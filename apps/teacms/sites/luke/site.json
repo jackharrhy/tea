@@ -1,0 +1,11 @@
+{
+  "name": "Luke Blackmore",
+  "origin": "https://luke.jackharrhy.dev",
+  "aliases": [],
+  "preview": true,
+  "features": {
+    "adornments": false,
+    "riso": false
+  },
+  "background": "#0b080f"
+}

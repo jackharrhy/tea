@@ -1,0 +1,16 @@
+node_modules/
+**/node_modules/
+**/.wrangler/
+**/.env
+**/.env.*
+!**/.env.example
+apps/teacms/data/
+apps/teacms/tmp/
+apps/teacms/uploads/
+apps/teacms/content/
+**/*.db
+**/*.db-*
+**/*.sqlite*
+**/playwright-report/
+**/test-results/
+apps/teacms/sites/*/site.local.json

@@ -1,0 +1,21 @@
+{
+  "name": "tea",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/teacms",
+    "apps/teacms/apps/*",
+    "apps/teacms/packages/*",
+    "apps/teacms/sites/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.3.0"
+  },
+  "scripts": {
+    "dev:teacms": "npm run dev --workspace teacms",
+    "check:teacms": "npm run check --workspace teacms",
+    "test:teacms": "npm run test --workspace teacms",
+    "check:teacms-edge": "npm run check --workspace @teacms/edge-example"
+  }
+}

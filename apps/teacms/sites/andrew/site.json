@@ -1,0 +1,11 @@
+{
+  "name": "Andrew Gosse Composer",
+  "origin": "https://andrew.jackharrhy.dev",
+  "aliases": [],
+  "preview": true,
+  "features": {
+    "adornments": true,
+    "riso": true
+  },
+  "background": "#f5f0e6"
+}

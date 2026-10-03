@@ -1,0 +1,24 @@
+{
+  "name": "teacms-edge-example",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "secrets": {
+    "required": [
+      "TEA_ADMIN_PASSWORD",
+      "TEA_SESSION_SECRET",
+      "TEA_PREVIEW_SECRET",
+    ],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "teacms-edge-example",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+    },
+  ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "teacms-edge-example-media" },
+  ],
+  "observability": { "enabled": true },
+}

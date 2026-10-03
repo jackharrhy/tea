@@ -1,0 +1,11 @@
+{
+  "name": "@teacms/server",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@teacms/core": "*",
+    "@teacms/site-andrew": "*",
+    "@teacms/site-luke": "*",
+    "remix": "3.0.0"
+  }
+}

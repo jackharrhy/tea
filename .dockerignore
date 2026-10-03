@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/.env*
+!**/.env.example
+apps/teacms/data
+apps/teacms/tmp
+apps/teacms/uploads
+apps/teacms/content
+**/playwright-report
+**/test-results
+**/*.db
+**/*.db-*
+**/*.sqlite*
+apps/teacms/sites/*/site.local.json

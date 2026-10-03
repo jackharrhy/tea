@@ -1,0 +1,13 @@
+FROM node:24-bookworm-slim AS build
+WORKDIR /app
+COPY . .
+RUN npm ci && npm run build --workspace teacms && npm prune --omit=dev
+
+FROM node:24-bookworm-slim
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=4351 TEA_DATA_DIR=/app/data
+WORKDIR /app/apps/teacms
+COPY --from=build --chown=node:node /app /app
+RUN mkdir -p /app/data && chown node:node /app/data
+USER node
+EXPOSE 4351
+CMD ["node", "--import", "remix/node-tsx", "apps/server/server.ts"]

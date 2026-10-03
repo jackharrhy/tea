@@ -1,0 +1,17 @@
+.image-with-adornments {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.image-with-adornments > img:first-child {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.image-with-adornments > .adornment {
+  pointer-events: none;
+  max-width: none;
+}

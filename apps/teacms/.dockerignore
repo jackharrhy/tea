@@ -1,0 +1,9 @@
+.git
+node_modules
+data
+tmp
+.env*
+sites/*/site.local.json
+playwright-report
+test-results
+*.swp

@@ -1,0 +1,14 @@
+{
+  "name": "@teacms/edge",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./app/index.tsx",
+    "./content": "./app/entries.ts",
+    "./preview": "./app/preview.ts",
+    "./schema.sql": "./db/schema.sql"
+  },
+  "dependencies": {
+    "remix": "3.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.*
+!.env.example
+/data/
+/tmp/
+*.db
+*.db-*
+*.sqlite*
+/uploads/
+/content/
+playwright-report/
+test-results/
+sites/*/site.local.json
+*.swp
