@@ -1,5 +1,5 @@
 import { createRouter } from "remix/router";
-import { createHandler } from "@sdxc/mcp";
+import { createHandler } from "@tea/mcp";
 import type { ShellConfig } from "./config.ts";
 import type { IdentityProvider } from "./auth/types.ts";
 import type { JobManager } from "./execution/index.ts";
@@ -7,8 +7,7 @@ import { routes } from "./routes.ts";
 import { shellTools } from "./tools.ts";
 import { shellController } from "./controllers/shell.ts";
 import { authenticate, json, privateResponses } from "./middleware/security.ts";
-import { limitConcurrency, limitMcpBody } from "./middleware/transport.ts";
-import { compatibleMcp } from "./compat.ts";
+import { limitConcurrency } from "./middleware/transport.ts";
 
 export function createApp(
   config: ShellConfig,
@@ -24,6 +23,8 @@ export function createApp(
     allowedOrigins: [config.publicOrigin],
     cacheScope: "private",
     listTtlMs: 0,
+    maxRequestBytes: 16_384,
+    requestTimeoutMs: 5_000,
     // Do not log request bodies, bearer tokens, or upstream error objects.
     onError: () => {
       console.error("MCP operation failed (details suppressed)");
@@ -51,19 +52,8 @@ export function createApp(
       : json({ error: "oauth_not_configured" }, 503),
   );
   router.map(routes.mcp, {
-    middleware: [authenticate(identity, config), limitMcpBody(16_384)],
-    handler: (ctx) => {
-      if (ctx.method !== "POST") return mcp.fetch(ctx);
-      return compatibleMcp(
-        ctx.request,
-        config.mcpName,
-        (request) => {
-          ctx.request = request;
-          return mcp.fetch(ctx);
-        },
-        () => mcp.fetch(ctx),
-      );
-    },
+    middleware: [authenticate(identity, config)],
+    handler: mcp.fetch,
   });
   return router;
 }

@@ -1,6 +1,6 @@
 import * as s from "@sdxc/json-schema";
 import * as checks from "@sdxc/json-schema/checks";
-import { createHandler, ToolError, tool, tools } from "@sdxc/mcp";
+import { createHandler, ToolError, tool, tools } from "@tea/mcp";
 import { contentContext } from "../middleware/context.ts";
 
 const declarations = tools({

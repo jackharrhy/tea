@@ -1,5 +1,5 @@
 import { it } from "remix/test";
-import { LATEST_PROTOCOL_VERSION, MetaKey } from "@sdxc/mcp";
+import { LATEST_PROTOCOL_VERSION, MetaKey } from "@tea/mcp";
 import * as assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";

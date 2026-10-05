@@ -1,0 +1,19 @@
+{
+  "name": "@tea/request-body",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./read.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import remix/node-tsx --test __tests__/*.test.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "remix": "3.0.0",
+    "typescript": "7.0.2"
+  }
+}

@@ -5,6 +5,7 @@ import {
   type Router,
 } from "remix/router";
 import { render as remixRender } from "remix/middleware/render";
+import { readRequestBody } from "@tea/request-body";
 import { routes } from "./routes.ts";
 import {
   clearedSessionCookie,
@@ -501,11 +502,15 @@ export function createEdgeRouter(
           const collection = collectionFor(config, params.collection);
           if (!collection || !validSlug(params.slug))
             return json({ error: "Not found" }, 404);
-          if (Number(request.headers.get("content-length") || 0) > 16384)
-            return json({ error: "Field is too long" }, 413);
-          const raw = await request.text();
-          if (raw.length > 16384)
-            return json({ error: "Field is too long" }, 413);
+          const body = await readRequestBody(request, {
+            maxBytes: 16_384,
+            timeoutMs: 5_000,
+          });
+          if (!body.ok)
+            return body.error === "too_large"
+              ? json({ error: "Field is too long" }, 413)
+              : json({ error: "Invalid request" }, 400);
+          const raw = new TextDecoder().decode(body.bytes);
           let input: { name?: unknown; value?: unknown; revision?: unknown };
           try {
             input = JSON.parse(raw);

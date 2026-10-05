@@ -18,6 +18,8 @@ a Remix 3 monorepo for personal apps and packages.
 | [`@tea/cms-core`](packages/cms-core/) | Node CMS routes, content storage, auth, media, and MCP | [README](packages/cms-core/README.md) |
 | [`@tea/cms-edge`](packages/cms-edge/) | CMS runtime, content APIs, and a Worker host example | [README](packages/cms-edge/README.md) |
 | [`@tea/cms-operator`](packages/cms-operator/) | Dashboard for the Node CMS host | [README](packages/cms-operator/README.md) |
+| [`@tea/mcp`](packages/mcp/) | MCP tools, resources, and Streamable HTTP handler | [README](packages/mcp/README.md) |
+| [`@tea/request-body`](packages/request-body/) | Bounded Web request-body reading | [README](packages/request-body/README.md) |
 | [`@tea/rich-text`](packages/rich-text/) | Inline document format and rich text editor | [README](packages/rich-text/README.md) |
 | [`@tea/shell-core`](packages/shell-core/) | Shell jobs, MCP tools, routes, and transport | [README](packages/shell-core/README.md) |
 

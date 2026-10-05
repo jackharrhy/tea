@@ -8,6 +8,8 @@ Apply `db/schema.sql` to D1 before serving requests. Bind D1 as `DB`, R2 as `MED
 
 The host renders public pages. Read published content from its D1 binding with `getEntry(env.DB, collection, slug)` or `listEntries(env.DB, collection)` from `@tea/cms-edge/content`. Pass `true` for draft reads only after validating a signed token with `@tea/cms-edge/preview`. Public JSON lives at `/api/content/:collection` and `/api/content/:collection/:slug`; `/api/preview/*` requires `Authorization: Bearer <TEA_PREVIEW_SECRET>`.
 
+Editor field updates use [`@tea/request-body`](../request-body/README.md) to enforce a 16 KiB byte limit while reading the stream.
+
 `extend` receives `Router<EdgeContext>`. Create site controllers with `createController<typeof siteRoutes, EdgeContext>(siteRoutes, { actions: ... })`, then call `router.map(siteRoutes, controller)`. Remix's `render()` middleware is already installed, so actions can use `context.render(<Page />)`. Keep site routes outside `/tea` and `/api`.
 
 From the root, run `npm ci` and `npm run check:cms-edge` for package and example typechecks plus edge tests in `app/__tests__/`. The example is part of this package, not a workspace.

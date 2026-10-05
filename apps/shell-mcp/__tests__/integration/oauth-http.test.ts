@@ -3,8 +3,6 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { createTestServer } from "remix/node-fetch-server/test";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   auth,
   type OAuthClientProvider,
@@ -13,6 +11,7 @@ import { createApp } from "@tea/shell-core/router.ts";
 import { createFourormIdentity } from "../../app/auth/fourorm.ts";
 import { readConfig } from "../../app/config.ts";
 import { JobManager, MockRunner } from "@tea/shell-core/execution/index.ts";
+import { LATEST_PROTOCOL_VERSION, MetaKey } from "@tea/mcp";
 
 const issuer = "https://4orm.harrhy.xyz";
 const resource = "https://jackharrhy.dev/mcp";
@@ -259,24 +258,52 @@ for (const selectorless of [false, true])
       assert.equal(claims.scope, "openid newport-shell:execute");
       assert.equal(claims.active, true);
 
-      const transport = new StreamableHTTPClientTransport(new URL(resource), {
-        authProvider: provider,
-        fetch: wireFetch,
-      });
-      const sdk = new Client({ name: "oauth-http-fixture", version: "1" });
-      t.after(() => sdk.close());
-      await sdk.connect(transport);
+      const mcpCall = (method: string, params: Record<string, unknown> = {}) =>
+        wireFetch(resource, {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${tokens.access_token}`,
+            "content-type": "application/json",
+            "MCP-Protocol-Version": LATEST_PROTOCOL_VERSION,
+            "Mcp-Method": method,
+            ...(typeof params.name === "string"
+              ? { "Mcp-Name": params.name }
+              : {}),
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method,
+            params: {
+              ...params,
+              _meta: {
+                [MetaKey.ProtocolVersion]: LATEST_PROTOCOL_VERSION,
+                [MetaKey.ClientCapabilities]: {},
+                [MetaKey.ClientInfo]: {
+                  name: "oauth-http-fixture",
+                  version: "1",
+                },
+              },
+            },
+          }),
+        });
+      const listResponse = await mcpCall("tools/list");
+      assert.equal(listResponse.status, 200);
       assert.deepEqual(
-        (await sdk.listTools()).tools.map((tool) => tool.name),
+        ((await listResponse.json()) as any).result.tools.map(
+          (tool: any) => tool.name,
+        ),
         ["execute", "read_job", "cancel"],
       );
-      const result = await sdk.callTool({
+      const callResponse = await mcpCall("tools/call", {
         name: "execute",
         arguments: {
           command: "fixture-not-real-execution",
           idempotencyKey: "oauth-http-fixture",
         },
       });
+      assert.equal(callResponse.status, 200);
+      const result = ((await callResponse.json()) as any).result;
       assert.notEqual(result.isError, true);
 
       const oldRefresh = tokens.refresh_token;

@@ -1,4 +1,5 @@
 import * as s from "remix/data-schema";
+import { readRequestBody } from "@tea/request-body";
 import { parseAdornmentInstances } from "../features/adornments/public/adornment-instances.ts";
 import type { ContentBlock, Page } from "../ui/public/content-types.ts";
 
@@ -6,21 +7,12 @@ export async function readInput(
   request: Request,
 ): Promise<Record<string, unknown> | null> {
   try {
-    const reader = request.body?.getReader();
-    if (!reader) return null;
-    const chunks: Uint8Array[] = [];
-    let length = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      length += value.length;
-      if (length > 2 * 1024 * 1024) {
-        await reader.cancel();
-        return null;
-      }
-      chunks.push(value);
-    }
-    const text = Buffer.concat(chunks).toString("utf8");
+    const result = await readRequestBody(request, {
+      maxBytes: 2 * 1024 * 1024,
+      timeoutMs: 30_000,
+    });
+    if (!result.ok) return null;
+    const text = new TextDecoder().decode(result.bytes);
     const value = request.headers
       .get("content-type")
       ?.includes("application/json")

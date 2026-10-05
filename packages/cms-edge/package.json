@@ -19,6 +19,7 @@
     "deploy:example": "wrangler deploy --config example/wrangler.jsonc"
   },
   "dependencies": {
+    "@tea/request-body": "0.1.0",
     "remix": "3.0.0"
   },
   "devDependencies": {

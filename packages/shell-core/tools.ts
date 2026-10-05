@@ -1,6 +1,6 @@
 import * as s from "@sdxc/json-schema";
 import * as checks from "@sdxc/json-schema/checks";
-import { tool, tools } from "@sdxc/mcp";
+import { tool, tools } from "@tea/mcp";
 
 // Declarative contract first; implementation lives in a typed controller.
 export const shellTools = tools({
