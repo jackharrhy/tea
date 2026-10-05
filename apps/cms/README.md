@@ -12,13 +12,13 @@ Use the latest Node.js 24 LTS release (minimum 24.3). From the repo root:
 
 ```sh
 npm ci
-npm run dev:cms
+npm run cms:dev
 ```
 
 Checks:
 
 ```sh
-npm run check:cms
+npm run cms:check
 npx playwright install chromium
 npm run test:browser --workspace @tea/cms
 ```

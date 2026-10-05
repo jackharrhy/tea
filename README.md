@@ -34,9 +34,9 @@ Use the latest Node.js 24 LTS release (`.nvmrc`; minimum 24.3). Install from the
 npm ci
 ```
 
-Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @tea/cms` starts CMS. Run `npm run` for root scripts, including `npm run check:cms`. Each workspace README has its own setup and checks.
+Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @tea/cms` starts CMS. Run `npm run` for root scripts, including `npm run cms:check`. Each workspace README has its own setup and checks.
 
-Vite+ runs the shared format and lint checks from [`vite.config.ts`](vite.config.ts). Run `npm run check:tooling` for both, or `npm run format` to format files. Run `npm run knip` to audit unused code and dependencies across workspaces. Knip currently reports findings, so it is a manual audit rather than a CI gate; review results before changing code.
+Vite+ runs the shared format and lint checks from [`vite.config.ts`](vite.config.ts). Run `npm run tooling:check` for both, or `npm run format` to format files. Run `npm run knip` to audit unused code and dependencies across workspaces. Knip currently reports findings, so it is a manual audit rather than a CI gate; review results before changing code.
 
 The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. Run `docker compose up --build -d`, then open [andrew.localhost](http://andrew.localhost), [luke.localhost](http://luke.localhost), or [shell.localhost/healthz](http://shell.localhost/healthz). The shell container runs in locked mode; it cannot execute commands. Only Traefik binds a host port, on loopback. Add a service and labels for each new containerized app. Production DNS, TLS, and host setup live in the infrastructure repo.
 

@@ -12,4 +12,4 @@ It can use `@tea/cms-core` contracts, but must not import the app or site presen
 
 ## Working here
 
-From the root, run `npm ci` and `npm run check:cms` to check the dashboard, host, and tests. Put new tests in a nearby `__tests__/` directory.
+From the root, run `npm ci` and `npm run cms:check` to check the dashboard, host, and tests. Put new tests in a nearby `__tests__/` directory.

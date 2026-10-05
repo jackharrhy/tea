@@ -12,4 +12,4 @@ Editor field updates use [`@tea/request-body`](../request-body/README.md) to enf
 
 `extend` receives `Router<EdgeContext>`. Create site controllers with `createController<typeof siteRoutes, EdgeContext>(siteRoutes, { actions: ... })`, then call `router.map(siteRoutes, controller)`. Remix's `render()` middleware is already installed, so actions can use `context.render(<Page />)`. Keep site routes outside `/tea` and `/api`.
 
-From the root, run `npm ci` and `npm run check:cms-edge` for package and example typechecks plus edge tests in `app/__tests__/`. The example is part of this package, not a workspace.
+From the root, run `npm ci` and `npm run cms-edge:check` for package and example typechecks plus edge tests in `app/__tests__/`. The example is part of this package, not a workspace.
