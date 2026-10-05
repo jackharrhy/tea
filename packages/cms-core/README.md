@@ -7,6 +7,7 @@ The Remix 3 Node runtime for [`@tea/cms`](../../apps/cms/README.md): routes and 
 - `@tea/cms-core/router.ts` exports `createTeaRouter` for one resolved site and database.
 - `@tea/cms-core/site.ts` defines the site contract.
 - `@tea/cms-core/data/*` contains SQLite stores; migrations live in `db/migrations/`.
+- `app/actions/admin/controller.tsx` wires admin routes; `page-actions.tsx` owns page editing and publishing.
 
 Modules export through `@tea/cms-core/*`. This package must not depend on the Node host or a site's presentation. The host selects hostnames, starts the server, and configures deployment.
 

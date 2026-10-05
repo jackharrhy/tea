@@ -37,6 +37,23 @@ services:
     networks:
       - web
 
+  shell-mcp:
+    build:
+      context: .
+      dockerfile: apps/shell-mcp/Dockerfile
+    environment:
+      SHELL_MODE: locked
+      HOST: 0.0.0.0
+      PORT: "3000"
+      PUBLIC_ORIGIN: http://shell.localhost
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.shell-mcp.rule: "Host(`shell.localhost`)"
+      traefik.http.routers.shell-mcp.entrypoints: web
+      traefik.http.services.shell-mcp.loadbalancer.server.port: "3000"
+    networks:
+      - web
+
 volumes:
   cms-data:
 
