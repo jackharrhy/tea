@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@sdxc/json-schema": "2026.10.2",
-    "@sdxc/mcp": "2026.10.2",
+    "@tea/mcp": "0.1.0",
     "remix": "3.0.0"
   },
   "devDependencies": {

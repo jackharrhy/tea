@@ -9,6 +9,8 @@ jobs:
       cms: ${{ steps.select.outputs.cms }}
       edge: ${{ steps.select.outputs.edge }}
       shell: ${{ steps.select.outputs.shell }}
+      body: ${{ steps.select.outputs.body }}
+      mcp: ${{ steps.select.outputs.mcp }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -70,3 +72,33 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check:shell-mcp
+
+  request-body:
+    needs: affected
+    if: needs.affected.outputs.body == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check:request-body
+
+  mcp:
+    needs: affected
+    if: needs.affected.outputs.mcp == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check:mcp

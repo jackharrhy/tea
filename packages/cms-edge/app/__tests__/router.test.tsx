@@ -133,6 +133,20 @@ it("serves a native Remix editor and public page from one router", async () => {
   assert.equal(edited.status, 200);
   assert.equal(((await edited.json()) as { revision: number }).revision, 3);
   assert.equal(row.published, JSON.stringify({ title: "Published title" }));
+
+  const oversized = await app.fetch(
+    new Request(`${origin}/tea/visual/articles/example`, {
+      method: "POST",
+      headers: {
+        Cookie: cookie,
+        Origin: origin,
+        "Content-Type": "application/json",
+      },
+      body: "x".repeat(16_385),
+    }),
+  );
+  assert.equal(oversized.status, 413);
+  assert.equal(row.revision, 3);
 });
 
 it("lets a standalone site own staff login and route authorization", async () => {

@@ -1,6 +1,25 @@
 import { it } from "remix/test";
 import * as assert from "remix/assert";
-import { validBlocks, validSlug } from "../input.ts";
+import { readInput, validBlocks, validSlug } from "../input.ts";
+
+it("reads bounded editor JSON and rejects oversized input", async () => {
+  const valid = new Request("https://cms.example/tea/page", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: '{"title":"Draft"}',
+  });
+  assert.deepEqual(await readInput(valid), { title: "Draft" });
+
+  const oversized = new Request("https://cms.example/tea/page", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Length": String(2 * 1024 * 1024 + 1),
+    },
+    body: "{}",
+  });
+  assert.equal(await readInput(oversized), null);
+});
 
 it("rejects malformed known blocks before they can corrupt a public page", () => {
   assert.equal(

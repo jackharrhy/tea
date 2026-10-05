@@ -43,7 +43,7 @@ try {
     401,
   );
   console.log(
-    "PASS: loopback HTTP → Remix 3 router → @sdxc/mcp → mock execute/read job; unauthorized request rejected. No real commands, OAuth, Docker, or dot integration tested.",
+    "PASS: loopback HTTP → Remix 3 router → @tea/mcp → mock execute/read job; unauthorized request rejected. No real commands, OAuth, Docker, or dot integration tested.",
   );
 } finally {
   await running.close();

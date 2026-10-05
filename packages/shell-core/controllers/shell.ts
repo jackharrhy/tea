@@ -1,4 +1,4 @@
-import { createToolController, ToolError } from "@sdxc/mcp";
+import { createToolController, ToolError } from "@tea/mcp";
 import { shellTools } from "../tools.ts";
 import { Identity } from "../middleware/security.ts";
 import { ownerKey } from "../auth/types.ts";

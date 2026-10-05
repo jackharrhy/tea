@@ -1,0 +1,25 @@
+{
+  "name": "@tea/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import remix/node-tsx --test __tests__/*.test.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@tea/request-body": "0.1.0",
+    "@sdxc/json-schema": "2026.10.2",
+    "@sdxc/logger": "2026.10.2",
+    "@sdxc/result": "2026.10.2",
+    "remix": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2"
+  }
+}

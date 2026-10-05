@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.32.0",
-    "@sdxc/mcp": "2026.10.2",
+    "@tea/mcp": "0.1.0",
     "@types/node": "26.6.4",
     "typescript": "7.0.2"
   }

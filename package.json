@@ -14,6 +14,8 @@
     "dev:shell-mcp": "npm run dev --workspace @tea/shell-mcp",
     "lint": "oxlint --deny-warnings .",
     "format:check": "oxfmt --check .",
+    "check:request-body": "npm run lint && npm run format:check && npm run check --workspace @tea/request-body",
+    "check:mcp": "npm run lint && npm run format:check && npm run check --workspace @tea/mcp",
     "check:cms": "npm run lint && npm run format:check && npm run check --workspace @tea/cms",
     "test:cms": "npm run test --workspace @tea/cms",
     "check:cms-edge": "npm run lint && npm run format:check && npm run check:example --workspace @tea/cms-edge",
