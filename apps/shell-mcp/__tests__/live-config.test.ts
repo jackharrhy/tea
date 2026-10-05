@@ -8,7 +8,7 @@ test("real runner requires fourorm and durable journal configuration", () => {
     () => readConfig({ SHELL_MODE: "demo", SHELL_RUNNER: "systemd" }),
     /fourorm/,
   );
-  assert.throws(() => readConfig({ SHELL_RUNNER: "anything" }), /runner/);
+  assert.throws(() => readConfig({ SHELL_RUNNER: "anything" }), /SHELL_RUNNER/);
 });
 test("shutdown waits for asynchronous cleanup acknowledgement", async () => {
   let end: () => void;

@@ -2,7 +2,7 @@
 
 Remix 3 Node host for [`@tea/shell-core`](../../packages/shell-core/README.md). It serves a shell MCP with `execute`, `read_job`, and `cancel`. The source began in `jack@newport:/home/jack/repos/personal/newport-shell-remix`; the current Newport service has not been redeployed from Tea.
 
-`server.ts` starts the listener. `app/config.ts` parses locked, demo, or live settings; `app/runtime.ts` selects the identity provider and runner. `app/auth/fourorm.ts` verifies opaque tokens; `app/systemd-runner.ts` calls a configured root-owned helper. [`examples/newport/`](examples/newport/) contains the Newport-specific helper and quota bootstrap. Production units, ingress, credentials, and host configuration belong in the infrastructure repo.
+`server.ts` starts the listener. `app/config-schema.ts` validates env values; `app/config.ts` assembles locked, demo, or live settings. `app/runtime.ts` selects the identity provider and runner. `app/auth/fourorm.ts` verifies opaque tokens, and `app/auth/secret.ts` reads the introspection secret. `app/systemd-runner.ts` calls a configured root-owned helper. [`examples/newport/`](examples/newport/) contains the Newport-specific helper and quota bootstrap. Production units, ingress, credentials, and host configuration belong in the infrastructure repo.
 
 ## Develop and check
 

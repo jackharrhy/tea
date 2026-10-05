@@ -1,7 +1,8 @@
 import { JobManager, MockRunner } from "@tea/shell-core/execution/index.ts";
 import { createFourormIdentity } from "./auth/fourorm.ts";
 import { demoIdentity, lockedIdentity } from "./auth/fixtures.ts";
-import { readIntrospectionSecret, type AppConfig } from "./config.ts";
+import { readIntrospectionSecret } from "./auth/secret.ts";
+import type { AppConfig } from "./config.ts";
 import { SystemdRunner } from "./systemd-runner.ts";
 
 export async function createRuntime(config: AppConfig) {
