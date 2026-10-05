@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@tea/request-body": "0.1.0",
-    "@sdxc/json-schema": "2026.10.2",
-    "@sdxc/logger": "2026.10.2",
-    "@sdxc/result": "2026.10.2",
+    "@tea/json-schema": "0.1.0",
+    "@tea/logger": "0.1.0",
+    "@tea/result": "0.1.0",
     "remix": "3.0.0"
   },
   "devDependencies": {

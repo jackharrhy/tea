@@ -1,5 +1,5 @@
-import * as s from "@sdxc/json-schema";
-import * as checks from "@sdxc/json-schema/checks";
+import * as s from "@tea/json-schema";
+import * as checks from "@tea/json-schema/checks";
 import { createHandler, ToolError, tool, tools } from "@tea/mcp";
 import { contentContext } from "../middleware/context.ts";
 

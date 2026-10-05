@@ -7,13 +7,10 @@
  * existing middleware — session, logger, database, authentication — is the middleware for
  * its MCP surface too, and a handler reads what that middleware set with the same
  * `ctx.get()` every other handler in the app uses.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
-import { currentLog } from "@sdxc/logger";
-import { isFailure } from "@sdxc/result";
+import { currentLog } from "@tea/logger";
+import { isFailure } from "@tea/result";
 import { readRequestBody } from "@tea/request-body";
 import { createMultiMatcher } from "remix/route-pattern/match";
 

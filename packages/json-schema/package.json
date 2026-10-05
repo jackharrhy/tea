@@ -1,0 +1,25 @@
+{
+  "name": "@tea/json-schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./checks": "./src/checks.ts",
+    "./coerce": "./src/coerce.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import remix/node-tsx --test __tests__/*.test.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@tea/result": "0.1.0",
+    "@standard-schema/spec": "1.1.0",
+    "remix": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2"
+  }
+}

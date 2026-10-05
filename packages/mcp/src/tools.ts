@@ -1,24 +1,21 @@
 /**
  * The tool declaration tree: the equivalent of a route table, where a tool's name is its
- * address and its `@sdxc/json-schema` input schema is what `tools/list` publishes, what
+ * address and its `@tea/json-schema` input schema is what `tools/list` publishes, what
  * validates a call, and what types the handler.
  *
  * Declaration is separate from handling: this file says what exists and what it takes,
  * while binding a handler and its middleware happens at `map()`, where an application's
  * own concerns belong. Nothing here reads a request or runs anything.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
 import type {
   DescribedSchema,
   InferOutput,
   JSONSchema,
-} from "@sdxc/json-schema";
+} from "@tea/json-schema";
 
-import { toJSONSchema } from "@sdxc/json-schema";
-import { isFailure } from "@sdxc/result";
+import { toJSONSchema } from "@tea/json-schema";
+import { isFailure } from "@tea/result";
 
 import type { AnyRequestContext, ToolContext } from "./context.ts";
 
@@ -42,7 +39,7 @@ export interface ToolAnnotations {
 
 /**
  * A schema a tool's arguments or structured result are declared with: any
- * `@sdxc/json-schema` schema whose parse yields an object, since MCP requires both to be
+ * `@tea/json-schema` schema whose parse yields an object, since MCP requires both to be
  * described by a JSON Schema of `type: "object"`.
  */
 // oxlint-disable-next-line typescript/no-explicit-any -- the accepted input side is whatever the schema documents

@@ -7,9 +7,6 @@
  * again in HTTP headers, which intermediaries route on without parsing the body. Validating
  * that the two copies agree closes a real security gap: a gateway could authorize on the
  * header while the server executes a differing body.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
 /**

@@ -15,7 +15,7 @@
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "@sdxc/json-schema": "2026.10.2",
+    "@tea/json-schema": "0.1.0",
     "@tea/mcp": "0.1.0",
     "remix": "3.0.0"
   },

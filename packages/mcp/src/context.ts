@@ -4,9 +4,6 @@
  * `RequestContext` — the one the surrounding remix middleware wrote to —
  * with a couple of properties installed on it, so `ctx.get(Database)`
  * inside a tool reads through that same shared context.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
 import type { ContextEntries } from "remix/router";
