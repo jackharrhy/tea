@@ -165,6 +165,31 @@ test("rejects origin, body limits, unsupported revision, malformed metadata, hea
     await jobs.close();
   }
 });
+test("limits streamed MCP bodies without a content-length header", async () => {
+  const { app, jobs } = fixture();
+  try {
+    const template = rpcRequest(origin, "tools/list");
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(16_000));
+        controller.enqueue(new Uint8Array(385));
+        controller.close();
+      },
+    });
+    const requestOptions = {
+      method: "POST",
+      headers: template.headers,
+      body,
+      duplex: "half" as const,
+    };
+    const response = await app.fetch(
+      new Request(`${origin}/mcp`, requestOptions),
+    );
+    assert.equal(response.status, 413);
+  } finally {
+    await jobs.close();
+  }
+});
 test("tool input validation rejects bad timeout and denies owner injection", async () => {
   const { app, jobs } = fixture();
   try {
