@@ -7,11 +7,7 @@ import { routes } from "./routes.ts";
 import { shellTools } from "./tools.ts";
 import { shellController } from "./controllers/shell.ts";
 import { authenticate, json, privateResponses } from "./middleware/security.ts";
-import {
-  canonicalMcpPath,
-  limitConcurrency,
-  limitMcpBody,
-} from "./middleware/transport.ts";
+import { limitConcurrency, limitMcpBody } from "./middleware/transport.ts";
 import { compatibleMcp } from "./compat.ts";
 
 export function createApp(
@@ -35,15 +31,7 @@ export function createApp(
   });
   mcp.tools.map(shellTools, shellController(jobs));
   const router = createRouter({
-    middleware: [
-      privateResponses,
-      limitConcurrency(8),
-      authenticate(identity, config),
-    ],
-    defaultHandler: (ctx) =>
-      ctx.url.pathname === "/mcp"
-        ? new Response(null, { status: 405, headers: { allow: "POST" } })
-        : json({ error: "not_found" }, 404),
+    middleware: [privateResponses, limitConcurrency(8)],
   });
   router.map(routes.health, () =>
     json({
@@ -63,9 +51,10 @@ export function createApp(
       : json({ error: "oauth_not_configured" }, 503),
   );
   router.map(routes.mcp, {
-    middleware: [canonicalMcpPath, limitMcpBody(16_384)],
-    handler: (ctx) =>
-      compatibleMcp(
+    middleware: [authenticate(identity, config), limitMcpBody(16_384)],
+    handler: (ctx) => {
+      if (ctx.method !== "POST") return mcp.fetch(ctx);
+      return compatibleMcp(
         ctx.request,
         config.mcpName,
         (request) => {
@@ -73,7 +62,8 @@ export function createApp(
           return mcp.fetch(ctx);
         },
         () => mcp.fetch(ctx),
-      ),
+      );
+    },
   });
   return router;
 }

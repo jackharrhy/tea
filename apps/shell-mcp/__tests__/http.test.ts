@@ -243,31 +243,52 @@ test("default service refuses execution and does not advertise configured OAuth"
   await jobs.close();
 });
 
-test("noncanonical route aliases cannot bypass authentication or body ceilings", async () => {
+test("router-matched MCP aliases keep authentication and body limits", async () => {
   const { app, jobs } = fixture();
   try {
-    for (const path of [
-      "/%6dcp",
-      "/m%63p",
-      "/mcp/",
-      "/%2fmcp",
-      "//mcp",
-      "/mcp%2f",
-      "/MCP",
-    ]) {
+    for (const path of ["/%6dcp", "/m%63p"]) {
+      const listed = await app.fetch(
+        new Request(`${origin}${path}`, rpcRequest(origin, "tools/list")),
+      );
+      assert.equal(listed.status, 200, path);
       for (const method of ["tools/list", "server/discover"]) {
         const original = rpcRequest(origin, method, {}, "bad");
         const response = await app.fetch(
           new Request(`${origin}${path}`, original),
         );
-        assert.equal(response.status, 404, path);
+        assert.equal(response.status, 401, path);
       }
+      assert.equal(
+        (await app.fetch(new Request(`${origin}${path}`))).status,
+        401,
+      );
+      assert.equal(
+        (
+          await app.fetch(
+            new Request(`${origin}${path}`, {
+              headers: { authorization: "Bearer demo-only-token" },
+            }),
+          )
+        ).status,
+        405,
+        path,
+      );
+      const authorized = rpcRequest(origin, "tools/list");
       const oversized = new Request(`${origin}${path}`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: authorized.headers,
         body: "x".repeat(100_000),
       });
-      assert.equal((await app.fetch(oversized)).status, 404, path);
+      assert.equal((await app.fetch(oversized)).status, 413, path);
+    }
+    for (const path of ["/mcp/", "/%2fmcp", "//mcp", "/mcp%2f", "/MCP"]) {
+      const response = await app.fetch(
+        new Request(
+          `${origin}${path}`,
+          rpcRequest(origin, "tools/list", {}, "bad"),
+        ),
+      );
+      assert.equal(response.status, 404, path);
     }
   } finally {
     await jobs.close();
