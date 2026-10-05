@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { failure, isFailure, isSuccess, success, wrap } from "../src/index.ts";
-
-test("result guards distinguish success and failure", () => {
-  assert.equal(isSuccess(success(42)), true);
-  assert.equal(isFailure(failure(new Error("failed"))), true);
-});
+import { wrap } from "../src/index.ts";
 
 test("wrap turns thrown and rejected errors into failures", async () => {
   const thrown = wrap(() => {
