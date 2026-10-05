@@ -1,7 +1,11 @@
 import { readFile, stat } from "node:fs/promises";
-import type { ShellConfig } from "@tea/shell-core/config.ts";
+import type {
+  DemoShellConfig,
+  LiveShellConfig,
+  LockedShellConfig,
+} from "@tea/shell-core/config.ts";
 type HostConfig = Readonly<{ host: string; port: number }>;
-type LiveConfig = Extract<ShellConfig, { mode: "fourorm" }> &
+type LiveConfig = LiveShellConfig &
   Readonly<{
     issuer: string;
     allowedSubjects: readonly string[];
@@ -11,7 +15,7 @@ type LiveConfig = Extract<ShellConfig, { mode: "fourorm" }> &
     helperPath: string;
   }>;
 export type AppConfig = HostConfig &
-  (Exclude<ShellConfig, { mode: "fourorm" }> | LiveConfig);
+  (LockedShellConfig | DemoShellConfig | LiveConfig);
 const LOOPBACK = new Set(["127.0.0.1", "::1", "localhost"]);
 export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const mode = env.SHELL_MODE ?? "locked";
