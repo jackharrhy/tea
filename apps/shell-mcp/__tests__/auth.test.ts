@@ -23,6 +23,7 @@ function fixture(
   profile: Record<string, unknown> = {},
   metadata: Record<string, unknown> = {},
   allowedUsernames: string[] = ["harrhy"],
+  clock: () => number = () => now,
 ) {
   const requests: Array<{ url: string; init?: RequestInit }> = [];
   const adapter = createFourormIdentity({
@@ -33,7 +34,7 @@ function fixture(
     allowedUsernames,
     introspectionClientId: "rs-client",
     introspectionClientSecret: "fixture-secret",
-    now: () => now,
+    now: clock,
     fetch: async (input, init) => {
       const url = String(input);
       requests.push({ url, init });
@@ -58,6 +59,13 @@ test("accepts a different explicitly enrolled admin", async () => {
   assert.equal(
     (await (await adapter).verify("opaque-token")).username,
     "alice",
+  );
+});
+test("accepts a single exact audience in array form", async () => {
+  const { adapter } = fixture({ aud: [resource] });
+  assert.equal(
+    (await (await adapter).verify("opaque-token")).subject,
+    "verified-42",
   );
 });
 test("authorizes only linked authoritative identity; same token goes to both endpoints", async () => {
@@ -100,6 +108,8 @@ for (const claims of [
   { exp: "1900000000" },
   { exp: undefined },
   { iat: now / 1000 + 100 },
+  { iat: now / 1000 + 100, exp: now / 1000 + 100 },
+  { exp: now / 1000 + 0.5 },
   { token_type: "Basic" },
   { client_id: "" },
   { iss: "https://attacker.example" },
@@ -129,6 +139,12 @@ for (const profile of [
       (await fixture({}, profile).adapter).verify("opaque-token"),
     );
   });
+test("rejects a token that expires while userinfo is fetched", async () => {
+  let reads = 0;
+  const clock = () => now + (reads++ === 0 ? 0 : 101_000);
+  const { adapter } = fixture({}, {}, {}, ["harrhy"], clock);
+  await assert.rejects((await adapter).verify("opaque-token"));
+});
 test("metadata issuer/credential endpoint must remain pinned", async () => {
   await assert.rejects(
     fixture({}, {}, { issuer: "https://other.example" }).adapter,

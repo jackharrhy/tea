@@ -1,25 +1,25 @@
 import {
   AuthenticationError,
   type IdentityProvider,
-  type Principal,
 } from "@tea/shell-core/auth/types.ts";
+import {
+  verifyIntrospection,
+  verifyUserinfo,
+  type OwnerPolicy,
+} from "./claims.ts";
 
 type JsonObject = Record<string, unknown>;
 type Fetcher = (
   input: string | URL | Request,
   init?: RequestInit,
 ) => Promise<Response>;
-export type FourormOptions = Readonly<{
-  issuer: string;
-  resource: string;
-  requiredScope: string;
-  allowedSubjects: readonly string[];
-  allowedUsernames: readonly string[];
-  introspectionClientId: string;
-  introspectionClientSecret: string;
-  fetch?: Fetcher;
-  now?: () => number;
-}>;
+export type FourormOptions = OwnerPolicy &
+  Readonly<{
+    introspectionClientId: string;
+    introspectionClientSecret: string;
+    fetch?: Fetcher;
+    now?: () => number;
+  }>;
 
 function object(value: unknown): JsonObject {
   if (!value || typeof value !== "object" || Array.isArray(value))
@@ -142,7 +142,7 @@ export async function createFourormIdentity(
     `${encodeURIComponent(options.introspectionClientId)}:${encodeURIComponent(options.introspectionClientSecret)}`,
   ).toString("base64");
   return {
-    async verify(token): Promise<Principal> {
+    async verify(token) {
       if (!/^[A-Za-z0-9._~+/-]+={0,2}$/.test(token) || token.length > 4096)
         throw new AuthenticationError();
       const claims = await request(introspection, {
@@ -154,56 +154,14 @@ export async function createFourormIdentity(
         },
         body: new URLSearchParams({ token, token_type_hint: "access_token" }),
       });
-      const currentSeconds = Math.floor(now() / 1000);
-      const audiences =
-        typeof claims.aud === "string" ? [claims.aud] : claims.aud;
-      const scopes =
-        typeof claims.scope === "string"
-          ? new Set(claims.scope.split(" "))
-          : new Set();
-      if (
-        claims.active !== true ||
-        claims.principal_type !== "user" ||
-        typeof claims.sub !== "string" ||
-        !options.allowedSubjects.includes(claims.sub) ||
-        typeof claims.token_type !== "string" ||
-        claims.token_type.toLowerCase() !== "bearer" ||
-        typeof claims.client_id !== "string" ||
-        !claims.client_id ||
-        !Array.isArray(audiences) ||
-        audiences.length !== 1 ||
-        audiences[0] !== options.resource ||
-        !scopes.has("openid") ||
-        !scopes.has(options.requiredScope) ||
-        !Number.isSafeInteger(claims.exp) ||
-        (claims.exp as number) <= currentSeconds ||
-        !Number.isSafeInteger(claims.iat) ||
-        (claims.iat as number) > currentSeconds + 5 ||
-        (claims.iat as number) >= (claims.exp as number) ||
-        (claims.iss !== undefined && claims.iss !== options.issuer)
-      )
-        throw new AuthenticationError();
+      const verifiedToken = verifyIntrospection(claims, options, now());
       const profile = await request(userinfo, {
         headers: {
           authorization: `Bearer ${token}`,
           accept: "application/json",
         },
       });
-      if (
-        profile.sub !== claims.sub ||
-        typeof profile.username !== "string" ||
-        !options.allowedUsernames.includes(profile.username) ||
-        profile.is_admin !== true ||
-        (claims.exp as number) * 1000 <= now()
-      )
-        throw new AuthenticationError();
-      return Object.freeze({
-        issuer: options.issuer,
-        subject: claims.sub,
-        username: profile.username,
-        admin: true,
-        expiresAt: (claims.exp as number) * 1000,
-      });
+      return verifyUserinfo(profile, verifiedToken, options, now());
     },
   };
 }
