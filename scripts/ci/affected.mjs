@@ -25,7 +25,7 @@ export function loadWorkspaces(directory = root) {
 }
 
 export function selectChecks(paths, workspaces) {
-  const all = { cms: true, edge: true };
+  const all = { cms: true, edge: true, shell: true };
   const byPath = workspaces.toSorted((a, b) => b.path.length - a.path.length);
   const affected = new Set();
 
@@ -74,6 +74,7 @@ export function selectChecks(paths, workspaces) {
   return {
     cms: affected.has("@tea/cms"),
     edge: affected.has("@tea/cms-edge"),
+    shell: affected.has("@tea/shell-mcp"),
   };
 }
 
@@ -101,7 +102,7 @@ if (
     );
   } catch (error) {
     console.warn(`Could not determine affected workspaces: ${error.message}`);
-    checks = { cms: true, edge: true };
+    checks = { cms: true, edge: true, shell: true };
   }
   console.log(`Affected checks: ${JSON.stringify(checks)}`);
   if (process.env.GITHUB_OUTPUT)

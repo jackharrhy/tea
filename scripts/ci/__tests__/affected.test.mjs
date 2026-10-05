@@ -15,12 +15,19 @@ const workspaces = [
   },
   { path: "packages/rich-text", name: "@tea/rich-text", manifest: {} },
   { path: "packages/cms-edge", name: "@tea/cms-edge", manifest: {} },
+  {
+    path: "apps/shell-mcp",
+    name: "@tea/shell-mcp",
+    manifest: { dependencies: { "@tea/shell-core": "0.1.0" } },
+  },
+  { path: "packages/shell-core", name: "@tea/shell-core", manifest: {} },
 ];
 
 test("a package change reaches its transitive app consumers", () => {
   assert.deepEqual(selectChecks(["packages/rich-text/inline.ts"], workspaces), {
     cms: true,
     edge: false,
+    shell: false,
   });
 });
 
@@ -30,25 +37,39 @@ test("edge and documentation changes do not start CMS checks", () => {
     {
       cms: false,
       edge: true,
+      shell: false,
     },
   );
   assert.deepEqual(selectChecks(["docs/architecture.md"], workspaces), {
     cms: false,
     edge: false,
+    shell: false,
   });
+  assert.deepEqual(selectChecks(["apps/shell-mcp/app/config.ts"], workspaces), {
+    cms: false,
+    edge: false,
+    shell: true,
+  });
+  assert.deepEqual(
+    selectChecks(["packages/shell-core/router.ts"], workspaces),
+    { cms: false, edge: false, shell: true },
+  );
 });
 
 test("shared configuration and unrecognized files run all known checks", () => {
   assert.deepEqual(selectChecks(["package-lock.json"], workspaces), {
     cms: true,
     edge: true,
+    shell: true,
   });
   assert.deepEqual(selectChecks(["compose.yml"], workspaces), {
     cms: true,
     edge: true,
+    shell: true,
   });
   assert.deepEqual(selectChecks(["unexpected/config.ts"], workspaces), {
     cms: true,
     edge: true,
+    shell: true,
   });
 });

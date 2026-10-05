@@ -1,0 +1,26 @@
+{
+  "name": "@tea/shell-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.3.0"
+  },
+  "exports": {
+    "./*": "./*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "NODE_ENV=test node --import remix/node-tsx --test __tests__/*.test.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@sdxc/json-schema": "2026.10.2",
+    "@sdxc/mcp": "2026.10.2",
+    "remix": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2"
+  }
+}

@@ -8,6 +8,7 @@ a Remix 3 monorepo for personal apps and packages.
 | Workspace | What it runs | Guide |
 | --- | --- | --- |
 | [`@tea/cms`](apps/cms/) | Node host for the multi-site CMS | [README](apps/cms/README.md) |
+| [`@tea/shell-mcp`](apps/shell-mcp/) | Node host for Shell MCP | [README](apps/shell-mcp/README.md) |
 
 ### Packages
 
@@ -18,6 +19,7 @@ a Remix 3 monorepo for personal apps and packages.
 | [`@tea/cms-edge`](packages/cms-edge/) | CMS runtime, content APIs, and a Worker host example | [README](packages/cms-edge/README.md) |
 | [`@tea/cms-operator`](packages/cms-operator/) | Dashboard for the Node CMS host | [README](packages/cms-operator/README.md) |
 | [`@tea/rich-text`](packages/rich-text/) | Inline document format and rich text editor | [README](packages/rich-text/README.md) |
+| [`@tea/shell-core`](packages/shell-core/) | Shell jobs, MCP tools, routes, and transport | [README](packages/shell-core/README.md) |
 
 ## Working in the repo
 
@@ -29,6 +31,6 @@ npm ci
 
 Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @tea/cms` starts CMS. Run `npm run` for root scripts, including `npm run check:cms`. Each workspace README has its own setup and checks.
 
-The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. Run `docker compose up --build -d`, then open [andrew.localhost](http://andrew.localhost) or [luke.localhost](http://luke.localhost). Only Traefik binds a host port, on loopback. Add a service and labels for each new containerized app. Production DNS, TLS, and host setup live in the infrastructure repo.
+The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. Run `docker compose up --build -d`, then open [andrew.localhost](http://andrew.localhost), [luke.localhost](http://luke.localhost), or [shell.localhost/healthz](http://shell.localhost/healthz). The shell container runs in locked mode; it cannot execute commands. Only Traefik binds a host port, on loopback. Add a service and labels for each new containerized app. Production DNS, TLS, and host setup live in the infrastructure repo.
 
 CI follows workspace dependencies: package changes also check affected apps. Shared config or unknown paths run all checks. README and `docs/` changes skip app checks. See [`scripts/ci/affected.mjs`](scripts/ci/affected.mjs).
