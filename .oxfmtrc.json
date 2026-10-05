@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    ".agents/**",
+    "package-lock.json",
+    "apps/cms/sites/*/public/icons/**",
+    "packages/cms-edge/example/worker-configuration.d.ts"
+  ]
+}

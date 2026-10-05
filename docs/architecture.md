@@ -1,11 +1,13 @@
-# Architecture direction
+# Architecture
 
-Tea starts with a wholesale TeaCMS import. The Node multi-site runtime and Cloudflare D1/R2 runtime remain distinct entry points while the shared contract is identified. Site selection, draft/publish rules, previews, and media checks are product invariants.
+Tea is a Remix 3 monorepo of independently deployable apps and importable packages, listed in the [root README](../README.md). Apps own runtime configuration and deployment artifacts. Packages use named workspace imports and never import apps. A package can serve just one product.
 
-Each app owns its routes, runtime configuration, and deployable artifact. Shared packages expose named exports and never import from apps. We will promote code only when a second app needs the same behavior.
+Use `remix/routes` for typed URLs, `remix/router` for controllers and middleware, and `remix/component` for UI. Start with a working server response, then add browser behavior. Node and Cloudflare hosts use Remix 3 with their own runtime adapters and storage.
 
-Remix 3 is the default web framework. Use `remix/routes` for typed URL contracts, `remix/router` for controllers and middleware, and `remix/component` for UI. Browser behavior follows a working server response. Services with their own runtime needs can remain separate applications.
+## TeaCMS today
 
-The default deployment target is independent containers on the VPS. TeaCMS also retains a Cloudflare Worker path. This repository can own Dockerfiles and Worker configuration, while the separate infrastructure repository owns hosts, ingress, DNS, secrets, and live state.
+`apps/cms` hosts multiple sites in Node and keeps each presentation in `sites/<id>`. The app registers each site's presentation, manifest, and assets at startup, then exports presentations by subpath. `packages/cms-core`, `packages/cms-operator`, and `packages/cms-edge` expose CMS modules; `packages/cms-edge/example` shows a Worker host. `packages/rich-text` owns TipTap and the Inline document format. Site selection, draft/publish rules, previews, and media checks belong to CMS.
 
-References: [Remix guides](https://guides.remix.run/), [Sergio Xalambrí's monorepo](https://github.com/sergiodxa/monorepo), [The Remix Way talk](https://remix.run/jam/2026), and [Pitlane Cloudflare guide](https://pitlane.tools/deploy/cloudflare).
+Root [`compose.yml`](../compose.yml) runs local containers behind Traefik on `.localhost`. Production targets independent VPS containers, configured in the infrastructure repo. CMS also has a Cloudflare Worker path. This repo owns Dockerfiles and Worker configuration; the infrastructure repo owns production routing, DNS, secrets, and live state.
+
+References: [Remix guides](https://guides.remix.run/), [Sergio Xalambrí's monorepo](https://github.com/sergiodxa/monorepo), [The Remix Way talk](https://remix.run/jam/2026), [Pitlane Cloudflare guide](https://pitlane.tools/deploy/cloudflare).

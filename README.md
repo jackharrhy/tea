@@ -1,24 +1,34 @@
-# Tea
+# tea
 
-A workspace for independently deployable personal projects. TeaCMS is the first app.
+a Remix 3 monorepo for personal apps and packages.
 
-Requires Node.js 24.3 or newer. From the repository root:
+### Apps
+
+<!-- prettier-ignore -->
+| Workspace | What it runs | Guide |
+| --- | --- | --- |
+| [`@tea/cms`](apps/cms/) | Node host for the multi-site CMS | [README](apps/cms/README.md) |
+
+### Packages
+
+<!-- prettier-ignore -->
+| Workspace | What it provides | Guide |
+| --- | --- | --- |
+| [`@tea/cms-core`](packages/cms-core/) | Node CMS routes, content storage, auth, media, and MCP | [README](packages/cms-core/README.md) |
+| [`@tea/cms-edge`](packages/cms-edge/) | CMS runtime, content APIs, and a Worker host example | [README](packages/cms-edge/README.md) |
+| [`@tea/cms-operator`](packages/cms-operator/) | Dashboard for the Node CMS host | [README](packages/cms-operator/README.md) |
+| [`@tea/rich-text`](packages/rich-text/) | Inline document format and rich text editor | [README](packages/rich-text/README.md) |
+
+## Working in the repo
+
+Use the latest Node.js 24 LTS release (`.nvmrc`; minimum 24.3). Install from the root:
 
 ```sh
-npm install
-npm run dev:teacms
-npm run check:teacms
+npm ci
 ```
 
-`apps/teacms` contains the imported TeaCMS Node app, reusable CMS package, Cloudflare edge package, and site examples. Its [README](apps/teacms/README.md) and [operations guide](apps/teacms/docs/operations.md) cover application setup. The source repository remains at `../teacms`; this import does not change its deployment.
+Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @tea/cms` starts CMS. Run `npm run` for root scripts, including `npm run check:cms`. Each workspace README has its own setup and checks.
 
-`npm run check:teacms-edge` validates the [Cloudflare Worker example](apps/teacms/apps/edge-example/README.md). The Node app includes an optional [read-only MCP endpoint](apps/teacms/docs/mcp.md).
+The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. Run `docker compose up --build -d`, then open [andrew.localhost](http://andrew.localhost) or [luke.localhost](http://luke.localhost). Only Traefik binds a host port, on loopback. Add a service and labels for each new containerized app. Production DNS, TLS, and host setup live in the infrastructure repo.
 
-## Boundaries
-
-- `apps/` holds deployable products and their own entry points.
-- `packages/` is for code with a demonstrated contract across products.
-- App-local packages may stay inside an app while their ownership is specific to that product.
-- Deployment manifests may live here; host inventory, DNS, secrets, and production state belong in the separate infrastructure repository.
-
-See [architecture notes](docs/architecture.md) for the migration direction.
+CI follows workspace dependencies: package changes also check affected apps. Shared config or unknown paths run all checks. README and `docs/` changes skip app checks. See [`scripts/ci/affected.mjs`](scripts/ci/affected.mjs).

@@ -1,0 +1,12 @@
+{
+  "name": "@tea/cms-operator",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@tea/cms-core": "*",
+    "remix": "3.0.0"
+  }
+}

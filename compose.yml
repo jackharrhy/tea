@@ -1,0 +1,52 @@
+services:
+  traefik:
+    image: traefik:v3.7
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
+
+  cms:
+    build:
+      context: .
+      dockerfile: apps/cms/Dockerfile
+    environment:
+      TEA_DATA_DIR: /app/data
+    volumes:
+      - cms-data:/app/data
+    configs:
+      - source: andrew-local-site
+        target: /app/apps/cms/sites/andrew/site.local.json
+      - source: luke-local-site
+        target: /app/apps/cms/sites/luke/site.local.json
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.cms-andrew.rule: "Host(`andrew.localhost`)"
+      traefik.http.routers.cms-andrew.entrypoints: web
+      traefik.http.routers.cms-andrew.service: cms
+      traefik.http.routers.cms-luke.rule: "Host(`luke.localhost`)"
+      traefik.http.routers.cms-luke.entrypoints: web
+      traefik.http.routers.cms-luke.service: cms
+      traefik.http.services.cms.loadbalancer.server.port: "4351"
+    networks:
+      - web
+
+volumes:
+  cms-data:
+
+configs:
+  andrew-local-site:
+    content: |
+      {"origin":"http://andrew.localhost"}
+  luke-local-site:
+    content: |
+      {"origin":"http://luke.localhost"}
+
+networks:
+  web:
