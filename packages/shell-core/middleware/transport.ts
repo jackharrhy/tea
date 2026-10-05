@@ -15,11 +15,9 @@ export function limitConcurrency(maxConcurrent: number): Middleware {
   };
 }
 
-export const canonicalMcpPath: Middleware = (context, next) =>
-  context.url.pathname === "/mcp" ? next() : json({ error: "not_found" }, 404);
-
 export function limitMcpBody(maxBytes: number): Middleware {
   return async (context, next) => {
+    if (context.method !== "POST") return next();
     const request = context.request;
     const contentLength = request.headers.get("content-length");
     if (

@@ -28,10 +28,8 @@ export function authenticate(
   config: ShellConfig,
 ): Middleware {
   return async (ctx, next) => {
-    const url = new URL(ctx.request.url);
-    if (url.pathname !== "/mcp") return next();
     // Host/origin checks complement bearer authentication; they do not fix provider-origin XSS.
-    if (url.origin !== config.publicOrigin)
+    if (ctx.url.origin !== config.publicOrigin)
       return json({ error: "invalid_origin" }, 403);
     const origin = ctx.request.headers.get("origin");
     if (origin !== null && origin !== config.publicOrigin)
