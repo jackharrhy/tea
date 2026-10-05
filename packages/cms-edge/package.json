@@ -19,10 +19,12 @@
     "deploy:example": "wrangler deploy --config example/wrangler.jsonc"
   },
   "dependencies": {
+    "@tea/logger": "0.1.0",
     "@tea/request-body": "0.1.0",
     "remix": "3.0.0"
   },
   "devDependencies": {
+    "@types/node": "^26.6.4",
     "typescript": "^5.9.3",
     "wrangler": "^4.45.0"
   }

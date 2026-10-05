@@ -5,6 +5,7 @@ import { loadSites, parseOperatorOrigin } from "./config.ts";
 import { createApp } from "./app.ts";
 import { OperatorStore } from "@tea/cms-operator/store.ts";
 import { resolve } from "node:path";
+import { createLogger } from "@tea/logger";
 const sites = await loadSites();
 const operatorOrigin = parseOperatorOrigin(
   process.env.TEA_OPERATOR_ORIGIN,
@@ -19,15 +20,21 @@ const operator = operatorOrigin
     }
   : undefined;
 const app = await createApp(sites, operator);
+const logger = createLogger({
+  service: "cms",
+  environment: process.env.NODE_ENV,
+});
 const server = http.createServer(
-  createRequestListener(async (request) => {
-    try {
-      return await app.fetch(request);
-    } catch (error) {
-      console.error(error);
-      return new Response("Internal Server Error", { status: 500 });
-    }
-  }),
+  createRequestListener((request) =>
+    logger.request(request, async (log) => {
+      try {
+        return await app.fetch(request);
+      } catch (error) {
+        log.fail(error);
+        return new Response("Internal Server Error", { status: 500 });
+      }
+    }),
+  ),
 );
 server.listen(
   Number(process.env.PORT ?? 4351),

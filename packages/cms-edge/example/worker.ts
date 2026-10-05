@@ -1,4 +1,7 @@
 import { createEdgeRouter, type EdgeConfig } from "@tea/cms-edge";
+import { createLogger } from "@tea/logger";
+
+const logger = createLogger({ service: "cms-edge-example" });
 
 const config: EdgeConfig = {
   siteName: "Example TeaCMS site",
@@ -16,6 +19,8 @@ const config: EdgeConfig = {
 
 export default {
   fetch(request: Request, env: Env) {
-    return createEdgeRouter(env, config).fetch(request);
+    return logger.request(request, () =>
+      createEdgeRouter(env, config).fetch(request),
+    );
   },
 };

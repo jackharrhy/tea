@@ -1,8 +1,8 @@
 # @tea/logger
 
-An optional wide-event logger for Remix 3 request and job handling. [`@tea/mcp`](../mcp/README.md) enriches the current log when one is open; otherwise it runs without a logger.
+Tea's shared logger for request and job events. The CMS and Shell MCP Node hosts open one record per request; [`@tea/mcp`](../mcp/README.md) adds method and tool fields to that record. `Log.run` also covers non-HTTP work such as jobs.
 
-`src/index.ts` exports `createLogger`, `Log`, and `currentLog`. `@tea/logger/middleware` exports Remix router middleware. The current log uses Node `AsyncLocalStorage`; a Cloudflare Worker using it needs Node compatibility.
+`src/index.ts` exports `createLogger`, `Log`, and `currentLog`. Hosts use `logger.request(request, handler)` to open and emit one record with HTTP method and status; `logger.open(kind).run(handler)` covers jobs. `@tea/logger/middleware` exposes the current log as `context.log` when a Remix router needs it. The current log uses Node `AsyncLocalStorage`; a Cloudflare Worker using it needs Node compatibility. Records include named fields and durations, but no URL, headers, body, exception message, or stack by default. Add only fields safe to retain. Failures keep error type, scalar code, and retriable flag.
 
 Run `npm run check --workspace @tea/logger` from the root. Changes also need the MCP, CMS, and Shell MCP checks.
 
