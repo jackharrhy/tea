@@ -34,7 +34,9 @@ test("shell discovery selects resource-specific registration, not Artbin default
       "openid",
       "newport-shell:execute",
     ]);
-    assert.equal(config.issuer, "https://4orm.harrhy.xyz");
+    assert.equal(config.mode, "fourorm");
+    if (config.mode === "fourorm")
+      assert.equal(config.issuer, "https://4orm.harrhy.xyz");
   } finally {
     await jobs.close();
   }

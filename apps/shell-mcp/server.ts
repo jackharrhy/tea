@@ -2,43 +2,11 @@ import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import { createRequestListener } from "remix/node-fetch-server";
 import { createApp } from "@tea/shell-core/router.ts";
-import {
-  readConfig,
-  readIntrospectionSecret,
-  type AppConfig,
-} from "./app/config.ts";
-import { createFourormIdentity } from "./app/auth/fourorm.ts";
-import { demoIdentity, lockedIdentity } from "./app/auth/fixtures.ts";
-import { JobManager, MockRunner } from "@tea/shell-core/execution/index.ts";
-import { SystemdRunner } from "./app/systemd-runner.ts";
+import { readConfig, type AppConfig } from "./app/config.ts";
+import { createRuntime } from "./app/runtime.ts";
 
 export async function startServer(config = readConfig()) {
-  const identity =
-    config.mode === "fourorm"
-      ? await createFourormIdentity({
-          issuer: config.issuer,
-          resource: config.resource,
-          requiredScope: config.requiredScope,
-          allowedSubjects: config.allowedSubjects,
-          allowedUsernames: config.allowedUsernames,
-          introspectionClientId: config.introspectionClientId,
-          introspectionClientSecret: await readIntrospectionSecret(
-            config.introspectionSecretFile,
-          ),
-        })
-      : config.mode === "demo"
-        ? demoIdentity
-        : lockedIdentity;
-  const jobs = new JobManager(
-    config.mode === "demo"
-      ? { runner: new MockRunner() }
-      : config.runner === "systemd"
-        ? {
-            runner: new SystemdRunner(config.helperPath),
-            journalFile: config.journalFile,
-          }
-        : {},
-  );
+  const { identity, jobs } = await createRuntime(config);
   let app: ReturnType<typeof createApp> | undefined;
   const server = createServer(
     { maxHeaderSize: 8192 },

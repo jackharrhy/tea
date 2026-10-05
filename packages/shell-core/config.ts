@@ -1,11 +1,19 @@
-export type ShellConfig = Readonly<{
-  mode: "locked" | "demo" | "fourorm";
+type BaseConfig = Readonly<{
   publicOrigin: string;
   resource: string;
-  authorizationServer: string;
-  requiredScope: string;
-  allowedUsernames: readonly string[];
-  runner: "disabled" | "systemd";
   mcpName: string;
   mcpTitle: string;
 }>;
+
+export type ShellConfig = BaseConfig &
+  (
+    | { mode: "locked"; runner: "disabled" }
+    | { mode: "demo"; runner: "mock-only"; allowedUsernames: readonly string[] }
+    | {
+        mode: "fourorm";
+        runner: "disabled" | "systemd";
+        authorizationServer: string;
+        requiredScope: string;
+        allowedUsernames: readonly string[];
+      }
+  );
