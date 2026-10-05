@@ -6,6 +6,6 @@ The template opens a request record with [`@tea/logger`](../../logger/README.md)
 
 ## Develop
 
-From the repo root, run `npm ci`, then `npm run dev:example --workspace @tea/cms-edge`. Run `npm run check:cms-edge` for types and tests. Apply `packages/cms-edge/db/schema.sql` to D1 before using the editor. Set `TEA_ADMIN_PASSWORD`, `TEA_SESSION_SECRET`, and `TEA_PREVIEW_SECRET` as Worker secrets or in ignored local `.dev.vars`.
+From the repo root, run `npm ci`, then `npm run dev:example --workspace @tea/cms-edge`. Run `npm run cms-edge:check` for types and tests. Apply `packages/cms-edge/db/schema.sql` to D1 before using the editor. Set `TEA_ADMIN_PASSWORD`, `TEA_SESSION_SECRET`, and `TEA_PREVIEW_SECRET` as Worker secrets or in ignored local `.dev.vars`.
 
 The zero `database_id` and example bucket name in `wrangler.jsonc` are placeholders. Create account resources and replace them before deploying. Hostnames, DNS, account IDs, and production secrets belong in the infrastructure repo.

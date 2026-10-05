@@ -15,4 +15,4 @@ Modules export through `@tea/cms-core/*`. This package must not depend on the No
 
 ## Working here
 
-From the root, run `npm ci` and `npm run check:cms` to check this package, its host, and tests. Keep tests in nearby `__tests__/` directories. Runtime setup is in the [CMS app guide](../../apps/cms/README.md).
+From the root, run `npm ci` and `npm run cms:check` to check this package, its host, and tests. Keep tests in nearby `__tests__/` directories. Runtime setup is in the [CMS app guide](../../apps/cms/README.md).

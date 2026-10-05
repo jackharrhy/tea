@@ -42,7 +42,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:cms
+      - run: npm run cms:check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser --workspace @tea/cms
 
@@ -59,7 +59,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:cms-edge
+      - run: npm run cms-edge:check
 
   shell-mcp:
     needs: affected
@@ -74,7 +74,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:shell-mcp
+      - run: npm run shell-mcp:check
 
   request-body:
     needs: affected
@@ -89,7 +89,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:request-body
+      - run: npm run request-body:check
 
   mcp:
     needs: affected
@@ -104,7 +104,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:mcp
+      - run: npm run mcp:check
 
   json-schema:
     needs: affected
@@ -119,7 +119,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:json-schema
+      - run: npm run json-schema:check
 
   logger:
     needs: affected
@@ -134,7 +134,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:logger
+      - run: npm run logger:check
 
   result:
     needs: affected
@@ -149,4 +149,4 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check:result
+      - run: npm run result:check

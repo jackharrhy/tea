@@ -8,7 +8,7 @@ The Node host records requests through [`@tea/logger`](../../packages/logger/REA
 
 ## Develop and check
 
-From the Tea root, run `npm ci` and `npm run check:shell-mcp`. The check covers the core package, host typecheck, local tests, and a loopback MCP smoke test with mock execution. `npm run dev:shell-mcp` starts locked on `127.0.0.1:3000`; `/healthz` responds and `/mcp` refuses requests. `npm run demo --workspace @tea/shell-mcp` uses the public fixture token `demo-only-token` and mock jobs on loopback only.
+From the Tea root, run `npm ci` and `npm run shell-mcp:check`. The check covers the core package, host typecheck, local tests, and a loopback MCP smoke test with mock execution. `npm run shell-mcp:dev` starts locked on `127.0.0.1:3000`; `/healthz` responds and `/mcp` refuses requests. `npm run demo --workspace @tea/shell-mcp` uses the public fixture token `demo-only-token` and mock jobs on loopback only.
 
 The OAuth integration test needs a compatible 4orm checkout and `FOURORM_TEST_REPO`; run `npm run test:oauth --workspace @tea/shell-mcp` after installing that fixture's dependencies. Newport host tests in `__tests__/host/` require its installed security boundary and `NEWPORT_REAL_TEST=1`; normal checks do not run them. See [integration notes](__tests__/integration/README.md).
 

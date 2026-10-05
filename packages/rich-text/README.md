@@ -12,4 +12,4 @@ Do not import a host app or CMS storage here. Keep conversion separate from brow
 
 ## Working here
 
-From the root, run `npm ci` and `npm run check:cms` to check this package and its current consumer. Conversion tests live in `__tests__/`; put future tests near their code.
+From the root, run `npm ci` and `npm run cms:check` to check this package and its current consumer. Conversion tests live in `__tests__/`; put future tests near their code.
