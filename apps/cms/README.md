@@ -4,6 +4,8 @@ This Remix 3 Node app hosts the multi-site CMS. It selects sites by hostname and
 
 `server.ts` starts the server, `config.ts` registers sites and origins, and `app.ts` connects each site to its router. Keep site code and assets in `sites/<id>/`. This app owns host configuration and deployment; packages own the CMS runtime and reusable modules.
 
+The Node host opens a request record through [`@tea/logger`](../../packages/logger/README.md). MCP handlers enrich that record. Request bodies, headers, and raw URLs are not logged.
+
 ## Develop
 
 Use the latest Node.js 24 LTS release (minimum 24.3). From the repo root:

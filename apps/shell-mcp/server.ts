@@ -1,17 +1,26 @@
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import { createRequestListener } from "remix/node-fetch-server";
+import { createLogger } from "@tea/logger";
 import { createApp } from "@tea/shell-core/router.ts";
 import { readConfig, type AppConfig } from "./app/config.ts";
 import { createRuntime } from "./app/runtime.ts";
 
 export async function startServer(config = readConfig()) {
   const { identity, jobs } = await createRuntime(config);
+  const logger = createLogger({
+    service: "shell-mcp",
+    environment: process.env.NODE_ENV,
+  });
   let app: ReturnType<typeof createApp> | undefined;
   const server = createServer(
     { maxHeaderSize: 8192 },
     createRequestListener(
-      (request) => app?.fetch(request) ?? new Response(null, { status: 503 }),
+      (request) =>
+        logger.request(
+          request,
+          () => app?.fetch(request) ?? new Response(null, { status: 503 }),
+        ),
       {
         trustProxy: false,
         protocol: new URL(config.publicOrigin).protocol,

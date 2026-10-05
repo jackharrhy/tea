@@ -17,6 +17,7 @@
     "check": "npm run typecheck && npm test && npm run smoke"
   },
   "dependencies": {
+    "@tea/logger": "0.1.0",
     "@tea/shell-core": "0.1.0",
     "remix": "3.0.0"
   },

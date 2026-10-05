@@ -33,6 +33,7 @@
   "dependencies": {
     "@tea/cms-core": "*",
     "@tea/cms-operator": "*",
+    "@tea/logger": "0.1.0",
     "remix": "3.0.0"
   }
 }

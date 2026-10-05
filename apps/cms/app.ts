@@ -6,6 +6,7 @@ import { transaction } from "@tea/cms-core/data/transaction.ts";
 import { createTeaRouter } from "@tea/cms-core/router.ts";
 import { createOperatorRouter } from "@tea/cms-operator/router.tsx";
 import type { OperatorStore } from "@tea/cms-operator/store.ts";
+import { currentLog } from "@tea/logger";
 import { parseOperatorOrigin } from "./config.ts";
 
 type Operator = { origin: string; store: OperatorStore };
@@ -71,10 +72,12 @@ export async function createApp(sites: SiteRuntime[], operator?: Operator) {
         const url = new URL(request.url),
           tenant = byHost.get(url.host);
         if (operatorRoute && url.host === operatorRoute.origin.host) {
+          currentLog()?.set({ app: { area: "operator" } });
           url.protocol = operatorRoute.origin.protocol;
           return operatorRoute.router.fetch(new Request(url, request));
         }
         if (!tenant) return new Response("Unknown site", { status: 404 });
+        currentLog()?.set({ site: { id: tenant.site.id } });
         const origin = new URL(tenant.origin);
         if (url.host !== origin.host) {
           origin.pathname = url.pathname;

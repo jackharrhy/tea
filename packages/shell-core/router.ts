@@ -25,10 +25,6 @@ export function createApp(
     listTtlMs: 0,
     maxRequestBytes: 16_384,
     requestTimeoutMs: 5_000,
-    // Do not log request bodies, bearer tokens, or upstream error objects.
-    onError: () => {
-      console.error("MCP operation failed (details suppressed)");
-    },
   });
   mcp.tools.map(shellTools, shellController(jobs));
   const router = createRouter({
