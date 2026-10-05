@@ -11,6 +11,9 @@ jobs:
       shell: ${{ steps.select.outputs.shell }}
       body: ${{ steps.select.outputs.body }}
       mcp: ${{ steps.select.outputs.mcp }}
+      schema: ${{ steps.select.outputs.schema }}
+      logger: ${{ steps.select.outputs.logger }}
+      result: ${{ steps.select.outputs.result }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -102,3 +105,48 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check:mcp
+
+  json-schema:
+    needs: affected
+    if: needs.affected.outputs.schema == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check:json-schema
+
+  logger:
+    needs: affected
+    if: needs.affected.outputs.logger == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check:logger
+
+  result:
+    needs: affected
+    if: needs.affected.outputs.result == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check:result

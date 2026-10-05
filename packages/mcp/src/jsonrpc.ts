@@ -4,9 +4,6 @@
  *
  * Kept apart from the transport so the message layer can be exercised without building a
  * `Request`, and apart from the tool layer so a handler never sees an id or a code.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
 /** The only `jsonrpc` value either side may send. */

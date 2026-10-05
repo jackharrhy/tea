@@ -8,7 +8,7 @@
   "dependencies": {
     "@tea/request-body": "0.1.0",
     "@tea/rich-text": "*",
-    "@sdxc/json-schema": "2026.10.2",
+    "@tea/json-schema": "0.1.0",
     "@tea/mcp": "0.1.0",
     "bcryptjs": "3.0.3",
     "marked": "18.0.3",

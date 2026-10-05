@@ -2,16 +2,13 @@
  * Runtime validation of a tool call's arguments through the tool's own input schema, the
  * same schema `tools/list` published, so a client is held to exactly the contract it was
  * told. It runs before a handler is entered, so `ctx.input` arrives parsed and typed.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
-import type { InferOutput, JSONSchema } from "@sdxc/json-schema";
-import type { Result } from "@sdxc/result";
+import type { InferOutput, JSONSchema } from "@tea/json-schema";
+import type { Result } from "@tea/result";
 
-import { parseSafe } from "@sdxc/json-schema";
-import { failure, success } from "@sdxc/result";
+import { parseSafe } from "@tea/json-schema";
+import { failure, success } from "@tea/result";
 
 import type { Tool, ToolSchema } from "./tools.ts";
 

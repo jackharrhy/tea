@@ -9,9 +9,6 @@
  * A tool is chosen by the model; a resource is picked by the person or attached by their
  * client, useful for content someone wants to hand their agent directly, with no
  * argument to give a tool.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
 import type { CreateHrefArgs } from "remix/route-pattern/href";

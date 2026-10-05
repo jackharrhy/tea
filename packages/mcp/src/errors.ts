@@ -7,9 +7,6 @@
  * answers with an ordinary result carrying `isError`, which the model reads and can
  * act on. Putting one in the other's place either hides a recoverable failure from the
  * model or shows it an operator's stack trace.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
 /**

@@ -1,3 +1,17 @@
+# @tea/logger
+
+An optional wide-event logger for Remix 3 request and job handling. [`@tea/mcp`](../mcp/README.md) enriches the current log when one is open; otherwise it runs without a logger.
+
+`src/index.ts` exports `createLogger`, `Log`, and `currentLog`. `@tea/logger/middleware` exports Remix router middleware. The current log uses Node `AsyncLocalStorage`; a Cloudflare Worker using it needs Node compatibility.
+
+Run `npm run check --workspace @tea/logger` from the root. Changes also need the MCP, CMS, and Shell MCP checks.
+
+---
+
+## Origin and MIT license
+
+This package ports [Sergio Xalambrí’s logger](https://github.com/sergiodxa/monorepo/tree/7582e46f150b052ba145945661ac9937f5f26f27/packages/logger) at revision `7582e46`.
+
 MIT License
 
 Copyright (c) 2026 Sergio Xalambrí

@@ -2,9 +2,6 @@
  * Public entry point for the MCP package: the tool and resource declaration trees, the
  * factories that type their implementations, the handler that serves them, and the errors a
  * handler throws to steer a result.
- *
- * @author [Sergio Xalambrí](https://sergiodxa.com)
- * @copyright Sergio Xalambrí 2026
  */
 
 export {
