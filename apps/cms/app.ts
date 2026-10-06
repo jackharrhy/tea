@@ -1,11 +1,11 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { SiteRuntime } from "@tea/cms-core/site.ts";
-import { openDatabase } from "@tea/cms-core/data/database.ts";
-import { transaction } from "@tea/cms-core/data/transaction.ts";
-import { createTeaRouter } from "@tea/cms-core/router.ts";
-import { createOperatorRouter } from "@tea/cms-operator/router.tsx";
-import type { OperatorStore } from "@tea/cms-operator/store.ts";
+import type { SiteRuntime } from "./app/site.ts";
+import { openDatabase } from "./app/data/database.ts";
+import { transaction } from "./app/data/transaction.ts";
+import { createTeaRouter } from "./app/router.ts";
+import { createOperatorRouter } from "./operator/router.tsx";
+import type { OperatorStore } from "./operator/store.ts";
 import { currentLog } from "@tea/logger";
 import { parseOperatorOrigin } from "./config.ts";
 

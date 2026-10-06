@@ -8,8 +8,8 @@ import { parseSites } from "../config.ts";
 import luke from "@tea/cms/sites/luke";
 import { createApp } from "../app.ts";
 import { seedFixture } from "./fixture.ts";
-import { openDatabase } from "@tea/cms-core/data/database.ts";
-import { ContentStore } from "@tea/cms-core/data/content.ts";
+import { openDatabase } from "../app/data/database.ts";
+import { ContentStore } from "../app/data/content.ts";
 
 it("isolates host routing, sessions, writes, uploads, optional features and analytics", async () => {
   const dir = await mkdtemp(join(tmpdir(), "teacms-tenants-"));
@@ -143,10 +143,10 @@ it("isolates host routing, sessions, writes, uploads, optional features and anal
       /https:\/\/one.example.test/,
     );
     for (const path of [
-      "/assets/core/data/auth.ts",
-      "/assets/core/site.ts",
+      "/assets/cms/data/auth.ts",
+      "/assets/cms/site.ts",
       "/assets/sites/andrew/app/page.tsx",
-      "/assets/core/ui/public/image-layout.test.ts",
+      "/assets/cms/ui/public/image-layout.test.ts",
       "/tea.db",
       "/.env",
     ])

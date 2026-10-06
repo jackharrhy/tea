@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import bcrypt from "bcryptjs";
-import { openDatabase } from "@tea/cms-core/data/database.ts";
-import { ContentStore } from "@tea/cms-core/data/content.ts";
-import { AuthStore } from "@tea/cms-core/data/auth.ts";
-import type { SiteRuntime } from "@tea/cms-core/site.ts";
+import { openDatabase } from "../app/data/database.ts";
+import { ContentStore } from "../app/data/content.ts";
+import { AuthStore } from "../app/data/auth.ts";
+import type { SiteRuntime } from "../app/site.ts";
 
 export const credentials = {
   email: "editor@example.test",

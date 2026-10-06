@@ -5,13 +5,15 @@ Tea is a Remix 3 monorepo of independently deployable apps and importable packag
 <!-- prettier-ignore -->
 | Location | Responsibility |
 | --- | --- |
-| `apps/*` | Deployable hosts, runtime configuration, and app-specific presentation |
-| `packages/*` | Importable modules, including modules that currently serve one app |
+| `apps/*` | Deployable products: routes, UI, storage, runtime configuration, and presentation |
+| `packages/*` | Shared modules and intentionally embeddable runtimes |
 | `docs/*` | Architecture and product guides that span individual files |
 
 Keep Markdown tables unpadded and put `<!-- prettier-ignore -->` immediately before each table so OxFmt leaves the source easy to edit.
 
 Apps import packages; packages must not import apps. Use Remix 3 for app routing, controllers, middleware, and UI. Read the [Remix skill](.agents/skills/remix/SKILL.md) and relevant installed guides before changing framework behavior. Put Node and Cloudflare runtime rules in the relevant workspace guide.
+
+Keep behavior owned by one app inside that app, even when it has a clean internal interface. Extract a package when another consumer needs it or the module is meant to be embedded by independent hosts.
 
 Put tests and test-only fixtures in `__tests__/` beside the code they cover. Put host integration and browser tests in the app's `__tests__/`. Do not use a root `tests/` directory or put `*.test.*` and `*.spec.*` beside implementation files. Keep those suffixes inside `__tests__/` for discovery. Production code must not import tests.
 

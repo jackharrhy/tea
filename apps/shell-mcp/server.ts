@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import { createRequestListener } from "remix/node-fetch-server";
 import { createLogger } from "@tea/logger";
-import { createApp } from "@tea/shell-core/router.ts";
+import { createApp } from "./app/router.ts";
 import { readConfig, type AppConfig } from "./app/config.ts";
 import { createRuntime } from "./app/runtime.ts";
 

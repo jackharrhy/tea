@@ -45,10 +45,6 @@ export function selectChecks(paths, workspaces) {
       path.startsWith("docs/")
     )
       continue;
-    if (path.startsWith("scripts/cms/")) {
-      affected.add("@tea/cms");
-      continue;
-    }
     const workspace = byPath.find(
       (item) => path === item.path || path.startsWith(`${item.path}/`),
     );

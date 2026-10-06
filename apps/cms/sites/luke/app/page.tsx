@@ -1,11 +1,11 @@
-import type { PublicPageProps } from "@tea/cms-core/site.ts";
-import { PublicDocument } from "@tea/cms-core/ui/public-document.tsx";
+import type { PublicPageProps } from "../../../app/site.ts";
+import { PublicDocument } from "../../../app/ui/public-document.tsx";
 import { unsafeHTML, type Handle } from "remix/component";
-import type { Page } from "@tea/cms-core/ui/public/content-types.ts";
+import type { Page } from "../../../app/ui/public/content-types.ts";
 import {
   renderBlocks as renderCoreBlocks,
   mediaUrl,
-} from "@tea/cms-core/actions/block-renderer.ts";
+} from "../../../app/actions/block-renderer.ts";
 
 export function PublicPage(handle: Handle<PublicPageProps>) {
   return () => {

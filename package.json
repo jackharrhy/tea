@@ -23,7 +23,7 @@
     "mcp:check": "npm run tooling:check && npm run check --workspace @tea/mcp",
     "request-body:check": "npm run tooling:check && npm run check --workspace @tea/request-body",
     "result:check": "npm run tooling:check && npm run check --workspace @tea/result",
-    "shell-mcp:check": "npm run tooling:check && npm run check --workspace @tea/shell-core && npm run check --workspace @tea/shell-mcp",
+    "shell-mcp:check": "npm run tooling:check && npm run check --workspace @tea/shell-mcp",
     "shell-mcp:dev": "npm run dev --workspace @tea/shell-mcp",
     "tooling:check": "vp check"
   },

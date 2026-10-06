@@ -1,9 +1,9 @@
 import * as http from "node:http";
 import { createRequestListener } from "remix/node-fetch-server";
-import { assets } from "@tea/cms-core/assets.ts";
+import { assets } from "./app/assets.ts";
 import { loadSites, parseOperatorOrigin } from "./config.ts";
 import { createApp } from "./app.ts";
-import { OperatorStore } from "@tea/cms-operator/store.ts";
+import { OperatorStore } from "./operator/store.ts";
 import { resolve } from "node:path";
 import { createLogger } from "@tea/logger";
 const sites = await loadSites();

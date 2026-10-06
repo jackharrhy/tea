@@ -1,8 +1,5 @@
 import * as s from "remix/data-schema";
-import {
-  AuthenticationError,
-  type Principal,
-} from "@tea/shell-core/auth/types.ts";
+import { AuthenticationError, type Principal } from "./types.ts";
 
 export type OwnerPolicy = Readonly<{
   issuer: string;

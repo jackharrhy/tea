@@ -6,11 +6,6 @@ const workspaces = [
   {
     path: "apps/cms",
     name: "@tea/cms",
-    manifest: { dependencies: { "@tea/cms-core": "*" } },
-  },
-  {
-    path: "packages/cms-core",
-    name: "@tea/cms-core",
     manifest: {
       dependencies: {
         "@tea/rich-text": "*",
@@ -24,16 +19,13 @@ const workspaces = [
   {
     path: "packages/cms-edge",
     name: "@tea/cms-edge",
-    manifest: { dependencies: { "@tea/request-body": "0.1.0" } },
+    manifest: {
+      dependencies: { "@tea/request-body": "0.1.0" },
+    },
   },
   {
     path: "apps/shell-mcp",
     name: "@tea/shell-mcp",
-    manifest: { dependencies: { "@tea/shell-core": "0.1.0" } },
-  },
-  {
-    path: "packages/shell-core",
-    name: "@tea/shell-core",
     manifest: {
       dependencies: { "@tea/mcp": "0.1.0", "@tea/json-schema": "0.1.0" },
     },
@@ -95,7 +87,11 @@ test("edge and documentation changes do not start CMS checks", () => {
     checks({ shell: true }),
   );
   assert.deepEqual(
-    selectChecks(["packages/shell-core/router.ts"], workspaces),
+    selectChecks(["apps/cms/scripts/seed-users.ts"], workspaces),
+    checks({ cms: true }),
+  );
+  assert.deepEqual(
+    selectChecks(["apps/shell-mcp/app/router.ts"], workspaces),
     checks({ shell: true }),
   );
 });

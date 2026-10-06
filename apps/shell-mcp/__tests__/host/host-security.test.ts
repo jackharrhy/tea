@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { JobManager } from "@tea/shell-core/execution/job-manager.ts";
+import { JobManager } from "../../app/execution/job-manager.ts";
 import { SystemdRunner } from "../../app/systemd-runner.ts";
 const enabled = process.env.NEWPORT_REAL_TEST === "1";
 async function run(command: string, timeoutMs = 20000) {

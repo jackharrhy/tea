@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { fileURLToPath } from "node:url";
 import * as s from "remix/data-schema";
-import type { SitePresentation, SiteRuntime } from "@tea/cms-core/site.ts";
+import type { SitePresentation, SiteRuntime } from "./app/site.ts";
 
 type SiteEntry = {
   id: string;

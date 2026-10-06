@@ -2,13 +2,13 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     "apps/cms": {
-      "entry": ["server.ts", "__tests__/server.ts", "sites/*/public/site.js"],
-    },
-    "packages/cms-core": {
-      "entry": ["public/**/*.js"],
-    },
-    "packages/cms-operator": {
-      "entry": ["public/**/*.js"],
+      "entry": [
+        "__tests__/server.ts",
+        "app/actions/public/entry.ts",
+        "sites/*/public/site.js",
+        "public/**/*.js",
+        "operator/public/**/*.js",
+      ],
     },
     "packages/cms-edge": {
       "entry": ["example/worker.ts"],

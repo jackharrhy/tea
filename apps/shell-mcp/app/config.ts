@@ -9,7 +9,7 @@ import type {
   DemoShellConfig,
   LiveShellConfig,
   LockedShellConfig,
-} from "@tea/shell-core/config.ts";
+} from "./config-types.ts";
 
 type HostConfig = Readonly<{ host: string; port: number }>;
 type IdentityConfig = Readonly<{
