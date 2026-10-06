@@ -25,16 +25,10 @@ export function loadWorkspaces(directory = root) {
 }
 
 export function selectChecks(paths, workspaces) {
-  const all = {
-    cms: true,
-    edge: true,
-    shell: true,
-    body: true,
-    mcp: true,
-    schema: true,
-    logger: true,
-    result: true,
-  };
+  const all = workspaces
+    .filter(({ manifest }) => manifest.scripts?.check)
+    .map(({ name }) => name)
+    .toSorted();
   const byPath = workspaces.toSorted((a, b) => b.path.length - a.path.length);
   const affected = new Set();
 
@@ -76,16 +70,7 @@ export function selectChecks(paths, workspaces) {
     }
   }
 
-  return {
-    cms: affected.has("@tea/cms"),
-    edge: affected.has("@tea/cms-edge"),
-    shell: affected.has("@tea/shell-mcp"),
-    body: affected.has("@tea/request-body"),
-    mcp: affected.has("@tea/mcp"),
-    schema: affected.has("@tea/json-schema"),
-    logger: affected.has("@tea/logger"),
-    result: affected.has("@tea/result"),
-  };
+  return all.filter((name) => affected.has(name));
 }
 
 function changedPaths(base, head) {
@@ -112,23 +97,12 @@ if (
     );
   } catch (error) {
     console.warn(`Could not determine affected workspaces: ${error.message}`);
-    checks = {
-      cms: true,
-      edge: true,
-      shell: true,
-      body: true,
-      mcp: true,
-      schema: true,
-      logger: true,
-      result: true,
-    };
+    checks = selectChecks(["package-lock.json"], loadWorkspaces());
   }
   console.log(`Affected checks: ${JSON.stringify(checks)}`);
   if (process.env.GITHUB_OUTPUT)
     appendFileSync(
       process.env.GITHUB_OUTPUT,
-      Object.entries(checks)
-        .map(([name, active]) => `${name}=${active}\n`)
-        .join(""),
+      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\ncms=${checks.includes("@tea/cms")}\n`,
     );
 }
