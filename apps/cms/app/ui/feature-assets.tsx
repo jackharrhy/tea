@@ -5,12 +5,6 @@ export function FeatureAssets(
 ) {
   return () => (
     <>
-      {handle.props.features.adornments && (
-        <link rel="stylesheet" href="/features/adornments.css" />
-      )}
-      {handle.props.features.riso && (
-        <link rel="stylesheet" href="/features/riso.css" />
-      )}
       {handle.props.features.riso && !handle.props.preview && (
         <script defer src="/features/riso.js"></script>
       )}

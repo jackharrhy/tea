@@ -1,6 +1,7 @@
 import type { Handle } from "remix/component";
 import { Document } from "../app/ui/document.tsx";
 import { AdminBrand } from "../app/ui/admin-brand.tsx";
+import { operatorStyles } from "./operator-styles.ts";
 
 export type Summary = {
   id: string;
@@ -17,12 +18,7 @@ export type Summary = {
 
 export function Login(handle: Handle<{ error?: string; csrf: string }>) {
   return () => (
-    <Document
-      title="Sign in · teacms"
-      admin
-      static
-      head={<link rel="stylesheet" href="/operator.css" />}
-    >
+    <Document title="Sign in · teacms" admin static styles={[operatorStyles]}>
       <main className="operator-login">
         <AdminBrand href="/" />
         <section className="operator-login-panel">
@@ -70,12 +66,7 @@ export function Dashboard(
   handle: Handle<{ email: string; sites: Summary[]; csrf: string }>,
 ) {
   return () => (
-    <Document
-      title="Sites · teacms"
-      admin
-      static
-      head={<link rel="stylesheet" href="/operator.css" />}
-    >
+    <Document title="Sites · teacms" admin static styles={[operatorStyles]}>
       <main className="operator-shell">
         <header className="operator-header">
           <AdminBrand href="/" />

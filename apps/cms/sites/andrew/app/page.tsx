@@ -2,6 +2,7 @@ import type { PublicPageProps } from "../../../app/site.ts";
 import { PublicDocument } from "../../../app/ui/public-document.tsx";
 import { unsafeHTML, type Handle } from "remix/component";
 import { renderBlocks, mediaUrl } from "../../../app/actions/block-renderer.ts";
+import { siteStyles } from "./styles.ts";
 
 export function PublicPage(handle: Handle<PublicPageProps>) {
   return () => {
@@ -9,7 +10,7 @@ export function PublicPage(handle: Handle<PublicPageProps>) {
       site = store.site(),
       sidebar = store.sidebar();
     return (
-      <PublicDocument {...handle.props}>
+      <PublicDocument {...handle.props} styles={siteStyles}>
         <div className="site-layout">
           <nav className="site-sidebar" aria-label="Main navigation">
             <a href="/" aria-label={site.site_name + " homepage"}>

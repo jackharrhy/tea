@@ -33,8 +33,7 @@ it("matches GET status and headers for HEAD without bodies or weaker CMS protect
       [routes.robots.href(), 200, ""],
       [routes.health.href(), 200, ""],
 
-      ["/admin.css", 200, ""],
-      ["/rich-text.css", 200, ""],
+      ["/fonts.css", 200, ""],
       [entryScript.href, 200, ""],
       ["/missing", 404, ""],
       ["/draft", 404, ""],

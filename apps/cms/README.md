@@ -4,6 +4,8 @@ This Remix 3 Node app is the multi-site CMS. It selects sites by hostname and us
 
 `server.ts` starts the server, `config.ts` registers sites and origins, and `app.ts` connects each site to its router. `app/` owns routes, controllers, editor UI, storage, and assets; `createContentStore` and `createAuthStore` bind storage to a database. `operator/` owns the dashboard and `createOperatorStore`; `db/` holds SQLite migrations. Keep site code and assets in `sites/<id>/`.
 
+UI styles use Remix `css(...)` mixins in `app/ui/`, `operator/`, and each site's `app/styles.ts`. `public/fonts.css` contains only the Inter font faces.
+
 The Node host opens a request record through [`@tea/logger`](../../packages/logger/README.md). MCP handlers enrich that record. Request bodies, headers, and raw URLs are not logged.
 
 ## Develop

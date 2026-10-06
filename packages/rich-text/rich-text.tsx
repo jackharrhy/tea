@@ -3,6 +3,7 @@ import { Editor, Mark } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import type { Inline } from "./inline.ts";
 import { textDocument, inlineDocument } from "./text-document.ts";
+import { richTextStyles } from "./rich-text-styles.ts";
 
 // Keep imported colors and future style metadata in the existing block format.
 const LegacyStyle = Mark.create({
@@ -47,7 +48,7 @@ export function RichText(
     else editor.chain().focus().toggleMark(name).run();
   }
   return () => (
-    <div className="rich-text-wrap">
+    <div className="rich-text-wrap" mix={richTextStyles}>
       <div className="rich-toolbar" aria-label="Text formatting">
         {[
           ["bold", "Bold", "B"],

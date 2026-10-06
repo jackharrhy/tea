@@ -6,6 +6,7 @@ import {
   renderBlocks as renderCoreBlocks,
   mediaUrl,
 } from "../../../app/actions/block-renderer.ts";
+import { siteStyles } from "./styles.ts";
 
 export function PublicPage(handle: Handle<PublicPageProps>) {
   return () => {
@@ -69,7 +70,7 @@ export function PublicPage(handle: Handle<PublicPageProps>) {
         renderBlocks(blocks.filter((b) => b.type === "media"));
     }
     return (
-      <PublicDocument {...handle.props}>
+      <PublicDocument {...handle.props} styles={siteStyles}>
         <a className="skip-link" href="#content">
           Skip to content
         </a>

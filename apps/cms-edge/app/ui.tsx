@@ -1,6 +1,6 @@
 import type { Handle, RemixNode } from "remix/component";
 import type { Collection, Entry, Field } from "./types.ts";
-import { css } from "./styles.ts";
+import { edgeStyles } from "./styles.ts";
 
 type Media = { id: string; filename: string };
 
@@ -13,13 +13,12 @@ function AdminDocument(
   }>,
 ) {
   return () => (
-    <html lang="en">
+    <html lang="en" mix={edgeStyles}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <meta name="robots" content="noindex,nofollow" />
         <title>{handle.props.title} · teacms</title>
-        <style>{css}</style>
       </head>
       <body>
         <header>
@@ -56,7 +55,7 @@ export function LoginPage(
           {handle.props.error}
         </p>
       )}
-      <div className="card" style={{ maxWidth: "28rem" }}>
+      <div className="card login-card">
         <form action="/tea/login" method="post">
           <label htmlFor="password">Password</label>
           <input
@@ -180,7 +179,7 @@ function FieldInput(
           name={field.name}
           type="checkbox"
           defaultChecked={Boolean(handle.props.value)}
-          style={{ width: "auto" }}
+          className="checkbox"
         />
       ) : field.type === "select" || field.type === "media" ? (
         <select
@@ -421,13 +420,9 @@ export function MediaPage(
         {handle.props.media.map((item) => (
           <div className="card">
             <img
+              className="media-preview"
               src={`/api/media/${encodeURIComponent(item.id)}`}
               alt={item.alt}
-              style={{
-                maxWidth: "100%",
-                height: "10rem",
-                objectFit: "contain",
-              }}
             />
             <p>{item.filename}</p>
             <code>{item.id}</code>

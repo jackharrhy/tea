@@ -22,11 +22,7 @@ export function PlainImageFields(
       <div className="image-block">
         <div className="image-block-preview">
           {p.mediaId ? (
-            <img
-              src={"/tea/api/media/file/" + p.mediaId}
-              alt={p.alt ?? ""}
-              style={{ maxHeight: 240, maxWidth: "100%", objectFit: "contain" }}
-            />
+            <img src={"/tea/api/media/file/" + p.mediaId} alt={p.alt ?? ""} />
           ) : (
             <p className="muted">No image selected.</p>
           )}
