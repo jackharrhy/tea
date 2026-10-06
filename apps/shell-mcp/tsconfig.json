@@ -5,6 +5,7 @@
   },
   "include": [
     "app/**/*.ts",
+    "app/**/*.tsx",
     "server.ts",
     "scripts/**/*.ts",
     "__tests__/**/*.ts"

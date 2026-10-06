@@ -7,10 +7,10 @@ import {
   auth,
   type OAuthClientProvider,
 } from "@modelcontextprotocol/sdk/client/auth.js";
-import { createApp } from "@tea/shell-core/router.ts";
+import { createApp } from "../../app/router.ts";
 import { createFourormIdentity } from "../../app/auth/fourorm.ts";
 import { readConfig } from "../../app/config.ts";
-import { JobManager, MockRunner } from "@tea/shell-core/execution/index.ts";
+import { JobManager, MockRunner } from "../../app/execution/index.ts";
 import { LATEST_PROTOCOL_VERSION, MetaKey } from "@tea/mcp";
 
 const issuer = "https://4orm.harrhy.xyz";

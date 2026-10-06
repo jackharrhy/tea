@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "@tea/shell-core/router.ts";
+import { createApp } from "../app/router.ts";
 import { readConfig } from "../app/config.ts";
 import { demoIdentity, lockedIdentity } from "../app/auth/fixtures.ts";
-import type { IdentityProvider } from "@tea/shell-core/auth/types.ts";
-import { JobManager, MockRunner } from "@tea/shell-core/execution/index.ts";
+import type { IdentityProvider } from "../app/auth/types.ts";
+import { JobManager, MockRunner } from "../app/execution/index.ts";
 import { rpcRequest, rpcResult, toolValue } from "../scripts/protocol.ts";
 const origin = "http://127.0.0.1:3000";
 function fixture(provider: IdentityProvider = demoIdentity) {

@@ -5,9 +5,9 @@ import { join } from "node:path";
 import { createRequestListener } from "remix/node-fetch-server";
 import { createApp } from "../app.ts";
 import { parseFixtureSites } from "./sites.ts";
-import { assets } from "@tea/cms-core/assets.ts";
+import { assets } from "../app/assets.ts";
 import { seedFixture } from "./fixture.ts";
-import { OperatorStore } from "@tea/cms-operator/store.ts";
+import { OperatorStore } from "../operator/store.ts";
 import bcrypt from "bcryptjs";
 const dir = await mkdtemp(join(tmpdir(), "teacms-browser-"));
 const sites = parseFixtureSites(

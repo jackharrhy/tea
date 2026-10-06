@@ -1,5 +1,5 @@
 import { clientEntry, on, type Handle } from "remix/component";
-import type { Sidebar, Page } from "@tea/cms-core/ui/public/content-types.ts";
+import type { Sidebar, Page } from "../../../../app/ui/public/content-types.ts";
 
 export const NavigationEditor = clientEntry(
   import.meta.url,

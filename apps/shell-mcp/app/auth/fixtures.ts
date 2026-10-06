@@ -1,7 +1,4 @@
-import {
-  AuthenticationError,
-  type IdentityProvider,
-} from "@tea/shell-core/auth/types.ts";
+import { AuthenticationError, type IdentityProvider } from "./types.ts";
 
 export const lockedIdentity: IdentityProvider = {
   async verify() {

@@ -1,4 +1,4 @@
-import { JobManager, MockRunner } from "@tea/shell-core/execution/index.ts";
+import { JobManager, MockRunner } from "./execution/index.ts";
 import { createFourormIdentity } from "./auth/fourorm.ts";
 import { demoIdentity, lockedIdentity } from "./auth/fixtures.ts";
 import { readIntrospectionSecret } from "./auth/secret.ts";

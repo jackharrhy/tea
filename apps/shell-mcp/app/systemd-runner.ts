@@ -4,7 +4,7 @@ import type {
   RunnerJob,
   RunnerCallbacks,
   RunnerHandle,
-} from "@tea/shell-core/execution/types.ts";
+} from "./execution/types.ts";
 
 /** Only the fixed root-owned helper can launch units; never accepts auth data. */
 export class SystemdRunner implements Runner {

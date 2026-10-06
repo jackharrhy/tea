@@ -6,9 +6,9 @@ Use `remix/routes` for typed URLs, `remix/router` for controllers and middleware
 
 ## Apps today
 
-`apps/cms` hosts multiple sites in Node and keeps each presentation in `sites/<id>`. The app registers each site's presentation, manifest, and assets at startup, then exports presentations by subpath. `packages/cms-core`, `packages/cms-operator`, and `packages/cms-edge` expose CMS modules; `packages/cms-edge/example` shows a Worker host. `packages/rich-text` owns TipTap and the Inline document format. Site selection, draft/publish rules, previews, and media checks belong to CMS.
+`apps/cms` owns the Node CMS: routes, storage, editor, operator dashboard, and site presentations in `sites/<id>`. It registers each site's presentation, manifest, and assets at startup, then exports presentations by subpath. `packages/cms-edge` exposes an embeddable Worker CMS runtime; `packages/cms-edge/example` shows a Worker host. `packages/rich-text` owns TipTap and the Inline document format. Site selection, draft/publish rules, previews, and media checks belong to CMS.
 
-`packages/shell-core` owns the Shell MCP routes, tools, transport, and job lifecycle. `apps/shell-mcp` composes it with a Node listener, 4orm identity provider, and optional systemd runner. Both Shell MCP and CMS use the published `@sdxc/mcp` package directly. The local Compose service runs locked; the live Newport host remains on its existing systemd deployment. See the [app guide](../apps/shell-mcp/README.md).
+`apps/shell-mcp` owns the Shell MCP routes, tools, job lifecycle, Node listener, 4orm identity provider, and optional systemd runner. Both Shell MCP and CMS use `@tea/mcp` for transport. The local Compose service runs locked; the live Newport host remains on its existing systemd deployment. See the [app guide](../apps/shell-mcp/README.md).
 
 Root [`compose.yml`](../compose.yml) runs local containers behind Traefik on `.localhost`. Independent VPS containers are the default deployment target; CMS also has a Cloudflare Worker path, and a live Shell MCP deployment can use host systemd units for bounded execution. This repo owns app Dockerfiles and Worker configuration; the infrastructure repo owns production routing, DNS, secrets, host units, and live state.
 

@@ -12,11 +12,11 @@
     "dev": "NODE_ENV=development node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts",
     "start": "NODE_ENV=production node --env-file-if-exists=.env --import remix/node-tsx server.ts",
     "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && NODE_ENV=production node --import remix/node-tsx ../../scripts/cms/check-assets.ts",
-    "test": "cd ../.. && NODE_ENV=test remix test --type server 'apps/cms/**/*.test.{ts,tsx}' 'packages/cms-core/**/*.test.{ts,tsx}' 'packages/cms-operator/**/*.test.{ts,tsx}' 'packages/rich-text/**/*.test.{ts,tsx}'",
+    "build": "npm run typecheck && NODE_ENV=production node --import remix/node-tsx scripts/check-assets.ts",
+    "test": "cd ../.. && NODE_ENV=test remix test --type server 'apps/cms/**/*.test.{ts,tsx}' 'packages/rich-text/**/*.test.{ts,tsx}'",
     "test:browser": "playwright test",
-    "cms:seed-users": "node --env-file-if-exists=.env --import remix/node-tsx ../../scripts/cms/seed-users.ts",
-    "cms:seed-operator": "node --env-file-if-exists=.env --import remix/node-tsx ../../scripts/cms/seed-operator.ts",
+    "cms:seed-users": "node --env-file-if-exists=.env --import remix/node-tsx scripts/seed-users.ts",
+    "cms:seed-operator": "node --env-file-if-exists=.env --import remix/node-tsx scripts/seed-operator.ts",
     "lint": "vp lint .",
     "lint:fix": "vp lint --fix .",
     "format": "vp fmt .",
@@ -25,15 +25,20 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0",
-    "@tea/mcp": "0.1.0",
     "@types/node": "^24.0.0",
     "@types/sanitize-html": "^2.16.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@tea/cms-core": "*",
-    "@tea/cms-operator": "*",
+    "@tea/json-schema": "0.1.0",
     "@tea/logger": "0.1.0",
-    "remix": "3.0.0"
+    "@tea/mcp": "0.1.0",
+    "@tea/request-body": "0.1.0",
+    "@tea/rich-text": "*",
+    "bcryptjs": "3.0.3",
+    "marked": "18.0.3",
+    "morphdom": "2.7.8",
+    "remix": "3.0.0",
+    "sanitize-html": "2.17.7"
   }
 }

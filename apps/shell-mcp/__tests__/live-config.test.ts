@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readConfig } from "../app/config.ts";
-import { JobManager } from "@tea/shell-core/execution/job-manager.ts";
+import { JobManager } from "../app/execution/job-manager.ts";
 import { startServer } from "../server.ts";
 test("real runner requires fourorm and durable journal configuration", () => {
   assert.throws(

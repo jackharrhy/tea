@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "@tea/shell-core/router.ts";
+import { createApp } from "../app/router.ts";
 import { readConfig } from "../app/config.ts";
 import { lockedIdentity } from "../app/auth/fixtures.ts";
-import { JobManager } from "@tea/shell-core/execution/index.ts";
+import { JobManager } from "../app/execution/index.ts";
 
 test("shell discovery selects resource-specific registration, not Artbin defaults", async () => {
   const config = readConfig({

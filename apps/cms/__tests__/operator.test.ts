@@ -6,7 +6,7 @@ import { join } from "node:path";
 import bcrypt from "bcryptjs";
 import { parseFixtureSites } from "./sites.ts";
 import { createApp } from "../app.ts";
-import { OperatorStore } from "@tea/cms-operator/store.ts";
+import { OperatorStore } from "../operator/store.ts";
 
 it("keeps operator access separate, hands off once, and revokes site access on sign-out", async () => {
   const dir = await mkdtemp(join(tmpdir(), "cms-operator-"));

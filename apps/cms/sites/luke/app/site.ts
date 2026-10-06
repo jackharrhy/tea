@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import type { SitePresentation } from "@tea/cms-core/site.ts";
+import type { SitePresentation } from "../../../app/site.ts";
 import { PublicPage } from "./page.tsx";
 import { NavigationEditor } from "./public/navigation-editor.tsx";
 export default {

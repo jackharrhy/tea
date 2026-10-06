@@ -12,7 +12,7 @@ const commaSeparated = requiredText
       .filter((item) => item.length > 0),
   )
   .refine((values) => values.length > 0, "At least one value is required");
-export const exactOrigin = s.string().refine((value) => {
+const exactOrigin = s.string().refine((value) => {
   const url = URL.parse(value);
   return (
     url !== null &&

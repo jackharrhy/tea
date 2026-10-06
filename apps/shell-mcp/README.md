@@ -1,14 +1,14 @@
 # @tea/shell-mcp
 
-Remix 3 Node host for [`@tea/shell-core`](../../packages/shell-core/README.md). It serves a shell MCP with `execute`, `read_job`, and `cancel`. The source began in `jack@newport:/home/jack/repos/personal/newport-shell-remix`; the current Newport service has not been redeployed from Tea.
+Remix 3 Node app serving a shell MCP with `execute`, `read_job`, and `cancel`. The source began in `jack@newport:/home/jack/repos/personal/newport-shell-remix`; the current Newport service has not been redeployed from Tea.
 
-`server.ts` starts the listener. `app/config-schema.ts` validates env values; `app/config.ts` assembles locked, demo, or live settings. `app/runtime.ts` selects the identity provider and runner. `app/auth/fourorm.ts` handles 4orm discovery and requests, `app/auth/claims.ts` checks token and userinfo data, and `app/auth/secret.ts` reads the introspection secret. `app/systemd-runner.ts` calls a configured root-owned helper. [`examples/newport/`](examples/newport/) contains the Newport-specific helper and quota bootstrap. Production units, ingress, credentials, and host configuration belong in the infrastructure repo.
+`server.ts` starts the listener. `app/router.ts`, `app/routes.ts`, and `app/tools.ts` define the Remix and MCP interface; `app/execution/` owns jobs. `app/config-schema.ts` validates env values; `app/config.ts` assembles locked, demo, or live settings. `app/runtime.ts` selects the identity provider and runner. `app/auth/` handles 4orm; `app/systemd-runner.ts` calls a configured root-owned helper. [`examples/newport/`](examples/newport/) contains the Newport-specific helper and quota bootstrap. Production units, ingress, credentials, and host configuration belong in the infrastructure repo.
 
 The Node host records requests through [`@tea/logger`](../../packages/logger/README.md), with MCP method and tool fields added inside the request. It does not record bearer tokens, request bodies, raw URLs, or exception details.
 
 ## Develop and check
 
-From the Tea root, run `npm ci` and `npm run shell-mcp:check`. The check covers the core package, host typecheck, local tests, and a loopback MCP smoke test with mock execution. `npm run shell-mcp:dev` starts locked on `127.0.0.1:3000`; `/healthz` responds and `/mcp` refuses requests. `npm run demo --workspace @tea/shell-mcp` uses the public fixture token `demo-only-token` and mock jobs on loopback only.
+From the Tea root, run `npm ci` and `npm run shell-mcp:check`. The check covers typecheck, local tests, and a loopback MCP smoke test with mock execution. `npm run shell-mcp:dev` starts locked on `127.0.0.1:3000`; `/healthz` responds and `/mcp` refuses requests. `npm run demo --workspace @tea/shell-mcp` uses the public fixture token `demo-only-token` and mock jobs on loopback only.
 
 The OAuth integration test needs a compatible 4orm checkout and `FOURORM_TEST_REPO`; run `npm run test:oauth --workspace @tea/shell-mcp` after installing that fixture's dependencies. Newport host tests in `__tests__/host/` require its installed security boundary and `NEWPORT_REAL_TEST=1`; normal checks do not run them. See [integration notes](__tests__/integration/README.md).
 
