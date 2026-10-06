@@ -7,6 +7,7 @@ const workspaces = [
     path: "apps/cms",
     name: "@tea/cms",
     manifest: {
+      scripts: { check: "npm test" },
       dependencies: {
         "@tea/rich-text": "*",
         "@tea/request-body": "0.1.0",
@@ -20,6 +21,7 @@ const workspaces = [
     path: "apps/cms-edge",
     name: "@tea/cms-edge",
     manifest: {
+      scripts: { check: "npm test" },
       dependencies: { "@tea/request-body": "0.1.0" },
     },
   },
@@ -27,14 +29,20 @@ const workspaces = [
     path: "apps/shell-mcp",
     name: "@tea/shell-mcp",
     manifest: {
+      scripts: { check: "npm test" },
       dependencies: { "@tea/mcp": "0.1.0", "@tea/json-schema": "0.1.0" },
     },
   },
-  { path: "packages/request-body", name: "@tea/request-body", manifest: {} },
+  {
+    path: "packages/request-body",
+    name: "@tea/request-body",
+    manifest: { scripts: { check: "npm test" } },
+  },
   {
     path: "packages/mcp",
     name: "@tea/mcp",
     manifest: {
+      scripts: { check: "npm test" },
       dependencies: {
         "@tea/request-body": "0.1.0",
         "@tea/json-schema": "0.1.0",
@@ -46,122 +54,102 @@ const workspaces = [
   {
     path: "packages/json-schema",
     name: "@tea/json-schema",
-    manifest: { dependencies: { "@tea/result": "0.1.0" } },
+    manifest: {
+      scripts: { check: "npm test" },
+      dependencies: { "@tea/result": "0.1.0" },
+    },
   },
-  { path: "packages/logger", name: "@tea/logger", manifest: {} },
-  { path: "packages/result", name: "@tea/result", manifest: {} },
+  {
+    path: "packages/logger",
+    name: "@tea/logger",
+    manifest: { scripts: { check: "npm test" } },
+  },
+  {
+    path: "packages/result",
+    name: "@tea/result",
+    manifest: { scripts: { check: "npm test" } },
+  },
 ];
 
-function checks(changed = {}) {
-  return {
-    cms: false,
-    edge: false,
-    shell: false,
-    body: false,
-    mcp: false,
-    schema: false,
-    logger: false,
-    result: false,
-    ...changed,
-  };
-}
+const checks = (...names) => names.toSorted();
 
 test("a package change reaches its transitive app consumers", () => {
   assert.deepEqual(
     selectChecks(["packages/rich-text/inline.ts"], workspaces),
-    checks({ cms: true }),
+    checks("@tea/cms"),
   );
 });
 
 test("edge and documentation changes do not start CMS checks", () => {
   assert.deepEqual(
     selectChecks(["apps/cms-edge/app/index.tsx"], workspaces),
-    checks({ edge: true }),
+    checks("@tea/cms-edge"),
   );
-  assert.deepEqual(
-    selectChecks(["docs/architecture.md"], workspaces),
-    checks(),
-  );
-  assert.deepEqual(
-    selectChecks(["apps/shell-mcp/app/config.ts"], workspaces),
-    checks({ shell: true }),
-  );
-  assert.deepEqual(
-    selectChecks(["apps/cms/scripts/seed-users.ts"], workspaces),
-    checks({ cms: true }),
-  );
+  assert.deepEqual(selectChecks(["docs/architecture.md"], workspaces), []);
   assert.deepEqual(
     selectChecks(["apps/shell-mcp/app/router.ts"], workspaces),
-    checks({ shell: true }),
+    checks("@tea/shell-mcp"),
   );
 });
 
 test("request body changes reach every consumer", () => {
   assert.deepEqual(
     selectChecks(["packages/request-body/read.ts"], workspaces),
-    checks({
-      cms: true,
-      edge: true,
-      shell: true,
-      body: true,
-      mcp: true,
-    }),
+    checks(
+      "@tea/cms",
+      "@tea/cms-edge",
+      "@tea/shell-mcp",
+      "@tea/request-body",
+      "@tea/mcp",
+    ),
   );
 });
 
 test("ported dependency changes reach their consumers", () => {
   assert.deepEqual(
     selectChecks(["packages/result/src/index.ts"], workspaces),
-    checks({
-      cms: true,
-      shell: true,
-      mcp: true,
-      schema: true,
-      result: true,
-    }),
+    checks(
+      "@tea/cms",
+      "@tea/shell-mcp",
+      "@tea/mcp",
+      "@tea/json-schema",
+      "@tea/result",
+    ),
   );
   assert.deepEqual(
-    selectChecks(["packages/json-schema/src/checks.ts"], workspaces),
-    checks({
-      cms: true,
-      shell: true,
-      mcp: true,
-      schema: true,
-    }),
-  );
-  assert.deepEqual(
-    selectChecks(["packages/logger/src/log.ts"], workspaces),
-    checks({
-      cms: true,
-      shell: true,
-      mcp: true,
-      logger: true,
-    }),
+    selectChecks(["packages/logger/src/index.ts"], workspaces),
+    checks("@tea/cms", "@tea/shell-mcp", "@tea/mcp", "@tea/logger"),
   );
 });
 
-test("MCP changes check both hosts and the package", () => {
+test("an independently checked workspace is picked up automatically", () => {
+  const extra = {
+    path: "apps/radio",
+    name: "@tea/radio",
+    manifest: {
+      scripts: { check: "npm test" },
+      dependencies: { "@tea/result": "0.1.0" },
+    },
+  };
   assert.deepEqual(
-    selectChecks(["packages/mcp/src/handler.ts"], workspaces),
-    checks({
-      cms: true,
-      shell: true,
-      mcp: true,
-    }),
+    selectChecks(["packages/result/src/index.ts"], [...workspaces, extra]),
+    checks(
+      "@tea/cms",
+      "@tea/shell-mcp",
+      "@tea/mcp",
+      "@tea/json-schema",
+      "@tea/result",
+      "@tea/radio",
+    ),
   );
 });
 
-test("shared configuration and unrecognized files run all known checks", () => {
-  const all = checks({
-    cms: true,
-    edge: true,
-    shell: true,
-    body: true,
-    mcp: true,
-    schema: true,
-    logger: true,
-    result: true,
-  });
+test("shared configuration and unrecognized files run all checks", () => {
+  const all = checks(
+    ...workspaces
+      .filter(({ manifest }) => manifest.scripts?.check)
+      .map(({ name }) => name),
+  );
   for (const path of [
     "package-lock.json",
     "compose.yml",

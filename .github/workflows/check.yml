@@ -1,19 +1,13 @@
 name: Check
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 permissions:
   contents: read
 jobs:
-  affected:
+  check:
     runs-on: ubuntu-latest
-    outputs:
-      cms: ${{ steps.select.outputs.cms }}
-      edge: ${{ steps.select.outputs.edge }}
-      shell: ${{ steps.select.outputs.shell }}
-      body: ${{ steps.select.outputs.body }}
-      mcp: ${{ steps.select.outputs.mcp }}
-      schema: ${{ steps.select.outputs.schema }}
-      logger: ${{ steps.select.outputs.logger }}
-      result: ${{ steps.select.outputs.result }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -22,131 +16,22 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: npm
       - run: node --test scripts/ci/__tests__/affected.test.mjs
       - id: select
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.sha }}
         run: node scripts/ci/affected.mjs
-
-  cms:
-    needs: affected
-    if: needs.affected.outputs.cms == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run cms:check
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser --workspace @tea/cms
-
-  cms-edge:
-    needs: affected
-    if: needs.affected.outputs.edge == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run cms-edge:check
-
-  shell-mcp:
-    needs: affected
-    if: needs.affected.outputs.shell == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run shell-mcp:check
-
-  request-body:
-    needs: affected
-    if: needs.affected.outputs.body == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run request-body:check
-
-  mcp:
-    needs: affected
-    if: needs.affected.outputs.mcp == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run mcp:check
-
-  json-schema:
-    needs: affected
-    if: needs.affected.outputs.schema == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run json-schema:check
-
-  logger:
-    needs: affected
-    if: needs.affected.outputs.logger == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run logger:check
-
-  result:
-    needs: affected
-    if: needs.affected.outputs.result == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run result:check
+      - if: steps.select.outputs.any == 'true'
+        run: npm ci
+      - if: steps.select.outputs.any == 'true'
+        run: npm run tooling:check
+      - if: steps.select.outputs.any == 'true'
+        env:
+          SELECTED_CHECKS: ${{ steps.select.outputs.selected }}
+        run: node scripts/ci/run-checks.mjs
+      - if: steps.select.outputs.cms == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.select.outputs.cms == 'true'
+        run: npm run test:browser --workspace @tea/cms

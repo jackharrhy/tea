@@ -37,4 +37,4 @@ Vite+ runs the shared format and lint checks from [`vite.config.ts`](vite.config
 
 The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. Run `docker compose up --build -d`, then open [andrew.localhost](http://andrew.localhost), [luke.localhost](http://luke.localhost), or [shell.localhost/healthz](http://shell.localhost/healthz). The shell container runs in locked mode; it cannot execute commands. Only Traefik binds a host port, on loopback. Add a service and labels for each new containerized app. Production DNS, TLS, and host setup live in the infrastructure repo.
 
-CI follows workspace dependencies: package changes also check affected apps. Shared config or unknown paths run all checks. README and `docs/` changes skip app checks. See [`scripts/ci/affected.mjs`](scripts/ci/affected.mjs).
+CI installs once and runs the `check` scripts for affected workspaces. Package changes also check their consumers; shared config or unknown paths check every workspace with a `check` script. README and `docs/` changes skip app checks. CMS browser setup runs only when CMS is affected. See [`scripts/ci/affected.mjs`](scripts/ci/affected.mjs).
