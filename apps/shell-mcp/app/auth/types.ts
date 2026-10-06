@@ -8,11 +8,10 @@ export type Principal = Readonly<{
 export interface IdentityProvider {
   verify(bearerToken: string): Promise<Principal>;
 }
-export class AuthenticationError extends Error {
-  constructor() {
-    super("Authentication rejected");
-    this.name = "AuthenticationError";
-  }
+export function authenticationError(): Error {
+  const error = new Error("Authentication rejected");
+  error.name = "AuthenticationError";
+  return error;
 }
 /** Unambiguous issuer + subject ownership key. No token, username, or caller-supplied owner. */
 export function ownerKey(principal: Principal): string {

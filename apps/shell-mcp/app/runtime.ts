@@ -1,18 +1,18 @@
-import { JobManager, MockRunner } from "./execution/index.ts";
+import { createJobManager, createMockRunner } from "./execution/index.ts";
 import { createFourormIdentity } from "./auth/fourorm.ts";
 import { demoIdentity, lockedIdentity } from "./auth/fixtures.ts";
 import { readIntrospectionSecret } from "./auth/secret.ts";
 import type { AppConfig } from "./config.ts";
-import { SystemdRunner } from "./systemd-runner.ts";
+import { createSystemdRunner } from "./systemd-runner.ts";
 
 export async function createRuntime(config: AppConfig) {
   switch (config.mode) {
     case "locked":
-      return { identity: lockedIdentity, jobs: new JobManager() };
+      return { identity: lockedIdentity, jobs: createJobManager() };
     case "demo":
       return {
         identity: demoIdentity,
-        jobs: new JobManager({ runner: new MockRunner() }),
+        jobs: createJobManager({ runner: createMockRunner() }),
       };
     case "fourorm": {
       const identity = await createFourormIdentity({
@@ -28,11 +28,11 @@ export async function createRuntime(config: AppConfig) {
       });
       const jobs =
         config.runner === "systemd"
-          ? new JobManager({
-              runner: new SystemdRunner(config.helperPath),
+          ? createJobManager({
+              runner: createSystemdRunner(config.helperPath),
               journalFile: config.journalFile,
             })
-          : new JobManager();
+          : createJobManager();
       return { identity, jobs };
     }
   }

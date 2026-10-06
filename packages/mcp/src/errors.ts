@@ -1,48 +1,55 @@
-/**
- * The errors a host application throws to steer a response, and the ones the
- * transport raises when a request does not satisfy the protocol.
- *
- * The split that matters is where MCP reports each category. A protocol error is a
- * JSON-RPC error the model never sees; a tool that ran and could not do what was asked
- * answers with an ordinary result carrying `isError`, which the model reads and can
- * act on. Putting one in the other's place either hides a recoverable failure from the
- * model or shows it an operator's stack trace.
- */
+/** Tool failures are returned to the model; protocol failures are not. */
+const toolErrorTag = Symbol("ToolError");
+const forbiddenErrorTag = Symbol("ForbiddenError");
+const invalidArgumentsErrorTag = Symbol("InvalidArgumentsError");
 
-/**
- * A tool ran and could not complete — the post does not exist, the connection was
- * refused, the caller asked for a page past the end. Its message reaches the model
- * verbatim, so it must read as actionable guidance: what went wrong, and what would work.
- */
-export class ToolError extends Error {
-  override readonly name = "ToolError";
+export interface ToolError extends Error {
+  name: "ToolError";
 }
 
-/**
- * A tool call is not permitted for this caller, reported as a protocol error.
- *
- * Reaching it means a call got past the `available` predicate meant to hide the tool — a backstop for a
- * stale client list, since remix middleware already blocks a credential-less request earlier in the chain.
- */
-export class ForbiddenError extends Error {
-  override readonly name = "ForbiddenError";
+export function createToolError(message: string): ToolError {
+  return Object.assign(new Error(message), {
+    name: "ToolError" as const,
+    [toolErrorTag]: true,
+  });
 }
 
-/**
- * Arguments did not satisfy a tool's declared schema.
- *
- * Reported to the client as JSON-RPC error `-32602`, raised before the handler runs; each
- * instance carries exactly the constraint failures that stopped the call before the handler could run.
- */
-export class InvalidArgumentsError extends Error {
-  override readonly name = "InvalidArgumentsError";
+export function isToolError(error: unknown): error is ToolError {
+  return error instanceof Error && toolErrorTag in error;
+}
 
-  /** One entry per failed constraint, each naming the property path it applies to. */
+export interface ForbiddenError extends Error {
+  name: "ForbiddenError";
+}
+
+export function createForbiddenError(message: string): ForbiddenError {
+  return Object.assign(new Error(message), {
+    name: "ForbiddenError" as const,
+    [forbiddenErrorTag]: true,
+  });
+}
+
+export function isForbiddenError(error: unknown): error is ForbiddenError {
+  return error instanceof Error && forbiddenErrorTag in error;
+}
+
+export interface InvalidArgumentsError extends Error {
+  name: "InvalidArgumentsError";
   readonly issues: readonly string[];
+}
 
-  /** @param issues Human-readable constraint failures, in declaration order. */
-  constructor(issues: readonly string[]) {
-    super(`Invalid arguments: ${issues.join("; ")}`);
-    this.issues = issues;
-  }
+export function createInvalidArgumentsError(
+  issues: readonly string[],
+): InvalidArgumentsError {
+  return Object.assign(new Error(`Invalid arguments: ${issues.join("; ")}`), {
+    name: "InvalidArgumentsError" as const,
+    issues,
+    [invalidArgumentsErrorTag]: true,
+  });
+}
+
+export function isInvalidArgumentsError(
+  error: unknown,
+): error is InvalidArgumentsError {
+  return error instanceof Error && invalidArgumentsErrorTag in error;
 }

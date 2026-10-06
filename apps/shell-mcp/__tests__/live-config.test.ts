@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readConfig } from "../app/config.ts";
-import { JobManager } from "../app/execution/job-manager.ts";
+import { createJobManager } from "../app/execution/job-manager.ts";
 import { startServer } from "../server.ts";
 test("real runner requires fourorm and durable journal configuration", () => {
   assert.throws(
@@ -12,7 +12,7 @@ test("real runner requires fourorm and durable journal configuration", () => {
 });
 test("shutdown waits for asynchronous cleanup acknowledgement", async () => {
   let end: () => void;
-  const jobs = new JobManager({
+  const jobs = createJobManager({
     runner: {
       enabled: true,
       run(_job, cb) {

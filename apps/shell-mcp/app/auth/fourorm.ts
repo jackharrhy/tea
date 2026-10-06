@@ -1,4 +1,4 @@
-import { AuthenticationError, type IdentityProvider } from "./types.ts";
+import { authenticationError, type IdentityProvider } from "./types.ts";
 import {
   verifyIntrospection,
   verifyUserinfo,
@@ -20,7 +20,7 @@ export type FourormOptions = OwnerPolicy &
 
 function object(value: unknown): JsonObject {
   if (!value || typeof value !== "object" || Array.isArray(value))
-    throw new AuthenticationError();
+    throw authenticationError();
   return value as JsonObject;
 }
 function https(value: string): URL {
@@ -38,9 +38,9 @@ function https(value: string): URL {
   return url;
 }
 function endpoint(value: unknown, issuer: URL): string {
-  if (typeof value !== "string") throw new AuthenticationError();
+  if (typeof value !== "string") throw authenticationError();
   const url = https(value);
-  if (url.origin !== issuer.origin) throw new AuthenticationError();
+  if (url.origin !== issuer.origin) throw authenticationError();
   return url.href;
 }
 /** Limits apply to bytes streamed, even when Content-Length is absent or false. */
@@ -52,9 +52,9 @@ async function boundedJson(response: Response): Promise<JsonObject> {
       ?.toLowerCase()
       .startsWith("application/json")
   )
-    throw new AuthenticationError();
+    throw authenticationError();
   const reader = response.body?.getReader();
-  if (!reader) throw new AuthenticationError();
+  if (!reader) throw authenticationError();
   let length = 0;
   const chunks: Uint8Array[] = [];
   try {
@@ -62,7 +62,7 @@ async function boundedJson(response: Response): Promise<JsonObject> {
       const { done, value } = await reader.read();
       if (done) break;
       length += value.byteLength;
-      if (length > 32_768) throw new AuthenticationError();
+      if (length > 32_768) throw authenticationError();
       chunks.push(value);
     }
     return object(JSON.parse(Buffer.concat(chunks).toString("utf8")));
@@ -109,21 +109,21 @@ export async function createFourormIdentity(
         }),
       );
     } catch {
-      throw new AuthenticationError();
+      throw authenticationError();
     }
   }
   const metadata = await request(
     new URL("/.well-known/oauth-authorization-server", issuer).href,
     { headers: { accept: "application/json" } },
   );
-  if (metadata.issuer !== options.issuer) throw new AuthenticationError();
+  if (metadata.issuer !== options.issuer) throw authenticationError();
   const introspection = endpoint(metadata.introspection_endpoint, issuer);
   // Userinfo is in 4orm's OpenID discovery; OAuth metadata may advertise it too.
   const oidc = await request(
     new URL("/.well-known/openid-configuration", issuer).href,
     { headers: { accept: "application/json" } },
   );
-  if (oidc.issuer !== options.issuer) throw new AuthenticationError();
+  if (oidc.issuer !== options.issuer) throw authenticationError();
   const userinfo = endpoint(oidc.userinfo_endpoint, issuer);
   // Pinned 4orm does not advertise introspection auth methods. Its source contract is Basic.
   // If a future deployment advertises this field, require agreement rather than infer from token-endpoint methods.
@@ -134,14 +134,14 @@ export async function createFourormIdentity(
         "client_secret_basic",
       ))
   )
-    throw new AuthenticationError();
+    throw authenticationError();
   const clientBasic = Buffer.from(
     `${encodeURIComponent(options.introspectionClientId)}:${encodeURIComponent(options.introspectionClientSecret)}`,
   ).toString("base64");
   return {
     async verify(token) {
       if (!/^[A-Za-z0-9._~+/-]+={0,2}$/.test(token) || token.length > 4096)
-        throw new AuthenticationError();
+        throw authenticationError();
       const claims = await request(introspection, {
         method: "POST",
         headers: {

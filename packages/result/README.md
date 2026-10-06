@@ -2,7 +2,7 @@
 
 A small `Result` type with success/failure constructors, guards, and helpers. [`@tea/json-schema`](../json-schema/README.md) and [`@tea/mcp`](../mcp/README.md) use it for schema conversion and tool validation.
 
-`src/index.ts` contains the public types, constructors, guards, and helpers, including `wrap`, `retry`, and `partition`. Import through `@tea/result`.
+`src/index.ts` contains the public types, constructors, guards, and helpers, including `wrap`, `retry`, `partition`, and `createRetryError`. Import through `@tea/result`.
 
 Run `npm run check --workspace @tea/result` from the root. Changes also need the JSON Schema, MCP, CMS, and Shell MCP checks. The single `IsAny` type used by `wrap` is kept inside this package.
 

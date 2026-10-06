@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createApp } from "../app/router.ts";
 import { readConfig } from "../app/config.ts";
 import { lockedIdentity } from "../app/auth/fixtures.ts";
-import { JobManager } from "../app/execution/index.ts";
+import { createJobManager } from "../app/execution/index.ts";
 
 test("shell discovery selects resource-specific registration, not Artbin defaults", async () => {
   const config = readConfig({
@@ -17,7 +17,7 @@ test("shell discovery selects resource-specific registration, not Artbin default
     FOURORM_INTROSPECTION_CLIENT_ID: "fixture",
     FOURORM_INTROSPECTION_SECRET_FILE: "/fixture",
   });
-  const jobs = new JobManager();
+  const jobs = createJobManager();
   try {
     const app = createApp(config, lockedIdentity, jobs);
     const metadata = (await (

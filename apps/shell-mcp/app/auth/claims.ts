@@ -1,5 +1,5 @@
 import * as s from "remix/data-schema";
-import { AuthenticationError, type Principal } from "./types.ts";
+import { authenticationError, type Principal } from "./types.ts";
 
 export type OwnerPolicy = Readonly<{
   issuer: string;
@@ -36,21 +36,20 @@ export function verifyIntrospection(
   now: number,
 ): VerifiedToken {
   const result = s.parseSafe(introspectionSchema, input);
-  if (!result.success) throw new AuthenticationError();
+  if (!result.success) throw authenticationError();
   const claims = result.value;
 
-  if (!policy.allowedSubjects.includes(claims.sub))
-    throw new AuthenticationError();
+  if (!policy.allowedSubjects.includes(claims.sub)) throw authenticationError();
   if (claims.token_type.toLowerCase() !== "bearer" || !claims.client_id)
-    throw new AuthenticationError();
+    throw authenticationError();
 
   const audiences = typeof claims.aud === "string" ? [claims.aud] : claims.aud;
   if (audiences.length !== 1 || audiences[0] !== policy.resource)
-    throw new AuthenticationError();
+    throw authenticationError();
 
   const scopes = new Set(claims.scope.split(" "));
   if (!scopes.has("openid") || !scopes.has(policy.requiredScope))
-    throw new AuthenticationError();
+    throw authenticationError();
 
   const currentSeconds = Math.floor(now / 1000);
   if (
@@ -58,9 +57,9 @@ export function verifyIntrospection(
     claims.iat > currentSeconds + 5 ||
     claims.iat >= claims.exp
   )
-    throw new AuthenticationError();
+    throw authenticationError();
   if (claims.iss !== undefined && claims.iss !== policy.issuer)
-    throw new AuthenticationError();
+    throw authenticationError();
 
   return { subject: claims.sub, expiresAt: claims.exp * 1000 };
 }
@@ -72,13 +71,13 @@ export function verifyUserinfo(
   now: number,
 ): Principal {
   const result = s.parseSafe(userinfoSchema, input);
-  if (!result.success) throw new AuthenticationError();
+  if (!result.success) throw authenticationError();
   const profile = result.value;
 
-  if (profile.sub !== token.subject) throw new AuthenticationError();
+  if (profile.sub !== token.subject) throw authenticationError();
   if (!policy.allowedUsernames.includes(profile.username))
-    throw new AuthenticationError();
-  if (token.expiresAt <= now) throw new AuthenticationError();
+    throw authenticationError();
+  if (token.expiresAt <= now) throw authenticationError();
 
   return Object.freeze({
     issuer: policy.issuer,

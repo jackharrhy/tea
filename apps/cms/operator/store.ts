@@ -2,22 +2,20 @@ import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { AuthStore, type User } from "../app/data/auth.ts";
+import { createAuthStore, type User } from "../app/data/auth.ts";
 import { transaction } from "../app/data/transaction.ts";
 import type { OperatorAccess } from "../app/operator-access.ts";
 
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 
-export class OperatorStore implements OperatorAccess {
-  readonly auth: AuthStore;
-  readonly sqlite: DatabaseSync;
+export type OperatorStore = ReturnType<typeof createOperatorStore>;
 
-  constructor(path: string) {
-    if (path !== ":memory:")
-      mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-    this.sqlite = new DatabaseSync(path);
-    this.sqlite.exec(`
+export function createOperatorStore(path: string) {
+  if (path !== ":memory:")
+    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+  const sqlite = new DatabaseSync(path);
+  sqlite.exec(`
       PRAGMA journal_mode=WAL;
       PRAGMA foreign_keys=ON;
       PRAGMA busy_timeout=5000;
@@ -44,13 +42,12 @@ export class OperatorStore implements OperatorAccess {
         expires_at TEXT NOT NULL
       );
     `);
-    this.auth = new AuthStore(this.sqlite);
-  }
+  const auth = createAuthStore(sqlite);
 
-  issueTicket(operatorSessionId: string, siteId: string) {
-    if (!this.auth.resolve(operatorSessionId)) return null;
+  function issueTicket(operatorSessionId: string, siteId: string) {
+    if (!auth.resolve(operatorSessionId)) return null;
     const token = randomBytes(32).toString("hex");
-    this.sqlite
+    sqlite
       .prepare(
         "INSERT INTO tickets(hash,session_id,site_id,expires_at) VALUES (?,?,?,?)",
       )
@@ -63,20 +60,20 @@ export class OperatorStore implements OperatorAccess {
     return token;
   }
 
-  redeemTicket(siteId: string, ticket: string) {
+  function redeemTicket(siteId: string, ticket: string) {
     if (!/^[a-f0-9]{64}$/.test(ticket)) return null;
-    return transaction(this.sqlite, () => {
-      const row = this.sqlite
+    return transaction(sqlite, () => {
+      const row = sqlite
         .prepare(
           "DELETE FROM tickets WHERE hash=? AND site_id=? AND expires_at>? RETURNING session_id",
         )
         .get(digest(ticket), siteId, new Date().toISOString());
       if (!row) return null;
       const operatorSessionId = String(row.session_id);
-      if (!this.auth.resolve(operatorSessionId)) return null;
+      if (!auth.resolve(operatorSessionId)) return null;
       const id = randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 8 * 60 * 60_000);
-      this.sqlite
+      sqlite
         .prepare(
           "INSERT INTO site_sessions(id,session_id,site_id,expires_at) VALUES (?,?,?,?)",
         )
@@ -85,9 +82,9 @@ export class OperatorStore implements OperatorAccess {
     });
   }
 
-  resolveSiteSession(siteId: string, id: string): User | null {
+  function resolveSiteSession(siteId: string, id: string): User | null {
     if (!/^[a-f0-9]{64}$/.test(id)) return null;
-    const row = this.sqlite
+    const row = sqlite
       .prepare(
         `SELECT u.id,u.email FROM site_sessions ss
          JOIN sessions s ON s.id=ss.session_id
@@ -98,14 +95,24 @@ export class OperatorStore implements OperatorAccess {
     return row ? { id: Number(row.id), email: String(row.email) } : null;
   }
 
-  revokeSiteSession(siteId: string, id: string) {
+  function revokeSiteSession(siteId: string, id: string) {
     if (!/^[a-f0-9]{64}$/.test(id)) return;
-    this.sqlite
+    sqlite
       .prepare("DELETE FROM site_sessions WHERE id=? AND site_id=?")
       .run(id, siteId);
   }
 
-  close() {
-    this.sqlite.close();
+  function close() {
+    sqlite.close();
   }
+  const store = {
+    auth,
+    sqlite,
+    issueTicket,
+    redeemTicket,
+    resolveSiteSession,
+    revokeSiteSession,
+    close,
+  };
+  return store satisfies OperatorAccess;
 }

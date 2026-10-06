@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import bcrypt from "bcryptjs";
 import { openDatabase } from "../app/data/database.ts";
-import { ContentStore } from "../app/data/content.ts";
-import { AuthStore } from "../app/data/auth.ts";
+import { createContentStore } from "../app/data/content.ts";
+import { createAuthStore } from "../app/data/auth.ts";
 import type { SiteRuntime } from "../app/site.ts";
 
 export const credentials = {
@@ -15,10 +15,10 @@ export async function seedFixture(site: SiteRuntime) {
     const user = sqlite
       .prepare("INSERT INTO users(email,password_hash) VALUES (?,?)")
       .run(credentials.email, await bcrypt.hash(credentials.password, 4));
-    const session = new AuthStore(sqlite).createSession(
+    const session = createAuthStore(sqlite).createSession(
       Number(user.lastInsertRowid),
     );
-    const store = new ContentStore(sqlite);
+    const store = createContentStore(sqlite);
     const home = store.homepage();
     const blocks = [
       {

@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { JobManager } from "../job-manager.ts";
+import { createJobManager } from "../job-manager.ts";
 import type { RunnerJob } from "../types.ts";
 test("cwd crosses permitted directories and binds idempotency", () => {
   let captured: RunnerJob | undefined;
-  const jobs = new JobManager({
+  const jobs = createJobManager({
     runner: {
       enabled: true,
       run(job, cb) {

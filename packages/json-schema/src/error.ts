@@ -4,24 +4,20 @@
  */
 
 /** A schema, or a schema nested in it, that has no JSON Schema form. */
-export class JSONSchemaConversionError extends Error {
-  override name = "JSONSchemaConversionError";
-  /** Where the failing schema sits in the emitted document, as JSON Pointer segments. */
+export interface JSONSchemaConversionError extends Error {
+  name: "JSONSchemaConversionError";
   readonly path: readonly (string | number)[];
+}
 
-  /**
-   * @param message - Why the schema could not be described.
-   * @param path - The failing schema's location in the emitted document.
-   * @param options - Native error options, carrying a converter's own error as `cause`.
-   */
-  constructor(
-    message: string,
-    path: readonly (string | number)[] = [],
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.path = path;
-  }
+export function createJSONSchemaConversionError(
+  message: string,
+  path: readonly (string | number)[] = [],
+  options?: ErrorOptions,
+): JSONSchemaConversionError {
+  return Object.assign(new Error(message, options), {
+    name: "JSONSchemaConversionError" as const,
+    path,
+  });
 }
 
 /**

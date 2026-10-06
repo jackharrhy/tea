@@ -1,7 +1,7 @@
 import { it } from "remix/test";
 import * as assert from "remix/assert";
 import { openDatabase } from "../../../data/database.ts";
-import { ContentStore } from "../../../data/content.ts";
+import { createContentStore } from "../../../data/content.ts";
 import { saveAdornment } from "../adornments.ts";
 
 it("rejects stale shared artwork edits and keeps its revision out of rendered content", async () => {
@@ -10,7 +10,7 @@ it("rejects stale shared artwork edits and keeps its revision out of rendered co
     sqlite.exec(
       "INSERT INTO media(id,filename,mime_type,size,path) VALUES('art','Art','image/png',1,'art.png')",
     );
-    const store = new ContentStore(sqlite);
+    const store = createContentStore(sqlite);
     assert.equal(
       saveAdornment(store, { name: "Tape", media_id: "art", css: {} }).ok,
       true,

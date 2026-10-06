@@ -2,7 +2,7 @@
 
 Remix 3 Node app serving a shell MCP with `execute`, `read_job`, and `cancel`. The source began in `jack@newport:/home/jack/repos/personal/newport-shell-remix`; the current Newport service has not been redeployed from Tea.
 
-`server.ts` starts the listener. `app/router.ts`, `app/routes.ts`, and `app/tools.ts` define the Remix and MCP interface; `app/execution/` owns jobs. `app/config-schema.ts` validates env values; `app/config.ts` assembles locked, demo, or live settings. `app/runtime.ts` selects the identity provider and runner. `app/auth/` handles 4orm; `app/systemd-runner.ts` calls a configured root-owned helper. [`examples/newport/`](examples/newport/) contains the Newport-specific helper and quota bootstrap. Production units, ingress, credentials, and host configuration belong in the infrastructure repo.
+`server.ts` starts the listener. `app/router.ts`, `app/routes.ts`, and `app/tools.ts` define the Remix and MCP interface; `app/execution/` owns jobs through `createJobManager` and runner functions. `app/config-schema.ts` validates env values; `app/config.ts` assembles locked, demo, or live settings. `app/runtime.ts` selects the identity provider and runner. `app/auth/` handles 4orm; `app/systemd-runner.ts` calls a configured root-owned helper. [`examples/newport/`](examples/newport/) contains the Newport-specific helper and quota bootstrap. Production units, ingress, credentials, and host configuration belong in the infrastructure repo.
 
 The Node host records requests through [`@tea/logger`](../../packages/logger/README.md), with MCP method and tool fields added inside the request. It does not record bearer tokens, request bodies, raw URLs, or exception details.
 

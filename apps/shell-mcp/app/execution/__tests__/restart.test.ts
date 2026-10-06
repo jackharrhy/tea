@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { JobManager } from "../job-manager.ts";
+import { createJobManager } from "../job-manager.ts";
 test("lost cleanup acknowledgement exposes uncertainty without freeing capacity", () => {
-  const jobs = new JobManager({
+  const jobs = createJobManager({
     maxConcurrent: 1,
     runner: {
       enabled: true,
@@ -40,13 +40,13 @@ test("restart preserves unknown outcome tombstone and never replays matching key
     },
   };
   try {
-    const first = new JobManager({ runner, journalFile });
+    const first = createJobManager({ runner, journalFile });
     const { job } = first.execute("owner", {
       command: "private-command",
       idempotencyKey: "persist-1",
     });
     first.close();
-    const second = new JobManager({ runner, journalFile });
+    const second = createJobManager({ runner, journalFile });
     const recovered = second.readJob("owner", job.jobId);
     assert.equal(recovered.status, "unknown");
     assert.match(recovered.error!, /not replay/);

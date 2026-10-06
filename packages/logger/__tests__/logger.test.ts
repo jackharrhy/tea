@@ -43,3 +43,25 @@ test("failure records omit exception details", async () => {
   assert.equal(records[0]["error.type"], "Error");
   assert.equal(JSON.stringify(records[0]).includes("secret-token"), false);
 });
+
+test("child failures degrade their parent once", async () => {
+  const records: Record<string, unknown>[] = [];
+  const logger = createLogger({
+    service: "fixture",
+    sink(record) {
+      records.push(record);
+    },
+  });
+  await logger.open("request").run(async (parent) => {
+    const child = parent.child("job");
+    assert.equal(child.parent, parent);
+    await child.run((log) => {
+      log.fail(new Error("hidden"));
+    });
+    assert.equal(parent.outcome, "degraded");
+  });
+  assert.equal(records.length, 2);
+  assert.equal(records[0].outcome, "error");
+  assert.equal(records[1].outcome, "degraded");
+  assert.equal(records[1]["job.count"], 1);
+});

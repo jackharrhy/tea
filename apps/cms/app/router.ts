@@ -11,8 +11,8 @@ import { staticFiles } from "remix/middleware/static";
 import { cop } from "remix/middleware/cop";
 import { assets } from "./assets.ts";
 import { routes } from "./routes.ts";
-import { ContentStore } from "./data/content.ts";
-import { AuthStore } from "./data/auth.ts";
+import { createContentStore } from "./data/content.ts";
+import { createAuthStore } from "./data/auth.ts";
 import { services, protectWrites } from "./middleware/context.ts";
 import { headRequests } from "./middleware/head.ts";
 import type { TeaDatabase } from "./data/database.ts";
@@ -48,11 +48,11 @@ export function createTeaRouter(
   operator?: OperatorAccess,
   operatorOrigin?: string,
 ) {
-  const content = new ContentStore(database.sqlite, {
+  const content = createContentStore(database.sqlite, {
     dataDir: site.dataDir,
     canonicalOrigin: site.origin,
   });
-  const auth = new AuthStore(database.sqlite);
+  const auth = createAuthStore(database.sqlite);
   const router = createRouter<AppContext>({
     middleware: [
       headRequests,

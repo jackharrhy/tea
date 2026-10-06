@@ -1,64 +1,75 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 const MAX_NOTES = 200;
-const storage = new AsyncLocalStorage<Log>();
 
-export namespace Sample {
-  export interface Options {
-    rate?: number;
-    slowerThanMs?: number;
-    keep?: (fields: Readonly<Record<string, Log.Value>>) => boolean;
-  }
+export type LogKind = "request" | "cron" | "queue" | "job" | "alarm";
+export type LogOutcome = "ok" | "degraded" | "error";
+export type LogValue = string | number | boolean | null;
+export type LogFields = Record<
+  string,
+  LogValue | undefined | Record<string, LogValue | undefined>
+>;
+
+export interface LogNote {
+  at: number;
+  level: "info" | "warn" | "error";
+  name: string;
+  [key: string]: LogValue | undefined;
 }
 
-export namespace Log {
-  export type Kind = "request" | "cron" | "queue" | "job" | "alarm";
-  export type Outcome = "ok" | "degraded" | "error";
-  export type Value = string | number | boolean | null;
-  export type Fields = Record<
-    string,
-    Value | undefined | Record<string, Value | undefined>
-  >;
-  export interface Note {
-    at: number;
-    level: "info" | "warn" | "error";
-    name: string;
-    [key: string]: Value | undefined;
-  }
-  export type Sink = (
+export interface SampleOptions {
+  rate?: number;
+  slowerThanMs?: number;
+  keep?: (fields: Readonly<Record<string, LogValue>>) => boolean;
+}
+
+export interface LogOptions {
+  kind: LogKind;
+  service?: string;
+  environment?: string;
+  version?: string;
+  sample?: SampleOptions;
+  sink?: (
     record: Readonly<Record<string, unknown>>,
-    outcome: Outcome,
+    outcome: LogOutcome,
   ) => void;
-  export interface Options {
-    kind: Kind;
-    service?: string;
-    environment?: string;
-    version?: string;
-    sample?: Sample.Options;
-    sink?: Sink;
-  }
 }
 
-export namespace Logger {
-  export interface Options extends Omit<Log.Options, "kind" | "service"> {
-    service: string;
-  }
+export interface LoggerOptions extends Omit<LogOptions, "kind" | "service"> {
+  service: string;
+}
+
+export interface Log {
+  readonly kind: LogKind;
+  readonly outcome: LogOutcome;
+  readonly parent: Log | undefined;
+  set(fields: LogFields): Log;
+  inc(field: string, by?: number): Log;
+  time<T>(name: string, fn: () => T | Promise<T>): Promise<T>;
+  note(name: string, fields?: Record<string, LogValue | undefined>): Log;
+  warn(name: string, fields?: Record<string, LogValue | undefined>): Log;
+  fail(error: unknown, fields?: LogFields): Log;
+  child(kind: LogKind, fields?: LogFields): Log;
+  run<T>(fn: (log: Log) => T | Promise<T>): Promise<T>;
+  emit(): void;
 }
 
 export interface Logger {
-  readonly options: Readonly<Logger.Options>;
-  open(kind: Log.Kind, fields?: Log.Fields): Log;
+  readonly options: Readonly<LoggerOptions>;
+  open(kind: LogKind, fields?: LogFields): Log;
   request(
     request: Request,
     handle: (log: Log) => Response | Promise<Response>,
   ): Promise<Response>;
 }
 
-export function createLogger(options: Logger.Options): Logger {
+const storage = new AsyncLocalStorage<Log>();
+
+export function createLogger(options: LoggerOptions): Logger {
   const logger: Logger = {
     options,
     open(kind, fields) {
-      return new Log({ ...options, kind }, fields);
+      return createLog({ ...options, kind }, fields);
     },
     request(request, handle) {
       return logger
@@ -94,7 +105,7 @@ function errorFields(error: unknown) {
 
 function writeToConsole(
   record: Readonly<Record<string, unknown>>,
-  outcome: Log.Outcome,
+  outcome: LogOutcome,
 ): void {
   if (outcome === "error") console.error(record);
   else if (outcome === "degraded") console.warn(record);
@@ -102,9 +113,9 @@ function writeToConsole(
 }
 
 function shouldKeep(
-  options: Sample.Options | undefined,
-  outcome: Log.Outcome,
-  fields: Readonly<Record<string, Log.Value>>,
+  options: SampleOptions | undefined,
+  outcome: LogOutcome,
+  fields: Readonly<Record<string, LogValue>>,
   durationMs: number,
 ): boolean {
   if (outcome !== "ok" || options === undefined) return true;
@@ -114,150 +125,138 @@ function shouldKeep(
   return options.rate === undefined || Math.random() < options.rate;
 }
 
-export class Log {
-  readonly kind: Log.Kind;
-  readonly #options: Log.Options;
-  readonly #started = performance.now();
-  readonly #fields = new Map<string, Log.Value>();
-  readonly #notes: Log.Note[] = [];
-  #droppedNotes = 0;
-  #outcome: Log.Outcome = "ok";
-  #parent: Log | undefined;
-  #emitted = false;
+export function createLog(options: LogOptions, fields?: LogFields): Log {
+  return openLog(options, fields);
+}
 
-  constructor(options: Log.Options, fields?: Log.Fields) {
-    this.#options = options;
-    this.kind = options.kind;
-    if (fields !== undefined) this.set(fields);
-  }
+function openLog(
+  options: LogOptions,
+  initialFields?: LogFields,
+  parent?: Log,
+  degradeParent?: () => void,
+): Log {
+  const started = performance.now();
+  const fields = new Map<string, LogValue>();
+  const notes: LogNote[] = [];
+  let droppedNotes = 0;
+  let outcome: LogOutcome = "ok";
+  let emitted = false;
 
-  get outcome(): Log.Outcome {
-    return this.#outcome;
-  }
-
-  get parent(): Log | undefined {
-    return this.#parent;
-  }
-
-  set(fields: Log.Fields): this {
-    for (const [key, value] of Object.entries(fields)) {
-      if (value === undefined) continue;
-      if (typeof value === "object" && value !== null) {
-        for (const [nested, inner] of Object.entries(value)) {
-          if (inner !== undefined) this.#fields.set(`${key}.${nested}`, inner);
-        }
-      } else {
-        this.#fields.set(key, value);
-      }
-    }
-    return this;
-  }
-
-  inc(field: string, by = 1): this {
-    const current = this.#fields.get(field);
-    this.#fields.set(field, (typeof current === "number" ? current : 0) + by);
-    return this;
-  }
-
-  async time<T>(name: string, fn: () => T | Promise<T>): Promise<T> {
-    const started = performance.now();
-    try {
-      return await fn();
-    } finally {
-      this.inc(`${name}.count`);
-      this.inc(`${name}.duration_ms`, round(performance.now() - started));
-    }
-  }
-
-  note(name: string, fields?: Record<string, Log.Value | undefined>): this {
-    this.#note("info", name, fields);
-    return this;
-  }
-
-  warn(name: string, fields?: Record<string, Log.Value | undefined>): this {
-    this.#note("warn", name, fields);
-    if (this.#outcome === "ok") this.#outcome = "degraded";
-    return this;
-  }
-
-  fail(error: unknown, fields?: Log.Fields): this {
-    this.#outcome = "error";
-    // Exception messages and stacks can contain request data or credentials.
-    this.set({
-      error: {
-        type: error instanceof Error ? error.name : "UnknownError",
-        ...errorFields(error),
-      },
-    });
-    if (fields !== undefined) this.set(fields);
-    return this;
-  }
-
-  child(kind: Log.Kind, fields?: Log.Fields): Log {
-    const child = new Log({ ...this.#options, kind }, fields);
-    child.#parent = this;
-    return child;
-  }
-
-  run<T>(fn: (log: this) => T | Promise<T>): Promise<T> {
-    return storage.run(this, async () => {
-      try {
-        return await fn(this);
-      } catch (error) {
-        this.fail(error);
-        throw error;
-      } finally {
-        this.emit();
-      }
-    });
-  }
-
-  emit(): void {
-    if (this.#emitted) return;
-    this.#emitted = true;
-
-    const duration = round(performance.now() - this.#started);
-    const fields = Object.fromEntries(this.#fields) as Record<
-      string,
-      Log.Value
-    >;
-    fields.kind = this.kind;
-    this.#parent?.inc(`${this.kind}.count`);
-    if (this.#outcome !== "ok" && this.#parent?.outcome === "ok") {
-      this.#parent.#outcome = "degraded";
-    }
-    if (!shouldKeep(this.#options.sample, this.#outcome, fields, duration))
-      return;
-
-    const record: Record<string, unknown> = Object.fromEntries(this.#fields);
-    record.kind = this.kind;
-    record.outcome = this.#outcome;
-    record.duration_ms = duration;
-    if (this.#options.service !== undefined)
-      record.service = this.#options.service;
-    if (this.#options.environment !== undefined)
-      record.environment = this.#options.environment;
-    if (this.#options.version !== undefined)
-      record.version = this.#options.version;
-    if (this.#notes.length > 0) record.notes = this.#notes;
-    if (this.#droppedNotes > 0) record["notes.dropped"] = this.#droppedNotes;
-    (this.#options.sink ?? writeToConsole)(record, this.#outcome);
-  }
-
-  #note(
-    level: Log.Note["level"],
+  function addNote(
+    level: LogNote["level"],
     name: string,
-    fields?: Record<string, Log.Value | undefined>,
+    values?: Record<string, LogValue | undefined>,
   ): void {
-    if (this.#notes.length >= MAX_NOTES) {
-      this.#droppedNotes++;
+    if (notes.length >= MAX_NOTES) {
+      droppedNotes++;
       return;
     }
-    this.#notes.push({
-      ...fields,
-      at: round(performance.now() - this.#started),
+    notes.push({
+      ...values,
+      at: round(performance.now() - started),
       level,
       name,
     });
   }
+
+  const log: Log = {
+    kind: options.kind,
+    get outcome() {
+      return outcome;
+    },
+    get parent() {
+      return parent;
+    },
+    set(values) {
+      for (const [key, value] of Object.entries(values)) {
+        if (value === undefined) continue;
+        if (typeof value === "object" && value !== null) {
+          for (const [nested, inner] of Object.entries(value)) {
+            if (inner !== undefined) fields.set(`${key}.${nested}`, inner);
+          }
+        } else {
+          fields.set(key, value);
+        }
+      }
+      return log;
+    },
+    inc(field, by = 1) {
+      const current = fields.get(field);
+      fields.set(field, (typeof current === "number" ? current : 0) + by);
+      return log;
+    },
+    async time(name, fn) {
+      const start = performance.now();
+      try {
+        return await fn();
+      } finally {
+        log.inc(`${name}.count`);
+        log.inc(`${name}.duration_ms`, round(performance.now() - start));
+      }
+    },
+    note(name, values) {
+      addNote("info", name, values);
+      return log;
+    },
+    warn(name, values) {
+      addNote("warn", name, values);
+      if (outcome === "ok") outcome = "degraded";
+      return log;
+    },
+    fail(error, values) {
+      outcome = "error";
+      // Exception messages and stacks can contain request data or credentials.
+      log.set({
+        error: {
+          type: error instanceof Error ? error.name : "UnknownError",
+          ...errorFields(error),
+        },
+      });
+      if (values !== undefined) log.set(values);
+      return log;
+    },
+    child(kind, values) {
+      return openLog({ ...options, kind }, values, log, () => {
+        if (outcome === "ok") outcome = "degraded";
+      });
+    },
+    run(fn) {
+      return storage.run(log, async () => {
+        try {
+          return await fn(log);
+        } catch (error) {
+          log.fail(error);
+          throw error;
+        } finally {
+          log.emit();
+        }
+      });
+    },
+    emit() {
+      if (emitted) return;
+      emitted = true;
+
+      const duration = round(performance.now() - started);
+      const values = Object.fromEntries(fields) as Record<string, LogValue>;
+      values.kind = log.kind;
+      parent?.inc(`${log.kind}.count`);
+      if (outcome !== "ok") degradeParent?.();
+      if (!shouldKeep(options.sample, outcome, values, duration)) return;
+
+      const record: Record<string, unknown> = Object.fromEntries(fields);
+      record.kind = log.kind;
+      record.outcome = outcome;
+      record.duration_ms = duration;
+      if (options.service !== undefined) record.service = options.service;
+      if (options.environment !== undefined)
+        record.environment = options.environment;
+      if (options.version !== undefined) record.version = options.version;
+      if (notes.length > 0) record.notes = notes;
+      if (droppedNotes > 0) record["notes.dropped"] = droppedNotes;
+      (options.sink ?? writeToConsole)(record, outcome);
+    },
+  };
+
+  if (initialFields !== undefined) log.set(initialFields);
+  return log;
 }

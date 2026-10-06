@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import bcrypt from "bcryptjs";
-import { OperatorStore } from "../operator/store.ts";
+import { createOperatorStore } from "../operator/store.ts";
 
 const email = process.env.TEA_OPERATOR_EMAIL?.trim().toLowerCase();
 const password = process.env.TEA_OPERATOR_PASSWORD;
@@ -8,7 +8,7 @@ if (!email || !password || password.length < 16)
   throw new Error(
     "Set TEA_OPERATOR_EMAIL and TEA_OPERATOR_PASSWORD (16+ characters) to create an operator.",
   );
-const store = new OperatorStore(
+const store = createOperatorStore(
   resolve(process.env.TEA_DATA_DIR ?? "data", "operator", "operator.db"),
 );
 try {

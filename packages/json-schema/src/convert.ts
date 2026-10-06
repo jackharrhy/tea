@@ -10,14 +10,14 @@ import type { Schema as DataSchema } from "remix/data-schema";
 import { success } from "@tea/result";
 
 import type { JSONSchemaConversionError } from "./error.ts";
-import type { JSONSchema, Schema } from "./types.ts";
+import type { JSONSchema, JSONSchemaDirection, Schema } from "./types.ts";
 
 import { convert, wrap } from "./node.ts";
 
 /** How `toJSONSchema` shapes its document. */
 export interface ToJSONSchemaOptions {
   /** @default "input" */
-  direction?: JSONSchema.Direction;
+  direction?: JSONSchemaDirection;
   /**
    * `"defs"` collects named schemas under `$defs` and references them; `"inline"` writes
    * them in place, keeping `$ref` only where a `lazy` schema recurses.

@@ -15,6 +15,8 @@ Apps import packages; packages must not import apps. Use Remix 3 for app routing
 
 Keep behavior owned by one app inside that app, even when it has a clean internal interface. Extract a package when another consumer needs it or the module is meant to be embedded by independent hosts.
 
+Prefer interfaces, plain objects, and functions that close over private state. Do not add TypeScript `namespace` declarations or classes just to group functions or state. Use a class only when an external API requires one.
+
 Put tests and test-only fixtures in `__tests__/` beside the code they cover. Put host integration and browser tests in the app's `__tests__/`. Do not use a root `tests/` directory or put `*.test.*` and `*.spec.*` beside implementation files. Keep those suffixes inside `__tests__/` for discovery. Production code must not import tests.
 
 Run checks for each affected workspace and its consumers when a package interface changes. Keep Dockerfiles with their apps; add containerized apps to root `compose.yml`. Host configuration, DNS, secrets, and production operations live in another repo.

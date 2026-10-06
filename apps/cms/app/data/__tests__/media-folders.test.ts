@@ -1,7 +1,7 @@
 import { it } from "remix/test";
 import * as assert from "remix/assert";
 import { openDatabase } from "../database.ts";
-import { ContentStore } from "../content.ts";
+import { createContentStore } from "../content.ts";
 import {
   mediaFolders,
   saveFolder,
@@ -12,7 +12,7 @@ import {
 it("supports nested folders and notes without changing file URLs; rejects cycles and nonempty deletion", async () => {
   const { sqlite } = await openDatabase(":memory:");
   try {
-    const store = new ContentStore(sqlite);
+    const store = createContentStore(sqlite);
     sqlite
       .prepare(
         "INSERT INTO media (id,filename,mime_type,size,path) VALUES (?,?,?,?,?)",

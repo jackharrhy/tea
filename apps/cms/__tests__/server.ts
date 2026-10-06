@@ -7,7 +7,7 @@ import { createApp } from "../app.ts";
 import { parseFixtureSites } from "./sites.ts";
 import { assets } from "../app/assets.ts";
 import { seedFixture } from "./fixture.ts";
-import { OperatorStore } from "../operator/store.ts";
+import { createOperatorStore } from "../operator/store.ts";
 import bcrypt from "bcryptjs";
 const dir = await mkdtemp(join(tmpdir(), "teacms-browser-"));
 const sites = parseFixtureSites(
@@ -31,7 +31,7 @@ const sites = parseFixtureSites(
   ],
   dir,
 );
-const operator = new OperatorStore(join(dir, "operator.db"));
+const operator = createOperatorStore(join(dir, "operator.db"));
 operator.sqlite
   .prepare("INSERT INTO users(email,password_hash) VALUES (?,?)")
   .run(

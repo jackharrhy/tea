@@ -267,7 +267,7 @@ export type ToolMiddleware<Input = Record<string, unknown>> = (
 
 /**
  * A returned string becomes the answer verbatim; any other value is serialized as JSON.
- * Throw `ToolError` to report a failed call to the model.
+ * Throw `createToolError(message)` to report a failed call to the model.
  */
 export type ToolHandler<Input = Record<string, unknown>> = (
   ctx: ToolContext<Input>,

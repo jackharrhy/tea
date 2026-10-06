@@ -12,7 +12,8 @@ import { failure, success } from "@tea/result";
 
 import type { Tool, ToolSchema } from "./tools.ts";
 
-import { InvalidArgumentsError } from "./errors.ts";
+import { createInvalidArgumentsError } from "./errors.ts";
+import type { InvalidArgumentsError } from "./errors.ts";
 
 /** One segment of an issue's path, as Standard Schema reports it. */
 type PathSegment = PropertyKey | { readonly key: PropertyKey };
@@ -37,7 +38,7 @@ export function validateArguments<Schema extends ToolSchema>(
   if (parsed.success) return success(parsed.value as InferOutput<Schema>);
 
   return failure(
-    new InvalidArgumentsError(
+    createInvalidArgumentsError(
       parsed.issues.map((issue) => describeIssue(issue, candidate)),
     ),
   );

@@ -4,11 +4,11 @@ import { createApp } from "../app/router.ts";
 import { readConfig } from "../app/config.ts";
 import { demoIdentity, lockedIdentity } from "../app/auth/fixtures.ts";
 import type { IdentityProvider } from "../app/auth/types.ts";
-import { JobManager, MockRunner } from "../app/execution/index.ts";
+import { createJobManager, createMockRunner } from "../app/execution/index.ts";
 import { rpcRequest, rpcResult, toolValue } from "../scripts/protocol.ts";
 const origin = "http://127.0.0.1:3000";
 function fixture(provider: IdentityProvider = demoIdentity) {
-  const jobs = new JobManager({ runner: new MockRunner({ delayMs: 100 }) });
+  const jobs = createJobManager({ runner: createMockRunner({ delayMs: 100 }) });
   const app = createApp(readConfig({ SHELL_MODE: "demo" }), provider, jobs);
   return { app, jobs };
 }
@@ -224,7 +224,7 @@ test("tool input validation rejects bad timeout and denies owner injection", asy
   }
 });
 test("default service refuses execution and does not advertise configured OAuth", async () => {
-  const jobs = new JobManager();
+  const jobs = createJobManager();
   const app = createApp(readConfig({}), lockedIdentity, jobs);
   assert.equal((await app.fetch(rpcRequest(origin, "tools/list"))).status, 503);
   assert.equal(
