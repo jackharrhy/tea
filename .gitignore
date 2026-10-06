@@ -4,6 +4,7 @@ node_modules/
 **/.env
 **/.env.*
 !**/.env.example
+**/.dev.vars*
 apps/cms/data/
 apps/cms/tmp/
 apps/cms/uploads/

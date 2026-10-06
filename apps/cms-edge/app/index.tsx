@@ -35,13 +35,7 @@ import {
 import { createPreviewToken } from "./preview.ts";
 import type { Bindings, Collection, EdgeConfig } from "./types.ts";
 
-export type {
-  Bindings,
-  Collection,
-  EdgeConfig,
-  Entry,
-  Field,
-} from "./types.ts";
+export type { Bindings, Collection, EdgeConfig } from "./types.ts";
 export { routes } from "./routes.ts";
 
 const renderMiddleware = remixRender();

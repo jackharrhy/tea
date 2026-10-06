@@ -8,7 +8,7 @@ export default defineConfig({
       ".agents/**",
       "package-lock.json",
       "apps/cms/sites/*/public/icons/**",
-      "packages/cms-edge/example/worker-configuration.d.ts",
+      "apps/cms-edge/worker-configuration.d.ts",
     ],
   },
   lint: {

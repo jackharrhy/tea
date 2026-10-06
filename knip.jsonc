@@ -10,8 +10,5 @@
         "operator/public/**/*.js",
       ],
     },
-    "packages/cms-edge": {
-      "entry": ["example/worker.ts"],
-    },
   },
 }

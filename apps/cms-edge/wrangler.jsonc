@@ -1,5 +1,5 @@
 {
-  "name": "cms-edge-example",
+  "name": "tea-cms-edge",
   "main": "worker.ts",
   "compatibility_date": "2026-10-03",
   "compatibility_flags": ["nodejs_compat"],
@@ -13,12 +13,10 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "cms-edge-example",
+      "database_name": "tea-cms-edge",
       "database_id": "00000000-0000-0000-0000-000000000000",
     },
   ],
-  "r2_buckets": [
-    { "binding": "MEDIA", "bucket_name": "cms-edge-example-media" },
-  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "tea-cms-edge-media" }],
   "observability": { "enabled": true },
 }

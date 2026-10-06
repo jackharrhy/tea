@@ -6,4 +6,4 @@ Without `TEA_MCP_TOKEN`, the endpoint returns 404. Set a long random token throu
 
 TeaCMS selects the site from the hostname before routing MCP. The route uses the public site's request-scoped `ContentStore`. A future write-capable MCP needs separate scoped credentials and per-tool authorization.
 
-Cloudflare `@tea/cms-edge` has no MCP endpoint yet. Its D1/R2 storage is separate from the Node app's SQLite store.
+The Cloudflare app [`@tea/cms-edge`](../../apps/cms-edge/README.md) has no MCP endpoint yet. Its D1/R2 storage is separate from the Node app's SQLite store.

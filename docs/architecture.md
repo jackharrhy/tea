@@ -6,7 +6,7 @@ Use `remix/routes` for typed URLs, `remix/router` for controllers and middleware
 
 ## Apps today
 
-`apps/cms` owns the Node CMS: routes, storage, editor, operator dashboard, and site presentations in `sites/<id>`. It registers each site's presentation, manifest, and assets at startup, then exports presentations by subpath. `packages/cms-edge` exposes an embeddable Worker CMS runtime; `packages/cms-edge/example` shows a Worker host. `packages/rich-text` owns TipTap and the Inline document format. Site selection, draft/publish rules, previews, and media checks belong to CMS.
+`apps/cms` owns the Node CMS: routes, storage, editor, operator dashboard, and site presentations in `sites/<id>`. It registers each site's presentation, manifest, and assets at startup, then exports presentations by subpath. `apps/cms-edge` is a separate Cloudflare Worker CMS with D1 and R2 storage. `packages/rich-text` owns TipTap and the Inline document format. Site selection, draft/publish rules, previews, and media checks belong to each CMS app.
 
 `apps/shell-mcp` owns the Shell MCP routes, tools, job lifecycle, Node listener, 4orm identity provider, and optional systemd runner. Both Shell MCP and CMS use `@tea/mcp` for transport. The local Compose service runs locked; the live Newport host remains on its existing systemd deployment. See the [app guide](../apps/shell-mcp/README.md).
 
