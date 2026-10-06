@@ -6,7 +6,7 @@ This package holds the Inline document format and a Remix 3 rich text editor. Fo
 
 - `@tea/rich-text/inline.ts` defines the Inline content type.
 - `@tea/rich-text/text-document.ts` converts between Inline content and TipTap documents.
-- `@tea/rich-text/rich-text.tsx` provides the Remix browser editor; `public/rich-text.css` styles it.
+- `@tea/rich-text/rich-text.tsx` provides the Remix browser editor and applies its styles through `rich-text-styles.ts`.
 
 Do not import a host app or CMS storage here. Keep conversion separate from browser UI when extending the format.
 

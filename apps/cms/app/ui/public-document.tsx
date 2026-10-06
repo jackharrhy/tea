@@ -1,11 +1,18 @@
-import { unsafeHTML, type Handle, type RemixNode } from "remix/component";
+import { css, unsafeHTML, type Handle, type RemixNode } from "remix/component";
 import type { PublicPageProps } from "../site.ts";
 import { pageMetadata, structuredData } from "../actions/public-seo.ts";
 import { Document } from "./document.tsx";
 import { FeatureAssets } from "./feature-assets.tsx";
+import { adornmentStyles } from "./adornment-styles.ts";
+import { risoStyles } from "./riso-styles.ts";
 
 export function PublicDocument(
-  handle: Handle<PublicPageProps & { children: RemixNode }>,
+  handle: Handle<
+    PublicPageProps & {
+      children: RemixNode;
+      styles: ReturnType<typeof css>;
+    }
+  >,
 ) {
   return () => {
     const {
@@ -35,6 +42,11 @@ export function PublicDocument(
         visualEditing={visualEditing}
         editorSession={editorSession}
         visualSlug={page?.slug ?? ""}
+        styles={[
+          handle.props.styles,
+          ...(features.adornments ? [adornmentStyles] : []),
+          ...(features.riso ? [risoStyles] : []),
+        ]}
         head={
           <>
             <FeatureAssets features={features} preview={staticPreview} />

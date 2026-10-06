@@ -1,12 +1,17 @@
-import type { Handle, RemixNode } from "remix/component";
+import { css, type Handle, type RemixNode } from "remix/component";
 import { ImportMap } from "remix/component/server";
 import { entryScript } from "../assets.ts";
+import { adminCoreStyles } from "./admin-core-styles.ts";
+import { adminEditorStyles } from "./admin-editor-styles.ts";
+import { adminLibraryStyles } from "./admin-library-styles.ts";
+import { adminWorkspaceStyles } from "./admin-workspace-styles.ts";
 
 export function Document(
   handle: Handle<{
     title: string;
     children: RemixNode;
     head?: RemixNode;
+    styles?: ReturnType<typeof css>[];
     admin?: boolean;
     background?: string;
     static?: boolean;
@@ -17,24 +22,36 @@ export function Document(
   }>,
 ) {
   return () => (
-    <html lang="en">
+    <html
+      lang="en"
+      mix={
+        handle.props.admin
+          ? [
+              adminCoreStyles,
+              adminEditorStyles,
+              adminLibraryStyles,
+              adminWorkspaceStyles,
+              ...(handle.props.styles ?? []),
+            ]
+          : handle.props.styles
+      }
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{handle.props.title}</title>
         {handle.props.admin && (
-          <link
-            rel="preload"
-            href="/fonts/InterVariable.woff2"
-            as="font"
-            type="font/woff2"
-            crossOrigin="anonymous"
-          />
+          <>
+            <link
+              rel="preload"
+              href="/fonts/InterVariable.woff2"
+              as="font"
+              type="font/woff2"
+              crossOrigin="anonymous"
+            />
+            <link rel="stylesheet" href="/fonts.css" />
+          </>
         )}
-        <link
-          rel="stylesheet"
-          href={handle.props.admin ? "/admin.css" : "/site.css"}
-        />
         {!handle.props.admin &&
           !handle.props.static &&
           handle.props.publicScript && (

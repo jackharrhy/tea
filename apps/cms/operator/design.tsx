@@ -1,6 +1,8 @@
 import type { Handle } from "remix/component";
 import { AdminBrand } from "../app/ui/admin-brand.tsx";
 import { Document } from "../app/ui/document.tsx";
+import { designStyles } from "./design-styles.ts";
+import { operatorStyles } from "./operator-styles.ts";
 
 const colors = [
   ["--canvas", "Page background"],
@@ -56,10 +58,9 @@ export function Design(_handle: Handle) {
       title="Design · teacms"
       admin
       static
+      styles={[operatorStyles, designStyles]}
       head={
         <>
-          <link rel="stylesheet" href="/operator.css" />
-          <link rel="stylesheet" href="/design.css" />
           <script src="/design.js" defer></script>
         </>
       }

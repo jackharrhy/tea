@@ -1,0 +1,546 @@
+import { css } from "remix/component";
+
+export const adminEditorStyles = css({
+  "& .editor-heading": {
+    display: "flex",
+    "justify-content": "space-between",
+    "align-items": "center",
+    gap: "24px",
+    "margin-bottom": "24px",
+  },
+  "& .editor-heading h1": {
+    "font-size": "28px",
+    margin: "10px 0px 5px",
+  },
+  "& .back-link": {
+    "font-size": "12px",
+    color: "var(--muted)",
+  },
+  "& .editor-heading > .muted": {
+    "font-size": "12px",
+  },
+  "& .editor-actions": {
+    display: "flex",
+    "align-items": "center",
+    gap: "16px",
+    "flex-wrap": "wrap",
+  },
+  "& .save-status": {
+    "font-size": "12px",
+    color: "var(--accent)",
+  },
+  "& .save-status.pending": {
+    color: "var(--muted)",
+  },
+  "& .save-status.failed": {
+    color: "var(--danger)",
+  },
+  "& .editor-toolbar": {
+    display: "flex",
+    "align-items": "center",
+    "justify-content": "space-between",
+    gap: "14px",
+    "flex-wrap": "wrap",
+    border: "0px",
+    padding: "6px 0px",
+    "margin-bottom": "18px",
+  },
+  "& .editor-toolbar > div": {
+    display: "flex",
+    "align-items": "center",
+    gap: "10px",
+  },
+  "& .editor-toolbar .muted": {
+    "font-size": "12px",
+    "margin-left": "4px",
+  },
+  "& .editor-canvas": {
+    "min-width": "0px",
+  },
+  "& .page-title-field": {
+    border: "1px solid var(--line)",
+    "border-radius": "var(--radius)",
+    padding: "0px 0px 12px",
+    background: "none",
+  },
+  "& .page-title-field > input": {
+    "font-weight": "550",
+    "letter-spacing": "-0.5px",
+    "font-size": "18px",
+  },
+  "& .block-card": {
+    border: "1px solid var(--line)",
+    background: "var(--paper)",
+    "border-radius": "var(--radius)",
+    "min-width": "0px",
+    position: "relative",
+    padding: "10px 12px",
+    "margin-bottom": "10px",
+  },
+  "& .block-top": {
+    display: "flex",
+    "justify-content": "space-between",
+    "align-items": "center",
+    "font-size": "13px",
+    color: "var(--muted)",
+    "margin-bottom": "5px",
+    gap: "4px",
+  },
+  "& .block-top > span": {
+    display: "flex",
+    "align-items": "center",
+    gap: "7px",
+  },
+  "& .block-index": {
+    color: "var(--muted)",
+    "font-variant-numeric": "tabular-nums",
+    "font-size": "12px",
+  },
+  "& .block-actions": {
+    display: "flex",
+    "align-items": "center",
+    gap: "0px",
+  },
+  "& .block-actions button": {
+    border: "0px",
+    background: "none",
+    "border-radius": "var(--radius-control)",
+    "font-size": "12px",
+    color: "var(--muted)",
+    "min-width": "25px",
+    "min-height": "28px",
+    padding: "3px 5px",
+  },
+  "& .block-actions button:hover:not(:disabled)": {
+    background: "var(--surface)",
+    color: "var(--accent)",
+  },
+  "& .block-card label": {
+    "font-size": "12px",
+  },
+  "& .block-card label:last-child": {
+    "margin-bottom": "0px",
+  },
+  "& .block-card input, & .block-card textarea, & .block-card select": {
+    "font-size": "12px",
+  },
+  "& .compact-field": {
+    "flex-direction": "row",
+    "align-items": "center",
+    "justify-content": "space-between",
+  },
+  "& .compact-field select": {
+    "max-width": "150px",
+  },
+  "& .code-input": {
+    "tab-size": "2",
+    "font-family":
+      "ui-monospace, SFMono-Regular, Consolas, monospace !important",
+    background: "var(--paper) !important",
+    "line-height": "1.7 !important",
+    "font-size": "13px !important",
+  },
+  "& .image-block-preview": {
+    position: "relative",
+    "flex-direction": "column",
+    "align-items": "center",
+    "justify-content": "center",
+    gap: "12px",
+    "border-radius": "var(--radius-control)",
+    "margin-bottom": "18px",
+    "min-height": "130px",
+    display: "block",
+    background: "none",
+    padding: "0px",
+  },
+  "& .image-block-preview img": {
+    "max-height": "240px",
+    "max-width": "100%",
+    "object-fit": "contain",
+  },
+  "& .image-block-preview .button": {
+    "font-size": "12px",
+    padding: "5px 10px",
+    "min-height": "30px",
+  },
+  "& .image-block details": {
+    "border-top": "1px solid var(--line)",
+    "font-size": "12px",
+  },
+  "& .image-block .field-grid": {
+    "grid-template-columns": "repeat(3, minmax(0px, 1fr))",
+    gap: "0px 10px",
+  },
+  "& .image-block label": {
+    "margin-bottom": "12px",
+  },
+  "& .adornment-choices": {
+    display: "flex",
+    "flex-wrap": "wrap",
+    gap: "8px",
+  },
+  "& .adornment-choices .check-label": {
+    padding: "6px",
+    border: "1px solid var(--line)",
+    "border-radius": "var(--radius-control)",
+    "font-size": "12px",
+  },
+  "& .adornment-choices img": {
+    width: "22px",
+    height: "22px",
+    "object-fit": "contain",
+  },
+  "& .add-block": {
+    "border-radius": "var(--radius)",
+    margin: "20px 0px",
+    "border-style": "solid",
+    padding: "12px",
+    background: "none",
+  },
+  "& .add-block > .eyebrow": {
+    display: "block",
+    "margin-bottom": "14px",
+    color: "var(--muted)",
+  },
+  "& .add-block > div": {
+    display: "flex",
+    "flex-wrap": "wrap",
+    gap: "8px",
+  },
+  "& .add-block .button": {
+    "font-size": "12px",
+    "min-height": "30px",
+  },
+  "& .seo-panel": {
+    padding: "16px",
+    "font-size": "12px",
+  },
+  "& .seo-panel > summary": {
+    padding: "0px",
+  },
+  "& .seo-panel .seo-image": {
+    display: "flex",
+    gap: "12px",
+    "align-items": "center",
+    "margin-bottom": "20px",
+  },
+  "& .seo-image img": {
+    width: "70px",
+    height: "48px",
+    "object-fit": "cover",
+  },
+  "& .history-panel": {
+    "max-height": "350px",
+    overflow: "auto",
+  },
+  "& .history-panel h2": {
+    "font-size": "17px",
+  },
+  "& .history-panel p": {
+    "font-size": "12px",
+  },
+  "& .special-block": {
+    padding: "18px",
+    background: "var(--surface)",
+    "border-radius": "var(--radius-control)",
+  },
+  "& .special-block p": {
+    margin: "4px 0px 0px",
+    "font-size": "12px",
+  },
+  "& .navigation-category .block-top": {
+    "margin-bottom": "20px",
+  },
+  "& .navigation-item .block-actions": {
+    "margin-top": "20px",
+  },
+  '& input:not([type="checkbox"]):not([type="color"]):not([type="file"]), & textarea, & select, & .rich-text-wrap':
+    {
+      "border-color": "var(--field-border)",
+    },
+  "& .block-actions button, & .rich-toolbar button": {
+    "min-height": "32px",
+    "min-width": "32px",
+    "font-size": "12px",
+  },
+  "& .block-card label, & .block-card input, & .block-card textarea, & .block-card select":
+    {
+      "font-size": "13px",
+    },
+  "& .page-heading, & .editor-heading": {
+    "margin-bottom": "18px",
+  },
+  "& .panel, & .page-title-field, & .block-card, & .add-block, & .media-inspector, & .adornment-tile, & .media-tile":
+    {
+      border: "0px",
+    },
+  "& .block-list": {
+    "padding-left": "26px",
+  },
+  "& .block-drag": {
+    position: "absolute",
+    left: "-26px",
+    top: "10px",
+    width: "24px",
+    height: "32px",
+    padding: "0px",
+    border: "0px",
+    background: "none",
+    color: "var(--muted)",
+    cursor: "grab",
+    "touch-action": "none",
+    "font-size": "23px",
+  },
+  "& .block-drag:active": {
+    cursor: "grabbing",
+    color: "var(--accent)",
+  },
+  "& .block-drag:hover": {
+    color: "var(--accent)",
+    background: "var(--accent-soft)",
+    "border-radius": "var(--radius-control)",
+  },
+  "& .block-card.drop-target": {
+    "box-shadow": "0 -3px var(--accent)",
+  },
+  "& .button.chosen": {
+    background: "var(--accent-soft)",
+    color: "var(--accent)",
+  },
+  "& .image-block-preview > .button": {
+    margin: "10px 0px",
+  },
+  "& .image-block-preview .composition": {
+    "max-width": "320px",
+    margin: "auto",
+  },
+  "& .image-block-preview .composition-photo": {
+    display: "block",
+    width: "100%",
+    height: "auto",
+    "max-width": "none",
+    "max-height": "none",
+    margin: "0px",
+  },
+  "& .image-block-preview .composition-layer": {
+    width: "auto",
+    height: "auto",
+    "max-width": "none",
+    "max-height": "none",
+    margin: "0px",
+  },
+  "& .compact-choices": {
+    display: "flex",
+    "flex-wrap": "wrap",
+    gap: "5px",
+    margin: "10px 0px",
+  },
+  "& .compact-choices .button": {
+    display: "inline-flex",
+    "align-items": "center",
+    gap: "5px",
+    "font-size": "12px",
+  },
+  "& .compact-choices img": {
+    width: "28px",
+    height: "20px",
+    "object-fit": "contain",
+  },
+  "& .adornment-suite .composition": {
+    "max-width": "min(100%, 350px)",
+    margin: "auto",
+  },
+  "& .composition-surround": {
+    padding: "36px",
+    background: "var(--surface)",
+    "border-radius": "6px",
+    overflow: "hidden",
+  },
+  "& .composition": {
+    position: "relative",
+    width: "100%",
+  },
+  "& .composition-photo": {
+    display: "block",
+    width: "100%",
+    height: "auto",
+    "max-height": "none",
+  },
+  "& .composition-placeholder": {
+    "aspect-ratio": "4 / 3",
+    display: "grid",
+    "place-items": "center",
+    background: "var(--paper)",
+    color: "var(--muted)",
+  },
+  "& .composition-layer": {
+    "max-width": "none",
+    "touch-action": "none",
+    "user-select": "none",
+  },
+  '& .composition-layer[role="button"]': {
+    cursor: "grab",
+  },
+  "& .composition-layer.selected": {
+    outline: "2px dashed var(--accent)",
+    "outline-offset": "5px",
+  },
+  "& .placement-controls": {
+    display: "grid",
+    "grid-template-columns": "1fr 1fr",
+    gap: "8px 18px",
+    "align-items": "center",
+    "margin-top": "12px",
+  },
+  "& .placement-controls label": {
+    margin: "0px",
+  },
+  "& .placement-controls output": {
+    "font-size": "12px",
+    color: "var(--muted)",
+  },
+  '& .placement-controls input[type="range"]': {
+    width: "100%",
+    padding: "0px",
+    border: "0px",
+    "accent-color": "var(--accent)",
+  },
+  "& .placement-controls small": {
+    "grid-column": "1 / -1",
+  },
+  "& .image-appearance": {
+    display: "grid",
+    "grid-template-columns": "1fr 1fr",
+    gap: "10px 16px",
+    margin: "12px 0px",
+  },
+  "& .image-appearance label": {
+    "min-width": "0px",
+    margin: "0px",
+  },
+  '& .image-appearance input[type="range"]': {
+    width: "100%",
+    padding: "0px",
+    border: "0px",
+    "accent-color": "var(--accent)",
+  },
+  '& .image-appearance input[type="color"]': {
+    width: "100%",
+    height: "32px",
+  },
+  "& .image-appearance span": {
+    "font-size": "12px",
+  },
+  "& .adornment-workbench .composition-surround": {
+    padding: "32px",
+  },
+  "& .composition-viewport": {
+    position: "relative",
+    margin: "auto",
+  },
+  "& .composition-scene": {
+    display: "flex",
+    "flex-direction": "column",
+    position: "absolute",
+    top: "0px",
+    left: "0px",
+    "transform-origin": "left top",
+    "line-height": "1.5",
+    color: "initial",
+  },
+  "& .adornment-workbench .composition": {
+    position: "relative",
+    display: "block",
+    "max-width": "100%",
+    "flex-shrink": "0",
+    "align-self": "flex-start",
+    margin: "0px",
+  },
+  "& .adornment-workbench .composition-photo": {
+    display: "block",
+    "max-width": "100%",
+    width: "auto",
+    height: "auto",
+    "max-height": "none",
+    "object-fit": "contain",
+    margin: "0px",
+    "border-radius": "0px",
+  },
+  "& .adornment-workbench .composition-layer": {
+    "max-width": "none",
+    width: "auto",
+    height: "auto",
+    "max-height": "none",
+    margin: "0px",
+    "border-radius": "0px",
+  },
+  "& .preview-photo-settings": {
+    "margin-bottom": "16px",
+  },
+  "@media (max-width: 800px)": {
+    "& .editor-actions": {
+      "flex-direction": "column",
+      "align-items": "flex-end",
+      gap: "6px",
+    },
+    "& .editor-heading h1": {
+      "font-size": "25px",
+    },
+    "& .editor-toolbar": {
+      gap: "12px",
+    },
+  },
+  "@media (max-width: 540px)": {
+    "& .block-top": {
+      "align-items": "flex-start",
+      "flex-flow": "column wrap",
+      gap: "5px",
+    },
+    "& .block-actions": {
+      "align-self": "flex-end",
+    },
+    "& .block-card": {
+      padding: "8px",
+    },
+    "& .editor-toolbar > div": {
+      "flex-wrap": "wrap",
+    },
+    "& .editor-toolbar .button.small": {
+      "font-size": "12px",
+    },
+    "& .editor-heading .button": {
+      padding: "8px 10px",
+      "font-size": "12px",
+    },
+    "& .editor-heading .save-status": {
+      "font-size": "12px",
+    },
+    "& .image-block .field-grid": {
+      "grid-template-columns": "repeat(2, minmax(0px, 1fr))",
+    },
+    "& .navigation-item > .block-actions": {
+      "grid-column": "1 / -1",
+      margin: "0px",
+    },
+    "& .editor-heading": {
+      "align-items": "flex-start",
+      "flex-wrap": "wrap",
+    },
+    "& .editor-heading h1": {
+      "overflow-wrap": "anywhere",
+    },
+    "& .editor-actions": {
+      "flex-shrink": "0",
+      width: "100%",
+    },
+    "& .block-list": {
+      "padding-left": "24px",
+    },
+    "& .composition-surround": {
+      padding: "24px",
+    },
+    "& .placement-controls": {
+      "grid-template-columns": "1fr",
+    },
+  },
+});

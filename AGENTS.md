@@ -13,6 +13,8 @@ Keep Markdown tables unpadded and put `<!-- prettier-ignore -->` immediately bef
 
 Apps import packages; packages must not import apps. Use Remix 3 for app routing, controllers, middleware, and UI. Read the [Remix skill](.agents/skills/remix/SKILL.md) and relevant installed guides before changing framework behavior. Put Node and Cloudflare runtime rules in the relevant workspace guide.
 
+Use Remix `css(...)` mixins for static UI styles. Keep inline `style` for values computed at runtime. A small stylesheet is fine for CSS features the mixin cannot express, such as `@font-face`.
+
 Keep behavior owned by one app inside that app, even when it has a clean internal interface. Extract a package when another consumer needs it or the module is meant to be embedded by independent hosts.
 
 Prefer interfaces, plain objects, and functions that close over private state. Do not add TypeScript `namespace` declarations or classes just to group functions or state. Use a class only when an external API requires one.
