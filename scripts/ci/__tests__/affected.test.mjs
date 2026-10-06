@@ -17,7 +17,7 @@ const workspaces = [
   },
   { path: "packages/rich-text", name: "@tea/rich-text", manifest: {} },
   {
-    path: "packages/cms-edge",
+    path: "apps/cms-edge",
     name: "@tea/cms-edge",
     manifest: {
       dependencies: { "@tea/request-body": "0.1.0" },
@@ -75,7 +75,7 @@ test("a package change reaches its transitive app consumers", () => {
 
 test("edge and documentation changes do not start CMS checks", () => {
   assert.deepEqual(
-    selectChecks(["packages/cms-edge/app/index.tsx"], workspaces),
+    selectChecks(["apps/cms-edge/app/index.tsx"], workspaces),
     checks({ edge: true }),
   );
   assert.deepEqual(

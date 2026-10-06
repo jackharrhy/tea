@@ -28,7 +28,7 @@ export type Entry = {
   publishedAt: string | null;
 };
 
-export type D1Statement = {
+type D1Statement = {
   bind(...values: unknown[]): D1Statement;
   first<T = Record<string, unknown>>(): Promise<T | null>;
   all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
@@ -40,12 +40,12 @@ export type D1Database = {
   batch(statements: D1Statement[]): Promise<unknown>;
 };
 
-export type R2Object = {
+type R2Object = {
   body: ReadableStream;
   httpMetadata?: { contentType?: string };
   size: number;
 };
-export type R2Bucket = {
+type R2Bucket = {
   put(
     key: string,
     value: ArrayBuffer | ReadableStream,

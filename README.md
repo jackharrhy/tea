@@ -8,6 +8,7 @@ a Remix 3 monorepo for personal apps and packages.
 | Workspace | What it runs | Guide |
 | --- | --- | --- |
 | [`@tea/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
+| [`@tea/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
 | [`@tea/shell-mcp`](apps/shell-mcp/) | Shell MCP, job lifecycle, and Node host | [README](apps/shell-mcp/README.md) |
 
 ### Packages
@@ -15,7 +16,6 @@ a Remix 3 monorepo for personal apps and packages.
 <!-- prettier-ignore -->
 | Workspace | What it provides | Guide |
 | --- | --- | --- |
-| [`@tea/cms-edge`](packages/cms-edge/) | CMS runtime, content APIs, and a Worker host example | [README](packages/cms-edge/README.md) |
 | [`@tea/json-schema`](packages/json-schema/) | Remix data schemas with JSON Schema descriptions | [README](packages/json-schema/README.md) |
 | [`@tea/logger`](packages/logger/) | Request and job logging primitives | [README](packages/logger/README.md) |
 | [`@tea/mcp`](packages/mcp/) | MCP tools, resources, and Streamable HTTP handler | [README](packages/mcp/README.md) |

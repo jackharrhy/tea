@@ -4,7 +4,7 @@ import { css } from "./styles.ts";
 
 type Media = { id: string; filename: string };
 
-export function AdminDocument(
+function AdminDocument(
   handle: Handle<{
     siteName: string;
     title: string;

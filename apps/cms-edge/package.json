@@ -1,0 +1,23 @@
+{
+  "name": "@tea/cms-edge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "test": "cd ../.. && NODE_ENV=test remix test --type server 'apps/cms-edge/**/*.test.{ts,tsx}'",
+    "check": "wrangler types worker-configuration.d.ts && npm run typecheck && npm test && wrangler deploy --dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@tea/logger": "0.1.0",
+    "@tea/request-body": "0.1.0",
+    "remix": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.45.0"
+  }
+}

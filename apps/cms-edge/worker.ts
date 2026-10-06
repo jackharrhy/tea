@@ -1,10 +1,10 @@
-import { createEdgeRouter, type EdgeConfig } from "@tea/cms-edge";
+import { createEdgeRouter, type EdgeConfig } from "./app/index.tsx";
 import { createLogger } from "@tea/logger";
 
-const logger = createLogger({ service: "cms-edge-example" });
+const logger = createLogger({ service: "cms-edge" });
 
 const config: EdgeConfig = {
-  siteName: "Example TeaCMS site",
+  siteName: "TeaCMS Edge",
   collections: [
     {
       name: "pages",
