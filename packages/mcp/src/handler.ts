@@ -47,7 +47,11 @@ import {
   ResourceVariables,
   ToolInput,
 } from "./context.ts";
-import { ForbiddenError, InvalidArgumentsError, ToolError } from "./errors.ts";
+import {
+  isForbiddenError,
+  isInvalidArgumentsError,
+  isToolError,
+} from "./errors.ts";
 import {
   ErrorCode,
   isJsonRpcMessage,
@@ -591,7 +595,7 @@ async function callTool(
     );
   } catch (error) {
     log?.set({ mcp: { is_error: true } });
-    if (error instanceof InvalidArgumentsError) {
+    if (isInvalidArgumentsError(error)) {
       return json(
         replyError(id, ErrorCode.InvalidParams, error.message, {
           issues: error.issues,
@@ -599,7 +603,7 @@ async function callTool(
         200,
       );
     }
-    if (error instanceof ForbiddenError) {
+    if (isForbiddenError(error)) {
       return json(replyError(id, ErrorCode.InvalidParams, error.message), 200);
     }
 
@@ -643,7 +647,7 @@ function runChain(
       let output = await entry.handler(ctx);
       return toResult(output, entry.tool.descriptor.outputSchema !== undefined);
     } catch (error) {
-      if (error instanceof ToolError) {
+      if (isToolError(error)) {
         return {
           content: [{ type: "text", text: error.message }],
           isError: true,

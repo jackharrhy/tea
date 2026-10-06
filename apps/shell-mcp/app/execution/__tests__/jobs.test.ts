@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import test from "node:test";
-import { JobError, JobManager, MockRunner } from "../index.ts";
+import { isJobError, createJobManager, createMockRunner } from "../index.ts";
 import type {
   ExecuteInput,
+  JobManager,
+  JobManagerOptions,
   Runner,
   RunnerCallbacks,
   RunnerHandle,
@@ -11,22 +13,27 @@ import type {
   StopReason,
 } from "../index.ts";
 
-class ControlledRunner implements Runner {
-  readonly enabled = true;
+function createControlledRunner(): Runner & {
   runs: {
     job: RunnerJob;
     callbacks: RunnerCallbacks;
     cancellations: StopReason[];
+  }[];
+} {
+  const runs: {
+    job: RunnerJob;
+    callbacks: RunnerCallbacks;
+    cancellations: StopReason[];
   }[] = [];
-  run(job: RunnerJob, callbacks: RunnerCallbacks): RunnerHandle {
-    const run = { job, callbacks, cancellations: [] as StopReason[] };
-    this.runs.push(run);
-    return {
-      cancel: (reason) => {
-        run.cancellations.push(reason);
-      },
-    };
-  }
+  return {
+    enabled: true,
+    runs,
+    run(job: RunnerJob, callbacks: RunnerCallbacks): RunnerHandle {
+      const run = { job, callbacks, cancellations: [] as StopReason[] };
+      runs.push(run);
+      return { cancel: (reason) => run.cancellations.push(reason) };
+    },
+  };
 }
 
 const request = (
@@ -34,15 +41,15 @@ const request = (
   command = "irrelevant mock input",
 ): ExecuteInput => ({ command, idempotencyKey });
 const hasCode = (code: string) => (error: unknown) =>
-  error instanceof JobError && error.code === code;
+  isJobError(error) && error.code === code;
 
-function setup(options: ConstructorParameters<typeof JobManager>[0] = {}) {
-  const runner = new ControlledRunner();
-  return { runner, manager: new JobManager({ runner, ...options }) };
+function setup(options: JobManagerOptions = {}) {
+  const runner = createControlledRunner();
+  return { runner, manager: createJobManager({ runner, ...options }) };
 }
 
 test("production/default construction refuses execution", () => {
-  const manager = new JobManager();
+  const manager = createJobManager();
   assert.throws(
     () => manager.execute("owner", request()),
     hasCode("RUNNER_DISABLED"),
@@ -50,7 +57,9 @@ test("production/default construction refuses execution", () => {
 });
 
 test("mock runner never interprets command and retains success and output", async () => {
-  const manager = new JobManager({ runner: new MockRunner({ delayMs: 1 }) });
+  const manager = createJobManager({
+    runner: createMockRunner({ delayMs: 1 }),
+  });
   const first = manager.execute(
     "owner",
     request("mock-only", "exit 79; this-is-never-evaluated"),
@@ -278,7 +287,7 @@ test("close cancels live work, rejects new work and retains readable results", (
 });
 
 test("runtime input validation does not rely on MCP schemas", () => {
-  const manager = new JobManager({ runner: new MockRunner() });
+  const manager = createJobManager({ runner: createMockRunner() });
   const badInputs = [
     null,
     [],
@@ -315,12 +324,12 @@ test("runtime input validation does not rely on MCP schemas", () => {
     { maxTimeoutMs: 0 },
     { defaultTimeoutMs: 300_001 },
   ]) {
-    assert.throws(() => new JobManager(options), hasCode("INVALID_INPUT"));
+    assert.throws(() => createJobManager(options), hasCode("INVALID_INPUT"));
   }
 });
 
 test("synchronous completion and startup failure are retained without automatic retries", () => {
-  const manager = new JobManager({
+  const manager = createJobManager({
     runner: {
       enabled: true,
       run(_job, callbacks) {
@@ -331,7 +340,7 @@ test("synchronous completion and startup failure are retained without automatic 
   });
   assert.equal(manager.execute("owner", request()).job.status, "succeeded");
   let attempts = 0;
-  const failed = new JobManager({
+  const failed = createJobManager({
     runner: {
       enabled: true,
       run() {
@@ -349,7 +358,7 @@ test("synchronous completion and startup failure are retained without automatic 
 
 test("a broken cancellation never falsely frees an execution slot", () => {
   let callbacks!: RunnerCallbacks;
-  const manager = new JobManager({
+  const manager = createJobManager({
     maxConcurrent: 1,
     runner: {
       enabled: true,
@@ -375,7 +384,9 @@ test("a broken cancellation never falsely frees an execution slot", () => {
 });
 
 test("mock cancellation actually clears its pending completion", async () => {
-  const manager = new JobManager({ runner: new MockRunner({ delayMs: 25 }) });
+  const manager = createJobManager({
+    runner: createMockRunner({ delayMs: 25 }),
+  });
   const { job } = manager.execute("owner", request());
   assert.equal(manager.cancel("owner", job.jobId).status, "cancelled");
   await delay(40);
@@ -389,7 +400,7 @@ test("reentrant cancellation during run is delivered once a handle exists", () =
   let callbacks!: RunnerCallbacks;
   const cancellations: StopReason[] = [];
   let manager!: JobManager;
-  manager = new JobManager({
+  manager = createJobManager({
     maxConcurrent: 1,
     runner: {
       enabled: true,
@@ -418,7 +429,7 @@ test("reentrant cancellation during run is delivered once a handle exists", () =
 test("reentrant cancellation failure cannot be mislabeled as a startup failure", () => {
   let callbacks!: RunnerCallbacks;
   let manager!: JobManager;
-  manager = new JobManager({
+  manager = createJobManager({
     maxConcurrent: 1,
     runner: {
       enabled: true,
@@ -459,7 +470,7 @@ test("diagnostics are byte-limited and an invalid exit is never success", () => 
 });
 
 test("null timeout is invalid even when bypassing a schema", () => {
-  const manager = new JobManager({ runner: new MockRunner() });
+  const manager = createJobManager({ runner: createMockRunner() });
   assert.throws(
     () =>
       manager.execute("owner", {

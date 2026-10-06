@@ -3,7 +3,7 @@ import { createRequestListener } from "remix/node-fetch-server";
 import { assets } from "./app/assets.ts";
 import { loadSites, parseOperatorOrigin } from "./config.ts";
 import { createApp } from "./app.ts";
-import { OperatorStore } from "./operator/store.ts";
+import { createOperatorStore } from "./operator/store.ts";
 import { resolve } from "node:path";
 import { createLogger } from "@tea/logger";
 const sites = await loadSites();
@@ -14,7 +14,7 @@ const operatorOrigin = parseOperatorOrigin(
 const operator = operatorOrigin
   ? {
       origin: operatorOrigin,
-      store: new OperatorStore(
+      store: createOperatorStore(
         resolve(process.env.TEA_DATA_DIR ?? "data", "operator", "operator.db"),
       ),
     }

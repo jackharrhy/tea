@@ -1,15 +1,15 @@
-import { createToolController, ToolError } from "@tea/mcp";
+import { createToolController, createToolError } from "@tea/mcp";
 import { shellTools } from "../tools.ts";
 import { Identity } from "../middleware/security.ts";
 import { ownerKey } from "../auth/types.ts";
-import { JobError, type JobManager } from "../execution/index.ts";
+import { isJobError, type JobManager } from "../execution/index.ts";
 
 function invoke<T>(operation: () => T): T {
   try {
     return operation();
   } catch (error) {
-    if (error instanceof JobError)
-      throw new ToolError(`${error.code}: ${error.message}`);
+    if (isJobError(error))
+      throw createToolError(`${error.code}: ${error.message}`);
     throw error;
   }
 }
@@ -20,7 +20,7 @@ export function shellController(jobs: JobManager) {
       async (ctx, next) => {
         const identity = ctx.get(Identity);
         if (!identity || identity.expiresAt <= Date.now())
-          throw new ToolError(
+          throw createToolError(
             "Authentication expired; authenticate again before calling a tool",
           );
         return next();

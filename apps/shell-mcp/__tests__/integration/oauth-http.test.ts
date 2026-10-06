@@ -10,7 +10,10 @@ import {
 import { createApp } from "../../app/router.ts";
 import { createFourormIdentity } from "../../app/auth/fourorm.ts";
 import { readConfig } from "../../app/config.ts";
-import { JobManager, MockRunner } from "../../app/execution/index.ts";
+import {
+  createJobManager,
+  createMockRunner,
+} from "../../app/execution/index.ts";
 import { LATEST_PROTOCOL_VERSION, MetaKey } from "@tea/mcp";
 
 const issuer = "https://4orm.harrhy.xyz";
@@ -100,7 +103,7 @@ for (const selectorless of [false, true])
         introspectionClientSecret: "introspection-secret",
         fetch: wireFetch,
       });
-      const jobs = new JobManager({ runner: new MockRunner() });
+      const jobs = createJobManager({ runner: createMockRunner() });
       t.after(() => jobs.close());
       const config = readConfig({
         SHELL_MODE: "fourorm",

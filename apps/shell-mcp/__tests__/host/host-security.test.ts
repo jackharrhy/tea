@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { JobManager } from "../../app/execution/job-manager.ts";
-import { SystemdRunner } from "../../app/systemd-runner.ts";
+import { createJobManager } from "../../app/execution/job-manager.ts";
+import { createSystemdRunner } from "../../app/systemd-runner.ts";
 const enabled = process.env.NEWPORT_REAL_TEST === "1";
 async function run(command: string, timeoutMs = 20000) {
-  const jobs = new JobManager({
-    runner: new SystemdRunner("/usr/local/libexec/newport-shell-job"),
+  const jobs = createJobManager({
+    runner: createSystemdRunner("/usr/local/libexec/newport-shell-job"),
   });
   const { job } = jobs.execute("fixture", {
     command,
@@ -106,8 +106,8 @@ test(
   "real two-slot capacity and double-fork cleanup",
   { skip: !enabled },
   async () => {
-    const jobs = new JobManager({
-      runner: new SystemdRunner("/usr/local/libexec/newport-shell-job"),
+    const jobs = createJobManager({
+      runner: createSystemdRunner("/usr/local/libexec/newport-shell-job"),
     });
     const command = python(`import os,time
 if os.fork()==0:

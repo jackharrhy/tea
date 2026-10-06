@@ -83,18 +83,16 @@ export function match<T, E extends Error, R>(
 
 type IsAny<T> = 0 extends 1 & T ? true : false;
 
-export namespace wrap {
-  export type ReturnType<T> =
-    IsAny<T> extends true
-      ? Result<any, Error>
-      : [T] extends [never]
-        ? Result<never, Error>
-        : T extends PromiseLike<infer U>
-          ? Promise<Result<U, Error>>
-          : Result<T, Error>;
-}
+export type WrapResult<T> =
+  IsAny<T> extends true
+    ? Result<any, Error>
+    : [T] extends [never]
+      ? Result<never, Error>
+      : T extends PromiseLike<infer U>
+        ? Promise<Result<U, Error>>
+        : Result<T, Error>;
 
-export function wrap<T>(fn: () => T): wrap.ReturnType<T>;
+export function wrap<T>(fn: () => T): WrapResult<T>;
 export function wrap(
   fn: () => unknown,
 ): Result<unknown, Error> | Promise<Result<unknown, Error>> {
@@ -123,26 +121,26 @@ export function partition<T, E extends Error>(
   ];
 }
 
-export class RetryError extends Error {
-  override name = "RetryError";
-
-  constructor(attempts: number) {
-    super(`Failed after ${attempts} attempts`);
-  }
+export interface RetryError extends Error {
+  name: "RetryError";
 }
 
-export namespace retry {
-  export interface Options<E extends Error> {
-    times: number;
-    delay: number;
-    backoff?: "constant" | "linear" | "exponential";
-    when?: (error: E, attempts: number) => boolean;
-  }
+export function createRetryError(attempts: number): RetryError {
+  return Object.assign(new Error(`Failed after ${attempts} attempts`), {
+    name: "RetryError" as const,
+  });
+}
+
+export interface RetryOptions<E extends Error> {
+  times: number;
+  delay: number;
+  backoff?: "constant" | "linear" | "exponential";
+  when?: (error: E, attempts: number) => boolean;
 }
 
 export async function retry<T, E extends Error>(
   fn: () => Promise<Result<T, E>>,
-  options: retry.Options<E>,
+  options: RetryOptions<E>,
 ): Promise<Result<T, E | RetryError>> {
   if (options.times <= 0)
     throw new RangeError("Retry times must be greater than 0");
@@ -164,5 +162,5 @@ export async function retry<T, E extends Error>(
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
-  return failure(new RetryError(attempts));
+  return failure(createRetryError(attempts));
 }

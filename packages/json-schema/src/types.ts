@@ -18,7 +18,7 @@ export interface JSONSchema {
   $id?: string;
   $ref?: string;
   $defs?: Record<string, JSONSchema>;
-  type?: JSONSchema.TypeName | JSONSchema.TypeName[];
+  type?: JSONSchemaTypeName | JSONSchemaTypeName[];
   enum?: readonly unknown[];
   const?: unknown;
   properties?: Record<string, JSONSchema>;
@@ -48,19 +48,16 @@ export interface JSONSchema {
   writeOnly?: boolean;
 }
 
-export namespace JSONSchema {
-  /** The seven primitive types 2020-12 names in `type`. */
-  export type TypeName =
-    | "string"
-    | "number"
-    | "integer"
-    | "boolean"
-    | "object"
-    | "array"
-    | "null";
-  /** Which side of a `transform` to describe: what a caller sends, or what the parser yields. */
-  export type Direction = "input" | "output";
-}
+export type JSONSchemaTypeName =
+  | "string"
+  | "number"
+  | "integer"
+  | "boolean"
+  | "object"
+  | "array"
+  | "null";
+
+export type JSONSchemaDirection = "input" | "output";
 
 /** Keywords that describe a schema without changing what it accepts. */
 export interface Annotations<Output> {

@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, writeFile, symlink, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { openDatabase } from "../../data/database.ts";
-import { ContentStore } from "../../data/content.ts";
+import { createContentStore } from "../../data/content.ts";
 import { createTeaRouter } from "../../router.ts";
 it("confines stored media paths to the upload directory", () => {
   assert.equal(
@@ -23,7 +23,7 @@ it("streams typed media and ranges while rejecting missing files and symlinks", 
   const previous = process.env.TEA_DATA_DIR;
   process.env.TEA_DATA_DIR = directory;
   const database = await openDatabase(":memory:");
-  const store = new ContentStore(database.sqlite);
+  const store = createContentStore(database.sqlite);
   try {
     await mkdir(join(directory, "uploads"));
     await writeFile(join(directory, "uploads", "test.png"), "0123456789");

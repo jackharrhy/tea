@@ -12,7 +12,12 @@ import { lazy as dataLazy } from "remix/data-schema/lazy";
 
 import type { JSONSchemaConversionError } from "./error.ts";
 import type { Describe, DescribeContext } from "./node.ts";
-import type { DescribedSchema, JSONSchema, Schema } from "./types.ts";
+import type {
+  DescribedSchema,
+  JSONSchema,
+  JSONSchemaTypeName,
+  Schema,
+} from "./types.ts";
 
 import { describeChild, named, nodeOf, wrap } from "./node.ts";
 
@@ -58,7 +63,7 @@ function fixed(json: JSONSchema): Describe {
 }
 
 /** The JSON type of a literal, so `const` and `enum` also document what kind of value they are. */
-function typeOf(value: unknown): JSONSchema.TypeName | undefined {
+function typeOf(value: unknown): JSONSchemaTypeName | undefined {
   if (typeof value === "string") return "string";
   if (typeof value === "boolean") return "boolean";
   if (typeof value === "number")
@@ -68,7 +73,7 @@ function typeOf(value: unknown): JSONSchema.TypeName | undefined {
 }
 
 /** The scalar types `nullable` widens with `"null"` in place of an `anyOf`. */
-const SCALAR_TYPES = new Set<JSONSchema.TypeName>([
+const SCALAR_TYPES = new Set<JSONSchemaTypeName>([
   "string",
   "number",
   "integer",

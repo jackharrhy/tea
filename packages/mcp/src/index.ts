@@ -18,7 +18,16 @@ export type {
   ResourceVariableValues,
   ToolContext,
 } from "./context.ts";
-export { ForbiddenError, InvalidArgumentsError, ToolError } from "./errors.ts";
+export {
+  createForbiddenError,
+  createInvalidArgumentsError,
+  createToolError,
+} from "./errors.ts";
+export type {
+  ForbiddenError,
+  InvalidArgumentsError,
+  ToolError,
+} from "./errors.ts";
 export { createHandler } from "./handler.ts";
 export type { CacheScope, HandlerOptions, McpHandler } from "./handler.ts";
 export { ErrorCode } from "./jsonrpc.ts";

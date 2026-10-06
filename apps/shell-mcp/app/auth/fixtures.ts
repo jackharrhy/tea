@@ -1,14 +1,14 @@
-import { AuthenticationError, type IdentityProvider } from "./types.ts";
+import { authenticationError, type IdentityProvider } from "./types.ts";
 
 export const lockedIdentity: IdentityProvider = {
   async verify() {
-    throw new AuthenticationError();
+    throw authenticationError();
   },
 };
 
 export const demoIdentity: IdentityProvider = {
   async verify(token) {
-    if (token !== "demo-only-token") throw new AuthenticationError();
+    if (token !== "demo-only-token") throw authenticationError();
     return {
       issuer: "urn:tea:shell-mcp:demo",
       subject: "demo",

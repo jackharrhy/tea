@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { JobManager } from "../../app/execution/job-manager.ts";
-import { SystemdRunner } from "../../app/systemd-runner.ts";
+import {
+  createJobManager,
+  type JobManager,
+} from "../../app/execution/job-manager.ts";
+import { createSystemdRunner } from "../../app/systemd-runner.ts";
 const enabled = process.env.NEWPORT_REAL_TEST === "1";
 async function done(jobs: JobManager, id: string) {
   for (let i = 0; i < 200; i++) {
@@ -15,8 +18,8 @@ test(
   "real UID, multiple cwd, stderr and exit status",
   { skip: !enabled },
   async () => {
-    const jobs = new JobManager({
-      runner: new SystemdRunner("/usr/local/libexec/newport-shell-job"),
+    const jobs = createJobManager({
+      runner: createSystemdRunner("/usr/local/libexec/newport-shell-job"),
     });
     for (const cwd of ["/home/newport-exec", "/usr"]) {
       const { job } = jobs.execute("fixture", {
@@ -35,8 +38,8 @@ test(
   "real jobs cannot read host-mounted LAN storage",
   { skip: !enabled },
   async () => {
-    const jobs = new JobManager({
-      runner: new SystemdRunner("/usr/local/libexec/newport-shell-job"),
+    const jobs = createJobManager({
+      runner: createSystemdRunner("/usr/local/libexec/newport-shell-job"),
     });
     const { job } = jobs.execute("fixture", {
       command: "test ! -r /mnt/stash/newport",
@@ -49,8 +52,8 @@ test(
   "real jobs deny private, local and hairpin egress",
   { skip: !enabled },
   async () => {
-    const jobs = new JobManager({
-      runner: new SystemdRunner("/usr/local/libexec/newport-shell-job"),
+    const jobs = createJobManager({
+      runner: createSystemdRunner("/usr/local/libexec/newport-shell-job"),
     });
     const code = `import socket, errno
 for address in ['127.0.0.1','10.0.0.80','100.123.66.70','169.254.169.254','172.17.0.1','192.168.1.1','173.35.51.79','::1','fd7a:115c:a1e0::42fb:4246','2607:fea8:ff01:7bb8::774f']:
@@ -77,8 +80,8 @@ test(
   "real descendant cleanup, cancellation, timeout and bounded flood",
   { skip: !enabled },
   async () => {
-    const jobs = new JobManager({
-      runner: new SystemdRunner("/usr/local/libexec/newport-shell-job"),
+    const jobs = createJobManager({
+      runner: createSystemdRunner("/usr/local/libexec/newport-shell-job"),
       maxOutputBytes: 1000,
     });
     let { job } = jobs.execute("fixture", {

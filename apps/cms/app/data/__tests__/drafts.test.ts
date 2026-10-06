@@ -1,12 +1,12 @@
 import { it } from "remix/test";
 import * as assert from "remix/assert";
 import { openDatabase } from "../database.ts";
-import { ContentStore } from "../content.ts";
+import { createContentStore } from "../content.ts";
 
 it("keeps new and existing pages private until publish, with independent revisions", async () => {
   const { sqlite } = await openDatabase(":memory:");
   try {
-    const store = new ContentStore(sqlite);
+    const store = createContentStore(sqlite);
     store.createPage("Private page", "private-page");
     const first = store.editorPage("private-page")!;
     assert.equal(store.page("private-page"), null);
@@ -72,7 +72,7 @@ it("keeps new and existing pages private until publish, with independent revisio
 it("protects draft media and refuses to publish over a newer public version", async () => {
   const { sqlite } = await openDatabase(":memory:");
   try {
-    const store = new ContentStore(sqlite);
+    const store = createContentStore(sqlite);
     const home = store.homepage();
     const blocks = [
       {

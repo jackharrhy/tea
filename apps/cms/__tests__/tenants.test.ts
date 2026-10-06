@@ -9,7 +9,7 @@ import luke from "@tea/cms/sites/luke";
 import { createApp } from "../app.ts";
 import { seedFixture } from "./fixture.ts";
 import { openDatabase } from "../app/data/database.ts";
-import { ContentStore } from "../app/data/content.ts";
+import { createContentStore } from "../app/data/content.ts";
 
 it("isolates host routing, sessions, writes, uploads, optional features and analytics", async () => {
   const dir = await mkdtemp(join(tmpdir(), "teacms-tenants-"));
@@ -92,7 +92,7 @@ it("isolates host routing, sessions, writes, uploads, optional features and anal
     for (const site of sites) {
       const { sqlite } = await openDatabase(join(site.dataDir, "tea.db"));
       try {
-        const store = new ContentStore(sqlite);
+        const store = createContentStore(sqlite);
         store.saveSite(
           {
             ...store.site(),

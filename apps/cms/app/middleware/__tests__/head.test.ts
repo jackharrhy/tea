@@ -4,8 +4,8 @@ import * as assert from "remix/assert";
 import { createRouter } from "remix/router";
 import { headRequests } from "../head.ts";
 import { openDatabase } from "../../data/database.ts";
-import { ContentStore } from "../../data/content.ts";
-import { AuthStore } from "../../data/auth.ts";
+import { createContentStore } from "../../data/content.ts";
+import { createAuthStore } from "../../data/auth.ts";
 import { createTeaRouter } from "../../router.ts";
 import { routes } from "../../routes.ts";
 import { entryScript } from "../../assets.ts";
@@ -13,14 +13,14 @@ import { entryScript } from "../../assets.ts";
 it("matches GET status and headers for HEAD without bodies or weaker CMS protection", async () => {
   const database = await openDatabase(":memory:");
   try {
-    const store = new ContentStore(database.sqlite);
+    const store = createContentStore(database.sqlite);
     store.createPage("About", "about");
     store.publishDraft("about", store.editorPage("about")!.revision);
     store.createPage("Draft", "draft");
     const user = database.sqlite
       .prepare("INSERT INTO users (email,password_hash) VALUES (?,?)")
       .run("head-test@example.test", "unused-test-hash");
-    const session = new AuthStore(database.sqlite).createSession(
+    const session = createAuthStore(database.sqlite).createSession(
       Number(user.lastInsertRowid),
     );
     const router = createTeaRouter(database, testSite());
@@ -56,7 +56,7 @@ it("matches GET status and headers for HEAD without bodies or weaker CMS protect
       assert.equal(await head.text(), "");
       await get.body?.cancel();
     }
-    assert.ok(new AuthStore(database.sqlite).resolve(session.id));
+    assert.ok(createAuthStore(database.sqlite).resolve(session.id));
     const write = await router.fetch(
       new Request(
         "http://localhost" + routes.admin.save.href({ slug: "about" }),

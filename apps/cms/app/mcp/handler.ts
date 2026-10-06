@@ -1,6 +1,6 @@
 import * as s from "@tea/json-schema";
 import * as checks from "@tea/json-schema/checks";
-import { createHandler, ToolError, tool, tools } from "@tea/mcp";
+import { createHandler, createToolError, tool, tools } from "@tea/mcp";
 import { contentContext } from "../middleware/context.ts";
 
 const declarations = tools({
@@ -43,7 +43,7 @@ mcp.tools.map(declarations.getPage, (context) => {
     context.input.slug === ""
       ? store.homepage()
       : store.page(context.input.slug);
-  if (!page) throw new ToolError("No published page has that slug.");
+  if (!page) throw createToolError("No published page has that slug.");
   return page;
 });
 

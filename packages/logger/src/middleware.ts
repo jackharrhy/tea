@@ -1,6 +1,6 @@
 import type { Middleware } from "remix/router";
 import { createContextKey } from "remix/router";
-import { currentLog, Log, type Logger } from "./index.ts";
+import { createLog, currentLog, type Log, type Logger } from "./index.ts";
 
 declare module "remix/router" {
   interface RequestContext {
@@ -17,7 +17,7 @@ export function log(
   return async (context, next) => {
     const current = currentLog();
     const active =
-      current ?? logger?.open("request") ?? new Log({ kind: "request" });
+      current ?? logger?.open("request") ?? createLog({ kind: "request" });
     context.set(CurrentLog, active, LOG_PROPERTY);
     active.set({ http: { method: context.method } });
 

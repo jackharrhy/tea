@@ -2,7 +2,7 @@
 
 This Remix 3 Node app is the multi-site CMS. It selects sites by hostname and uses [`@tea/rich-text`](../../packages/rich-text/README.md), [`@tea/mcp`](../../packages/mcp/README.md), and other shared packages. Andrew and Luke each keep their presentation and assets under `sites/`, exported as `@tea/cms/sites/andrew` and `@tea/cms/sites/luke`.
 
-`server.ts` starts the server, `config.ts` registers sites and origins, and `app.ts` connects each site to its router. `app/` owns routes, controllers, editor UI, storage, and assets; `operator/` owns the dashboard; `db/` holds SQLite migrations. Keep site code and assets in `sites/<id>/`.
+`server.ts` starts the server, `config.ts` registers sites and origins, and `app.ts` connects each site to its router. `app/` owns routes, controllers, editor UI, storage, and assets; `createContentStore` and `createAuthStore` bind storage to a database. `operator/` owns the dashboard and `createOperatorStore`; `db/` holds SQLite migrations. Keep site code and assets in `sites/<id>/`.
 
 The Node host opens a request record through [`@tea/logger`](../../packages/logger/README.md). MCP handlers enrich that record. Request bodies, headers, and raw URLs are not logged.
 

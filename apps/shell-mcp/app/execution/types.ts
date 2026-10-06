@@ -86,11 +86,15 @@ export type JobErrorCode =
   | "IDEMPOTENCY_CONFLICT"
   | "RUNNER_DISABLED";
 
-export class JobError extends Error {
+export interface JobError extends Error {
+  name: "JobError";
   readonly code: JobErrorCode;
-  constructor(code: JobErrorCode, message: string) {
-    super(message);
-    this.name = "JobError";
-    this.code = code;
-  }
+}
+
+export function createJobError(code: JobErrorCode, message: string): JobError {
+  return Object.assign(new Error(message), { name: "JobError" as const, code });
+}
+
+export function isJobError(error: unknown): error is JobError {
+  return error instanceof Error && error.name === "JobError";
 }

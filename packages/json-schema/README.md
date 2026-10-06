@@ -2,7 +2,7 @@
 
 Schema builders that validate through Remix 3 `remix/data-schema` and describe the same input as JSON Schema 2020-12. CMS and Shell MCP use `@tea/json-schema` and `@tea/json-schema/checks` to define tool inputs. `@tea/mcp` publishes those descriptions to clients.
 
-`src/index.ts` exports builders, parsing, and `toJSONSchema`; `src/checks.ts` exports checks with JSON Schema keywords; `src/coerce.ts` exports coercion helpers. Conversion results use [`@tea/result`](../result/README.md).
+`src/index.ts` exports builders, parsing, `toJSONSchema`, and `createJSONSchemaConversionError`; `src/checks.ts` exports checks with JSON Schema keywords; `src/coerce.ts` exports coercion helpers. Conversion results use [`@tea/result`](../result/README.md).
 
 Run `npm run check --workspace @tea/json-schema` from the root. Changes also need the MCP, CMS, and Shell MCP checks.
 

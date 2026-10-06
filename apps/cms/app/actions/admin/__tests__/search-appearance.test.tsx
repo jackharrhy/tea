@@ -2,8 +2,8 @@ import { testSite } from "../../../__tests__/site.ts";
 import { it } from "remix/test";
 import * as assert from "remix/assert";
 import { openDatabase } from "../../../data/database.ts";
-import { ContentStore } from "../../../data/content.ts";
-import { AuthStore } from "../../../data/auth.ts";
+import { createContentStore } from "../../../data/content.ts";
+import { createAuthStore } from "../../../data/auth.ts";
 import { createTeaRouter } from "../../../router.ts";
 import { searchAppearanceRows } from "../search-appearance.tsx";
 import { pageMetadata } from "../../public-seo.ts";
@@ -11,7 +11,7 @@ import { pageMetadata } from "../../public-seo.ts";
 it("reports live metadata, homepage drafts and unpublished pages without publishing edits", async () => {
   const database = await openDatabase(":memory:");
   try {
-    const store = new ContentStore(database.sqlite);
+    const store = createContentStore(database.sqlite);
     const site = store.site();
     assert.ok(
       store.saveSite({ ...site, description: "Site fallback." }, site.revision)
@@ -79,7 +79,7 @@ it("reports live metadata, homepage drafts and unpublished pages without publish
     const user = database.sqlite
       .prepare("INSERT INTO users (email,password_hash) VALUES (?,?)")
       .run("seo-test@example.test", "unused-test-hash");
-    const session = new AuthStore(database.sqlite).createSession(
+    const session = createAuthStore(database.sqlite).createSession(
       Number(user.lastInsertRowid),
     );
     const router = createTeaRouter(database, testSite());
@@ -107,7 +107,7 @@ it("reports live metadata, homepage drafts and unpublished pages without publish
 it("missing-details filter clears with a description and sharing image, not a title override", async () => {
   const database = await openDatabase(":memory:");
   try {
-    const store = new ContentStore(database.sqlite);
+    const store = createContentStore(database.sqlite);
     database.sqlite
       .prepare(
         "INSERT INTO media(id,filename,mime_type,size,path) VALUES(?,?,?,?,?)",

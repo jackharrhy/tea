@@ -1,6 +1,8 @@
-export { JobManager } from "./job-manager.ts";
-export { MockRunner } from "./runners.ts";
-export { JobError } from "./types.ts";
+export { createJobManager } from "./job-manager.ts";
+export type { JobManager, JobManagerOptions } from "./job-manager.ts";
+export { createMockRunner } from "./runners.ts";
+export { createJobError, isJobError } from "./types.ts";
+export type { JobError } from "./types.ts";
 export type {
   ExecuteInput,
   Runner,

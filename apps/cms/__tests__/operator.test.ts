@@ -6,7 +6,7 @@ import { join } from "node:path";
 import bcrypt from "bcryptjs";
 import { parseFixtureSites } from "./sites.ts";
 import { createApp } from "../app.ts";
-import { OperatorStore } from "../operator/store.ts";
+import { createOperatorStore } from "../operator/store.ts";
 
 it("keeps operator access separate, hands off once, and revokes site access on sign-out", async () => {
   const dir = await mkdtemp(join(tmpdir(), "cms-operator-"));
@@ -33,7 +33,7 @@ it("keeps operator access separate, hands off once, and revokes site access on s
     dir,
   );
   const operatorOrigin = `${host}:4103`;
-  const store = new OperatorStore(":memory:");
+  const store = createOperatorStore(":memory:");
   store.sqlite
     .prepare("INSERT INTO users(email,password_hash) VALUES (?,?)")
     .run("operator@test.local", await bcrypt.hash("operator-test-password", 4));

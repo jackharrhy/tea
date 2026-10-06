@@ -8,8 +8,8 @@ import {
   statSync,
   writeSync,
 } from "node:fs";
-import { DisabledRunner } from "./runners.ts";
-import { JobError } from "./types.ts";
+import { createDisabledRunner } from "./runners.ts";
+import { createJobError } from "./types.ts";
 import type {
   ExecuteInput,
   ExecuteResult,
@@ -22,7 +22,7 @@ import type {
   StopReason,
 } from "./types.ts";
 
-interface JobManagerOptions {
+export interface JobManagerOptions {
   journalFile?: string;
   runner?: Runner;
   maxConcurrent?: number;
@@ -70,7 +70,7 @@ function integer(
   max: number,
 ): number {
   if (!Number.isSafeInteger(value) || value < min || value > max) {
-    throw new JobError(
+    throw createJobError(
       "INVALID_INPUT",
       `${name} must be an integer from ${min} to ${max}`,
     );
@@ -85,7 +85,7 @@ function validateOwner(ownerId: unknown): asserts ownerId is string {
     Buffer.byteLength(ownerId) > MAX_OWNER_BYTES ||
     ownerId.includes("\0")
   ) {
-    throw new JobError(
+    throw createJobError(
       "INVALID_INPUT",
       "A valid authenticated owner is required",
     );
@@ -106,106 +106,101 @@ function boundedText(bytes: Uint8Array | string, maxBytes: number): string {
 }
 
 /** In-memory lifecycle manager. There is deliberately no queue and no retry loop. */
-export class JobManager {
-  private readonly runner: Runner;
-  private readonly maxConcurrent: number;
-  private readonly maxJobs: number;
-  private readonly retentionMs: number;
-  private readonly maxOutputBytes: number;
-  private readonly defaultTimeoutMs: number;
-  private readonly maxTimeoutMs: number;
-  private readonly jobs = new Map<string, RecordState>();
-  private readonly idempotency = new Map<string, string>();
-  private activeCount = 0;
-  private closed = false;
-  private readonly journalFile?: string;
+export interface JobManager {
+  execute(ownerId: string, input: ExecuteInput): ExecuteResult;
+  readJob(ownerId: string, jobId: string): JobSnapshot;
+  cancel(ownerId: string, jobId: string): JobSnapshot;
+  close(): void;
+  closeAndWait(timeoutMs?: number): Promise<void>;
+}
 
-  constructor(options: JobManagerOptions = {}) {
-    this.runner = options.runner ?? new DisabledRunner();
-    if (
-      typeof this.runner.enabled !== "boolean" ||
-      typeof this.runner.run !== "function"
-    ) {
-      throw new JobError("INVALID_INPUT", "Invalid runner");
-    }
-    this.maxJobs = integer("maxJobs", options.maxJobs ?? 128, 1, 1_024);
-    this.maxConcurrent = integer(
-      "maxConcurrent",
-      options.maxConcurrent ?? Math.min(2, this.maxJobs),
-      1,
-      Math.min(16, this.maxJobs),
+export function createJobManager(options: JobManagerOptions = {}): JobManager {
+  const jobs = new Map<string, RecordState>();
+  const idempotency = new Map<string, string>();
+  let activeCount = 0;
+  let closed = false;
+
+  const runner = options.runner ?? createDisabledRunner();
+  if (typeof runner.enabled !== "boolean" || typeof runner.run !== "function") {
+    throw createJobError("INVALID_INPUT", "Invalid runner");
+  }
+  const maxJobs = integer("maxJobs", options.maxJobs ?? 128, 1, 1_024);
+  const maxConcurrent = integer(
+    "maxConcurrent",
+    options.maxConcurrent ?? Math.min(2, maxJobs),
+    1,
+    Math.min(16, maxJobs),
+  );
+  const retentionMs = integer(
+    "retentionMs",
+    options.retentionMs ?? 900_000,
+    1,
+    86_400_000,
+  );
+  const maxOutputBytes = integer(
+    "maxOutputBytes",
+    options.maxOutputBytes ?? 65_536,
+    1,
+    1_048_576,
+  );
+  // Two fixed buffers per job; no unbounded list of tiny output chunks.
+  if (maxJobs * maxOutputBytes * 2 > MAX_OUTPUT_PREALLOCATION) {
+    throw createJobError(
+      "INVALID_INPUT",
+      "Total output buffer allocation must not exceed 64 MiB",
     );
-    this.retentionMs = integer(
-      "retentionMs",
-      options.retentionMs ?? 900_000,
-      1,
-      86_400_000,
-    );
-    this.maxOutputBytes = integer(
-      "maxOutputBytes",
-      options.maxOutputBytes ?? 65_536,
-      1,
-      1_048_576,
-    );
-    // Two fixed buffers per job; no unbounded list of tiny output chunks.
-    if (this.maxJobs * this.maxOutputBytes * 2 > MAX_OUTPUT_PREALLOCATION) {
-      throw new JobError(
-        "INVALID_INPUT",
-        "Total output buffer allocation must not exceed 64 MiB",
-      );
-    }
-    this.maxTimeoutMs = integer(
-      "maxTimeoutMs",
-      options.maxTimeoutMs ?? 300_000,
-      1,
-      300_000,
-    );
-    this.defaultTimeoutMs = integer(
-      "defaultTimeoutMs",
-      options.defaultTimeoutMs ?? Math.min(30_000, this.maxTimeoutMs),
-      1,
-      this.maxTimeoutMs,
-    );
-    this.journalFile = options.journalFile;
-    if (this.journalFile && existsSync(this.journalFile)) {
-      if (statSync(this.journalFile).size > 8_388_608)
-        throw new Error("Journal full; operator reconciliation required");
-      for (const line of readFileSync(this.journalFile, "utf8")
-        .split("\n")
-        .filter(Boolean)) {
-        const entry = JSON.parse(line);
-        const record: RecordState = {
-          ...entry,
-          status: "unknown",
-          finishedAt: null,
-          expiresAt: null,
-          stopReason: null,
-          exitCode: null,
-          signal: null,
-          error:
-            "Outcome unknown after restart; do not replay. Inspect side effects before issuing a new command.",
-          stdout: Buffer.alloc(0),
-          stderr: Buffer.alloc(0),
-          stdoutBytes: 0,
-          stderrBytes: 0,
-          receivedBytes: 0,
-          truncated: false,
-          active: false,
-        };
-        this.jobs.set(record.jobId, record);
-        this.idempotency.set(record.key, record.jobId);
-      }
+  }
+  const maxTimeoutMs = integer(
+    "maxTimeoutMs",
+    options.maxTimeoutMs ?? 300_000,
+    1,
+    300_000,
+  );
+  const defaultTimeoutMs = integer(
+    "defaultTimeoutMs",
+    options.defaultTimeoutMs ?? Math.min(30_000, maxTimeoutMs),
+    1,
+    maxTimeoutMs,
+  );
+  const journalFile = options.journalFile;
+  if (journalFile && existsSync(journalFile)) {
+    if (statSync(journalFile).size > 8_388_608)
+      throw new Error("Journal full; operator reconciliation required");
+    for (const line of readFileSync(journalFile, "utf8")
+      .split("\n")
+      .filter(Boolean)) {
+      const entry = JSON.parse(line);
+      const record: RecordState = {
+        ...entry,
+        status: "unknown",
+        finishedAt: null,
+        expiresAt: null,
+        stopReason: null,
+        exitCode: null,
+        signal: null,
+        error:
+          "Outcome unknown after restart; do not replay. Inspect side effects before issuing a new command.",
+        stdout: Buffer.alloc(0),
+        stderr: Buffer.alloc(0),
+        stdoutBytes: 0,
+        stderrBytes: 0,
+        receivedBytes: 0,
+        truncated: false,
+        active: false,
+      };
+      jobs.set(record.jobId, record);
+      idempotency.set(record.key, record.jobId);
     }
   }
 
-  execute(ownerId: string, input: ExecuteInput): ExecuteResult {
+  function execute(ownerId: string, input: ExecuteInput): ExecuteResult {
     validateOwner(ownerId);
     if (input === null || typeof input !== "object" || Array.isArray(input)) {
-      throw new JobError("INVALID_INPUT", "Execute input must be an object");
+      throw createJobError("INVALID_INPUT", "Execute input must be an object");
     }
     const allowed = new Set(["command", "cwd", "idempotencyKey", "timeoutMs"]);
     if (Object.keys(input).some((key) => !allowed.has(key))) {
-      throw new JobError("INVALID_INPUT", "Unknown execute input field");
+      throw createJobError("INVALID_INPUT", "Unknown execute input field");
     }
     if (
       typeof input.command !== "string" ||
@@ -213,7 +208,7 @@ export class JobManager {
       input.command.includes("\0") ||
       Buffer.byteLength(input.command) > MAX_COMMAND_BYTES
     ) {
-      throw new JobError(
+      throw createJobError(
         "INVALID_INPUT",
         "Command must be nonempty, NUL-free and at most 16384 UTF-8 bytes",
       );
@@ -222,7 +217,7 @@ export class JobManager {
       typeof input.idempotencyKey !== "string" ||
       !/^[A-Za-z0-9._:-]{1,128}$/.test(input.idempotencyKey)
     ) {
-      throw new JobError(
+      throw createJobError(
         "INVALID_INPUT",
         "idempotencyKey must be 1–128 ASCII letters, digits, periods, underscores, colons or hyphens",
       );
@@ -234,45 +229,45 @@ export class JobManager {
         input.cwd.includes("\0") ||
         Buffer.byteLength(input.cwd) > 4096)
     )
-      throw new JobError(
+      throw createJobError(
         "INVALID_INPUT",
         "cwd must be an absolute NUL-free path of at most 4096 bytes",
       );
     const timeoutMs = integer(
       "timeoutMs",
-      input.timeoutMs === undefined ? this.defaultTimeoutMs : input.timeoutMs,
+      input.timeoutMs === undefined ? defaultTimeoutMs : input.timeoutMs,
       1,
-      this.maxTimeoutMs,
+      maxTimeoutMs,
     );
     const key = JSON.stringify([ownerId, input.idempotencyKey]);
     const fingerprint = createHash("sha256")
       .update(JSON.stringify([input.command, input.cwd ?? null, timeoutMs]))
       .digest("hex");
-    this.pruneExpired();
-    const priorId = this.idempotency.get(key);
+    pruneExpired();
+    const priorId = idempotency.get(key);
     if (priorId) {
-      const prior = this.jobs.get(priorId)!;
+      const prior = jobs.get(priorId)!;
       if (prior.fingerprint !== fingerprint) {
-        throw new JobError(
+        throw createJobError(
           "IDEMPOTENCY_CONFLICT",
           "This idempotency key was already used with different input",
         );
       }
-      return { job: this.snapshot(prior), reused: true };
+      return { job: snapshot(prior), reused: true };
     }
-    if (this.closed || !this.runner.enabled)
-      throw new JobError("RUNNER_DISABLED", "Command execution is disabled");
-    if (this.activeCount >= this.maxConcurrent) {
-      throw new JobError(
+    if (closed || !runner.enabled)
+      throw createJobError("RUNNER_DISABLED", "Command execution is disabled");
+    if (activeCount >= maxConcurrent) {
+      throw createJobError(
         "CAPACITY",
         "All execution slots are occupied; no job was queued or started",
       );
     }
     if (
-      [...this.jobs.values()].filter((record) => record.status !== "unknown")
-        .length >= this.maxJobs
+      [...jobs.values()].filter((record) => record.status !== "unknown")
+        .length >= maxJobs
     ) {
-      throw new JobError(
+      throw createJobError(
         "CAPACITY",
         "Retained job capacity reached; no job was queued or started",
       );
@@ -291,8 +286,8 @@ export class JobManager {
       exitCode: null,
       signal: null,
       error: null,
-      stdout: Buffer.alloc(this.maxOutputBytes),
-      stderr: Buffer.alloc(this.maxOutputBytes),
+      stdout: Buffer.alloc(maxOutputBytes),
+      stderr: Buffer.alloc(maxOutputBytes),
       stdoutBytes: 0,
       stderrBytes: 0,
       receivedBytes: 0,
@@ -300,11 +295,11 @@ export class JobManager {
       active: true,
     };
     // Reserve both identity and slot before calling user-supplied runner code.
-    if (this.journalFile) {
-      const fd = openSync(this.journalFile, "a", 0o600);
+    if (journalFile) {
+      const fd = openSync(journalFile, "a", 0o600);
       try {
-        if (statSync(this.journalFile).size > 8_388_608)
-          throw new JobError(
+        if (statSync(journalFile).size > 8_388_608)
+          throw createJobError(
             "CAPACITY",
             "Journal full; operator reconciliation required",
           );
@@ -324,17 +319,14 @@ export class JobManager {
         closeSync(fd);
       }
     }
-    this.jobs.set(record.jobId, record);
-    this.idempotency.set(key, record.jobId);
-    this.activeCount += 1;
-    record.timer = setTimeout(
-      () => this.requestStop(record, "timeout"),
-      timeoutMs,
-    );
+    jobs.set(record.jobId, record);
+    idempotency.set(key, record.jobId);
+    activeCount += 1;
+    record.timer = setTimeout(() => requestStop(record, "timeout"), timeoutMs);
     record.timer.unref();
     let handle: RunnerHandle;
     try {
-      handle = this.runner.run(
+      handle = runner.run(
         Object.freeze({
           jobId: record.jobId,
           command: input.command,
@@ -342,8 +334,8 @@ export class JobManager {
           timeoutMs,
         }),
         {
-          onOutput: (stream, data) => this.appendOutput(record, stream, data),
-          onExit: (exit) => this.finish(record, exit),
+          onOutput: (stream, data) => appendOutput(record, stream, data),
+          onExit: (exit) => finish(record, exit),
           onUncertain: () => {
             record.status = "unknown";
             record.error =
@@ -353,45 +345,48 @@ export class JobManager {
       );
     } catch {
       // A trusted runner that throws is contractually responsible for its own cleanup.
-      this.finish(record, { exitCode: null, error: "Runner failed to start" });
-      return { job: this.snapshot(record), reused: false };
+      finish(record, { exitCode: null, error: "Runner failed to start" });
+      return { job: snapshot(record), reused: false };
     }
     if (record.active) {
       record.handle = handle;
       // Covers a trusted runner that synchronously re-enters manager.cancel().
-      if (record.stopReason !== null) this.signalStop(record);
+      if (record.stopReason !== null) signalStop(record);
     }
-    return { job: this.snapshot(record), reused: false };
+    return { job: snapshot(record), reused: false };
   }
 
-  readJob(ownerId: string, jobId: string): JobSnapshot {
-    return this.snapshot(this.findOwned(ownerId, jobId));
+  function readJob(ownerId: string, jobId: string): JobSnapshot {
+    return snapshot(findOwned(ownerId, jobId));
   }
 
-  cancel(ownerId: string, jobId: string): JobSnapshot {
-    const record = this.findOwned(ownerId, jobId);
-    this.requestStop(record, "cancelled");
-    return this.snapshot(record);
+  function cancel(ownerId: string, jobId: string): JobSnapshot {
+    const record = findOwned(ownerId, jobId);
+    requestStop(record, "cancelled");
+    return snapshot(record);
   }
 
   /** Stop accepting new work and request cancellation. Does not assert cleanup completed. */
-  close(): void {
-    this.closed = true;
-    for (const record of this.jobs.values())
-      this.requestStop(record, "cancelled");
+  function close(): void {
+    closed = true;
+    for (const record of jobs.values()) requestStop(record, "cancelled");
   }
 
-  async closeAndWait(timeoutMs = 8_000): Promise<void> {
-    this.close();
+  function hasActiveJobs(): boolean {
+    return activeCount > 0;
+  }
+
+  async function closeAndWait(timeoutMs = 8_000): Promise<void> {
+    close();
     const deadline = Date.now() + timeoutMs;
-    while (this.activeCount > 0) {
+    while (hasActiveJobs()) {
       if (Date.now() >= deadline)
         throw new Error("Cleanup not confirmed; outcomes unknown");
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
   }
 
-  private findOwned(ownerId: string, jobId: string): RecordState {
+  function findOwned(ownerId: string, jobId: string): RecordState {
     validateOwner(ownerId);
     if (
       typeof jobId !== "string" ||
@@ -399,25 +394,25 @@ export class JobManager {
         jobId,
       )
     ) {
-      throw new JobError("NOT_FOUND", "Job not found");
+      throw createJobError("NOT_FOUND", "Job not found");
     }
-    this.pruneExpired();
-    const record = this.jobs.get(jobId);
+    pruneExpired();
+    const record = jobs.get(jobId);
     // Deliberately indistinguishable unknown ID / another owner's ID.
     if (!record || record.ownerId !== ownerId)
-      throw new JobError("NOT_FOUND", "Job not found");
+      throw createJobError("NOT_FOUND", "Job not found");
     return record;
   }
 
-  private requestStop(record: RecordState, reason: StopReason): void {
+  function requestStop(record: RecordState, reason: StopReason): void {
     if (!record.active || record.stopReason !== null) return;
     record.stopReason = reason;
     if (record.status !== "unknown") record.status = "cancelling";
     if (record.timer) clearTimeout(record.timer);
-    this.signalStop(record);
+    signalStop(record);
   }
 
-  private signalStop(record: RecordState): void {
+  function signalStop(record: RecordState): void {
     try {
       if (record.stopReason !== null) record.handle?.cancel(record.stopReason);
     } catch {
@@ -426,7 +421,7 @@ export class JobManager {
     }
   }
 
-  private appendOutput(
+  function appendOutput(
     record: RecordState,
     stream: OutputStream,
     data: string | Uint8Array,
@@ -439,8 +434,7 @@ export class JobManager {
       Number.MAX_SAFE_INTEGER,
       record.receivedBytes + incomingBytes,
     );
-    const available =
-      this.maxOutputBytes - record.stdoutBytes - record.stderrBytes;
+    const available = maxOutputBytes - record.stdoutBytes - record.stderrBytes;
     const keep = Math.min(available, incomingBytes);
     if (incomingBytes > keep) record.truncated = true;
     if (keep === 0) return;
@@ -460,15 +454,15 @@ export class JobManager {
     else record.stderrBytes += written;
   }
 
-  private finish(record: RecordState, exit: RunnerExit): void {
+  function finish(record: RecordState, exit: RunnerExit): void {
     if (!record.active) return;
     record.active = false;
     if (record.timer) clearTimeout(record.timer);
     record.timer = undefined;
     record.handle = undefined;
-    this.activeCount -= 1;
+    activeCount -= 1;
     record.finishedAt = Date.now();
-    record.expiresAt = record.finishedAt + this.retentionMs;
+    record.expiresAt = record.finishedAt + retentionMs;
     record.exitCode =
       Number.isSafeInteger(exit?.exitCode) &&
       exit.exitCode !== null &&
@@ -492,21 +486,21 @@ export class JobManager {
             : "failed";
   }
 
-  private pruneExpired(): void {
+  function pruneExpired(): void {
     const now = Date.now();
-    for (const [id, record] of this.jobs) {
+    for (const [id, record] of jobs) {
       if (
         !record.active &&
         record.expiresAt !== null &&
         record.expiresAt <= now
       ) {
-        this.jobs.delete(id);
-        this.idempotency.delete(record.key);
+        jobs.delete(id);
+        idempotency.delete(record.key);
       }
     }
   }
 
-  private snapshot(record: RecordState): JobSnapshot {
+  function snapshot(record: RecordState): JobSnapshot {
     return {
       jobId: record.jobId,
       status: record.status,
@@ -535,9 +529,10 @@ export class JobManager {
       output: {
         retainedBytes: record.stdoutBytes + record.stderrBytes,
         receivedBytes: record.receivedBytes,
-        limitBytes: this.maxOutputBytes,
+        limitBytes: maxOutputBytes,
         truncated: record.truncated,
       },
     };
   }
+  return { execute, readJob, cancel, close, closeAndWait };
 }

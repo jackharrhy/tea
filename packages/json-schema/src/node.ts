@@ -16,10 +16,12 @@ import type {
   Annotations,
   DescribedSchema,
   JSONSchema,
+  JSONSchemaDirection,
   Schema,
 } from "./types.ts";
 
-import { JSONSchemaConversionError, toPointer } from "./error.ts";
+import { createJSONSchemaConversionError, toPointer } from "./error.ts";
+import type { JSONSchemaConversionError } from "./error.ts";
 
 /** The meta-schema URI a standalone document declares. */
 export const DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
@@ -32,7 +34,7 @@ const NODE = Symbol.for("@tea/json-schema.node");
 
 /** The state one conversion threads through every nested schema. */
 export interface DescribeContext {
-  direction: JSONSchema.Direction;
+  direction: JSONSchemaDirection;
   refs: "defs" | "inline";
   /** Named schemas described so far; the root document's `$defs`. */
   defs: Map<string, JSONSchema>;
@@ -76,7 +78,7 @@ export function nodeOf(schema: unknown): Node | undefined {
  * @param refs - Whether named schemas become `$ref`s into `$defs` or stay inline.
  */
 export function createContext(
-  direction: JSONSchema.Direction,
+  direction: JSONSchemaDirection,
   refs: "defs" | "inline",
 ): DescribeContext {
   return { direction, refs, defs: new Map(), pending: new Set(), path: [] };
@@ -119,7 +121,7 @@ function describeForeign(
   let pointer = toPointer(context.path);
   if (typeof converter?.[context.direction] !== "function") {
     return failure(
-      new JSONSchemaConversionError(
+      createJSONSchemaConversionError(
         `The schema at "${pointer}" cannot describe itself as JSON Schema`,
         context.path,
       ),
@@ -132,7 +134,7 @@ function describeForeign(
   } catch (error) {
     let reason = error instanceof Error ? error.message : String(error);
     return failure(
-      new JSONSchemaConversionError(
+      createJSONSchemaConversionError(
         `The schema at "${pointer}" failed to convert: ${reason}`,
         context.path,
         { cause: error },
@@ -163,7 +165,7 @@ function register(
   let existing = context.defs.get(name);
   if (existing !== undefined && !isDeepEqual(existing, json)) {
     return failure(
-      new JSONSchemaConversionError(
+      createJSONSchemaConversionError(
         `Two different schemas are named "${name}"`,
         context.path,
       ),
@@ -212,7 +214,7 @@ export function named(
  */
 export function convert(
   schema: unknown,
-  direction: JSONSchema.Direction,
+  direction: JSONSchemaDirection,
   refs: "defs" | "inline",
 ): Result<JSONSchema, JSONSchemaConversionError> {
   let context = createContext(direction, refs);
@@ -231,11 +233,11 @@ export function convert(
  */
 function standardConverter(schema: unknown): StandardJSONSchemaV1.Converter {
   let run = (
-    direction: JSONSchema.Direction,
+    direction: JSONSchemaDirection,
     options: StandardJSONSchemaV1.Options,
   ) => {
     if (options.target !== "draft-2020-12") {
-      throw new JSONSchemaConversionError(
+      throw createJSONSchemaConversionError(
         `Unsupported JSON Schema target "${options.target}"`,
       );
     }
