@@ -55,6 +55,7 @@ const clientEntryFiles = {
   "editor-geometry-panel.tsx": browserAssets.editorGeometry,
   "editor-entity-inspector-panel.tsx": browserAssets.editorEntityInspector,
   "editor-face-basics-panel.tsx": browserAssets.editorFaceBasics,
+  "editor-face-texture-panel.tsx": browserAssets.editorFaceTexture,
   "editor-detached-maps-panel.tsx": browserAssets.editorDetachedMaps,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,

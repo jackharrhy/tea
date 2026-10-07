@@ -150,6 +150,8 @@ The selected point entity and entity properties inspector renders through a Remi
 
 The selected face picker, numeric Extrude, Split, and Stamp controls, and material application render through a Remix client component. The editor still runs those geometry and material edits through its session and source guard.
 
+Face projection fields and Align texture controls render through Remix client components. The editor still commits projection changes and alignment as undoable edits, using project material dimensions or a manually entered texture size.
+
 When editing inside a linked group that has another copy, entity properties can be marked Independent in the inspector. A new protected property stays in the open copy, while edits to ordinary properties continue to synchronize. The checkbox beside an existing property can add or remove that protection.
 
 Viewport picking treats closed groups as one selection, opens a group on activation, and expands a brush entity pick to its sibling brushes. With several brushes selected, picking a face in Face mode selects matching faces across them. Paint selection reports the resulting count in the editor status.

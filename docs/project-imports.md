@@ -46,6 +46,8 @@ The selected point entity and entity properties inspector now renders through a 
 
 The selected face picker, numeric face geometry actions, and material application now render through a Remix client entry. The editor retains the geometry and material transactions.
 
+Face projection fields and texture alignment now render through Remix client entries; the editor retains the projection transactions, project texture sizes, and manual fit options.
+
 Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.
 
 Viewport tool, grid size, and Texture lock now render through a Remix client entry. The editor and its tools read the same settings state for rendering and transactions.

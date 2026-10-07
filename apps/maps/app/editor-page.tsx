@@ -23,6 +23,10 @@ import { EditorTransforms } from "./assets/editor-transforms-panel.tsx";
 import { EditorGeometry, EditorCsg } from "./assets/editor-geometry-panel.tsx";
 import { EditorEntityInspector } from "./assets/editor-entity-inspector-panel.tsx";
 import { EditorFaceBasics } from "./assets/editor-face-basics-panel.tsx";
+import {
+  EditorFaceProjectionFields,
+  EditorTextureAlignment,
+} from "./assets/editor-face-texture-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -446,18 +450,7 @@ export function EditorPage() {
                 <EditorFaceBasics />
                 <div id="face-projection" hidden>
                   <h3>Face projection</h3>
-                  <div class="face-projection-fields">
-                    <label for="texture-offset-u">U offset</label>
-                    <input id="texture-offset-u" type="number" step="1" />
-                    <label for="texture-offset-v">V offset</label>
-                    <input id="texture-offset-v" type="number" step="1" />
-                    <label for="texture-scale-u">U scale</label>
-                    <input id="texture-scale-u" type="number" step="0.25" />
-                    <label for="texture-scale-v">V scale</label>
-                    <input id="texture-scale-v" type="number" step="0.25" />
-                    <label for="texture-rotation">Rotation (°)</label>
-                    <input id="texture-rotation" type="number" step="15" />
-                  </div>
+                  <EditorFaceProjectionFields />
                   <div class="uv-editor-frame">
                     <svg
                       id="uv-editor"
@@ -502,47 +495,7 @@ export function EditorPage() {
                     </p>
                   </div>
                 </div>
-                <details id="texture-alignment">
-                  <summary>Align texture</summary>
-                  <label for="texture-alignment-operation">Operation</label>
-                  <select id="texture-alignment-operation">
-                    <option value="reset">Reset face projection</option>
-                    <option value="world">Align to world axes</option>
-                    <option value="flip-u">Flip horizontally</option>
-                    <option value="flip-v">Flip vertically</option>
-                    <option value="rotate-ccw">Rotate 90° left</option>
-                    <option value="rotate-cw">Rotate 90° right</option>
-                    <option value="align-edge">Align to face edge</option>
-                    <option value="justify-u-min">Justify left</option>
-                    <option value="justify-u-max">Justify right</option>
-                    <option value="justify-v-min">Justify top</option>
-                    <option value="justify-v-max">Justify bottom</option>
-                    <option value="fit-u">Fit horizontally</option>
-                    <option value="fit-v">Fit vertically</option>
-                    <option value="auto-fit">Fit to face</option>
-                  </select>
-                  <div class="texture-size-fields">
-                    <label for="texture-width">Texture width</label>
-                    <input id="texture-width" type="number" min="1" step="1" />
-                    <label for="texture-height">Texture height</label>
-                    <input id="texture-height" type="number" min="1" step="1" />
-                  </div>
-                  <p>
-                    Fit and justify use project texture sizes, or both
-                    dimensions entered here.
-                  </p>
-                  <label for="texture-align-reverse">
-                    <input id="texture-align-reverse" type="checkbox" />
-                    Reverse direction
-                  </label>
-                  <label for="texture-align-subdivide">
-                    <input id="texture-align-subdivide" type="checkbox" />
-                    Subdivide when fitting
-                  </label>
-                  <button id="apply-texture-alignment" type="button" disabled>
-                    Align selection
-                  </button>
-                </details>
+                <EditorTextureAlignment />
                 <details id="surface-attributes" hidden>
                   <summary>Quake II surface</summary>
                   <fieldset>

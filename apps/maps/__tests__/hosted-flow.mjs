@@ -1643,6 +1643,45 @@ try {
       .execute({ kind: "brush" })
       .objects.some((brush) => brush.materials.includes("BRICK")),
   );
+  const beforeProjection = await facePage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await facePage.locator("#texture-offset-u").fill("12");
+  await facePage.locator("#texture-offset-u").press("Tab");
+  await facePage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    beforeProjection,
+  );
+  await facePage.locator("#texture-alignment summary").click();
+  await facePage.locator("#texture-width").fill("64");
+  const beforeAlignment = await facePage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await facePage.locator("#apply-texture-alignment:not([disabled])").click();
+  await facePage.getByText("Enter both texture dimensions").waitFor();
+  assert.equal(
+    await facePage.evaluate(
+      () =>
+        window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+          .revision,
+    ),
+    beforeAlignment,
+  );
+  await facePage.locator("#texture-height").fill("64");
+  await facePage.locator("#texture-alignment-operation").selectOption("flip-u");
+  await facePage.locator("#apply-texture-alignment").click();
+  await facePage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    beforeAlignment,
+  );
   const beforeFaceGeometry = await facePage.evaluate(
     () =>
       window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
@@ -1669,7 +1708,7 @@ try {
   );
   await facePage.close();
   result.checks.push(
-    "Remix face picker, material application, and numeric face geometry use editor transactions",
+    "Remix face picker, material, projection, alignment, and geometry controls use editor transactions",
   );
   const entityPage = await browser.newPage();
   await installSiteToolMock(entityPage);

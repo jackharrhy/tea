@@ -38,7 +38,6 @@ import {
   type BrushClipCandidate,
   type BrushClipMode,
   type BrushCreationCandidate,
-  type FaceTextureAlignmentOperation,
   type FaceTextureAlignmentOptions,
   type FaceTextureProjectionField,
   type MapDocument,
@@ -210,6 +209,10 @@ import {
   initEditorFaceBasics,
   type FaceGeometryOperation,
 } from "./editor-face-basics-bridge.ts";
+import {
+  initEditorFaceTexture,
+  type ProjectionInputState,
+} from "./editor-face-texture-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -274,6 +277,10 @@ const faceBasics = initEditorFaceBasics({
   runGeometry: runFaceGeometry,
   applyMaterial: applySelectedMaterial,
 });
+const faceTexture = initEditorFaceTexture({
+  commitProjection,
+  applyAlignment,
+});
 const historyControls = initEditorHistory({
   undo: () => void runHistoryAction("undo"),
   redo: () => void runHistoryAction("redo"),
@@ -300,31 +307,6 @@ const discardHullButton =
   document.querySelector<HTMLButtonElement>("#discard-hull")!;
 const faceInspector = document.querySelector<HTMLElement>("#face-inspector")!;
 const faceProjection = document.querySelector<HTMLElement>("#face-projection")!;
-const projectionInputs: Readonly<
-  Record<FaceTextureProjectionField, HTMLInputElement>
-> = {
-  "offset-u": document.querySelector<HTMLInputElement>("#texture-offset-u")!,
-  "offset-v": document.querySelector<HTMLInputElement>("#texture-offset-v")!,
-  "scale-u": document.querySelector<HTMLInputElement>("#texture-scale-u")!,
-  "scale-v": document.querySelector<HTMLInputElement>("#texture-scale-v")!,
-  rotation: document.querySelector<HTMLInputElement>("#texture-rotation")!,
-};
-const alignmentOperation = document.querySelector<HTMLSelectElement>(
-  "#texture-alignment-operation",
-)!;
-const textureWidth =
-  document.querySelector<HTMLInputElement>("#texture-width")!;
-const textureHeight =
-  document.querySelector<HTMLInputElement>("#texture-height")!;
-const alignmentReverse = document.querySelector<HTMLInputElement>(
-  "#texture-align-reverse",
-)!;
-const alignmentSubdivide = document.querySelector<HTMLInputElement>(
-  "#texture-align-subdivide",
-)!;
-const alignmentButton = document.querySelector<HTMLButtonElement>(
-  "#apply-texture-alignment",
-)!;
 const surfaceAttributes = document.querySelector<HTMLDetailsElement>(
   "#surface-attributes",
 )!;
@@ -1336,37 +1318,18 @@ function refreshSelection() {
     applyMaterialDisabled: materialDisabled || !selectedMaterial.trim(),
   });
   const textureSelectionKey = `${brushIds.join("|")}/${faces.map((face) => face.id).join("|")}`;
-  if (textureSelectionKey !== inspectedTextureSelection) {
-    textureWidth.value = "";
-    textureHeight.value = "";
-    inspectedTextureSelection = textureSelectionKey;
-  }
+  const textureSelectionChanged =
+    textureSelectionKey !== inspectedTextureSelection;
+  inspectedTextureSelection = textureSelectionKey;
   const catalogMaterial = sharedMaterial
     ? currentMaterials().find(
         (material) =>
           material.name.toLowerCase() === materials[0]?.toLowerCase(),
       )
     : undefined;
-  textureWidth.placeholder = catalogMaterial
-    ? String(catalogMaterial.logicalWidth ?? catalogMaterial.width)
-    : "";
-  textureHeight.placeholder = catalogMaterial
-    ? String(catalogMaterial.logicalHeight ?? catalogMaterial.height)
-    : "";
-  for (const control of [
-    alignmentOperation,
-    textureWidth,
-    textureHeight,
-    alignmentReverse,
-    alignmentSubdivide,
-  ]) {
-    control.disabled = faceInspector.hidden || !editing;
-  }
-  alignmentButton.disabled = faceInspector.hidden || !editing;
-  for (const [field, input] of Object.entries(projectionInputs) as [
-    FaceTextureProjectionField,
-    HTMLInputElement,
-  ][]) {
+  const projectionInput = (
+    field: FaceTextureProjectionField,
+  ): ProjectionInputState => {
     const values = faces.map((face) => {
       const projection = face.projection;
       switch (field) {
@@ -1383,10 +1346,30 @@ function refreshSelection() {
       }
     });
     const common = values.every((value) => value === values[0]);
-    input.value = common ? String(values[0] ?? "") : "";
-    input.placeholder = common ? "" : "Mixed";
-    input.disabled = faces.length === 0 || !editing;
-  }
+    return {
+      value: common ? String(values[0] ?? "") : "",
+      placeholder: common ? "" : "Mixed",
+      disabled: faces.length === 0 || !editing,
+    };
+  };
+  faceTexture.update({
+    projection: {
+      "offset-u": projectionInput("offset-u"),
+      "offset-v": projectionInput("offset-v"),
+      "scale-u": projectionInput("scale-u"),
+      "scale-v": projectionInput("scale-v"),
+      rotation: projectionInput("rotation"),
+    },
+    width: textureSelectionChanged ? "" : faceTexture.state.width,
+    height: textureSelectionChanged ? "" : faceTexture.state.height,
+    widthPlaceholder: catalogMaterial
+      ? String(catalogMaterial.logicalWidth ?? catalogMaterial.width)
+      : "",
+    heightPlaceholder: catalogMaterial
+      ? String(catalogMaterial.logicalHeight ?? catalogMaterial.height)
+      : "",
+    alignmentDisabled: faceInspector.hidden || !editing,
+  });
   refreshSurfaceInspector(faces, editing);
   const selectedEntity =
     pointEntity ?? (brushIds.length === 1 ? owners[0] : undefined);
@@ -2957,18 +2940,17 @@ function runFaceGeometry(operation: FaceGeometryOperation) {
   }
 }
 
-alignmentButton.addEventListener("click", () => {
+function applyAlignment() {
+  if (faceTexture.state.alignmentDisabled) return;
   if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;
-  const width = textureWidth.value.trim();
-  const height = textureHeight.value.trim();
+  const width = faceTexture.state.width.trim();
+  const height = faceTexture.state.height.trim();
   if ((width || height) && (!width || !height)) {
     status.textContent = "Enter both texture dimensions";
     return;
   }
   const manualSize =
-    width && height
-      ? ([textureWidth.valueAsNumber, textureHeight.valueAsNumber] as const)
-      : null;
+    width && height ? ([Number(width), Number(height)] as const) : null;
   if (
     manualSize &&
     manualSize.some((value) => !Number.isInteger(value) || value <= 0)
@@ -2989,42 +2971,32 @@ alignmentButton.addEventListener("click", () => {
           ]
         : null;
     },
-    direction: alignmentReverse.checked ? -1 : 1,
-    fitMode: alignmentSubdivide.checked ? "subdivide" : "repeat",
+    direction: faceTexture.state.reverse ? -1 : 1,
+    fitMode: faceTexture.state.subdivide ? "subdivide" : "repeat",
   };
   try {
-    if (
-      !session.alignTexture(
-        alignmentOperation.value as FaceTextureAlignmentOperation,
-        options,
-      )
-    ) {
+    if (!session.alignTexture(faceTexture.state.alignmentOperation, options)) {
       status.textContent = "Select a brush or face to align its texture";
     }
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
-for (const [field, input] of Object.entries(projectionInputs) as [
-  FaceTextureProjectionField,
-  HTMLInputElement,
-][]) {
-  input.addEventListener("change", () => {
-    if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;
-    const value = input.valueAsNumber;
-    if (!Number.isFinite(value)) {
-      status.textContent = "Enter a finite projection value";
-      return;
-    }
-    try {
-      session.setSelectedTextureProjectionField(field, value);
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-      refreshSelection();
-    }
-  });
+function commitProjection(field: FaceTextureProjectionField, raw: string) {
+  if (faceTexture.state.projection[field].disabled) return;
+  if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;
+  const value = raw.trim() ? Number(raw) : Number.NaN;
+  if (!Number.isFinite(value)) {
+    status.textContent = "Enter a finite projection value";
+    return;
+  }
+  try {
+    session.setSelectedTextureProjectionField(field, value);
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+    refreshSelection();
+  }
 }
 
 surfaceValue.addEventListener("change", () => {
