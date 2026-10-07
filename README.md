@@ -49,3 +49,4 @@ The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. 
 CI installs once and runs the `check` scripts for affected workspaces. Package changes also check their consumers; shared config or unknown paths check every workspace with a `check` script. README and `docs/` changes skip app checks. CMS browser setup runs only when CMS is affected. See [`scripts/ci/affected.mjs`](scripts/ci/affected.mjs).
 
 The [project import guide](docs/project-imports.md) tracks the Ref and Radio bake period and the staged Maps migration from Worldview.
+The [Worldview third-party notices](THIRD_PARTY_NOTICES.md) preserve attribution for the imported Maps code and test fixture.

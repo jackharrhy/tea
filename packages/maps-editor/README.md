@@ -4,4 +4,4 @@ Tea's copy of Worldview's DOM-free Valve 220 map document, convex-brush, command
 
 From the repo root, run `npm ci` and `npm run check --workspace @tea/maps-editor`. The check typechecks, runs `__tests__/`, and builds the public `.`, `/core`, and `/render` entry points. Run the renderer check too when changing the renderer interface.
 
-No game assets are included. The [MIT license](LICENSE) travels with this copied source. The original Worldview editor package continues independently while Tea's UI is migrated.
+No game assets are included. The [MIT license](LICENSE) and [Worldview third-party notices](THIRD_PARTY_NOTICES.md) travel with this copied source. The original Worldview editor package continues independently while Tea's UI is migrated.
