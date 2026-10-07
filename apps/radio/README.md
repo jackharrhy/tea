@@ -106,7 +106,7 @@ track keys, and 1 GiB upload limit.
 
 ## Real Celld verification
 
-Tea CI runs the production smoke with an 8 MiB payload using the fork selected by `Dockerfile` when Radio is affected.
+Tea CI runs the production smoke with an 8 MiB payload using the fork selected by `Dockerfile` when Radio is affected on a ready PR or `main`.
 To investigate runtime or storage changes locally:
 
 ```sh

@@ -44,7 +44,7 @@ cd ../..
 REF_SMOKE_PASSWORD='the-value-in-.dev.vars' npm run smoke --workspace @tea/ref
 ```
 
-Tea CI runs this smoke against a temporary Wrangler store and generated password when Ref is affected.
+Tea CI runs this smoke against a temporary Wrangler store and generated password when Ref is affected on a ready PR or `main`.
 
 Ref also runs a production-style Celld check using an isolated SQLite object store and random password. It runs the browser smoke, kills Celld, removes its replica cache, then verifies the board, links, and WebSocket from the authoritative store. CI extracts the Celld binary from the image selected by this app's Dockerfile. To run the same check locally:
 

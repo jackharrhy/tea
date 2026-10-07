@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
 concurrency:
   group: check-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -11,6 +12,8 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      RUN_INTEGRATION: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -30,17 +33,17 @@ jobs:
         run: npm ci
       - if: steps.select.outputs.any == 'true'
         run: npm run tooling:check
-      - if: steps.select.outputs.browser == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.browser == 'true'
         run: npx playwright install --only-shell chromium
-      - if: steps.select.outputs.maps_hosted == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
         run: npm exec --workspace @tea/maps -- playwright install --only-shell chromium
       - if: steps.select.outputs.any == 'true'
         env:
           SELECTED_CHECKS: ${{ steps.select.outputs.selected }}
         run: node scripts/ci/run-checks.mjs
-      - if: steps.select.outputs.cms == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.cms == 'true'
         run: npm run test:browser --workspace @tea/cms
-      - if: steps.select.outputs.ref == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.ref == 'true'
         run: |
           set -eu
           ref_smoke_dir=$(mktemp -d "$RUNNER_TEMP/tea-ref-smoke.XXXXXX")
@@ -69,7 +72,7 @@ jobs:
             cat "$ref_smoke_dir/wrangler.log"
             exit 1
           }
-      - if: steps.select.outputs.radio == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.radio == 'true'
         run: |
           set -eu
           radio_celld_image=$(sed -n 's/^ARG CELLD_IMAGE=//p' apps/radio/Dockerfile)
@@ -83,7 +86,7 @@ jobs:
           docker cp "$radio_celld_container:/usr/local/bin/celld" "$RUNNER_TEMP/celld"
           chmod +x "$RUNNER_TEMP/celld"
           CELLD_BIN="$RUNNER_TEMP/celld" npm run test:celld --workspace @tea/radio -- --output "$RUNNER_TEMP/radio-celld-smoke.json"
-      - if: steps.select.outputs.ref == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.ref == 'true'
         run: |
           set -eu
           ref_celld_image=$(sed -n 's/^ARG CELLD_IMAGE=//p' apps/ref/Dockerfile)
@@ -97,9 +100,9 @@ jobs:
           docker cp "$ref_celld_container:/usr/local/bin/celld" "$RUNNER_TEMP/ref-celld"
           chmod +x "$RUNNER_TEMP/ref-celld"
           CELLD_BIN="$RUNNER_TEMP/ref-celld" npm run test:celld --workspace @tea/ref -- --output "$RUNNER_TEMP/ref-celld-smoke.json"
-      - if: steps.select.outputs.maps_hosted == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
         run: npm run test:hosted --workspace @tea/maps -- --output "$RUNNER_TEMP/maps-hosted-smoke.json"
-      - if: steps.select.outputs.maps_hosted == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
         run: npm run test:gpu --workspace @tea/maps
-      - if: steps.select.outputs.maps_hosted == 'true'
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
         run: npm run test:embed --workspace @tea/maps
