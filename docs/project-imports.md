@@ -24,6 +24,8 @@ The Tea editor now exposes exact shear and mirror transforms, Worldview view fil
 
 The four-viewport editor also exposes Worldview's clip, perspective hull, and face sweep tools. Clip previews back, split, and front results for selected brushes; hull creation previews a brush from placed face points. Sweep previews one or more selected faces through a configurable path and destination cap. All three commit through the session history and hosted semantic operation path.
 
+Selection brushes now expose touching, enclosed, and XY/XZ/YZ projected queries in Tea. Each query consumes selected structural brushes, selects the matching objects, and can be undone as one edit.
+
 Vertex and edge tools now expose the copied renderer's component handles in Tea. Drag, snap, insertion, keyboard nudge, and hull-safe deletion use the copied session candidates and the editor's normal history and hosted operation path.
 
 Draw shape now uses Worldview's simple-shape generator for cuboids, stairs, arches, cylinders, cones, and both sphere types. Its bounding-box gesture previews the generated brush set, then commits that set as one creation transaction.

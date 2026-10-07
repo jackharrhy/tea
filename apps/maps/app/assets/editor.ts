@@ -14,6 +14,8 @@ import {
   EditorSession,
   findBrush,
   gameProfileSupportsFaceSyntax,
+  isEditorGroupEntity,
+  isEditorLayerEntity,
   isWorldviewGameProfile,
   mapSourceFingerprint,
   parseMapSource,
@@ -228,6 +230,18 @@ const repeatCommandsButton =
   document.querySelector<HTMLButtonElement>("#repeat-commands")!;
 const clearRepeatCommandsButton = document.querySelector<HTMLButtonElement>(
   "#clear-repeat-commands",
+)!;
+const selectionBrushButtons = {
+  touching: document.querySelector<HTMLButtonElement>(
+    "#selection-brush-touching",
+  )!,
+  inside: document.querySelector<HTMLButtonElement>("#selection-brush-inside")!,
+  "inside-projected": document.querySelector<HTMLButtonElement>(
+    "#selection-brush-projected",
+  )!,
+};
+const selectionBrushProjection = document.querySelector<HTMLSelectElement>(
+  "#selection-brush-projection",
 )!;
 const nudgeButtons =
   document.querySelectorAll<HTMLButtonElement>("[data-nudge-axis]");
@@ -1377,6 +1391,22 @@ function refreshSelection() {
           ? `${pointIds.length} point entities selected`
           : "No selection";
   const editing = !hostedMap || hostedConnection !== null;
+  const selectionBrushReady =
+    editing &&
+    brushIds.length > 0 &&
+    pointIds.length === 0 &&
+    !selection?.faceId &&
+    !selection?.groupId &&
+    owners.every(
+      (entity) =>
+        entity &&
+        (entity.properties.classname === "worldspawn" ||
+          isEditorGroupEntity(entity) ||
+          isEditorLayerEntity(entity)),
+    );
+  for (const button of Object.values(selectionBrushButtons))
+    button.disabled = !selectionBrushReady;
+  selectionBrushProjection.disabled = !selectionBrushReady;
   gameProfile.value = activeGame();
   gameProfile.disabled = project !== null || hostedMap !== null;
   const faces = faceRefs.flatMap(({ brushId: ownerId, faceId }) => {
@@ -3318,6 +3348,36 @@ document
 document
   .querySelector<HTMLButtonElement>("#invert-selection")!
   .addEventListener("click", () => selectObjects("invert"));
+for (const [mode, button] of Object.entries(selectionBrushButtons) as [
+  keyof typeof selectionBrushButtons,
+  HTMLButtonElement,
+][]) {
+  button.addEventListener("click", () => {
+    if (!viewportCanEdit()) return;
+    try {
+      const projection =
+        mode === "inside-projected"
+          ? (selectionBrushProjection.value as "xy" | "xz" | "yz")
+          : undefined;
+      const result = session.selectWithSelectionBrushes(mode, projection);
+      if (!result) {
+        status.textContent = "Select one or more structural brushes first";
+        return;
+      }
+      const count = result.selectedBrushCount + result.selectedEntityCount;
+      const relationship =
+        mode === "touching"
+          ? "touching"
+          : mode === "inside"
+            ? "enclosed"
+            : `${projection} enclosed`;
+      status.textContent = `Consumed ${result.removedBrushCount} selection ${result.removedBrushCount === 1 ? "brush" : "brushes"} · selected ${count} ${relationship} ${count === 1 ? "object" : "objects"}`;
+    } catch (error) {
+      status.textContent =
+        error instanceof Error ? error.message : String(error);
+    }
+  });
+}
 hideSelectionButton.addEventListener("click", () => {
   if (!hostedMap && applyWorkingSource()) session.hideSelected();
 });

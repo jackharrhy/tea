@@ -160,6 +160,34 @@ export function EditorPage() {
             <button id="invert-selection" type="button" disabled>
               Invert selection
             </button>
+            <details id="selection-brush-tools">
+              <summary>Selection brushes</summary>
+              <div
+                class="selection-brush-actions"
+                role="group"
+                aria-label="Selection brush commands"
+              >
+                <button id="selection-brush-touching" type="button" disabled>
+                  Select touching
+                </button>
+                <button id="selection-brush-inside" type="button" disabled>
+                  Select enclosed
+                </button>
+                <label for="selection-brush-projection">2D plane</label>
+                <select id="selection-brush-projection" disabled>
+                  <option value="xy">XY</option>
+                  <option value="xz">XZ</option>
+                  <option value="yz">YZ</option>
+                </select>
+                <button id="selection-brush-projected" type="button" disabled>
+                  Select enclosed in 2D
+                </button>
+              </div>
+              <p>
+                Selected structural brushes define the volume and are removed.
+                Undo restores them.
+              </p>
+            </details>
             <button id="focus-selection" type="button" disabled>
               Focus selection
             </button>

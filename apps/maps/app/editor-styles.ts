@@ -383,6 +383,22 @@ export const editorStyles = css({
   "& #transform-tool input[type='number']": { width: "4.5rem" },
   "& #transform-tool p": { margin: "0", "max-width": "43rem" },
   "& #csg-tools summary": { cursor: "pointer", "font-weight": "700" },
+  "& #selection-brush-tools summary": {
+    cursor: "pointer",
+    "font-weight": "700",
+  },
+  "& .selection-brush-actions": {
+    display: "flex",
+    "align-items": "center",
+    "flex-wrap": "wrap",
+    gap: "0.35rem",
+    padding: "0.5rem 0",
+  },
+  "& #selection-brush-tools p": {
+    margin: "0",
+    "max-width": "34rem",
+    "line-height": "1.3",
+  },
   "& #advanced-transforms": { "font-size": "0.85rem" },
   "& #advanced-transforms summary": {
     cursor: "pointer",

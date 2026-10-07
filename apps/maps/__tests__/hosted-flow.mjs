@@ -729,6 +729,72 @@ try {
   result.checks.push(
     "browser site tool opens an authorized project map with explicit discard",
   );
+  const selectionPage = await browser.newPage();
+  await installSiteToolMock(selectionPage);
+  await selectionPage.goto(`${mapsOrigin}/editor`);
+  await selectionPage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  const selectionSetup = await selectionPage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const inspect = () => tools.get("tea_maps_inspect_editor").execute({});
+    const before = inspect();
+    const volume = tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [128, 128, 128],
+      material: "STONE",
+    });
+    const afterVolume = inspect();
+    tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: afterVolume.revision,
+      min: [32, 32, 32],
+      max: [64, 64, 64],
+      material: "STONE",
+    });
+    const afterCreate = inspect();
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: afterCreate.revision,
+      mode: "objects",
+      brushIds: [volume.brushId],
+    });
+    return { brushes: afterCreate.counts.brushes };
+  });
+  await selectionPage.locator("#selection-brush-tools summary").click();
+  for (const label of [
+    "Select enclosed",
+    "Select touching",
+    "Select enclosed in 2D",
+  ]) {
+    await selectionPage
+      .getByRole("button", { name: label, exact: true })
+      .click();
+    await selectionPage.getByText(/Consumed 1 selection brush/).waitFor();
+    assert.equal(
+      await selectionPage.evaluate(
+        () =>
+          window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+            .counts.brushes,
+      ),
+      selectionSetup.brushes - 1,
+    );
+    await selectionPage.locator("#undo").click();
+    assert.equal(
+      await selectionPage.evaluate(
+        () =>
+          window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+            .counts.brushes,
+      ),
+      selectionSetup.brushes,
+    );
+  }
+  await selectionPage.close();
+  result.checks.push(
+    "selection brush queries consume volumes and undo restores them",
+  );
   const siteToolPage = await browser.newPage();
   siteToolPage.on("pageerror", (error) => errors.push(error.message));
   await installSiteToolMock(siteToolPage);
