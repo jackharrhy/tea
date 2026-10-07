@@ -6,6 +6,7 @@ import {
   mkdir,
   mkdtemp,
   rm,
+  symlink,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -108,6 +109,19 @@ test("compares copied hosted metadata and blob bytes, and catches divergence", a
     assert.equal(matched.report.source.tables.maps.rows, 1);
     assert.equal(matched.report.source.blobs.files, 2);
     assert.equal(matched.report.source.blobs.referencedFiles, 2);
+
+    const sameRoot = compare(source, source);
+    assert.equal(sameRoot.exitCode, 1);
+    assert.equal(sameRoot.report.status, "failed");
+    assert.match(sameRoot.report.error, /separate source and Tea data roots/);
+    const sourceAlias = join(state, "source-alias");
+    await symlink(source, sourceAlias, "dir");
+    const aliasedRoot = compare(source, sourceAlias);
+    assert.equal(aliasedRoot.exitCode, 1);
+    assert.match(
+      aliasedRoot.report.error,
+      /separate source and Tea data roots/,
+    );
 
     await unlink(sourceBlob);
     await unlink(targetBlob);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { readdir, stat, writeFile } from "node:fs/promises";
+import { readdir, realpath, stat, writeFile } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
@@ -182,6 +182,15 @@ async function report(root) {
 const [sourceRoot, targetRoot] = positionals;
 const comparison = { sourceRoot, targetRoot, status: "running" };
 try {
+  const [sourcePath, targetPath] = await Promise.all([
+    realpath(sourceRoot),
+    realpath(targetRoot),
+  ]);
+  assert.notEqual(
+    sourcePath,
+    targetPath,
+    "Compare separate source and Tea data roots",
+  );
   comparison.source = await report(sourceRoot);
   comparison.target = await report(targetRoot);
   comparison.mismatches = [];
