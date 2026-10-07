@@ -200,6 +200,7 @@ import { initEditorEditActions } from "./editor-edit-actions-bridge.ts";
 import { initEditorToolSettings } from "./editor-tool-settings-bridge.ts";
 import { initEditorHistory } from "./editor-history-bridge.ts";
 import { initEditorEntityCreation } from "./editor-entity-creation-bridge.ts";
+import { initEditorTransforms } from "./editor-transforms-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -267,8 +268,6 @@ const editActions = initEditorEditActions({
   pasteOriginal: pasteInPlace,
 });
 const selectionBrushes = initEditorSelectionBrushes(runSelectionBrushQuery);
-const nudgeButtons =
-  document.querySelectorAll<HTMLButtonElement>("[data-nudge-axis]");
 const toolSettings = initEditorToolSettings({
   selectTool: activateViewportTool,
   textureLockChanged: () => sweepTool.refresh(),
@@ -279,22 +278,14 @@ const entityCreation = initEditorEntityCreation({
   makeStructural,
   addPoint: addPointEntity,
 });
-const moveButton =
-  document.querySelector<HTMLButtonElement>("#move-selection")!;
-const rotateButton =
-  document.querySelector<HTMLButtonElement>("#rotate-selection")!;
-const scaleButton =
-  document.querySelector<HTMLButtonElement>("#scale-selection")!;
-const shearButton =
-  document.querySelector<HTMLButtonElement>("#shear-selection")!;
-const shearSourceAxis =
-  document.querySelector<HTMLSelectElement>("#shear-source-axis")!;
-const shearTargetAxis =
-  document.querySelector<HTMLSelectElement>("#shear-target-axis")!;
-const shearOffset = document.querySelector<HTMLInputElement>("#shear-offset")!;
-const flipButtons = (["x", "y", "z"] as const).map((axis) =>
-  document.querySelector<HTMLButtonElement>(`#flip-${axis}`)!,
-);
+const transforms = initEditorTransforms({
+  move: moveSelection,
+  nudge: nudgeSelection,
+  rotate: rotateSelection,
+  scale: scaleSelection,
+  shear: shearSelection,
+  flip: flipSelection,
+});
 const csgButtons = {
   merge: document.querySelector<HTMLButtonElement>("#csg-merge")!,
   intersect: document.querySelector<HTMLButtonElement>("#csg-intersect")!,
@@ -742,9 +733,9 @@ const transformTool = createEditorTransform({
   textureLock: () => toolSettings.state.textureLock,
   canEdit: viewportCanEdit,
   applyNumeric: (tool) =>
-    ({ rotate: rotateButton, scale: scaleButton, shear: shearButton })[
+    ({ rotate: rotateSelection, scale: scaleSelection, shear: shearSelection })[
       tool
-    ].click(),
+    ](),
   status: (message) => {
     status.textContent = message;
   },
@@ -1507,9 +1498,14 @@ function refreshSelection() {
     focusDisabled: !selection || !renderer,
     unlockAllDisabled: hostedMap !== null || !session.canUnlockAll,
   });
-  for (const button of nudgeButtons) {
-    button.disabled = (!brushId && pointIds.length === 0) || !editing;
-  }
+  transforms.update({
+    nudgeDisabled: (!brushId && pointIds.length === 0) || !editing,
+    moveDisabled: (!brushId && pointIds.length === 0) || !editing,
+    rotateDisabled: !brushId || !editing,
+    scaleDisabled: !brushId || !editing,
+    shearDisabled: (!brushId && pointIds.length === 0) || !editing,
+    flipDisabled: (!brushId && pointIds.length === 0) || !editing,
+  });
   entityCreation.update({
     makeBrushDisabled: !brushId || !editing,
     makeStructuralDisabled:
@@ -1520,13 +1516,6 @@ function refreshSelection() {
           entity?.properties.classname?.toLowerCase() === "worldspawn",
       ),
   });
-  moveButton.disabled = (!brushId && pointIds.length === 0) || !editing;
-  rotateButton.disabled = !brushId || !editing;
-  scaleButton.disabled = !brushId || !editing;
-  shearButton.disabled = (!brushId && pointIds.length === 0) || !editing;
-  for (const button of flipButtons) {
-    button.disabled = (!brushId && pointIds.length === 0) || !editing;
-  }
   csgButtons.merge.disabled = brushIds.length < 2 || !editing;
   csgButtons.intersect.disabled = brushIds.length < 2 || !editing;
   csgButtons.subtract.disabled = brushIds.length === 0 || !editing;
@@ -3305,24 +3294,17 @@ function clearRecordedCommands() {
   session.clearRepeatableCommands();
   refreshSelection();
 }
-for (const button of nudgeButtons) {
-  button.addEventListener("click", () => {
-    if (!viewportCanEdit()) return;
-    const axis = button.dataset.nudgeAxis;
-    const index = axis === "X" ? 0 : axis === "Y" ? 1 : 2;
-    const grid = toolSettings.state.gridSize;
-    const direction = Number(button.dataset.nudgeDirection);
-    const delta: [number, number, number] = [0, 0, 0];
-    delta[index] = grid * direction;
-    try {
-      if (!session.translateSelected(delta, toolSettings.state.textureLock)) {
-        status.textContent = "Select an object to nudge";
-      }
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
+function nudgeSelection(axis: TransformAxis, direction: -1 | 1) {
+  if (transforms.state.nudgeDisabled || !viewportCanEdit()) return;
+  const delta: [number, number, number] = [0, 0, 0];
+  delta[axis] = toolSettings.state.gridSize * direction;
+  try {
+    if (!session.translateSelected(delta, toolSettings.state.textureLock)) {
+      status.textContent = "Select an object to nudge";
     }
-  });
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
 }
 function snapSelectionToGrid() {
   if (editActions.state.snapDisabled) return;
@@ -3421,12 +3403,10 @@ function makeStructural() {
   }
 }
 
-moveButton.addEventListener("click", () => {
+function moveSelection() {
+  if (transforms.state.moveDisabled) return;
   if (!applyWorkingSource()) return;
-  const axes = ["x", "y", "z"] as const;
-  const delta = axes.map((axis) =>
-    Number(document.querySelector<HTMLInputElement>(`#move-${axis}`)!.value),
-  );
+  const delta = transforms.state.move.map(Number);
   if (delta.some((value) => !Number.isFinite(value))) {
     status.textContent = "Move coordinates must be finite numbers";
     return;
@@ -3439,20 +3419,15 @@ moveButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
-rotateButton.addEventListener("click", () => {
+function rotateSelection() {
+  if (transforms.state.rotateDisabled) return;
   if (!applyWorkingSource()) return;
   const pivot = transformTool.pivot() ?? selectedBrushPivot();
-  const axis = Number(
-    document.querySelector<HTMLSelectElement>("#rotate-axis")!.value,
-  ) as TransformAxis;
-  const input = document.querySelector<HTMLInputElement>("#rotate-degrees")!;
-  if (
-    !pivot ||
-    !input.checkValidity() ||
-    !Number.isFinite(input.valueAsNumber)
-  ) {
+  const { rotateAxis, rotateDegrees, rotateValid } = transforms.state;
+  const degrees = rotateDegrees.trim() ? Number(rotateDegrees) : Number.NaN;
+  if (!pivot || !rotateValid || !Number.isFinite(degrees)) {
     status.textContent = "Select objects and enter a finite rotation";
     return;
   }
@@ -3460,8 +3435,8 @@ rotateButton.addEventListener("click", () => {
     const candidate = session.createObjectRotationCandidate(
       session.selection!,
       [...pivot],
-      axis,
-      input.valueAsNumber,
+      rotateAxis,
+      degrees,
       toolSettings.state.textureLock,
       transformTool.updateAngles(),
     );
@@ -3469,19 +3444,18 @@ rotateButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
-scaleButton.addEventListener("click", () => {
+function scaleSelection() {
+  if (transforms.state.scaleDisabled) return;
   if (!applyWorkingSource()) return;
   const pivot = transformTool.pivot() ?? selectedBrushPivot();
-  const axes = ["x", "y", "z"] as const;
-  const inputs = axes.map((axis) =>
-    document.querySelector<HTMLInputElement>(`#scale-${axis}`)!,
+  const factors = transforms.state.scale.map((value) =>
+    value.trim() ? Number(value) : Number.NaN,
   );
-  const factors = inputs.map((input) => input.valueAsNumber);
   if (
     !pivot ||
-    inputs.some((input) => !input.checkValidity()) ||
+    transforms.state.scaleValid.some((valid) => !valid) ||
     factors.some((value) => !Number.isFinite(value) || value <= 0)
   ) {
     status.textContent = "Select objects and enter positive scale factors";
@@ -3499,19 +3473,22 @@ scaleButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
-shearButton.addEventListener("click", () => {
+function shearSelection() {
+  if (transforms.state.shearDisabled) return;
   if (!viewportCanEdit()) return;
   const bounds = selectedObjectBounds();
-  const sourceAxis = Number(shearSourceAxis.value) as TransformAxis;
-  const targetAxis = Number(shearTargetAxis.value) as TransformAxis;
-  const offset = shearOffset.valueAsNumber;
+  const { shearSourceAxis: sourceAxis, shearTargetAxis: targetAxis } =
+    transforms.state;
+  const offset = transforms.state.shearOffset.trim()
+    ? Number(transforms.state.shearOffset)
+    : Number.NaN;
   const span = bounds ? bounds.max[sourceAxis] - bounds.min[sourceAxis] : 0;
   if (
     !bounds ||
     sourceAxis === targetAxis ||
-    !shearOffset.checkValidity() ||
+    !transforms.state.shearValid ||
     !Number.isFinite(offset) ||
     span <= 1e-6
   ) {
@@ -3533,34 +3510,26 @@ shearButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
-for (const [axis, button] of flipButtons.entries()) {
-  button.addEventListener("click", () => {
-    if (!viewportCanEdit()) return;
-    const bounds = selectedObjectBounds();
-    if (!bounds) {
-      status.textContent = "Select objects to mirror";
-      return;
-    }
-    const grid = toolSettings.state.gridSize;
-    const pivot = ([0, 1, 2] as const).map(
-      (component) =>
-        Math.round(
-          (bounds.min[component] + bounds.max[component]) / (2 * grid),
-        ) * grid,
-    ) as [number, number, number];
-    try {
-      session.flipSelected(
-        pivot,
-        axis as TransformAxis,
-        toolSettings.state.textureLock,
-      );
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
+function flipSelection(axis: TransformAxis) {
+  if (transforms.state.flipDisabled || !viewportCanEdit()) return;
+  const bounds = selectedObjectBounds();
+  if (!bounds) {
+    status.textContent = "Select objects to mirror";
+    return;
+  }
+  const grid = toolSettings.state.gridSize;
+  const pivot = ([0, 1, 2] as const).map(
+    (component) =>
+      Math.round((bounds.min[component] + bounds.max[component]) / (2 * grid)) *
+      grid,
+  ) as [number, number, number];
+  try {
+    session.flipSelected(pivot, axis, toolSettings.state.textureLock);
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
 }
 
 async function runHistoryAction(action: "undo" | "redo") {
@@ -4276,7 +4245,7 @@ async function showVersionsFromControls() {
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #add-point-entity, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all, #repeat-commands, #clear-repeat-commands, #paste-original)",
+  ".editor-toolbar button:not(.transform-nudge, #delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #add-point-entity, #move-selection, #rotate-selection, #scale-selection, #shear-selection, #flip-x, #flip-y, #flip-z, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all, #repeat-commands, #clear-repeat-commands, #paste-original)",
 )) {
   button.disabled = false;
 }

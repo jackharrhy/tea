@@ -38,6 +38,8 @@ Undo and Redo buttons now render through a Remix client entry; the editor retain
 
 Brush and point entity creation controls now render through a Remix client entry, with project definition suggestions. The editor retains validation, defaults, placement bounds, and history transactions.
 
+Numeric transform controls now render through a Remix client entry. Move, nudge, Rotate, Scale, Shear, and Mirror still use the editor's geometry transactions and texture lock setting.
+
 Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.
 
 Viewport tool, grid size, and Texture lock now render through a Remix client entry. The editor and its tools read the same settings state for rendering and transactions.

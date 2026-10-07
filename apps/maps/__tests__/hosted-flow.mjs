@@ -1600,9 +1600,98 @@ try {
         .execute({ kind: "entity" })
         .objects.some((entity) => entity.classname === "func_detail"),
   );
+  await entityPage.evaluate((brushId) => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      mode: "objects",
+      brushIds: [brushId],
+    });
+  }, entityBrush);
+  await entityPage.locator("#move-x").fill("16");
+  await entityPage.locator("#move-selection:not([disabled])").click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "brush" })
+      .objects.some((brush) => brush.bounds.min[0] === 16),
+  );
+  await entityPage.getByRole("button", { name: "Nudge X positive" }).click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "brush" })
+      .objects.some((brush) => brush.bounds.min[0] === 32),
+  );
+  const transformRevision = await entityPage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await entityPage.locator("#rotate-degrees").fill("45");
+  await entityPage.locator("#rotate-selection").click();
+  await entityPage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    transformRevision,
+  );
+  const rotatedRevision = await entityPage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await entityPage.locator("#scale-x").fill("0");
+  await entityPage.locator("#scale-selection").click();
+  await entityPage
+    .getByText("Select objects and enter positive scale factors")
+    .waitFor();
+  assert.equal(
+    await entityPage.evaluate(
+      () =>
+        window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+          .revision,
+    ),
+    rotatedRevision,
+  );
+  await entityPage.locator("#scale-x").fill("1.25");
+  await entityPage.locator("#scale-selection").click();
+  await entityPage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    rotatedRevision,
+  );
+  await entityPage.locator("#advanced-transforms summary").click();
+  const scaledRevision = await entityPage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await entityPage.locator("#shear-selection").click();
+  await entityPage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    scaledRevision,
+  );
+  const shearedRevision = await entityPage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await entityPage.locator("#flip-x").click();
+  await entityPage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    shearedRevision,
+  );
   await entityPage.close();
   result.checks.push(
-    "Remix entity controls create point and brush entities, validate origin, and restore structural geometry",
+    "Remix entity and transform controls create entities, restore geometry, and edit a brush",
   );
   const selectionPage = await browser.newPage();
   await installSiteToolMock(selectionPage);

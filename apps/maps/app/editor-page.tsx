@@ -19,6 +19,7 @@ import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
 import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
 import { EditorHistory } from "./assets/editor-history-panel.tsx";
 import { EditorEntityCreation } from "./assets/editor-entity-creation-panel.tsx";
+import { EditorTransforms } from "./assets/editor-transforms-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -84,138 +85,7 @@ export function EditorPage() {
             <EditorSelectionCommands />
             <EditorEditActions />
             <EditorEntityCreation />
-            <div
-              class="transform-tools"
-              role="group"
-              aria-label="Move selection"
-            >
-              <span>Move</span>
-              <label for="move-x">X</label>
-              <input id="move-x" type="number" value="16" />
-              <label for="move-y">Y</label>
-              <input id="move-y" type="number" value="0" />
-              <label for="move-z">Z</label>
-              <input id="move-z" type="number" value="0" />
-              <button id="move-selection" type="button" disabled>
-                Apply
-              </button>
-            </div>
-            <div class="transform-tools" role="group" aria-label="Grid nudge">
-              <span>Grid nudge</span>
-              {(["X", "Y", "Z"] as const).map((axis) => (
-                <span>
-                  {axis}
-                  <button
-                    type="button"
-                    data-nudge-axis={axis}
-                    data-nudge-direction="-1"
-                    disabled
-                    aria-label={`Nudge ${axis} negative`}
-                  >
-                    −
-                  </button>
-                  <button
-                    type="button"
-                    data-nudge-axis={axis}
-                    data-nudge-direction="1"
-                    disabled
-                    aria-label={`Nudge ${axis} positive`}
-                  >
-                    +
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div
-              class="transform-tools"
-              role="group"
-              aria-label="Rotate selection"
-            >
-              <span>Rotate</span>
-              <label for="rotate-axis">Axis</label>
-              <select id="rotate-axis">
-                <option value="0">X</option>
-                <option value="1">Y</option>
-                <option value="2" selected>
-                  Z
-                </option>
-              </select>
-              <label for="rotate-degrees">Degrees</label>
-              <input id="rotate-degrees" type="number" value="90" step="1" />
-              <button id="rotate-selection" type="button" disabled>
-                Apply
-              </button>
-            </div>
-            <div
-              class="transform-tools"
-              role="group"
-              aria-label="Scale selection"
-            >
-              <span>Scale</span>
-              <label for="scale-x">X</label>
-              <input
-                id="scale-x"
-                type="number"
-                min="0.05"
-                step="0.05"
-                value="1.25"
-              />
-              <label for="scale-y">Y</label>
-              <input
-                id="scale-y"
-                type="number"
-                min="0.05"
-                step="0.05"
-                value="1.25"
-              />
-              <label for="scale-z">Z</label>
-              <input
-                id="scale-z"
-                type="number"
-                min="0.05"
-                step="0.05"
-                value="1.25"
-              />
-              <button id="scale-selection" type="button" disabled>
-                Apply
-              </button>
-            </div>
-            <details id="advanced-transforms">
-              <summary>Shear and mirror</summary>
-              <div class="advanced-transform-controls">
-                <label for="shear-source-axis">Plane axis</label>
-                <select id="shear-source-axis">
-                  <option value="0">X</option>
-                  <option value="1">Y</option>
-                  <option value="2" selected>
-                    Z
-                  </option>
-                </select>
-                <label for="shear-target-axis">Move axis</label>
-                <select id="shear-target-axis">
-                  <option value="0" selected>
-                    X
-                  </option>
-                  <option value="1">Y</option>
-                  <option value="2">Z</option>
-                </select>
-                <label for="shear-offset">Offset</label>
-                <input id="shear-offset" type="number" step="1" value="16" />
-                <button id="shear-selection" type="button" disabled>
-                  Shear
-                </button>
-                <span>Mirror around snapped center</span>
-                <button id="flip-x" type="button" disabled>
-                  Flip X
-                </button>
-                <button id="flip-y" type="button" disabled>
-                  Flip Y
-                </button>
-                <button id="flip-z" type="button" disabled>
-                  Flip Z
-                </button>
-              </div>
-            </details>
+            <EditorTransforms />
             <div id="clip-tools" class="clip-tools" hidden>
               <span id="clip-points">Place two or three points</span>
               <div role="group" aria-label="Clip result">

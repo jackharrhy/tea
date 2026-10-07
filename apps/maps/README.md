@@ -142,6 +142,8 @@ Undo and Redo buttons render through a Remix client component. The editor still 
 
 Brush and point entity creation controls render through a Remix client component, including class suggestions from project definitions. The editor still validates classnames and origins, applies definition defaults and point placement bounds, and commits entity changes through its history.
 
+Move, grid nudge, Rotate, Scale, Shear, and Mirror controls render through a Remix client component. The editor keeps geometry validation, selection pivots, texture lock, and history transactions.
+
 When editing inside a linked group that has another copy, entity properties can be marked Independent in the inspector. A new protected property stays in the open copy, while edits to ordinary properties continue to synchronize. The checkbox beside an existing property can add or remove that protection.
 
 Viewport picking treats closed groups as one selection, opens a group on activation, and expands a brush entity pick to its sibling brushes. With several brushes selected, picking a face in Face mode selects matching faces across them. Paint selection reports the resulting count in the editor status.
