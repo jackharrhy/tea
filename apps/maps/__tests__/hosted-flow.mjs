@@ -2266,6 +2266,45 @@ try {
   result.checks.push(
     "Remix project sync pushes a reviewed disk edit to hosted storage",
   );
+  const concurrentSource = `${pushedMap.map.source}\n// concurrent hosted edit\n`;
+  const concurrentResponse = await page.request.put(
+    `${mapsOrigin}/api/projects/${projectUrl.split("/").at(-1)}/maps/${hostedMapId}/source`,
+    {
+      headers: { Origin: mapsOrigin },
+      data: {
+        expectedMapVersion: pushedMap.map.mapVersion,
+        expectedSourceSha256: pushedMap.map.sourceSha256,
+        source: concurrentSource,
+      },
+    },
+  );
+  assert.equal(concurrentResponse.status(), 200);
+  await page.evaluate(async () => {
+    const root = await window.showDirectoryPicker();
+    const mapDirectory = await root.getDirectoryHandle("maps");
+    const handle = await mapDirectory.getFileHandle("alpha.map");
+    const source = await (await handle.getFile()).text();
+    const writer = await handle.createWritable();
+    await writer.write(`${source}\n// concurrent local edit\n`);
+    await writer.close();
+  });
+  await page.locator("#project-sync-open:not([disabled])").click();
+  await page
+    .locator("#project-sync-summary")
+    .filter({ hasText: /Both changed/ })
+    .waitFor();
+  assert.match(
+    await page.locator("#project-sync-local").inputValue(),
+    /\/\/ concurrent local edit/,
+  );
+  assert.match(
+    await page.locator("#project-sync-hosted").inputValue(),
+    /\/\/ concurrent hosted edit/,
+  );
+  await page.locator("#project-sync-close").click();
+  result.checks.push(
+    "Remix project sync reviews concurrent local and hosted changes",
+  );
   const projectSiteTools = await page.evaluate(async () => {
     const tools = window.teaMapsTestTools;
     const inspect = () => tools.get("tea_maps_inspect_editor").execute({});
