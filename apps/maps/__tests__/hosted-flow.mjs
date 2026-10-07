@@ -749,6 +749,64 @@ try {
     (await sourcePage.locator("#camera-position").textContent()) ?? "",
     /^Position: /,
   );
+  const movementPage = await browser.newPage();
+  await movementPage.goto(`${mapsOrigin}/?example=quake`);
+  await movementPage.locator("#viewport world-view").waitFor();
+  await movementPage.evaluate(() => {
+    const element = document.querySelector("#viewport world-view");
+    const settings = {
+      maxSpeed: 300,
+      accelerate: 10,
+      airAccelerate: 10,
+      friction: 4,
+      stopSpeed: 100,
+      mouseSensitivity: 1,
+      mouseAcceleration: 0,
+      viewBob: 0.5,
+    };
+    const calls = [];
+    Object.defineProperty(element, "viewer", {
+      configurable: true,
+      value: {
+        world: {},
+        movement: settings,
+        setMovement(update) {
+          calls.push(update);
+          Object.assign(settings, update);
+          element.dispatchEvent(
+            new CustomEvent("movementchange", {
+              detail: { mode: "walk", settings },
+            }),
+          );
+        },
+      },
+    });
+    window.movementProbe = { settings, calls };
+  });
+  await movementPage.waitForFunction(() => {
+    const element = document.querySelector("#viewport world-view");
+    element.dispatchEvent(
+      new CustomEvent("movementchange", {
+        detail: { mode: "walk", settings: window.movementProbe.settings },
+      }),
+    );
+    return !document.querySelector("#movement-max-speed").disabled;
+  });
+  assert.equal(
+    await movementPage.locator("#movement-max-speed").inputValue(),
+    "300",
+  );
+  await movementPage.locator("details.movement-settings summary").click();
+  const movementCalls = await movementPage.evaluate(() => {
+    window.movementProbe.calls.length = 0;
+    const input = document.querySelector("#movement-max-speed");
+    input.value = "320";
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return window.movementProbe.calls;
+  });
+  assert.deepEqual(movementCalls, [{ maxSpeed: 320 }]);
+  await movementPage.close();
+  result.checks.push("Remix viewer movement settings update renderer controls");
   const viewerFolder = join(state, "viewer-fixture");
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
   await writeFile(join(viewerFolder, "maps", "folder.bsp"), bsp);

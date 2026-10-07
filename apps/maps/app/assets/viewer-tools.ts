@@ -4,7 +4,6 @@ import {
   type CameraState,
   type MapDiagnostics,
   type OverviewCaptureOptions,
-  type WorldviewMovementSettings,
 } from "@tea/maps-renderer";
 import type { WorldViewElement } from "@tea/maps-renderer/element";
 import { serializeWalkability } from "@tea/maps-renderer/walkability";
@@ -48,21 +47,6 @@ export function initViewerTools(element: WorldViewElement): {
     document.querySelector<HTMLUListElement>("#entity-classes")!;
   const toolStatus =
     document.querySelector<HTMLOutputElement>("#map-tool-status")!;
-  const movementInputs = (
-    [
-      ["maxSpeed", "#movement-max-speed"],
-      ["accelerate", "#movement-accelerate"],
-      ["airAccelerate", "#movement-air-accelerate"],
-      ["friction", "#movement-friction"],
-      ["stopSpeed", "#movement-stop-speed"],
-      ["mouseSensitivity", "#movement-mouse-sensitivity"],
-      ["mouseAcceleration", "#movement-mouse-acceleration"],
-      ["viewBob", "#movement-view-bob"],
-    ] as const
-  ).map(([key, selector]) => ({
-    key,
-    input: document.querySelector<HTMLInputElement>(selector)!,
-  }));
   const overviewSize =
     document.querySelector<HTMLSelectElement>("#overview-size")!;
   const overviewLighting =
@@ -165,12 +149,6 @@ export function initViewerTools(element: WorldViewElement): {
     stopMusic.disabled = !audio.musicPlaying;
   }
 
-  function updateMovement(settings: WorldviewMovementSettings) {
-    for (const { key, input } of movementInputs) {
-      input.value = String(settings[key]);
-    }
-  }
-
   function reset() {
     initialCamera = undefined;
     warningMessages = [];
@@ -189,10 +167,6 @@ export function initViewerTools(element: WorldViewElement): {
     musicLoading = false;
     musicTrack.replaceChildren(new Option("No map music", ""));
     musicStatus.textContent = "No map music";
-    for (const { input } of movementInputs) {
-      input.value = "";
-      input.disabled = true;
-    }
     for (const control of [
       overviewZMin,
       overviewZMax,
@@ -247,8 +221,6 @@ export function initViewerTools(element: WorldViewElement): {
     }
     warningMessages = [...event.detail.diagnostics.warnings];
     warnings.textContent = warningMessages.slice(0, 5).join("\n");
-    updateMovement(runtime.movement);
-    for (const { input } of movementInputs) input.disabled = false;
     const overview = planOverview(event.detail.world);
     overviewZMin.value = String(Math.floor(overview.bounds.min[2]));
     overviewZMax.value = String(Math.ceil(overview.bounds.max[2]));
@@ -289,9 +261,6 @@ export function initViewerTools(element: WorldViewElement): {
     if (event.detail.code === "asset-warning")
       toolStatus.textContent = event.detail.message;
   });
-  element.addEventListener("movementchange", (event) => {
-    updateMovement(event.detail.settings);
-  });
   element.addEventListener("walkabilitychange", (event) => {
     updateWalkability();
     if (event.detail.walkability)
@@ -303,23 +272,6 @@ export function initViewerTools(element: WorldViewElement): {
     report(event.detail.error);
   });
 
-  for (const { key, input } of movementInputs) {
-    input.addEventListener("change", () => {
-      const runtime = element.viewer;
-      if (!runtime || input.disabled) return;
-      const value = input.valueAsNumber;
-      if (!input.checkValidity() || !Number.isFinite(value)) {
-        input.value = String(runtime.movement[key]);
-        return;
-      }
-      try {
-        runtime.setMovement({ [key]: value });
-      } catch (error) {
-        report(error);
-        input.value = String(runtime.movement[key]);
-      }
-    });
-  }
   downloadOverview.addEventListener("click", async () => {
     const runtime = element.viewer;
     if (!runtime?.world) return;

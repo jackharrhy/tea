@@ -34,6 +34,8 @@ The editor's Recent projects menu now renders as a Remix client entry while reta
 
 The viewer Camera panel now renders through a Remix client entry while the renderer continues to own movement and camera state.
 
+The viewer Movement settings panel also renders through a Remix client entry; it listens to renderer movement changes and applies validated control values.
+
 The editor's document controls now render through a Remix client entry. The editor still checks file handles and source save plans, writes recovery checkpoints, and guards map replacement.
 
 The viewport pointer readout now renders in a Remix client entry using the editor renderer's snapped map position.

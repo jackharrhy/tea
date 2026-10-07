@@ -28,6 +28,8 @@ Worldview's `?fixture=<id>` links open matching generated or local development f
 
 The Camera panel is a Remix client component for reticle visibility, walk and fly mode, field of view, reset, live position and angles, and copying a shareable view link. The viewer runtime still owns camera movement and map loading.
 
+Movement settings render through a Remix client component and update the renderer's walk and fly controls as each value changes.
+
 ## Editor
 
 Save and Download preserve untouched local `.map` source, including comments and unsupported constructs, when the source planner can patch an edit safely. If it cannot, both stop with a diagnostic. Export normalized downloads a separate `.normalized.map` copy and never writes the opened file. Local recovery snapshots retain the semantic document and source anchors along with unapplied text edits.

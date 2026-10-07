@@ -72,6 +72,7 @@ const clientEntryFiles = {
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,
   "viewer-source-panel.tsx": browserAssets.viewerSourcePanel,
   "viewer-camera-panel.tsx": browserAssets.viewerCameraPanel,
+  "viewer-movement-panel.tsx": browserAssets.viewerMovementPanel,
   "new-map-setup.tsx": browserAssets.newMap,
   "project-maps.tsx": browserAssets.projectMaps,
   "project-new-map.tsx": browserAssets.projectNewMap,

@@ -74,6 +74,10 @@ export const mapsStyles = css({
     gap: "0.65rem",
     "padding-top": "0.65rem",
   },
+  "& .movement-fields label": {
+    display: "grid",
+    gap: "0.3rem",
+  },
   "& .toggle": { display: "flex", "align-items": "center", gap: "0.5rem" },
   "& .toggle input": { width: "auto" },
   "& label": { "font-size": "0.85rem", "font-weight": "700" },

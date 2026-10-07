@@ -3,6 +3,7 @@ import { mapsStyles } from "./styles.ts";
 import { HostedViewerPanel } from "./assets/hosted-viewer-panel.tsx";
 import { ViewerSourcePanel } from "./assets/viewer-source-panel.tsx";
 import { ViewerCameraPanel } from "./assets/viewer-camera-panel.tsx";
+import { ViewerMovementPanel } from "./assets/viewer-movement-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -47,93 +48,7 @@ export function MapsPage() {
                   </details>
                 </section>
                 <ViewerCameraPanel />
-                <section aria-label="Movement settings">
-                  <details class="movement-settings">
-                    <summary>Movement settings</summary>
-                    <div class="movement-fields">
-                      <label for="movement-max-speed">Max speed</label>
-                      <input
-                        id="movement-max-speed"
-                        type="number"
-                        min="100"
-                        max="400"
-                        step="1"
-                        disabled
-                      />
-                      <label for="movement-accelerate">
-                        Ground acceleration
-                      </label>
-                      <input
-                        id="movement-accelerate"
-                        type="number"
-                        min="1"
-                        max="20"
-                        step="0.1"
-                        disabled
-                      />
-                      <label for="movement-air-accelerate">
-                        Air acceleration
-                      </label>
-                      <input
-                        id="movement-air-accelerate"
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        disabled
-                      />
-                      <label for="movement-friction">Friction</label>
-                      <input
-                        id="movement-friction"
-                        type="number"
-                        min="0"
-                        max="10"
-                        step="0.1"
-                        disabled
-                      />
-                      <label for="movement-stop-speed">Stop speed</label>
-                      <input
-                        id="movement-stop-speed"
-                        type="number"
-                        min="0"
-                        max="200"
-                        step="1"
-                        disabled
-                      />
-                      <label for="movement-mouse-sensitivity">
-                        Mouse sensitivity
-                      </label>
-                      <input
-                        id="movement-mouse-sensitivity"
-                        type="number"
-                        min="0.1"
-                        max="10"
-                        step="0.1"
-                        disabled
-                      />
-                      <label for="movement-mouse-acceleration">
-                        Mouse acceleration
-                      </label>
-                      <input
-                        id="movement-mouse-acceleration"
-                        type="number"
-                        min="0"
-                        max="0.1"
-                        step="0.002"
-                        disabled
-                      />
-                      <label for="movement-view-bob">View bob</label>
-                      <input
-                        id="movement-view-bob"
-                        type="number"
-                        min="0"
-                        max="2"
-                        step="0.05"
-                        disabled
-                      />
-                    </div>
-                  </details>
-                </section>
+                <ViewerMovementPanel />
                 <section aria-label="Map overview">
                   <h2>Overview</h2>
                   <label for="overview-size">Image size</label>
