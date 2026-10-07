@@ -106,6 +106,8 @@ References can load another `.map` or snapshot the current document into a read-
 
 The perspective viewport has a vertical FOV control from 20° to 120°. Its default is saved in this browser, can be reset to the current default, and can be restored to the factory 60° setting. The control is unavailable while the compiled preview is showing.
 
+The FOV control is a Remix client component. The editor applies its saved default to a new renderer and publishes camera changes to the control.
+
 Expand switches between the four viewport layout and a perspective-only view. The dividers between viewport panes and beside the inspector support dragging or arrow keys. Tea saves the pane sizes, view mode, and camera positions per map in this browser and restores them when that map is reopened.
 
 The Performance control samples visible-tab animation frame cadence and editor render CPU submission time only while open. It shows a bounded frame graph and can record up to 30 seconds of timing samples as copyable JSON. GPU execution time and map contents are not included.

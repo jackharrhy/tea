@@ -5,6 +5,7 @@ import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.tsx";
 import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
+import { EditorFov } from "./assets/editor-fov-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -860,32 +861,7 @@ export function EditorPage() {
               <div class="viewport-frame">
                 <div class="perspective-header">
                   <span id="perspective-label">Perspective</span>
-                  <details id="editor-fov">
-                    <summary id="editor-fov-trigger">FOV 60°</summary>
-                    <div class="editor-fov-controls">
-                      <label for="editor-fov-value">
-                        Vertical FOV (degrees)
-                      </label>
-                      <input
-                        id="editor-fov-value"
-                        type="number"
-                        min="20"
-                        max="120"
-                        step="1"
-                        value="60"
-                      />
-                      <span id="editor-fov-default">Default: 60°</span>
-                      <button id="editor-fov-reset" type="button" disabled>
-                        Reset to default
-                      </button>
-                      <button id="editor-fov-save" type="button" disabled>
-                        Use current as default
-                      </button>
-                      <button id="editor-fov-factory" type="button">
-                        Restore 60° default
-                      </button>
-                    </div>
-                  </details>
+                  <EditorFov />
                   <button
                     id="perspective-only"
                     type="button"

@@ -383,10 +383,31 @@ try {
   await themePage.waitForFunction(
     () => document.documentElement.dataset.theme === "dark",
   );
-  await themePage.close();
-  result.checks.push(
-    "editor theme follows system and persists a manual choice",
+  await themePage.locator("#editor-fov summary").click();
+  await themePage.locator("#editor-fov-value").fill("75");
+  await themePage.locator("#editor-fov-value").press("Tab");
+  await themePage.waitForFunction(
+    () =>
+      document.querySelector("#editor-fov-trigger")?.textContent?.trim() ===
+      "FOV 75° *",
   );
+  await themePage.locator("#editor-fov-save").click();
+  await themePage.getByText("Default: 75°").waitFor();
+  await themePage.reload();
+  await themePage.waitForFunction(
+    () =>
+      document.querySelector("#editor-fov-trigger")?.textContent?.trim() ===
+      "FOV 75°",
+  );
+  await themePage.locator("#editor-fov summary").click();
+  await themePage.locator("#editor-fov-factory").click();
+  await themePage.waitForFunction(
+    () =>
+      document.querySelector("#editor-fov-trigger")?.textContent?.trim() ===
+      "FOV 60°",
+  );
+  await themePage.close();
+  result.checks.push("editor theme and Remix FOV control persist preferences");
 
   const sourcePage = await browser.newPage();
   await sourcePage.goto(`${mapsOrigin}/?example=quake`);
