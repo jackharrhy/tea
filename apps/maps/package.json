@@ -29,7 +29,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^2.0.0-beta.sha-52b0dc0e9",
     "@types/node": "^26.6.4",
-    "cf": "^1.0.0-beta.12",
+    "cf": "^1.0.0-beta.13",
     "esbuild": "^0.28.2",
     "fake-indexeddb": "^6.2.5",
     "playwright": "1.62.1",
