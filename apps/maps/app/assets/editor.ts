@@ -196,6 +196,7 @@ import {
   type SelectionBrushProjection,
 } from "./editor-selection-brushes-bridge.ts";
 import { initEditorSelectionCommands } from "./editor-selection-commands-bridge.ts";
+import { initEditorEditActions } from "./editor-edit-actions-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -254,22 +255,17 @@ const selectionCommands = initEditorSelectionCommands({
   lock: lockSelection,
   unlockAll: unlockAllSelection,
 });
-const repeatCommandsButton =
-  document.querySelector<HTMLButtonElement>("#repeat-commands")!;
-const clearRepeatCommandsButton = document.querySelector<HTMLButtonElement>(
-  "#clear-repeat-commands",
-)!;
+const editActions = initEditorEditActions({
+  snap: snapSelectionToGrid,
+  repeat: repeatRecordedCommands,
+  clearRepeat: clearRecordedCommands,
+  copy: copySelection,
+  pastePointer: pasteAtPointer,
+  pasteOriginal: pasteInPlace,
+});
 const selectionBrushes = initEditorSelectionBrushes(runSelectionBrushQuery);
 const nudgeButtons =
   document.querySelectorAll<HTMLButtonElement>("[data-nudge-axis]");
-const snapToGridButton =
-  document.querySelector<HTMLButtonElement>("#snap-to-grid")!;
-const copySelectionButton =
-  document.querySelector<HTMLButtonElement>("#copy-selection")!;
-const pasteCursorButton =
-  document.querySelector<HTMLButtonElement>("#paste-cursor")!;
-const pasteOriginalButton =
-  document.querySelector<HTMLButtonElement>("#paste-original")!;
 const gridSizeInput = document.querySelector<HTMLSelectElement>("#grid-size")!;
 const textureLockInput =
   document.querySelector<HTMLInputElement>("#texture-lock")!;
@@ -1489,10 +1485,23 @@ function refreshSelection() {
   }
   updatePointButton.disabled = !pointEntity || !editing;
   const objectCommandDisabled = (!brushId && pointIds.length === 0) || !editing;
-  copySelectionButton.disabled = !selection;
-  snapToGridButton.disabled =
-    hostedMap !== null ||
-    (brushIds.length === 0 && selectedFaceReferences(selection).length === 0);
+  editActions.update({
+    copyDisabled: !selection,
+    snapDisabled:
+      hostedMap !== null ||
+      (brushIds.length === 0 && selectedFaceReferences(selection).length === 0),
+    repeatDisabled: !session.canRepeatCommands || !editing,
+    repeatLabel: session.repeatCommandCount
+      ? `Repeat ${session.repeatCommandCount}`
+      : "Repeat",
+    repeatTitle: session.repeatCommandLabels.length
+      ? `Repeat ${session.repeatCommandLabels.join(" → ")} (Ctrl/Command+Shift+R)`
+      : "Record duplicate, move, rotate, flip, scale, or shear commands first",
+    clearRepeatDisabled: session.repeatCommandCount === 0,
+    clearRepeatTitle: session.repeatCommandCount
+      ? `Clear ${session.repeatCommandLabels.join(" → ")}`
+      : "No recorded command sequence",
+  });
   selectionCommands.update({
     deleteDisabled: objectCommandDisabled,
     duplicateDisabled: objectCommandDisabled,
@@ -1501,17 +1510,6 @@ function refreshSelection() {
     focusDisabled: !selection || !renderer,
     unlockAllDisabled: hostedMap !== null || !session.canUnlockAll,
   });
-  repeatCommandsButton.disabled = !session.canRepeatCommands || !editing;
-  repeatCommandsButton.textContent = session.repeatCommandCount
-    ? `Repeat ${session.repeatCommandCount}`
-    : "Repeat";
-  repeatCommandsButton.title = session.repeatCommandLabels.length
-    ? `Repeat ${session.repeatCommandLabels.join(" → ")} (Ctrl/Command+Shift+R)`
-    : "Record duplicate, move, rotate, flip, scale, or shear commands first";
-  clearRepeatCommandsButton.disabled = session.repeatCommandCount === 0;
-  clearRepeatCommandsButton.title = session.repeatCommandCount
-    ? `Clear ${session.repeatCommandLabels.join(" → ")}`
-    : "No recorded command sequence";
   for (const button of nudgeButtons) {
     button.disabled = (!brushId && pointIds.length === 0) || !editing;
   }
@@ -1782,7 +1780,7 @@ function setMap(value: MapDocument, sourceState?: MapSourceState) {
   dragDuplicateBase = null;
   faceDrag.reset();
   latestPointer = null;
-  pasteCursorButton.disabled = true;
+  editActions.update({ pastePointerDisabled: true });
   latestBuildExport = null;
   buildControls.exportStatus = "";
   refreshBuildExport();
@@ -1945,9 +1943,11 @@ function setHostedEditability() {
       readOnly && (hostedMap?.role === "viewer" || !hostedConnection),
     downloadLabel: readOnly ? "Download copy" : "Download .map",
   });
-  pasteOriginalButton.disabled = readOnly && !hostedConnection;
-  pasteCursorButton.disabled =
-    (readOnly && !hostedConnection) || latestPointer === null;
+  editActions.update({
+    pasteOriginalDisabled: readOnly && !hostedConnection,
+    pastePointerDisabled:
+      (readOnly && !hostedConnection) || latestPointer === null,
+  });
   const buildDisabled =
     localBuildBusy ||
     (readOnly && (hostedMap?.role === "viewer" || hostedBuildBusy));
@@ -2258,8 +2258,8 @@ function showViewportContextMenu(event: EditorViewportContextMenuEvent) {
     },
     {
       label: "Copy selection",
-      disabled: copySelectionButton.disabled,
-      run: () => clipboard.copy(),
+      disabled: editActions.state.copyDisabled,
+      run: copySelection,
     },
     {
       label: "Duplicate selection",
@@ -2504,7 +2504,9 @@ if (!navigator.gpu) {
         session.selectFacesWithLasso(faces, ensureSelected),
       onPointerPosition: (pointer) => {
         latestPointer = pointer;
-        pasteCursorButton.disabled = hostedMap !== null && !hostedConnection;
+        editActions.update({
+          pastePointerDisabled: hostedMap !== null && !hostedConnection,
+        });
         hostedConnection?.publishPointer(pointer);
       },
       onContextMenu: showViewportContextMenu,
@@ -3307,11 +3309,11 @@ function repeatRecordedCommands() {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
 }
-repeatCommandsButton.addEventListener("click", repeatRecordedCommands);
-clearRepeatCommandsButton.addEventListener("click", () => {
+function clearRecordedCommands() {
+  if (editActions.state.clearRepeatDisabled) return;
   session.clearRepeatableCommands();
   refreshSelection();
-});
+}
 for (const button of nudgeButtons) {
   button.addEventListener("click", () => {
     if (!viewportCanEdit()) return;
@@ -3331,7 +3333,8 @@ for (const button of nudgeButtons) {
     }
   });
 }
-snapToGridButton.addEventListener("click", () => {
+function snapSelectionToGrid() {
+  if (editActions.state.snapDisabled) return;
   if (hostedMap || !applyWorkingSource()) return;
   try {
     if (
@@ -3346,16 +3349,19 @@ snapToGridButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
-copySelectionButton.addEventListener("click", () => {
+}
+function copySelection() {
+  if (editActions.state.copyDisabled) return;
   void clipboard.copy();
-});
-pasteCursorButton.addEventListener("click", () => {
+}
+function pasteAtPointer() {
+  if (editActions.state.pastePointerDisabled) return;
   void clipboard.paste("pointer");
-});
-pasteOriginalButton.addEventListener("click", () => {
+}
+function pasteInPlace() {
+  if (editActions.state.pasteOriginalDisabled) return;
   void clipboard.paste("original");
-});
+}
 
 function textEditingTarget(target: EventTarget | null): boolean {
   return (
@@ -4284,7 +4290,7 @@ async function showVersionsFromControls() {
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all)",
+  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all, #repeat-commands, #clear-repeat-commands, #paste-original)",
 )) {
   button.disabled = false;
 }

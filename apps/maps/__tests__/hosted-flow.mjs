@@ -1585,6 +1585,42 @@ try {
   result.checks.push(
     "Remix selection commands duplicate, hide, lock, invert, and delete with Undo",
   );
+  await selectionPage.locator("#select-all").click();
+  await selectionPage.locator("#copy-selection").click();
+  await selectionPage
+    .getByText(/Copied selected objects as map text|Copied inside Maps/)
+    .waitFor();
+  await selectionPage.locator("#paste-original").click();
+  await selectionPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
+        .brushes === 4,
+  );
+  await selectionPage.locator("#undo").click();
+  await selectionPage.locator("#select-all").click();
+  await selectionPage.locator("#snap-to-grid").click();
+  await selectionPage.getByText("Selection is already on the grid").waitFor();
+  result.checks.push(
+    "Remix clipboard and grid actions copy, paste, undo, and snap",
+  );
+  await selectionPage.locator("#duplicate-selection").click();
+  await selectionPage.locator("#repeat-commands:not([disabled])").waitFor();
+  await selectionPage.locator("#repeat-commands").click();
+  await selectionPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
+        .brushes > 4,
+  );
+  await selectionPage.locator("#clear-repeat-commands").click();
+  await selectionPage.locator("#repeat-commands[disabled]").waitFor();
+  await selectionPage.locator("#undo").click();
+  await selectionPage.locator("#undo").click();
+  await selectionPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
+        .brushes === 2,
+  );
+  result.checks.push("Remix repeat controls replay and clear object commands");
   await selectionPage.locator("#view-filters summary").click();
   await selectionPage.locator("#show-world-brushes").uncheck();
   await selectionPage.getByText("View filters · 2 filtered").waitFor();

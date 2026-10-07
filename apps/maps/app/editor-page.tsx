@@ -15,6 +15,7 @@ import { EditorDocumentControls } from "./assets/editor-document-controls-panel.
 import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
 import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
 import { EditorSelectionCommands } from "./assets/editor-selection-commands-panel.tsx";
+import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -103,24 +104,7 @@ export function EditorPage() {
             <label for="texture-lock">
               <input id="texture-lock" type="checkbox" checked /> Texture lock
             </label>
-            <button id="snap-to-grid" type="button" disabled>
-              Snap selection
-            </button>
-            <button id="repeat-commands" type="button" disabled>
-              Repeat
-            </button>
-            <button id="clear-repeat-commands" type="button" disabled>
-              Clear repeat
-            </button>
-            <button id="copy-selection" type="button" disabled>
-              Copy
-            </button>
-            <button id="paste-cursor" type="button" disabled>
-              Paste at pointer
-            </button>
-            <button id="paste-original" type="button" disabled>
-              Paste in place
-            </button>
+            <EditorEditActions />
             <div class="transform-tools" role="group" aria-label="Brush entity">
               <label for="brush-entity-classname">Brush entity</label>
               <input

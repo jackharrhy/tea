@@ -34,6 +34,8 @@ Selection-brush query controls now render through a Remix client entry; the edit
 
 The selection command group now renders through a Remix client entry. Its context-menu and keyboard paths call the same editor actions as the buttons.
 
+Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, grid and texture-lock inputs, history, and hosted edit checks.
+
 The hosted share link and live participant list now render as a Remix client entry. The editor keeps room membership, operations, and viewport overlays.
 
 The editor's hosted Project access panel now renders as a Remix client entry and uses the same member service calls as the dedicated Access page. The editor only publishes the selected project ID to this panel.
