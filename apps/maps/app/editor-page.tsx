@@ -1,5 +1,6 @@
 import { browserAssets } from "./assets/build-manifest.ts";
 import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
+import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
@@ -1423,33 +1424,7 @@ export function EditorPage() {
                 source edits before using viewport tools.
               </p>
             </aside>
-            <section
-              id="project-map-selector"
-              aria-labelledby="project-map-selector-title"
-              hidden
-            >
-              <div class="project-map-selector-content">
-                <p>Local project</p>
-                <h1 id="project-map-selector-title">Project maps</h1>
-                <p>Choose a map to start editing.</p>
-                <div class="project-map-selector-list">
-                  <div class="project-map-selector-heading">
-                    <strong id="project-map-selector-count">Maps</strong>
-                    <input
-                      id="project-map-selector-filter"
-                      type="search"
-                      aria-label="Filter project maps"
-                      placeholder="Filter maps"
-                      hidden
-                    />
-                  </div>
-                  <div id="project-map-selector-rows" />
-                </div>
-                <button id="project-map-selector-sync" type="button">
-                  Project sync
-                </button>
-              </div>
-            </section>
+            <EditorProjectMapSelector />
           </div>
         </main>
         <section

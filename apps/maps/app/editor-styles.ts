@@ -1014,10 +1014,10 @@ export const editorStyles = css({
       "minmax(0, 1fr) 0 minmax(16rem, var(--inspector-width, 20rem))",
     "min-height": "0",
   },
-  "& .editor-workspace[data-choosing-map='true']": {
+  "& .editor-workspace:has(#project-map-selector:not([hidden]))": {
     "min-height": "min(70vh, 42rem)",
   },
-  "& .editor-workspace[data-choosing-map='true'] > .viewports, & .editor-workspace[data-choosing-map='true'] > #inspector-resizer, & .editor-workspace[data-choosing-map='true'] > .source-panel":
+  "& .editor-workspace:has(#project-map-selector:not([hidden])) > .viewports, & .editor-workspace:has(#project-map-selector:not([hidden])) > #inspector-resizer, & .editor-workspace:has(#project-map-selector:not([hidden])) > .source-panel":
     {
       visibility: "hidden",
     },
@@ -1030,7 +1030,7 @@ export const editorStyles = css({
     "align-items": "start",
     "justify-items": "center",
     padding: "clamp(2rem, 7vh, 5rem) 1.5rem",
-    background: "var(--editor-button-ink)",
+    background: "var(--editor-background)",
   },
   "& #project-map-selector[hidden]": { display: "none" },
   "& .project-map-selector-content": { width: "min(100%, 42rem)" },

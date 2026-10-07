@@ -19,6 +19,7 @@ declare module "remix/router" {
 }
 
 const clientEntryFiles = {
+  "editor-project-map-selector-panel.tsx": browserAssets.projectMapSelector,
   "editor-theme-control.tsx": browserAssets.editorTheme,
   "recovered-maps.tsx": browserAssets.recoveredMaps,
   "editor-recent-projects-panel.tsx": browserAssets.editorRecentProjects,

@@ -725,6 +725,9 @@ try {
   );
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
+  await page.locator("#project-map-selector-sync").click();
+  await page.locator("#project-sync-dialog").waitFor({ state: "visible" });
+  await page.locator("#project-sync-close").click();
   result.checks.push("local project map chooser and filtered map selection");
   const projectSiteTools = await page.evaluate(async () => {
     const tools = window.teaMapsTestTools;
