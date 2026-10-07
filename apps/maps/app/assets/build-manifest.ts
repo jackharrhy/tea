@@ -39,7 +39,7 @@ export const browserAssets = import.meta.env.DEV
   : {
       entry: "/assets/entry-JCK7T7IM.js",
       viewer: "/assets/viewer-25BRIEA7.js",
-      editor: "/assets/editor-ULWNFVRW.js",
+      editor: "/assets/editor-PCRF7YLD.js",
       editorTheme: "/assets/editorTheme-O2RSVMSI.js",
       editorHostedPresence: "/assets/editorHostedPresence-7MLOPJCL.js",
       editorHostedAccess: "/assets/editorHostedAccess-MXGH443S.js",

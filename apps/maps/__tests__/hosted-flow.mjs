@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -511,6 +511,79 @@ try {
     "editor theme, Remix FOV, layers, references, and export settings work without WebGPU",
   );
 
+  const localBuildPage = await browser.newPage();
+  await localBuildPage.addInitScript((bspBase64) => {
+    const originalFetch = window.fetch.bind(window);
+    window.teaMapsLocalCompileRequests = [];
+    window.fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : input);
+      if (url.origin !== "http://127.0.0.1:8788")
+        return originalFetch(input, init);
+      if (url.pathname === "/capabilities") {
+        return Response.json({
+          protocolVersion: 1,
+          compileProfiles: [
+            {
+              id: "test-quake",
+              label: "Test Quake",
+              game: "quake",
+              qualities: ["preview", "final"],
+            },
+          ],
+          launchProfiles: [],
+        });
+      }
+      if (url.pathname === "/compile") {
+        const request = JSON.parse(init.body);
+        window.teaMapsLocalCompileRequests.push(request);
+        return Response.json({
+          status: "succeeded",
+          buildId: "one-shot-build",
+          sourceDocumentRevision: request.expectedDocumentRevision,
+          diagnostics: [],
+          logs: [],
+          elapsedMilliseconds: 7,
+          artifacts: [
+            {
+              name: "tea-map.bsp",
+              kind: "bsp",
+              mediaType: "application/octet-stream",
+              base64: bspBase64,
+            },
+          ],
+        });
+      }
+      return new Response(null, { status: 404 });
+    };
+  }, bsp.toString("base64"));
+  await localBuildPage.goto(`${mapsOrigin}/editor`);
+  await localBuildPage.waitForFunction(
+    () => !document.querySelector("#build-export-once")?.disabled,
+  );
+  assert.equal(
+    await localBuildPage.locator("#export-after-build").isChecked(),
+    false,
+  );
+  const oneShotDownload = localBuildPage.waitForEvent("download");
+  await localBuildPage.locator("#build-export-once").click();
+  const exportedBuild = await oneShotDownload;
+  assert.equal(exportedBuild.suggestedFilename(), "tea-map.bsp");
+  assert.deepEqual(await readFile(await exportedBuild.path()), bsp);
+  assert.equal(
+    await localBuildPage.evaluate(
+      () => window.teaMapsLocalCompileRequests.length,
+    ),
+    1,
+  );
+  assert.equal(
+    await localBuildPage.locator("#export-after-build").isChecked(),
+    false,
+  );
+  await localBuildPage.close();
+  result.checks.push(
+    "one-shot local build export downloads BSP without changing preference",
+  );
+
   const sourcePage = await browser.newPage();
   await sourcePage.goto(`${mapsOrigin}/?example=quake`);
   await sourcePage.locator("#map-name").getByText("Quake sky").waitFor();
@@ -999,6 +1072,7 @@ try {
   result.checks.push("Remix recovery versions list hosted checkpoints");
   await page.locator("#hosted-builds summary").click();
   await page.getByText("0 builds · hosted compiler available").waitFor();
+  assert.equal(await page.locator("#build-export-once").isDisabled(), true);
   await page.locator("#build-map").click();
   const download = page.getByRole("link", { name: "Download BSP" });
   try {

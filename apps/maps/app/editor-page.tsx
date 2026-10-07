@@ -106,6 +106,9 @@ export function EditorPage() {
             <button id="build-map" type="button" disabled>
               Build BSP
             </button>
+            <button id="build-export-once" type="button" disabled>
+              Build &amp; export
+            </button>
             <button id="export-build" type="button" disabled>
               Export build
             </button>

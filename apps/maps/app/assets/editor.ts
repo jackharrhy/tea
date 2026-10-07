@@ -312,6 +312,8 @@ const buildProfile =
   document.querySelector<HTMLSelectElement>("#build-profile")!;
 const gameProfile = document.querySelector<HTMLSelectElement>("#game-profile")!;
 const buildButton = document.querySelector<HTMLButtonElement>("#build-map")!;
+const buildExportOnceButton =
+  document.querySelector<HTMLButtonElement>("#build-export-once")!;
 const exportBuildButton =
   document.querySelector<HTMLButtonElement>("#export-build")!;
 const exportStatus = document.querySelector<HTMLElement>("#export-status")!;
@@ -1967,6 +1969,7 @@ function setHostedEditability() {
   buildButton.textContent = readOnly ? "Build hosted BSP" : "Build BSP";
   buildButton.disabled =
     readOnly && (hostedMap?.role === "viewer" || hostedBuildBusy);
+  buildExportOnceButton.disabled = readOnly || buildButton.disabled;
   hostedSourceControls?.setAvailability();
   refreshSelection();
   issueBrowser.refresh();
@@ -3965,7 +3968,7 @@ async function exportLatestBuild(settings: ExportSettings): Promise<void> {
   }
 }
 
-buildButton.addEventListener("click", async () => {
+async function runBuild(exportOnce: boolean) {
   if (!applyWorkingSource()) return;
   const selected = project?.manifest.buildProfiles.find(
     (profile) => profile.id === buildProfile.value,
@@ -4040,12 +4043,13 @@ buildButton.addEventListener("click", async () => {
     selected && bindingsAtStart?.preferred(selected.id);
   const nameAtStart = mapName;
   const settingsAtStart = exportSettings;
-  const autoExport = settingsAtStart.afterBuild;
+  const autoExport = settingsAtStart.afterBuild || exportOnce;
   const generation = ++buildGeneration;
   latestBuildExport = null;
   exportStatus.textContent = "";
   refreshBuildExport();
   buildButton.disabled = true;
+  buildExportOnceButton.disabled = true;
   buildStatus.textContent = `Building ${quality}…`;
   buildDetails.hidden = true;
   try {
@@ -4185,9 +4189,12 @@ buildButton.addEventListener("click", async () => {
     buildStatus.textContent =
       error instanceof Error ? error.message : String(error);
   } finally {
-    buildButton.disabled = false;
+    setHostedEditability();
   }
-});
+}
+
+buildButton.addEventListener("click", () => void runBuild(false));
+buildExportOnceButton.addEventListener("click", () => void runBuild(true));
 
 exportBuildButton.addEventListener("click", async () => {
   refreshBuildExport();
