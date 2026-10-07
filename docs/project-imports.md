@@ -206,7 +206,9 @@ The selected-face UV editor now previews offset, rotation, and scale drags again
 
 The Tea editor now exposes WebMCP site tools for live document inspection, bounded object, issue, and material lists, and source slices in browsers that support `document.modelContext`. Tools frame the view and choose a viewport tool. Authoring tools select objects and faces, create boxes and point entities, translate, rotate, scale, shear, duplicate, or delete selections, edit materials and entity properties, and use local or personalized hosted history with document revision guards. Document tools can open a map from an authorized local project folder or replace the current source as a detached copy, with explicit confirmation for discarded work or replacement.
 
-The hosted service's separate MCP endpoint advertises `tea_maps_*` tools and the `tea-maps` server identity. It accepts the old `worldview_*` names as call aliases during migration, and browser grants link to Tea's canonical project route. Fourm still requires the copied `worldview:admin` scope until that external authorization contract is changed.
+The hosted service's separate MCP endpoint advertises `tea_maps_*` tools and the `tea-maps` server identity. It accepts the old `worldview_*` names as call aliases during migration, and browser grants link to Tea's canonical project route. Fourm still requires the copied `worldview:admin` scope until that external authorization contract is changed. The current Fourm policy binds that scope to Worldview's `https://worldview.harrhy.xyz/mcp` resource; a future Tea public MCP origin needs a separate Fourm policy and client-grant update before it can issue matching production tokens.
+
+Tea's hosted service uses its own `tea_maps_*` session, automation, and OAuth cookie names. A copied Worldview database does not make an original browser cookie valid in Tea; users sign in again after a future host cutover.
 
 The hosted map picker can compare its selected hosted source with the current local editor source in a read-only dialog. This standalone comparison does not link maps or transfer source.
 

@@ -189,6 +189,6 @@ export function session(
   const user = database.upsertUser(profile);
   return {
     user,
-    cookie: `worldview_session=${database.createSession(user.id).token}`,
+    cookie: `tea_maps_session=${database.createSession(user.id).token}`,
   };
 }

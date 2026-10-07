@@ -405,11 +405,11 @@ describe("hosted project access control", () => {
     expect(
       (
         await fetch(`${app.origin}/api/projects`, {
-          headers: { Cookie: "worldview_session=forged" },
+          headers: { Cookie: "tea_maps_session=forged" },
         })
       ).status,
     ).toBe(401);
-    const token = outsider.cookie.slice("worldview_session=".length);
+    const token = outsider.cookie.slice("tea_maps_session=".length);
     app.database.deleteSession(token);
     expect(
       (

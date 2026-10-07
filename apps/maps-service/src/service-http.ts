@@ -1,9 +1,9 @@
 import type { HostedSessionUser } from "@tea/maps-protocol";
 import type { WorldviewDatabase, WorldviewUser } from "./database.js";
 
-export const SESSION_COOKIE = "worldview_session";
-export const AUTOMATION_COOKIE = "worldview_automation";
-export const OAUTH_COOKIE = "worldview_oauth";
+export const SESSION_COOKIE = "tea_maps_session";
+export const AUTOMATION_COOKIE = "tea_maps_automation";
+export const OAUTH_COOKIE = "tea_maps_oauth";
 export const MAX_HOSTED_MAP_BYTES = 2 * 1024 * 1024;
 
 export interface SessionRequestContext {

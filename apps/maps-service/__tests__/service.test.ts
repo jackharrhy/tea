@@ -92,7 +92,7 @@ const successfulCompilerFetch: typeof fetch = async (_input, init) => {
   } satisfies RemoteCompileResult);
 };
 
-describe("Worldview hosted project service", () => {
+describe("Tea Maps hosted project service", () => {
   test("returns only the public session contract", async () => {
     const app = await fixture();
     const { cookie, user } = session(app.database);
@@ -101,10 +101,18 @@ describe("Worldview hosted project service", () => {
       user: null,
     });
     const malformedCookie = await fetch(`${app.origin}/api/session`, {
-      headers: { Cookie: "worldview_session=%E0%A4%A" },
+      headers: { Cookie: "tea_maps_session=%E0%A4%A" },
     });
     expect(malformedCookie.status).toBe(200);
     await expect(malformedCookie.json()).resolves.toEqual({ user: null });
+    const oldCookie = cookie.replace("tea_maps_session=", "worldview_session=");
+    expect(
+      await (
+        await fetch(`${app.origin}/api/session`, {
+          headers: { Cookie: oldCookie },
+        })
+      ).json(),
+    ).toEqual({ user: null });
 
     const response: unknown = await (
       await fetch(`${app.origin}/api/session`, { headers: { Cookie: cookie } })
@@ -383,7 +391,7 @@ describe("Worldview hosted project service", () => {
       displayName: "Outsider",
       isAdmin: false,
     });
-    const outsiderCookie = `worldview_session=${app.database.createSession(outsider.id).token}`;
+    const outsiderCookie = `tea_maps_session=${app.database.createSession(outsider.id).token}`;
     await fetch(`${app.origin}/api/projects`, {
       method: "POST",
       headers: { Cookie: owner.cookie, "Content-Type": "application/json" },
@@ -414,7 +422,7 @@ describe("Worldview hosted project service", () => {
       displayName: "Carson",
       isAdmin: false,
     });
-    const collaboratorCookie = `worldview_session=${app.database.createSession(collaborator.id).token}`;
+    const collaboratorCookie = `tea_maps_session=${app.database.createSession(collaborator.id).token}`;
     const project = app.database.createProject(
       owner.user.id,
       "Shared project",
@@ -697,8 +705,8 @@ describe("Worldview hosted project service", () => {
     expect(callbackCookies).toHaveLength(2);
     expect(callbackCookies).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("worldview_oauth=;"),
-        expect.stringContaining("worldview_session="),
+        expect.stringContaining("tea_maps_oauth=;"),
+        expect.stringContaining("tea_maps_session="),
       ]),
     );
     expect(calls).toEqual([
@@ -723,7 +731,7 @@ describe("Worldview hosted project service", () => {
     expect(denial.status).toBe(303);
     expect(denial.headers.get("location")).toBe("/?authError=access_denied");
     expect(denial.headers.getSetCookie()).toEqual([
-      expect.stringContaining("worldview_oauth=;"),
+      expect.stringContaining("tea_maps_oauth=;"),
     ]);
 
     const replay = await fetch(
@@ -735,7 +743,7 @@ describe("Worldview hosted project service", () => {
       error: "OAuth transaction is missing or expired",
     });
     expect(replay.headers.getSetCookie()).toEqual([
-      expect.stringContaining("worldview_oauth=;"),
+      expect.stringContaining("tea_maps_oauth=;"),
     ]);
   });
 
@@ -778,7 +786,7 @@ describe("Worldview hosted project service", () => {
     expect(callback.status).toBe(303);
     expect(tokenRedirectUri).toBe(`${tailnetOrigin}/auth/callback`);
     const sessionCookie = callback.headers["set-cookie"]!.find((value) =>
-      value.startsWith("worldview_session="),
+      value.startsWith("tea_maps_session="),
     )!.split(";", 1)[0]!;
     const create = await requestWithHost(app.origin, "/api/projects", host, {
       method: "POST",
@@ -804,7 +812,7 @@ describe("Worldview hosted project service", () => {
 
     expect(callback.status).toBe(500);
     expect(callback.headers.getSetCookie()).toEqual([
-      expect.stringContaining("worldview_oauth=;"),
+      expect.stringContaining("tea_maps_oauth=;"),
     ]);
     expect(await callback.json()).toEqual({ error: "Internal server error" });
   });
