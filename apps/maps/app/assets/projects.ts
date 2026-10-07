@@ -1,10 +1,8 @@
 import {
   HostedProjectResponseSchema,
   HostedSessionResponseSchema,
-  type HostedProject,
 } from "@tea/maps-protocol";
 import { createHostedMap } from "./editor-hosted-create.ts";
-import { openLinkedLocalProject } from "./project-local.ts";
 import { readHostedApi } from "./hosted-api.ts";
 import { showProjectAccess } from "./project-access.ts";
 import { showProjectResources } from "./project-resources.ts";
@@ -24,42 +22,6 @@ login.href = `/auth/login?returnTo=${encodeURIComponent(location.pathname + loca
 
 function message(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-function row(name: string, detail: string): HTMLElement {
-  const item = document.createElement("div");
-  item.className = "project-row";
-  const title = document.createElement("strong");
-  title.textContent = name;
-  const subtitle = document.createElement("small");
-  subtitle.textContent = detail;
-  item.append(title, subtitle);
-  return item;
-}
-
-function showMaps(project: HostedProject) {
-  const list = document.querySelector<HTMLElement>("#project-maps-list")!;
-  list.replaceChildren();
-  if (!project.maps.length) list.textContent = "No maps in this project yet";
-  for (const map of project.maps) {
-    const item = row(
-      map.name,
-      map.format === "quake" ? "Classic Quake" : "Valve 220",
-    );
-    const actions = document.createElement("div");
-    actions.className = "project-actions";
-    const edit = document.createElement("a");
-    edit.dataset.rmxDocument = "";
-    edit.href = `/editor?hostedMap=${encodeURIComponent(map.id)}`;
-    edit.textContent = "Open in editor";
-    const view = document.createElement("a");
-    view.dataset.rmxDocument = "";
-    view.href = `/?hostedProject=${encodeURIComponent(project.id)}&hostedMap=${encodeURIComponent(map.id)}`;
-    view.textContent = "View a build";
-    actions.append(edit, view);
-    item.append(actions);
-    list.append(item);
-  }
 }
 
 async function showProject() {
@@ -93,26 +55,6 @@ async function showProject() {
   }
   if (section === "access") {
     await showProjectAccess(project);
-    status.textContent = "";
-    return;
-  }
-  if (section === "maps") {
-    showMaps(project);
-    const openLocal = document.querySelector<HTMLButtonElement>(
-      "#project-open-local",
-    )!;
-    openLocal.addEventListener("click", async () => {
-      openLocal.disabled = true;
-      try {
-        const recentId = await openLinkedLocalProject(project);
-        if (recentId)
-          location.href = `/editor?recentProject=${encodeURIComponent(recentId)}`;
-      } catch (error) {
-        status.textContent = message(error);
-      } finally {
-        openLocal.disabled = false;
-      }
-    });
     status.textContent = "";
     return;
   }

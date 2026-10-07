@@ -362,13 +362,43 @@ try {
   );
   result.checks.push("signed-out UI and protected same-origin service proxy");
 
+  await page.goto(`${mapsOrigin}/projects/0123456789ab`);
+  await page.getByText("Sign in to open this project").waitFor();
+  assert.match(
+    await page.locator("#projects-login").getAttribute("href"),
+    /returnTo=%2Fprojects%2F0123456789ab/,
+  );
+  result.checks.push("signed-out hosted map page requests sign-in");
+  await page.goto(`${mapsOrigin}/projects`);
+  await page.getByText("Sign in to browse hosted projects").waitFor();
+
   await page.locator("#projects-login").click();
   await page.getByText("Signed in as Test Mapper").waitFor();
   await page.locator("#projects-create summary").click();
   await page.locator("#projects-create-name").fill("Smoke Project");
   await page.locator("#projects-create-form button").click();
   await page.waitForURL(/\/projects\/[a-z0-9]{12}$/);
-  await page.getByText("No maps in this project yet").waitFor();
+  try {
+    await page.getByText("No maps in this project yet").waitFor();
+  } catch (error) {
+    throw new Error(
+      `Project Maps did not load: ${JSON.stringify({
+        url: page.url(),
+        status: await page
+          .locator("#projects-status")
+          .textContent()
+          .catch(() => null),
+        html: (
+          await page
+            .locator("#projects-app")
+            .innerHTML()
+            .catch(() => "")
+        ).slice(0, 1600),
+        errors,
+      })}`,
+      { cause: error },
+    );
+  }
   await page.getByRole("button", { name: "Open local project" }).waitFor();
   const projectUrl = page.url();
   result.checks.push(
