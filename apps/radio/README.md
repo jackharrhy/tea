@@ -81,6 +81,16 @@ SQLite backups, use a consistent SQLite backup or stop the runtime and preserve 
 with its WAL; copying a live main database file alone is insufficient. Never remove
 `object-store/` when clearing the replica cache.
 
+The default `wrangler.jsonc` uses the separate `tea-radio` Worker and `tea-radio-tracks` logical bucket during the bake period. A copy of the original Celld object store cannot expose its rooms through those new names: the room directory belongs to the original Worker identity, and its audio is under `radio-tracks`. On a **copied, isolated** Celld store, set `RADIO_CELLD_DEPLOY_CONFIG=wrangler.celld-cutover.jsonc` to run Tea's code with the original `radio` Worker and `radio-tracks` names. The normal startup script accepts only this explicit config or the default. Do not point the cutover config at the live original store while it is serving traffic.
+
+To check that path with disposable source data, run the original Radio repository's `test:celld` with `--keep-state --output /tmp/radio-source-smoke.json`, then from Tea run:
+
+```sh
+npm run test:source-cutover --workspace @tea/radio -- /tmp/radio-source-smoke.json
+```
+
+This optional check requires Celld, SQLite's `sqlite3` CLI, and Playwright Chromium. It makes a consistent SQLite snapshot of the stopped source smoke store, starts Tea Radio with the cutover config and fresh credentials, and verifies the original room, track ID, queue title, volume, paused position, audio hash, and suffix range. It reads but does not change the source store. It does not prove a production transfer; repeat the same comparisons on a production snapshot before changing routing.
+
 ### Upgrading Celld 0.4 to 0.5
 
 The fork now follows upstream Celld 0.5.1. Its alarm storage format changes when opening older

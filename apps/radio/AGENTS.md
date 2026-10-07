@@ -101,6 +101,7 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
 - Preserve all room and media APIs and the full 1 GiB upload limit. A backend change must preserve
   room IDs, track keys, queue/playback state, audio bytes, attributes, and range/HEAD behavior.
 - The original repository continues publishing and serving `ghcr.io/jackharrhy/radio` during Tea's bake period. Do not update production infrastructure as part of workspace changes.
+- Keep `wrangler.jsonc` on Tea's isolated logical names. `wrangler.celld-cutover.jsonc` and `RADIO_CELLD_DEPLOY_CONFIG` are only for a copied original Celld store after source writers stop; they retain the original logical Worker and audio bucket names.
 
 ## Verification
 

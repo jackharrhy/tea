@@ -9,6 +9,12 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const bucket = process.env.CELLD_BUCKET;
 if (!bucket) throw new Error("CELLD_BUCKET is required");
 const celld = process.env.CELLD_BIN ?? "celld";
+const deployConfig = process.env.RADIO_CELLD_DEPLOY_CONFIG ?? ".";
+if (![".", "wrangler.celld-cutover.jsonc"].includes(deployConfig)) {
+  throw new Error(
+    "RADIO_CELLD_DEPLOY_CONFIG must select the default or cutover config",
+  );
+}
 const environment = {
   ...process.env,
   CELLD_ESBUILD:
@@ -52,7 +58,7 @@ if (bucket.startsWith("sqlite:///")) {
   );
 }
 
-run(["deploy", ".", "--bucket", bucket]);
+run(["deploy", deployConfig, "--bucket", bucket]);
 
 async function prepareAzurite() {
   const { BlobServiceClient, StorageSharedKeyCredential } =
