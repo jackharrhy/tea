@@ -10,6 +10,7 @@ import { EditorHostedSource } from "./assets/editor-hosted-source-panel.tsx";
 import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
 import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
 import { EditorIssues } from "./assets/editor-issues-panel.tsx";
+import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -1077,41 +1078,7 @@ export function EditorPage() {
               <h1>Source</h1>
               <p id="selection-info">No selection</p>
               <EditorIssues />
-              <details id="view-filters">
-                <summary id="view-filter-summary">View filters</summary>
-                <p>Local view only · map source stays unchanged</p>
-                <label for="show-world-brushes">
-                  <input id="show-world-brushes" type="checkbox" checked />
-                  World brushes
-                </label>
-                <h2>Special brushes</h2>
-                <div id="special-brush-filters" />
-                <h2>Entity classes</h2>
-                <label for="entity-class-search">Find classname</label>
-                <input id="entity-class-search" type="search" />
-                <div class="filter-actions">
-                  <button id="show-all-classes" type="button">
-                    All
-                  </button>
-                  <button id="hide-all-classes" type="button">
-                    None
-                  </button>
-                </div>
-                <div id="entity-class-filters" />
-              </details>
-              <details id="entity-links">
-                <summary>Entity links</summary>
-                <label for="entity-link-mode">Visibility</label>
-                <select id="entity-link-mode">
-                  <option value="all">All</option>
-                  <option value="transitive">Transitive selected</option>
-                  <option value="direct" selected>
-                    Direct selected
-                  </option>
-                  <option value="none">None</option>
-                </select>
-                <span id="entity-link-count">0 / 0 shown</span>
-              </details>
+              <EditorVisibility />
               <div id="face-inspector" hidden>
                 <h2>Brush and face</h2>
                 <p id="face-inspector-summary" />

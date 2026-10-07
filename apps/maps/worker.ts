@@ -31,6 +31,7 @@ const clientEntryFiles = {
   "editor-source-compare-panel.tsx": browserAssets.editorSourceCompare,
   "editor-material-browser-panel.tsx": browserAssets.editorMaterialBrowser,
   "editor-issues-panel.tsx": browserAssets.editorIssues,
+  "editor-visibility-panel.tsx": browserAssets.editorVisibility,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,
   "viewer-source-panel.tsx": browserAssets.viewerSourcePanel,

@@ -1079,9 +1079,23 @@ try {
       selectionSetup.brushes,
     );
   }
+  await selectionPage.locator("#view-filters summary").click();
+  await selectionPage.locator("#show-world-brushes").uncheck();
+  await selectionPage.getByText("View filters · 2 filtered").waitFor();
+  await selectionPage.locator("#show-world-brushes").check();
+  await selectionPage.getByText("View filters · 0 filtered").waitFor();
+  await selectionPage.locator("#entity-links summary").click();
+  await selectionPage.locator("#entity-link-mode").selectOption("none");
+  assert.equal(
+    await selectionPage.locator("#entity-link-mode").inputValue(),
+    "none",
+  );
   await selectionPage.close();
   result.checks.push(
     "selection brush queries consume volumes and undo restores them",
+  );
+  result.checks.push(
+    "Remix view filters update visible brushes and entity link mode",
   );
   const issuesPage = await browser.newPage();
   await issuesPage.goto(`${mapsOrigin}/editor`);
@@ -1109,6 +1123,16 @@ try {
     .getByRole("button", { name: "Reset invalid origin" })
     .click();
   await originIssue.waitFor({ state: "detached" });
+  await issuesPage.locator("#view-filters summary").click();
+  await issuesPage
+    .locator("#entity-class-filters")
+    .getByRole("checkbox", { name: /light/ })
+    .uncheck();
+  await issuesPage.getByText("View filters · 1 filtered").waitFor();
+  await issuesPage.locator("#entity-class-search").fill("missing-class");
+  await issuesPage.getByText("No matching classnames").waitFor();
+  await issuesPage.locator("#show-all-classes").click();
+  await issuesPage.getByText("View filters · 0 filtered").waitFor();
   await issuesPage.locator("#undo").click();
   await originIssue.waitFor();
   await issuesPage.close();

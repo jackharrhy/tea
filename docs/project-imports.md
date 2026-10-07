@@ -40,6 +40,8 @@ The editor material browser now renders and filters texture thumbnails through a
 
 The editor issue browser now renders findings and filters through a Remix client entry. Select, Reveal, and Fix still call the editor session and preserve its edit guards.
 
+The editor's local view filters and entity link visibility controls now render through a Remix client entry. Brush and class visibility stays in the editor session, and the selected link mode is applied to new renderers.
+
 The Tea editor now exposes exact shear and mirror transforms, Worldview view filters, and entity link visibility modes alongside the copied map issue diagnostics, type filters, local finding visibility, object reveal, and undoable repairs. It can create, rename, activate, reorder, hide, lock, isolate, and remove TrenchBroom-compatible layers, and move objects between them. It can create, rename, open, close, link duplicate, unlink, and ungroup TrenchBroom-compatible object groups. Group metadata survives source saving and hosted collaboration operations, and opening a group locks viewport interaction with objects outside it.
 
 The entity inspector now exposes linked-group property protection. While editing an open linked copy, users can keep an existing or newly added property independent of its siblings.

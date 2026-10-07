@@ -118,6 +118,8 @@ The material browser is a Remix client component that shows thumbnails for loade
 
 The issue browser is a Remix client component. It lists geometry, entity, link, and structure findings from the editor session, supports type and hidden filters, and can select, reveal, or fix a finding through that same session.
 
+View filters and entity link visibility are Remix client controls. They filter world and special brushes or entity classes locally without changing map source; the editor keeps the link display mode when its renderer is recreated.
+
 The selected entity inspector shows editable properties. When a project supplies FGD or ENT definitions, it also shows suggested properties with choices, checkboxes, flag bits, and numeric controls. The raw key and value fields remain available for custom properties. Changes use the same local history or hosted semantic operations as other property edits.
 
 Align texture supports projection reset, world axes, flips, 90° rotation, edge alignment, justification, and fitting on selected faces or brushes. Reverse direction changes alignment cycling; Subdivide when fitting uses fractions of a texture. Fit and justify use project material dimensions when available, or both manually entered dimensions for a standalone or hosted map. The alignment command is undoable.

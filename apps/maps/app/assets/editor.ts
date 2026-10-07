@@ -728,7 +728,6 @@ const issueBrowser = createIssueBrowser({
   },
 });
 const visibility = createEditorVisibility({
-  root: document.querySelector<HTMLElement>(".source-panel")!,
   session: () => session,
   renderer: () => renderer,
 });
