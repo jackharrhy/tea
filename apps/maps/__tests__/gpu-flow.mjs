@@ -7,7 +7,8 @@ import { chromium } from "playwright";
 import { syntheticQuakeBsp } from "../app/assets/synthetic.ts";
 
 const teaRoot = fileURLToPath(new URL("../../..", import.meta.url));
-const testCorpus = process.argv.includes("--corpus");
+const testCorpusAll = process.argv.includes("--corpus-all");
+const testCorpus = process.argv.includes("--corpus") || testCorpusAll;
 if (testCorpus && !process.env.TEA_MAPS_LOCAL_FIXTURE_ROOT)
   throw new Error(
     "Set TEA_MAPS_LOCAL_FIXTURE_ROOT to the existing local fixture directory",
@@ -49,6 +50,7 @@ async function waitForServer() {
 }
 
 let browser;
+let corpusFixtures = 0;
 try {
   await waitForServer();
   browser = await chromium.launch({ headless: true, args: flags });
@@ -73,7 +75,10 @@ try {
     window.teaMapsReleaseGpuCompile = () => releaseCompile();
     window.teaMapsGpuCompilerRequests = [];
     window.fetch = async (input, init) => {
-      const url = new URL(input instanceof Request ? input.url : input);
+      const url = new URL(
+        input instanceof Request ? input.url : input,
+        location.href,
+      );
       if (url.origin !== "http://127.0.0.1:8788")
         return originalFetch(input, init);
       if (url.pathname === "/capabilities")
@@ -327,33 +332,68 @@ try {
       ["steam-corpus/quake/map2b", "quake-bsp2"],
       ["steam-corpus/quake-ii/mgu1m1", "quake2-bsp38"],
     ];
-    for (const [id, format] of cases) {
+    const knownIds = new Set(cases.map(([id]) => id));
+    const allCases = testCorpusAll
+      ? [
+          ...cases,
+          ...catalog
+            .filter(
+              (fixture) =>
+                fixture.id.startsWith("steam-corpus/") &&
+                !knownIds.has(fixture.id),
+            )
+            .map((fixture) => [fixture.id, null]),
+        ]
+      : cases;
+    for (const [id, format] of allCases) {
+      console.log(`Corpus ${corpusFixtures + 1}/${allCases.length}: ${id}`);
       localResponses.length = 0;
       assert.ok(
         catalog.some((fixture) => fixture.id === id),
         `${id} is absent from the local fixture catalog`,
       );
       await page.goto(`${origin}/?fixture=${encodeURIComponent(id)}`);
-      await page
-        .locator("#viewer-status")
-        .getByText(/^Ready/)
-        .waitFor();
+      try {
+        await page
+          .locator("#viewer-status")
+          .getByText(/^Ready/)
+          .waitFor();
+      } catch (error) {
+        throw new Error(
+          `${id}: ${await page.locator("#viewer-status").textContent()}\n${JSON.stringify(localResponses.slice(-12))}`,
+          { cause: error },
+        );
+      }
       const diagnostics = await page
         .locator("#viewport world-view")
         .evaluate((element) => element.viewer?.diagnostics);
-      assert.equal(diagnostics?.format, format, `${id} format`);
+      if (format) assert.equal(diagnostics?.format, format, `${id} format`);
+      else
+        assert.ok(
+          [
+            "quake-bsp29",
+            "quake-bsp2",
+            "goldsrc-bsp30",
+            "quake2-bsp38",
+          ].includes(diagnostics?.format),
+          `${id} has an unexpected BSP format`,
+        );
       assert.ok(diagnostics.triangles > 0, `${id} has no rendered faces`);
-      assert.doesNotMatch(
-        await page.locator("#map-warnings").textContent(),
-        /missing.*(texture|palette)/i,
-        `${id} has missing assets`,
-      );
       const fetched = localResponses
         .filter((response) => response.status === 200)
         .map((response) => new URL(response.url).pathname);
       assert.ok(
         fetched.some((path) => path.endsWith(".bsp")),
         `${id} did not fetch its BSP`,
+      );
+      if (!format) {
+        corpusFixtures += 1;
+        continue;
+      }
+      assert.doesNotMatch(
+        await page.locator("#map-warnings").textContent(),
+        /missing.*(texture|palette)/i,
+        `${id} has missing assets`,
       );
       assert.ok(
         fetched.some((path) => /\.(?:lmp|pcx)$/u.test(path)),
@@ -369,6 +409,7 @@ try {
           fetched.some((path) => path.endsWith(".wad")),
           `${id} did not fetch a WAD`,
         );
+      corpusFixtures += 1;
     }
   }
   assert.deepEqual(pageErrors, []);
@@ -386,9 +427,12 @@ try {
         "WebGPU viewer opens a generated BSP2 map",
         "WebGPU viewer loads a generated Quake II map with its assets",
         ...(testCorpus
-          ? ["WebGPU viewer loads five owned-game corpus fixtures in place"]
+          ? [
+              `WebGPU viewer loads ${corpusFixtures} owned-game corpus fixtures in place`,
+            ]
           : []),
       ],
+      ...(testCorpus ? { corpusFixtures } : {}),
     }),
   );
 } catch (error) {
