@@ -13,7 +13,9 @@ import {
   exportLegacyLocalArchive,
   importLegacyLocalArchive,
   importLegacyLocalData,
+  importLegacyLocalProjects,
   listImportedLegacyRecovery,
+  countLegacyLocalProjects,
   type LegacyRecoverySnapshot,
 } from "./editor-legacy-local.ts";
 
@@ -62,6 +64,9 @@ export const RecentProjects = clientEntry(
     let projects: readonly RecentProject[] | null = null;
     let error: string | null = null;
     let openingId: string | null = null;
+    let legacyCount = 0;
+    let importing = false;
+    let importStatus = "";
 
     handle.queueTask(() => {
       void listRecentProjects()
@@ -73,7 +78,33 @@ export const RecentProjects = clientEntry(
           error = message(cause);
           handle.update();
         });
+      void countLegacyLocalProjects()
+        .then((count) => {
+          legacyCount = count;
+          handle.update();
+        })
+        .catch((cause: unknown) => {
+          error = message(cause);
+          handle.update();
+        });
     });
+
+    async function importProjects() {
+      if (importing) return;
+      importing = true;
+      importStatus = "Importing Worldview project folders…";
+      handle.update();
+      try {
+        const result = await importLegacyLocalProjects();
+        projects = await listRecentProjects();
+        importStatus = `Imported ${result.imported} project folders; ${result.existing} were already in Tea.`;
+      } catch (cause) {
+        importStatus = message(cause);
+      } finally {
+        importing = false;
+        handle.update();
+      }
+    }
 
     async function openProject(project: RecentProject) {
       openingId = project.id;
@@ -101,6 +132,16 @@ export const RecentProjects = clientEntry(
     return () => (
       <div id="local-projects-list" class="project-list">
         {error ? <p role="status">{error}</p> : null}
+        {legacyCount > 0 ? (
+          <button
+            type="button"
+            disabled={importing}
+            mix={on("click", () => void importProjects())}
+          >
+            Import {legacyCount} Worldview project folders
+          </button>
+        ) : null}
+        {importStatus ? <p role="status">{importStatus}</p> : null}
         {projects === null
           ? "Loading recent projects…"
           : projects.length === 0

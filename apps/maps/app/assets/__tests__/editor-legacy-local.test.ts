@@ -17,20 +17,25 @@ import {
   exportLegacyLocalArchive,
   importLegacyLocalArchive,
   importLegacyLocalData,
+  importLegacyLocalProjects,
   listImportedLegacyRecovery,
   loadImportedLegacyRecovery,
+  countLegacyLocalProjects,
 } from "../editor-legacy-local.ts";
+import { recentProject } from "../editor-recent-projects.ts";
 
 beforeEach(async () => {
   await deleteEditorDatabase();
   await deleteDB("worldview-editor");
   await deleteDB("tea-maps-worldview-recovery");
+  await deleteDB("tea-maps-recent-projects");
 });
 
 afterEach(async () => {
   await deleteEditorDatabase();
   await deleteDB("worldview-editor");
   await deleteDB("tea-maps-worldview-recovery");
+  await deleteDB("tea-maps-recent-projects");
 });
 
 it("transfers local copies and recovery history while preserving both originals and Tea edits", async () => {
@@ -72,14 +77,40 @@ it("transfers local copies and recovery history while preserving both originals 
       database.createObjectStore("recovery-latest", {
         keyPath: "documentKey",
       });
+      database.createObjectStore("local-projects", { keyPath: "projectKey" });
     },
   });
   await legacy.put("detached-maps", copy);
   await legacy.put("recovery-history", snapshot);
   await legacy.put("recovery-latest", snapshot);
+  const project = {
+    version: 2,
+    workspaceId: "legacy-workspace",
+    projectKey: "legacy-project",
+    displayName: "Legacy project",
+    handle: { kind: "directory", name: "legacy-folder" },
+    buildBindings: {},
+    lastMapPath: "maps/start.map",
+    updatedAt: 101,
+  };
+  await legacy.put("local-projects", project);
   legacy.close();
 
   expect(await countLegacyLocalData()).toEqual({ copies: 1, recovery: 1 });
+  expect(await countLegacyLocalProjects()).toBe(1);
+  expect(await importLegacyLocalProjects()).toEqual({
+    imported: 1,
+    existing: 0,
+  });
+  expect(await recentProject("legacy-workspace")).toMatchObject({
+    name: "Legacy project",
+    handle: { kind: "directory", name: "legacy-folder" },
+    lastMapPath: "maps/start.map",
+  });
+  expect(await importLegacyLocalProjects()).toEqual({
+    imported: 0,
+    existing: 1,
+  });
   expect(await importLegacyLocalData()).toEqual({
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 1, existing: 0 },
@@ -109,6 +140,9 @@ it("transfers local copies and recovery history while preserving both originals 
   expect(await source.get("detached-maps", copy.id)).toEqual(copy);
   expect(await source.get("recovery-history", snapshot.snapshotId)).toEqual(
     snapshot,
+  );
+  expect(await source.get("local-projects", project.projectKey)).toEqual(
+    project,
   );
   source.close();
 

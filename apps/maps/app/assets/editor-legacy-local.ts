@@ -9,12 +9,48 @@ import {
   EDITOR_STORES,
   openEditorDatabase,
 } from "./editor-collaboration-database.ts";
+import {
+  importRecentProjects,
+  type RecentProject,
+} from "./editor-recent-projects.ts";
+import type { MapDirectoryHandle } from "./editor-project.ts";
 
 interface LegacyEditorDatabase extends DBSchema {
   "detached-maps": { key: string; value: DetachedHostedMap };
   "recovery-history": { key: string; value: LegacyRecoverySnapshot };
   "recovery-latest": { key: string; value: LegacyRecoverySnapshot };
+  "local-projects": { key: string; value: LegacyLocalProject };
 }
+
+interface LegacyLocalProject {
+  version: 2;
+  workspaceId: string;
+  projectKey: string;
+  displayName: string;
+  handle: MapDirectoryHandle;
+  buildBindings: Readonly<Record<string, string>>;
+  lastMapPath?: string;
+  updatedAt: number;
+}
+
+const LegacyLocalProjectSchema = z.strictObject({
+  version: z.literal(2),
+  workspaceId: z.string().min(1).max(256),
+  projectKey: z.string().min(1).max(4_096),
+  displayName: z.string().min(1).max(4_096),
+  handle: z.custom<MapDirectoryHandle>(
+    (value) =>
+      typeof value === "object" &&
+      value !== null &&
+      "kind" in value &&
+      value.kind === "directory" &&
+      "name" in value &&
+      typeof value.name === "string",
+  ),
+  buildBindings: z.record(z.string().max(256), z.string().max(256)),
+  lastMapPath: z.string().min(1).max(4_096).optional(),
+  updatedAt: z.number().int().nonnegative(),
+});
 
 export const LegacyRecoverySnapshotSchema = z.strictObject({
   version: z.literal(1),
@@ -55,6 +91,42 @@ function recoveryDatabase() {
       database.createObjectStore("snapshots", { keyPath: "snapshotId" });
     },
   });
+}
+
+async function legacyLocalProjects(): Promise<readonly RecentProject[]> {
+  if (!indexedDB.databases) return [];
+  const databases = await indexedDB.databases();
+  if (!databases.some((database) => database.name === "worldview-editor"))
+    return [];
+  const legacy = await openDB<LegacyEditorDatabase>("worldview-editor");
+  try {
+    if (!legacy.objectStoreNames.contains("local-projects")) return [];
+    const values: unknown[] = await legacy.getAll("local-projects");
+    return values.flatMap((value) => {
+      const parsed = LegacyLocalProjectSchema.safeParse(value);
+      if (!parsed.success) return [];
+      const project = parsed.data;
+      return [
+        {
+          id: project.workspaceId,
+          name: project.displayName,
+          handle: project.handle,
+          ...(project.lastMapPath ? { lastMapPath: project.lastMapPath } : {}),
+          updatedAt: project.updatedAt,
+        },
+      ];
+    });
+  } finally {
+    legacy.close();
+  }
+}
+
+export async function countLegacyLocalProjects(): Promise<number> {
+  return (await legacyLocalProjects()).length;
+}
+
+export async function importLegacyLocalProjects() {
+  return importRecentProjects(await legacyLocalProjects());
 }
 
 async function legacyLocalData(): Promise<{
