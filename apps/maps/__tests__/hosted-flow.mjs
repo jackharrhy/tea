@@ -1570,6 +1570,22 @@ try {
     );
   }
   const hostedEditorUrl = page.url();
+  await page.locator("#hosted-presence-toggle").getByText("Live · 1").waitFor();
+  await page.locator("#hosted-presence-toggle").click();
+  assert.equal(
+    await page
+      .locator("#hosted-editor-picker")
+      .evaluate((picker) => picker.open),
+    false,
+  );
+  await page.locator("#hosted-presence-toggle").click();
+  assert.equal(
+    await page
+      .locator("#hosted-editor-picker")
+      .evaluate((picker) => picker.open),
+    true,
+  );
+  await page.locator("#hosted-share-link").waitFor({ state: "visible" });
   await observer.goto(hostedEditorUrl);
   await observer.waitForFunction(() =>
     document
@@ -1580,8 +1596,13 @@ try {
     await observer.locator("#hosted-participant-list li").count(),
     0,
   );
+  await observer
+    .locator("#hosted-presence-toggle")
+    .getByText("Viewing hosted map")
+    .waitFor();
   await observer.close();
   assert.deepEqual(errors, []);
+  result.checks.push("Remix header presence and hosted panel toggle");
   await page.locator("#material-filter").fill("no-such-material");
   await page.getByText("No materials match this view").waitFor();
   await page.locator("#material-filter").fill("");

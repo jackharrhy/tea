@@ -1,6 +1,9 @@
 import { browserAssets } from "./assets/build-manifest.ts";
 import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
-import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx";
+import {
+  EditorHostedPresence,
+  EditorHostedPresenceStrip,
+} from "./assets/editor-hosted-presence-panel.tsx";
 import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.tsx";
 import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
@@ -86,6 +89,7 @@ export function EditorPage() {
             <EditorDocumentName />
             <EditorStatus />
             <EditorPointerReadout />
+            <EditorHostedPresenceStrip />
             <EditorThemeControl />
             <EditorPerformanceToggle />
             <EditorInspectorToggle />

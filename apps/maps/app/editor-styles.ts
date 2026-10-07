@@ -125,6 +125,42 @@ export const editorStyles = css({
     "font-family": "ui-monospace, monospace",
     "white-space": "nowrap",
   },
+  "& .hosted-presence-toggle": {
+    display: "inline-flex",
+    "align-items": "center",
+    gap: "0.4rem",
+    "white-space": "nowrap",
+    "font-size": "0.8rem",
+  },
+  "& .hosted-presence-indicator": {
+    width: "0.5rem",
+    height: "0.5rem",
+    "border-radius": "50%",
+    background: "var(--editor-muted)",
+  },
+  "& .hosted-presence-indicator[data-connection='connected']": {
+    background: "#7edca5",
+  },
+  "& .hosted-presence-indicator[data-connection='connecting'], & .hosted-presence-indicator[data-connection='disconnected']":
+    {
+      background: "var(--editor-warning-bright)",
+    },
+  "& .hosted-presence-people": {
+    display: "inline-flex",
+    "align-items": "center",
+    gap: "0.15rem",
+  },
+  "& .hosted-presence-person": {
+    display: "inline-grid",
+    "place-items": "center",
+    width: "1.15rem",
+    height: "1.15rem",
+    "border-radius": "50%",
+    color: "var(--editor-panel)",
+    background: "var(--editor-ink)",
+    "font-size": "0.65rem",
+    "font-weight": "700",
+  },
   "& .editor-theme-choice": {
     display: "flex",
     "align-items": "center",

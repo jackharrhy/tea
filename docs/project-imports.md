@@ -196,6 +196,8 @@ The project sync dialog can pair a local folder project's maps with a Tea hosted
 
 Hosted Maps editing now exposes the room share link and participant presence details in Tea's editor, alongside its existing remote selection, pointer, and preview overlays.
 
+The Remix editor header now mirrors Worldview's visible collaboration entry point: it shows the live room count and participant initials, reports connecting or reconnecting state, and opens the hosted panel. Read-only viewers see their map status without being counted as room participants.
+
 The Tea editor can now create hosted projects and maps through the copied service API. A new map may start empty or import a checked local `.map` source, and the created map opens in the Tea editor.
 
 The Remix `/projects` page lists hosted projects and recent local folders, and `/projects/:projectId` lists hosted maps with links to editing and built-map viewing. A separate New map route lets owners and editors create hosted maps. The project also has Resources and Access routes. Owners can upload resources, import copies from configured Artbin, remove mounts, and manage member roles; members can download mounts. The hosted project page can open a local folder after checking its game and hosted link. Local project links reopen the recent folder in the editor when browser permission persists; the editor's Recent projects menu can request folder permission again when needed. These pages use the existing same-origin service API and keep the original editor controls available during validation.

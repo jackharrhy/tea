@@ -108,6 +108,8 @@ The hosted project and map picker is a Remix client component. It loads the sign
 
 The Hosted maps section shows a copyable link to the open map and lists live participants with their viewport and selection count. Remix renders this share and presence panel from the editor's room state. It counts participants only after the live room connects and shows reconnecting status if the connection drops; viewer access shows the map without claiming a live session. Recipients still need access to the hosted project.
 
+The editor header shows the same room connection at a glance, with the live participant count and up to three initials. Its Hosted maps button opens or closes the hosted section, so the share link and participant details are reachable without scrolling through the toolbar.
+
 The hosted source editor is a Remix client component. It saves a browser draft while typing and when closed, recovers that draft on reopen, and can discard, download, or submit it. Submission keeps the version and source-hash checks and waits for live edits to finish before replacing the map.
 
 The editor's Project resources panel is a Remix client component. Project members can download mounted files; owners can upload files or a game asset folder, import an Artbin copy, and remove mounts. Changes notify the open editor so it reloads project resources.

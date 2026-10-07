@@ -6,6 +6,87 @@ import {
   reportHostedPresenceStatus,
 } from "./editor-hosted-presence.ts";
 
+export const EditorHostedPresenceStrip = clientEntry(
+  `${import.meta.url}#EditorHostedPresenceStrip`,
+  function EditorHostedPresenceStripComponent(handle: Handle) {
+    let state = null as ReturnType<typeof currentHostedPresence>;
+    let pickerOpen = false;
+
+    handle.queueTask(() => {
+      const picker = document.querySelector<HTMLDetailsElement>(
+        "#hosted-editor-picker",
+      )!;
+      pickerOpen = picker.open;
+      picker.addEventListener(
+        "toggle",
+        () => {
+          pickerOpen = picker.open;
+          handle.update();
+        },
+        { signal: handle.signal },
+      );
+      onHostedPresenceChange(() => {
+        state = currentHostedPresence();
+        handle.update();
+      }, handle.signal);
+      state = currentHostedPresence();
+      handle.update();
+    });
+
+    return () => {
+      const connected = state?.connection === "connected";
+      const names =
+        state?.connection === "connected"
+          ? [
+              state.displayName,
+              ...state.participants.map((person) => person.displayName),
+            ]
+          : [];
+      const people = names.length;
+      const label = connected
+        ? `Live · ${people}`
+        : state?.connection === "connecting"
+          ? "Connecting"
+          : state?.connection === "disconnected"
+            ? "Reconnecting"
+            : state
+              ? "Viewing hosted map"
+              : "Hosted maps";
+      return (
+        <button
+          id="hosted-presence-toggle"
+          class="hosted-presence-toggle"
+          type="button"
+          aria-controls="hosted-editor-picker"
+          aria-expanded={pickerOpen}
+          mix={on("click", () => {
+            const picker = document.querySelector<HTMLDetailsElement>(
+              "#hosted-editor-picker",
+            )!;
+            picker.open = !picker.open;
+          })}
+        >
+          <span
+            class="hosted-presence-indicator"
+            data-connection={state?.connection ?? "local"}
+          />
+          <span>{label}</span>
+          {connected && (
+            <span class="hosted-presence-people" aria-hidden="true">
+              {names.slice(0, 3).map((name) => (
+                <span class="hosted-presence-person" title={name}>
+                  {name.charAt(0).toUpperCase()}
+                </span>
+              ))}
+              {people > 3 && <span>+{people - 3}</span>}
+            </span>
+          )}
+        </button>
+      );
+    };
+  },
+);
+
 export const EditorHostedPresence = clientEntry(
   `${import.meta.url}#EditorHostedPresence`,
   function EditorHostedPresenceComponent(handle: Handle) {
