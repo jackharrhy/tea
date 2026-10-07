@@ -19,7 +19,7 @@ const options = {
     viewer: "app/assets/viewer.ts",
     editor: "app/assets/editor.ts",
     projects: "app/assets/projects.ts",
-    newMap: "app/assets/new-map.ts",
+    newMap: "app/assets/new-map-setup.tsx",
     recoveredMaps: "app/assets/recovered-maps.tsx",
     hostedProjects: "app/assets/hosted-projects.tsx",
   },
@@ -45,7 +45,7 @@ const options = {
           const entryHref = (name) => {
             const sourceName =
               name === "newMap"
-                ? "new-map.ts"
+                ? "new-map-setup.tsx"
                 : name === "recoveredMaps"
                   ? "recovered-maps.tsx"
                   : name === "hostedProjects"

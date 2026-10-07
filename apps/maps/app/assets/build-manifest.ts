@@ -14,7 +14,7 @@ export const browserAssets = import.meta.env.DEV
       viewer: "/assets/viewer-WCFS7BZW.js",
       editor: "/assets/editor-PAJECJZB.js",
       projects: "/assets/projects-2PEI52FA.js",
-      newMap: "/assets/newMap-V52DTRSQ.js",
+      newMap: "/assets/newMap-LTIWDVES.js",
       recoveredMaps: "/assets/recoveredMaps-WTE6RWE6.js",
       hostedProjects: "/assets/hostedProjects-HBOUVLFL.js",
     };

@@ -27,7 +27,9 @@ const router = createRouter<AppContext>({
             ? browserAssets.recoveredMaps
             : sourceId.endsWith("/app/assets/hosted-projects.tsx")
               ? browserAssets.hostedProjects
-              : null;
+              : sourceId.endsWith("/app/assets/new-map-setup.tsx")
+                ? browserAssets.newMap
+                : null;
           if (!href) throw new Error(`Unknown Maps client entry ${sourceId}`);
           return {
             href,

@@ -325,6 +325,32 @@ try {
   await ready(maps, `${mapsOrigin}/new-map`);
 
   browser = await chromium.launch({ headless: true });
+  const setupPage = await browser.newPage();
+  await setupPage.goto(`${mapsOrigin}/new-map`);
+  await setupPage.locator("#new-map-name").fill("smoke.map");
+  await setupPage.locator("#new-map-game").selectOption("quake2");
+  assert.equal(
+    await setupPage.locator("#new-map-format").inputValue(),
+    "quake",
+  );
+  await setupPage
+    .getByText(/Quake II source maps with classic faces/)
+    .waitFor();
+  await setupPage.locator("#new-map-game").selectOption("goldsrc");
+  assert.equal(
+    await setupPage.locator("#new-map-format").inputValue(),
+    "valve-220",
+  );
+  assert.equal(
+    await setupPage.locator("#new-map-name").inputValue(),
+    "smoke.map",
+  );
+  await setupPage.getByRole("button", { name: "Open editor" }).click();
+  await setupPage.waitForURL(/\/editor\?.*newMap=1/);
+  assert.equal(new URL(setupPage.url()).searchParams.get("game"), "goldsrc");
+  await setupPage.close();
+  result.checks.push("Remix new-map form keeps name and compatible format");
+
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -888,7 +914,9 @@ try {
   await page.waitForFunction(
     () =>
       document.querySelector("#switch-map-dialog")?.open ||
-      !document.querySelector("#detached-editor-open")?.disabled,
+      document
+        .querySelector("#editor-status")
+        ?.textContent?.includes("live editing"),
   );
   if (await page.locator("#switch-map-dialog").isVisible())
     await page.getByRole("button", { name: "Discard" }).click();
