@@ -157,7 +157,7 @@ export async function linkHostedProject(
     },
   };
   const text = serializeWorldviewProject(manifest);
-  const file = await project.handle.getFileHandle("worldview.project.json");
+  const file = await project.handle.getFileHandle(project.manifestFileName);
   await writeMapFile(
     file,
     text,

@@ -122,6 +122,28 @@ const manifest = {
 };
 
 describe("local map projects", () => {
+  it("opens Tea project manifests and rejects ambiguous folders", async () => {
+    const teaFile = file(
+      "tea.maps.project.json",
+      JSON.stringify({ ...manifest, mapRoots: ["."] }),
+    );
+    const root = directory("project", { "tea.maps.project.json": teaFile });
+    const project = await openMapProject(root);
+    expect(project.manifestFileName).toBe("tea.maps.project.json");
+    expect(project.manifest.name).toBe("Test project");
+
+    const ambiguous = directory("project", {
+      "tea.maps.project.json": teaFile,
+      "worldview.project.json": file(
+        "worldview.project.json",
+        JSON.stringify(manifest),
+      ),
+    });
+    await expect(openMapProject(ambiguous)).rejects.toThrow(
+      "contains both tea.maps.project.json and worldview.project.json",
+    );
+  });
+
   it("discovers nested maps once across overlapping roots", async () => {
     const maps = directory("maps", {
       "b.map": file("b.map"),
@@ -136,6 +158,7 @@ describe("local map projects", () => {
       maps,
     });
     const project = await openMapProject(root);
+    expect(project.manifestFileName).toBe("worldview.project.json");
     expect(project.manifest.name).toBe("Test project");
     expect(project.maps.map((map) => map.path)).toEqual([
       "maps/b.map",

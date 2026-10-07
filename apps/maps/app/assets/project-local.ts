@@ -3,7 +3,7 @@ import {
   type WorldviewProjectManifest,
 } from "@tea/maps-editor/core";
 import type { HostedProject } from "@tea/maps-protocol";
-import { pickProjectDirectory, projectFile } from "./editor-project.ts";
+import { pickProjectDirectory, projectManifestFile } from "./editor-project.ts";
 import { rememberRecentProject } from "./editor-recent-projects.ts";
 
 export function validateLinkedLocalProject(
@@ -40,7 +40,7 @@ export async function openLinkedLocalProject(
   }
   if (!handle) return null;
   const manifest = parseWorldviewProject(
-    await (await projectFile(handle, "worldview.project.json")).text(),
+    await (await projectManifestFile(handle)).file.text(),
   );
   validateLinkedLocalProject(manifest, project, location.origin);
   return (await rememberRecentProject(handle, manifest.name)).id;

@@ -43,6 +43,7 @@ export interface ProjectMap {
 
 export interface MapProject {
   readonly handle: MapDirectoryHandle;
+  readonly manifestFileName: string;
   readonly manifest: WorldviewProjectManifest;
   readonly maps: readonly ProjectMap[];
   readonly definitions: EntityDefinitionCatalog;
@@ -97,6 +98,21 @@ export async function projectFile(
   if (!fileName) throw new Error(`Invalid project resource path: ${path}`);
   const directory = await directoryAt(root, parts.join("/"));
   return (await directory.getFileHandle(fileName)).getFile();
+}
+
+export async function projectManifestFile(
+  root: MapDirectoryHandle,
+): Promise<{ name: string; file: File }> {
+  const names = ["tea.maps.project.json", "worldview.project.json"];
+  const found: string[] = [];
+  for await (const [name, handle] of root.entries()) {
+    if (handle.kind === "file" && names.includes(name)) found.push(name);
+  }
+  if (found.length > 1)
+    throw new Error(`Project folder contains both ${names.join(" and ")}`);
+  const name = found[0];
+  if (!name) throw new Error(`Project folder needs ${names.join(" or ")}`);
+  return { name, file: await (await root.getFileHandle(name)).getFile() };
 }
 
 async function mapsInDirectory(
@@ -419,9 +435,7 @@ async function loadProjectMaterials(
 export async function openMapProject(
   handle: MapDirectoryHandle,
 ): Promise<MapProject> {
-  const file = await (
-    await handle.getFileHandle("worldview.project.json")
-  ).getFile();
+  const { name: manifestFileName, file } = await projectManifestFile(handle);
   const manifest = parseWorldviewProject(await file.text());
   const maps = (
     await Promise.all(
@@ -442,6 +456,7 @@ export async function openMapProject(
     ]);
   return {
     handle,
+    manifestFileName,
     manifest,
     maps: [...uniqueMaps.values()],
     definitions: entityResources.definitions,

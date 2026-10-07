@@ -50,10 +50,13 @@ function fileHandle(name: string, initial: string) {
   };
 }
 
-function fixture(localSource = baseSource) {
+function fixture(
+  localSource = baseSource,
+  manifestFileName = "worldview.project.json",
+) {
   const local = fileHandle("demo.map", localSource);
   const manifest = fileHandle(
-    "worldview.project.json",
+    manifestFileName,
     JSON.stringify({
       schemaVersion: 1,
       name: "Demo",
@@ -64,9 +67,15 @@ function fixture(localSource = baseSource) {
     }),
   );
   const project = {
+    manifestFileName,
     manifest: parseWorldviewProject(manifest.read()),
     maps: [{ path: "maps/demo.map", handle: local.handle }],
-    handle: { getFileHandle: async () => manifest.handle },
+    handle: {
+      getFileHandle: async (name: string) => {
+        if (name !== manifestFileName) throw new Error(`Missing ${name}`);
+        return manifest.handle;
+      },
+    },
   } as unknown as MapProject;
   return { project, local, manifest };
 }
@@ -109,6 +118,17 @@ it("validates map syntax before saving project links", async () => {
     linkHostedProject(project, remote, { "maps/demo.map": mapId }, origin),
   ).rejects.toThrow(/uses valve-220/);
   expect(JSON.parse(manifest.read())).not.toHaveProperty("hosted");
+});
+
+it("writes a Tea project link to its opened manifest", async () => {
+  const { project, manifest } = fixture(baseSource, "tea.maps.project.json");
+  const remote = {
+    id: projectId,
+    game: "quake",
+    maps: [{ id: mapId, name: "Demo map", format: "valve-220" }],
+  } as Parameters<typeof linkHostedProject>[1];
+  await linkHostedProject(project, remote, { "maps/demo.map": mapId }, origin);
+  expect(JSON.parse(manifest.read()).hosted.projectId).toBe(projectId);
 });
 
 it("tracks the common baseline and refuses a stale pull", async () => {
