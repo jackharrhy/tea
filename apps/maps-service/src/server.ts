@@ -125,7 +125,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       .filter(Boolean),
     oauth: {
       fourmUrl: environment("FOURM_URL", "http://127.0.0.1:8000"),
-      clientId: environment("FOURM_CLIENT_ID", "maps"),
+      clientId: environment("FOURM_CLIENT_ID", "tea-maps"),
       publicUrl: environment("TEA_MAPS_URL", "http://localhost:8790"),
     },
     ...(process.env.TEA_MAPS_FOURM_INTROSPECTION_SECRET
