@@ -535,6 +535,10 @@ export const editorStyles = css({
     gap: "0.35rem",
     "white-space": "nowrap",
   },
+  "& #inspector-panel-entity .transform-tools": {
+    "flex-wrap": "wrap",
+    "white-space": "normal",
+  },
   "& #csg-tools": { "font-size": "0.85rem" },
   "& #clip-tools, & #hull-tools": {
     display: "flex",
@@ -777,14 +781,15 @@ export const editorStyles = css({
     "border-radius": "5px",
     padding: "0.5rem",
   },
-  "& .editor-toolbar input[type='number']": {
-    width: "4.5rem",
-    color: "var(--editor-ink)",
-    background: "var(--editor-field)",
-    border: "1px solid var(--editor-border)",
-    "border-radius": "5px",
-    padding: "0.5rem",
-  },
+  "& .editor-toolbar input[type='number'], & #inspector-panel-entity input[type='number']":
+    {
+      width: "4.5rem",
+      color: "var(--editor-ink)",
+      background: "var(--editor-field)",
+      border: "1px solid var(--editor-border)",
+      "border-radius": "5px",
+      padding: "0.5rem",
+    },
   "& #brush-entity-classname, & #point-entity-classname, & #group-name": {
     width: "9rem",
     color: "var(--editor-ink)",

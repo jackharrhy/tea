@@ -1781,6 +1781,7 @@ try {
   const initialBrushCount = Number(
     await page.locator("#brush-count").textContent(),
   );
+  await observer.locator("#inspector-tab-entity").click();
   await observer.locator("#add-box:not([disabled])").click();
   await page.waitForFunction(
     (count) =>
@@ -2281,6 +2282,7 @@ try {
   await toolSettingsPage.evaluate(() => {
     window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "clip" });
   });
+  await toolSettingsPage.locator("#inspector-tab-entity").click();
   await toolSettingsPage.locator("#clip-tools").waitFor({ state: "visible" });
   await toolSettingsPage.locator("#clip-front").click();
   await toolSettingsPage.waitForFunction(
@@ -2594,6 +2596,7 @@ try {
   await geometryPage.waitForFunction(
     () => document.documentElement.dataset.teaMapsSiteTools === "ready",
   );
+  await geometryPage.locator("#inspector-tab-entity").click();
   await geometryPage.locator("#box-material").fill("BRICK");
   await geometryPage.locator("#add-box:not([disabled])").click();
   const firstGeometryBrush = await geometryPage.evaluate(() => {
@@ -2635,6 +2638,7 @@ try {
     .locator("#material-replace-scope")
     .getByText(/2 selected brushes/)
     .waitFor();
+  await geometryPage.locator("#inspector-tab-entity").click();
   await geometryPage.locator("#csg-tools summary").click();
   await geometryPage.locator("#csg-merge:not([disabled])").click();
   await geometryPage.getByText(/Convex merge applied/).waitFor();
@@ -2709,6 +2713,7 @@ try {
   await facePage.evaluate(() => {
     window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "sweep" });
   });
+  await facePage.locator("#inspector-tab-entity").click();
   await facePage.locator("#sweep-tools").waitFor({ state: "visible" });
   await facePage.waitForFunction(() => {
     const count = document.querySelector("#sweep-count")?.textContent;
@@ -2730,6 +2735,7 @@ try {
     window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "face" });
   });
   await facePage.locator("#sweep-tools").waitFor({ state: "hidden" });
+  await facePage.locator("#inspector-tab-face").click();
   await facePage.locator("#uv-frame:not([disabled])").click();
   await facePage
     .locator("#uv-editor-status")
@@ -2918,6 +2924,7 @@ try {
   await entityPage.waitForFunction(
     () => document.documentElement.dataset.teaMapsSiteTools === "ready",
   );
+  await entityPage.locator("#inspector-tab-entity").click();
   await entityPage.locator("#point-entity-classname").fill("light");
   await entityPage.locator("#point-origin-x").fill("24");
   await entityPage.locator("#point-origin-y").fill("48");
@@ -4052,6 +4059,7 @@ try {
     await page.locator("#map-source").inputValue(),
     hostedBeforeLocalCopy.source,
   );
+  await page.locator("#inspector-tab-entity").click();
   await page.locator("#add-box:not([disabled])").click();
   await page.waitForFunction(
     () => document.querySelector("#brush-count")?.textContent === "1",

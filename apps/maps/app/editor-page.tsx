@@ -106,17 +106,8 @@ export function EditorPage() {
             <EditorBuildControls />
             <EditorExportSettings />
             <EditorHostedBuilds />
-            <EditorGeometry />
             <EditorSelectionCommands />
             <EditorEditActions />
-            <EditorEntityCreation />
-            <EditorTransforms />
-            <EditorClipHull />
-            <EditorSweepPanel />
-            <EditorTopologyPanel />
-            <EditorShapePanel />
-            <EditorTransformToolPanel />
-            <EditorCsg />
           </nav>
           <details id="hosted-editor-picker" class="hosted-editor-picker">
             <summary>Hosted maps</summary>
@@ -245,6 +236,15 @@ export function EditorPage() {
               >
                 <EditorEntityInspector />
                 <EditorGroups />
+                <EditorEntityCreation />
+                <EditorGeometry />
+                <EditorShapePanel />
+                <EditorClipHull />
+                <EditorSweepPanel />
+                <EditorTopologyPanel />
+                <EditorTransformToolPanel />
+                <EditorTransforms />
+                <EditorCsg />
               </section>
               <section
                 id="inspector-panel-face"
