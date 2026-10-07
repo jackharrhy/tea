@@ -437,6 +437,11 @@ try {
     ).status(),
     403,
   );
+  await observer.goto(`${projectUrl}/access`);
+  await observer
+    .getByText("Only the project owner can manage access")
+    .waitFor();
+  assert.equal(await observer.locator("#project-access-search").count(), 0);
   await observer.getByRole("link", { name: "Resources" }).click();
   await observer.getByText("No project resources yet").waitFor();
   assert.equal(

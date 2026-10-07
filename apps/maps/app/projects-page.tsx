@@ -5,6 +5,7 @@ import { RecentProjects, RecoveredMaps } from "./assets/recovered-maps.tsx";
 import { HostedProjects } from "./assets/hosted-projects.tsx";
 import { ProjectMaps } from "./assets/project-maps.tsx";
 import { ProjectNewMap } from "./assets/project-new-map.tsx";
+import { ProjectAccess } from "./assets/project-access-page.tsx";
 
 export function ProjectsPage(
   handle: Handle<{
@@ -46,9 +47,7 @@ export function ProjectsPage(
                 Projects
               </a>
             </nav>
-            {handle.props.projectId &&
-            (handle.props.section === "resources" ||
-              handle.props.section === "access") ? (
+            {handle.props.projectId && handle.props.section === "resources" ? (
               <a
                 id="projects-login"
                 href="/auth/login?returnTo=/projects"
@@ -60,9 +59,7 @@ export function ProjectsPage(
             ) : null}
           </header>
           <div class="projects-content">
-            {handle.props.projectId &&
-            (handle.props.section === "resources" ||
-              handle.props.section === "access") ? (
+            {handle.props.projectId && handle.props.section === "resources" ? (
               <p id="projects-status" role="status">
                 Loading projects…
               </p>
@@ -98,6 +95,8 @@ export function ProjectsPage(
               <ProjectMaps projectId={handle.props.projectId} />
             ) : handle.props.section === "new-map" ? (
               <ProjectNewMap projectId={handle.props.projectId} />
+            ) : handle.props.section === "access" ? (
+              <ProjectAccess projectId={handle.props.projectId} />
             ) : (
               <section class="project-detail">
                 <a href="/projects" data-rmx-document>
@@ -136,9 +135,6 @@ export function ProjectsPage(
                     id="project-access-tab"
                     href={`/projects/${handle.props.projectId}/access`}
                     data-rmx-document
-                    aria-current={
-                      handle.props.section === "access" ? "page" : undefined
-                    }
                     hidden
                   >
                     Access
@@ -206,23 +202,6 @@ export function ProjectsPage(
                     </section>
                   </>
                 ) : null}
-                {handle.props.section === "access" ? (
-                  <>
-                    <h2>Access</h2>
-                    <p>
-                      Grant editor or viewer access to people who have signed in
-                      to Maps.
-                    </p>
-                    <label for="project-access-search">Search people</label>
-                    <input
-                      id="project-access-search"
-                      type="search"
-                      autocomplete="off"
-                    />
-                    <p id="project-access-status" role="status" />
-                    <div id="project-access-list" class="project-list" />
-                  </>
-                ) : null}
               </section>
             )}
           </div>
@@ -230,7 +209,8 @@ export function ProjectsPage(
         {!handle.props.projectId ||
         !handle.props.section ||
         handle.props.section === "maps" ||
-        handle.props.section === "new-map" ? (
+        handle.props.section === "new-map" ||
+        handle.props.section === "access" ? (
           <script type="module" src={browserAssets.entry}></script>
         ) : (
           <script type="module" src={browserAssets.projects}></script>

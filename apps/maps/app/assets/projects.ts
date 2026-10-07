@@ -3,14 +3,12 @@ import {
   HostedSessionResponseSchema,
 } from "@tea/maps-protocol";
 import { readHostedApi } from "./hosted-api.ts";
-import { showProjectAccess } from "./project-access.ts";
 import { showProjectResources } from "./project-resources.ts";
 
 const root = document.querySelector<HTMLElement>("#projects-app")!;
 const status = document.querySelector<HTMLElement>("#projects-status")!;
 const login = document.querySelector<HTMLAnchorElement>("#projects-login")!;
 const projectId = root.dataset.projectId ?? "";
-const section = root.dataset.section ?? "maps";
 const gameNames: Record<string, string> = {
   quake: "Quake",
   goldsrc: "GoldSrc",
@@ -47,12 +45,7 @@ async function showProject() {
     project.role !== "owner";
   document.querySelector<HTMLElement>("#project-new-map-tab")!.hidden =
     project.role === "viewer";
-  if (section === "resources") {
-    await showProjectResources(project);
-    status.textContent = "";
-    return;
-  }
-  await showProjectAccess(project);
+  await showProjectResources(project);
   status.textContent = "";
 }
 
