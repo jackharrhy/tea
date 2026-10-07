@@ -14,9 +14,10 @@ import {
   type EditorBrushCreateEvent,
   type EditorSourceRenderer,
 } from "@tea/maps-editor/render";
+import { initEditorShapePanel, shapeFields } from "./editor-shape-bridge.ts";
 
-function number(input: HTMLInputElement): number {
-  const value = input.value.trim() === "" ? NaN : Number(input.value);
+function number(raw: string): number {
+  const value = raw.trim() === "" ? NaN : Number(raw);
   if (!Number.isFinite(value))
     throw new Error("Shape values must be finite numbers");
   return value;
@@ -51,83 +52,32 @@ export function createEditorShapes(options: {
   canEdit(): boolean;
   status(message: string): void;
 }) {
-  const root = document.querySelector<HTMLElement>("#shape-tools")!;
-  const result = document.querySelector<HTMLElement>("#shape-result")!;
-  const kindInput = document.querySelector<HTMLSelectElement>("#shape-kind")!;
-  const axisInput = document.querySelector<HTMLSelectElement>("#shape-axis")!;
-  const sidesInput = document.querySelector<HTMLInputElement>("#shape-sides")!;
-  const circleModeInput =
-    document.querySelector<HTMLSelectElement>("#shape-circle-mode")!;
-  const hollowInput =
-    document.querySelector<HTMLInputElement>("#shape-hollow")!;
-  const hollowLabel = document.querySelector<HTMLElement>(
-    "#shape-hollow-label",
-  )!;
-  const thicknessInput =
-    document.querySelector<HTMLInputElement>("#shape-thickness")!;
-  const ringsInput = document.querySelector<HTMLInputElement>("#shape-rings")!;
-  const accuracyInput =
-    document.querySelector<HTMLInputElement>("#shape-accuracy")!;
-  const stepHeightInput =
-    document.querySelector<HTMLInputElement>("#shape-step-height")!;
-  const stairDirectionInput = document.querySelector<HTMLSelectElement>(
-    "#shape-stair-direction",
-  )!;
-  const circleFields = document.querySelector<HTMLElement>(
-    "#shape-circle-fields",
-  )!;
-  const hollowFields = document.querySelector<HTMLElement>(
-    "#shape-hollow-fields",
-  )!;
-  const uvFields = document.querySelector<HTMLElement>("#shape-uv-fields")!;
-  const icoFields = document.querySelector<HTMLElement>("#shape-ico-fields")!;
-  const stairFields = document.querySelector<HTMLElement>(
-    "#shape-stair-fields",
-  )!;
-
   let shapeOptions = DEFAULT_SIMPLE_SHAPE_OPTIONS;
   let candidate: BrushBatchCreationCandidate | null = null;
   let prefix: string | null = null;
+  const panel = initEditorShapePanel(handleInput);
 
   function sync() {
-    kindInput.value = shapeOptions.kind;
-    axisInput.value = String(shapeOptions.axis);
-    sidesInput.value = String(shapeOptions.sides);
-    circleModeInput.value = shapeOptions.circleMode;
-    hollowInput.checked = shapeOptions.hollow;
-    thicknessInput.value = String(shapeOptions.thickness);
-    ringsInput.value = String(shapeOptions.rings);
-    accuracyInput.value = String(shapeOptions.accuracy);
-    stepHeightInput.value = String(shapeOptions.stepHeight);
-    stairDirectionInput.value = shapeOptions.stairDirection;
-    const circular = ["arch", "cylinder", "cone", "uv-sphere"].includes(
-      shapeOptions.kind,
-    );
-    circleFields.hidden = !circular;
-    hollowFields.hidden =
-      shapeOptions.kind !== "arch" && shapeOptions.kind !== "cylinder";
-    hollowLabel.hidden = shapeOptions.kind === "arch";
-    thicknessInput.disabled =
-      shapeOptions.kind === "cylinder" && !shapeOptions.hollow;
-    uvFields.hidden = shapeOptions.kind !== "uv-sphere";
-    icoFields.hidden = shapeOptions.kind !== "ico-sphere";
-    stairFields.hidden = shapeOptions.kind !== "stairs";
-    root.hidden = options.tool() !== "create";
+    panel.update({
+      fields: shapeFields(shapeOptions),
+      hollow: shapeOptions.hollow,
+      visible: options.tool() === "create",
+    });
   }
 
   function readOptions(): SimpleShapeOptions {
+    const { fields, hollow } = panel.state;
     const next: SimpleShapeOptions = {
-      kind: kindInput.value as SimpleShapeKind,
-      axis: integer(Number(axisInput.value), 0, 2, "Shape axis") as 0 | 1 | 2,
-      sides: integer(number(sidesInput), 3, 96, "Sides"),
-      circleMode: circleModeInput.value as SimpleShapeOptions["circleMode"],
-      hollow: hollowInput.checked,
-      thickness: integer(number(thicknessInput), 1, 1024, "Thickness"),
-      rings: integer(number(ringsInput), 1, 32, "Rings"),
-      accuracy: integer(number(accuracyInput), 1, 3, "Accuracy"),
-      stepHeight: integer(number(stepHeightInput), 1, 1024, "Step height"),
-      stairDirection:
-        stairDirectionInput.value as SimpleShapeOptions["stairDirection"],
+      kind: fields.kind,
+      axis: integer(Number(fields.axis), 0, 2, "Shape axis") as 0 | 1 | 2,
+      sides: integer(number(fields.sides), 3, 96, "Sides"),
+      circleMode: fields.circleMode,
+      hollow,
+      thickness: integer(number(fields.thickness), 1, 1024, "Thickness"),
+      rings: integer(number(fields.rings), 1, 32, "Rings"),
+      accuracy: integer(number(fields.accuracy), 1, 3, "Accuracy"),
+      stepHeight: integer(number(fields.stepHeight), 1, 1024, "Step height"),
+      stairDirection: fields.stairDirection,
     };
     if (
       next.circleMode === "scalable" &&
@@ -152,7 +102,7 @@ export function createEditorShapes(options: {
     if (event.phase === "cancel" || !event.bounds) {
       candidate = null;
       prefix = null;
-      result.textContent = "Drag to draw";
+      panel.update({ result: "Drag to draw" });
       restore();
       return;
     }
@@ -178,44 +128,33 @@ export function createEditorShapes(options: {
             createBrushSelection(next.selectionAfter),
             next.selectionAfter,
           );
-        result.textContent = `${brushes.length} ${brushes.length === 1 ? "brush" : "brushes"}`;
+        panel.update({
+          result: `${brushes.length} ${brushes.length === 1 ? "brush" : "brushes"}`,
+        });
       } else {
         options.session().commitBatchCreationCandidate(candidate ?? next);
         candidate = null;
         prefix = null;
-        result.textContent = `${brushes.length} created`;
+        panel.update({ result: `${brushes.length} created` });
         options.status(label);
       }
     } catch (error) {
       candidate = null;
       prefix = null;
-      result.textContent = "Invalid bounds or options";
+      panel.update({ result: "Invalid bounds or options" });
       restore();
       options.status(error instanceof Error ? error.message : String(error));
     }
   }
 
-  for (const input of [
-    kindInput,
-    axisInput,
-    sidesInput,
-    circleModeInput,
-    hollowInput,
-    thicknessInput,
-    ringsInput,
-    accuracyInput,
-    stepHeightInput,
-    stairDirectionInput,
-  ]) {
-    input.addEventListener("input", () => {
-      try {
-        shapeOptions = readOptions();
-        sync();
-        result.textContent = `${shapeLabel(shapeOptions.kind)} ready`;
-      } catch (error) {
-        options.status(error instanceof Error ? error.message : String(error));
-      }
-    });
+  function handleInput() {
+    try {
+      shapeOptions = readOptions();
+      sync();
+      panel.update({ result: `${shapeLabel(shapeOptions.kind)} ready` });
+    } catch (error) {
+      options.status(error instanceof Error ? error.message : String(error));
+    }
   }
 
   sync();
@@ -225,7 +164,7 @@ export function createEditorShapes(options: {
     reset() {
       candidate = null;
       prefix = null;
-      result.textContent = "Drag to draw";
+      panel.update({ result: "Drag to draw" });
     },
   };
 }

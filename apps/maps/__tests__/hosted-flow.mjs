@@ -1559,6 +1559,35 @@ try {
   await toolSettingsPage.evaluate(() => {
     window.teaMapsTestTools
       .get("tea_maps_set_tool")
+      .execute({ tool: "create" });
+  });
+  await toolSettingsPage.locator("#shape-tools").waitFor({ state: "visible" });
+  await toolSettingsPage.locator("#shape-kind").selectOption("cylinder");
+  await toolSettingsPage
+    .locator("#shape-circle-fields")
+    .waitFor({ state: "visible" });
+  assert.equal(
+    await toolSettingsPage.locator("#shape-thickness").isDisabled(),
+    true,
+  );
+  await toolSettingsPage.locator("#shape-hollow").check();
+  await toolSettingsPage.waitForFunction(
+    () => !document.querySelector("#shape-thickness")?.disabled,
+  );
+  await toolSettingsPage.locator("#shape-circle-mode").selectOption("scalable");
+  await toolSettingsPage.waitForFunction(
+    () => document.querySelector("#shape-sides")?.value === "12",
+  );
+  await toolSettingsPage.locator("#shape-kind").selectOption("stairs");
+  await toolSettingsPage
+    .locator("#shape-stair-fields")
+    .waitFor({ state: "visible" });
+  await toolSettingsPage
+    .locator("#shape-circle-fields")
+    .waitFor({ state: "hidden" });
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools
+      .get("tea_maps_set_tool")
       .execute({ tool: "select" });
     const tools = window.teaMapsTestTools;
     const before = tools.get("tea_maps_inspect_editor").execute({});
@@ -1582,7 +1611,7 @@ try {
   assert.deepEqual(snappedBounds, { min: [0, 0, 0], max: [64, 64, 64] });
   await toolSettingsPage.close();
   result.checks.push(
-    "Remix tool, Clip/Hull, topology, grid, and texture-lock controls update live editor settings",
+    "Remix tool, Clip/Hull, topology, shape, grid, and texture-lock controls update live editor settings",
   );
   const geometryPage = await browser.newPage();
   await installSiteToolMock(geometryPage);

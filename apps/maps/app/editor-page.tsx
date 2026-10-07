@@ -33,6 +33,7 @@ import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
 import { EditorClipHull } from "./assets/editor-clip-hull-panel.tsx";
 import { EditorSweepPanel } from "./assets/editor-sweep-panel.tsx";
 import { EditorTopologyPanel } from "./assets/editor-topology-panel.tsx";
+import { EditorShapePanel } from "./assets/editor-shape-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -92,103 +93,7 @@ export function EditorPage() {
             <EditorClipHull />
             <EditorSweepPanel />
             <EditorTopologyPanel />
-            <div id="shape-tools" class="shape-tools" hidden>
-              <strong>Simple shape</strong>
-              <span id="shape-result">Drag to draw</span>
-              <label for="shape-kind">Shape</label>
-              <select id="shape-kind">
-                <option value="cuboid">Cuboid</option>
-                <option value="stairs">Stairs</option>
-                <option value="arch">Arch</option>
-                <option value="cylinder">Cylinder</option>
-                <option value="cone">Cone</option>
-                <option value="uv-sphere">UV spheroid</option>
-                <option value="ico-sphere">Icosphere</option>
-              </select>
-              <div id="shape-circle-fields" class="shape-fields" hidden>
-                <label for="shape-axis">Axis</label>
-                <select id="shape-axis">
-                  <option value="0">X</option>
-                  <option value="1">Y</option>
-                  <option value="2" selected>
-                    Z
-                  </option>
-                </select>
-                <label for="shape-sides">Sides</label>
-                <input
-                  id="shape-sides"
-                  type="number"
-                  min="3"
-                  max="96"
-                  step="1"
-                  value="8"
-                />
-                <label for="shape-circle-mode">Circle</label>
-                <select id="shape-circle-mode">
-                  <option value="edge-aligned">Edge aligned</option>
-                  <option value="vertex-aligned">Vertex aligned</option>
-                  <option value="scalable">Scalable grid</option>
-                </select>
-              </div>
-              <div id="shape-hollow-fields" class="shape-fields" hidden>
-                <label id="shape-hollow-label" for="shape-hollow">
-                  <input id="shape-hollow" type="checkbox" /> Hollow
-                </label>
-                <label for="shape-thickness">Thickness</label>
-                <input
-                  id="shape-thickness"
-                  type="number"
-                  min="1"
-                  max="1024"
-                  step="1"
-                  value="16"
-                />
-              </div>
-              <div id="shape-uv-fields" class="shape-fields" hidden>
-                <label for="shape-rings">Rings</label>
-                <input
-                  id="shape-rings"
-                  type="number"
-                  min="1"
-                  max="32"
-                  step="1"
-                  value="8"
-                />
-              </div>
-              <div id="shape-ico-fields" class="shape-fields" hidden>
-                <label for="shape-accuracy">Accuracy</label>
-                <input
-                  id="shape-accuracy"
-                  type="number"
-                  min="1"
-                  max="3"
-                  step="1"
-                  value="1"
-                />
-              </div>
-              <div id="shape-stair-fields" class="shape-fields" hidden>
-                <label for="shape-step-height">Step height</label>
-                <input
-                  id="shape-step-height"
-                  type="number"
-                  min="1"
-                  max="1024"
-                  step="1"
-                  value="16"
-                />
-                <label for="shape-stair-direction">Direction</label>
-                <select id="shape-stair-direction">
-                  <option value="positive-x">+X</option>
-                  <option value="negative-x">−X</option>
-                  <option value="positive-y">+Y</option>
-                  <option value="negative-y">−Y</option>
-                </select>
-              </div>
-              <p>
-                Drag in a viewport to size the shape. Shift makes the visible
-                axes equal; Shift+Alt makes a cube in perspective.
-              </p>
-            </div>
+            <EditorShapePanel />
             <div id="transform-tool" class="transform-tool" hidden>
               <strong id="transform-title">Rotate</strong>
               <span>Pivot</span>

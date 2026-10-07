@@ -48,6 +48,8 @@ The face Sweep panel now renders through a Remix client entry while the editor k
 
 The Vertex and Edge handle panel now renders through a Remix client entry while the editor keeps topology selection and edit transactions.
 
+The Draw shape panel now renders through a Remix client entry while the editor keeps shape validation, viewport previews, and brush creation transactions.
+
 The selected point entity and entity properties inspector now renders through a Remix client entry, including definition driven fields and linked-copy protection. The editor retains validation, source guards, and property history.
 
 The selected face picker, numeric face geometry actions, and material application now render through a Remix client entry. The editor retains the geometry and material transactions.
