@@ -60,6 +60,7 @@ export const browserAssets = import.meta.env.DEV
       viewerCameraPanel: "/assets/viewerCameraPanel.js",
       viewerMovementPanel: "/assets/viewerMovementPanel.js",
       viewerOverviewPanel: "/assets/viewerOverviewPanel.js",
+      viewerWalkabilityPanel: "/assets/viewerWalkabilityPanel.js",
       projectMaps: "/assets/projectMaps.js",
       projectNewMap: "/assets/projectNewMap.js",
       projectAccess: "/assets/projectAccess.js",
@@ -67,8 +68,8 @@ export const browserAssets = import.meta.env.DEV
     }
   : {
       entry: "/assets/entry-JCK7T7IM.js",
-      viewer: "/assets/viewer-FAPI6TWO.js",
-      editor: "/assets/editor-WXVMSDYE.js",
+      viewer: "/assets/viewer-K3ZKXW5U.js",
+      editor: "/assets/editor-57WFJ7KS.js",
       editorTheme: "/assets/editorTheme-EU7X55BI.js",
       editorHostedPresence: "/assets/editorHostedPresence-PIENC5CI.js",
       editorPointerReadout: "/assets/editorPointerReadout-CRVBM7FX.js",
@@ -124,7 +125,8 @@ export const browserAssets = import.meta.env.DEV
       viewerSourcePanel: "/assets/viewerSourcePanel-XLV22DYW.js",
       viewerCameraPanel: "/assets/viewerCameraPanel-P266DMC7.js",
       viewerMovementPanel: "/assets/viewerMovementPanel-NG233XQC.js",
-      viewerOverviewPanel: "/assets/viewerOverviewPanel-JRJXIZIZ.js",
+      viewerOverviewPanel: "/assets/viewerOverviewPanel-IQWJ5O7T.js",
+      viewerWalkabilityPanel: "/assets/viewerWalkabilityPanel-7EZ3Y6B6.js",
       projectMaps: "/assets/projectMaps-6XBD64VR.js",
       projectNewMap: "/assets/projectNewMap-FY45V7N4.js",
       projectAccess: "/assets/projectAccess-UABOXJGI.js",

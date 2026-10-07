@@ -38,6 +38,8 @@ The viewer Movement settings panel also renders through a Remix client entry; it
 
 The viewer Overview panel renders through a Remix client entry and delegates PNG capture to the renderer.
 
+The viewer Walkability panel renders through a Remix client entry while generation, sidecar loading, and graph display remain renderer behavior.
+
 The editor's document controls now render through a Remix client entry. The editor still checks file handles and source save plans, writes recovery checkpoints, and guards map replacement.
 
 The viewport pointer readout now renders in a Remix client entry using the editor renderer's snapped map position.

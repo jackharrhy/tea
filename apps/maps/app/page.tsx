@@ -5,6 +5,7 @@ import { ViewerSourcePanel } from "./assets/viewer-source-panel.tsx";
 import { ViewerCameraPanel } from "./assets/viewer-camera-panel.tsx";
 import { ViewerMovementPanel } from "./assets/viewer-movement-panel.tsx";
 import { ViewerOverviewPanel } from "./assets/viewer-overview-panel.tsx";
+import { ViewerWalkabilityPanel } from "./assets/viewer-walkability-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -51,43 +52,7 @@ export function MapsPage() {
                 <ViewerCameraPanel />
                 <ViewerMovementPanel />
                 <ViewerOverviewPanel />
-                <section aria-label="Walkability graph">
-                  <h2>Walkability</h2>
-                  <label for="walkability-spacing">Sample spacing</label>
-                  <input
-                    id="walkability-spacing"
-                    type="number"
-                    min="8"
-                    max="128"
-                    step="1"
-                    value="32"
-                  />
-                  <label class="toggle" for="walkability-jumps">
-                    <input id="walkability-jumps" type="checkbox" checked />
-                    Probe jumps
-                  </label>
-                  <button id="generate-walkability" type="button" disabled>
-                    Generate graph
-                  </button>
-                  <label class="toggle" for="show-walkability">
-                    <input id="show-walkability" type="checkbox" disabled />
-                    Show graph
-                  </label>
-                  <output id="walkability-details">No graph loaded</output>
-                  <button id="download-walkability" type="button" disabled>
-                    Download sidecar
-                  </button>
-                  <label for="walkability-file">Load sidecar</label>
-                  <input
-                    id="walkability-file"
-                    type="file"
-                    accept=".json,application/json"
-                    disabled
-                  />
-                  <button id="clear-walkability" type="button" disabled>
-                    Clear graph
-                  </button>
-                </section>
+                <ViewerWalkabilityPanel />
                 <section aria-label="Map audio">
                   <h2>Audio</h2>
                   <output id="audio-details">Load a map to enable sound</output>

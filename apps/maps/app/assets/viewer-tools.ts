@@ -4,8 +4,6 @@ import {
   type MapDiagnostics,
 } from "@tea/maps-renderer";
 import type { WorldViewElement } from "@tea/maps-renderer/element";
-import { serializeWalkability } from "@tea/maps-renderer/walkability";
-import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
 
 export function formatMapDetails(
   diagnostics: MapDiagnostics,
@@ -32,26 +30,6 @@ export function initViewerTools(element: WorldViewElement): {
     document.querySelector<HTMLUListElement>("#entity-classes")!;
   const toolStatus =
     document.querySelector<HTMLOutputElement>("#map-tool-status")!;
-  const spacing = document.querySelector<HTMLInputElement>(
-    "#walkability-spacing",
-  )!;
-  const probeJumps =
-    document.querySelector<HTMLInputElement>("#walkability-jumps")!;
-  const generateWalkability = document.querySelector<HTMLButtonElement>(
-    "#generate-walkability",
-  )!;
-  const showWalkability =
-    document.querySelector<HTMLInputElement>("#show-walkability")!;
-  const walkabilityDetails = document.querySelector<HTMLOutputElement>(
-    "#walkability-details",
-  )!;
-  const downloadWalkability = document.querySelector<HTMLButtonElement>(
-    "#download-walkability",
-  )!;
-  const walkabilityFile =
-    document.querySelector<HTMLInputElement>("#walkability-file")!;
-  const clearWalkability =
-    document.querySelector<HTMLButtonElement>("#clear-walkability")!;
   const audioDetails =
     document.querySelector<HTMLOutputElement>("#audio-details")!;
   const audioRoom = document.querySelector<HTMLOutputElement>("#audio-room")!;
@@ -76,18 +54,6 @@ export function initViewerTools(element: WorldViewElement): {
   function report(error: unknown) {
     toolStatus.textContent =
       error instanceof Error ? error.message : String(error);
-  }
-
-  function updateWalkability() {
-    const runtime = element.viewer;
-    const graph = runtime?.walkability;
-    walkabilityDetails.textContent = graph
-      ? `${graph.nodes.length.toLocaleString()} nodes · ${graph.edges.length.toLocaleString()} edges`
-      : "No graph loaded";
-    showWalkability.checked = runtime?.walkabilityVisible ?? false;
-    showWalkability.disabled = !graph;
-    downloadWalkability.disabled = !graph;
-    clearWalkability.disabled = !graph;
   }
 
   function updateAudio() {
@@ -123,19 +89,12 @@ export function initViewerTools(element: WorldViewElement): {
     entityCounts.textContent = "Load a map to inspect entities";
     entityClasses.replaceChildren();
     toolStatus.textContent = "";
-    walkabilityDetails.textContent = "No graph loaded";
-    showWalkability.checked = false;
     audioDetails.textContent = "Load a map to enable sound";
     audioRoom.textContent = "Room: —";
     musicLoading = false;
     musicTrack.replaceChildren(new Option("No map music", ""));
     musicStatus.textContent = "No map music";
     for (const control of [
-      generateWalkability,
-      showWalkability,
-      downloadWalkability,
-      walkabilityFile,
-      clearWalkability,
       enableAudio,
       muteAudio,
       audioVolume,
@@ -182,8 +141,6 @@ export function initViewerTools(element: WorldViewElement): {
     warningMessages = [...event.detail.diagnostics.warnings];
     warnings.textContent = warningMessages.slice(0, 5).join("\n");
     for (const control of [
-      generateWalkability,
-      walkabilityFile,
       enableAudio,
       muteAudio,
       audioVolume,
@@ -205,7 +162,6 @@ export function initViewerTools(element: WorldViewElement): {
           )),
     );
     musicTrack.disabled = tracks.length === 0;
-    updateWalkability();
     updateAudio();
   });
   element.addEventListener("warning", (event) => {
@@ -214,73 +170,12 @@ export function initViewerTools(element: WorldViewElement): {
     if (event.detail.code === "asset-warning")
       toolStatus.textContent = event.detail.message;
   });
-  element.addEventListener("walkabilitychange", (event) => {
-    updateWalkability();
-    if (event.detail.walkability)
-      toolStatus.textContent = "Walkability graph ready";
-  });
   element.addEventListener("audiochange", updateAudio);
   element.addEventListener("error", (event) => {
     if (!element.viewer?.world) reset();
     report(event.detail.error);
   });
 
-  generateWalkability.addEventListener("click", async () => {
-    const runtime = element.viewer;
-    if (!runtime?.world) return;
-    const sampleSpacing = Number(spacing.value);
-    if (
-      !Number.isFinite(sampleSpacing) ||
-      sampleSpacing < 8 ||
-      sampleSpacing > 128
-    ) {
-      toolStatus.textContent = "Spacing must be between 8 and 128";
-      return;
-    }
-    generateWalkability.disabled = true;
-    toolStatus.textContent = "Generating walkability graph";
-    try {
-      const graph = await runtime.generateWalkability({
-        spacing: sampleSpacing,
-        allowJump: probeJumps.checked,
-        onProgress(progress) {
-          if (element.viewer === runtime)
-            toolStatus.textContent = `Sampling ${progress.nodes.toLocaleString()} nodes`;
-        },
-      });
-      if (element.viewer !== runtime) return;
-      runtime.setWalkability(graph);
-      element.walkabilityVisible = true;
-      toolStatus.textContent = "Walkability graph ready";
-    } catch (error) {
-      report(error);
-    } finally {
-      generateWalkability.disabled = !element.viewer?.world;
-    }
-  });
-  showWalkability.addEventListener("change", () => {
-    element.walkabilityVisible = showWalkability.checked;
-  });
-  downloadWalkability.addEventListener("click", () => {
-    const graph = element.viewer?.walkability;
-    if (!graph) return;
-    downloadViewerFile(
-      new Blob([serializeWalkability(graph)], { type: "application/json" }),
-      `${viewerMapFilename()}.tea-maps-walkability.json`,
-    );
-    toolStatus.textContent = "Walkability sidecar downloaded";
-  });
-  walkabilityFile.addEventListener("change", () => {
-    const file = walkabilityFile.files?.[0];
-    if (!file) return;
-    element.walkabilitySource = file;
-    toolStatus.textContent = "Loading walkability sidecar";
-  });
-  clearWalkability.addEventListener("click", () => {
-    element.walkabilitySource = null;
-    element.viewer?.setWalkability(null);
-    toolStatus.textContent = "Walkability graph cleared";
-  });
   enableAudio.addEventListener("click", async () => {
     try {
       await element.viewer?.enableAudio();

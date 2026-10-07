@@ -830,13 +830,59 @@ try {
     };
     const calls = [];
     const captureCalls = [];
-    window.cameraProbe = { camera, calls, world, captureCalls };
+    const walkabilityCalls = [];
+    const graph = {
+      format: "worldview-walkability",
+      version: 1,
+      worldFingerprint: "smoke",
+      parameters: {
+        spacing: 48,
+        mergeDistance: 16,
+        directions: 4,
+        maximumNodes: 100,
+        allowJump: false,
+        jumpSeconds: 0.3,
+        fixedDeltaSeconds: 0.05,
+        movement: {
+          gravity: 800,
+          stopSpeed: 100,
+          maxSpeed: 320,
+          accelerate: 10,
+          airAccelerate: 10,
+          friction: 4,
+          edgeFriction: 2,
+          stepSize: 18,
+        },
+      },
+      seeds: [],
+      nodes: [],
+      edges: [],
+      boundaries: [],
+      statistics: {
+        nodes: 0,
+        edges: 0,
+        walkEdges: 0,
+        jumpEdges: 0,
+        dropEdges: 0,
+        boundaries: 0,
+        components: 0,
+        truncated: false,
+      },
+    };
+    window.cameraProbe = {
+      camera,
+      calls,
+      world,
+      captureCalls,
+      walkabilityCalls,
+    };
     Object.defineProperty(element, "viewer", {
       configurable: true,
       value: {
         world,
         camera,
         movementMode: "walk",
+        walkability: null,
         setCamera(update) {
           calls.push(update);
           Object.assign(camera, update);
@@ -852,33 +898,56 @@ try {
             },
           };
         },
+        async generateWalkability(options) {
+          walkabilityCalls.push({
+            spacing: options.spacing,
+            allowJump: options.allowJump,
+          });
+          options.onProgress({ nodes: 0 });
+          return graph;
+        },
+        setWalkability(value) {
+          this.walkability = value;
+          element.dispatchEvent(
+            new CustomEvent("walkabilitychange", {
+              detail: {
+                walkability: value,
+                visible: element.walkabilityVisible,
+              },
+            }),
+          );
+        },
       },
     });
   });
-  await cameraPage.waitForFunction(() => {
-    const world = window.cameraProbe.world;
-    const diagnostics = {
-      format: "quake",
-      version: 29,
-      triangles: 0,
-      faces: 0,
-      batches: 0,
-      materials: 0,
-      lightmapPages: 0,
-      sprites: 0,
-      loadedSounds: 0,
-      loadedMusic: 0,
-      playerSounds: 0,
-      loadMilliseconds: 0,
-      warnings: [],
-    };
-    document
-      .querySelector("#viewport world-view")
-      .dispatchEvent(
-        new CustomEvent("ready", { detail: { world, diagnostics } }),
-      );
-    return !document.querySelector("#field-of-view").disabled;
-  });
+  await cameraPage.waitForFunction(
+    () => {
+      const world = window.cameraProbe.world;
+      const diagnostics = {
+        format: "quake",
+        version: 29,
+        triangles: 0,
+        faces: 0,
+        batches: 0,
+        materials: 0,
+        lightmapPages: 0,
+        sprites: 0,
+        loadedSounds: 0,
+        loadedMusic: 0,
+        playerSounds: 0,
+        loadMilliseconds: 0,
+        warnings: [],
+      };
+      document
+        .querySelector("#viewport world-view")
+        .dispatchEvent(
+          new CustomEvent("ready", { detail: { world, diagnostics } }),
+        );
+      return !document.querySelector("#field-of-view").disabled;
+    },
+    undefined,
+    { timeout: 60_000 },
+  );
   await cameraPage.locator("#field-of-view").fill("90");
   assert.equal(await cameraPage.locator("#field-of-view").inputValue(), "90");
   await cameraPage.locator("#field-of-view").press("Tab");
@@ -922,10 +991,80 @@ try {
       },
     ],
   );
+  await cameraPage.locator("#generate-walkability:enabled").waitFor();
+  await cameraPage.locator("#walkability-spacing").fill("4");
+  await cameraPage.locator("#generate-walkability").click();
+  assert.equal(
+    await cameraPage.locator("#walkability-status").textContent(),
+    "Spacing must be between 8 and 128",
+  );
+  assert.deepEqual(
+    await cameraPage.evaluate(() => window.cameraProbe.walkabilityCalls),
+    [],
+  );
+  await cameraPage.locator("#walkability-spacing").fill("48");
+  await cameraPage.locator("#walkability-jumps").uncheck();
+  await cameraPage.locator("#generate-walkability").click();
+  await cameraPage
+    .locator("#walkability-status")
+    .getByText("Walkability graph ready")
+    .waitFor();
+  assert.deepEqual(
+    await cameraPage.evaluate(() => window.cameraProbe.walkabilityCalls),
+    [{ spacing: 48, allowJump: false }],
+  );
+  assert.equal(await cameraPage.locator("#show-walkability").isChecked(), true);
+  assert.equal(
+    await cameraPage.locator("#walkability-details").textContent(),
+    "0 nodes · 0 edges",
+  );
+  const [sidecarDownload] = await Promise.all([
+    cameraPage.waitForEvent("download"),
+    cameraPage.locator("#download-walkability").click(),
+  ]);
+  assert.match(
+    sidecarDownload.suggestedFilename(),
+    /\.tea-maps-walkability\.json$/,
+  );
+  await cameraPage.locator("#clear-walkability").click();
+  assert.equal(
+    await cameraPage.locator("#walkability-details").textContent(),
+    "No graph loaded",
+  );
+  assert.equal(
+    await cameraPage.locator("#show-walkability").isDisabled(),
+    true,
+  );
+  await cameraPage.locator("#walkability-file").setInputFiles({
+    name: "graph.json",
+    mimeType: "application/json",
+    buffer: Buffer.from("{}"),
+  });
+  assert.equal(
+    await cameraPage.locator("#walkability-status").textContent(),
+    "Loading walkability sidecar",
+  );
+  await cameraPage.evaluate(() => {
+    document.querySelector("#viewport world-view").dispatchEvent(
+      new CustomEvent("warning", {
+        detail: {
+          code: "asset-warning",
+          message: "walkability sidecar could not be loaded: invalid graph",
+        },
+      }),
+    );
+  });
+  assert.equal(
+    await cameraPage.locator("#walkability-status").textContent(),
+    "walkability sidecar could not be loaded: invalid graph",
+  );
   await cameraPage.close();
   result.checks.push("Remix viewer field of view accepts typed camera values");
   result.checks.push(
     "Remix viewer overview validates and downloads capture options",
+  );
+  result.checks.push(
+    "Remix viewer walkability generates and downloads Tea sidecars",
   );
   const viewerFolder = join(state, "viewer-fixture");
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
