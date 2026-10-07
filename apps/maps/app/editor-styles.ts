@@ -370,6 +370,7 @@ export const editorStyles = css({
     "align-items": "center",
     gap: "0.4rem",
   },
+  "& .hosted-presence-panel": { display: "contents" },
   "& .hosted-share[hidden]": { display: "none" },
   "& #hosted-share-link": {
     width: "min(22rem, 55vw)",

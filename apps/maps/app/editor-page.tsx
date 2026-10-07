@@ -1,5 +1,6 @@
 import { browserAssets } from "./assets/build-manifest.ts";
 import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
+import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { editorStyles } from "./editor-styles.ts";
@@ -963,18 +964,7 @@ export function EditorPage() {
               <button id="hosted-source-open" type="button" disabled>
                 Edit hosted source
               </button>
-              <div id="hosted-share" class="hosted-share" hidden>
-                <label for="hosted-share-link">Share link</label>
-                <input id="hosted-share-link" type="url" readOnly />
-                <button id="hosted-copy-link" type="button">
-                  Copy link
-                </button>
-              </div>
-              <output id="hosted-participants" aria-live="polite"></output>
-              <ul
-                id="hosted-participant-list"
-                aria-label="Live collaborators"
-              ></ul>
+              <EditorHostedPresence />
               <label for="detached-editor-map">Recovery copies</label>
               <select id="detached-editor-map" disabled></select>
               <button id="detached-editor-open" type="button" disabled>

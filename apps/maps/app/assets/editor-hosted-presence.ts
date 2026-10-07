@@ -9,24 +9,45 @@ export function hostedShareUrl(mapId: string, origin: string): string {
   return url.toString();
 }
 
-export function initHostedPresence(status: (message: string) => void) {
-  const share = document.querySelector<HTMLElement>("#hosted-share")!;
-  const link = document.querySelector<HTMLInputElement>("#hosted-share-link")!;
-  const copy = document.querySelector<HTMLButtonElement>("#hosted-copy-link")!;
-  const summary = document.querySelector<HTMLElement>("#hosted-participants")!;
-  const list = document.querySelector<HTMLUListElement>(
-    "#hosted-participant-list",
-  )!;
+interface VisibleParticipant {
+  readonly actorId: string;
+  readonly displayName: string;
+  readonly viewport: string;
+  readonly selectedCount: number;
+  readonly editing: boolean;
+}
 
-  copy.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(link.value);
-      status("Hosted map link copied");
-    } catch {
-      link.focus();
-      link.select();
-      status("Select the share link to copy it");
-    }
+export interface HostedPresenceState {
+  readonly mapId: string;
+  readonly displayName: string;
+  readonly participants: readonly VisibleParticipant[];
+}
+
+const changeEvent = "tea-maps-hosted-presence-change";
+const statusEvent = "tea-maps-hosted-presence-status";
+type PresenceWindow = Window & {
+  teaMapsHostedPresence?: HostedPresenceState | null;
+};
+
+export function currentHostedPresence(): HostedPresenceState | null {
+  return (window as PresenceWindow).teaMapsHostedPresence ?? null;
+}
+
+export function onHostedPresenceChange(
+  listener: () => void,
+  signal: AbortSignal,
+): void {
+  window.addEventListener(changeEvent, listener, { signal });
+}
+
+export function reportHostedPresenceStatus(message: string): void {
+  window.dispatchEvent(new CustomEvent(statusEvent, { detail: message }));
+}
+
+export function initHostedPresence(status: (message: string) => void) {
+  let lastVisibleState = "";
+  window.addEventListener(statusEvent, (event) => {
+    status((event as CustomEvent<string>).detail);
   });
 
   return {
@@ -34,29 +55,24 @@ export function initHostedPresence(status: (message: string) => void) {
       map: HostedMapLaunch | null,
       participants: readonly CollaborationPresence[],
     ) {
-      share.hidden = !map;
-      link.value = map ? hostedShareUrl(map.id, location.origin) : "";
-      copy.disabled = !map;
-      list.replaceChildren();
-      if (!map) {
-        summary.textContent = "";
-        return;
-      }
-      summary.textContent = `${participants.length + 1} ${participants.length === 0 ? "person" : "people"} here`;
-      const local = document.createElement("li");
-      local.textContent = `${map.displayName} (you)`;
-      list.append(local);
-      for (const participant of participants) {
-        const item = document.createElement("li");
-        const selected = participant.selectedObjectIds?.length ?? 0;
-        item.textContent = [
-          participant.displayName ?? participant.actorId,
-          participant.viewport ?? "No viewport",
-          selected ? `${selected} selected` : "No selection",
-          ...(participant.preview ? ["Editing"] : []),
-        ].join(" · ");
-        list.append(item);
-      }
+      const state: HostedPresenceState | null = map
+        ? {
+            mapId: map.id,
+            displayName: map.displayName,
+            participants: participants.map((participant) => ({
+              actorId: participant.actorId,
+              displayName: participant.displayName ?? participant.actorId,
+              viewport: participant.viewport ?? "No viewport",
+              selectedCount: participant.selectedObjectIds?.length ?? 0,
+              editing: !!participant.preview,
+            })),
+          }
+        : null;
+      const visibleState = JSON.stringify(state);
+      if (visibleState === lastVisibleState) return;
+      lastVisibleState = visibleState;
+      (window as PresenceWindow).teaMapsHostedPresence = state;
+      window.dispatchEvent(new Event(changeEvent));
     },
   };
 }

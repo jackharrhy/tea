@@ -623,8 +623,27 @@ try {
   }
   const hostedEditorUrl = page.url();
   assert.deepEqual(errors, []);
+  try {
+    await page.locator("#hosted-share").waitFor({ state: "visible" });
+  } catch (error) {
+    throw new Error(
+      `Hosted presence did not render: ${JSON.stringify(
+        await page.evaluate(() => ({
+          state: window.teaMapsHostedPresence,
+          share: document.querySelector("#hosted-share")?.outerHTML,
+        })),
+      )}`,
+      { cause: error },
+    );
+  }
+  assert.equal(
+    await page.locator("#hosted-share-link").inputValue(),
+    hostedEditorUrl,
+  );
+  await page.getByText("1 person here").waitFor();
+  assert.equal(await page.locator("#hosted-participant-list li").count(), 1);
   result.checks.push(
-    "hosted map creation and editor launch through live collaboration service",
+    "hosted map creation, editor launch, and Remix share and presence UI",
   );
   await page.locator("#hosted-builds summary").click();
   await page.getByText("0 builds · hosted compiler available").waitFor();
