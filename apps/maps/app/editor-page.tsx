@@ -1,5 +1,6 @@
 import { browserAssets } from "./assets/build-manifest.ts";
 import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
+import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -23,6 +24,7 @@ export function EditorPage() {
             <span id="editor-status" role="status">
               Starting…
             </span>
+            <EditorThemeControl />
             <button id="performance-toggle" type="button" aria-pressed="false">
               Performance
             </button>

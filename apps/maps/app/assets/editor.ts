@@ -60,6 +60,7 @@ import {
   type EditorRemotePresenceOverlay,
   type EditorViewportContextMenuEvent,
 } from "@tea/maps-editor/render";
+import { editorRenderTheme, editorThemeEvent } from "./editor-theme.ts";
 import {
   defineWorldViewElement,
   type WorldViewElement,
@@ -485,6 +486,9 @@ let session = new EditorSession(createEmptyDocument());
 let openGroupId: string | null = null;
 let selectedLayerId: string | null = null;
 let renderer: EditorSourceRenderer | null = null;
+window.addEventListener(editorThemeEvent, () => {
+  renderer?.setTheme(editorRenderTheme());
+});
 const references = initEditorReferences({
   document: () => session.document,
   renderer: () => renderer,
@@ -2561,6 +2565,7 @@ if (!navigator.gpu) {
       document: session.document,
       materials: currentMaterials(),
       referenceScenes: references.scenes(),
+      theme: editorRenderTheme(),
       onPick: (value, _viewport, intent) => handleViewportPick(value, intent),
       onBrushDrag: handleBrushDrag,
       onBrushCreate: shapeTool.handleCreate,

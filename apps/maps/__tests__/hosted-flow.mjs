@@ -351,6 +351,43 @@ try {
   await setupPage.close();
   result.checks.push("Remix new-map form keeps name and compatible format");
 
+  const themePage = await browser.newPage();
+  await themePage.emulateMedia({ colorScheme: "light" });
+  await themePage.goto(`${mapsOrigin}/editor`);
+  await themePage.waitForFunction(
+    () => document.documentElement.dataset.theme === "light",
+  );
+  assert.equal(await themePage.locator("#editor-theme").inputValue(), "system");
+  assert.equal(
+    await themePage.evaluate(
+      () => getComputedStyle(document.documentElement).backgroundColor,
+    ),
+    "rgb(238, 245, 238)",
+  );
+  await themePage.locator("#editor-theme").selectOption("dark");
+  await themePage.waitForFunction(
+    () => document.documentElement.dataset.theme === "dark",
+  );
+  await themePage.reload();
+  await themePage.waitForFunction(
+    () =>
+      document.documentElement.dataset.theme === "dark" &&
+      document.querySelector("#editor-theme")?.value === "dark",
+  );
+  assert.equal(await themePage.locator("#editor-theme").inputValue(), "dark");
+  await themePage.locator("#editor-theme").selectOption("system");
+  await themePage.waitForFunction(
+    () => document.documentElement.dataset.theme === "light",
+  );
+  await themePage.emulateMedia({ colorScheme: "dark" });
+  await themePage.waitForFunction(
+    () => document.documentElement.dataset.theme === "dark",
+  );
+  await themePage.close();
+  result.checks.push(
+    "editor theme follows system and persists a manual choice",
+  );
+
   const sourcePage = await browser.newPage();
   await sourcePage.goto(`${mapsOrigin}/?example=quake`);
   await sourcePage.locator("#map-name").getByText("Quake sky").waitFor();
