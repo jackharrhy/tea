@@ -1312,6 +1312,21 @@ try {
   await recentRow.getByRole("button", { name: "Open in editor" }).click();
   await page.waitForURL(/recentProject=smoke-recent-project/);
   result.checks.push("Projects page opens a hydrated recent project row");
+  await page.locator("#recent-projects summary").click();
+  const editorRecentRow = page
+    .locator("#recent-project-list button")
+    .filter({ hasText: "Smoke recent project" });
+  await editorRecentRow.getByText("maps/beta.map").waitFor();
+  await editorRecentRow.click();
+  const recentError = page.locator("#recent-project-list [role='status']");
+  await recentError.waitFor();
+  assert.doesNotMatch(
+    await recentError.textContent(),
+    /editor is still starting/i,
+  );
+  result.checks.push(
+    "Remix editor recent-project menu renders and invokes stored folders",
+  );
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {

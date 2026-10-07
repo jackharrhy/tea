@@ -143,11 +143,11 @@ import {
   type MapProject,
 } from "./editor-project.ts";
 import {
-  listRecentProjects,
   recentProject,
   rememberRecentProject,
   rememberRecentProjectMap,
 } from "./editor-recent-projects.ts";
+import type { OpenRecentProjectRequest } from "./editor-recent-projects-panel.tsx";
 import {
   openProjectBuildBindings,
   type ProjectBuildBindings,
@@ -332,11 +332,6 @@ const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
 const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
 const fileInput = document.querySelector<HTMLInputElement>("#open-map")!;
 const projectMaps = document.querySelector<HTMLSelectElement>("#project-maps")!;
-const recentProjects =
-  document.querySelector<HTMLDetailsElement>("#recent-projects")!;
-const recentProjectList = document.querySelector<HTMLElement>(
-  "#recent-project-list",
-)!;
 const buildProfile =
   document.querySelector<HTMLSelectElement>("#build-profile")!;
 const gameProfile = document.querySelector<HTMLSelectElement>("#game-profile")!;
@@ -3956,43 +3951,13 @@ async function openRecentProject(id: string, requestPermission: boolean) {
   await openProjectDirectory(current.handle, current.id, current.lastMapPath);
 }
 
-async function renderRecentProjects() {
-  const recents = await listRecentProjects();
-  recentProjectList.replaceChildren();
-  if (!recents.length) {
-    recentProjectList.textContent = "No recent project folders";
-    return;
-  }
-  for (const record of recents) {
-    const button = document.createElement("button");
-    button.type = "button";
-    const name = document.createElement("strong");
-    name.textContent = record.name;
-    const detail = document.createElement("small");
-    detail.textContent = record.lastMapPath ?? record.handle.name;
-    button.append(name, detail);
-    button.addEventListener("click", async () => {
-      button.disabled = true;
-      try {
-        await openRecentProject(record.id, true);
-        recentProjects.open = false;
-      } catch (error) {
-        status.textContent =
-          error instanceof Error ? error.message : String(error);
-      } finally {
-        button.disabled = false;
-      }
-    });
-    recentProjectList.append(button);
-  }
-}
-
-recentProjects.addEventListener("toggle", () => {
-  if (recentProjects.open)
-    void renderRecentProjects().catch((error: unknown) => {
-      recentProjectList.textContent =
-        error instanceof Error ? error.message : String(error);
-    });
+window.addEventListener("tea-maps-open-recent-project", (event) => {
+  const request = (event as CustomEvent<OpenRecentProjectRequest>).detail;
+  event.preventDefault();
+  void openRecentProject(request.id, true).then(
+    request.resolve,
+    request.reject,
+  );
 });
 
 document

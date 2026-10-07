@@ -20,6 +20,8 @@ Worldview is a monorepo, rather than one app. Tea's viewer opens generated examp
 
 The Maps viewer now opens Worldview camera and fixture links and can copy the current view URL. The editor now keeps bounded local source versions and protected checkpoints; recovery restores open as detached copies so the original disk file is never replaced by a version choice.
 
+The editor's Recent projects menu now renders as a Remix client entry while retaining the editor's folder permission and unsaved-work handling. The viewer source controls and hosted project pages also use Remix client entries.
+
 The Tea editor now exposes exact shear and mirror transforms, Worldview view filters, and entity link visibility modes alongside the copied map issue diagnostics, type filters, local finding visibility, object reveal, and undoable repairs. It can create, rename, activate, reorder, hide, lock, isolate, and remove TrenchBroom-compatible layers, and move objects between them. It can create, rename, open, close, link duplicate, unlink, and ungroup TrenchBroom-compatible object groups. Group metadata survives source saving and hosted collaboration operations, and opening a group locks viewport interaction with objects outside it.
 
 The entity inspector now exposes linked-group property protection. While editing an open linked copy, users can keep an existing or newly added property independent of its siblings.

@@ -18,34 +18,27 @@ declare module "remix/router" {
   }
 }
 
+const clientEntryFiles = {
+  "recovered-maps.tsx": browserAssets.recoveredMaps,
+  "editor-recent-projects-panel.tsx": browserAssets.editorRecentProjects,
+  "hosted-projects.tsx": browserAssets.hostedProjects,
+  "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,
+  "viewer-source-panel.tsx": browserAssets.viewerSourcePanel,
+  "new-map-setup.tsx": browserAssets.newMap,
+  "project-maps.tsx": browserAssets.projectMaps,
+  "project-new-map.tsx": browserAssets.projectNewMap,
+  "project-access-page.tsx": browserAssets.projectAccess,
+  "project-resources-page.tsx": browserAssets.projectResources,
+};
+
 const router = createRouter<AppContext>({
   middleware: [
     render({
       assets: {
         async getScriptEntry(sourceId) {
-          const href = sourceId.endsWith("/app/assets/recovered-maps.tsx")
-            ? browserAssets.recoveredMaps
-            : sourceId.endsWith("/app/assets/hosted-projects.tsx")
-              ? browserAssets.hostedProjects
-              : sourceId.endsWith("/app/assets/hosted-viewer-panel.tsx")
-                ? browserAssets.hostedViewerPanel
-                : sourceId.endsWith("/app/assets/viewer-source-panel.tsx")
-                  ? browserAssets.viewerSourcePanel
-                  : sourceId.endsWith("/app/assets/new-map-setup.tsx")
-                    ? browserAssets.newMap
-                    : sourceId.endsWith("/app/assets/project-maps.tsx")
-                      ? browserAssets.projectMaps
-                      : sourceId.endsWith("/app/assets/project-new-map.tsx")
-                        ? browserAssets.projectNewMap
-                        : sourceId.endsWith(
-                              "/app/assets/project-access-page.tsx",
-                            )
-                          ? browserAssets.projectAccess
-                          : sourceId.endsWith(
-                                "/app/assets/project-resources-page.tsx",
-                              )
-                            ? browserAssets.projectResources
-                            : null;
+          const href = Object.entries(clientEntryFiles).find(([filename]) =>
+            sourceId.endsWith(`/app/assets/${filename}`),
+          )?.[1];
           if (!href) throw new Error(`Unknown Maps client entry ${sourceId}`);
           return {
             href,

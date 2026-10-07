@@ -1,4 +1,5 @@
 import { browserAssets } from "./assets/build-manifest.ts";
+import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -40,10 +41,7 @@ export function EditorPage() {
             <button id="open-project" type="button" disabled>
               Open project
             </button>
-            <details id="recent-projects">
-              <summary>Recent projects</summary>
-              <div id="recent-project-list" />
-            </details>
+            <EditorRecentProjects />
             <label for="project-maps">Project maps</label>
             <select id="project-maps" disabled>
               <option value="">No project open</option>
@@ -1629,6 +1627,7 @@ export function EditorPage() {
           hidden
         />
         <script type="module" src={browserAssets.editor}></script>
+        <script type="module" src={browserAssets.entry}></script>
       </body>
     </html>
   );
