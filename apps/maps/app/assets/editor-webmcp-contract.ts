@@ -52,6 +52,18 @@ export interface EditorState {
 export interface EditorActions {
   prepareEdit(): void;
   history(action: "undo" | "redo"): Promise<void>;
+  openProjectMap(
+    path: string,
+    discardUnsavedChanges: boolean,
+    expectedDocumentId: string,
+    expectedRevision: number,
+  ): Promise<void>;
+  replaceMapSource(
+    source: string,
+    name: string,
+    expectedDocumentId: string,
+    expectedRevision: number,
+  ): Promise<void>;
   setTool(tool: string): void;
   status(message: string): void;
 }

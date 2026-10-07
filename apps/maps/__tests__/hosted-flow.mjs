@@ -473,6 +473,7 @@ try {
   await page.locator("#hosted-builds-refresh").click();
   await page.getByText("Large maps may take several minutes").waitFor();
   result.checks.push("hosted compiler duration hint in editor");
+  await installSiteToolMock(page);
   await page.goto(`${mapsOrigin}/editor`);
   await page.evaluate(() => {
     const manifest = JSON.stringify({
@@ -532,6 +533,46 @@ try {
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   result.checks.push("local project map chooser and filtered map selection");
+  const projectSiteTools = await page.evaluate(async () => {
+    const tools = window.teaMapsTestTools;
+    const inspect = () => tools.get("tea_maps_inspect_editor").execute({});
+    const before = inspect();
+    tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [32, 32, 32],
+      material: "STONE",
+    });
+    const dirty = inspect();
+    let rejected = "";
+    try {
+      await tools.get("tea_maps_open_project_map").execute({
+        expectedDocumentId: dirty.documentId,
+        expectedRevision: dirty.revision,
+        path: "maps/gamma.map",
+      });
+    } catch (error) {
+      rejected = error.message;
+    }
+    const opened = await tools.get("tea_maps_open_project_map").execute({
+      expectedDocumentId: dirty.documentId,
+      expectedRevision: dirty.revision,
+      path: "maps/gamma.map",
+      discardUnsavedChanges: true,
+    });
+    return { rejected, opened, inspection: inspect() };
+  });
+  assert.match(projectSiteTools.rejected, /unsaved changes/);
+  assert.equal(projectSiteTools.opened.name, "gamma.map");
+  assert.equal(projectSiteTools.inspection.counts.brushes, 0);
+  assert.equal(
+    await page.locator("#project-maps").inputValue(),
+    "maps/gamma.map",
+  );
+  result.checks.push(
+    "browser site tool opens an authorized project map with explicit discard",
+  );
   const siteToolPage = await browser.newPage();
   siteToolPage.on("pageerror", (error) => errors.push(error.message));
   await installSiteToolMock(siteToolPage);
@@ -658,7 +699,7 @@ try {
       source: tools.get("tea_maps_get_map_source").execute({}),
     };
   });
-  assert.equal(siteTools.names.length, 19);
+  assert.equal(siteTools.names.length, 21);
   assert.equal(siteTools.activeTool.activeTool, "rotate");
   assert.equal(siteTools.inspection.name, "tea-map.map");
   assert.equal(siteTools.inspection.counts.brushes, 1);
@@ -678,7 +719,45 @@ try {
   result.checks.push(
     "browser WebMCP tools inspect and edit the live editor with revision guards",
   );
-  await installSiteToolMock(page);
+  const sourceReplacement = await siteToolPage.evaluate(async () => {
+    const tools = window.teaMapsTestTools;
+    const inspect = () => tools.get("tea_maps_inspect_editor").execute({});
+    const before = inspect();
+    let rejected = "";
+    try {
+      await tools.get("tea_maps_replace_map_source").execute({
+        expectedDocumentId: before.documentId,
+        expectedRevision: before.revision,
+        source: '{\n"classname" "worldspawn"\n}\n',
+      });
+    } catch (error) {
+      rejected = error.message;
+    }
+    const replaced = await tools.get("tea_maps_replace_map_source").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      source: '{\n"classname" "worldspawn"\n}\n',
+      name: "replaced.map",
+      confirmDestructive: true,
+    });
+    return { rejected, replaced, inspection: inspect() };
+  });
+  assert.match(sourceReplacement.rejected, /Tool input is invalid/);
+  assert.equal(sourceReplacement.replaced.name, "replaced.map");
+  assert.equal(sourceReplacement.inspection.counts.brushes, 0);
+  assert.equal(sourceReplacement.inspection.dirty, true);
+  await siteToolPage.reload();
+  await siteToolPage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  const recoveredReplacement = await siteToolPage.evaluate(() =>
+    window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}),
+  );
+  assert.equal(recoveredReplacement.name, "replaced.map");
+  assert.equal(recoveredReplacement.dirty, true);
+  result.checks.push(
+    "browser site tool replaces source as a detached local copy",
+  );
   await page.goto(hostedEditorUrl);
   await page.waitForFunction(
     () => document.documentElement.dataset.teaMapsSiteTools === "ready",

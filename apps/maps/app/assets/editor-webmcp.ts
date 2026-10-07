@@ -1,5 +1,6 @@
 import { editEditorWebMcpTools } from "./editor-webmcp-edit.ts";
 import { readEditorWebMcpTools } from "./editor-webmcp-read.ts";
+import { documentEditorWebMcpTools } from "./editor-webmcp-document.ts";
 import type {
   EditorActions,
   EditorState,
@@ -14,6 +15,7 @@ export function editorWebMcpTools(
   return [
     ...readEditorWebMcpTools(state),
     ...editEditorWebMcpTools(state, actions),
+    ...documentEditorWebMcpTools(state, actions),
   ];
 }
 

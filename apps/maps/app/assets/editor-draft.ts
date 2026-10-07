@@ -13,6 +13,7 @@ export interface EditorDraft {
   readonly fileName: string;
   readonly committedSource: string;
   readonly workingSource: string;
+  readonly savedSource?: string;
   readonly revision: number;
   readonly game?: WorldviewGameProfile;
   readonly document?: MapDocument;
@@ -58,6 +59,8 @@ function validDraft(value: unknown): value is EditorDraft {
     typeof draft.fileName === "string" &&
     typeof draft.committedSource === "string" &&
     typeof draft.workingSource === "string" &&
+    (draft.savedSource === undefined ||
+      typeof draft.savedSource === "string") &&
     typeof draft.revision === "number" &&
     (draft.document === undefined ||
       MapDocumentSchema.safeParse(draft.document).success) &&

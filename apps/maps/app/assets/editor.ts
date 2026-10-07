@@ -839,6 +839,7 @@ function captureDraft(): EditorDraft {
     fileName: mapName,
     committedSource: serializeMap(session.document),
     workingSource: source.value,
+    savedSource,
     revision: session.document.revision,
     game: activeGame(),
     document: session.document,
@@ -1941,6 +1942,35 @@ async function mayReplaceMap(): Promise<boolean> {
   return false;
 }
 
+function assertSiteToolDocument(id: string, revision: number) {
+  if (session.document.id !== id)
+    throw new Error(
+      `Stale document identity: current ID is ${session.document.id}`,
+    );
+  if (session.document.revision !== revision)
+    throw new Error(
+      `Stale document revision: current revision is ${session.document.revision}`,
+    );
+}
+
+async function checkSiteToolReplacement(
+  id: string,
+  revision: number,
+  discardUnsavedChanges: boolean,
+) {
+  assertSiteToolDocument(id, revision);
+  if (
+    hostedMap &&
+    (await new IndexedDbCollaborationOutbox().pending(hostedMap.id)).length > 0
+  )
+    throw new Error("Hosted edits are waiting to sync");
+  assertSiteToolDocument(id, revision);
+  if (hasUnsavedChanges() && !discardUnsavedChanges)
+    throw new Error(
+      "The current map has unsaved changes; set discardUnsavedChanges to true",
+    );
+}
+
 function setHostedEditability() {
   const readOnly = hostedMap !== null;
   if (readOnly && !hostedConnection) {
@@ -2441,6 +2471,7 @@ try {
   if (draft) {
     documentId = draft.documentId;
     mapName = draft.fileName;
+    savedSource = draft.savedSource ?? emptySource;
     localGame = draft.game ?? "quake";
     const parsed = parseMapSource(draft.committedSource);
     setMap(
@@ -3859,32 +3890,47 @@ document
     }
   });
 
-projectMaps.addEventListener("change", async () => {
-  const path = projectMaps.value;
+async function openProjectMap(
+  path: string,
+  siteTool?: {
+    readonly expectedDocumentId: string;
+    readonly expectedRevision: number;
+    readonly discardUnsavedChanges: boolean;
+  },
+) {
   const previous = activeProjectPath ?? "";
   const entry = project?.maps.find((projectMap) => projectMap.path === path);
   if (!entry) {
     projectMaps.value = previous;
-    return;
+    if (siteTool) throw new Error(`Unknown project map ${path}`);
+    return false;
   }
-  if (path === activeProjectPath) return;
+  if (path === activeProjectPath) return true;
   try {
     const file = await entry.handle.getFile();
     const text = await file.text();
     const parsed = parseMapSource(text);
     const document = parsed.document;
-    if (!(await mayReplaceMap())) {
+    if (siteTool)
+      await checkSiteToolReplacement(
+        siteTool.expectedDocumentId,
+        siteTool.expectedRevision,
+        siteTool.discardUnsavedChanges,
+      );
+    else if (!(await mayReplaceMap())) {
       projectMaps.value = previous;
-      return;
+      return false;
     }
     persistDraft();
     leaveHostedMap();
     const identity = `project:${projectRecoveryScope}:${path}`;
     const diskSource = serializeMap(document);
-    const recovery = await newerLocalRecovery(identity, file, diskSource);
+    const recovery = siteTool
+      ? null
+      : await newerLocalRecovery(identity, file, diskSource);
     if (recovery) {
       openRecoveredLocalCopy(recovery, entry.handle.name);
-      return;
+      return true;
     }
     openedFile = entry.handle;
     openedFingerprint = mapSourceFingerprint(text);
@@ -3893,15 +3939,27 @@ projectMaps.addEventListener("change", async () => {
     activeProjectPath = path;
     documentId = identity;
     setMap(document, parsed.source);
+    projectMaps.value = path;
     projectMapSelector.hide();
     if (activeRecentProjectId)
       void rememberRecentProjectMap(activeRecentProjectId, path).catch(
         () => {},
       );
+    if (siteTool) {
+      persistDraft();
+      await saveQueue;
+    }
+    return true;
   } catch (error) {
     projectMaps.value = previous;
     status.textContent = error instanceof Error ? error.message : String(error);
+    if (siteTool) throw error;
+    return false;
   }
+}
+
+projectMaps.addEventListener("change", async () => {
+  await openProjectMap(projectMaps.value);
 });
 
 document
@@ -4570,6 +4628,39 @@ void registerEditorWebMcpTools(
     async history(action) {
       if (hostedMap) await hostedConnection![action]();
       else session[action]();
+    },
+    async openProjectMap(
+      path,
+      discardUnsavedChanges,
+      expectedDocumentId,
+      expectedRevision,
+    ) {
+      await openProjectMap(path, {
+        expectedDocumentId,
+        expectedRevision,
+        discardUnsavedChanges,
+      });
+    },
+    async replaceMapSource(text, name, expectedDocumentId, expectedRevision) {
+      const parsed = parseMapSource(text);
+      await checkSiteToolReplacement(
+        expectedDocumentId,
+        expectedRevision,
+        true,
+      );
+      const game = activeGame();
+      persistDraft();
+      leaveHostedMap();
+      setProject(null);
+      localGame = game;
+      openedFile = null;
+      openedFingerprint = null;
+      mapName = name;
+      documentId = crypto.randomUUID();
+      savedSource = "";
+      setMap(parsed.document, parsed.source);
+      persistDraft();
+      await saveQueue;
     },
     setTool(next) {
       activateViewportTool(next);
