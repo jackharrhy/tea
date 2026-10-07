@@ -10,6 +10,12 @@ The Tea Maps hosted service also reads `TEA_MAPS_*` compiler, public-origin, and
 
 When affected, CI checks Ref's browser flow on Wrangler and on the Celld binary selected by its Dockerfile. The Celld smoke kills the runtime, clears the replica cache, and reopens the copied board from the separate authoritative SQLite store. Radio's Celld smoke performs the same cold restore for room state and audio bytes. These checks use disposable stores; they do not prove a production data transfer.
 
+## Source audit
+
+On 2026-10-07, the clean source worktrees were at Ref `8d6eca7edb19`, Radio `a53595efc5c6`, and Worldview `622fae386f09`. These are review baselines for later upstream changes, not deployment revisions. A syntax-tree comparison of Ref and Radio's corresponding app files found the expected Tea branding and Remix import changes. Ref also broadens link-preview control-character filtering and uses event listeners in its browser board; Radio's unused custom frame resolver is omitted in favor of the installed Remix 3 default. No source repository was changed by this audit.
+
+At that baseline, `npm run ref:check` and `npm run radio:check` passed. Both Celld cold-restore smokes passed with the binary from `ghcr.io/jackharrhy/celld:latest` at image digest `sha256:b173e540c3eeb5aa8dda232e275a3f28b8e9567df070e3227c511be9055695f2` (`celld 0.5.1`). Ref reopened its board, links, media, and WebSocket after a SIGKILL and empty replica cache. Radio reopened its directory, queue, playback state, and audio bytes after the same failure. These checks used temporary stores; they do not verify a production copy.
+
 ## Cloudflare configuration
 
 Cloudflare's new [`cf` CLI](https://developers.cloudflare.com/cf/) uses `cloudflare.config.ts` and is currently in beta. [Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/) says to convert Wrangler projects explicitly; its Durable Object lifecycle declaration differs from Wrangler migrations. [Celld currently reads only `wrangler.jsonc` or `wrangler.json`](https://celld.dev/docs/cloudflare-compat/#wrangler-configuration), so Ref, Radio, and the Maps collaboration Worker retain Wrangler-compatible configs for their shared runtime. Do not run `cf init`, `cf dev`, or `cf deploy` in those workspaces without an explicit dual-config migration that passes both Cloudflare and Celld checks. The Cloudflare-only CMS edge and Maps UI apps use `cf` and `cloudflare.config.ts` with the Cloudflare Vite plugin.
