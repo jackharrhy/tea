@@ -2118,7 +2118,7 @@ async function openHostedMap(map: HostedMapLaunch): Promise<boolean> {
 
 function openDetachedCopy(copy: {
   document: MapDocument;
-  source: { originalText: string };
+  source: MapSourceState;
   fileName: string;
   profile: WorldviewGameProfile;
 }) {
@@ -2129,10 +2129,10 @@ function openDetachedCopy(copy: {
   localGame = copy.profile;
   documentId = crypto.randomUUID();
   mapName = copy.fileName;
-  savedSource = emptySource;
-  setMap(copy.document);
+  savedSource = "";
+  setMap(copy.document, copy.source);
   source.value = copy.source.originalText;
-  scheduleDraftSave();
+  persistDraft();
   status.textContent = `Local recovery copy ${copy.fileName} · save to a file when ready`;
 }
 
@@ -4537,7 +4537,9 @@ hostedControls = initHostedEditor({
   makeCopy: makeLocalCopy,
   async openDetached(copy: DetachedHostedMap) {
     if (!(await mayReplaceMap())) return false;
+    persistDraft();
     openDetachedCopy(copy);
+    await saveQueue;
     return true;
   },
   resourcesChanged(projectId) {

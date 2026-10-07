@@ -804,6 +804,111 @@ try {
   result.checks.push(
     "browser WebMCP authoring survives hosted room persistence",
   );
+  const detachedSource = await page.evaluate(async (mapId) => {
+    const draftDb = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("tea-maps-editor");
+      request.addEventListener("success", () => resolve(request.result), {
+        once: true,
+      });
+      request.addEventListener("error", () => reject(request.error), {
+        once: true,
+      });
+    });
+    const draft = await new Promise((resolve, reject) => {
+      const request = draftDb
+        .transaction("drafts")
+        .objectStore("drafts")
+        .get("current");
+      request.addEventListener("success", () => resolve(request.result), {
+        once: true,
+      });
+      request.addEventListener("error", () => reject(request.error), {
+        once: true,
+      });
+    });
+    draftDb.close();
+    if (!draft?.document || !draft.sourceState)
+      throw new Error("Expected a saved local recovery draft");
+    const collaborationDb = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("tea-maps-collaboration");
+      request.addEventListener("success", () => resolve(request.result), {
+        once: true,
+      });
+      request.addEventListener("error", () => reject(request.error), {
+        once: true,
+      });
+    });
+    const transaction = collaborationDb.transaction(
+      "detached-maps",
+      "readwrite",
+    );
+    await new Promise((resolve, reject) => {
+      const request = transaction.objectStore("detached-maps").put({
+        version: 1,
+        id: "smoke-detached-map",
+        originalMapId: mapId,
+        documentKey: "smoke-detached-map",
+        fileName: "recovered-hosted.map",
+        profile: "quake",
+        document: draft.document,
+        source: draft.sourceState,
+        originalMapVersion: 1,
+        createdAt: Date.now(),
+        reason: "Fixture conflict",
+        operationCount: 1,
+        encodedBytes: 1,
+      });
+      request.addEventListener("success", () => resolve(request.result), {
+        once: true,
+      });
+      request.addEventListener("error", () => reject(request.error), {
+        once: true,
+      });
+    });
+    await new Promise((resolve, reject) => {
+      transaction.addEventListener("complete", resolve, { once: true });
+      transaction.addEventListener("error", () => reject(transaction.error), {
+        once: true,
+      });
+      transaction.addEventListener("abort", () => reject(transaction.error), {
+        once: true,
+      });
+    });
+    collaborationDb.close();
+    return draft.sourceState.originalText;
+  }, hostedAfterReload.hostedMap.id);
+  await page.reload();
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#switch-map-dialog")?.open ||
+      !document.querySelector("#detached-editor-open")?.disabled,
+  );
+  if (await page.locator("#switch-map-dialog").isVisible())
+    await page.getByRole("button", { name: "Discard" }).click();
+  await page.locator("#detached-editor-open").waitFor({ state: "attached" });
+  await page.waitForFunction(
+    () => !document.querySelector("#detached-editor-open")?.disabled,
+  );
+  if (
+    !(await page
+      .locator("#hosted-editor-picker")
+      .evaluate((picker) => picker.open))
+  )
+    await page.locator("#hosted-editor-picker summary").first().click();
+  await page.locator("#detached-editor-map").selectOption("smoke-detached-map");
+  await page.locator("#detached-editor-open").click();
+  await page.getByText(/Local recovery copy recovered-hosted.map/).waitFor();
+  const detachedCopy = await page.evaluate(() => ({
+    inspection: window.teaMapsTestTools
+      .get("tea_maps_inspect_editor")
+      .execute({}),
+    source: window.teaMapsTestTools.get("tea_maps_get_map_source").execute({}),
+  }));
+  assert.equal(detachedCopy.inspection.name, "recovered-hosted.map");
+  assert.equal(detachedCopy.inspection.hostedMap, null);
+  assert.equal(detachedCopy.inspection.dirty, true);
+  assert.equal(detachedCopy.source.text, detachedSource);
+  result.checks.push("saved detached hosted edits reopen as a local copy");
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {
