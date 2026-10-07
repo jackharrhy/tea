@@ -86,6 +86,12 @@ describe("Tea Maps MCP", () => {
     expect(created.status).toBe(200);
     const project = (await created.json()).result.structuredContent.project;
     expect(project.name).toBe("MCP map");
+    const legacyList = await call(app.origin, "worldview_list_projects", {});
+    expect(
+      (await legacyList.json()).result.structuredContent.projects.map(
+        (item: { id: string }) => item.id,
+      ),
+    ).toContain(project.id);
     const mapResponse = await call(app.origin, "tea_maps_create_map", {
       projectId: project.id,
       name: "test.map",
