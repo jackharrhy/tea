@@ -50,6 +50,8 @@ The Vertex and Edge handle panel now renders through a Remix client entry while 
 
 The Draw shape panel now renders through a Remix client entry while the editor keeps shape validation, viewport previews, and brush creation transactions.
 
+The Rotate, Scale, and Shear tool panel now renders through a Remix client entry while the editor keeps pivot calculation, viewport previews, and transform transactions.
+
 The selected point entity and entity properties inspector now renders through a Remix client entry, including definition driven fields and linked-copy protection. The editor retains validation, source guards, and property history.
 
 The selected face picker, numeric face geometry actions, and material application now render through a Remix client entry. The editor retains the geometry and material transactions.

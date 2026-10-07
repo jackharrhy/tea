@@ -1599,6 +1599,45 @@ try {
       material: "STONE",
     });
   });
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools
+      .get("tea_maps_set_tool")
+      .execute({ tool: "rotate" });
+  });
+  await toolSettingsPage
+    .locator("#transform-tool")
+    .waitFor({ state: "visible" });
+  const initialPivotX = await toolSettingsPage
+    .locator("#transform-pivot-x")
+    .inputValue();
+  await toolSettingsPage
+    .locator("#transform-pivot-x")
+    .fill(String(Number(initialPivotX) + 32));
+  await toolSettingsPage.locator("#transform-pivot-x").press("Tab");
+  assert.equal(
+    await toolSettingsPage.locator("#transform-pivot-x").inputValue(),
+    String(Number(initialPivotX) + 32),
+  );
+  await toolSettingsPage.locator("#reset-transform-pivot").click();
+  await toolSettingsPage.waitForFunction(
+    (value) => document.querySelector("#transform-pivot-x")?.value === value,
+    initialPivotX,
+  );
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "shear" });
+  });
+  await toolSettingsPage
+    .locator("#transform-title")
+    .getByText("Shear")
+    .waitFor();
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools
+      .get("tea_maps_set_tool")
+      .execute({ tool: "select" });
+  });
+  await toolSettingsPage
+    .locator("#transform-tool")
+    .waitFor({ state: "hidden" });
   await toolSettingsPage.locator("#grid-size").selectOption("32");
   await toolSettingsPage.locator("#texture-lock").uncheck();
   await toolSettingsPage.locator("#snap-to-grid").click();
@@ -1611,7 +1650,7 @@ try {
   assert.deepEqual(snappedBounds, { min: [0, 0, 0], max: [64, 64, 64] });
   await toolSettingsPage.close();
   result.checks.push(
-    "Remix tool, Clip/Hull, topology, shape, grid, and texture-lock controls update live editor settings",
+    "Remix tool, Clip/Hull, topology, shape, transform pivot, grid, and texture-lock controls update live editor settings",
   );
   const geometryPage = await browser.newPage();
   await installSiteToolMock(geometryPage);

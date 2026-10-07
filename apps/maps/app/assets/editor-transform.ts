@@ -15,6 +15,7 @@ import {
   type EditorTransformDragEvent,
   type EditorTransformPivotDragEvent,
 } from "@tea/maps-editor/render";
+import { initEditorTransformTool } from "./editor-transform-tool-bridge.ts";
 
 type Candidate =
   | BrushEditCandidate
@@ -38,25 +39,18 @@ export function createEditorTransform(options: {
   applyNumeric(tool: "rotate" | "scale" | "shear"): void;
   status(message: string): void;
 }) {
-  const root = document.querySelector<HTMLElement>("#transform-tool")!;
-  const title = document.querySelector<HTMLElement>("#transform-title")!;
-  const pivotInputs = (["x", "y", "z"] as const).map((axis) =>
-    document.querySelector<HTMLInputElement>(`#transform-pivot-${axis}`)!,
-  );
-  const resetButton = document.querySelector<HTMLButtonElement>(
-    "#reset-transform-pivot",
-  )!;
-  const updateAnglesInput = document.querySelector<HTMLInputElement>(
-    "#transform-update-angles",
-  )!;
-  const applyButton = document.querySelector<HTMLButtonElement>(
-    "#apply-transform-tool",
-  )!;
-
   let pivot: Vec3 | null = null;
   let selectionKey: string | null = null;
   let preview: Candidate | null = null;
   let prefix: string | null = null;
+  const panel = initEditorTransformTool({
+    commitPivot,
+    resetPivot,
+    apply: () => {
+      const tool = activeTool();
+      if (tool) options.applyNumeric(tool);
+    },
+  });
 
   function activeTool(): "rotate" | "scale" | "shear" | null {
     const tool = options.tool();
@@ -109,8 +103,12 @@ export function createEditorTransform(options: {
   }
 
   function syncPivot() {
-    pivotInputs.forEach((input, axis) => {
-      input.value = String(pivot?.[axis] ?? 0);
+    panel.update({
+      pivot: [
+        String(pivot?.[0] ?? 0),
+        String(pivot?.[1] ?? 0),
+        String(pivot?.[2] ?? 0),
+      ],
     });
     options.renderer()?.setTransformPivot(activeTool() ? pivot : null);
   }
@@ -123,18 +121,20 @@ export function createEditorTransform(options: {
 
   function refresh() {
     const tool = activeTool();
-    root.hidden = !tool;
+    panel.update({ visible: !!tool });
     if (!tool) {
       options.renderer()?.setTransformPivot(null);
       return;
     }
-    title.textContent = tool[0]!.toUpperCase() + tool.slice(1);
+    panel.update({ title: tool[0]!.toUpperCase() + tool.slice(1) });
     const nextKey = currentSelectionKey();
     if (selectionKey !== nextKey) resetPivot();
     else syncPivot();
-    applyButton.disabled = !pivot || !options.canEdit();
-    updateAnglesInput.disabled =
-      selectedPointEntityIds(options.session().selection).length === 0;
+    panel.update({
+      applyDisabled: !pivot || !options.canEdit(),
+      updateAnglesDisabled:
+        selectedPointEntityIds(options.session().selection).length === 0,
+    });
   }
 
   function restore() {
@@ -168,7 +168,7 @@ export function createEditorTransform(options: {
             event.axis,
             event.angleDegrees,
             options.textureLock(),
-            updateAnglesInput.checked,
+            panel.state.updateAngles,
           );
     }
     if (event.tool === "scale") {
@@ -186,7 +186,7 @@ export function createEditorTransform(options: {
             event.pivot,
             event.factors,
             options.textureLock(),
-            updateAnglesInput.checked,
+            panel.state.updateAngles,
           );
     }
     return components
@@ -207,7 +207,7 @@ export function createEditorTransform(options: {
           event.targetAxis,
           event.factor,
           options.textureLock(),
-          updateAnglesInput.checked,
+          panel.state.updateAngles,
         );
   }
 
@@ -260,26 +260,19 @@ export function createEditorTransform(options: {
     syncPivot();
   }
 
-  for (const input of pivotInputs) {
-    input.addEventListener("change", () => {
-      const next = pivotInputs.map((field) =>
-        field.value.trim() === "" ? NaN : Number(field.value),
-      );
-      if (next.some((value) => !Number.isFinite(value))) {
-        options.status("Pivot coordinates must be finite numbers");
-        syncPivot();
-        return;
-      }
-      pivot = [next[0]!, next[1]!, next[2]!];
-      selectionKey = currentSelectionKey();
+  function commitPivot() {
+    const next = panel.state.pivot.map((value) =>
+      value.trim() === "" ? NaN : Number(value),
+    );
+    if (next.some((value) => !Number.isFinite(value))) {
+      options.status("Pivot coordinates must be finite numbers");
       syncPivot();
-    });
+      return;
+    }
+    pivot = [next[0]!, next[1]!, next[2]!];
+    selectionKey = currentSelectionKey();
+    syncPivot();
   }
-  resetButton.addEventListener("click", resetPivot);
-  applyButton.addEventListener("click", () => {
-    const tool = activeTool();
-    if (tool) options.applyNumeric(tool);
-  });
 
   return {
     refresh,
@@ -287,7 +280,7 @@ export function createEditorTransform(options: {
     handleDrag,
     handlePivotDrag,
     pivot: () => (activeTool() ? pivot : null),
-    updateAngles: () => updateAnglesInput.checked,
+    updateAngles: () => panel.state.updateAngles,
     clear() {
       preview = null;
       prefix = null;

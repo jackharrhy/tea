@@ -34,6 +34,7 @@ import { EditorClipHull } from "./assets/editor-clip-hull-panel.tsx";
 import { EditorSweepPanel } from "./assets/editor-sweep-panel.tsx";
 import { EditorTopologyPanel } from "./assets/editor-topology-panel.tsx";
 import { EditorShapePanel } from "./assets/editor-shape-panel.tsx";
+import { EditorTransformToolPanel } from "./assets/editor-transform-tool-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -94,31 +95,7 @@ export function EditorPage() {
             <EditorSweepPanel />
             <EditorTopologyPanel />
             <EditorShapePanel />
-            <div id="transform-tool" class="transform-tool" hidden>
-              <strong id="transform-title">Rotate</strong>
-              <span>Pivot</span>
-              <label for="transform-pivot-x">X</label>
-              <input id="transform-pivot-x" type="number" step="1" value="0" />
-              <label for="transform-pivot-y">Y</label>
-              <input id="transform-pivot-y" type="number" step="1" value="0" />
-              <label for="transform-pivot-z">Z</label>
-              <input id="transform-pivot-z" type="number" step="1" value="0" />
-              <button id="reset-transform-pivot" type="button">
-                Reset pivot
-              </button>
-              <label for="transform-update-angles">
-                <input id="transform-update-angles" type="checkbox" checked />{" "}
-                Update entity angles
-              </label>
-              <button id="apply-transform-tool" type="button" disabled>
-                Apply numeric transform
-              </button>
-              <p>
-                Drag the viewport handles to transform the selection. Set exact
-                rotation, scale, or shear values in the toolbar above; the pivot
-                also applies to those commands while this tool is active.
-              </p>
-            </div>
+            <EditorTransformToolPanel />
             <EditorCsg />
             <EditorGroups />
             <EditorLayers />
