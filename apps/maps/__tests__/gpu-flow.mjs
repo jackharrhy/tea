@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { syntheticQuakeBsp } from "../app/assets/synthetic.ts";
 
 const teaRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const testCorpus = process.argv.includes("--corpus");
@@ -63,6 +64,51 @@ try {
     });
     window.teaMapsTestTools = tools;
   });
+  await page.addInitScript((bspBase64) => {
+    const originalFetch = window.fetch.bind(window);
+    window.teaMapsGpuCompilerRequests = [];
+    window.fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : input);
+      if (url.origin !== "http://127.0.0.1:8788")
+        return originalFetch(input, init);
+      if (url.pathname === "/capabilities")
+        return Response.json({
+          protocolVersion: 1,
+          compileProfiles: [
+            {
+              id: "gpu-smoke-quake",
+              label: "GPU smoke Quake",
+              game: "quake",
+              qualities: ["preview"],
+            },
+          ],
+          launchProfiles: [],
+        });
+      if (url.pathname === "/compile") {
+        const request = JSON.parse(init.body);
+        window.teaMapsGpuCompilerRequests.push(request);
+        return Response.json({
+          status: "succeeded",
+          buildId: "gpu-smoke-build",
+          sourceDocumentRevision: request.expectedDocumentRevision,
+          diagnostics: [],
+          logs: [
+            { stage: "qbsp", text: "GPU smoke artifact", truncated: false },
+          ],
+          elapsedMilliseconds: 7,
+          artifacts: [
+            {
+              name: "gpu-smoke.bsp",
+              kind: "bsp",
+              mediaType: "application/octet-stream",
+              base64: bspBase64,
+            },
+          ],
+        });
+      }
+      return new Response(null, { status: 404 });
+    };
+  }, Buffer.from(syntheticQuakeBsp()).toString("base64"));
   await page.goto(`${origin}/editor`);
   const gpu = await page.evaluate(async () => {
     const adapter = await navigator.gpu?.requestAdapter();
@@ -129,6 +175,29 @@ try {
   assert.equal(await page.locator("#editor-inspector").isVisible(), false);
   await page.locator("#toggle-inspector").click();
   assert.equal(await page.locator("#editor-inspector").isVisible(), true);
+  await page.locator("#build-map:enabled").click();
+  await page
+    .locator("#build-status")
+    .getByText("Compiled preview ready")
+    .waitFor();
+  const compiled = page.locator(".perspective-header ~ world-view");
+  const compiledDiagnostics = await compiled.evaluate(
+    (element) => element.viewer?.diagnostics,
+  );
+  assert.equal(compiledDiagnostics?.format, "quake-bsp29");
+  assert.ok(
+    compiledDiagnostics.triangles > 0,
+    "Compiled preview has no rendered faces",
+  );
+  assert.equal(await compiled.getAttribute("data-active"), "true");
+  await page.locator("#toggle-compiled").click();
+  assert.equal(await compiled.getAttribute("data-active"), "false");
+  await page.locator("#toggle-compiled").click();
+  assert.equal(await compiled.getAttribute("data-active"), "true");
+  assert.equal(
+    await page.evaluate(() => window.teaMapsGpuCompilerRequests.length),
+    1,
+  );
   await page.goto(`${origin}/?example=quake`);
   await page
     .locator("#viewer-status")
@@ -275,6 +344,7 @@ try {
         "Top viewport selects and drags a brush",
         "Undo restores the pre-drag source",
         "Inspector collapses and stays closed after reload",
+        "Compiled BSP preview renders in the WebGPU editor and toggles with source",
         "WebGPU viewer switches from Quake to GoldSrc BSP",
         "Overview exports a PNG and walkability sidecar round-trips",
         "WebGPU viewer opens a generated BSP2 map",
