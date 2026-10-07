@@ -1390,8 +1390,36 @@ try {
       window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
         .name === "beta.map",
   );
+  const beforeSaveGuard = await page.locator("#map-source").inputValue();
+  await page
+    .locator("#map-source")
+    .fill(`${beforeSaveGuard}\n// saved by guard\n`);
+  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
+  await page.locator("#switch-map-dialog").press("Escape");
+  await page.waitForFunction(
+    () => document.querySelector("#project-maps")?.value === "maps/beta.map",
+  );
+  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
+  await page.locator('#switch-map-dialog button[value="save"]').click();
+  await page.waitForFunction(
+    () =>
+      window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
+        .name === "alpha.map",
+  );
+  await page.locator("#project-maps").selectOption("maps/beta.map");
+  await page.waitForFunction(
+    () =>
+      window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
+        .name === "beta.map",
+  );
+  assert.match(
+    await page.locator("#map-source").inputValue(),
+    /saved by guard/,
+  );
   result.checks.push(
-    "Remix project map toolbar switches files and honors cancel and discard",
+    "Remix project map toolbar switches files and honors cancel, Escape, discard, and save",
   );
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });

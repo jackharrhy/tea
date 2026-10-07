@@ -48,6 +48,8 @@ The selected face picker, numeric face geometry actions, and material applicatio
 
 Face projection fields, texture alignment, and UV editor controls now render through Remix client entries; the editor retains the projection transactions, SVG gestures, project texture sizes, and manual fit options.
 
+The unsaved-map Save, Discard, or Cancel dialog now renders through a Remix client entry; the editor keeps the map replacement guard and save outcome check.
+
 Quake II surface contents, flags, mixed selections, unknown bits, and light value now render through a Remix client entry while the editor retains the surface edit transactions.
 
 Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.

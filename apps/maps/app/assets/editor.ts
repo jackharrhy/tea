@@ -215,6 +215,7 @@ import {
 } from "./editor-face-texture-bridge.ts";
 import { initEditorSurface } from "./editor-surface-bridge.ts";
 import { initEditorUvControls } from "./editor-uv-controls-bridge.ts";
+import { initEditorSwitchMapDialog } from "./editor-switch-map-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -313,8 +314,7 @@ const discardHullButton =
   document.querySelector<HTMLButtonElement>("#discard-hull")!;
 const faceInspector = document.querySelector<HTMLElement>("#face-inspector")!;
 const faceProjection = document.querySelector<HTMLElement>("#face-projection")!;
-const switchMapDialog =
-  document.querySelector<HTMLDialogElement>("#switch-map-dialog")!;
+const switchMapDialog = initEditorSwitchMapDialog();
 const versionsDialog =
   document.querySelector<HTMLDialogElement>("#versions-dialog")!;
 const canvases = {
@@ -1757,18 +1757,7 @@ function hasUnsavedChanges(): boolean {
 }
 
 function askBeforeReplacing(): Promise<"save" | "discard" | "cancel"> {
-  return new Promise((resolve) => {
-    switchMapDialog.returnValue = "cancel";
-    switchMapDialog.addEventListener(
-      "close",
-      () => {
-        const choice = switchMapDialog.returnValue;
-        resolve(choice === "save" || choice === "discard" ? choice : "cancel");
-      },
-      { once: true },
-    );
-    switchMapDialog.showModal();
-  });
+  return switchMapDialog.ask();
 }
 
 async function mayReplaceMap(): Promise<boolean> {

@@ -29,6 +29,7 @@ import {
 } from "./assets/editor-face-texture-panel.tsx";
 import { EditorSurface } from "./assets/editor-surface-panel.tsx";
 import { EditorUvControls } from "./assets/editor-uv-controls-panel.tsx";
+import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -480,15 +481,7 @@ export function EditorPage() {
           </div>
         </main>
         <EditorPerformancePanel />
-        <dialog id="switch-map-dialog" aria-labelledby="switch-map-title">
-          <h2 id="switch-map-title">Save this map?</h2>
-          <p>Choose what to do with changes before opening another map.</p>
-          <form method="dialog">
-            <button value="save">Save</button>
-            <button value="discard">Discard</button>
-            <button value="cancel">Cancel</button>
-          </form>
-        </dialog>
+        <EditorSwitchMapDialog />
         <EditorVersions />
         <EditorProjectSync />
         <EditorSourceComparison />
