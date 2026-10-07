@@ -13,6 +13,7 @@ import {
   type EditorTopologyKind,
   type EditorViewportKind,
 } from "@tea/maps-editor/render";
+import { initEditorTopologyPanel } from "./editor-topology-bridge.ts";
 
 type Candidate = BrushEditCandidate | BrushBatchEditCandidate;
 
@@ -28,11 +29,7 @@ export function createEditorTopology(options: {
   status(message: string): void;
   selectTool(): void;
 }) {
-  const section = document.querySelector<HTMLElement>("#topology-tools")!;
-  const title = document.querySelector<HTMLElement>("#topology-title")!;
-  const count = document.querySelector<HTMLElement>("#topology-count")!;
-  const deleteButton =
-    document.querySelector<HTMLButtonElement>("#delete-topology")!;
+  const panel = initEditorTopologyPanel(deleteHandles);
   let kind: EditorTopologyKind | null = null;
   let selectedVertices: readonly Vec3[] = [];
   let selectedCount = 0;
@@ -48,11 +45,13 @@ export function createEditorTopology(options: {
 
   function refresh() {
     const active = options.tool() === "vertex" || options.tool() === "edge";
-    section.hidden = !active;
+    panel.update({ visible: active });
     if (!active) return;
-    title.textContent = options.tool() === "edge" ? "Edge edit" : "Vertex edit";
-    count.textContent = String(selectedCount);
-    deleteButton.disabled = selectedCount === 0 || !options.canEdit();
+    panel.update({
+      title: options.tool() === "edge" ? "Edge edit" : "Vertex edit",
+      count: selectedCount,
+      deleteDisabled: selectedCount === 0 || !options.canEdit(),
+    });
   }
 
   function selectionChanged(
@@ -240,8 +239,6 @@ export function createEditorTopology(options: {
     selectedCount = 0;
     refresh();
   }
-
-  deleteButton.addEventListener("click", deleteHandles);
 
   return {
     refresh,

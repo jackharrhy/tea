@@ -1540,6 +1540,25 @@ try {
   await toolSettingsPage.evaluate(() => {
     window.teaMapsTestTools
       .get("tea_maps_set_tool")
+      .execute({ tool: "vertex" });
+  });
+  await toolSettingsPage
+    .locator("#topology-tools")
+    .waitFor({ state: "visible" });
+  await toolSettingsPage
+    .locator("#topology-title")
+    .getByText("Vertex edit")
+    .waitFor();
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "edge" });
+  });
+  await toolSettingsPage
+    .locator("#topology-title")
+    .getByText("Edge edit")
+    .waitFor();
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools
+      .get("tea_maps_set_tool")
       .execute({ tool: "select" });
     const tools = window.teaMapsTestTools;
     const before = tools.get("tea_maps_inspect_editor").execute({});
@@ -1563,7 +1582,7 @@ try {
   assert.deepEqual(snappedBounds, { min: [0, 0, 0], max: [64, 64, 64] });
   await toolSettingsPage.close();
   result.checks.push(
-    "Remix tool, Clip/Hull, grid, and texture-lock controls update live editor settings",
+    "Remix tool, Clip/Hull, topology, grid, and texture-lock controls update live editor settings",
   );
   const geometryPage = await browser.newPage();
   await installSiteToolMock(geometryPage);

@@ -61,6 +61,7 @@ const clientEntryFiles = {
   "editor-switch-map-panel.tsx": browserAssets.editorSwitchMap,
   "editor-clip-hull-panel.tsx": browserAssets.editorClipHull,
   "editor-sweep-panel.tsx": browserAssets.editorSweep,
+  "editor-topology-panel.tsx": browserAssets.editorTopology,
   "editor-detached-maps-panel.tsx": browserAssets.editorDetachedMaps,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,

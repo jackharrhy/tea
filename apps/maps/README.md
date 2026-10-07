@@ -152,6 +152,8 @@ Clip and Convex hull tool panels render through a Remix client component. The ed
 
 The face Sweep panel renders through a Remix client component, including numeric destination, path, segment, iteration, and snapping controls. The editor keeps sweep validation, viewport previews, and batch creation transactions.
 
+The Vertex and Edge handle panel renders through a Remix client component. The editor keeps handle selection, movement, insertion, snapping, and deletion transactions.
+
 The selected point entity and entity properties inspector renders through a Remix client component. Project definitions supply choices, flags, checkboxes, and numeric fields; linked copies can keep individual properties independent. The editor still validates classnames and origins and commits property edits through its history.
 
 The selected face picker, numeric Extrude, Split, and Stamp controls, and material application render through a Remix client component. The editor still runs those geometry and material edits through its session and source guard.

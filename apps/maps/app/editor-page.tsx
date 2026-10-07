@@ -32,6 +32,7 @@ import { EditorUvControls } from "./assets/editor-uv-controls-panel.tsx";
 import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
 import { EditorClipHull } from "./assets/editor-clip-hull-panel.tsx";
 import { EditorSweepPanel } from "./assets/editor-sweep-panel.tsx";
+import { EditorTopologyPanel } from "./assets/editor-topology-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -90,22 +91,7 @@ export function EditorPage() {
             <EditorTransforms />
             <EditorClipHull />
             <EditorSweepPanel />
-            <div id="topology-tools" class="topology-tools" hidden>
-              <strong id="topology-title">Vertex edit</strong>
-              <span>
-                <b id="topology-count">0</b> handles selected
-              </span>
-              <button id="delete-topology" type="button" disabled>
-                Delete handles
-              </button>
-              <p>
-                Click or lasso handles on selected brushes. Ctrl/Command adds
-                handles or changes snap mode; Shift+Alt-click a vertex to snap
-                to it. Arrow keys nudge by one grid step. Shift-drag a green
-                surface handle to add a vertex. Escape clears handles before
-                leaving the tool.
-              </p>
-            </div>
+            <EditorTopologyPanel />
             <div id="shape-tools" class="shape-tools" hidden>
               <strong>Simple shape</strong>
               <span id="shape-result">Drag to draw</span>
