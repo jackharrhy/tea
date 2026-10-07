@@ -4,6 +4,7 @@ export const routes = route({
   home: get("/"),
   editor: get("/editor"),
   newMap: get("/new-map"),
+  legacyNewProject: get("/new-project"),
   projects: get("/projects"),
   project: get("/projects/:projectId"),
   projectNewMap: get("/projects/:projectId/new-map"),

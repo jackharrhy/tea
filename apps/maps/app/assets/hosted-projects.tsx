@@ -16,6 +16,8 @@ const gameNames = {
 export const HostedProjects = clientEntry(
   `${import.meta.url}#HostedProjects`,
   function HostedProjectsComponent(handle: Handle) {
+    const createRequested =
+      new URLSearchParams(location.search).get("create") === "1";
     let projects: readonly HostedProjectSummary[] | null = null;
     let signedInName: string | null = null;
     let signInRequired = false;
@@ -77,7 +79,11 @@ export const HostedProjects = clientEntry(
         {signInRequired ? (
           <a
             id="projects-login"
-            href="/auth/login?returnTo=%2Fprojects"
+            href={
+              createRequested
+                ? "/auth/login?returnTo=%2Fprojects%3Fcreate%3D1"
+                : "/auth/login?returnTo=%2Fprojects"
+            }
             data-rmx-document
           >
             Sign in
@@ -102,7 +108,7 @@ export const HostedProjects = clientEntry(
                 ))}
         </div>
         {signedInName ? (
-          <details id="projects-create">
+          <details id="projects-create" open={createRequested}>
             <summary>Create hosted project</summary>
             <form
               id="projects-create-form"

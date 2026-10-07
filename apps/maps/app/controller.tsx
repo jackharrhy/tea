@@ -42,6 +42,12 @@ export default createController(routes, {
     newMap(context) {
       return context.render(<NewMapPage />);
     },
+    legacyNewProject(context) {
+      const destination = new URL(context.request.url);
+      destination.pathname = "/projects";
+      destination.searchParams.set("create", "1");
+      return Response.redirect(destination, 308);
+    },
     projects(context) {
       return context.render(<ProjectsPage />);
     },

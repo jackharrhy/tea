@@ -1997,6 +1997,7 @@ try {
   assert.ok(hostedProjectId);
   const legacyProject = `/project/${hostedProjectId}-smoke-project`;
   for (const [from, to] of [
+    ["/new-project", "/projects?create=1"],
     [legacyProject, `/projects/${hostedProjectId}`],
     [`${legacyProject}/new-map`, `/projects/${hostedProjectId}/new-map`],
     [`${legacyProject}/resources`, `/projects/${hostedProjectId}/resources`],
@@ -2025,7 +2026,9 @@ try {
     .locator("#hosted-editor-status")
     .getByText("Hosted map does not belong to this project")
     .waitFor();
-  result.checks.push("Worldview hosted project and map links reach Tea routes");
+  result.checks.push(
+    "Worldview new-project, hosted project, and map links reach Tea routes",
+  );
   await page.goto(
     `${mapsOrigin}/?hostedProject=${projectUrl.split("/").at(-1)}&hostedMap=${hostedMapId}`,
   );
