@@ -2017,7 +2017,16 @@ function handleSessionChange(change: { kind: string }) {
     issueBrowser.refresh();
     materialBrowser.refresh();
   }
-  if (change.kind === "selection") materialBrowser.refresh();
+  if (change.kind === "selection") {
+    materialBrowser.refresh();
+    if (session.selection) {
+      window.dispatchEvent(
+        new CustomEvent("tea-maps-inspector-selection", {
+          detail: session.selection.faceId ? "face" : "entity",
+        }),
+      );
+    }
+  }
   if (change.kind === "view") issueBrowser.refresh();
   refreshSelection();
 }

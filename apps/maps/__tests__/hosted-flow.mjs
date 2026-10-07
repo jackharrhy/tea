@@ -764,6 +764,7 @@ try {
 
   const sourceEditorPage = await browser.newPage();
   await sourceEditorPage.goto(`${mapsOrigin}/editor`);
+  await sourceEditorPage.locator("#inspector-tab-source").click();
   await sourceEditorPage.locator("#map-source:not([disabled])").waitFor();
   const sourceDraftInitial =
     '{\n"classname" "worldspawn"\n"message" "tea_source_draft"\n}\n';
@@ -785,6 +786,7 @@ try {
   );
   await delay(600);
   await sourceEditorPage.reload();
+  await sourceEditorPage.locator("#inspector-tab-source").click();
   await sourceEditorPage.locator("#map-source:not([disabled])").waitFor();
   assert.equal(
     await sourceEditorPage.locator("#map-source").inputValue(),
@@ -1615,6 +1617,7 @@ try {
     .waitFor();
   assert.deepEqual(errors, []);
   result.checks.push("Remix header presence and hosted panel toggle");
+  await page.locator("#inspector-tab-face").click();
   await page.locator("#material-filter").fill("no-such-material");
   await page.getByText("No materials match this view").waitFor();
   await page.locator("#material-filter").fill("");
@@ -2103,6 +2106,7 @@ try {
         .name === "beta.map",
   );
   const beforeGuard = await page.locator("#map-source").inputValue();
+  await page.locator("#inspector-tab-source").click();
   await page.locator("#map-source").fill(`${beforeGuard}\n// pending\n`);
   await page.locator("#project-maps").selectOption("maps/alpha.map");
   await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
@@ -2626,6 +2630,7 @@ try {
     },
     [firstGeometryBrush, secondGeometryBrush],
   );
+  await geometryPage.locator("#inspector-tab-face").click();
   await geometryPage
     .locator("#material-replace-scope")
     .getByText(/2 selected brushes/)
@@ -3302,6 +3307,7 @@ try {
         .brushes === 2,
   );
   result.checks.push("Remix repeat controls replay and clear object commands");
+  await selectionPage.locator("#inspector-tab-map").click();
   await selectionPage.locator("#view-filters summary").click();
   await selectionPage.locator("#show-world-brushes").uncheck();
   await selectionPage.getByText("View filters · 2 filtered").waitFor();
@@ -3323,6 +3329,7 @@ try {
   result.checks.push("Remix editor readouts follow status and selection");
   const issuesPage = await browser.newPage();
   await issuesPage.goto(`${mapsOrigin}/editor`);
+  await issuesPage.locator("#inspector-tab-source").click();
   await issuesPage.locator("#map-source").waitFor({ state: "visible" });
   await issuesPage
     .locator("#map-source")
@@ -3330,15 +3337,18 @@ try {
       '{\n"classname" "worldspawn"\n}\n{\n"classname" "light"\n"origin" "not a vector"\n}\n',
     );
   await issuesPage.locator("#apply-source").click();
+  await issuesPage.locator("#inspector-tab-map").click();
   await issuesPage.locator("#issue-browser summary").first().click();
   const originIssue = issuesPage.locator(
     '.issue-row[data-issue-id^="invalid-origin:"]',
   );
   await originIssue.waitFor();
   await originIssue.getByRole("button", { name: "Select" }).click();
+  await issuesPage.locator("#inspector-tab-map").click();
   await issuesPage.getByText(/Selected:.*origin/i).waitFor();
   await originIssue.getByRole("button", { name: "Reveal" }).click();
   await issuesPage.getByText(/Revealed:.*origin/i).waitFor();
+  await issuesPage.locator("#inspector-tab-map").click();
   await originIssue.getByRole("button", { name: "Hide" }).click();
   assert.equal(await originIssue.count(), 0);
   await issuesPage.locator("#show-hidden-issues").check();
@@ -3347,6 +3357,7 @@ try {
     .getByRole("button", { name: "Reset invalid origin" })
     .click();
   await originIssue.waitFor({ state: "detached" });
+  await issuesPage.locator("#inspector-tab-map").click();
   await issuesPage.locator("#view-filters summary").click();
   await issuesPage
     .locator("#entity-class-filters")

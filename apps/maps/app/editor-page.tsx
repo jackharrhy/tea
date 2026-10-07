@@ -10,6 +10,7 @@ import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorFov } from "./assets/editor-fov-panel.tsx";
 import {
+  EditorInspectorTabs,
   EditorInspectorToggle,
   EditorWorkspaceToggle,
 } from "./assets/editor-workspace-toggle.tsx";
@@ -224,20 +225,47 @@ export function EditorPage() {
               data-resize="inspector"
             />
             <aside id="editor-inspector" class="source-panel">
-              <h1>Source</h1>
               <EditorSelectionInfo />
-              <EditorDocumentSummary />
-              <EditorIssues />
-              <EditorVisibility />
-              <EditorFaceInspector />
-              <EditorMaterialBrowser />
-              <EditorEntityInspector />
-              <EditorSourcePanel />
-              <p>
-                Choose a viewport tool to draw, move, or place objects.
-                Middle-drag pans; right-drag looks around in Perspective. Apply
-                source edits before using viewport tools.
-              </p>
+              <EditorInspectorTabs />
+              <section
+                id="inspector-panel-map"
+                role="tabpanel"
+                aria-labelledby="inspector-tab-map"
+                data-inspector-panel="map"
+              >
+                <EditorDocumentSummary />
+                <EditorIssues />
+                <EditorVisibility />
+              </section>
+              <section
+                id="inspector-panel-entity"
+                role="tabpanel"
+                aria-labelledby="inspector-tab-entity"
+                data-inspector-panel="entity"
+                hidden
+              >
+                <EditorEntityInspector />
+              </section>
+              <section
+                id="inspector-panel-face"
+                role="tabpanel"
+                aria-labelledby="inspector-tab-face"
+                data-inspector-panel="face"
+                hidden
+              >
+                <EditorFaceInspector />
+                <EditorMaterialBrowser />
+              </section>
+              <section
+                id="inspector-panel-source"
+                role="tabpanel"
+                aria-labelledby="inspector-tab-source"
+                data-inspector-panel="source"
+                hidden
+              >
+                <EditorSourcePanel />
+                <p>Apply source edits before using viewport tools.</p>
+              </section>
             </aside>
             <EditorProjectMapSelector />
           </div>

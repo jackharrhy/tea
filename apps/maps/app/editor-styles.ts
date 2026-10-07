@@ -1411,6 +1411,28 @@ export const editorStyles = css({
     background: "var(--editor-panel)",
   },
   "& .source-panel h1": { margin: "0", "font-size": "1.15rem" },
+  "& .inspector-tabs": {
+    display: "grid",
+    "grid-template-columns": "repeat(4, minmax(0, 1fr))",
+    gap: "0.25rem",
+  },
+  "& .inspector-tabs button": {
+    padding: "0.4rem 0.2rem",
+    "font-size": "0.75rem",
+    "font-weight": "700",
+  },
+  "& .inspector-tabs button[aria-selected='true']": {
+    color: "var(--editor-ink)",
+    background: "var(--editor-source)",
+    "border-color": "var(--editor-border)",
+  },
+  "& [data-inspector-panel]": {
+    display: "flex",
+    "flex-direction": "column",
+    gap: "0.8rem",
+    "min-height": "0",
+  },
+  "& [data-inspector-panel][hidden]": { display: "none" },
   "& .source-panel p": {
     margin: "0",
     "font-size": "0.83rem",

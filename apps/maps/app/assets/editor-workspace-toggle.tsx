@@ -74,3 +74,79 @@ export const EditorInspectorToggle = clientEntry(
     );
   },
 );
+
+const inspectorTabs = ["map", "entity", "face", "source"] as const;
+type InspectorTab = (typeof inspectorTabs)[number];
+
+export const EditorInspectorTabs = clientEntry(
+  `${import.meta.url}#EditorInspectorTabs`,
+  function EditorInspectorTabsComponent(handle: Handle) {
+    let active: InspectorTab = "map";
+
+    function select(tab: InspectorTab) {
+      active = tab;
+      for (const panel of document.querySelectorAll<HTMLElement>(
+        "[data-inspector-panel]",
+      )) {
+        panel.hidden = panel.dataset.inspectorPanel !== tab;
+      }
+      handle.update();
+    }
+
+    handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-inspector-selection",
+        (event) => {
+          if (
+            document.querySelector<HTMLElement>(".editor-workspace")?.dataset
+              .inspectorOpen === "false"
+          )
+            return;
+          select((event as CustomEvent<"entity" | "face">).detail);
+        },
+        { signal: handle.signal },
+      );
+    });
+
+    return () => (
+      <div class="inspector-tabs" role="tablist" aria-label="Inspector views">
+        {inspectorTabs.map((tab) => (
+          <button
+            id={`inspector-tab-${tab}`}
+            type="button"
+            role="tab"
+            aria-controls={`inspector-panel-${tab}`}
+            aria-selected={active === tab}
+            tabIndex={active === tab ? 0 : -1}
+            mix={[
+              on("click", () => select(tab)),
+              on<HTMLButtonElement>("keydown", (event) => {
+                if (!("key" in event)) return;
+                const index = inspectorTabs.indexOf(tab);
+                const next =
+                  event.key === "ArrowRight"
+                    ? inspectorTabs[(index + 1) % inspectorTabs.length]
+                    : event.key === "ArrowLeft"
+                      ? inspectorTabs[
+                          (index - 1 + inspectorTabs.length) %
+                            inspectorTabs.length
+                        ]
+                      : event.key === "Home"
+                        ? inspectorTabs[0]
+                        : event.key === "End"
+                          ? inspectorTabs[inspectorTabs.length - 1]
+                          : null;
+                if (!next) return;
+                event.preventDefault();
+                select(next);
+                document.getElementById(`inspector-tab-${next}`)?.focus();
+              }),
+            ]}
+          >
+            {tab[0]!.toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+    );
+  },
+);
