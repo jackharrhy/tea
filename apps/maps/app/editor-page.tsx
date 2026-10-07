@@ -35,6 +35,7 @@ import { EditorSweepPanel } from "./assets/editor-sweep-panel.tsx";
 import { EditorTopologyPanel } from "./assets/editor-topology-panel.tsx";
 import { EditorShapePanel } from "./assets/editor-shape-panel.tsx";
 import { EditorTransformToolPanel } from "./assets/editor-transform-tool-panel.tsx";
+import { EditorContextMenu } from "./assets/editor-context-menu-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -238,12 +239,7 @@ export function EditorPage() {
         <EditorProjectSync />
         <EditorSourceComparison />
         <EditorHostedSource />
-        <div
-          id="viewport-context-menu"
-          role="menu"
-          aria-label="Map view actions"
-          hidden
-        />
+        <EditorContextMenu />
         <script type="module" src={browserAssets.editor}></script>
         <script type="module" src={browserAssets.entry}></script>
       </body>

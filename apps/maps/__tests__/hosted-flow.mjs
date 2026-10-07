@@ -1648,9 +1648,120 @@ try {
         .execute({ kind: "brush" }).objects[0].bounds,
   );
   assert.deepEqual(snappedBounds, { min: [0, 0, 0], max: [64, 64, 64] });
-  await toolSettingsPage.close();
   result.checks.push(
     "Remix tool, Clip/Hull, topology, shape, transform pivot, grid, and texture-lock controls update live editor settings",
+  );
+  await toolSettingsPage.evaluate(async () => {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        clearInterval(retry);
+        reject(new Error("Context menu did not hydrate"));
+      }, 5000);
+      const retry = setInterval(
+        () =>
+          window.dispatchEvent(new Event("tea-maps-context-menu-bridge-ready")),
+        25,
+      );
+      window.addEventListener(
+        "tea-maps-context-menu-ready",
+        () => {
+          clearTimeout(timer);
+          clearInterval(retry);
+          resolve();
+        },
+        { once: true },
+      );
+    });
+    window.teaMapsContextMenuTest = {
+      hits: 0,
+      state: {
+        visible: true,
+        x: 64,
+        y: 64,
+        sections: [
+          {
+            label: "Test actions",
+            actions: [
+              { label: "First action", run() {} },
+              { label: "Disabled action", disabled: true, run() {} },
+              {
+                label: "Last action",
+                run() {
+                  window.teaMapsContextMenuTest.hits += 1;
+                },
+              },
+            ],
+          },
+        ],
+      },
+      hide() {
+        this.state = { ...this.state, visible: false, sections: [] };
+        window.dispatchEvent(
+          new CustomEvent("tea-maps-context-menu-state", { detail: this }),
+        );
+      },
+      runAction(action) {
+        this.hide(true);
+        action.run();
+      },
+    };
+    window.dispatchEvent(
+      new CustomEvent("tea-maps-context-menu-state", {
+        detail: window.teaMapsContextMenuTest,
+      }),
+    );
+  });
+  await toolSettingsPage
+    .locator("#viewport-context-menu")
+    .waitFor({ state: "visible" });
+  await toolSettingsPage.waitForFunction(
+    () => document.activeElement?.textContent?.trim() === "First action",
+  );
+  await toolSettingsPage.locator("#viewport-context-menu").press("ArrowDown");
+  await toolSettingsPage.waitForFunction(
+    () => document.activeElement?.textContent?.trim() === "Last action",
+  );
+  await toolSettingsPage.locator("#viewport-context-menu").press("Escape");
+  await toolSettingsPage
+    .locator("#viewport-context-menu")
+    .waitFor({ state: "hidden" });
+  await toolSettingsPage.evaluate(() => {
+    const menu = window.teaMapsContextMenuTest;
+    menu.state = {
+      ...menu.state,
+      visible: true,
+      sections: [
+        {
+          label: "Test actions",
+          actions: [
+            {
+              label: "Last action",
+              run() {
+                menu.hits += 1;
+              },
+            },
+          ],
+        },
+      ],
+    };
+    window.dispatchEvent(
+      new CustomEvent("tea-maps-context-menu-state", { detail: menu }),
+    );
+  });
+  await toolSettingsPage
+    .locator("#viewport-context-menu")
+    .getByRole("menuitem", { name: "Last action" })
+    .click();
+  assert.equal(
+    await toolSettingsPage.evaluate(() => window.teaMapsContextMenuTest.hits),
+    1,
+  );
+  await toolSettingsPage
+    .locator("#viewport-context-menu")
+    .waitFor({ state: "hidden" });
+  await toolSettingsPage.close();
+  result.checks.push(
+    "Remix context menu renders actions, skips disabled items, handles Escape, and activates commands",
   );
   const geometryPage = await browser.newPage();
   await installSiteToolMock(geometryPage);

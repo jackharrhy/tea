@@ -9,60 +9,52 @@ export interface ContextSection {
   readonly actions: readonly ContextAction[];
 }
 
-export function createEditorContextMenu(
-  root: HTMLElement,
-  report: (error: unknown) => void,
-) {
+export interface EditorContextMenuState {
+  readonly visible: boolean;
+  readonly x: number;
+  readonly y: number;
+  readonly sections: readonly ContextSection[];
+}
+
+export interface EditorContextMenuContext {
+  readonly state: EditorContextMenuState;
+  readonly hide: (restoreFocus?: boolean) => void;
+  readonly runAction: (action: ContextAction) => void;
+}
+
+export function createEditorContextMenu(report: (error: unknown) => void) {
+  let state: EditorContextMenuState = {
+    visible: false,
+    x: 0,
+    y: 0,
+    sections: [],
+  };
   let focusTarget: HTMLElement | null = null;
+  let ready = false;
+
+  function publish() {
+    if (!ready) return;
+    window.dispatchEvent(
+      new CustomEvent<EditorContextMenuContext>("tea-maps-context-menu-state", {
+        detail: { state, hide, runAction },
+      }),
+    );
+  }
 
   function hide(restoreFocus = false) {
-    if (root.hidden) return;
-    root.hidden = true;
-    root.replaceChildren();
+    if (!state.visible) return;
+    state = { ...state, visible: false, sections: [] };
+    publish();
     if (restoreFocus) focusTarget?.focus({ preventScroll: true });
     focusTarget = null;
   }
 
-  function buttons(): HTMLButtonElement[] {
-    return [
-      ...root.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
-    ];
+  function runAction(action: ContextAction) {
+    hide(true);
+    void Promise.resolve()
+      .then(() => action.run())
+      .catch(report);
   }
-
-  root.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      hide(true);
-      return;
-    }
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    const items = buttons();
-    if (!items.length) return;
-    const current = items.indexOf(document.activeElement as HTMLButtonElement);
-    const index =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? items.length - 1
-          : event.key === "ArrowDown"
-            ? (current + 1) % items.length
-            : (current + items.length - 1) % items.length;
-    items[index]?.focus();
-  });
-  document.addEventListener("pointerdown", (event) => {
-    if (!root.hidden && !root.contains(event.target as Node)) hide();
-  });
-  document.addEventListener("contextmenu", (event) => {
-    if (
-      !root.hidden ||
-      (event.target instanceof HTMLCanvasElement &&
-        event.target.closest(".viewport-frame"))
-    ) {
-      event.preventDefault();
-    }
-  });
-  window.addEventListener("blur", () => hide());
 
   function show(
     x: number,
@@ -72,36 +64,20 @@ export function createEditorContextMenu(
   ) {
     hide();
     focusTarget = returnFocus;
-    for (const section of sections) {
-      if (!section.actions.length) continue;
-      const group = document.createElement("div");
-      group.setAttribute("role", "group");
-      group.setAttribute("aria-label", section.label);
-      const heading = document.createElement("div");
-      heading.className = "context-heading";
-      heading.textContent = section.label;
-      group.append(heading);
-      for (const action of section.actions) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.setAttribute("role", "menuitem");
-        button.textContent = action.label;
-        button.disabled = action.disabled ?? false;
-        button.addEventListener("click", () => {
-          hide(true);
-          void Promise.resolve()
-            .then(() => action.run())
-            .catch(report);
-        });
-        group.append(button);
-      }
-      root.append(group);
-    }
-    root.hidden = false;
-    root.style.left = `${Math.max(8, Math.min(x, window.innerWidth - root.offsetWidth - 8))}px`;
-    root.style.top = `${Math.max(8, Math.min(y, window.innerHeight - root.offsetHeight - 8))}px`;
-    buttons()[0]?.focus();
+    state = {
+      visible: true,
+      x,
+      y,
+      sections: sections.filter((section) => section.actions.length > 0),
+    };
+    publish();
   }
+
+  window.addEventListener("tea-maps-context-menu-ready", () => {
+    ready = true;
+    publish();
+  });
+  window.dispatchEvent(new Event("tea-maps-context-menu-bridge-ready"));
 
   return { show, hide };
 }

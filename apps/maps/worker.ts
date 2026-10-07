@@ -64,6 +64,7 @@ const clientEntryFiles = {
   "editor-topology-panel.tsx": browserAssets.editorTopology,
   "editor-shape-panel.tsx": browserAssets.editorShape,
   "editor-transform-tool-panel.tsx": browserAssets.editorTransformTool,
+  "editor-context-menu-panel.tsx": browserAssets.editorContextMenu,
   "editor-detached-maps-panel.tsx": browserAssets.editorDetachedMaps,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,

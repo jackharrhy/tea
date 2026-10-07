@@ -566,12 +566,9 @@ const clipboard = createEditorClipboard({
     status.textContent = message;
   },
 });
-const contextMenu = createEditorContextMenu(
-  document.querySelector<HTMLElement>("#viewport-context-menu")!,
-  (error) => {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  },
-);
+const contextMenu = createEditorContextMenu((error) => {
+  status.textContent = error instanceof Error ? error.message : String(error);
+});
 const faceDrag = createFaceDragController({
   session: () => session,
   renderer: () => renderer,
