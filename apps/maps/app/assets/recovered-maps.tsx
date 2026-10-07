@@ -169,7 +169,7 @@ export const RecoveredMaps = clientEntry(
   function RecoveredMapsComponent(handle: Handle) {
     let copies: readonly DetachedMapSummary[] | null = null;
     let error: string | null = null;
-    let legacyCounts = { copies: 0, recovery: 0 };
+    let legacyCounts = { copies: 0, recovery: 0, mounts: 0 };
     let recovery: readonly LegacyRecoverySnapshot[] = [];
     let legacyError: string | null = null;
     let importing = false;
@@ -214,7 +214,7 @@ export const RecoveredMaps = clientEntry(
         const result = await importLegacyLocalData();
         copies = await listDetachedMapSummaries();
         recovery = await listImportedLegacyRecovery();
-        importStatus = `Imported ${result.copies.imported} local copies and ${result.recovery.imported} recovery versions; ${result.copies.existing + result.recovery.existing} were already in Tea.`;
+        importStatus = `Imported ${result.copies.imported} local copies, ${result.recovery.imported} recovery versions, and ${result.mounts.imported} resource mounts; ${result.copies.existing + result.recovery.existing + result.mounts.existing} were already in Tea.`;
       } catch (cause) {
         importStatus = message(cause);
       } finally {
@@ -254,7 +254,7 @@ export const RecoveredMaps = clientEntry(
         const result = await importLegacyLocalArchive(file);
         copies = await listDetachedMapSummaries();
         recovery = await listImportedLegacyRecovery();
-        importStatus = `Imported ${result.copies.imported} local copies and ${result.recovery.imported} recovery versions; ${result.copies.existing + result.recovery.existing} were already in Tea.`;
+        importStatus = `Imported ${result.copies.imported} local copies, ${result.recovery.imported} recovery versions, and ${result.mounts.imported} resource mounts; ${result.copies.existing + result.recovery.existing + result.mounts.existing} were already in Tea.`;
       } catch (cause) {
         importStatus = message(cause);
       } finally {
@@ -265,7 +265,8 @@ export const RecoveredMaps = clientEntry(
 
     return () => (
       <div id="detached-maps-list" class="project-list">
-        {legacyCounts.copies + legacyCounts.recovery > 0 ? (
+        {legacyCounts.copies + legacyCounts.recovery + legacyCounts.mounts >
+        0 ? (
           <div>
             <button
               id="import-worldview-copies"
@@ -274,7 +275,8 @@ export const RecoveredMaps = clientEntry(
               mix={on("click", () => void importFromThisOrigin())}
             >
               Import {legacyCounts.copies} Worldview copies and{" "}
-              {legacyCounts.recovery} recovery versions
+              {legacyCounts.recovery} recovery versions, and{" "}
+              {legacyCounts.mounts} resource mounts
             </button>
             <button
               id="download-worldview-copies"

@@ -18,6 +18,14 @@ import {
   type RecentProject,
 } from "./editor-recent-projects.ts";
 import type { MapDirectoryHandle } from "./editor-project.ts";
+import {
+  fromPortableLegacyMount,
+  importLegacyBrowserMounts,
+  PortableLegacyMountSchema,
+  readLegacyBrowserMounts,
+  toPortableLegacyMount,
+  type LegacyBrowserMount,
+} from "./editor-legacy-mounts.ts";
 
 interface LegacyEditorDatabase extends DBSchema {
   "detached-maps": { key: string; value: DetachedHostedMap };
@@ -94,6 +102,13 @@ const LocalArchiveV2Schema = z.strictObject({
   version: z.literal(2),
   copies: z.array(DetachedHostedMapSchema),
   recovery: z.array(LegacyRecoverySnapshotSchema),
+});
+const LocalArchiveV3Schema = z.strictObject({
+  kind: z.literal("tea-maps-worldview-local"),
+  version: z.literal(3),
+  copies: z.array(DetachedHostedMapSchema),
+  recovery: z.array(LegacyRecoverySnapshotSchema),
+  mounts: z.array(PortableLegacyMountSchema),
 });
 const MAX_ARCHIVE_BYTES = 128 * 1_024 * 1_024;
 
@@ -210,8 +225,9 @@ async function pendingHostedCopies(
 async function legacyLocalData(): Promise<{
   copies: readonly DetachedHostedMap[];
   recovery: readonly LegacyRecoverySnapshot[];
+  mounts: readonly LegacyBrowserMount[];
 }> {
-  const empty = { copies: [], recovery: [] };
+  const empty = { copies: [], recovery: [], mounts: [] };
   if (!indexedDB.databases) return empty;
   const databases = await indexedDB.databases();
   if (!databases.some((database) => database.name === "worldview-editor"))
@@ -236,12 +252,14 @@ async function legacyLocalData(): Promise<{
       }),
     );
     const pending = await pendingHostedCopies(legacy);
+    const mounts = await readLegacyBrowserMounts();
     return {
       copies: [
         ...copies.map((value) => DetachedHostedMapSchema.parse(value)),
         ...pending,
       ],
       recovery: [...recovery.values()],
+      mounts,
     };
   } finally {
     legacy.close();
@@ -251,9 +269,14 @@ async function legacyLocalData(): Promise<{
 export async function countLegacyLocalData(): Promise<{
   copies: number;
   recovery: number;
+  mounts: number;
 }> {
   const data = await legacyLocalData();
-  return { copies: data.copies.length, recovery: data.recovery.length };
+  return {
+    copies: data.copies.length,
+    recovery: data.recovery.length,
+    mounts: data.mounts.length,
+  };
 }
 
 async function importCopies(copies: readonly DetachedHostedMap[]): Promise<{
@@ -316,10 +339,12 @@ async function importRecovery(recovery: readonly LegacyRecoverySnapshot[]) {
 async function importLocalData(data: {
   copies: readonly DetachedHostedMap[];
   recovery: readonly LegacyRecoverySnapshot[];
+  mounts: readonly LegacyBrowserMount[];
 }) {
   const copies = await importCopies(data.copies);
   const recovery = await importRecovery(data.recovery);
-  return { copies, recovery };
+  const mounts = await importLegacyBrowserMounts(data.mounts);
+  return { copies, recovery, mounts };
 }
 
 export async function importLegacyLocalData() {
@@ -332,8 +357,10 @@ export async function exportLegacyLocalArchive(): Promise<Blob> {
     [
       JSON.stringify({
         kind: "tea-maps-worldview-local",
-        version: 2,
-        ...data,
+        version: 3,
+        copies: data.copies,
+        recovery: data.recovery,
+        mounts: await Promise.all(data.mounts.map(toPortableLegacyMount)),
       }),
     ],
     { type: "application/json" },
@@ -348,10 +375,20 @@ export async function importLegacyLocalArchive(file: File) {
     throw new Error("Worldview copy archive exceeds 128 MiB");
   const value: unknown = JSON.parse(await file.text());
   const v1 = DetachedArchiveV1Schema.safeParse(value);
-  const data = v1.success
-    ? { copies: v1.data.copies, recovery: [] }
-    : LocalArchiveV2Schema.parse(value);
-  return importLocalData(data);
+  if (v1.success)
+    return importLocalData({
+      copies: v1.data.copies,
+      recovery: [],
+      mounts: [],
+    });
+  const v2 = LocalArchiveV2Schema.safeParse(value);
+  if (v2.success) return importLocalData({ ...v2.data, mounts: [] });
+  const v3 = LocalArchiveV3Schema.parse(value);
+  return importLocalData({
+    copies: v3.copies,
+    recovery: v3.recovery,
+    mounts: await Promise.all(v3.mounts.map(fromPortableLegacyMount)),
+  });
 }
 
 export async function listImportedLegacyRecovery(): Promise<

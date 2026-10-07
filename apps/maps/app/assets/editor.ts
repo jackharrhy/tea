@@ -78,6 +78,7 @@ import {
   type EditorVersion,
 } from "./editor-draft.ts";
 import { loadImportedLegacyRecovery } from "./editor-legacy-local.ts";
+import { installLegacyRecoveryResources } from "./editor-legacy-mounts.ts";
 import { initHostedEditor } from "./editor-hosted.ts";
 import { listHostedResources } from "./editor-hosted-resources.ts";
 import { loadHostedWorldSource } from "./hosted-world-source.ts";
@@ -4856,10 +4857,16 @@ if (launchLegacyRecovery)
     )
       throw new Error(`${game} does not support this map's face format`);
     if (!(await mayReplaceMap())) return;
+    const documentKey = `worldview-recovery:${snapshot.snapshotId}`;
+    await installLegacyRecoveryResources(
+      snapshot.documentKey,
+      documentKey,
+      game,
+    );
     persistDraft();
     openDetachedCopy(
       {
-        documentKey: `worldview-recovery:${snapshot.snapshotId}`,
+        documentKey,
         document: snapshot.document,
         source: snapshot.source,
         fileName: snapshot.fileName,

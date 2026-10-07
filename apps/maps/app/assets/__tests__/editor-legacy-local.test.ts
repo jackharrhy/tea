@@ -5,6 +5,7 @@ import {
   createBoxBrush,
   createSequentialIdFactory,
   createStarterDocument,
+  developmentTexturePack,
   insertBrush,
   rebaseMapSource,
   serializeMap,
@@ -26,12 +27,26 @@ import {
   countLegacyLocalProjects,
 } from "../editor-legacy-local.ts";
 import { recentProject } from "../editor-recent-projects.ts";
+import { installLegacyRecoveryResources } from "../editor-legacy-mounts.ts";
+import {
+  loadStandaloneResources,
+  saveStandaloneResources,
+  emptyStandaloneResources,
+} from "../editor-standalone-resources.ts";
+
+async function fingerprint(data: ArrayBuffer): Promise<string> {
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", data))]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 beforeEach(async () => {
   await deleteEditorDatabase();
   await deleteDB("worldview-editor");
   await deleteDB("tea-maps-worldview-recovery");
   await deleteDB("tea-maps-recent-projects");
+  await deleteDB("tea-maps-worldview-mounts");
+  await deleteDB("tea-maps-standalone-resources");
 });
 
 afterEach(async () => {
@@ -39,10 +54,16 @@ afterEach(async () => {
   await deleteDB("worldview-editor");
   await deleteDB("tea-maps-worldview-recovery");
   await deleteDB("tea-maps-recent-projects");
+  await deleteDB("tea-maps-worldview-mounts");
+  await deleteDB("tea-maps-standalone-resources");
 });
 
 it("transfers local copies and recovery history while preserving both originals and Tea edits", async () => {
-  expect(await countLegacyLocalData()).toEqual({ copies: 0, recovery: 0 });
+  expect(await countLegacyLocalData()).toEqual({
+    copies: 0,
+    recovery: 0,
+    mounts: 0,
+  });
   const document = createStarterDocument();
   const copy = {
     version: 1,
@@ -99,7 +120,11 @@ it("transfers local copies and recovery history while preserving both originals 
   await legacy.put("local-projects", project);
   legacy.close();
 
-  expect(await countLegacyLocalData()).toEqual({ copies: 1, recovery: 1 });
+  expect(await countLegacyLocalData()).toEqual({
+    copies: 1,
+    recovery: 1,
+    mounts: 0,
+  });
   expect(await countLegacyLocalProjects()).toBe(1);
   expect(await importLegacyLocalProjects()).toEqual({
     imported: 1,
@@ -117,6 +142,7 @@ it("transfers local copies and recovery history while preserving both originals 
   expect(await importLegacyLocalData()).toEqual({
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 1, existing: 0 },
+    mounts: { imported: 0, existing: 0 },
   });
   expect(
     await new IndexedDbCollaborationOutbox().loadDetached(copy.id),
@@ -134,6 +160,7 @@ it("transfers local copies and recovery history while preserving both originals 
   expect(await importLegacyLocalData()).toEqual({
     copies: { imported: 0, existing: 1 },
     recovery: { imported: 0, existing: 1 },
+    mounts: { imported: 0, existing: 0 },
   });
   expect(
     (await new IndexedDbCollaborationOutbox().loadDetached(copy.id))?.reason,
@@ -157,6 +184,7 @@ it("transfers local copies and recovery history while preserving both originals 
   ).toEqual({
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 1, existing: 0 },
+    mounts: { imported: 0, existing: 0 },
   });
   expect(
     await new IndexedDbCollaborationOutbox().loadDetached(copy.id),
@@ -166,7 +194,7 @@ it("transfers local copies and recovery history while preserving both originals 
   );
 });
 
-it("accepts an earlier detached-only archive", async () => {
+it("accepts earlier archives without resource mounts", async () => {
   const archive = new File(
     [
       JSON.stringify({
@@ -180,7 +208,93 @@ it("accepts an earlier detached-only archive", async () => {
   expect(await importLegacyLocalArchive(archive)).toEqual({
     copies: { imported: 0, existing: 0 },
     recovery: { imported: 0, existing: 0 },
+    mounts: { imported: 0, existing: 0 },
   });
+  const v2 = new File(
+    [
+      JSON.stringify({
+        kind: "tea-maps-worldview-local",
+        version: 2,
+        copies: [],
+        recovery: [],
+      }),
+    ],
+    "worldview-local-v2.json",
+  );
+  expect(await importLegacyLocalArchive(v2)).toEqual({
+    copies: { imported: 0, existing: 0 },
+    recovery: { imported: 0, existing: 0 },
+    mounts: { imported: 0, existing: 0 },
+  });
+});
+
+it("carries browser WADs and palettes through an archive into recovery copies", async () => {
+  const wad = developmentTexturePack("quake")!.wad;
+  const palette = new Uint8Array(768).fill(17).buffer;
+  const mounts = [
+    {
+      id: "source:wad",
+      scopeId: "source",
+      label: "textures.wad",
+      priority: 1,
+      profile: "quake",
+      sourceName: "textures.wad",
+      contentFingerprint: await fingerprint(wad),
+      kind: "browser-wad",
+      data: wad,
+    },
+    {
+      id: "source:palette",
+      scopeId: "source",
+      label: "palette.lmp",
+      priority: 2,
+      profile: "quake",
+      sourceName: "palette.lmp",
+      contentFingerprint: await fingerprint(palette),
+      kind: "browser-palette",
+      data: palette,
+    },
+  ];
+  const legacy = await openDB("worldview-editor", 3, {
+    upgrade(database) {
+      database.createObjectStore("asset-mounts", { keyPath: "id" });
+    },
+  });
+  for (const mount of mounts) await legacy.put("asset-mounts", mount);
+  legacy.close();
+
+  expect(await countLegacyLocalData()).toEqual({
+    copies: 0,
+    recovery: 0,
+    mounts: 2,
+  });
+  const archive = await exportLegacyLocalArchive();
+  expect(JSON.parse(await archive.text())).toMatchObject({ version: 3 });
+  expect(
+    await importLegacyLocalArchive(new File([archive], "resources.json")),
+  ).toEqual({
+    copies: { imported: 0, existing: 0 },
+    recovery: { imported: 0, existing: 0 },
+    mounts: { imported: 2, existing: 0 },
+  });
+  expect(await installLegacyRecoveryResources("source", "copy", "quake")).toBe(
+    true,
+  );
+  const resources = await loadStandaloneResources("copy", "quake");
+  expect(resources.wads[0]?.data).toEqual(wad);
+  expect(resources.palette).toEqual(new Uint8Array(palette));
+  await saveStandaloneResources("copy", "quake", emptyStandaloneResources());
+  expect(await installLegacyRecoveryResources("source", "copy", "quake")).toBe(
+    false,
+  );
+  expect((await loadStandaloneResources("copy", "quake")).wads).toEqual([]);
+  const source = await openDB("worldview-editor");
+  const sourceMounts = await source.getAll("asset-mounts");
+  source.close();
+  expect(sourceMounts.map((mount) => mount.id)).toEqual([
+    "source:palette",
+    "source:wad",
+  ]);
 });
 
 it("preserves unsynced Worldview hosted edits as a portable local copy", async () => {
@@ -253,10 +367,15 @@ it("preserves unsynced Worldview hosted edits as a portable local copy", async (
   await legacy.put("collaboration-sessions", session);
   legacy.close();
 
-  expect(await countLegacyLocalData()).toEqual({ copies: 1, recovery: 0 });
+  expect(await countLegacyLocalData()).toEqual({
+    copies: 1,
+    recovery: 0,
+    mounts: 0,
+  });
   expect(await importLegacyLocalData()).toEqual({
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 0, existing: 0 },
+    mounts: { imported: 0, existing: 0 },
   });
   const [copy] = await new IndexedDbCollaborationOutbox().listDetached();
   expect(copy).toMatchObject({
@@ -272,6 +391,7 @@ it("preserves unsynced Worldview hosted edits as a portable local copy", async (
   ).toEqual({
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 0, existing: 0 },
+    mounts: { imported: 0, existing: 0 },
   });
   expect(
     await new IndexedDbCollaborationOutbox().loadDetached(copy!.id),
