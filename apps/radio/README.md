@@ -89,7 +89,7 @@ To check that path with disposable source data, run the original Radio repositor
 npm run test:source-cutover --workspace @tea/radio -- /tmp/radio-source-smoke.json
 ```
 
-This optional check requires Celld, SQLite's `sqlite3` CLI, and Playwright Chromium. It makes a consistent SQLite snapshot of the stopped source smoke store, starts Tea Radio with the cutover config and fresh credentials, and verifies the original room, track ID, queue title, volume, paused position, audio hash, and suffix range. It reads but does not change the source store. It does not prove a production transfer; repeat the same comparisons on a production snapshot before changing routing.
+This optional check requires Celld, SQLite's `sqlite3` CLI, and Playwright Chromium. It makes a consistent SQLite snapshot of the stopped source smoke store, starts Tea Radio with the cutover config and fresh credentials, and verifies the original room, track ID, queue title, volume, paused position, audio hash, and suffix range. Tea then renames the copied track and changes its volume, kills Celld, removes its replica cache, and verifies those edits and the audio from the copied authoritative store. It reads but does not change the source store. It does not prove a production transfer; repeat the same comparisons on a production snapshot before changing routing.
 
 ### Upgrading Celld 0.4 to 0.5
 

@@ -124,6 +124,60 @@ async function stop() {
   runtime = undefined;
 }
 
+async function roomSnapshot(page, roomSlug) {
+  return page.evaluate(
+    (slug) =>
+      new Promise((resolve, reject) => {
+        const socket = new WebSocket(`ws://${location.host}/ws/${slug}`);
+        globalThis.cutoverSmokeSocket = socket;
+        const timer = setTimeout(
+          () => reject(new Error("Room state timed out")),
+          20_000,
+        );
+        socket.addEventListener("open", () =>
+          socket.send(
+            JSON.stringify({ type: "JOIN", clientId: "cutover-check" }),
+          ),
+        );
+        socket.addEventListener("message", ({ data }) => {
+          const frame = JSON.parse(data);
+          if (frame.type === "LIVENESS_PING")
+            socket.send(JSON.stringify({ type: "LIVENESS_PONG" }));
+          if (frame.type === "ROOM_STATE" || frame.type === "ERROR") {
+            clearTimeout(timer);
+            if (frame.type === "ERROR") reject(new Error(frame.message));
+            else resolve(frame.snapshot);
+          }
+        });
+      }),
+    roomSlug,
+  );
+}
+
+async function roomCommand(page, commandMessage, frameType) {
+  return page.evaluate(
+    ({ message, expectedType }) =>
+      new Promise((resolve, reject) => {
+        const socket = globalThis.cutoverSmokeSocket;
+        const timer = setTimeout(() => {
+          socket.removeEventListener("message", received);
+          reject(new Error(`Timed out waiting for ${expectedType}`));
+        }, 10_000);
+        function received({ data }) {
+          const frame = JSON.parse(data);
+          if (frame.type !== expectedType && frame.type !== "ERROR") return;
+          clearTimeout(timer);
+          socket.removeEventListener("message", received);
+          if (frame.type === "ERROR") reject(new Error(frame.message));
+          else resolve(frame);
+        }
+        socket.addEventListener("message", received);
+        socket.send(JSON.stringify(message));
+      }),
+    { message: commandMessage, expectedType: frameType },
+  );
+}
+
 try {
   const listed = await command([
     binary,
@@ -206,31 +260,7 @@ try {
   ]);
   const page = await context.newPage();
   await page.goto(`${origin}/rooms/${roomSlug}`);
-  const snapshot = await page.evaluate(
-    (slug) =>
-      new Promise((resolve, reject) => {
-        const socket = new WebSocket(`ws://${location.host}/ws/${slug}`);
-        const timer = setTimeout(
-          () => reject(new Error("Room state timed out")),
-          20_000,
-        );
-        socket.addEventListener("open", () =>
-          socket.send(
-            JSON.stringify({ type: "JOIN", clientId: "cutover-check" }),
-          ),
-        );
-        socket.addEventListener("message", ({ data }) => {
-          const frame = JSON.parse(data);
-          if (frame.type === "ROOM_STATE" || frame.type === "ERROR") {
-            clearTimeout(timer);
-            socket.close();
-            if (frame.type === "ERROR") reject(new Error(frame.message));
-            else resolve(frame.snapshot);
-          }
-        });
-      }),
-    roomSlug,
-  );
+  const snapshot = await roomSnapshot(page, roomSlug);
   assert.equal(
     snapshot.tracks.find((track) => track.id === report.trackId)?.title,
     "Persisted smoke",
@@ -239,6 +269,52 @@ try {
   assert.equal(snapshot.playback.type, "paused");
   assert.equal(snapshot.playback.trackId, report.trackId);
   assert.equal(snapshot.playback.trackTimeSeconds, 1.25);
+  const renamed = await roomCommand(
+    page,
+    {
+      type: "RENAME_TRACK",
+      trackId: report.trackId,
+      title: "Tea cutover edit",
+    },
+    "QUEUE_UPDATED",
+  );
+  assert.equal(
+    renamed.tracks.find((track) => track.id === report.trackId)?.title,
+    "Tea cutover edit",
+  );
+  assert.equal(
+    (
+      await roomCommand(
+        page,
+        { type: "SET_VOLUME", volume: 0.37 },
+        "VOLUME_UPDATED",
+      )
+    ).volume,
+    0.37,
+  );
+  await page.close();
+  await stop();
+  await rm(environment.CELLD_WATCH, { recursive: true, force: true });
+  await start(origin);
+  const restoredPage = await context.newPage();
+  await restoredPage.goto(`${origin}/rooms/${roomSlug}`);
+  const restored = await roomSnapshot(restoredPage, roomSlug);
+  assert.equal(
+    restored.tracks.find((track) => track.id === report.trackId)?.title,
+    "Tea cutover edit",
+  );
+  assert.equal(restored.volume, 0.37);
+  assert.equal(restored.playback.type, "paused");
+  assert.equal(restored.playback.trackId, report.trackId);
+  assert.equal(restored.playback.trackTimeSeconds, 1.25);
+  const restoredMedia = await request(mediaPath);
+  assert.equal(restoredMedia.status, 200);
+  assert.equal(
+    createHash("sha256")
+      .update(Buffer.from(await restoredMedia.arrayBuffer()))
+      .digest("hex"),
+    report.audioSha256,
+  );
   passed = true;
   console.log(
     JSON.stringify({
@@ -252,6 +328,8 @@ try {
       queue: true,
       playback: true,
       range: true,
+      postCutoverWrites: true,
+      coldRestore: true,
     }),
   );
 } catch (error) {
