@@ -9,6 +9,7 @@ const { values } = parseArgs({
     "maps-db": { type: "string" },
     "source-origin": { type: "string" },
     "target-origin": { type: "string" },
+    "require-source-checkpoints": { type: "boolean", default: false },
     output: { type: "string" },
   },
 });
@@ -122,6 +123,7 @@ async function compareMap(mapId) {
   const targetCheckpoints = targetList.checkpoints.toSorted((a, b) =>
     a.id.localeCompare(b.id),
   );
+  let checkpointSourcesCompared = 0;
   for (const checkpoint of targetCheckpoints) {
     const detail = await read(
       targetOrigin,
@@ -130,7 +132,21 @@ async function compareMap(mapId) {
       `/checkpoints/${encodeURIComponent(checkpoint.id)}`,
     );
     assert.deepEqual(detail.checkpoint, checkpoint);
+    assert.equal(typeof detail.source, "string");
     assert.equal(sha256(detail.source), checkpoint.sourceSha256);
+    if (values["require-source-checkpoints"]) {
+      const sourceDetail = await read(
+        sourceOrigin,
+        sourceSecret,
+        mapId,
+        `/checkpoints/${encodeURIComponent(checkpoint.id)}`,
+      );
+      assert.deepEqual(sourceDetail.checkpoint, checkpoint);
+      assert.equal(typeof sourceDetail.source, "string");
+      assert.equal(sha256(sourceDetail.source), checkpoint.sourceSha256);
+      assert.equal(sourceDetail.source, detail.source);
+      checkpointSourcesCompared++;
+    }
   }
   return {
     mapId,
@@ -139,6 +155,7 @@ async function compareMap(mapId) {
     sourceCheckpointsSha256: fingerprint(sourceCheckpoints),
     targetCheckpointsSha256: fingerprint(targetCheckpoints),
     checkpoints: sourceCheckpoints.length,
+    checkpointSourcesCompared,
     matched:
       fingerprint(sourceSnapshot) === fingerprint(targetSnapshot) &&
       fingerprint(sourceCheckpoints) === fingerprint(targetCheckpoints),
@@ -147,6 +164,9 @@ async function compareMap(mapId) {
 
 const report = {
   status: "running",
+  checkpointSourceMode: values["require-source-checkpoints"]
+    ? "full"
+    : "metadata-only",
   sourceOrigin: sourceOrigin.origin,
   targetOrigin: targetOrigin.origin,
   maps: [],

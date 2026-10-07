@@ -127,7 +127,12 @@ async function ready(origin, child = runtime) {
   throw new Error(`Celld did not become ready; see ${state}`);
 }
 
-function compareCells(hostedDatabase, sourceOrigin, targetOrigin) {
+function compareCells(
+  hostedDatabase,
+  sourceOrigin,
+  targetOrigin,
+  strict = false,
+) {
   const result = spawnSync(
     process.execPath,
     [
@@ -138,6 +143,7 @@ function compareCells(hostedDatabase, sourceOrigin, targetOrigin) {
       sourceOrigin,
       "--target-origin",
       targetOrigin,
+      ...(strict ? ["--require-source-checkpoints"] : []),
     ],
     {
       encoding: "utf8",
@@ -304,7 +310,51 @@ try {
   const matched = compareCells(hostedDatabase, sourceOrigin, targetOrigin);
   assert.equal(matched.exitCode, 0, JSON.stringify(matched.report));
   assert.equal(matched.report.status, "passed");
+  assert.equal(matched.report.checkpointSourceMode, "metadata-only");
   assert.equal(matched.report.maps.length, 2);
+
+  await stopChild(comparisonSource);
+  comparisonSource = undefined;
+  await delay(11_000);
+  const sourceTeaEnv = environment(
+    sourceDatabase,
+    join(sourceDirectory, "replicas"),
+    sourcePort,
+    "CELLD_VAR_TEA_MAPS_REALTIME_TICKET_SECRET",
+  );
+  run(app, sourceTeaEnv, [
+    "diagnose",
+    "--bucket",
+    sourceTeaEnv.CELLD_BUCKET,
+    "--no-control-plane",
+  ]);
+  run(app, sourceTeaEnv, [
+    "deploy",
+    "wrangler.celld-cutover.jsonc",
+    "--bucket",
+    sourceTeaEnv.CELLD_BUCKET,
+  ]);
+  comparisonSource = spawnRuntime(
+    app,
+    sourceTeaEnv,
+    "source-tea-compare",
+    values.binary,
+  );
+  await ready(sourceOrigin, comparisonSource);
+  const fullMatch = compareCells(
+    hostedDatabase,
+    sourceOrigin,
+    targetOrigin,
+    true,
+  );
+  assert.equal(fullMatch.exitCode, 0, JSON.stringify(fullMatch.report));
+  assert.equal(fullMatch.report.status, "passed");
+  assert.equal(fullMatch.report.checkpointSourceMode, "full");
+  assert.equal(
+    fullMatch.report.maps.find((map) => map.mapId === mapId)
+      ?.checkpointSourcesCompared,
+    1,
+  );
 
   const edited = source.replace("Worldview editor starter", "Tea copied map");
   assert.notEqual(edited, source);
@@ -350,6 +400,7 @@ try {
         "stopped SQLite backup",
         "Tea snapshot and checkpoint match",
         "all-map comparator matches two copied cells and detects Tea-only edit",
+        "strict comparator matches historical checkpoint bodies on two Tea copies",
         "Tea source edit survives SIGKILL and empty replica restore",
       ],
       state: values["keep-state"] ? state : undefined,
