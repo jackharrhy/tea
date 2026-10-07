@@ -76,6 +76,30 @@ export async function saveExportSettings(
   }
 }
 
+export async function importExportSettings(
+  settings: readonly ExportSettings[],
+): Promise<{ imported: number; existing: number }> {
+  const db = await openExportDatabase();
+  try {
+    const transaction = db.transaction("settings", "readwrite");
+    const store = transaction.objectStore("settings");
+    let imported = 0;
+    let existing = 0;
+    for (const setting of settings) {
+      if (await store.get(setting.scopeId)) {
+        existing++;
+      } else {
+        await store.add(setting);
+        imported++;
+      }
+    }
+    await transaction.done;
+    return { imported, existing };
+  } finally {
+    db.close();
+  }
+}
+
 export function directoryExportSupported(): boolean {
   return typeof window !== "undefined" && "showDirectoryPicker" in window;
 }

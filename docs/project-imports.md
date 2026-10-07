@@ -266,7 +266,7 @@ Worldview's MIT attribution and third-party notices accompany the adapted source
 | `collaboration-operations`, `collaboration-sessions` | Preserve pending edits as local copies when a recovery snapshot exists; never replay them into Tea rooms |
 | `asset-mounts` | Transfer browser-added WADs and palettes; project files still come from the selected folder |
 | `build-history` | Retained in Worldview; download build artifacts there if they must be kept, or rebuild in Tea |
-| `build-exports` | Choose the export folder and settings again in Tea |
+| `build-exports` | Import export preferences on the old origin; choose the export folder again on a new origin |
 | `project-sync` | Relink to the Tea hosted project and inspect source differences before pulling or pushing |
 
 Before making Tea public, decide the repository-level license and Radio's license. The Tea root and Radio currently have no `LICENSE` file; Ref and each imported Worldview workspace keep their source MIT licenses. Tea preserves Worldview's full [third-party notice](../THIRD_PARTY_NOTICES.md) at the root and beside the independently packable Maps editor and renderer. This publication decision is separate from data and deployment cutover.

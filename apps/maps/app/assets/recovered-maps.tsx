@@ -18,6 +18,10 @@ import {
   countLegacyLocalProjects,
   type LegacyRecoverySnapshot,
 } from "./editor-legacy-local.ts";
+import {
+  countLegacyExportSettings,
+  importLegacyExportSettings,
+} from "./editor-legacy-export-settings.ts";
 
 export const OpenLocalProject = clientEntry(
   `${import.meta.url}#OpenLocalProject`,
@@ -170,6 +174,7 @@ export const RecoveredMaps = clientEntry(
     let copies: readonly DetachedMapSummary[] | null = null;
     let error: string | null = null;
     let legacyCounts = { copies: 0, recovery: 0, mounts: 0 };
+    let legacyExportCount = 0;
     let recovery: readonly LegacyRecoverySnapshot[] = [];
     let legacyError: string | null = null;
     let importing = false;
@@ -188,6 +193,15 @@ export const RecoveredMaps = clientEntry(
       void countLegacyLocalData()
         .then((counts) => {
           legacyCounts = counts;
+          handle.update();
+        })
+        .catch((cause: unknown) => {
+          legacyError = message(cause);
+          handle.update();
+        });
+      void countLegacyExportSettings()
+        .then((count) => {
+          legacyExportCount = count;
           handle.update();
         })
         .catch((cause: unknown) => {
@@ -245,6 +259,22 @@ export const RecoveredMaps = clientEntry(
       }
     }
 
+    async function importExportPreferences() {
+      if (importing) return;
+      importing = true;
+      importStatus = "Importing Worldview export preferences…";
+      handle.update();
+      try {
+        const result = await importLegacyExportSettings();
+        importStatus = `Imported ${result.imported} export preferences; ${result.existing} were already in Tea.`;
+      } catch (cause) {
+        importStatus = message(cause);
+      } finally {
+        importing = false;
+        handle.update();
+      }
+    }
+
     async function importFile(file: File) {
       if (importing) return;
       importing = true;
@@ -286,11 +316,27 @@ export const RecoveredMaps = clientEntry(
             >
               Download Worldview maps and browser resources
             </button>
-            <p>
-              Local build history and export settings stay in Worldview. Save
-              builds you need there; relink project sync in Tea.
-            </p>
           </div>
+        ) : null}
+        {legacyExportCount > 0 ? (
+          <button
+            type="button"
+            disabled={importing}
+            mix={on("click", () => void importExportPreferences())}
+          >
+            Import {legacyExportCount} Worldview export preferences
+          </button>
+        ) : null}
+        {legacyCounts.copies +
+          legacyCounts.recovery +
+          legacyCounts.mounts +
+          legacyExportCount >
+        0 ? (
+          <p>
+            Local build history stays in Worldview. Save builds you need there;
+            choose export folders again on a new origin and relink project sync
+            in Tea.
+          </p>
         ) : null}
         <label for="import-worldview-copies-file">
           Import Worldview local work from a file
