@@ -1369,7 +1369,13 @@ try {
     });
   });
   await linkedPage.locator("#group-tools summary").click();
+  await linkedPage.locator("#group-name").fill("Review group");
   await linkedPage.locator("#group-selection").click();
+  await linkedPage.locator("#group-name").fill("Linked review");
+  await linkedPage.locator("#rename-group").click();
+  await linkedPage.waitForFunction(() =>
+    document.querySelector("#map-source")?.value.includes('"Linked review"'),
+  );
   await linkedPage.locator("#linked-duplicate-group").click();
   const linkedGroupId = await linkedPage.evaluate(
     () =>
@@ -1439,9 +1445,11 @@ try {
     ],
     undefined,
   );
+  await linkedPage.locator("#close-group").click();
+  assert.equal(await linkedPage.locator("#close-group").isDisabled(), true);
   await linkedPage.close();
   result.checks.push(
-    "linked group entity properties can stay independent through the inspector",
+    "Remix groups support rename, linked editing, and close with independent entity properties",
   );
   const siteToolPage = await browser.newPage();
   siteToolPage.on("pageerror", (error) => errors.push(error.message));

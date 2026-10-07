@@ -183,6 +183,10 @@ import {
   initEditorLayersPanel,
   type EditorLayerCommand,
 } from "./editor-layers-bridge.ts";
+import {
+  initEditorGroupsPanel,
+  type EditorGroupCommand,
+} from "./editor-groups-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -300,16 +304,6 @@ const csgButtons = {
 };
 const csgThickness =
   document.querySelector<HTMLInputElement>("#csg-thickness")!;
-const groupName = document.querySelector<HTMLInputElement>("#group-name")!;
-const groupButtons = {
-  create: document.querySelector<HTMLButtonElement>("#group-selection")!,
-  rename: document.querySelector<HTMLButtonElement>("#rename-group")!,
-  open: document.querySelector<HTMLButtonElement>("#open-group")!,
-  close: document.querySelector<HTMLButtonElement>("#close-group")!,
-  linked: document.querySelector<HTMLButtonElement>("#linked-duplicate-group")!,
-  unlink: document.querySelector<HTMLButtonElement>("#unlink-group")!,
-  ungroup: document.querySelector<HTMLButtonElement>("#ungroup-selection")!,
-};
 const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
 const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
 const fileInput = document.querySelector<HTMLInputElement>("#open-map")!;
@@ -449,6 +443,7 @@ let session = new EditorSession(createEmptyDocument());
 let openGroupId: string | null = null;
 let selectedLayerId: string | null = null;
 const layersPanel = initEditorLayersPanel(runLayerCommand);
+const groupsPanel = initEditorGroupsPanel(runGroupCommand);
 let renderer: EditorSourceRenderer | null = null;
 window.addEventListener(editorThemeEvent, () => {
   renderer?.setTheme(editorRenderTheme());
@@ -1555,19 +1550,18 @@ function refreshSelection() {
   csgButtons.hollow.disabled = brushIds.length === 0 || !editing;
   csgThickness.disabled = !editing;
   const selectedGroup = selectedEditorGroup(session.document, selection);
-  groupButtons.create.disabled = !selection || !!selection.faceId || !editing;
-  groupButtons.rename.disabled = !selectedGroup || !editing;
-  groupButtons.open.disabled =
-    !selectedGroup || !editing || selectedGroup.id === openGroupId;
-  groupButtons.close.disabled = !openGroupId;
-  groupButtons.linked.disabled =
-    !selectedGroup || !editing || selectedGroup.id === openGroupId;
-  groupButtons.unlink.disabled = !selectedGroup?.linkedGroupId || !editing;
-  groupButtons.ungroup.disabled = !selectedGroup || !editing;
-  groupName.disabled = !editing;
-  if (selectedGroup && document.activeElement !== groupName) {
-    groupName.value = selectedGroup.name;
-  }
+  groupsPanel.publish({
+    editing,
+    canGroupSelection: !!selection && !selection.faceId,
+    selectedGroup: selectedGroup
+      ? {
+          id: selectedGroup.id,
+          name: selectedGroup.name,
+          linked: !!selectedGroup.linkedGroupId,
+        }
+      : null,
+    openGroupId,
+  });
   refreshLayers();
   undoButton.disabled = hostedMap
     ? !hostedConnection?.canUndo()
@@ -2765,49 +2759,6 @@ for (const [operation, button] of Object.entries(csgButtons) as [
   });
 }
 
-groupButtons.create.addEventListener("click", () => {
-  if (!viewportCanEdit()) return;
-  const name = groupName.value.trim();
-  if (!name) {
-    status.textContent = "Enter a group name";
-    return;
-  }
-  try {
-    session.groupSelected(
-      name,
-      createSequentialIdFactory(`tea-group-${crypto.randomUUID()}`),
-      openGroupId,
-    );
-  } catch (error) {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  }
-});
-
-groupButtons.rename.addEventListener("click", () => {
-  if (!viewportCanEdit()) return;
-  const group = selectedEditorGroup(session.document, session.selection);
-  const name = groupName.value.trim();
-  if (!group || !name) {
-    status.textContent = "Select a group and enter a name";
-    return;
-  }
-  try {
-    session.renameGroup(group.id, name);
-  } catch (error) {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  }
-});
-
-groupButtons.open.addEventListener("click", () => {
-  const group = selectedEditorGroup(session.document, session.selection);
-  if (!group) return;
-  openGroupId = group.id;
-  session.setEditingGroup(group.id);
-  renderer?.setOpenGroupId(group.id);
-  session.select(null);
-  status.textContent = `Opened ${group.name} · objects outside the group are locked`;
-});
-
 function closeOpenGroup(selectGroup: boolean) {
   const group = deriveEditorGroups(session.document).find(
     (candidate) => candidate.id === openGroupId,
@@ -2819,51 +2770,72 @@ function closeOpenGroup(selectGroup: boolean) {
   return group;
 }
 
-groupButtons.close.addEventListener("click", () => {
-  const group = closeOpenGroup(true);
-  status.textContent = group ? `Closed ${group.name}` : "Closed group";
-});
-
-groupButtons.linked.addEventListener("click", () => {
-  if (!viewportCanEdit()) return;
-  try {
-    const grid = Number(gridSizeInput.value);
-    const groupId = session.linkedDuplicateSelected(
-      createSequentialIdFactory(`tea-linked-${crypto.randomUUID()}`),
-      [grid, grid, 0],
-      textureLockInput.checked,
-    );
-    status.textContent = groupId
-      ? "Created linked duplicate · edits to either opened group update both"
-      : "Select a closed group to make a linked duplicate";
-  } catch (error) {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  }
-});
-
-groupButtons.unlink.addEventListener("click", () => {
-  if (!viewportCanEdit()) return;
+function runGroupCommand(command: EditorGroupCommand) {
   const group = selectedEditorGroup(session.document, session.selection);
-  if (!group) return;
+  if (command.type === "open") {
+    if (!group) return;
+    openGroupId = group.id;
+    session.setEditingGroup(group.id);
+    renderer?.setOpenGroupId(group.id);
+    session.select(null);
+    status.textContent = `Opened ${group.name} · objects outside the group are locked`;
+    return;
+  }
+  if (command.type === "close") {
+    const closed = closeOpenGroup(true);
+    status.textContent = closed ? `Closed ${closed.name}` : "Closed group";
+    return;
+  }
+  if (!viewportCanEdit()) return;
   try {
-    if (session.unlinkGroup(group.id)) {
-      status.textContent = `Unlinked ${group.name} · its contents are independent`;
+    switch (command.type) {
+      case "create": {
+        const name = command.name.trim();
+        if (!name) {
+          status.textContent = "Enter a group name";
+          return;
+        }
+        session.groupSelected(
+          name,
+          createSequentialIdFactory(`tea-group-${crypto.randomUUID()}`),
+          openGroupId,
+        );
+        return;
+      }
+      case "rename": {
+        const name = command.name.trim();
+        if (!group || !name) {
+          status.textContent = "Select a group and enter a name";
+          return;
+        }
+        session.renameGroup(group.id, name);
+        return;
+      }
+      case "linked": {
+        const grid = Number(gridSizeInput.value);
+        const groupId = session.linkedDuplicateSelected(
+          createSequentialIdFactory(`tea-linked-${crypto.randomUUID()}`),
+          [grid, grid, 0],
+          textureLockInput.checked,
+        );
+        status.textContent = groupId
+          ? "Created linked duplicate · edits to either opened group update both"
+          : "Select a closed group to make a linked duplicate";
+        return;
+      }
+      case "unlink":
+        if (group && session.unlinkGroup(group.id)) {
+          status.textContent = `Unlinked ${group.name} · its contents are independent`;
+        }
+        return;
+      case "ungroup":
+        if (group) session.ungroupSelected(group.id);
+        return;
     }
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
-
-groupButtons.ungroup.addEventListener("click", () => {
-  if (!viewportCanEdit()) return;
-  const group = selectedEditorGroup(session.document, session.selection);
-  if (!group) return;
-  try {
-    session.ungroupSelected(group.id);
-  } catch (error) {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  }
-});
+}
 
 function editLayer(action: () => void) {
   if (!viewportCanEdit()) {

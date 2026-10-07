@@ -108,6 +108,8 @@ References can load another `.map` or snapshot the current document into a read-
 
 The Layers panel is a Remix client component. It displays layer membership and flags, while the editor session owns creation, ordering, visibility, locking, and source changes.
 
+The Groups panel is a Remix client component. The editor session still owns nested grouping, linked copies, open-group selection limits, source changes, and undo.
+
 The References panel is a Remix client component. Its scene list stays in the editor so a renderer created after a reference is added receives those overlays.
 
 The perspective viewport has a vertical FOV control from 20° to 120°. Its default is saved in this browser, can be reset to the current default, and can be restored to the factory 60° setting. The control is unavailable while the compiled preview is showing.

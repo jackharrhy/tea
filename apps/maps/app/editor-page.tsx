@@ -8,6 +8,7 @@ import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorFov } from "./assets/editor-fov-panel.tsx";
 import { EditorReferences } from "./assets/editor-references-panel.tsx";
 import { EditorLayers } from "./assets/editor-layers-panel.tsx";
+import { EditorGroups } from "./assets/editor-groups-panel.tsx";
 import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
@@ -694,40 +695,7 @@ export function EditorPage() {
                 selected brushes as cutters and removes them.
               </p>
             </details>
-            <details id="group-tools">
-              <summary>Groups</summary>
-              <div class="group-controls" role="group" aria-label="Groups">
-                <label for="group-name">Name</label>
-                <input
-                  id="group-name"
-                  type="text"
-                  value="Group"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <button id="group-selection" type="button" disabled>
-                  Group selection
-                </button>
-                <button id="rename-group" type="button" disabled>
-                  Rename
-                </button>
-                <button id="open-group" type="button" disabled>
-                  Open group
-                </button>
-                <button id="close-group" type="button" disabled>
-                  Close group
-                </button>
-                <button id="linked-duplicate-group" type="button" disabled>
-                  Linked duplicate
-                </button>
-                <button id="unlink-group" type="button" disabled>
-                  Unlink
-                </button>
-                <button id="ungroup-selection" type="button" disabled>
-                  Ungroup
-                </button>
-              </div>
-            </details>
+            <EditorGroups />
             <EditorLayers />
             <EditorReferences />
             <button id="undo" type="button" disabled>

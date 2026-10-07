@@ -39,6 +39,7 @@ const clientEntryFiles = {
   "editor-fov-panel.tsx": browserAssets.editorFov,
   "editor-references-panel.tsx": browserAssets.editorReferences,
   "editor-layers-panel.tsx": browserAssets.editorLayers,
+  "editor-groups-panel.tsx": browserAssets.editorGroups,
   "editor-export-settings-panel.tsx": browserAssets.editorExportSettings,
   "editor-detached-maps-panel.tsx": browserAssets.editorDetachedMaps,
   "hosted-projects.tsx": browserAssets.hostedProjects,
