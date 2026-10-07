@@ -23,10 +23,14 @@ const router = createRouter<AppContext>({
     render({
       assets: {
         async getScriptEntry(sourceId) {
-          if (!sourceId.endsWith("/app/assets/recovered-maps.tsx"))
-            throw new Error(`Unknown Maps client entry ${sourceId}`);
+          const href = sourceId.endsWith("/app/assets/recovered-maps.tsx")
+            ? browserAssets.recoveredMaps
+            : sourceId.endsWith("/app/assets/hosted-projects.tsx")
+              ? browserAssets.hostedProjects
+              : null;
+          if (!href) throw new Error(`Unknown Maps client entry ${sourceId}`);
           return {
-            href: browserAssets.recoveredMaps,
+            href,
             preloads: [],
             importMap: { imports: {} },
           };

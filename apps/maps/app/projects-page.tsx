@@ -2,6 +2,7 @@ import type { Handle } from "remix/component";
 import { browserAssets } from "./assets/build-manifest.ts";
 import { projectsStyles } from "./projects-styles.ts";
 import { RecentProjects, RecoveredMaps } from "./assets/recovered-maps.tsx";
+import { HostedProjects } from "./assets/hosted-projects.tsx";
 
 export function ProjectsPage(
   handle: Handle<{
@@ -43,19 +44,23 @@ export function ProjectsPage(
                 Projects
               </a>
             </nav>
-            <a
-              id="projects-login"
-              href="/auth/login?returnTo=/projects"
-              data-rmx-document
-              hidden
-            >
-              Sign in
-            </a>
+            {handle.props.projectId ? (
+              <a
+                id="projects-login"
+                href="/auth/login?returnTo=/projects"
+                data-rmx-document
+                hidden
+              >
+                Sign in
+              </a>
+            ) : null}
           </header>
           <div class="projects-content">
-            <p id="projects-status" role="status">
-              Loading projects…
-            </p>
+            {handle.props.projectId ? (
+              <p id="projects-status" role="status">
+                Loading projects…
+              </p>
+            ) : null}
             {!handle.props.projectId ? (
               <>
                 <section class="projects-intro">
@@ -66,29 +71,7 @@ export function ProjectsPage(
                   </p>
                 </section>
                 <div class="projects-columns">
-                  <section aria-labelledby="hosted-projects-title">
-                    <h2 id="hosted-projects-title">Hosted projects</h2>
-                    <div id="hosted-projects-list" class="project-list" />
-                    <details id="projects-create" hidden>
-                      <summary>Create hosted project</summary>
-                      <form id="projects-create-form">
-                        <label for="projects-create-name">Project name</label>
-                        <input
-                          id="projects-create-name"
-                          name="name"
-                          required
-                          maxLength={120}
-                        />
-                        <label for="projects-create-game">Game</label>
-                        <select id="projects-create-game" name="game">
-                          <option value="quake">Quake</option>
-                          <option value="goldsrc">GoldSrc</option>
-                          <option value="gower">Gower Complex</option>
-                        </select>
-                        <button type="submit">Create project</button>
-                      </form>
-                    </details>
-                  </section>
+                  <HostedProjects />
                   <section aria-labelledby="local-projects-title">
                     <h2 id="local-projects-title">Recent local projects</h2>
                     <RecentProjects />
@@ -282,8 +265,11 @@ export function ProjectsPage(
             )}
           </div>
         </main>
-        <script type="module" src={browserAssets.entry}></script>
-        <script type="module" src={browserAssets.projects}></script>
+        {!handle.props.projectId ? (
+          <script type="module" src={browserAssets.entry}></script>
+        ) : (
+          <script type="module" src={browserAssets.projects}></script>
+        )}
       </body>
     </html>
   );

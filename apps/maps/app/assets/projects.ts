@@ -1,13 +1,9 @@
 import {
   HostedProjectResponseSchema,
-  HostedProjectsResponseSchema,
   HostedSessionResponseSchema,
   type HostedProject,
 } from "@tea/maps-protocol";
-import {
-  createHostedMap,
-  createHostedProject,
-} from "./editor-hosted-create.ts";
+import { createHostedMap } from "./editor-hosted-create.ts";
 import { openLinkedLocalProject } from "./project-local.ts";
 import { readHostedApi } from "./hosted-api.ts";
 import { showProjectAccess } from "./project-access.ts";
@@ -39,62 +35,6 @@ function row(name: string, detail: string): HTMLElement {
   subtitle.textContent = detail;
   item.append(title, subtitle);
   return item;
-}
-
-async function showHostedProjects() {
-  const session = await readHostedApi(
-    "/api/session",
-    HostedSessionResponseSchema,
-  );
-  if (!session.user) {
-    login.hidden = false;
-    status.textContent = "Sign in to browse hosted projects";
-    return;
-  }
-  const response = await readHostedApi(
-    "/api/projects",
-    HostedProjectsResponseSchema,
-  );
-  const list = document.querySelector<HTMLElement>("#hosted-projects-list")!;
-  if (!response.projects.length) list.textContent = "No hosted projects yet";
-  for (const project of response.projects) {
-    const link = document.createElement("a");
-    link.dataset.rmxDocument = "";
-    link.className = "project-row";
-    link.href = `/projects/${encodeURIComponent(project.id)}`;
-    const title = document.createElement("strong");
-    title.textContent = project.name;
-    const detail = document.createElement("small");
-    detail.textContent = `${gameNames[project.game]} · ${project.role}`;
-    link.append(title, detail);
-    list.append(link);
-  }
-  const create =
-    document.querySelector<HTMLDetailsElement>("#projects-create")!;
-  const form = document.querySelector<HTMLFormElement>(
-    "#projects-create-form",
-  )!;
-  create.hidden = false;
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const submit = form.querySelector<HTMLButtonElement>(
-      'button[type="submit"]',
-    )!;
-    submit.disabled = true;
-    status.textContent = "Creating hosted project";
-    try {
-      const data = new FormData(form);
-      const project = await createHostedProject(
-        String(data.get("name") ?? ""),
-        String(data.get("game") ?? "quake"),
-      );
-      location.href = `/projects/${encodeURIComponent(project.id)}`;
-    } catch (error) {
-      status.textContent = message(error);
-      submit.disabled = false;
-    }
-  });
-  status.textContent = `Signed in as ${session.user.displayName}`;
 }
 
 function showMaps(project: HostedProject) {
@@ -219,12 +159,6 @@ async function showProject() {
   status.textContent = "";
 }
 
-if (projectId) {
-  void showProject().catch((error: unknown) => {
-    status.textContent = message(error);
-  });
-} else {
-  void showHostedProjects().catch((error: unknown) => {
-    status.textContent = `Hosted projects are unavailable: ${message(error)}`;
-  });
-}
+void showProject().catch((error: unknown) => {
+  status.textContent = message(error);
+});
