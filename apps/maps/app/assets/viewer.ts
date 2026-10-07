@@ -11,10 +11,9 @@ import { sourceName } from "./world-input.ts";
 
 defineWorldViewElement();
 
-const viewport = document.querySelector<HTMLElement>("#viewport")!;
-const viewer = document.createElement("world-view") as WorldViewElement;
-viewer.setAttribute("controls", "walk");
-viewport.append(viewer);
+const viewer = document.querySelector<WorldViewElement>(
+  "#viewport world-view",
+)!;
 let initialCamera: CameraState | undefined;
 window.dispatchEvent(new Event("tea-maps-viewer-element-ready"));
 

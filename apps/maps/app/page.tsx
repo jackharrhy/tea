@@ -51,6 +51,7 @@ export function MapsPage() {
           <section class="viewport-panel" aria-label="Map viewer">
             <ViewerToolbar />
             <div id="viewport" class="viewport">
+              <world-view controls="walk" />
               <div id="reticle" class="reticle" aria-hidden="true" hidden></div>
               <ViewerDropTarget />
             </div>
