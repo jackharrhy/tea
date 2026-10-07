@@ -8,7 +8,7 @@ const mcpAuth = {
   clientSecret: "test-secret",
 };
 
-function fourmFetch(admin: boolean): typeof fetch {
+function fourmFetch(admin: boolean, scope = "worldview:admin"): typeof fetch {
   return async (input) => {
     const url = String(input);
     if (url.endsWith("/oauth/introspect"))
@@ -17,7 +17,7 @@ function fourmFetch(admin: boolean): typeof fetch {
         principal_type: "user",
         sub: "mcp-user",
         aud: `${mcpAuth.publicUrl}/mcp`,
-        scope: "openid worldview:admin",
+        scope: `openid ${scope}`,
         exp: Math.floor(Date.now() / 1000) + 600,
       });
     if (url.endsWith("/oauth/userinfo"))
@@ -148,5 +148,47 @@ describe("Tea Maps MCP", () => {
     expect((await call(app.origin, "tea_maps_list_projects", {})).status).toBe(
       403,
     );
+  });
+
+  test("uses a configured Tea scope for discovery and token checks", async () => {
+    const config = { ...mcpAuth, scope: "tea_maps:admin" };
+    const app = await fixture(
+      fourmFetch(true, "tea_maps:admin"),
+      undefined,
+      undefined,
+      config,
+    );
+    mcpAuth.publicUrl = app.origin;
+    config.publicUrl = app.origin;
+    const metadata = await fetch(
+      `${app.origin}/.well-known/oauth-protected-resource/mcp`,
+    );
+    expect((await metadata.json()).scopes_supported).toEqual([
+      "openid",
+      "tea_maps:admin",
+    ]);
+    const challenge = await fetch(`${app.origin}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    expect(challenge.headers.get("www-authenticate")).toContain(
+      'scope="openid tea_maps:admin"',
+    );
+    expect((await call(app.origin, "tea_maps_list_projects", {})).status).toBe(
+      200,
+    );
+
+    const legacyOnly = await fixture(
+      fourmFetch(true),
+      undefined,
+      undefined,
+      config,
+    );
+    mcpAuth.publicUrl = legacyOnly.origin;
+    config.publicUrl = legacyOnly.origin;
+    expect(
+      (await call(legacyOnly.origin, "tea_maps_list_projects", {})).status,
+    ).toBe(401);
   });
 });

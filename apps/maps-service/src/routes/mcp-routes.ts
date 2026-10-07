@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  mcpResourceUrl,
-  requireMcpAdmin,
-  WORLDVIEW_MCP_SCOPE,
-} from "../mcp-auth.js";
+import { mcpResourceUrl, mcpScope, requireMcpAdmin } from "../mcp-auth.js";
 import { mcpOperationsByName, mcpToolDescriptions } from "../mcp-operations.js";
 import { ServiceHttpError } from "../service-http.js";
 import { defineWebRoute } from "../service-routing.js";
@@ -29,6 +25,7 @@ function rpcResponse(body: unknown): Response {
 }
 
 export function createMcpRoutes(options: WorldviewServiceOptions) {
+  const scope = mcpScope(options.mcpAuth);
   return [
     defineWebRoute(
       "mcp-protected-resource",
@@ -43,7 +40,7 @@ export function createMcpRoutes(options: WorldviewServiceOptions) {
             resource: mcpResourceUrl(options.mcpAuth),
             authorization_servers: [options.mcpAuth.fourmUrl],
             bearer_methods_supported: ["header"],
-            scopes_supported: ["openid", WORLDVIEW_MCP_SCOPE],
+            scopes_supported: ["openid", scope],
           }),
           {
             status: 200,
@@ -86,7 +83,7 @@ export function createMcpRoutes(options: WorldviewServiceOptions) {
         if (error.status === 401) {
           headers.set(
             "WWW-Authenticate",
-            `Bearer resource_metadata="${config.publicUrl}/.well-known/oauth-protected-resource/mcp", scope="openid ${WORLDVIEW_MCP_SCOPE}"`,
+            `Bearer resource_metadata="${config.publicUrl}/.well-known/oauth-protected-resource/mcp", scope="openid ${scope}"`,
           );
         }
         return webError(error.status, error.message, headers);

@@ -138,6 +138,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
               "tea-maps-service",
             ),
             clientSecret: process.env.TEA_MAPS_FOURM_INTROSPECTION_SECRET,
+            ...(process.env.TEA_MAPS_MCP_SCOPE
+              ? { scope: process.env.TEA_MAPS_MCP_SCOPE }
+              : {}),
           },
         }
       : {}),

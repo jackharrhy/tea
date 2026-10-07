@@ -2,13 +2,21 @@ import { z } from "zod";
 import type { WorldviewDatabase, WorldviewUser } from "./database.js";
 import { ServiceHttpError } from "./service-http.js";
 
-export const WORLDVIEW_MCP_SCOPE = "worldview:admin";
+const DEFAULT_MCP_SCOPE = "worldview:admin";
 
 export interface WorldviewMcpAuthConfig {
   readonly fourmUrl: string;
   readonly publicUrl: string;
   readonly clientId: string;
   readonly clientSecret: string;
+  readonly scope?: string;
+}
+
+export function mcpScope(config?: WorldviewMcpAuthConfig): string {
+  const scope = config?.scope ?? DEFAULT_MCP_SCOPE;
+  if (!/^[a-z][a-z0-9._-]*:[a-z][a-z0-9._-]*$/.test(scope))
+    throw new Error("Invalid Tea Maps MCP scope");
+  return scope;
 }
 
 const IntrospectionSchema = z.looseObject({
@@ -71,7 +79,7 @@ export async function requireMcpAdmin(
     value.principal_type !== "user" ||
     !value.sub ||
     !audiences.includes(mcpResourceUrl(config)) ||
-    !value.scope?.split(/\s+/).includes(WORLDVIEW_MCP_SCOPE) ||
+    !value.scope?.split(/\s+/).includes(mcpScope(config)) ||
     !value.scope.split(/\s+/).includes("openid") ||
     !value.exp ||
     value.exp <= Math.floor(Date.now() / 1000)
