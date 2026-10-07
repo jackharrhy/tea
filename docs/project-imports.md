@@ -18,7 +18,7 @@ At that baseline, `npm run ref:check` and `npm run radio:check` passed. Both Cel
 
 A route-registration audit of the Worldview service at that baseline found 29 routes. Tea's Maps service retains every route ID with the same HTTP method and path pattern, and adds two checkpoint reads (`get-map-checkpoint-source` and `list-map-checkpoints`). This checks the public route surface; the hosted browser flow and service tests cover behavior separately.
 
-Tea runs a focused WebGPU browser check for both Maps surfaces: brush creation, canvas selection and dragging, Undo, and a Quake-to-GoldSrc BSP switch in the viewer. This adds renderer evidence beyond the WebGPU-free hosted flow. Worldview's wider GPU interaction and owned-game corpus cases remain a separate parity gate before a replacement decision.
+Tea runs a focused WebGPU browser check for both Maps surfaces: brush creation, canvas selection and dragging, Undo, a Quake-to-GoldSrc BSP switch, overview PNG export, walkability sidecar round-trip, and a generated BSP2 load. This adds renderer evidence beyond the WebGPU-free hosted flow. Worldview's wider GPU interaction and owned-game corpus cases remain a separate parity gate before a replacement decision.
 
 ## Cloudflare configuration
 

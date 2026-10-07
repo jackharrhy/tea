@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -139,6 +140,43 @@ try {
       .evaluate((element) => element.viewer?.diagnostics?.format),
     "goldsrc-bsp30",
   );
+  await page.locator("#download-overview:enabled").waitFor();
+  const overviewDownload = page.waitForEvent("download");
+  await page.locator("#download-overview").click();
+  const overview = await overviewDownload;
+  assert.match(overview.suggestedFilename(), /-overview\.png$/);
+  const overviewPath = await overview.path();
+  assert.ok(overviewPath, "Overview download has no file");
+  const png = await readFile(overviewPath);
+  assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.ok(png.byteLength > 1_000, "Overview image is unexpectedly small");
+  await page.locator("#walkability-spacing").fill("32");
+  await page.locator("#generate-walkability:enabled").click();
+  await page.locator("#download-walkability:enabled").waitFor();
+  const graphDownload = page.waitForEvent("download");
+  await page.locator("#download-walkability").click();
+  const graph = await graphDownload;
+  assert.match(graph.suggestedFilename(), /\.tea-maps-walkability\.json$/);
+  const graphPath = await graph.path();
+  assert.ok(graphPath, "Walkability download has no file");
+  const sidecar = JSON.parse(await readFile(graphPath, "utf8"));
+  assert.equal(sidecar.format, "worldview-walkability");
+  assert.ok(sidecar.nodes.length > 0, "Walkability graph has no nodes");
+  await page.locator("#clear-walkability").click();
+  assert.equal(await page.locator("#download-walkability").isDisabled(), true);
+  await page.locator("#walkability-file").setInputFiles(graphPath);
+  await page.locator("#download-walkability:enabled").waitFor();
+  await page.goto(`${origin}/?example=quake-bsp2`);
+  await page
+    .locator("#viewer-status")
+    .getByText(/^Ready/)
+    .waitFor();
+  assert.equal(
+    await page
+      .locator("#viewport world-view")
+      .evaluate((element) => element.viewer?.diagnostics?.format),
+    "quake-bsp2",
+  );
   assert.deepEqual(pageErrors, []);
   console.log(
     JSON.stringify({
@@ -148,6 +186,8 @@ try {
         "Top viewport selects and drags a brush",
         "Undo restores the pre-drag source",
         "WebGPU viewer switches from Quake to GoldSrc BSP",
+        "Overview exports a PNG and walkability sidecar round-trips",
+        "WebGPU viewer opens a generated BSP2 map",
       ],
     }),
   );
