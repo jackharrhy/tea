@@ -66,6 +66,11 @@ try {
   });
   await page.addInitScript((bspBase64) => {
     const originalFetch = window.fetch.bind(window);
+    let releaseCompile;
+    const compileReleased = new Promise((resolve) => {
+      releaseCompile = resolve;
+    });
+    window.teaMapsReleaseGpuCompile = () => releaseCompile();
     window.teaMapsGpuCompilerRequests = [];
     window.fetch = async (input, init) => {
       const url = new URL(input instanceof Request ? input.url : input);
@@ -87,6 +92,7 @@ try {
       if (url.pathname === "/compile") {
         const request = JSON.parse(init.body);
         window.teaMapsGpuCompilerRequests.push(request);
+        await compileReleased;
         return Response.json({
           status: "succeeded",
           buildId: "gpu-smoke-build",
@@ -175,7 +181,30 @@ try {
   assert.equal(await page.locator("#editor-inspector").isVisible(), false);
   await page.locator("#toggle-inspector").click();
   assert.equal(await page.locator("#editor-inspector").isVisible(), true);
+  const cameraAtBuild = await page.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .perspectiveCamera,
+  );
   await page.locator("#build-map:enabled").click();
+  await page.waitForFunction(
+    () => window.teaMapsGpuCompilerRequests.length === 1,
+  );
+  const perspectiveBounds = await page.locator("#perspective").boundingBox();
+  assert.ok(perspectiveBounds, "Perspective viewport has no bounds");
+  const centerX = perspectiveBounds.x + perspectiveBounds.width / 2;
+  const centerY = perspectiveBounds.y + perspectiveBounds.height / 2;
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down({ button: "right" });
+  await page.mouse.move(centerX + 90, centerY - 45, { steps: 5 });
+  await page.mouse.up({ button: "right" });
+  const cameraWhileCompiling = await page.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .perspectiveCamera,
+  );
+  assert.notEqual(cameraWhileCompiling.yaw, cameraAtBuild.yaw);
+  await page.evaluate(() => window.teaMapsReleaseGpuCompile());
   await page
     .locator("#build-status")
     .getByText("Compiled preview ready")
@@ -189,6 +218,13 @@ try {
     compiledDiagnostics.triangles > 0,
     "Compiled preview has no rendered faces",
   );
+  const compiledCamera = await compiled.evaluate(
+    (element) => element.viewer?.camera,
+  );
+  assert.deepEqual(compiledCamera.position, cameraAtBuild.position);
+  assert.equal(compiledCamera.yaw, cameraAtBuild.yaw);
+  assert.equal(compiledCamera.pitch, cameraAtBuild.pitch);
+  assert.equal(compiledCamera.fieldOfView, cameraAtBuild.fieldOfViewDegrees);
   assert.equal(await compiled.getAttribute("data-active"), "true");
   await page.locator("#toggle-compiled").click();
   assert.equal(await compiled.getAttribute("data-active"), "false");
@@ -344,7 +380,7 @@ try {
         "Top viewport selects and drags a brush",
         "Undo restores the pre-drag source",
         "Inspector collapses and stays closed after reload",
-        "Compiled BSP preview renders in the WebGPU editor and toggles with source",
+        "Compiled BSP preview keeps the camera captured before build and toggles with source",
         "WebGPU viewer switches from Quake to GoldSrc BSP",
         "Overview exports a PNG and walkability sidecar round-trips",
         "WebGPU viewer opens a generated BSP2 map",
