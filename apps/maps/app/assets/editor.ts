@@ -2116,32 +2116,43 @@ async function openHostedMap(map: HostedMapLaunch): Promise<boolean> {
   return true;
 }
 
-function openDetachedCopy(copy: {
-  document: MapDocument;
-  source: MapSourceState;
-  fileName: string;
-  profile: WorldviewGameProfile;
-}) {
+function openDetachedCopy(
+  copy: {
+    documentKey: string;
+    document: MapDocument;
+    source: MapSourceState;
+    fileName: string;
+    profile: WorldviewGameProfile;
+  },
+  recovery?: EditorVersion | null,
+) {
+  const parsed = recovery ? parseMapSource(recovery.committedSource) : null;
   leaveHostedMap();
   openedFile = null;
   openedFingerprint = null;
   setProject(null);
-  localGame = copy.profile;
-  documentId = crypto.randomUUID();
-  mapName = copy.fileName;
+  localGame = recovery?.game ?? copy.profile;
+  documentId = copy.documentKey;
+  mapName = recovery?.fileName ?? copy.fileName;
   savedSource = "";
-  setMap(copy.document, copy.source);
-  source.value = copy.source.originalText;
+  setMap(
+    recovery?.document ?? copy.document,
+    recovery?.sourceState ?? parsed?.source ?? copy.source,
+  );
+  source.value = recovery?.workingSource ?? copy.source.originalText;
   persistDraft();
-  status.textContent = `Local recovery copy ${copy.fileName} · save to a file when ready`;
+  status.textContent = `Local recovery copy ${mapName} · save to a file when ready`;
 }
 
 async function openDetachedCopyAfterConfirmation(
   copy: DetachedHostedMap,
 ): Promise<boolean> {
+  const recovery = await latestEditorVersion(copy.documentKey).catch(
+    () => null,
+  );
   if (!(await mayReplaceMap())) return false;
   persistDraft();
-  openDetachedCopy(copy);
+  openDetachedCopy(copy, recovery);
   await saveQueue;
   return true;
 }

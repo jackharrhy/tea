@@ -8,7 +8,7 @@ export const browserAssets = import.meta.env.DEV
     }
   : {
       viewer: "/assets/viewer-VG56QUBI.js",
-      editor: "/assets/editor-WCLJD6EX.js",
+      editor: "/assets/editor-BTDKKJX4.js",
       projects: "/assets/projects-KG5U7FHQ.js",
       newMap: "/assets/newMap-62DRSWOS.js",
     };

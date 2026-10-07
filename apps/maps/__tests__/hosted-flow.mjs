@@ -909,6 +909,24 @@ try {
   assert.equal(detachedCopy.inspection.dirty, true);
   assert.equal(detachedCopy.source.text, detachedSource);
   result.checks.push("saved detached hosted edits reopen as a local copy");
+  await page.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [48, 48, 48],
+      material: "STONE",
+    });
+  });
+  await page.locator("#show-versions").click();
+  await page.locator("#versions-dialog").waitFor({ state: "visible" });
+  await page
+    .locator("#versions-list .version-row")
+    .filter({ hasText: "recovered-hosted.map · Revision 1" })
+    .waitFor();
+  await page.locator("#close-versions").click();
   await page.goto(`${mapsOrigin}/projects`);
   const recoveredLink = page
     .locator("#detached-maps-list a")
@@ -929,8 +947,14 @@ try {
   if (await page.locator("#switch-map-dialog").isVisible())
     await page.getByRole("button", { name: "Discard" }).click();
   await page.getByText(/Local recovery copy recovered-hosted.map/).waitFor();
+  const reopenedCopy = await page.evaluate(() =>
+    window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}),
+  );
+  assert.equal(reopenedCopy.counts.brushes, 1);
   assert.equal(new URL(page.url()).searchParams.has("detachedMap"), false);
-  result.checks.push("Projects page links to locally stored recovery copies");
+  result.checks.push(
+    "Projects page reopens the latest local recovery revision",
+  );
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {
