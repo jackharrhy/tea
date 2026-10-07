@@ -201,6 +201,10 @@ import { initEditorToolSettings } from "./editor-tool-settings-bridge.ts";
 import { initEditorHistory } from "./editor-history-bridge.ts";
 import { initEditorEntityCreation } from "./editor-entity-creation-bridge.ts";
 import { initEditorTransforms } from "./editor-transforms-bridge.ts";
+import {
+  initEditorGeometry,
+  type CsgOperation,
+} from "./editor-geometry-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -286,14 +290,7 @@ const transforms = initEditorTransforms({
   shear: shearSelection,
   flip: flipSelection,
 });
-const csgButtons = {
-  merge: document.querySelector<HTMLButtonElement>("#csg-merge")!,
-  intersect: document.querySelector<HTMLButtonElement>("#csg-intersect")!,
-  subtract: document.querySelector<HTMLButtonElement>("#csg-subtract")!,
-  hollow: document.querySelector<HTMLButtonElement>("#csg-hollow")!,
-};
-const csgThickness =
-  document.querySelector<HTMLInputElement>("#csg-thickness")!;
+const geometry = initEditorGeometry({ addBox, runCsg });
 const historyControls = initEditorHistory({
   undo: () => void runHistoryAction("undo"),
   redo: () => void runHistoryAction("redo"),
@@ -301,9 +298,6 @@ const historyControls = initEditorHistory({
 const projectContext = initEditorProjectContext(openProjectMap);
 const perspectiveLabel =
   document.querySelector<HTMLElement>("#perspective-label")!;
-const materialChoices =
-  document.querySelector<HTMLDataListElement>("#material-choices")!;
-const boxMaterial = document.querySelector<HTMLInputElement>("#box-material")!;
 const clipTools = document.querySelector<HTMLElement>("#clip-tools")!;
 const clipPointsLabel = document.querySelector<HTMLElement>("#clip-points")!;
 const applyClipButton =
@@ -627,7 +621,7 @@ const materialBrowser = initEditorMaterialBrowser({
     return applyWorkingSource();
   },
   activate: (name) => {
-    boxMaterial.value = name;
+    geometry.setMaterial(name);
     selectedMaterial.value = name;
     applyMaterialButton.disabled = selectedMaterial.disabled || !name.trim();
   },
@@ -712,7 +706,7 @@ const shapeTool = createEditorShapes({
   renderer: () => renderer,
   viewState: () => rendererViewState,
   tool: () => toolSettings.state.tool,
-  material: () => boxMaterial.value.trim() || "DEV/GRID",
+  material: () => geometry.state.material.trim() || "DEV/GRID",
   openGroupEntityId: () =>
     deriveEditorGroups(session.document).find(
       (group) => group.id === openGroupId,
@@ -1046,12 +1040,11 @@ function refreshResourceCatalog() {
       resources?.definitions,
     ).bounds,
   );
-  materialChoices.replaceChildren();
-  for (const material of resources?.materials ?? []) {
-    const option = document.createElement("option");
-    option.value = material.name;
-    materialChoices.append(option);
-  }
+  geometry.update({
+    materialChoices: (resources?.materials ?? []).map(
+      (material) => material.name,
+    ),
+  });
   const definitions = resources?.definitions.all() ?? [];
   entityCreation.update({
     pointClasses: definitions
@@ -1516,11 +1509,13 @@ function refreshSelection() {
           entity?.properties.classname?.toLowerCase() === "worldspawn",
       ),
   });
-  csgButtons.merge.disabled = brushIds.length < 2 || !editing;
-  csgButtons.intersect.disabled = brushIds.length < 2 || !editing;
-  csgButtons.subtract.disabled = brushIds.length === 0 || !editing;
-  csgButtons.hollow.disabled = brushIds.length === 0 || !editing;
-  csgThickness.disabled = !editing;
+  geometry.update({
+    mergeDisabled: brushIds.length < 2 || !editing,
+    intersectDisabled: brushIds.length < 2 || !editing,
+    subtractDisabled: brushIds.length === 0 || !editing,
+    hollowDisabled: brushIds.length === 0 || !editing,
+    thicknessDisabled: !editing,
+  });
   const selectedGroup = selectedEditorGroup(session.document, selection);
   groupsPanel.publish({
     editing,
@@ -1600,7 +1595,7 @@ function refreshClipPreview() {
         clipPlanePoints,
         clipMode,
         createSequentialIdFactory(`tea-clip-${crypto.randomUUID()}`),
-        boxMaterial.value.trim() || undefined,
+        geometry.state.material.trim() || undefined,
       );
     } catch (error) {
       status.textContent =
@@ -1683,7 +1678,7 @@ function handleHullCreate(event: EditorHullCreateEvent) {
     hullPrefix ??= `tea-hull-${crypto.randomUUID()}`;
     const brush = createConvexHullBrush(
       event.points,
-      boxMaterial.value.trim() || "DEV/GRID",
+      geometry.state.material.trim() || "DEV/GRID",
       createSequentialIdFactory(hullPrefix),
     );
     const openGroup = deriveEditorGroups(session.document).find(
@@ -1924,8 +1919,7 @@ function setHostedEditability() {
     toolDisabled: !renderer || (readOnly && !hostedConnection),
   });
   source.disabled = readOnly;
-  document.querySelector<HTMLButtonElement>("#add-box")!.disabled =
-    readOnly && !hostedConnection;
+  geometry.update({ addBoxDisabled: readOnly && !hostedConnection });
   entityCreation.update({ addPointDisabled: readOnly && !hostedConnection });
   documentControls.update({
     saveDisabled: readOnly,
@@ -2675,64 +2669,57 @@ async function exampleMapFromControls() {
   setMap(createStarterDocument());
 }
 
-document
-  .querySelector<HTMLButtonElement>("#add-box")!
-  .addEventListener("click", () => {
-    if (!applyWorkingSource()) return;
-    try {
-      const ids = createSequentialIdFactory(`tea-${crypto.randomUUID()}`);
-      const brush = createBoxBrush(
-        [-32, -32, 0],
-        [32, 32, 64],
-        boxMaterial.value.trim() || "DEV/GRID",
-        ids,
-      );
-      session.commitCreationCandidate(session.createBrushCandidate(brush));
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
+function addBox() {
+  if (geometry.state.addBoxDisabled || !applyWorkingSource()) return;
+  try {
+    const ids = createSequentialIdFactory(`tea-${crypto.randomUUID()}`);
+    const brush = createBoxBrush(
+      [-32, -32, 0],
+      [32, 32, 64],
+      geometry.state.material.trim() || "DEV/GRID",
+      ids,
+    );
+    session.commitCreationCandidate(session.createBrushCandidate(brush));
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
+}
 
-for (const [operation, button] of Object.entries(csgButtons) as [
-  keyof typeof csgButtons,
-  HTMLButtonElement,
-][]) {
-  button.addEventListener("click", () => {
-    if (!viewportCanEdit()) return;
-    const thickness = csgThickness.valueAsNumber;
-    if (
-      operation === "hollow" &&
-      (!Number.isFinite(thickness) || thickness <= 0)
-    ) {
-      status.textContent = "Hollow wall thickness must be positive";
-      return;
-    }
-    try {
-      const ids = createSequentialIdFactory(
-        `tea-csg-${operation}-${crypto.randomUUID()}`,
-      );
-      const changed =
-        operation === "merge"
-          ? session.csgConvexMergeSelected(
-              ids,
-              boxMaterial.value.trim() || undefined,
-            )
-          : operation === "intersect"
-            ? session.csgIntersectSelected(ids)
-            : operation === "subtract"
-              ? session.csgSubtractSelected(ids)
-              : session.csgHollowSelected(thickness, ids);
-      status.textContent = changed
-        ? `${operation === "merge" ? "Convex merge" : operation[0]!.toUpperCase() + operation.slice(1)} applied · Undo restores the previous brushes`
-        : operation === "merge" || operation === "intersect"
-          ? "Select at least two brushes"
-          : "Select one or more brushes";
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
+function runCsg(operation: CsgOperation) {
+  if (geometry.state[`${operation}Disabled`] || !viewportCanEdit()) return;
+  const thickness = geometry.state.thickness.trim()
+    ? Number(geometry.state.thickness)
+    : Number.NaN;
+  if (
+    operation === "hollow" &&
+    (!Number.isFinite(thickness) || thickness <= 0)
+  ) {
+    status.textContent = "Hollow wall thickness must be positive";
+    return;
+  }
+  try {
+    const ids = createSequentialIdFactory(
+      `tea-csg-${operation}-${crypto.randomUUID()}`,
+    );
+    const changed =
+      operation === "merge"
+        ? session.csgConvexMergeSelected(
+            ids,
+            geometry.state.material.trim() || undefined,
+          )
+        : operation === "intersect"
+          ? session.csgIntersectSelected(ids)
+          : operation === "subtract"
+            ? session.csgSubtractSelected(ids)
+            : session.csgHollowSelected(thickness, ids);
+    status.textContent = changed
+      ? `${operation === "merge" ? "Convex merge" : operation[0]!.toUpperCase() + operation.slice(1)} applied · Undo restores the previous brushes`
+      : operation === "merge" || operation === "intersect"
+        ? "Select at least two brushes"
+        : "Select one or more brushes";
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
 }
 
 function closeOpenGroup(selectGroup: boolean) {
@@ -4245,7 +4232,7 @@ async function showVersionsFromControls() {
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(.transform-nudge, #delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #add-point-entity, #move-selection, #rotate-selection, #scale-selection, #shear-selection, #flip-x, #flip-y, #flip-z, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all, #repeat-commands, #clear-repeat-commands, #paste-original)",
+  ".editor-toolbar button:not(.transform-nudge, #add-box, #csg-merge, #csg-intersect, #csg-subtract, #csg-hollow, #delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #add-point-entity, #move-selection, #rotate-selection, #scale-selection, #shear-selection, #flip-x, #flip-y, #flip-z, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all, #repeat-commands, #clear-repeat-commands, #paste-original)",
 )) {
   button.disabled = false;
 }

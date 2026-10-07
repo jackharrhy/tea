@@ -1522,6 +1522,84 @@ try {
   result.checks.push(
     "Remix tool, grid, and texture-lock controls update live editor settings",
   );
+  const geometryPage = await browser.newPage();
+  await installSiteToolMock(geometryPage);
+  await geometryPage.goto(`${mapsOrigin}/editor`);
+  await geometryPage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  await geometryPage.locator("#box-material").fill("BRICK");
+  await geometryPage.locator("#add-box:not([disabled])").click();
+  const firstGeometryBrush = await geometryPage.evaluate(() => {
+    const brushes = window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "brush" }).objects;
+    const brush = brushes.find((candidate) =>
+      candidate.materials.includes("BRICK"),
+    );
+    if (!brush) throw new Error("Add box did not use the selected texture");
+    return brush.id;
+  });
+  const secondGeometryBrush = await geometryPage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    return tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [32, -32, 0],
+      max: [96, 32, 64],
+      material: "STONE",
+    }).brushId;
+  });
+  await geometryPage.evaluate(
+    (brushIds) => {
+      const tools = window.teaMapsTestTools;
+      const before = tools.get("tea_maps_inspect_editor").execute({});
+      tools.get("tea_maps_select").execute({
+        expectedDocumentId: before.documentId,
+        expectedRevision: before.revision,
+        mode: "objects",
+        brushIds,
+      });
+    },
+    [firstGeometryBrush, secondGeometryBrush],
+  );
+  await geometryPage.locator("#csg-tools summary").click();
+  await geometryPage.locator("#csg-merge:not([disabled])").click();
+  await geometryPage.getByText(/Convex merge applied/).waitFor();
+  const merged = await geometryPage.evaluate(
+    () =>
+      window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "brush" }).objects,
+  );
+  assert.equal(merged.length, 1);
+  assert.ok(merged[0].materials.includes("BRICK"));
+  const beforeInvalidHollow = await geometryPage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await geometryPage.locator("#csg-thickness").fill("0");
+  await geometryPage.locator("#csg-hollow:not([disabled])").click();
+  await geometryPage
+    .getByText("Hollow wall thickness must be positive")
+    .waitFor();
+  assert.equal(
+    await geometryPage.evaluate(
+      () =>
+        window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+          .revision,
+    ),
+    beforeInvalidHollow,
+  );
+  await geometryPage.locator("#csg-thickness").fill("8");
+  await geometryPage.locator("#csg-hollow").click();
+  await geometryPage.getByText(/Hollow applied/).waitFor();
+  await geometryPage.close();
+  result.checks.push(
+    "Remix brush texture, Add box, convex merge, and Hollow controls use editor transactions",
+  );
   const entityPage = await browser.newPage();
   await installSiteToolMock(entityPage);
   await entityPage.goto(`${mapsOrigin}/editor`);

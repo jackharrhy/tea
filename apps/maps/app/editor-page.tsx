@@ -20,6 +20,7 @@ import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
 import { EditorHistory } from "./assets/editor-history-panel.tsx";
 import { EditorEntityCreation } from "./assets/editor-entity-creation-panel.tsx";
 import { EditorTransforms } from "./assets/editor-transforms-panel.tsx";
+import { EditorGeometry, EditorCsg } from "./assets/editor-geometry-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -70,18 +71,8 @@ export function EditorPage() {
             <EditorBuildControls />
             <EditorExportSettings />
             <EditorHostedBuilds />
-            <button id="add-box" type="button" disabled>
-              Add box
-            </button>
+            <EditorGeometry />
             <EditorToolSettings />
-            <label for="box-material">Brush texture</label>
-            <input
-              id="box-material"
-              type="text"
-              list="material-choices"
-              value="DEV/GRID"
-            />
-            <datalist id="material-choices" />
             <EditorSelectionCommands />
             <EditorEditActions />
             <EditorEntityCreation />
@@ -344,39 +335,7 @@ export function EditorPage() {
                 also applies to those commands while this tool is active.
               </p>
             </div>
-            <details id="csg-tools">
-              <summary>Constructive geometry</summary>
-              <div
-                class="csg-actions"
-                role="group"
-                aria-label="Constructive geometry commands"
-              >
-                <button id="csg-merge" type="button" disabled>
-                  Convex merge
-                </button>
-                <button id="csg-intersect" type="button" disabled>
-                  Intersect
-                </button>
-                <button id="csg-subtract" type="button" disabled>
-                  Subtract
-                </button>
-                <label for="csg-thickness">Hollow wall thickness</label>
-                <input
-                  id="csg-thickness"
-                  type="number"
-                  min="1"
-                  step="1"
-                  value="16"
-                />
-                <button id="csg-hollow" type="button" disabled>
-                  Hollow
-                </button>
-              </div>
-              <p>
-                Merge and Intersect need at least two brushes. Subtract uses
-                selected brushes as cutters and removes them.
-              </p>
-            </details>
+            <EditorCsg />
             <EditorGroups />
             <EditorLayers />
             <EditorReferences />
