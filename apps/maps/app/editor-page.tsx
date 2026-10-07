@@ -136,18 +136,38 @@ export function EditorPage() {
                   id="perspective"
                   aria-label="Perspective map viewport"
                 />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div class="viewport-frame">
                 <span>Top (XY)</span>
                 <canvas id="xy" aria-label="Top map viewport" />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div class="viewport-frame">
                 <span>Front (XZ)</span>
                 <canvas id="xz" aria-label="Front map viewport" />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div class="viewport-frame">
                 <span>Side (YZ)</span>
                 <canvas id="yz" aria-label="Side map viewport" />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div
                 class="viewport-resizer column-resizer"

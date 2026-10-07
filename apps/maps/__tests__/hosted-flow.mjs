@@ -353,6 +353,16 @@ try {
 
   const standalonePage = await browser.newPage();
   await standalonePage.goto(`${mapsOrigin}/editor`);
+  assert.equal(
+    await standalonePage.locator('[data-viewport-overlay="lasso"]').count(),
+    4,
+  );
+  assert.equal(
+    await standalonePage
+      .locator('[data-viewport-overlay="transform-readout"]')
+      .count(),
+    4,
+  );
   await standalonePage.locator("#game-profile").selectOption("quake");
   await standalonePage.getByText("Map resources", { exact: true }).click();
   await standalonePage.locator("#standalone-palette").setInputFiles({
@@ -367,7 +377,7 @@ try {
   await standalonePage.getByText(/0 WADs · Resources cleared/).waitFor();
   await standalonePage.close();
   result.checks.push(
-    "standalone map palette imports and clears through Remix controls",
+    "standalone resources and viewport overlays render in the Remix editor",
   );
 
   const themePage = await browser.newPage();

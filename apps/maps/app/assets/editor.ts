@@ -333,6 +333,24 @@ const canvases = {
   xz: document.querySelector<HTMLCanvasElement>("#xz")!,
   yz: document.querySelector<HTMLCanvasElement>("#yz")!,
 };
+function viewportOverlay(canvas: HTMLCanvasElement) {
+  const container = canvas.parentElement!;
+  return {
+    container,
+    handleLasso: container.querySelector<HTMLDivElement>(
+      '[data-viewport-overlay="lasso"]',
+    )!,
+    transformReadout: container.querySelector<HTMLDivElement>(
+      '[data-viewport-overlay="transform-readout"]',
+    )!,
+  };
+}
+const viewportOverlays = {
+  perspective: viewportOverlay(canvases.perspective),
+  xy: viewportOverlay(canvases.xy),
+  xz: viewportOverlay(canvases.xz),
+  yz: viewportOverlay(canvases.yz),
+};
 
 let session = new EditorSession(createEmptyDocument());
 let openGroupId: string | null = null;
@@ -2651,6 +2669,7 @@ if (!navigator.gpu) {
   try {
     renderer = await EditorSourceRenderer.create({
       canvases,
+      viewportOverlays,
       document: session.document,
       materials: currentMaterials(),
       referenceScenes: references.scenes(),

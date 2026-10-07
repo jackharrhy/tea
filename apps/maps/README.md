@@ -180,6 +180,8 @@ When editing inside a linked group that has another copy, entity properties can 
 
 Viewport picking treats closed groups as one selection, opens a group on activation, and expands a brush entity pick to its sibling brushes. With several brushes selected, picking a face in Face mode selects matching faces across them. Paint selection reports the resulting count in the editor status.
 
+Face, vertex, and edge lasso gestures show a selection rectangle in each viewport. Transform gestures show their current coordinates beside the handle; these overlays stay out of pointer input and disappear when the gesture ends.
+
 The sidebar shows a selected brush or face's material. Choose a face from a selected brush or select one in a viewport. Apply a material to the selected faces, or to every face of selected brushes. Selecting faces also exposes U/V offsets, U/V scale, and rotation; mixed values are left blank until edited. These changes use the editor's undo history and hosted room operations.
 
 For one selected face, the UV editor shows its texture grid and face polygon. Drag the face to offset its texture, the ring to rotate, or the axis handles to scale. Drag the origin to change the transform pivot, pan with a middle or right drag, and zoom with the wheel. Grid subdivisions control snapping; Ctrl or Command bypasses it. UV drags preview in the viewport and commit through undo history and hosted room operations.

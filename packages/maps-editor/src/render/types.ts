@@ -252,7 +252,7 @@ export interface EditorViewportCanvases {
   readonly yz: HTMLCanvasElement;
 }
 
-/** React-owned overlay roots whose high-frequency geometry is controlled by a viewport runtime. */
+/** Host-owned overlay roots whose high-frequency geometry is controlled by a viewport runtime. */
 export interface EditorViewportOverlayElements {
   readonly container: HTMLElement;
   readonly handleLasso: HTMLDivElement;
