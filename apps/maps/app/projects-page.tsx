@@ -1,7 +1,7 @@
 import type { Handle } from "remix/component";
 import { browserAssets } from "./assets/build-manifest.ts";
 import { projectsStyles } from "./projects-styles.ts";
-import { RecoveredMaps } from "./assets/recovered-maps.tsx";
+import { RecentProjects, RecoveredMaps } from "./assets/recovered-maps.tsx";
 
 export function ProjectsPage(
   handle: Handle<{
@@ -91,7 +91,7 @@ export function ProjectsPage(
                   </section>
                   <section aria-labelledby="local-projects-title">
                     <h2 id="local-projects-title">Recent local projects</h2>
-                    <div id="local-projects-list" class="project-list" />
+                    <RecentProjects />
                     <h3>Recovered maps</h3>
                     <RecoveredMaps />
                     <p class="projects-note">

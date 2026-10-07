@@ -771,7 +771,14 @@ try {
   );
   if (await page.locator("#switch-map-dialog").isVisible())
     await page.getByRole("button", { name: "Discard" }).click();
-  await page.getByText(/live editing/).waitFor();
+  try {
+    await page.getByText(/live editing/).waitFor();
+  } catch (error) {
+    throw new Error(
+      `Hosted editor did not reconnect: ${JSON.stringify({ url: page.url(), status: await page.locator("#editor-status").textContent(), dialog: await page.locator("#switch-map-dialog").isVisible(), errors })}`,
+      { cause: error },
+    );
+  }
   const hostedToolEdit = await page.evaluate(() => {
     const tools = window.teaMapsTestTools;
     const before = tools.get("tea_maps_inspect_editor").execute({});
@@ -951,10 +958,45 @@ try {
     window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}),
   );
   assert.equal(reopenedCopy.counts.brushes, 1);
+  await page.waitForFunction(
+    () => !new URL(location.href).searchParams.has("detachedMap"),
+  );
   assert.equal(new URL(page.url()).searchParams.has("detachedMap"), false);
   result.checks.push(
     "Projects page reopens the latest local recovery revision",
   );
+
+  await page.evaluate(async () => {
+    const request = indexedDB.open("tea-maps-recent-projects", 1);
+    const database = await new Promise((resolve, reject) => {
+      request.addEventListener("upgradeneeded", () => {
+        request.result.createObjectStore("projects", { keyPath: "id" });
+      });
+      request.addEventListener("success", () => resolve(request.result));
+      request.addEventListener("error", () => reject(request.error));
+    });
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction("projects", "readwrite");
+      transaction.objectStore("projects").put({
+        id: "smoke-recent-project",
+        name: "Smoke recent project",
+        handle: { kind: "directory", name: "smoke-folder" },
+        lastMapPath: "maps/beta.map",
+        updatedAt: Date.now(),
+      });
+      transaction.addEventListener("complete", resolve);
+      transaction.addEventListener("error", () => reject(transaction.error));
+    });
+    database.close();
+  });
+  await page.goto(`${mapsOrigin}/projects`);
+  const recentRow = page
+    .locator("#local-projects-list .project-row")
+    .filter({ hasText: "Smoke recent project" });
+  await recentRow.getByText("maps/beta.map").waitFor();
+  await recentRow.getByRole("button", { name: "Open in editor" }).click();
+  await page.waitForURL(/recentProject=smoke-recent-project/);
+  result.checks.push("Projects page opens a hydrated recent project row");
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {

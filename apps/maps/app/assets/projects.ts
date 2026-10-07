@@ -9,7 +9,6 @@ import {
   createHostedProject,
 } from "./editor-hosted-create.ts";
 import { openLinkedLocalProject } from "./project-local.ts";
-import { listRecentProjects } from "./editor-recent-projects.ts";
 import { readHostedApi } from "./hosted-api.ts";
 import { showProjectAccess } from "./project-access.ts";
 import { showProjectResources } from "./project-resources.ts";
@@ -40,42 +39,6 @@ function row(name: string, detail: string): HTMLElement {
   subtitle.textContent = detail;
   item.append(title, subtitle);
   return item;
-}
-
-async function showRecentProjects() {
-  const list = document.querySelector<HTMLElement>("#local-projects-list")!;
-  const recents = await listRecentProjects();
-  if (!recents.length) {
-    list.textContent = "No recent local projects on this device";
-    return;
-  }
-  for (const recent of recents) {
-    const item = row(recent.name, recent.lastMapPath ?? recent.handle.name);
-    const open = document.createElement("button");
-    open.type = "button";
-    open.textContent = "Open in editor";
-    open.addEventListener("click", async () => {
-      open.disabled = true;
-      try {
-        const permission =
-          (await recent.handle.queryPermission?.({ mode: "readwrite" })) ??
-          "granted";
-        if (permission !== "granted") {
-          const granted = await recent.handle.requestPermission?.({
-            mode: "readwrite",
-          });
-          if (granted !== "granted")
-            throw new Error("Project folder permission was not granted");
-        }
-        location.href = `/editor?recentProject=${encodeURIComponent(recent.id)}`;
-      } catch (error) {
-        status.textContent = message(error);
-        open.disabled = false;
-      }
-    });
-    item.append(open);
-    list.append(item);
-  }
 }
 
 async function showHostedProjects() {
@@ -261,10 +224,6 @@ if (projectId) {
     status.textContent = message(error);
   });
 } else {
-  void showRecentProjects().catch((error: unknown) => {
-    document.querySelector<HTMLElement>("#local-projects-list")!.textContent =
-      `Recent projects are unavailable: ${message(error)}`;
-  });
   void showHostedProjects().catch((error: unknown) => {
     status.textContent = `Hosted projects are unavailable: ${message(error)}`;
   });
