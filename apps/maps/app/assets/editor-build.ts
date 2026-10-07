@@ -19,6 +19,7 @@ import type { WorldSource } from "@tea/maps-renderer";
 import { classifyMaterial } from "@tea/maps-renderer/core";
 import { isGameTreeAssetPath } from "@tea/maps-protocol";
 import { projectFile, type MapProject } from "./editor-project.ts";
+import type { StandaloneResources } from "./editor-standalone-resources.ts";
 import {
   downloadBuildFile,
   type BuildExportInput,
@@ -41,15 +42,27 @@ async function compileAssets(
   project: MapProject | null,
   document: MapDocument,
   game: WorldviewGameProfile,
+  standalone: StandaloneResources | null,
 ): Promise<MapCompileInputAsset[]> {
   const assets: MapCompileInputAsset[] = [];
-  const pack = developmentTexturePack(game);
+  const pack = developmentTexturePack(game, standalone?.palette ?? undefined);
   if (pack) {
     assets.push({
       name: "worldview_dev.wad",
       mediaType: "application/x-wad",
       data: pack.wad,
     });
+  }
+  for (const [index, wad] of (project
+    ? []
+    : (standalone?.wads ?? [])
+  ).entries()) {
+    let name = wadName(wad.name, index);
+    while (
+      assets.some((asset) => asset.name.toLowerCase() === name.toLowerCase())
+    )
+      name = wadName(`${index}_${name}`, index);
+    assets.push({ name, mediaType: "application/x-wad", data: wad.data });
   }
   for (const [index, path] of (
     project?.manifest.resources.wads ?? []
@@ -121,6 +134,7 @@ export async function buildMap(
     readonly project: MapProject | null;
     readonly quality: MapCompileQuality;
     readonly game?: WorldviewGameProfile;
+    readonly standalone?: StandaloneResources | null;
     readonly preferredProfileId?: string;
   },
   buildService: MapBuildService = compiler,
@@ -145,7 +159,12 @@ export async function buildMap(
       `No local ${game} compiler is configured for ${input.quality} builds`,
     );
   }
-  const assets = await compileAssets(input.project, input.document, game);
+  const assets = await compileAssets(
+    input.project,
+    input.document,
+    game,
+    input.standalone ?? null,
+  );
   const mapText =
     game === "quake" || game === "goldsrc"
       ? serializeMapForCompile(
@@ -174,6 +193,14 @@ export async function buildMap(
           bsp: new File([bsp.data], bsp.name, { type: bsp.mediaType }),
           ...(game === "quake" || game === "goldsrc"
             ? {
+                ...(input.standalone?.palette
+                  ? {
+                      palette: new File(
+                        [new Uint8Array(input.standalone.palette)],
+                        "palette.lmp",
+                      ),
+                    }
+                  : {}),
                 wads: assets.map(
                   (asset) =>
                     new File([asset.data], asset.name, {
@@ -207,6 +234,9 @@ export async function buildMap(
               .filter((asset) => !asset.name.toLowerCase().endsWith(".wad"))
               .map((asset) => [asset.name, asset.data]),
           ),
+          ...(input.standalone?.palette
+            ? { palette: new Uint8Array(input.standalone.palette).buffer }
+            : {}),
           project: input.project,
         }
       : null;

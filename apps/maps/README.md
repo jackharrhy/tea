@@ -186,6 +186,8 @@ For one selected face, the UV editor shows its texture grid and face polygon. Dr
 
 The material browser is a Remix client component that shows thumbnails for loaded project textures and generated development textures on standalone Quake and GoldSrc maps. Search, source, used-only, and usage-sort controls narrow the list. Choose a material for new brushes or apply it to the current selection; sample a selected face, select all visible faces or brushes using a material, copy its name, or replace matching uses in the current selection (the whole map when nothing is selected). The browser reports materials used by the map that are missing from the loaded sources. The editor supplies session actions and material updates through a browser event bridge.
 
+Standalone Quake and GoldSrc maps can import WAD texture packs from the editor toolbar. Quake maps can also import a 768-byte palette. These browser-local resources are stored by map and game profile in IndexedDB, restored with the map, and included in local compiler requests and portable build bundles. Clear resources removes the current map's imported packs and palette. Project and hosted maps continue using their own resource catalogs.
+
 The issue browser is a Remix client component. It lists geometry, entity, link, and structure findings from the editor session, supports type and hidden filters, and can select, reveal, or fix a finding through that same session.
 
 View filters and entity link visibility are Remix client controls. They filter world and special brushes or entity classes locally without changing map source; the editor keeps the link display mode when its renderer is recreated.

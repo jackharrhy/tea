@@ -7,7 +7,6 @@ import {
   createSequentialIdFactory,
   createStarterDocument,
   decodeSurfaceFlags,
-  developmentTexturePack,
   deriveBrush,
   deriveEditorGroups,
   deriveEditorLayers,
@@ -164,6 +163,15 @@ import {
 } from "./editor-context-menu.ts";
 import { buildMap, downloadBsp, launchLocalBuild } from "./editor-build.ts";
 import {
+  addStandaloneWad,
+  emptyStandaloneResources,
+  loadStandaloneResources,
+  saveStandaloneResources,
+  setStandalonePalette,
+  standaloneMaterials,
+  type StandaloneResources,
+} from "./editor-standalone-resources.ts";
+import {
   listLocalBuilds,
   recordLocalBuild,
   type LocalBuildRecord,
@@ -300,7 +308,11 @@ const historyControls = initEditorHistory({
   undo: () => void runHistoryAction("undo"),
   redo: () => void runHistoryAction("redo"),
 });
-const projectContext = initEditorProjectContext(openProjectMap);
+const projectContext = initEditorProjectContext(openProjectMap, {
+  addWads: importStandaloneWads,
+  setPalette: importStandalonePalette,
+  clearResources: clearStandaloneResources,
+});
 const clipHull = initEditorClipHull({
   setClipMode,
   applyClip,
@@ -542,19 +554,189 @@ const uvEditor = createTextureUvEditor({
     }
   },
 });
-const standaloneMaterials = new Map<
-  WorldviewGameProfile,
-  readonly EditorMaterial[]
->();
+let standaloneResources: StandaloneResources = emptyStandaloneResources();
+let standaloneResourceGeneration = 0;
+let standaloneResourcesLoading = false;
+let standaloneMaterialCache: {
+  resources: StandaloneResources;
+  game: WorldviewGameProfile;
+  materials: readonly EditorMaterial[];
+} | null = null;
+function standaloneContext() {
+  return !project && !hostedMap;
+}
+
+function publishStandaloneResources(message = "") {
+  projectContext.update({
+    standalone: standaloneContext(),
+    standaloneGame: activeGame(),
+    standaloneWadCount: standaloneContext()
+      ? standaloneResources.wads.length
+      : 0,
+    standalonePalette: standaloneContext() && !!standaloneResources.palette,
+    standaloneMessage: message,
+  });
+}
+
+function applyStandaloneResources(
+  resources: StandaloneResources,
+  message = "",
+) {
+  standaloneResources = resources;
+  ++standaloneResourceGeneration;
+  ++buildGeneration;
+  latestBuildExport = null;
+  latestLaunch = null;
+  refreshBuildLaunch();
+  buildControls.exportStatus = "";
+  refreshBuildExport();
+  clearCompiledPreview();
+  buildOverlays.clear();
+  renderer?.setMaterials(currentMaterials());
+  materialBrowser.setMaterials(currentMaterials());
+  publishStandaloneResources(message);
+}
+
+async function restoreStandaloneResources() {
+  applyStandaloneResources(emptyStandaloneResources());
+  const generation = standaloneResourceGeneration;
+  const id = documentId;
+  const game = activeGame();
+  standaloneResourcesLoading = standaloneContext();
+  if (!standaloneResourcesLoading) return;
+  publishStandaloneResources("Loading map resources…");
+  try {
+    const resources = await loadStandaloneResources(id, game);
+    if (
+      generation !== standaloneResourceGeneration ||
+      id !== documentId ||
+      game !== activeGame() ||
+      !standaloneContext()
+    )
+      return;
+    standaloneResourcesLoading = false;
+    applyStandaloneResources(resources);
+  } catch (error) {
+    if (generation === standaloneResourceGeneration) {
+      standaloneResourcesLoading = false;
+      publishStandaloneResources(
+        `Could not restore resources: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+}
+
+async function importStandaloneWads(files: readonly File[]) {
+  if (!standaloneContext() || files.length === 0) return;
+  if (standaloneResourcesLoading) return;
+  const id = documentId;
+  const game = activeGame();
+  const generation = standaloneResourceGeneration;
+  try {
+    let next = standaloneResources;
+    for (const file of files)
+      next = addStandaloneWad(
+        next,
+        { name: file.name, data: await file.arrayBuffer() },
+        game,
+      );
+    if (
+      generation !== standaloneResourceGeneration ||
+      id !== documentId ||
+      game !== activeGame() ||
+      !standaloneContext()
+    )
+      return;
+    await saveStandaloneResources(id, game, next);
+    if (
+      generation !== standaloneResourceGeneration ||
+      id !== documentId ||
+      game !== activeGame() ||
+      !standaloneContext()
+    )
+      return;
+    applyStandaloneResources(
+      next,
+      `${files.length} WAD${files.length === 1 ? "" : "s"} imported`,
+    );
+    scheduleDraftSave();
+  } catch (error) {
+    publishStandaloneResources(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+async function importStandalonePalette(file: File) {
+  if (!standaloneContext()) return;
+  if (standaloneResourcesLoading) return;
+  const id = documentId;
+  const game = activeGame();
+  const generation = standaloneResourceGeneration;
+  try {
+    const next = setStandalonePalette(
+      standaloneResources,
+      new Uint8Array(await file.arrayBuffer()),
+      game,
+    );
+    if (
+      generation !== standaloneResourceGeneration ||
+      id !== documentId ||
+      game !== activeGame() ||
+      !standaloneContext()
+    )
+      return;
+    await saveStandaloneResources(id, game, next);
+    if (
+      generation !== standaloneResourceGeneration ||
+      id !== documentId ||
+      game !== activeGame() ||
+      !standaloneContext()
+    )
+      return;
+    applyStandaloneResources(next, `${file.name} palette loaded`);
+    scheduleDraftSave();
+  } catch (error) {
+    publishStandaloneResources(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+async function clearStandaloneResources() {
+  if (!standaloneContext()) return;
+  if (standaloneResourcesLoading) return;
+  const id = documentId;
+  const game = activeGame();
+  const generation = standaloneResourceGeneration;
+  const next = emptyStandaloneResources();
+  try {
+    await saveStandaloneResources(id, game, next);
+    if (
+      generation === standaloneResourceGeneration &&
+      id === documentId &&
+      game === activeGame() &&
+      standaloneContext()
+    )
+      applyStandaloneResources(next, "Resources cleared");
+  } catch (error) {
+    publishStandaloneResources(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
 function currentMaterials(): readonly EditorMaterial[] {
   if (project) return project.materials;
   if (hostedResources) return hostedResources.materials;
   const game = activeGame();
-  let materials = standaloneMaterials.get(game);
-  if (!materials) {
-    materials = developmentTexturePack(game)?.materials ?? [];
-    standaloneMaterials.set(game, materials);
-  }
+  if (
+    standaloneMaterialCache?.resources === standaloneResources &&
+    standaloneMaterialCache.game === game
+  )
+    return standaloneMaterialCache.materials;
+  const materials = standaloneMaterials(standaloneResources, game);
+  standaloneMaterialCache = { resources: standaloneResources, game, materials };
   return materials;
 }
 function currentDefinitions() {
@@ -1139,6 +1321,7 @@ function setProject(value: MapProject | null) {
     profileId: value?.manifest.defaultBuildProfile ?? profiles[0]!.id,
   });
   refreshResourceCatalog();
+  publishStandaloneResources();
   if (value) return;
   projectMapSelector.hide();
   activeProjectPath = null;
@@ -1797,6 +1980,7 @@ function setMap(value: MapDocument, sourceState?: MapSourceState) {
   materialBrowser.setMaterials(currentMaterials());
   refreshSelection();
   renderer?.focusDocument();
+  void restoreStandaloneResources();
   workspace.switchDocument(hostedMap ? `hosted:${hostedMap.id}` : documentId);
   void refreshLocalBuildHistory();
   refreshSource();
@@ -2653,6 +2837,7 @@ function selectGameProfile(value: string) {
   }
   if (value === localGame) return;
   localGame = value;
+  void restoreStandaloneResources();
   renderer?.setMaterials(currentMaterials());
   materialBrowser.setMaterials(currentMaterials());
   buildGeneration += 1;
@@ -3894,6 +4079,10 @@ async function launchCurrentBuild() {
 }
 
 async function runBuild(exportOnce: boolean) {
+  if (standaloneContext() && standaloneResourcesLoading) {
+    buildControls.buildStatus = "Wait for map resources to load";
+    return;
+  }
   if (
     buildControls.state.buildDisabled ||
     (exportOnce && buildControls.state.buildExportOnceDisabled)
@@ -3977,6 +4166,8 @@ async function runBuild(exportOnce: boolean) {
     selected && bindingsAtStart?.preferred(selected.id);
   const nameAtStart = mapName;
   const documentKeyAtStart = documentId;
+  const resourceGenerationAtStart = standaloneResourceGeneration;
+  const standaloneAtStart = projectAtStart ? null : standaloneResources;
   const settingsAtStart = exportSettings;
   const autoExport = settingsAtStart.afterBuild || exportOnce;
   const generation = ++buildGeneration;
@@ -3998,6 +4189,7 @@ async function runBuild(exportOnce: boolean) {
         project: projectAtStart,
         quality,
         game: gameAtStart,
+        standalone: standaloneAtStart,
         ...(preferredProfileId ? { preferredProfileId } : {}),
       });
     buildControls.buildOutput = localBuildMessages(result);
@@ -4029,7 +4221,9 @@ async function runBuild(exportOnce: boolean) {
       project === projectAtStart &&
       activeGame() === gameAtStart &&
       mapName === nameAtStart &&
-      source.value === sourceAtStart;
+      source.value === sourceAtStart &&
+      resourceGenerationAtStart === standaloneResourceGeneration &&
+      generation === buildGeneration;
     if (resultIsCurrent) buildOverlays.inspect(result);
     if (resultIsCurrent && result.status === "succeeded" && launchProfileId) {
       latestLaunch = {
@@ -4066,7 +4260,8 @@ async function runBuild(exportOnce: boolean) {
               source.value !== sourceAtStart ||
               project !== projectAtStart ||
               activeGame() !== gameAtStart ||
-              mapName !== nameAtStart
+              mapName !== nameAtStart ||
+              resourceGenerationAtStart !== standaloneResourceGeneration
             ) {
               return;
             }
@@ -4110,7 +4305,8 @@ async function runBuild(exportOnce: boolean) {
               source.value !== sourceAtStart ||
               project !== projectAtStart ||
               activeGame() !== gameAtStart ||
-              mapName !== nameAtStart
+              mapName !== nameAtStart ||
+              resourceGenerationAtStart !== standaloneResourceGeneration
             )
               return;
             buildControls.exportStatus =

@@ -351,6 +351,25 @@ try {
   await setupPage.close();
   result.checks.push("Remix new-map form keeps name and compatible format");
 
+  const standalonePage = await browser.newPage();
+  await standalonePage.goto(`${mapsOrigin}/editor`);
+  await standalonePage.locator("#game-profile").selectOption("quake");
+  await standalonePage.getByText("Map resources", { exact: true }).click();
+  await standalonePage.locator("#standalone-palette").setInputFiles({
+    name: "custom.lmp",
+    mimeType: "application/octet-stream",
+    buffer: Buffer.alloc(768, 120),
+  });
+  await standalonePage
+    .getByText(/custom palette · custom.lmp palette loaded/)
+    .waitFor();
+  await standalonePage.getByRole("button", { name: "Clear resources" }).click();
+  await standalonePage.getByText(/0 WADs · Resources cleared/).waitFor();
+  await standalonePage.close();
+  result.checks.push(
+    "standalone map palette imports and clears through Remix controls",
+  );
+
   const themePage = await browser.newPage();
   await themePage.emulateMedia({ colorScheme: "light" });
   await themePage.goto(`${mapsOrigin}/editor`);

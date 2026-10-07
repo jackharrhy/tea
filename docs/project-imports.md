@@ -170,6 +170,8 @@ The Remix `/new-map` page now carries Worldview's standalone setup flow into Tea
 
 Hosted project resources now feed the open editor’s materials, entity definitions, and sprites, matching the local project resource path. Resource loads are cancelled when the map changes. Hosted project resources can now be listed, downloaded, uploaded, and removed in the Tea editor. Project owners can also search Artbin and import a checked asset through the copied hosted service when that integration is configured. Uploads use the copied service's contained path rules and limits; project owner access remains enforced by the service.
 
+Standalone Quake and GoldSrc maps can now import browser-local WAD packs; Quake maps can also use a custom palette. Tea restores these resources by map and game profile, uses them for editor materials and local builds, and includes the palette in portable bundles. The original Worldview editor remains in service while this copy is validated.
+
 Project owners can also manage signed-in users' editor and viewer roles in Tea. The copied service still enforces ownership and membership for access changes and room tickets.
 
 The editor's Build BSP action now calls the hosted build API for hosted maps, checks the reviewed map version, polls the server job, and exposes BSP history and downloads. The local compiler path remains for local maps and projects.

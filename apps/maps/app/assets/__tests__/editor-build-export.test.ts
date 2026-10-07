@@ -129,6 +129,19 @@ describe("build bundle export", () => {
     project: null,
   };
 
+  it("includes a standalone Quake palette in the portable bundle", async () => {
+    const palette = new Uint8Array(768).fill(120).buffer;
+    const { files } = await buildExportEntries(
+      {
+        ...input,
+        bsp: syntheticQuakeBsp(),
+        palette,
+      },
+      false,
+    );
+    expect(files.get("gfx/palette.lmp")).toEqual(palette);
+  });
+
   it("requires referenced companion files before packaging", async () => {
     await expect(buildExportEntries(input, false)).rejects.toThrow(
       /sprites\/fixture\.spr/,

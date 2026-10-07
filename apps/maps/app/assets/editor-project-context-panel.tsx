@@ -60,6 +60,70 @@ export const EditorProjectContextPanel = clientEntry(
               ))}
             </ul>
           </details>
+          {state?.standalone && (
+            <details>
+              <summary>Map resources</summary>
+              <div
+                mix={css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                })}
+              >
+                <label for="standalone-wads" mix={css({ cursor: "pointer" })}>
+                  Add WAD
+                </label>
+                <input
+                  id="standalone-wads"
+                  type="file"
+                  accept=".wad"
+                  multiple
+                  mix={[
+                    css({ maxWidth: "8rem" }),
+                    on<HTMLInputElement>("change", (event) => {
+                      const input = event.currentTarget;
+                      void context?.addWads([...(input.files ?? [])]);
+                      input.value = "";
+                    }),
+                  ]}
+                />
+                <label
+                  for="standalone-palette"
+                  mix={css({ cursor: "pointer" })}
+                >
+                  Quake palette
+                </label>
+                <input
+                  id="standalone-palette"
+                  type="file"
+                  accept=".lmp,.pal,.dat"
+                  disabled={state.standaloneGame !== "quake"}
+                  mix={[
+                    css({ maxWidth: "8rem" }),
+                    on<HTMLInputElement>("change", (event) => {
+                      const input = event.currentTarget;
+                      const file = input.files?.[0];
+                      if (file) void context?.setPalette(file);
+                      input.value = "";
+                    }),
+                  ]}
+                />
+                <span role="status">
+                  {state.standaloneWadCount} WADs
+                  {state.standalonePalette ? " · custom palette" : ""}
+                  {state.standaloneMessage
+                    ? ` · ${state.standaloneMessage}`
+                    : ""}
+                </span>
+                <button
+                  type="button"
+                  mix={on("click", () => void context?.clearResources())}
+                >
+                  Clear resources
+                </button>
+              </div>
+            </details>
+          )}
         </div>
       );
     };

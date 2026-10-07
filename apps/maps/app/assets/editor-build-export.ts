@@ -15,6 +15,7 @@ export interface BuildExportInput {
   readonly source: string;
   readonly wads: readonly MapCompileInputAsset[];
   readonly gameAssets: ReadonlyMap<string, ArrayBuffer>;
+  readonly palette?: ArrayBuffer;
   readonly project: MapProject | null;
 }
 
@@ -166,6 +167,7 @@ export async function buildExportEntries(
       .replace(/[^A-Za-z0-9_-]/g, "_")
       .toLowerCase() || "map";
   const files = new Map<string, ArrayBuffer>([[`maps/${stem}.bsp`, input.bsp]]);
+  if (input.palette) files.set("gfx/palette.lmp", input.palette);
   const knownAssets = new Map(
     [...input.gameAssets].map(([path, data]) => [safePath(path), data]),
   );

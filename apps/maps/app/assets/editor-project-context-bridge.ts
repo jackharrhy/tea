@@ -4,15 +4,27 @@ export interface EditorProjectContextState {
   readonly selectedPath: string;
   readonly resourceInfo: string;
   readonly diagnostics: readonly string[];
+  readonly standalone: boolean;
+  readonly standaloneGame: string;
+  readonly standaloneWadCount: number;
+  readonly standalonePalette: boolean;
+  readonly standaloneMessage: string;
 }
 
 export interface EditorProjectContext {
   readonly state: EditorProjectContextState;
   readonly openMap: (path: string) => Promise<boolean>;
+  readonly addWads: (files: readonly File[]) => Promise<void>;
+  readonly setPalette: (file: File) => Promise<void>;
+  readonly clearResources: () => Promise<void>;
 }
 
 export function initEditorProjectContext(
   openMap: (path: string) => Promise<boolean>,
+  resources: Pick<
+    EditorProjectContext,
+    "addWads" | "setPalette" | "clearResources"
+  >,
 ) {
   let state: EditorProjectContextState = {
     projectName: null,
@@ -20,6 +32,11 @@ export function initEditorProjectContext(
     selectedPath: "",
     resourceInfo: "",
     diagnostics: [],
+    standalone: true,
+    standaloneGame: "quake",
+    standaloneWadCount: 0,
+    standalonePalette: false,
+    standaloneMessage: "",
   };
   let ready = false;
 
@@ -27,7 +44,7 @@ export function initEditorProjectContext(
     if (!ready) return;
     window.dispatchEvent(
       new CustomEvent<EditorProjectContext>("tea-maps-project-context-state", {
-        detail: { state, openMap },
+        detail: { state, openMap, ...resources },
       }),
     );
   }

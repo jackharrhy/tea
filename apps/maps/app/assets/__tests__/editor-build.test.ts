@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createStarterDocument,
+  developmentTexturePack,
   type MapBuildService,
   type MapCompileRequest,
   type MapLaunchRequest,
@@ -86,6 +87,28 @@ describe("local map build", () => {
     expect(built.previewSource?.bsp).toBeInstanceOf(File);
     expect(built.previewSource?.wads).toHaveLength(1);
     expect(built.launchProfileId).toBe("quake-launch");
+    const palette = new Uint8Array(768).fill(120);
+    const custom = await buildMap(
+      {
+        document: createStarterDocument(),
+        mapName: "Tea map.map",
+        project: null,
+        quality: "preview",
+        standalone: {
+          wads: [
+            { name: "custom.wad", data: developmentTexturePack("quake")!.wad },
+          ],
+          palette,
+        },
+      },
+      service,
+    );
+    expect(request?.assets?.map(({ name }) => name)).toEqual([
+      "worldview_dev.wad",
+      "custom.wad",
+    ]);
+    expect(custom.previewSource?.palette).toBeInstanceOf(File);
+    expect(custom.exportInput?.palette).toEqual(palette.buffer);
     await launchLocalBuild(built.result, built.launchProfileId!, service);
     expect(launchRequest).toMatchObject({
       buildId: "test-build",
