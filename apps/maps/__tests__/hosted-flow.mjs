@@ -386,6 +386,18 @@ try {
 
   const standalonePage = await browser.newPage();
   await standalonePage.goto(`${mapsOrigin}/editor`);
+  const editorLayout = await standalonePage.evaluate(() => {
+    const toolbar = document.querySelector(".editor-toolbar");
+    const viewports = document.querySelector(".viewports");
+    return {
+      viewportHeight: viewports?.getBoundingClientRect().height ?? 0,
+      toolbarHeight: toolbar?.getBoundingClientRect().height ?? 0,
+      toolbarContentHeight: toolbar?.scrollHeight ?? 0,
+      windowHeight: window.innerHeight,
+    };
+  });
+  assert.ok(editorLayout.viewportHeight >= editorLayout.windowHeight * 0.55);
+  assert.ok(editorLayout.toolbarHeight < editorLayout.toolbarContentHeight);
   assert.equal(
     await standalonePage.locator('[data-viewport-overlay="lasso"]').count(),
     4,
@@ -444,7 +456,7 @@ try {
   await standalonePage.getByText(/0 WADs · Resources cleared/).waitFor();
   await standalonePage.close();
   result.checks.push(
-    "standalone resources, document summary, pointer readout, inspector visibility, and viewport overlays render in the Remix editor",
+    "standalone resources, document summary, pointer readout, inspector visibility, compact toolbar, and viewport overlays render in the Remix editor",
   );
 
   const themePage = await browser.newPage();

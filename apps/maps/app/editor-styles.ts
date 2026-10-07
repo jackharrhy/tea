@@ -249,10 +249,21 @@ export const editorStyles = css({
   "& .editor-toolbar": {
     display: "flex",
     "align-items": "center",
+    "align-content": "start",
     "flex-wrap": "wrap",
     gap: "0.55rem",
     padding: "0.65rem 1rem",
+    "max-height": "min(11rem, 28vh)",
+    "min-height": "0",
+    "overflow-y": "auto",
+    "overscroll-behavior": "contain",
+    "scrollbar-gutter": "stable",
     background: "var(--editor-toolbar)",
+  },
+  "& .toolbar-scroll-hint": {
+    color: "var(--editor-muted)",
+    "font-size": "0.75rem",
+    "white-space": "nowrap",
   },
   "& #project-maps": {
     color: "var(--editor-ink)",

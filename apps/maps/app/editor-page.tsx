@@ -95,6 +95,9 @@ export function EditorPage() {
             <EditorInspectorToggle />
           </header>
           <nav class="editor-toolbar" aria-label="Editor actions">
+            <EditorToolSettings />
+            <EditorHistory />
+            <span class="toolbar-scroll-hint">More actions below ↓</span>
             <EditorDocumentControls />
             <EditorRecentProjects />
             <EditorProjectContextPanel />
@@ -103,7 +106,6 @@ export function EditorPage() {
             <EditorExportSettings />
             <EditorHostedBuilds />
             <EditorGeometry />
-            <EditorToolSettings />
             <EditorSelectionCommands />
             <EditorEditActions />
             <EditorEntityCreation />
@@ -117,7 +119,6 @@ export function EditorPage() {
             <EditorGroups />
             <EditorLayers />
             <EditorReferences />
-            <EditorHistory />
           </nav>
           <details id="hosted-editor-picker" class="hosted-editor-picker">
             <summary>Hosted maps</summary>
