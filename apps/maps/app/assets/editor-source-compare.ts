@@ -30,41 +30,37 @@ export function compareSources(
   };
 }
 
-export function initSourceComparison() {
-  const dialog = document.querySelector<HTMLDialogElement>(
-    "#source-compare-dialog",
-  )!;
-  const title = document.querySelector<HTMLElement>("#source-compare-title")!;
-  const summary = document.querySelector<HTMLElement>(
-    "#source-compare-summary",
-  )!;
-  const local = document.querySelector<HTMLTextAreaElement>(
-    "#source-compare-local",
-  )!;
-  const hosted = document.querySelector<HTMLTextAreaElement>(
-    "#source-compare-hosted",
-  )!;
-  const close = document.querySelector<HTMLButtonElement>(
-    "#source-compare-close",
-  )!;
-  close.addEventListener("click", () => dialog.close());
+export interface SourceComparisonRequest {
+  readonly localName: string;
+  readonly localSource: string;
+  readonly hostedName: string;
+  readonly hostedSource: string;
+  readonly hostedVersion: number;
+}
 
+export function initSourceComparison() {
+  let ready = false;
+  let pending: SourceComparisonRequest | null = null;
+
+  function showPending() {
+    if (!ready || !pending) return;
+    window.dispatchEvent(
+      new CustomEvent<SourceComparisonRequest>("tea-maps-source-compare-open", {
+        detail: pending,
+      }),
+    );
+    pending = null;
+  }
+
+  window.addEventListener("tea-maps-source-compare-ready", () => {
+    ready = true;
+    showPending();
+  });
+  window.dispatchEvent(new Event("tea-maps-source-compare-bridge-ready"));
   return {
-    show(options: {
-      readonly localName: string;
-      readonly localSource: string;
-      readonly hostedName: string;
-      readonly hostedSource: string;
-      readonly hostedVersion: number;
-    }) {
-      const result = compareSources(options.localSource, options.hostedSource);
-      title.textContent = `${options.localName} ↔ ${options.hostedName}`;
-      summary.textContent = result.same
-        ? `Sources match exactly · hosted version ${options.hostedVersion}`
-        : `Sources differ at line ${result.firstDifferentLine ?? "end"} · local ${result.localLines} lines · hosted ${result.hostedLines} lines · hosted version ${options.hostedVersion}`;
-      local.value = options.localSource;
-      hosted.value = options.hostedSource;
-      dialog.showModal();
+    show(options: SourceComparisonRequest) {
+      pending = options;
+      showPending();
     },
   };
 }

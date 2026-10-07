@@ -34,6 +34,8 @@ The editor's Project sync dialog now renders hosted map mappings and source comp
 
 The hosted source dialog now renders through a Remix client entry. The browser draft survives closing and reopening; replacing source still uses the service's version and hash checks and reconnects the live room.
 
+The read-only local and hosted source comparison now renders through a Remix client entry, including the first differing line and both source snapshots.
+
 The Tea editor now exposes exact shear and mirror transforms, Worldview view filters, and entity link visibility modes alongside the copied map issue diagnostics, type filters, local finding visibility, object reveal, and undoable repairs. It can create, rename, activate, reorder, hide, lock, isolate, and remove TrenchBroom-compatible layers, and move objects between them. It can create, rename, open, close, link duplicate, unlink, and ungroup TrenchBroom-compatible object groups. Group metadata survives source saving and hosted collaboration operations, and opening a group locks viewport interaction with objects outside it.
 
 The entity inspector now exposes linked-group property protection. While editing an open linked copy, users can keep an existing or newly added property independent of its siblings.

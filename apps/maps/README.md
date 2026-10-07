@@ -80,6 +80,8 @@ For an open hosted map, Build BSP queues a preview or final job against the serv
 
 With a local map open, **Compare with current source** fetches the selected hosted map and shows both sources as read-only snapshots. It includes unapplied text edits on the local side and reports the first different line and hosted version. Comparing does not save or replace either source.
 
+The comparison dialog is a Remix client component; the editor supplies snapshots after the hosted map fetch completes.
+
 For a folder project, **Sync project** can link local `.map` paths to maps in a hosted project. It saves the links in `worldview.project.json` after checking the game and each map's face syntax. Linked maps show a source comparison and whether the local file, hosted source, or both changed since the last common version. Pull replaces the local file; Push replaces the hosted source. Both directions recheck the disk file, hosted version, and source hash immediately before writing. Save or discard open editor changes first. A link from an older Worldview origin can be changed to a Tea hosted project from the same dialog. The browser stores the common sync baseline locally.
 
 The Sync project dialog is a Remix client component. The editor hands it the current local project and guards syncing the open map; the existing sync module checks links, source revisions, and writes.

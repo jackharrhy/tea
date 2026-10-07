@@ -937,6 +937,26 @@ try {
   result.checks.push(
     "Remix local project chooser and linked source comparison",
   );
+  await page.locator("#hosted-editor-picker summary").first().click();
+  await page.waitForFunction(
+    () => !document.querySelector("#hosted-editor-compare")?.disabled,
+  );
+  const comparedLocalSource = await page.locator("#map-source").inputValue();
+  await page.locator("#hosted-editor-compare").click();
+  await page.locator("#source-compare-dialog").waitFor({ state: "visible" });
+  await page.getByText(/Sources differ at line/).waitFor();
+  assert.equal(
+    await page.locator("#source-compare-local").inputValue(),
+    comparedLocalSource,
+  );
+  assert.equal(
+    await page.locator("#source-compare-hosted").inputValue(),
+    hostedMapSource,
+  );
+  await page.locator("#source-compare-close").click();
+  result.checks.push(
+    "Remix hosted source comparison keeps read-only snapshots",
+  );
   const projectSiteTools = await page.evaluate(async () => {
     const tools = window.teaMapsTestTools;
     const inspect = () => tools.get("tea_maps_inspect_editor").execute({});

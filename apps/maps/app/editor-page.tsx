@@ -7,6 +7,7 @@ import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
 import { EditorProjectSync } from "./assets/editor-project-sync-panel.tsx";
 import { EditorHostedSource } from "./assets/editor-hosted-source-panel.tsx";
+import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -1458,34 +1459,7 @@ export function EditorPage() {
         </dialog>
         <EditorVersions />
         <EditorProjectSync />
-        <dialog
-          id="source-compare-dialog"
-          aria-labelledby="source-compare-title"
-        >
-          <h2 id="source-compare-title">Compare map sources</h2>
-          <p id="source-compare-summary" role="status"></p>
-          <p>
-            These are read-only snapshots. The local side includes unapplied
-            source edits.
-          </p>
-          <div class="source-compare-columns">
-            <div>
-              <label for="source-compare-local">Current source</label>
-              <textarea id="source-compare-local" readOnly spellCheck={false} />
-            </div>
-            <div>
-              <label for="source-compare-hosted">Hosted source</label>
-              <textarea
-                id="source-compare-hosted"
-                readOnly
-                spellCheck={false}
-              />
-            </div>
-          </div>
-          <button id="source-compare-close" type="button">
-            Close
-          </button>
-        </dialog>
+        <EditorSourceComparison />
         <EditorHostedSource />
         <div
           id="viewport-context-menu"
