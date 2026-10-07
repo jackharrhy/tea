@@ -509,6 +509,12 @@ try {
     .selectOption("viewer");
   await page.getByRole("button", { name: "Add" }).click();
   await page.getByText("2 members · showing 2 of 2 matching users").waitFor();
+  assert.equal(
+    await page
+      .getByRole("combobox", { name: "Access role for Test Observer" })
+      .inputValue(),
+    "viewer",
+  );
   await page
     .locator('.project-tabs a[aria-current="page"]')
     .getByText("Access")
@@ -642,8 +648,23 @@ try {
   );
   await page.getByText("1 person here").waitFor();
   assert.equal(await page.locator("#hosted-participant-list li").count(), 1);
+  await page.locator("#hosted-project-access").waitFor({ state: "visible" });
+  await page.locator("#hosted-project-access summary").click();
+  await page.locator("#hosted-access-search").fill("observer");
+  await page
+    .locator("#hosted-access-list")
+    .getByText("Test Observer · @observer")
+    .waitFor();
+  assert.equal(await page.locator("#hosted-access-list li").count(), 1);
+  const editorAccessRole = page.locator("#hosted-access-list select");
+  assert.equal(await editorAccessRole.isVisible(), true);
+  assert.equal(
+    await editorAccessRole.getAttribute("aria-label"),
+    "Access role for Test Observer",
+  );
+  assert.equal(await editorAccessRole.inputValue(), "viewer");
   result.checks.push(
-    "hosted map creation, editor launch, and Remix share and presence UI",
+    "hosted map creation, editor launch, and Remix presence and access UI",
   );
   await page.locator("#hosted-builds summary").click();
   await page.getByText("0 builds · hosted compiler available").waitFor();

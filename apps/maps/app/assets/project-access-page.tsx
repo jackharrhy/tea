@@ -145,12 +145,6 @@ export const ProjectAccess = clientEntry(
                               <div class="project-actions">
                                 <select
                                   aria-label={`Access role for ${user.displayName}`}
-                                  defaultValue={
-                                    selectedRoles.get(user.id) ??
-                                    (user.role === "viewer"
-                                      ? "viewer"
-                                      : "editor")
-                                  }
                                   mix={on<HTMLSelectElement>(
                                     "change",
                                     (event) => {
@@ -161,8 +155,24 @@ export const ProjectAccess = clientEntry(
                                     },
                                   )}
                                 >
-                                  <option value="editor">Editor</option>
-                                  <option value="viewer">Viewer</option>
+                                  <option
+                                    value="editor"
+                                    selected={
+                                      (selectedRoles.get(user.id) ??
+                                        user.role) !== "viewer"
+                                    }
+                                  >
+                                    Editor
+                                  </option>
+                                  <option
+                                    value="viewer"
+                                    selected={
+                                      (selectedRoles.get(user.id) ??
+                                        user.role) === "viewer"
+                                    }
+                                  >
+                                    Viewer
+                                  </option>
                                 </select>
                                 <button
                                   type="button"

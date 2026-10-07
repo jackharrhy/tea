@@ -1,6 +1,7 @@
 import { browserAssets } from "./assets/build-manifest.ts";
 import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
 import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx";
+import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { editorStyles } from "./editor-styles.ts";
@@ -940,18 +941,7 @@ export function EditorPage() {
                   </button>
                 </div>
               </details>
-              <details id="hosted-project-access" hidden>
-                <summary>Project access</summary>
-                <p id="hosted-access-status" role="status"></p>
-                <label for="hosted-access-search">Find a signed-in user</label>
-                <input
-                  id="hosted-access-search"
-                  type="search"
-                  placeholder="Name or username"
-                  autoComplete="off"
-                />
-                <ul id="hosted-access-list"></ul>
-              </details>
+              <EditorHostedAccess />
               <button id="hosted-editor-open" type="button" disabled>
                 Open hosted map
               </button>

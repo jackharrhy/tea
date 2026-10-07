@@ -365,6 +365,12 @@ export const editorStyles = css({
   },
   "& #hosted-artbin-query": { padding: "0.5rem" },
   "& #hosted-access-search": { padding: "0.5rem", margin: "0.5rem" },
+  "& .hosted-access-actions": {
+    display: "flex",
+    "align-items": "center",
+    "flex-wrap": "wrap",
+    gap: "0.4rem",
+  },
   "& .hosted-share": {
     display: "flex",
     "align-items": "center",
