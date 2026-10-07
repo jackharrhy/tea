@@ -31,9 +31,9 @@ jobs:
       - if: steps.select.outputs.any == 'true'
         run: npm run tooling:check
       - if: steps.select.outputs.browser == 'true'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps --only-shell chromium
       - if: steps.select.outputs.maps_hosted == 'true'
-        run: npm exec --workspace @tea/maps -- playwright install chromium
+        run: npm exec --workspace @tea/maps -- playwright install --only-shell chromium
       - if: steps.select.outputs.any == 'true'
         env:
           SELECTED_CHECKS: ${{ steps.select.outputs.selected }}
