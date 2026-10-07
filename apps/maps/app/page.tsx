@@ -8,6 +8,7 @@ import { ViewerOverviewPanel } from "./assets/viewer-overview-panel.tsx";
 import { ViewerWalkabilityPanel } from "./assets/viewer-walkability-panel.tsx";
 import { ViewerAudioPanel } from "./assets/viewer-audio-panel.tsx";
 import { ViewerDiagnosticsPanel } from "./assets/viewer-diagnostics-panel.tsx";
+import { ViewerDropTarget, ViewerToolbar } from "./assets/viewer-chrome.tsx";
 
 export function MapsPage() {
   return () => (
@@ -48,17 +49,10 @@ export function MapsPage() {
             <HostedViewerPanel />
           </aside>
           <section class="viewport-panel" aria-label="Map viewer">
-            <div class="toolbar">
-              <strong id="map-name">No map open</strong>
-              <span id="viewer-status" role="status">
-                Choose a map to begin
-              </span>
-            </div>
+            <ViewerToolbar />
             <div id="viewport" class="viewport">
               <div id="reticle" class="reticle" aria-hidden="true" hidden></div>
-              <div id="drop-target" class="drop-target" role="status" hidden>
-                Drop a BSP with its map assets
-              </div>
+              <ViewerDropTarget />
             </div>
           </section>
         </main>

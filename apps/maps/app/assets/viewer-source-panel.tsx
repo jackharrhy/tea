@@ -101,6 +101,13 @@ export const ViewerSourcePanel = clientEntry(
     }
 
     handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-open-source",
+        () => {
+          userOpenedSource = true;
+        },
+        { signal: handle.signal },
+      );
       const initial = new URL(location.href).searchParams;
       for (const field of remoteFieldNames) {
         const input = document.querySelector<HTMLInputElement>(

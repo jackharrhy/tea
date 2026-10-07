@@ -38,6 +38,8 @@ The Audio panel renders through Remix. It follows renderer audio state, enables 
 
 Map details, entity support, and warnings render through a Remix diagnostics panel. The viewer entry applies a requested starting camera before panels read the loaded map.
 
+The viewer toolbar and BSP drop overlay render through Remix. The toolbar follows renderer progress and source changes; dropped files enter the same source-opening path as the viewer controls.
+
 ## Editor
 
 Save and Download preserve untouched local `.map` source, including comments and unsupported constructs, when the source planner can patch an edit safely. If it cannot, both stop with a diagnostic. Export normalized downloads a separate `.normalized.map` copy and never writes the opened file. Local recovery snapshots retain the semantic document and source anchors along with unapplied text edits.

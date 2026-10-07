@@ -7,33 +7,45 @@ import type {
   CameraState,
   WorldSource,
 } from "@tea/maps-renderer";
-import { sourceFromFiles, sourceName } from "./world-input.ts";
+import { sourceName } from "./world-input.ts";
 
 defineWorldViewElement();
 
 const viewport = document.querySelector<HTMLElement>("#viewport")!;
-const shell = document.querySelector<HTMLElement>(".shell")!;
-const dropTarget = document.querySelector<HTMLElement>("#drop-target")!;
-const status = document.querySelector<HTMLElement>("#viewer-status")!;
-const name = document.querySelector<HTMLElement>("#map-name")!;
 const viewer = document.createElement("world-view") as WorldViewElement;
 viewer.setAttribute("controls", "walk");
 viewport.append(viewer);
 let initialCamera: CameraState | undefined;
 window.dispatchEvent(new Event("tea-maps-viewer-element-ready"));
 
+function updateChrome(changes: { name?: string; status?: string }) {
+  if (changes.name !== undefined) viewer.dataset.mapName = changes.name;
+  if (changes.status !== undefined) viewer.dataset.status = changes.status;
+  window.dispatchEvent(
+    new CustomEvent("tea-maps-viewer-chrome", {
+      detail: {
+        name: viewer.dataset.mapName ?? "No map open",
+        status: viewer.dataset.status ?? "Choose a map to begin",
+      },
+    }),
+  );
+}
+
 viewer.addEventListener("progress", (event) => {
-  status.textContent = event.detail.label
-    ? `Loading ${event.detail.label}`
-    : "Loading map";
+  updateChrome({
+    status: event.detail.label
+      ? `Loading ${event.detail.label}`
+      : "Loading map",
+  });
 });
 viewer.addEventListener("ready", () => {
   if (initialCamera) viewer.viewer?.setCamera(initialCamera);
-  status.textContent =
-    "Ready · click the map to look around · V switches walk/fly";
+  updateChrome({
+    status: "Ready · click the map to look around · V switches walk/fly",
+  });
 });
 viewer.addEventListener("error", (event) => {
-  status.textContent = event.detail.error.message;
+  updateChrome({ status: event.detail.error.message });
 });
 
 function open(
@@ -44,18 +56,11 @@ function open(
     readonly walkability?: BinarySource;
   },
 ) {
-  name.textContent = label;
-  status.textContent = "Loading map";
+  updateChrome({ name: label, status: "Loading map" });
   initialCamera = options?.camera;
   window.dispatchEvent(new Event("tea-maps-viewer-reset"));
   viewer.source = source;
   viewer.walkabilitySource = options?.walkability ?? null;
-}
-
-function replaceQuery(parameters: Record<string, string>) {
-  const url = new URL(location.href);
-  url.search = new URLSearchParams(parameters).toString();
-  history.replaceState(null, "", url);
 }
 
 window.addEventListener("tea-maps-open-source", (event) => {
@@ -71,46 +76,5 @@ window.addEventListener("tea-maps-open-source", (event) => {
 });
 
 window.addEventListener("tea-maps-viewer-status", (event) => {
-  status.textContent = (event as CustomEvent<string>).detail;
-});
-
-async function openLocalFiles(files: Iterable<File>, emptyMessage: string) {
-  try {
-    const source = await sourceFromFiles(files);
-    if (!source) {
-      status.textContent = emptyMessage;
-      return;
-    }
-    open(source);
-    replaceQuery({});
-  } catch (error) {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  }
-}
-
-let dragDepth = 0;
-shell.addEventListener("dragenter", (event) => {
-  if (!event.dataTransfer?.types.includes("Files")) return;
-  event.preventDefault();
-  dragDepth += 1;
-  dropTarget.hidden = false;
-});
-shell.addEventListener("dragover", (event) => {
-  if (!event.dataTransfer?.types.includes("Files")) return;
-  event.preventDefault();
-  event.dataTransfer.dropEffect = "copy";
-});
-shell.addEventListener("dragleave", () => {
-  dragDepth = Math.max(0, dragDepth - 1);
-  if (dragDepth === 0) dropTarget.hidden = true;
-});
-shell.addEventListener("drop", (event) => {
-  dragDepth = 0;
-  dropTarget.hidden = true;
-  if (!event.dataTransfer?.types.includes("Files")) return;
-  event.preventDefault();
-  void openLocalFiles(
-    event.dataTransfer.files,
-    "The drop did not include a BSP file",
-  );
+  updateChrome({ status: (event as CustomEvent<string>).detail });
 });

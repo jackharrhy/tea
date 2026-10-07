@@ -1259,6 +1259,38 @@ try {
   await sourcePage.getByRole("button", { name: "Open files" }).click();
   await sourcePage.locator("#map-name").getByText("smoke.bsp").waitFor();
   assert.equal(new URL(sourcePage.url()).search, "");
+  await sourcePage.evaluate(
+    (bytes) => {
+      const transfer = new DataTransfer();
+      transfer.items.add(
+        new File([new Uint8Array(bytes)], "dropped.bsp", {
+          type: "application/octet-stream",
+        }),
+      );
+      document.querySelector(".shell").dispatchEvent(
+        new DragEvent("dragenter", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: transfer,
+        }),
+      );
+      window.viewerDropTransfer = transfer;
+    },
+    [...bsp],
+  );
+  await sourcePage.locator("#drop-target").waitFor({ state: "visible" });
+  await sourcePage.evaluate(() => {
+    document.querySelector(".shell").dispatchEvent(
+      new DragEvent("drop", {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: window.viewerDropTransfer,
+      }),
+    );
+  });
+  await sourcePage.locator("#drop-target").waitFor({ state: "hidden" });
+  await sourcePage.locator("#map-name").getByText("dropped.bsp").waitFor();
+  assert.equal(new URL(sourcePage.url()).search, "");
   const remoteBsp = `${mapsOrigin}/missing.bsp`;
   await sourcePage.locator("#bsp-url").fill(remoteBsp);
   await sourcePage.getByRole("button", { name: "Open URL" }).click();
@@ -1286,6 +1318,7 @@ try {
   result.checks.push(
     "Remix viewer picker opens examples, folders, files, and URLs",
   );
+  result.checks.push("Remix viewer chrome opens dropped BSP files");
 
   const page = await browser.newPage();
   const errors = [];
