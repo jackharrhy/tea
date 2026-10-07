@@ -77,6 +77,7 @@ import {
   type EditorDraft,
   type EditorVersion,
 } from "./editor-draft.ts";
+import { loadImportedLegacyRecovery } from "./editor-legacy-local.ts";
 import { initHostedEditor } from "./editor-hosted.ts";
 import { listHostedResources } from "./editor-hosted-resources.ts";
 import { loadHostedWorldSource } from "./hosted-world-source.ts";
@@ -2377,6 +2378,7 @@ function openDetachedCopy(
     profile: WorldviewGameProfile;
   },
   recovery?: EditorVersion | null,
+  workingSource?: string,
 ) {
   const parsed = recovery ? parseMapSource(recovery.committedSource) : null;
   leaveHostedMap();
@@ -2391,7 +2393,8 @@ function openDetachedCopy(
     recovery?.document ?? copy.document,
     recovery?.sourceState ?? parsed?.source ?? copy.source,
   );
-  source.value = recovery?.workingSource ?? copy.source.originalText;
+  source.value =
+    workingSource ?? recovery?.workingSource ?? copy.source.originalText;
   persistDraft();
   status.textContent = `Local recovery copy ${mapName} · save to a file when ready`;
 }
@@ -4830,6 +4833,47 @@ if (launchDetachedMap)
     if (!(await openDetachedCopyAfterConfirmation(copy))) return;
     detachedMapUrl.searchParams.delete("detachedMap");
     history.replaceState(null, "", detachedMapUrl);
+  })().catch((error: unknown) => {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  });
+
+const legacyRecoveryUrl = new URL(location.href);
+const launchLegacyRecovery =
+  legacyRecoveryUrl.searchParams.get("legacyRecovery");
+if (launchLegacyRecovery)
+  void (async () => {
+    const game = legacyRecoveryUrl.searchParams.get("game");
+    if (!isWorldviewGameProfile(game))
+      throw new Error("Choose a game for the Worldview recovery version");
+    const snapshot = await loadImportedLegacyRecovery(launchLegacyRecovery);
+    if (!snapshot)
+      throw new Error(
+        "This Worldview recovery version is unavailable on this device",
+      );
+    if (
+      !gameProfileSupportsFaceSyntax(
+        worldviewGameProfile(game),
+        snapshot.document.faceSyntax,
+      )
+    )
+      throw new Error(`${game} does not support this map's face format`);
+    if (!(await mayReplaceMap())) return;
+    persistDraft();
+    openDetachedCopy(
+      {
+        documentKey: `worldview-recovery:${snapshot.snapshotId}`,
+        document: snapshot.document,
+        source: snapshot.source,
+        fileName: snapshot.fileName,
+        profile: game,
+      },
+      null,
+      serializeMap(snapshot.document),
+    );
+    await saveQueue;
+    legacyRecoveryUrl.searchParams.delete("legacyRecovery");
+    legacyRecoveryUrl.searchParams.delete("game");
+    history.replaceState(null, "", legacyRecoveryUrl);
   })().catch((error: unknown) => {
     status.textContent = error instanceof Error ? error.message : String(error);
   });

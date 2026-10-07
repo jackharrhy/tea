@@ -49,7 +49,13 @@ export default createController(routes, {
       return Response.redirect(destination, 308);
     },
     projects(context) {
-      return context.render(<ProjectsPage />);
+      return context.render(
+        <ProjectsPage
+          createRequested={
+            new URL(context.request.url).searchParams.get("create") === "1"
+          }
+        />,
+      );
     },
     project(context) {
       if (!/^[a-z0-9]{12}$/.test(context.params.projectId))

@@ -15,9 +15,10 @@ const gameNames = {
 
 export const HostedProjects = clientEntry(
   `${import.meta.url}#HostedProjects`,
-  function HostedProjectsComponent(handle: Handle) {
-    const createRequested =
-      new URLSearchParams(location.search).get("create") === "1";
+  function HostedProjectsComponent(
+    handle: Handle<{ createRequested: boolean }>,
+  ) {
+    const createRequested = handle.props.createRequested;
     let projects: readonly HostedProjectSummary[] | null = null;
     let signedInName: string | null = null;
     let signInRequired = false;

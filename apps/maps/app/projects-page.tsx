@@ -16,6 +16,7 @@ export function ProjectsPage(
   handle: Handle<{
     projectId?: string;
     section?: "maps" | "new-map" | "resources" | "access";
+    createRequested?: boolean;
   }>,
 ) {
   return () => (
@@ -60,7 +61,9 @@ export function ProjectsPage(
                   </p>
                 </section>
                 <div class="projects-columns">
-                  <HostedProjects />
+                  <HostedProjects
+                    createRequested={handle.props.createRequested ?? false}
+                  />
                   <section aria-labelledby="local-projects-title">
                     <h2 id="local-projects-title">Recent local projects</h2>
                     <OpenLocalProject />

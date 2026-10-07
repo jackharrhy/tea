@@ -9,10 +9,12 @@ import {
 } from "./editor-detached-catalog.ts";
 import { openLocalProject } from "./project-local.ts";
 import {
-  countLegacyDetachedMaps,
-  exportLegacyDetachedMaps,
-  importDetachedArchive,
-  importLegacyDetachedMaps,
+  countLegacyLocalData,
+  exportLegacyLocalArchive,
+  importLegacyLocalArchive,
+  importLegacyLocalData,
+  listImportedLegacyRecovery,
+  type LegacyRecoverySnapshot,
 } from "./editor-legacy-local.ts";
 
 export const OpenLocalProject = clientEntry(
@@ -126,7 +128,8 @@ export const RecoveredMaps = clientEntry(
   function RecoveredMapsComponent(handle: Handle) {
     let copies: readonly DetachedMapSummary[] | null = null;
     let error: string | null = null;
-    let legacyCount = 0;
+    let legacyCounts = { copies: 0, recovery: 0 };
+    let recovery: readonly LegacyRecoverySnapshot[] = [];
     let legacyError: string | null = null;
     let importing = false;
     let importStatus = "";
@@ -141,9 +144,18 @@ export const RecoveredMaps = clientEntry(
           error = message(cause);
           handle.update();
         });
-      void countLegacyDetachedMaps()
-        .then((count) => {
-          legacyCount = count;
+      void countLegacyLocalData()
+        .then((counts) => {
+          legacyCounts = counts;
+          handle.update();
+        })
+        .catch((cause: unknown) => {
+          legacyError = message(cause);
+          handle.update();
+        });
+      void listImportedLegacyRecovery()
+        .then((found) => {
+          recovery = found;
           handle.update();
         })
         .catch((cause: unknown) => {
@@ -152,15 +164,16 @@ export const RecoveredMaps = clientEntry(
         });
     });
 
-    async function importCopies() {
+    async function importFromThisOrigin() {
       if (importing) return;
       importing = true;
-      importStatus = "Importing local Worldview copies…";
+      importStatus = "Importing local Worldview work…";
       handle.update();
       try {
-        const result = await importLegacyDetachedMaps();
+        const result = await importLegacyLocalData();
         copies = await listDetachedMapSummaries();
-        importStatus = `Imported ${result.imported} Worldview copies; ${result.existing} were already in Tea.`;
+        recovery = await listImportedLegacyRecovery();
+        importStatus = `Imported ${result.copies.imported} local copies and ${result.recovery.imported} recovery versions; ${result.copies.existing + result.recovery.existing} were already in Tea.`;
       } catch (cause) {
         importStatus = message(cause);
       } finally {
@@ -169,20 +182,20 @@ export const RecoveredMaps = clientEntry(
       }
     }
 
-    async function downloadLegacyCopies() {
+    async function downloadLegacyWork() {
       if (importing) return;
       importing = true;
-      importStatus = "Preparing Worldview copy archive…";
+      importStatus = "Preparing Worldview local archive…";
       handle.update();
       try {
-        const blob = await exportLegacyDetachedMaps();
+        const blob = await exportLegacyLocalArchive();
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
-        anchor.download = "worldview-local-copies.json";
+        anchor.download = "worldview-local-work.json";
         anchor.click();
         setTimeout(() => URL.revokeObjectURL(url), 1_000);
-        importStatus = "Downloaded Worldview local copies";
+        importStatus = "Downloaded Worldview local work";
       } catch (cause) {
         importStatus = message(cause);
       } finally {
@@ -194,12 +207,13 @@ export const RecoveredMaps = clientEntry(
     async function importFile(file: File) {
       if (importing) return;
       importing = true;
-      importStatus = "Importing Worldview copy archive…";
+      importStatus = "Importing Worldview local archive…";
       handle.update();
       try {
-        const result = await importDetachedArchive(file);
+        const result = await importLegacyLocalArchive(file);
         copies = await listDetachedMapSummaries();
-        importStatus = `Imported ${result.imported} Worldview copies; ${result.existing} were already in Tea.`;
+        recovery = await listImportedLegacyRecovery();
+        importStatus = `Imported ${result.copies.imported} local copies and ${result.recovery.imported} recovery versions; ${result.copies.existing + result.recovery.existing} were already in Tea.`;
       } catch (cause) {
         importStatus = message(cause);
       } finally {
@@ -210,28 +224,29 @@ export const RecoveredMaps = clientEntry(
 
     return () => (
       <div id="detached-maps-list" class="project-list">
-        {legacyCount > 0 ? (
+        {legacyCounts.copies + legacyCounts.recovery > 0 ? (
           <div>
             <button
               id="import-worldview-copies"
               type="button"
               disabled={importing}
-              mix={on("click", () => void importCopies())}
+              mix={on("click", () => void importFromThisOrigin())}
             >
-              Import {legacyCount} Worldview local copies
+              Import {legacyCounts.copies} Worldview copies and{" "}
+              {legacyCounts.recovery} recovery versions
             </button>
             <button
               id="download-worldview-copies"
               type="button"
               disabled={importing}
-              mix={on("click", () => void downloadLegacyCopies())}
+              mix={on("click", () => void downloadLegacyWork())}
             >
-              Download Worldview copies
+              Download Worldview local work
             </button>
           </div>
         ) : null}
         <label for="import-worldview-copies-file">
-          Import Worldview copies from a file
+          Import Worldview local work from a file
         </label>
         <input
           id="import-worldview-copies-file"
@@ -269,6 +284,34 @@ export const RecoveredMaps = clientEntry(
                     </a>
                   </div>
                 ))}
+        {recovery.length > 0 ? <h3>Worldview recovery versions</h3> : null}
+        {recovery.map((snapshot) => (
+          <div class="project-row">
+            <strong>{snapshot.fileName}</strong>
+            <small>
+              {snapshot.label} · {snapshot.document.faceSyntax} ·{" "}
+              {new Date(snapshot.updatedAt).toLocaleString()}
+            </small>
+            <form action="/editor" method="get">
+              <input
+                type="hidden"
+                name="legacyRecovery"
+                value={snapshot.snapshotId}
+              />
+              <label>
+                Game
+                <select name="game" required>
+                  <option value="">Choose game</option>
+                  <option value="quake">Quake</option>
+                  <option value="goldsrc">GoldSrc</option>
+                  <option value="quake2">Quake II</option>
+                  <option value="gower">Gower Complex</option>
+                </select>
+              </label>
+              <button type="submit">Open as local copy</button>
+            </form>
+          </div>
+        ))}
       </div>
     );
   },
