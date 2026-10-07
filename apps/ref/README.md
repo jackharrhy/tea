@@ -65,6 +65,8 @@ The backup command creates a new directory containing `manifest.json`, uploaded 
 
 Archives contain the current board state, not edit history or full copies of linked web pages. Link preview images that were never cached still depend on their external URLs.
 
+With the original Ref repository checked out beside Tea and Celld installed, run `npm run test:archive:source --workspace @tea/ref` to verify the transfer path. This check creates a board with an image and link in disposable local source storage, backs it up with the original Ref archive command, restores it into a separate Tea Ref store twice, and compares the resulting archive. Set `REF_SOURCE_ROOT` if the original checkout is elsewhere. It does not read a live deployment or production data.
+
 ## Hosting
 
 For a separate Cloudflare deployment of this Tea copy, create the `tea-ref-media` R2 bucket, set `REF_PASSWORD` as a Worker secret, then build and deploy from `apps/ref`. The Worker is named `tea-ref`; it does not share the original Ref Worker or bucket. Use HTTPS on the public address. [Cloudflare's secret documentation](https://developers.cloudflare.com/workers/configuration/secrets/) covers local and deployed secrets.

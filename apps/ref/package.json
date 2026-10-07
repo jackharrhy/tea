@@ -12,6 +12,7 @@
     "test": "vitest run",
     "smoke": "node scripts/smoke.mjs",
     "test:celld": "npm run build && node __tests__/celld-smoke.mjs",
+    "test:archive:source": "node __tests__/source-archive-smoke.mjs",
     "backup": "node scripts/archive.mjs backup",
     "restore": "node scripts/archive.mjs restore",
     "check": "npm run build && npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run",
