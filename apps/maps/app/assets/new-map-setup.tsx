@@ -2,7 +2,7 @@ import {
   worldviewGameProfile,
   type WorldviewGameProfile,
 } from "@tea/maps-editor/core";
-import { clientEntry, on, type Handle } from "remix/component";
+import { clientEntry, on, ref, type Handle } from "remix/component";
 
 export const NewMapSetup = clientEntry(
   `${import.meta.url}#NewMapSetup`,
@@ -28,7 +28,15 @@ export const NewMapSetup = clientEntry(
     return () => {
       const profile = worldviewGameProfile(game);
       return (
-        <form action="/editor" method="get" id="new-map-form" data-rmx-document>
+        <form
+          action="/editor"
+          method="get"
+          id="new-map-form"
+          data-rmx-document
+          mix={ref((node: HTMLFormElement) => {
+            node.dataset.clientReady = "true";
+          })}
+        >
           <input type="hidden" name="newMap" value="1" />
           <label for="new-map-name">Map name</label>
           <input

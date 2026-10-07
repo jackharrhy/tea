@@ -358,6 +358,7 @@ try {
   browser = await chromium.launch({ headless: true });
   const setupPage = await browser.newPage();
   await setupPage.goto(`${mapsOrigin}/new-map`);
+  await setupPage.locator("#new-map-form[data-client-ready=true]").waitFor();
   await setupPage.locator("#new-map-name").fill("smoke.map");
   await setupPage.locator("#new-map-game").selectOption("quake2");
   assert.equal(
