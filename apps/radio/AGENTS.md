@@ -88,8 +88,9 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
   store. The ordinary `sqlite:///absolute/path/objects.sqlite3` bucket configuration must work
   for deployment, diagnostics, and runtime startup; do not use `CELLD_INTERNAL_DEV_STORE` or
   `celld dev` as a production shortcut.
-- The Radio image copies `/usr/local/bin/celld` from `ghcr.io/jackharrhy/celld:latest`. Keep that
-  runtime independent of Radio's build; never download a floating install script in Docker.
+- The Radio image copies `/usr/local/bin/celld` from the verified fork image pinned by digest in
+  `Dockerfile`. Keep that runtime independent of Radio's build; rehearse candidate images on
+  isolated stores and never download a floating install script in Docker.
 - Keep authoritative objects at `/app/.celld/object-store/objects.sqlite3` and replica/cache
   files at `/app/.celld/state`, under the persistent `/app/.celld` mount. A cache cleanup must
   never delete the object store. Back up the authoritative store consistently, including its WAL.

@@ -2019,10 +2019,16 @@ function handleSessionChange(change: { kind: string }) {
   }
   if (change.kind === "selection") {
     materialBrowser.refresh();
-    if (session.selection) {
+    const selectedTab = !session.selection
+      ? ""
+      : session.selection.faceId
+        ? "face"
+        : "entity";
+    document.documentElement.dataset.inspectorSelection = selectedTab;
+    if (selectedTab) {
       window.dispatchEvent(
         new CustomEvent("tea-maps-inspector-selection", {
-          detail: session.selection.faceId ? "face" : "entity",
+          detail: selectedTab,
         }),
       );
     }

@@ -133,6 +133,13 @@ export const EditorInspector = clientEntry(
         },
         { signal: handle.signal },
       );
+      const selection = document.documentElement.dataset.inspectorSelection;
+      if (
+        (selection === "entity" || selection === "face") &&
+        document.querySelector<HTMLElement>(".editor-workspace")?.dataset
+          .inspectorOpen !== "false"
+      )
+        select(selection);
     });
 
     return () => (
