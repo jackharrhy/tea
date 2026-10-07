@@ -16,6 +16,7 @@
     "test:worker": "vitest run --config vitest.config.ts",
     "test:celld": "NODE_ENV=production npm run build && node scripts/test-celld.mjs",
     "test:source-cutover": "node __tests__/source-cutover-smoke.mjs",
+    "compare:instances": "node scripts/compare-instances.mjs",
     "typecheck": "tsc --noEmit",
     "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example"
   },
