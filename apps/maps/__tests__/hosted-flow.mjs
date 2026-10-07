@@ -797,16 +797,83 @@ try {
     "300",
   );
   await movementPage.locator("details.movement-settings summary").click();
-  const movementCalls = await movementPage.evaluate(() => {
-    window.movementProbe.calls.length = 0;
-    const input = document.querySelector("#movement-max-speed");
-    input.value = "320";
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-    return window.movementProbe.calls;
-  });
+  await movementPage.locator("#movement-max-speed").fill("320");
+  assert.equal(
+    await movementPage.locator("#movement-max-speed").inputValue(),
+    "320",
+  );
+  await movementPage.locator("#movement-max-speed").press("Tab");
+  const movementCalls = await movementPage.evaluate(
+    () => window.movementProbe.calls,
+  );
   assert.deepEqual(movementCalls, [{ maxSpeed: 320 }]);
   await movementPage.close();
   result.checks.push("Remix viewer movement settings update renderer controls");
+  const cameraPage = await browser.newPage();
+  await cameraPage.goto(mapsOrigin);
+  await cameraPage.locator("#viewport world-view").waitFor();
+  await cameraPage.evaluate(() => {
+    const element = document.querySelector("#viewport world-view");
+    const camera = {
+      position: [0, 0, 0],
+      yaw: 0,
+      pitch: 0,
+      fieldOfView: 75,
+    };
+    const calls = [];
+    window.cameraProbe = { camera, calls };
+    Object.defineProperty(element, "viewer", {
+      configurable: true,
+      value: {
+        world: {},
+        camera,
+        movementMode: "walk",
+        setCamera(update) {
+          calls.push(update);
+          Object.assign(camera, update);
+        },
+      },
+    });
+  });
+  await cameraPage.waitForFunction(() => {
+    const world = {
+      models: [],
+      entities: [],
+      faces: [],
+      batches: [],
+      bounds: { min: [0, 0, 0], max: [1, 1, 1] },
+      musicTracks: [],
+    };
+    const diagnostics = {
+      format: "quake",
+      version: 29,
+      triangles: 0,
+      faces: 0,
+      batches: 0,
+      materials: 0,
+      lightmapPages: 0,
+      sprites: 0,
+      loadedSounds: 0,
+      loadedMusic: 0,
+      playerSounds: 0,
+      loadMilliseconds: 0,
+      warnings: [],
+    };
+    document
+      .querySelector("#viewport world-view")
+      .dispatchEvent(
+        new CustomEvent("ready", { detail: { world, diagnostics } }),
+      );
+    return !document.querySelector("#field-of-view").disabled;
+  });
+  await cameraPage.locator("#field-of-view").fill("90");
+  assert.equal(await cameraPage.locator("#field-of-view").inputValue(), "90");
+  await cameraPage.locator("#field-of-view").press("Tab");
+  assert.deepEqual(await cameraPage.evaluate(() => window.cameraProbe.calls), [
+    { fieldOfView: 90 },
+  ]);
+  await cameraPage.close();
+  result.checks.push("Remix viewer field of view accepts typed camera values");
   const viewerFolder = join(state, "viewer-fixture");
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
   await writeFile(join(viewerFolder, "maps", "folder.bsp"), bsp);

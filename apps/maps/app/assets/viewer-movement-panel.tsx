@@ -68,12 +68,14 @@ const fields = [
     step: 0.05,
   },
 ] as const;
+type MovementKey = (typeof fields)[number]["key"];
 
 export const ViewerMovementPanel = clientEntry(
   `${import.meta.url}#ViewerMovementPanel`,
   function ViewerMovementPanelComponent(handle: Handle) {
     let element: WorldViewElement | null = null;
     let settings: WorldviewMovementSettings | null = null;
+    let drafts: Partial<Record<MovementKey, string>> = {};
     let status = "";
 
     function updateSettings(next: WorldviewMovementSettings) {
@@ -88,6 +90,7 @@ export const ViewerMovementPanel = clientEntry(
 
     function reset() {
       settings = null;
+      drafts = {};
       status = "";
       handle.update();
     }
@@ -139,26 +142,38 @@ export const ViewerMovementPanel = clientEntry(
                   min={String(field.min)}
                   max={String(field.max)}
                   step={String(field.step)}
-                  value={settings ? String(settings[field.key]) : ""}
+                  value={
+                    drafts[field.key] ??
+                    (settings ? String(settings[field.key]) : "")
+                  }
                   disabled={!settings}
-                  mix={on<HTMLInputElement>("change", (event) => {
-                    const runtime = element?.viewer;
-                    if (!runtime?.world) return;
-                    const input = event.currentTarget;
-                    const value = input.valueAsNumber;
-                    if (!input.checkValidity() || !Number.isFinite(value)) {
-                      input.value = String(runtime.movement[field.key]);
-                      return;
-                    }
-                    try {
-                      runtime.setMovement({ [field.key]: value });
-                      status = "";
-                    } catch (error) {
-                      status =
-                        error instanceof Error ? error.message : String(error);
-                    }
-                    updateSettings(runtime.movement);
-                  })}
+                  mix={[
+                    on<HTMLInputElement>("input", (event) => {
+                      drafts[field.key] = event.currentTarget.value;
+                      handle.update();
+                    }),
+                    on<HTMLInputElement>("change", (event) => {
+                      const runtime = element?.viewer;
+                      if (!runtime?.world) return;
+                      const input = event.currentTarget;
+                      const value = input.valueAsNumber;
+                      delete drafts[field.key];
+                      if (!input.checkValidity() || !Number.isFinite(value)) {
+                        updateSettings(runtime.movement);
+                        return;
+                      }
+                      try {
+                        runtime.setMovement({ [field.key]: value });
+                        status = "";
+                      } catch (error) {
+                        status =
+                          error instanceof Error
+                            ? error.message
+                            : String(error);
+                      }
+                      updateSettings(runtime.movement);
+                    }),
+                  ]}
                 />
               </label>
             ))}

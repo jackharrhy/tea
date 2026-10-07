@@ -13,6 +13,7 @@ export const ViewerCameraPanel = clientEntry(
     let showReticle = true;
     let movementMode = "walk";
     let fieldOfView = 75;
+    let fieldOfViewDraft: string | null = null;
     let position = "Position: —";
     let angles = "Yaw / pitch: —";
     let status = "";
@@ -28,6 +29,7 @@ export const ViewerCameraPanel = clientEntry(
       position = "Position: —";
       angles = "Yaw / pitch: —";
       status = "";
+      fieldOfViewDraft = null;
       updateReticle();
       handle.update();
     }
@@ -40,6 +42,7 @@ export const ViewerCameraPanel = clientEntry(
       ready = true;
       movementMode = runtime.movementMode === "fly" ? "fly" : "walk";
       fieldOfView = camera.fieldOfView;
+      fieldOfViewDraft = null;
       shareable = ["bsp", "example", "fixture", "hostedBuild"].some((key) =>
         new URL(location.href).searchParams.has(key),
       );
@@ -160,15 +163,22 @@ export const ViewerCameraPanel = clientEntry(
           min="45"
           max="110"
           step="1"
-          value={String(fieldOfView)}
+          value={fieldOfViewDraft ?? String(fieldOfView)}
           disabled={!ready}
-          mix={on<HTMLInputElement>("change", (event) => {
-            const value = event.currentTarget.valueAsNumber;
-            if (Number.isFinite(value) && value >= 45 && value <= 110)
-              element?.viewer?.setCamera({ fieldOfView: value });
-            fieldOfView = element?.viewer?.camera.fieldOfView ?? fieldOfView;
-            handle.update();
-          })}
+          mix={[
+            on<HTMLInputElement>("input", (event) => {
+              fieldOfViewDraft = event.currentTarget.value;
+              handle.update();
+            }),
+            on<HTMLInputElement>("change", (event) => {
+              const value = event.currentTarget.valueAsNumber;
+              fieldOfViewDraft = null;
+              if (Number.isFinite(value) && value >= 45 && value <= 110)
+                element?.viewer?.setCamera({ fieldOfView: value });
+              fieldOfView = element?.viewer?.camera.fieldOfView ?? fieldOfView;
+              handle.update();
+            }),
+          ]}
         />
         <button
           id="reset-camera"
@@ -178,6 +188,7 @@ export const ViewerCameraPanel = clientEntry(
             if (!startCamera) return;
             element?.viewer?.setCamera(startCamera);
             fieldOfView = startCamera.fieldOfView;
+            fieldOfViewDraft = null;
             refreshCamera();
             handle.update();
           })}
