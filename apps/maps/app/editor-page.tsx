@@ -22,6 +22,7 @@ import { EditorEntityCreation } from "./assets/editor-entity-creation-panel.tsx"
 import { EditorTransforms } from "./assets/editor-transforms-panel.tsx";
 import { EditorGeometry, EditorCsg } from "./assets/editor-geometry-panel.tsx";
 import { EditorEntityInspector } from "./assets/editor-entity-inspector-panel.tsx";
+import { EditorFaceBasics } from "./assets/editor-face-basics-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -442,39 +443,7 @@ export function EditorPage() {
               <EditorVisibility />
               <div id="face-inspector" hidden>
                 <h2>Brush and face</h2>
-                <p id="face-inspector-summary" />
-                <label for="selected-face">Face</label>
-                <select id="selected-face" aria-label="Select brush face" />
-                <div id="face-geometry" hidden>
-                  <h3>Face geometry</h3>
-                  <label for="face-distance">Distance</label>
-                  <input id="face-distance" type="number" step="1" value="16" />
-                  <div class="face-geometry-actions">
-                    <button id="extrude-face" type="button" disabled>
-                      Extrude
-                    </button>
-                    <button id="split-face" type="button" disabled>
-                      Split
-                    </button>
-                    <button id="stamp-face" type="button" disabled>
-                      Stamp
-                    </button>
-                  </div>
-                </div>
-                <h3>Texture</h3>
-                <label for="selected-material">Material</label>
-                <div class="face-material-actions">
-                  <input
-                    id="selected-material"
-                    type="text"
-                    list="material-choices"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                  <button id="apply-material" type="button" disabled>
-                    Apply
-                  </button>
-                </div>
+                <EditorFaceBasics />
                 <div id="face-projection" hidden>
                   <h3>Face projection</h3>
                   <div class="face-projection-fields">

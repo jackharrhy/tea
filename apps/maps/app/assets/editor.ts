@@ -206,6 +206,10 @@ import {
   type CsgOperation,
 } from "./editor-geometry-bridge.ts";
 import { initEditorEntityInspector } from "./editor-entity-inspector-bridge.ts";
+import {
+  initEditorFaceBasics,
+  type FaceGeometryOperation,
+} from "./editor-face-basics-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -265,6 +269,11 @@ const entityInspector = initEditorEntityInspector({
   commitProperty: commitEntityProperty,
   protectProperty: setEntityPropertyProtection,
 });
+const faceBasics = initEditorFaceBasics({
+  selectFace,
+  runGeometry: runFaceGeometry,
+  applyMaterial: applySelectedMaterial,
+});
 const historyControls = initEditorHistory({
   undo: () => void runHistoryAction("undo"),
   redo: () => void runHistoryAction("redo"),
@@ -290,24 +299,7 @@ const createHullButton =
 const discardHullButton =
   document.querySelector<HTMLButtonElement>("#discard-hull")!;
 const faceInspector = document.querySelector<HTMLElement>("#face-inspector")!;
-const faceSummary = document.querySelector<HTMLElement>(
-  "#face-inspector-summary",
-)!;
 const faceProjection = document.querySelector<HTMLElement>("#face-projection")!;
-const faceGeometry = document.querySelector<HTMLElement>("#face-geometry")!;
-const faceDistance =
-  document.querySelector<HTMLInputElement>("#face-distance")!;
-const faceGeometryButtons = {
-  extrude: document.querySelector<HTMLButtonElement>("#extrude-face")!,
-  split: document.querySelector<HTMLButtonElement>("#split-face")!,
-  stamp: document.querySelector<HTMLButtonElement>("#stamp-face")!,
-};
-const selectedFace =
-  document.querySelector<HTMLSelectElement>("#selected-face")!;
-const selectedMaterial =
-  document.querySelector<HTMLInputElement>("#selected-material")!;
-const applyMaterialButton =
-  document.querySelector<HTMLButtonElement>("#apply-material")!;
 const projectionInputs: Readonly<
   Record<FaceTextureProjectionField, HTMLInputElement>
 > = {
@@ -596,8 +588,7 @@ const materialBrowser = initEditorMaterialBrowser({
   },
   activate: (name) => {
     geometry.setMaterial(name);
-    selectedMaterial.value = name;
-    applyMaterialButton.disabled = selectedMaterial.disabled || !name.trim();
+    faceBasics.setMaterial(name);
   },
   tool: activateViewportTool,
   status: (message) => {
@@ -1310,27 +1301,12 @@ function refreshSelection() {
   uvResetPivot.disabled = uvFrame.disabled;
   faceInspector.hidden = brushIds.length === 0 && faces.length === 0;
   faceProjection.hidden = faces.length === 0;
-  faceGeometry.hidden = faces.length === 0;
-  faceDistance.disabled = faces.length === 0 || !editing;
-  for (const button of Object.values(faceGeometryButtons))
-    button.disabled = !selection?.faceId || !editing;
-  faceSummary.textContent = faces.length
-    ? `${faces.length} ${faces.length === 1 ? "face" : "faces"} selected`
-    : `${brushIds.length} ${brushIds.length === 1 ? "brush" : "brushes"} selected · apply to all faces`;
   const faceBrush =
     brushIds.length === 1
       ? findBrush(session.document, brushIds[0]!)
       : selection?.brushId && selection.faceId
         ? findBrush(session.document, selection.brushId)
         : null;
-  selectedFace.replaceChildren(new Option("All brush faces", ""));
-  for (const [index, face] of (faceBrush?.faces ?? []).entries()) {
-    selectedFace.add(
-      new Option(`Face ${index + 1} · ${face.material}`, face.id),
-    );
-  }
-  selectedFace.value = selection?.faceId ?? "";
-  selectedFace.disabled = !faceBrush;
   const materials = faces.length
     ? faces.map((face) => face.material)
     : brushIds.flatMap(
@@ -1339,13 +1315,26 @@ function refreshSelection() {
           [],
       );
   const sharedMaterial = materials.every((value) => value === materials[0]);
-  selectedMaterial.value = sharedMaterial ? (materials[0] ?? "") : "";
-  selectedMaterial.placeholder = sharedMaterial
-    ? "Material"
-    : "Mixed materials";
-  selectedMaterial.disabled = faceInspector.hidden || !editing;
-  applyMaterialButton.disabled =
-    selectedMaterial.disabled || !selectedMaterial.value.trim();
+  const selectedMaterial = sharedMaterial ? (materials[0] ?? "") : "";
+  const materialDisabled = faceInspector.hidden || !editing;
+  faceBasics.update({
+    summary: faces.length
+      ? `${faces.length} ${faces.length === 1 ? "face" : "faces"} selected`
+      : `${brushIds.length} ${brushIds.length === 1 ? "brush" : "brushes"} selected · apply to all faces`,
+    faces: (faceBrush?.faces ?? []).map((face, index) => ({
+      id: face.id,
+      label: `Face ${index + 1} · ${face.material}`,
+    })),
+    selectedFaceId: selection?.faceId ?? "",
+    faceSelectDisabled: !faceBrush,
+    geometryVisible: faces.length > 0,
+    distanceDisabled: faces.length === 0 || !editing,
+    geometryDisabled: !selection?.faceId || !editing,
+    material: selectedMaterial,
+    materialPlaceholder: sharedMaterial ? "Material" : "Mixed materials",
+    materialDisabled,
+    applyMaterialDisabled: materialDisabled || !selectedMaterial.trim(),
+  });
   const textureSelectionKey = `${brushIds.join("|")}/${faces.map((face) => face.id).join("|")}`;
   if (textureSelectionKey !== inspectedTextureSelection) {
     textureWidth.value = "";
@@ -2909,14 +2898,10 @@ function updatePointEntity() {
   }
 }
 
-selectedMaterial.addEventListener("input", () => {
-  applyMaterialButton.disabled =
-    selectedMaterial.disabled || !selectedMaterial.value.trim();
-});
-
 function applySelectedMaterial() {
+  if (faceBasics.state.applyMaterialDisabled) return;
   if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;
-  const material = selectedMaterial.value.trim();
+  const material = faceBasics.state.material.trim();
   if (!material) return;
   try {
     if (!session.applyMaterial(material)) {
@@ -2927,61 +2912,50 @@ function applySelectedMaterial() {
   }
 }
 
-selectedFace.addEventListener("change", () => {
+function selectFace(faceId: string) {
   const brushId = session.selection?.brushId;
-  if (!brushId || !selectedFace.value) {
+  if (!brushId || !faceId) {
     if (brushId) session.select({ brushId });
     return;
   }
   const face = findBrush(session.document, brushId)?.faces.find(
-    (candidate) => candidate.id === selectedFace.value,
+    (candidate) => candidate.id === faceId,
   );
   if (face) session.select({ brushId, faceId: face.id });
-});
-
-for (const [operation, button] of Object.entries(faceGeometryButtons) as [
-  keyof typeof faceGeometryButtons,
-  HTMLButtonElement,
-][]) {
-  button.addEventListener("click", () => {
-    if (!viewportCanEdit()) return;
-    const distance = faceDistance.valueAsNumber;
-    if (!Number.isFinite(distance) || Math.abs(distance) <= Number.EPSILON) {
-      status.textContent = "Enter a non-zero face distance";
-      return;
-    }
-    try {
-      const changed =
-        operation === "extrude"
-          ? session.extrudeSelectedFace(distance)
-          : operation === "split"
-            ? session.splitSelectedFace(
-                distance,
-                createSequentialIdFactory(
-                  `tea-face-split-${crypto.randomUUID()}`,
-                ),
-              )
-            : session.stampSelectedFace(
-                distance,
-                createSequentialIdFactory(
-                  `tea-face-stamp-${crypto.randomUUID()}`,
-                ),
-                toolSettings.state.textureLock,
-              );
-      if (!changed) status.textContent = "Select a face for this operation";
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
 }
 
-applyMaterialButton.addEventListener("click", applySelectedMaterial);
-selectedMaterial.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") return;
-  event.preventDefault();
-  applySelectedMaterial();
-});
+function runFaceGeometry(operation: FaceGeometryOperation) {
+  if (faceBasics.state.geometryDisabled || !viewportCanEdit()) return;
+  const distance = faceBasics.state.distance.trim()
+    ? Number(faceBasics.state.distance)
+    : Number.NaN;
+  if (!Number.isFinite(distance) || Math.abs(distance) <= Number.EPSILON) {
+    status.textContent = "Enter a non-zero face distance";
+    return;
+  }
+  try {
+    const changed =
+      operation === "extrude"
+        ? session.extrudeSelectedFace(distance)
+        : operation === "split"
+          ? session.splitSelectedFace(
+              distance,
+              createSequentialIdFactory(
+                `tea-face-split-${crypto.randomUUID()}`,
+              ),
+            )
+          : session.stampSelectedFace(
+              distance,
+              createSequentialIdFactory(
+                `tea-face-stamp-${crypto.randomUUID()}`,
+              ),
+              toolSettings.state.textureLock,
+            );
+    if (!changed) status.textContent = "Select a face for this operation";
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
+}
 
 alignmentButton.addEventListener("click", () => {
   if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;

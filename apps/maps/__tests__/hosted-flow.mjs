@@ -1600,6 +1600,77 @@ try {
   result.checks.push(
     "Remix brush texture, Add box, convex merge, and Hollow controls use editor transactions",
   );
+  const facePage = await browser.newPage();
+  await installSiteToolMock(facePage);
+  await facePage.goto(`${mapsOrigin}/editor`);
+  await facePage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  const selectedFaceId = await facePage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    const created = tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [64, 64, 64],
+      material: "STONE",
+    });
+    const brush = tools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "brush" })
+      .objects.find((candidate) => candidate.id === created.brushId);
+    if (!brush) throw new Error("Face test brush was not found");
+    const after = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: after.documentId,
+      expectedRevision: after.revision,
+      mode: "faces",
+      faces: [{ brushId: brush.id, faceId: brush.faceIds[0] }],
+    });
+    return brush.faceIds[0];
+  });
+  await facePage.locator("#face-inspector").waitFor({ state: "visible" });
+  assert.equal(
+    await facePage.locator("#selected-face").inputValue(),
+    selectedFaceId,
+  );
+  await facePage.locator("#selected-material").fill("BRICK");
+  await facePage.locator("#apply-material:not([disabled])").click();
+  await facePage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "brush" })
+      .objects.some((brush) => brush.materials.includes("BRICK")),
+  );
+  const beforeFaceGeometry = await facePage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await facePage.locator("#face-distance").fill("0");
+  await facePage.locator("#extrude-face:not([disabled])").click();
+  await facePage.getByText("Enter a non-zero face distance").waitFor();
+  assert.equal(
+    await facePage.evaluate(
+      () =>
+        window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+          .revision,
+    ),
+    beforeFaceGeometry,
+  );
+  await facePage.locator("#face-distance").fill("8");
+  await facePage.locator("#extrude-face").click();
+  await facePage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    beforeFaceGeometry,
+  );
+  await facePage.close();
+  result.checks.push(
+    "Remix face picker, material application, and numeric face geometry use editor transactions",
+  );
   const entityPage = await browser.newPage();
   await installSiteToolMock(entityPage);
   await entityPage.goto(`${mapsOrigin}/editor`);

@@ -148,6 +148,8 @@ Add box, Brush texture, and Constructive geometry controls render through Remix 
 
 The selected point entity and entity properties inspector renders through a Remix client component. Project definitions supply choices, flags, checkboxes, and numeric fields; linked copies can keep individual properties independent. The editor still validates classnames and origins and commits property edits through its history.
 
+The selected face picker, numeric Extrude, Split, and Stamp controls, and material application render through a Remix client component. The editor still runs those geometry and material edits through its session and source guard.
+
 When editing inside a linked group that has another copy, entity properties can be marked Independent in the inspector. A new protected property stays in the open copy, while edits to ordinary properties continue to synchronize. The checkbox beside an existing property can add or remove that protection.
 
 Viewport picking treats closed groups as one selection, opens a group on activation, and expands a brush entity pick to its sibling brushes. With several brushes selected, picking a face in Face mode selects matching faces across them. Paint selection reports the resulting count in the editor status.
