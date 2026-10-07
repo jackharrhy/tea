@@ -748,6 +748,13 @@ export const editorStyles = css({
     "align-items": "center",
     gap: "0.4rem",
   },
+  "& .entity-property-protection": { "font-size": "0.8rem" },
+  "& #entity-property-protection-option": {
+    display: "flex",
+    "align-items": "center",
+    gap: "0.4rem",
+  },
+  "& #entity-property-protection-option[hidden]": { display: "none" },
   "& .entity-property-row input:not([type='checkbox']), & .entity-property-row select":
     {
       color: "#e0e9e2",

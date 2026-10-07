@@ -795,6 +795,97 @@ try {
   result.checks.push(
     "selection brush queries consume volumes and undo restores them",
   );
+  const linkedPage = await browser.newPage();
+  await installSiteToolMock(linkedPage);
+  await linkedPage.goto(`${mapsOrigin}/editor`);
+  await linkedPage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  await linkedPage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_create_point_entity").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      classname: "info_player_start",
+      origin: [32, 32, 32],
+    });
+  });
+  await linkedPage.locator("#group-tools summary").click();
+  await linkedPage.locator("#group-selection").click();
+  await linkedPage.locator("#linked-duplicate-group").click();
+  const linkedGroupId = await linkedPage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .selection.groupId,
+  );
+  assert.ok(linkedGroupId);
+  await linkedPage.locator("#open-group").click();
+  const linkedMember = await linkedPage.evaluate((groupId) => {
+    const tools = window.teaMapsTestTools;
+    const current = tools.get("tea_maps_inspect_editor").execute({});
+    const members = tools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" });
+    const point = members.objects.find(
+      (entity) =>
+        entity.classname === "info_player_start" &&
+        entity.properties["_tb_group"] === groupId,
+    );
+    if (!point) throw new Error("Linked group point entity was not found");
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: current.documentId,
+      expectedRevision: current.revision,
+      mode: "objects",
+      entityIds: [point.id],
+    });
+    return point.id;
+  }, linkedGroupId);
+  await linkedPage.locator("#entity-property-protection-option").waitFor({
+    state: "visible",
+  });
+  await linkedPage.locator("#entity-property-key").fill("message");
+  await linkedPage.locator("#entity-property-value").fill("Only this copy");
+  await linkedPage.locator("#entity-property-protected").check();
+  await linkedPage.locator("#save-entity-property").click();
+  const protectedMembers = await linkedPage.evaluate(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.filter((entity) => entity.classname === "info_player_start"),
+  );
+  assert.equal(protectedMembers.length, 2);
+  assert.equal(
+    protectedMembers.find((entity) => entity.id === linkedMember).properties
+      .message,
+    "Only this copy",
+  );
+  assert.equal(
+    protectedMembers.find((entity) => entity.id !== linkedMember).properties
+      .message,
+    undefined,
+  );
+  await linkedPage
+    .getByRole("checkbox", {
+      name: "Keep message independent in this linked copy",
+    })
+    .click();
+  const unprotectedMembers = await linkedPage.evaluate(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.filter((entity) => entity.classname === "info_player_start"),
+  );
+  assert.equal(
+    unprotectedMembers.find((entity) => entity.id === linkedMember).properties[
+      "_tb_protected_properties"
+    ],
+    undefined,
+  );
+  await linkedPage.close();
+  result.checks.push(
+    "linked group entity properties can stay independent through the inspector",
+  );
   const siteToolPage = await browser.newPage();
   siteToolPage.on("pageerror", (error) => errors.push(error.message));
   await installSiteToolMock(siteToolPage);

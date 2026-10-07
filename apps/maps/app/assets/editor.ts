@@ -94,7 +94,10 @@ import {
 import { createFaceDragController } from "./editor-face-drag.ts";
 import { createEditorSweep } from "./editor-sweep.ts";
 import { initEditorReferences } from "./editor-references.ts";
-import { renderEntityProperties } from "./editor-entity-properties.ts";
+import {
+  canProtectEntityProperties,
+  renderEntityProperties,
+} from "./editor-entity-properties.ts";
 import { initEditorFov } from "./editor-fov.ts";
 import { initEditorWorkspace } from "./editor-workspace.ts";
 import { initEditorMaterialBrowser } from "./editor-material-browser.ts";
@@ -203,6 +206,12 @@ const propertyKey = document.querySelector<HTMLInputElement>(
 )!;
 const propertyValue = document.querySelector<HTMLInputElement>(
   "#entity-property-value",
+)!;
+const propertyProtectionOption = document.querySelector<HTMLElement>(
+  "#entity-property-protection-option",
+)!;
+const propertyProtected = document.querySelector<HTMLInputElement>(
+  "#entity-property-protected",
 )!;
 const savePropertyButton = document.querySelector<HTMLButtonElement>(
   "#save-entity-property",
@@ -1543,14 +1552,28 @@ function refreshSelection() {
     inspectedEntityId = selectedEntity?.id ?? null;
   }
   if (selectedEntity) {
+    const canProtect = canProtectEntityProperties(
+      session.document,
+      selectedEntity,
+      openGroupId,
+    );
+    propertyProtectionOption.hidden = !canProtect;
+    propertyProtected.disabled = !editing || !canProtect;
+    if (!canProtect) propertyProtected.checked = false;
     renderEntityProperties({
       list: propertyList,
       entity: selectedEntity,
       definitions: currentDefinitions(),
       editable: editing,
+      canProtect,
       commit: commitEntityProperty,
+      protect: setEntityPropertyProtection,
     });
-  } else propertyList.replaceChildren();
+  } else {
+    propertyList.replaceChildren();
+    propertyProtectionOption.hidden = true;
+    propertyProtected.checked = false;
+  }
   propertyKey.disabled = !selectedEntity || !editing;
   propertyValue.disabled = !selectedEntity || !editing;
   refreshPropertyActions();
@@ -3246,7 +3269,11 @@ surfaceValue.addEventListener("change", () => {
 
 propertyKey.addEventListener("input", refreshPropertyActions);
 
-function commitEntityProperty(key: string, next: string | null) {
+function commitEntityProperty(
+  key: string,
+  next: string | null,
+  protect = false,
+) {
   let value = next;
   if (!inspectedEntityId || !key || key.startsWith("_tb_")) return;
   if (key === "classname" && value === null) return;
@@ -3277,14 +3304,29 @@ function commitEntityProperty(key: string, next: string | null) {
     value = coordinates.join(" ");
   }
   try {
-    session.setEntityProperty(inspectedEntityId, key, value);
+    session.setEntityProperty(inspectedEntityId, key, value, protect);
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
 }
 
+function setEntityPropertyProtection(key: string, protect: boolean) {
+  if (!inspectedEntityId || !applyWorkingSource()) return;
+  try {
+    session.setEntityPropertyProtected(inspectedEntityId, key, protect);
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+    refreshSelection();
+  }
+}
+
 savePropertyButton.addEventListener("click", () => {
-  commitEntityProperty(propertyKey.value.trim(), propertyValue.value);
+  commitEntityProperty(
+    propertyKey.value.trim(),
+    propertyValue.value,
+    propertyProtected.checked,
+  );
+  propertyProtected.checked = false;
 });
 
 removePropertyButton.addEventListener("click", () => {

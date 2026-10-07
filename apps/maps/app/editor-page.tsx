@@ -1389,6 +1389,14 @@ export function EditorPage() {
                 />
                 <label for="entity-property-value">Value</label>
                 <input id="entity-property-value" type="text" />
+                <label
+                  id="entity-property-protection-option"
+                  for="entity-property-protected"
+                  hidden
+                >
+                  <input id="entity-property-protected" type="checkbox" />
+                  Keep new property independent in this linked copy
+                </label>
                 <div class="entity-property-actions">
                   <button id="save-entity-property" type="button" disabled>
                     Save property

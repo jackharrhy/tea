@@ -22,6 +22,8 @@ The Maps viewer now opens Worldview camera and fixture links and can copy the cu
 
 The Tea editor now exposes exact shear and mirror transforms, Worldview view filters, and entity link visibility modes alongside the copied map issue diagnostics, type filters, local finding visibility, object reveal, and undoable repairs. It can create, rename, activate, reorder, hide, lock, isolate, and remove TrenchBroom-compatible layers, and move objects between them. It can create, rename, open, close, link duplicate, unlink, and ungroup TrenchBroom-compatible object groups. Group metadata survives source saving and hosted collaboration operations, and opening a group locks viewport interaction with objects outside it.
 
+The entity inspector now exposes linked-group property protection. While editing an open linked copy, users can keep an existing or newly added property independent of its siblings.
+
 The four-viewport editor also exposes Worldview's clip, perspective hull, and face sweep tools. Clip previews back, split, and front results for selected brushes; hull creation previews a brush from placed face points. Sweep previews one or more selected faces through a configurable path and destination cap. All three commit through the session history and hosted semantic operation path.
 
 Selection brushes now expose touching, enclosed, and XY/XZ/YZ projected queries in Tea. Each query consumes selected structural brushes, selects the matching objects, and can be undone as one edit.

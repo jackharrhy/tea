@@ -92,6 +92,8 @@ The Performance control samples visible-tab animation frame cadence and editor r
 
 Selection brushes use selected structural brushes as volumes to select touching or enclosed objects, including a chosen XY, XZ, or YZ projection. The command removes the selection brushes and selects the matches in one undoable edit; Undo restores the brushes.
 
+When editing inside a linked group that has another copy, entity properties can be marked Independent in the inspector. A new protected property stays in the open copy, while edits to ordinary properties continue to synchronize. The checkbox beside an existing property can add or remove that protection.
+
 The sidebar shows a selected brush or face's material. Choose a face from a selected brush or select one in a viewport. Apply a material to the selected faces, or to every face of selected brushes. Selecting faces also exposes U/V offsets, U/V scale, and rotation; mixed values are left blank until edited. These changes use the editor's undo history and hosted room operations.
 
 For one selected face, the UV editor shows its texture grid and face polygon. Drag the face to offset its texture, the ring to rotate, or the axis handles to scale. Drag the origin to change the transform pivot, pan with a middle or right drag, and zoom with the wheel. Grid subdivisions control snapping; Ctrl or Command bypasses it. UV drags preview in the viewport and commit through undo history and hosted room operations.

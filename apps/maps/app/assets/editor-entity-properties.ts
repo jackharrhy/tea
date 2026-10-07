@@ -3,6 +3,33 @@ import type {
   EntityPropertyDefinition,
   MapEntity,
 } from "@tea/maps-editor/core";
+import {
+  deriveEditorGroups,
+  linkedGroupSiblings,
+  protectedEntityProperties,
+  type MapDocument,
+} from "@tea/maps-editor/core";
+
+export function canProtectEntityProperties(
+  document: MapDocument,
+  entity: MapEntity,
+  openGroupId: string | null,
+): boolean {
+  const groups = deriveEditorGroups(document);
+  const openGroup = groups.find((group) => group.id === openGroupId);
+  if (
+    !openGroup?.linkedGroupId ||
+    linkedGroupSiblings(document, openGroup.id).length < 2
+  )
+    return false;
+  const groupsById = new Map(groups.map((group) => [group.id, group]));
+  let containingGroup = groupsById.get(entity.properties["_tb_group"] ?? "");
+  while (containingGroup) {
+    if (containingGroup.id === openGroup.id) return true;
+    containingGroup = groupsById.get(containingGroup.parentGroupId ?? "");
+  }
+  return false;
+}
 
 function propertyValue(
   property: EntityPropertyDefinition | undefined,
@@ -17,9 +44,13 @@ export function renderEntityProperties(options: {
   readonly entity: MapEntity;
   readonly definitions: EntityDefinitionCatalog | undefined;
   readonly editable: boolean;
+  readonly canProtect: boolean;
   readonly commit: (key: string, value: string | null) => void;
+  readonly protect: (key: string, value: boolean) => void;
 }): void {
-  const { list, entity, definitions, editable, commit } = options;
+  const { list, entity, definitions, editable, canProtect, commit, protect } =
+    options;
+  const protectedKeys = new Set(protectedEntityProperties(entity));
   const definition = definitions?.find(entity.properties.classname ?? "");
   const defined = new Map(
     definition?.properties.map((property) => [property.key, property]),
@@ -107,6 +138,21 @@ export function renderEntityProperties(options: {
     }
 
     if (!row.contains(label)) row.prepend(label);
+    if (canProtect) {
+      const protection = document.createElement("label");
+      protection.className = "entity-property-protection";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = protectedKeys.has(key);
+      checkbox.disabled = !editable;
+      checkbox.setAttribute(
+        "aria-label",
+        `Keep ${key} independent in this linked copy`,
+      );
+      checkbox.addEventListener("change", () => protect(key, checkbox.checked));
+      protection.append(checkbox, document.createTextNode("Independent"));
+      row.append(protection);
+    }
     if (key !== "classname" && key in entity.properties) {
       const remove = document.createElement("button");
       remove.type = "button";
