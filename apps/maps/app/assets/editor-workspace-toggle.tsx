@@ -94,6 +94,7 @@ export const EditorInspectorToggle = clientEntry(
         aria-label={
           state?.inspectorOpen === false ? "Show inspector" : "Hide inspector"
         }
+        disabled={!state}
         mix={on("click", () => state?.toggleInspector())}
       >
         Inspector
