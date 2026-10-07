@@ -750,7 +750,18 @@ try {
     /^Position: /,
   );
   const movementPage = await browser.newPage();
+  await movementPage.addInitScript(() => {
+    window.teaMapsViewerElementReady = false;
+    window.addEventListener(
+      "tea-maps-viewer-element-ready",
+      () => {
+        window.teaMapsViewerElementReady = true;
+      },
+      { once: true },
+    );
+  });
   await movementPage.goto(`${mapsOrigin}/?example=quake`);
+  await movementPage.waitForFunction(() => window.teaMapsViewerElementReady);
   await movementPage.locator("#viewport world-view").waitFor();
   await movementPage.evaluate(() => {
     const element = document.querySelector("#viewport world-view");
@@ -790,7 +801,8 @@ try {
         detail: { mode: "walk", settings: window.movementProbe.settings },
       }),
     );
-    return !document.querySelector("#movement-max-speed").disabled;
+    const input = document.querySelector("#movement-max-speed");
+    return !input.disabled && input.value === "300";
   });
   assert.equal(
     await movementPage.locator("#movement-max-speed").inputValue(),
