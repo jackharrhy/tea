@@ -40,6 +40,8 @@ The viewer Overview panel renders through a Remix client entry and delegates PNG
 
 The viewer Walkability panel renders through a Remix client entry while generation, sidecar loading, and graph display remain renderer behavior.
 
+The viewer Audio panel renders through a Remix client entry while the renderer owns sound state and playback.
+
 The editor's document controls now render through a Remix client entry. The editor still checks file handles and source save plans, writes recovery checkpoints, and guards map replacement.
 
 The viewport pointer readout now renders in a Remix client entry using the editor renderer's snapped map position.

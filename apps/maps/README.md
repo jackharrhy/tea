@@ -34,6 +34,8 @@ The Overview panel renders through Remix. It plans export height defaults from t
 
 The Walkability panel renders through Remix. It generates and shows navigation graphs through the renderer, accepts JSON sidecars, and downloads Tea named sidecars.
 
+The Audio panel renders through Remix. It follows renderer audio state, enables and mutes sound, adjusts volumes, and selects, plays, or stops map music.
+
 ## Editor
 
 Save and Download preserve untouched local `.map` source, including comments and unsupported constructs, when the source planner can patch an edit safely. If it cannot, both stop with a diagnostic. Export normalized downloads a separate `.normalized.map` copy and never writes the opened file. Local recovery snapshots retain the semantic document and source anchors along with unapplied text edits.

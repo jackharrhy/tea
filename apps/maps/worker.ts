@@ -75,6 +75,7 @@ const clientEntryFiles = {
   "viewer-movement-panel.tsx": browserAssets.viewerMovementPanel,
   "viewer-overview-panel.tsx": browserAssets.viewerOverviewPanel,
   "viewer-walkability-panel.tsx": browserAssets.viewerWalkabilityPanel,
+  "viewer-audio-panel.tsx": browserAssets.viewerAudioPanel,
   "new-map-setup.tsx": browserAssets.newMap,
   "project-maps.tsx": browserAssets.projectMaps,
   "project-new-map.tsx": browserAssets.projectNewMap,

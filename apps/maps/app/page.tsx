@@ -6,6 +6,7 @@ import { ViewerCameraPanel } from "./assets/viewer-camera-panel.tsx";
 import { ViewerMovementPanel } from "./assets/viewer-movement-panel.tsx";
 import { ViewerOverviewPanel } from "./assets/viewer-overview-panel.tsx";
 import { ViewerWalkabilityPanel } from "./assets/viewer-walkability-panel.tsx";
+import { ViewerAudioPanel } from "./assets/viewer-audio-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -53,63 +54,7 @@ export function MapsPage() {
                 <ViewerMovementPanel />
                 <ViewerOverviewPanel />
                 <ViewerWalkabilityPanel />
-                <section aria-label="Map audio">
-                  <h2>Audio</h2>
-                  <output id="audio-details">Load a map to enable sound</output>
-                  <output id="audio-room" class="hint">
-                    Room: —
-                  </output>
-                  <button id="enable-audio" type="button" disabled>
-                    Enable sound
-                  </button>
-                  <label class="toggle" for="mute-audio">
-                    <input id="mute-audio" type="checkbox" disabled />
-                    Mute
-                  </label>
-                  <label for="audio-volume">Volume</label>
-                  <input
-                    id="audio-volume"
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value="0.8"
-                    disabled
-                  />
-                  <label for="player-volume">Footstep volume</label>
-                  <input
-                    id="player-volume"
-                    type="range"
-                    min="0"
-                    max="2"
-                    step="0.05"
-                    value="1"
-                    disabled
-                  />
-                  <label for="music-volume">Music volume</label>
-                  <input
-                    id="music-volume"
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value="1"
-                    disabled
-                  />
-                  <label for="music-track">Music track</label>
-                  <select id="music-track" disabled>
-                    <option value="">No map music</option>
-                  </select>
-                  <output id="music-status" class="hint">
-                    No map music
-                  </output>
-                  <button id="play-music" type="button" disabled>
-                    Play music
-                  </button>
-                  <button id="stop-music" type="button" disabled>
-                    Stop music
-                  </button>
-                </section>
+                <ViewerAudioPanel />
                 <output id="map-tool-status" role="status"></output>
               </div>
             </details>

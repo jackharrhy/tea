@@ -61,6 +61,7 @@ export const browserAssets = import.meta.env.DEV
       viewerMovementPanel: "/assets/viewerMovementPanel.js",
       viewerOverviewPanel: "/assets/viewerOverviewPanel.js",
       viewerWalkabilityPanel: "/assets/viewerWalkabilityPanel.js",
+      viewerAudioPanel: "/assets/viewerAudioPanel.js",
       projectMaps: "/assets/projectMaps.js",
       projectNewMap: "/assets/projectNewMap.js",
       projectAccess: "/assets/projectAccess.js",
@@ -68,7 +69,7 @@ export const browserAssets = import.meta.env.DEV
     }
   : {
       entry: "/assets/entry-JCK7T7IM.js",
-      viewer: "/assets/viewer-K3ZKXW5U.js",
+      viewer: "/assets/viewer-Y3C4CJO5.js",
       editor: "/assets/editor-57WFJ7KS.js",
       editorTheme: "/assets/editorTheme-EU7X55BI.js",
       editorHostedPresence: "/assets/editorHostedPresence-PIENC5CI.js",
@@ -127,6 +128,7 @@ export const browserAssets = import.meta.env.DEV
       viewerMovementPanel: "/assets/viewerMovementPanel-NG233XQC.js",
       viewerOverviewPanel: "/assets/viewerOverviewPanel-IQWJ5O7T.js",
       viewerWalkabilityPanel: "/assets/viewerWalkabilityPanel-7EZ3Y6B6.js",
+      viewerAudioPanel: "/assets/viewerAudioPanel-4NAOIDZW.js",
       projectMaps: "/assets/projectMaps-6XBD64VR.js",
       projectNewMap: "/assets/projectNewMap-FY45V7N4.js",
       projectAccess: "/assets/projectAccess-UABOXJGI.js",

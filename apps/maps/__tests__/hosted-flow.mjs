@@ -826,11 +826,29 @@ try {
       faces: [],
       batches: [],
       bounds: { min: [0, 0, 0], max: [1, 1, 1] },
-      musicTracks: [],
+      musicTracks: [
+        {
+          entityIndex: 7,
+          reference: { basename: "theme.ogg" },
+          targetName: "Theme",
+        },
+      ],
     };
     const calls = [];
     const captureCalls = [];
     const walkabilityCalls = [];
+    const audioCalls = [];
+    const audio = {
+      enabled: false,
+      suspended: false,
+      muted: false,
+      volume: 0.8,
+      playerVolume: 1,
+      musicVolume: 1,
+      musicPlaying: false,
+      musicEntityIndex: null,
+      roomType: 0,
+    };
     const graph = {
       format: "worldview-walkability",
       version: 1,
@@ -875,12 +893,19 @@ try {
       world,
       captureCalls,
       walkabilityCalls,
+      audioCalls,
     };
+    function emitAudioChange() {
+      element.dispatchEvent(
+        new CustomEvent("audiochange", { detail: { state: { ...audio } } }),
+      );
+    }
     Object.defineProperty(element, "viewer", {
       configurable: true,
       value: {
         world,
         camera,
+        audio,
         movementMode: "walk",
         walkability: null,
         setCamera(update) {
@@ -916,6 +941,42 @@ try {
               },
             }),
           );
+        },
+        async enableAudio() {
+          audioCalls.push({ action: "enable" });
+          audio.enabled = true;
+          emitAudioChange();
+        },
+        setAudioMuted(value) {
+          audioCalls.push({ action: "mute", value });
+          audio.muted = value;
+          emitAudioChange();
+        },
+        setAudioVolume(value) {
+          audioCalls.push({ action: "volume", value });
+          audio.volume = value;
+          emitAudioChange();
+        },
+        setPlayerAudioVolume(value) {
+          audioCalls.push({ action: "playerVolume", value });
+          audio.playerVolume = value;
+          emitAudioChange();
+        },
+        setMusicVolume(value) {
+          audioCalls.push({ action: "musicVolume", value });
+          audio.musicVolume = value;
+          emitAudioChange();
+        },
+        async playMusic(entityIndex) {
+          audioCalls.push({ action: "play", entityIndex });
+          audio.musicEntityIndex = entityIndex;
+          audio.musicPlaying = true;
+          emitAudioChange();
+        },
+        stopMusic() {
+          audioCalls.push({ action: "stop" });
+          audio.musicPlaying = false;
+          emitAudioChange();
         },
       },
     });
@@ -1058,6 +1119,57 @@ try {
     await cameraPage.locator("#walkability-status").textContent(),
     "walkability sidecar could not be loaded: invalid graph",
   );
+  await cameraPage.locator("#enable-audio:enabled").waitFor();
+  await cameraPage.locator("#enable-audio").click();
+  assert.equal(
+    await cameraPage.locator("#audio-details").textContent(),
+    "Sound enabled",
+  );
+  await cameraPage.locator("#mute-audio").check();
+  await cameraPage.locator("#audio-volume").focus();
+  await cameraPage.locator("#audio-volume").press("ArrowRight");
+  await cameraPage.locator("#player-volume").focus();
+  await cameraPage.locator("#player-volume").press("ArrowLeft");
+  await cameraPage.locator("#music-volume").focus();
+  await cameraPage.locator("#music-volume").press("ArrowLeft");
+  await cameraPage.locator("#play-music").click();
+  assert.equal(
+    await cameraPage.locator("#music-status").textContent(),
+    "Playing",
+  );
+  await cameraPage.locator("#stop-music").click();
+  assert.equal(
+    await cameraPage.locator("#music-status").textContent(),
+    "Stopped",
+  );
+  const audioCalls = await cameraPage.evaluate(
+    () => window.cameraProbe.audioCalls,
+  );
+  assert.deepEqual(
+    audioCalls.filter((call) => call.action === "enable"),
+    [{ action: "enable" }],
+  );
+  assert.deepEqual(
+    audioCalls.filter((call) => call.action === "mute"),
+    [{ action: "mute", value: true }],
+  );
+  assert.ok(
+    audioCalls.some((call) => call.action === "volume" && call.value > 0.8),
+  );
+  assert.ok(
+    audioCalls.some((call) => call.action === "playerVolume" && call.value < 1),
+  );
+  assert.ok(
+    audioCalls.some((call) => call.action === "musicVolume" && call.value < 1),
+  );
+  assert.deepEqual(
+    audioCalls.filter((call) => call.action === "play"),
+    [{ action: "play", entityIndex: 7 }],
+  );
+  assert.deepEqual(
+    audioCalls.filter((call) => call.action === "stop"),
+    [{ action: "stop" }],
+  );
   await cameraPage.close();
   result.checks.push("Remix viewer field of view accepts typed camera values");
   result.checks.push(
@@ -1065,6 +1177,9 @@ try {
   );
   result.checks.push(
     "Remix viewer walkability generates and downloads Tea sidecars",
+  );
+  result.checks.push(
+    "Remix viewer audio controls follow renderer playback state",
   );
   const viewerFolder = join(state, "viewer-fixture");
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
