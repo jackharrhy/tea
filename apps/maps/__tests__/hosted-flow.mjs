@@ -744,6 +744,11 @@ try {
   await sourcePage.getByRole("button", { name: "Open example" }).click();
   await sourcePage.waitForURL(/\?example=goldsrc$/);
   await sourcePage.locator("#map-name").getByText("GoldSrc room").waitFor();
+  assert.equal(await sourcePage.locator("#movement-mode").count(), 1);
+  assert.match(
+    (await sourcePage.locator("#camera-position").textContent()) ?? "",
+    /^Position: /,
+  );
   const viewerFolder = join(state, "viewer-fixture");
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
   await writeFile(join(viewerFolder, "maps", "folder.bsp"), bsp);

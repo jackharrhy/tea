@@ -2,6 +2,7 @@ import { browserAssets } from "./assets/build-manifest.ts";
 import { mapsStyles } from "./styles.ts";
 import { HostedViewerPanel } from "./assets/hosted-viewer-panel.tsx";
 import { ViewerSourcePanel } from "./assets/viewer-source-panel.tsx";
+import { ViewerCameraPanel } from "./assets/viewer-camera-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -45,40 +46,7 @@ export function MapsPage() {
                     <ul id="entity-classes"></ul>
                   </details>
                 </section>
-                <section aria-label="Camera controls">
-                  <h2>Camera</h2>
-                  <label class="toggle" for="show-reticle">
-                    <input id="show-reticle" type="checkbox" checked />
-                    Show reticle
-                  </label>
-                  <label for="movement-mode">Movement</label>
-                  <select id="movement-mode" disabled>
-                    <option value="walk">Walk</option>
-                    <option value="fly">Fly</option>
-                  </select>
-                  <label for="field-of-view">Field of view</label>
-                  <input
-                    id="field-of-view"
-                    type="number"
-                    min="45"
-                    max="110"
-                    step="1"
-                    value="75"
-                    disabled
-                  />
-                  <button id="reset-camera" type="button" disabled>
-                    Reset camera
-                  </button>
-                  <output id="camera-position" class="hint">
-                    Position: —
-                  </output>
-                  <output id="camera-angles" class="hint">
-                    Yaw / pitch: —
-                  </output>
-                  <button id="copy-camera-link" type="button" disabled>
-                    Copy view link
-                  </button>
-                </section>
+                <ViewerCameraPanel />
                 <section aria-label="Movement settings">
                   <details class="movement-settings">
                     <summary>Movement settings</summary>

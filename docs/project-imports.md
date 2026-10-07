@@ -32,6 +32,8 @@ Local Maps projects can use `tea.maps.project.json` with the existing project sc
 
 The editor's Recent projects menu now renders as a Remix client entry while retaining the editor's folder permission and unsaved-work handling. The viewer source controls and hosted project pages also use Remix client entries.
 
+The viewer Camera panel now renders through a Remix client entry while the renderer continues to own movement and camera state.
+
 The editor's document controls now render through a Remix client entry. The editor still checks file handles and source save plans, writes recovery checkpoints, and guards map replacement.
 
 The viewport pointer readout now renders in a Remix client entry using the editor renderer's snapped map position.

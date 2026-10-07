@@ -21,6 +21,7 @@ const viewer = document.createElement("world-view") as WorldViewElement;
 viewer.setAttribute("controls", "walk");
 viewport.append(viewer);
 const viewerTools = initViewerTools(viewer);
+window.dispatchEvent(new Event("tea-maps-viewer-element-ready"));
 
 viewer.addEventListener("progress", (event) => {
   status.textContent = event.detail.label

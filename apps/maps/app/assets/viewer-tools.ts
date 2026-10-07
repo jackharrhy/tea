@@ -8,7 +8,6 @@ import {
 } from "@tea/maps-renderer";
 import type { WorldViewElement } from "@tea/maps-renderer/element";
 import { serializeWalkability } from "@tea/maps-renderer/walkability";
-import { cameraUrlValue } from "./remote-input.ts";
 
 function download(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
@@ -49,10 +48,6 @@ export function initViewerTools(element: WorldViewElement): {
     document.querySelector<HTMLUListElement>("#entity-classes")!;
   const toolStatus =
     document.querySelector<HTMLOutputElement>("#map-tool-status")!;
-  const movement = document.querySelector<HTMLSelectElement>("#movement-mode")!;
-  const showReticle =
-    document.querySelector<HTMLInputElement>("#show-reticle")!;
-  const reticle = document.querySelector<HTMLElement>("#reticle")!;
   const movementInputs = (
     [
       ["maxSpeed", "#movement-max-speed"],
@@ -68,16 +63,6 @@ export function initViewerTools(element: WorldViewElement): {
     key,
     input: document.querySelector<HTMLInputElement>(selector)!,
   }));
-  const fieldOfView =
-    document.querySelector<HTMLInputElement>("#field-of-view")!;
-  const resetCamera =
-    document.querySelector<HTMLButtonElement>("#reset-camera")!;
-  const cameraPosition =
-    document.querySelector<HTMLOutputElement>("#camera-position")!;
-  const cameraAngles =
-    document.querySelector<HTMLOutputElement>("#camera-angles")!;
-  const copyCameraLink =
-    document.querySelector<HTMLButtonElement>("#copy-camera-link")!;
   const overviewSize =
     document.querySelector<HTMLSelectElement>("#overview-size")!;
   const overviewLighting =
@@ -134,7 +119,6 @@ export function initViewerTools(element: WorldViewElement): {
     document.querySelector<HTMLOutputElement>("#music-status")!;
   const playMusic = document.querySelector<HTMLButtonElement>("#play-music")!;
   const stopMusic = document.querySelector<HTMLButtonElement>("#stop-music")!;
-  let startCamera: CameraState | null = null;
   let initialCamera: CameraState | undefined;
   let warningMessages: string[] = [];
   let musicLoading = false;
@@ -188,7 +172,6 @@ export function initViewerTools(element: WorldViewElement): {
   }
 
   function reset() {
-    startCamera = null;
     initialCamera = undefined;
     warningMessages = [];
     details.textContent = "Loading map";
@@ -196,15 +179,11 @@ export function initViewerTools(element: WorldViewElement): {
     entityCounts.textContent = "Load a map to inspect entities";
     entityClasses.replaceChildren();
     toolStatus.textContent = "";
-    cameraPosition.textContent = "Position: —";
-    cameraAngles.textContent = "Yaw / pitch: —";
-    copyCameraLink.disabled = true;
     overviewStatus.textContent = "Load a map to export";
     overviewZMin.value = "";
     overviewZMax.value = "";
     walkabilityDetails.textContent = "No graph loaded";
     showWalkability.checked = false;
-    reticle.hidden = true;
     audioDetails.textContent = "Load a map to enable sound";
     audioRoom.textContent = "Room: —";
     musicLoading = false;
@@ -215,9 +194,6 @@ export function initViewerTools(element: WorldViewElement): {
       input.disabled = true;
     }
     for (const control of [
-      movement,
-      fieldOfView,
-      resetCamera,
       overviewZMin,
       overviewZMax,
       downloadOverview,
@@ -237,14 +213,13 @@ export function initViewerTools(element: WorldViewElement): {
     ]) {
       control.disabled = true;
     }
+    window.dispatchEvent(new Event("tea-maps-viewer-reset"));
   }
 
   element.addEventListener("ready", (event) => {
     const runtime = element.viewer;
     if (!runtime) return;
     if (initialCamera) runtime.setCamera(initialCamera);
-    const camera = runtime.camera;
-    startCamera = { ...camera, position: [...camera.position] };
     details.textContent = formatMapDetails(
       event.detail.diagnostics,
       event.detail.world.entities.length,
@@ -272,25 +247,13 @@ export function initViewerTools(element: WorldViewElement): {
     }
     warningMessages = [...event.detail.diagnostics.warnings];
     warnings.textContent = warningMessages.slice(0, 5).join("\n");
-    movement.value = runtime.movementMode === "fly" ? "fly" : "walk";
     updateMovement(runtime.movement);
     for (const { input } of movementInputs) input.disabled = false;
-    fieldOfView.value = String(camera.fieldOfView);
-    copyCameraLink.disabled = ![
-      "bsp",
-      "example",
-      "fixture",
-      "hostedBuild",
-    ].some((key) => new URL(location.href).searchParams.has(key));
-    reticle.hidden = !showReticle.checked;
     const overview = planOverview(event.detail.world);
     overviewZMin.value = String(Math.floor(overview.bounds.min[2]));
     overviewZMax.value = String(Math.ceil(overview.bounds.max[2]));
     overviewStatus.textContent = "Ready to export";
     for (const control of [
-      movement,
-      fieldOfView,
-      resetCamera,
       overviewZMin,
       overviewZMax,
       downloadOverview,
@@ -327,7 +290,6 @@ export function initViewerTools(element: WorldViewElement): {
       toolStatus.textContent = event.detail.message;
   });
   element.addEventListener("movementchange", (event) => {
-    if (event.detail.mode !== "none") movement.value = event.detail.mode;
     updateMovement(event.detail.settings);
   });
   element.addEventListener("walkabilitychange", (event) => {
@@ -341,19 +303,6 @@ export function initViewerTools(element: WorldViewElement): {
     report(event.detail.error);
   });
 
-  movement.addEventListener("change", () => {
-    try {
-      element.viewer?.setMovementMode(
-        movement.value === "fly" ? "fly" : "walk",
-      );
-    } catch (error) {
-      report(error);
-      movement.value = element.viewer?.movementMode ?? "walk";
-    }
-  });
-  showReticle.addEventListener("change", () => {
-    reticle.hidden = !element.viewer?.world || !showReticle.checked;
-  });
   for (const { key, input } of movementInputs) {
     input.addEventListener("change", () => {
       const runtime = element.viewer;
@@ -371,34 +320,6 @@ export function initViewerTools(element: WorldViewElement): {
       }
     });
   }
-  fieldOfView.addEventListener("change", () => {
-    const value = Number(fieldOfView.value);
-    if (!Number.isFinite(value) || value < 45 || value > 110) return;
-    element.viewer?.setCamera({ fieldOfView: value });
-  });
-  resetCamera.addEventListener("click", () => {
-    if (!startCamera) return;
-    element.viewer?.setCamera(startCamera);
-    fieldOfView.value = String(startCamera.fieldOfView);
-  });
-  window.setInterval(() => {
-    const camera = element.viewer?.world && element.viewer.camera;
-    if (!camera) return;
-    cameraPosition.textContent = `Position: ${camera.position.map((value) => value.toFixed(1)).join(" / ")}`;
-    cameraAngles.textContent = `Yaw / pitch: ${((camera.yaw * 180) / Math.PI).toFixed(1)} / ${((camera.pitch * 180) / Math.PI).toFixed(1)}°`;
-  }, 100);
-  copyCameraLink.addEventListener("click", async () => {
-    const camera = element.viewer?.camera;
-    if (!camera) return;
-    const url = new URL(location.href);
-    url.searchParams.set("camera", cameraUrlValue(camera));
-    try {
-      await navigator.clipboard.writeText(url.href);
-      toolStatus.textContent = "View link copied";
-    } catch (error) {
-      report(error);
-    }
-  });
   downloadOverview.addEventListener("click", async () => {
     const runtime = element.viewer;
     if (!runtime?.world) return;
