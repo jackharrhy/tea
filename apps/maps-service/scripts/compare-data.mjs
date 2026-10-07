@@ -62,12 +62,41 @@ function databaseReport(path) {
         "SELECT name,sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       )
       .all();
-    return Object.fromEntries(
+    const tables = Object.fromEntries(
       entries.map(({ name, sql: schema }) => [
         name,
         { schemaSha256: digest(schema), ...tableDigest(sql, name) },
       ]),
     );
+    const references = [];
+    if (tables.resource_mounts) {
+      for (const row of sql
+        .prepare("SELECT expected_sha256,metadata_json FROM resource_mounts")
+        .iterate()) {
+        const metadata = JSON.parse(row.metadata_json);
+        references.push({
+          kind: "resource mount",
+          sha256: row.expected_sha256,
+          size: metadata.size,
+        });
+      }
+    }
+    if (tables.builds) {
+      for (const row of sql
+        .prepare("SELECT result_json FROM builds WHERE result_json IS NOT NULL")
+        .iterate()) {
+        const result = JSON.parse(row.result_json);
+        if (result.artifacts === undefined) continue;
+        assert.ok(Array.isArray(result.artifacts), "Invalid build artifacts");
+        for (const artifact of result.artifacts)
+          references.push({
+            kind: "build artifact",
+            sha256: artifact.sha256,
+            size: artifact.size,
+          });
+      }
+    }
+    return { tables, references };
   } finally {
     sql.close();
   }
@@ -79,7 +108,7 @@ async function fileDigest(path) {
   return hash.digest("hex");
 }
 
-async function blobReport(root) {
+async function blobReport(root, references) {
   const blobs = join(root, "blobs");
   const records = [];
   async function visit(directory) {
@@ -116,17 +145,37 @@ async function blobReport(root) {
   }
   await visit(blobs);
   records.sort((left, right) => left.name.localeCompare(right.name));
+  const byHash = new Map(records.map((record) => [record.name, record.size]));
+  for (const reference of references) {
+    assert.match(reference.sha256, /^[a-f0-9]{64}$/);
+    assert.ok(
+      Number.isSafeInteger(reference.size) && reference.size >= 0,
+      `Invalid ${reference.kind} blob size`,
+    );
+    assert.ok(
+      byHash.has(reference.sha256),
+      `Missing ${reference.kind} blob ${reference.sha256}`,
+    );
+    assert.equal(
+      byHash.get(reference.sha256),
+      reference.size,
+      `Wrong ${reference.kind} blob size ${reference.sha256}`,
+    );
+  }
   return {
     files: records.length,
     bytes: records.reduce((sum, record) => sum + record.size, 0),
     sha256: digest(JSON.stringify(records)),
+    referencedFiles: new Set(references.map((reference) => reference.sha256))
+      .size,
   };
 }
 
 async function report(root) {
+  const { tables, references } = databaseReport(join(root, "maps.db"));
   return {
-    tables: databaseReport(join(root, "maps.db")),
-    blobs: await blobReport(root),
+    tables,
+    blobs: await blobReport(root, references),
   };
 }
 

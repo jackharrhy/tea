@@ -55,18 +55,77 @@ test("compares copied hosted metadata and blob bytes, and catches divergence", a
     await copyFile(join(source, "maps.db"), join(target, "maps.db"));
     const body = Buffer.from("copied hosted resource");
     const hash = createHash("sha256").update(body).digest("hex");
+    const buildBody = Buffer.from("copied build artifact");
+    const buildHash = createHash("sha256").update(buildBody).digest("hex");
     const sourceBlob = join(source, "blobs", hash.slice(0, 2), hash.slice(2));
     const targetBlob = join(target, "blobs", hash.slice(0, 2), hash.slice(2));
+    const sourceBuildBlob = join(
+      source,
+      "blobs",
+      buildHash.slice(0, 2),
+      buildHash.slice(2),
+    );
+    const targetBuildBlob = join(
+      target,
+      "blobs",
+      buildHash.slice(0, 2),
+      buildHash.slice(2),
+    );
     await mkdir(join(source, "blobs", hash.slice(0, 2)), { recursive: true });
     await mkdir(join(target, "blobs", hash.slice(0, 2)), { recursive: true });
+    await mkdir(join(source, "blobs", buildHash.slice(0, 2)), {
+      recursive: true,
+    });
+    await mkdir(join(target, "blobs", buildHash.slice(0, 2)), {
+      recursive: true,
+    });
     await writeFile(sourceBlob, body);
     await copyFile(sourceBlob, targetBlob);
+    await writeFile(sourceBuildBlob, buildBody);
+    await copyFile(sourceBuildBlob, targetBuildBlob);
+    for (const root of [source, target]) {
+      const database = new DatabaseSync(join(root, "maps.db"));
+      database
+        .prepare(
+          "INSERT INTO resource_mounts(id,project_id,ordinal,provider,provider_asset_id,expected_sha256,kind,display_name,metadata_json,created_by,created_at) VALUES ('resource','project',0,'artbin','asset',?,'wad','example.wad',?,'user',1)",
+        )
+        .run(hash, JSON.stringify({ size: body.byteLength }));
+      database
+        .prepare(
+          "INSERT INTO builds(id,map_id,requested_by,map_version,profile_id,quality,status,source_sha256,result_json,created_at,updated_at) VALUES ('build','map','user',1,'quake','preview','succeeded',NULL,?,1,1)",
+        )
+        .run(
+          JSON.stringify({
+            artifacts: [{ sha256: buildHash, size: buildBody.byteLength }],
+          }),
+        );
+      database.close();
+    }
 
     const matched = compare(source, target);
     assert.equal(matched.exitCode, 0);
     assert.equal(matched.report.status, "passed");
     assert.equal(matched.report.source.tables.maps.rows, 1);
-    assert.equal(matched.report.source.blobs.files, 1);
+    assert.equal(matched.report.source.blobs.files, 2);
+    assert.equal(matched.report.source.blobs.referencedFiles, 2);
+
+    await unlink(sourceBlob);
+    await unlink(targetBlob);
+    const missingResource = compare(source, target);
+    assert.equal(missingResource.exitCode, 1);
+    assert.equal(missingResource.report.status, "failed");
+    assert.match(missingResource.report.error, /Missing resource mount blob/);
+    await writeFile(sourceBlob, body);
+    await writeFile(targetBlob, body);
+
+    await unlink(sourceBuildBlob);
+    await unlink(targetBuildBlob);
+    const missingArtifact = compare(source, target);
+    assert.equal(missingArtifact.exitCode, 1);
+    assert.equal(missingArtifact.report.status, "failed");
+    assert.match(missingArtifact.report.error, /Missing build artifact blob/);
+    await writeFile(sourceBuildBlob, buildBody);
+    await writeFile(targetBuildBlob, buildBody);
 
     const targetSql = new DatabaseSync(join(target, "maps.db"));
     targetSql.prepare("UPDATE maps SET name='Changed' WHERE id='map'").run();
@@ -79,7 +138,7 @@ test("compares copied hosted metadata and blob bytes, and catches divergence", a
     await unlink(targetBlob);
     const missing = compare(source, target);
     assert.equal(missing.exitCode, 1);
-    assert.deepEqual(missing.report.mismatches, ["blobs"]);
+    assert.match(missing.report.error, /Missing resource mount blob/);
 
     await writeFile(targetBlob, "damaged hosted resource");
     const damaged = compare(source, target);
