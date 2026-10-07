@@ -719,7 +719,6 @@ const faceDrag = createFaceDragController({
   },
 });
 const issueBrowser = createIssueBrowser({
-  root: document.querySelector<HTMLDetailsElement>("#issue-browser")!,
   session: () => session,
   renderer: () => renderer,
   canEdit: () => !hostedMap || hostedConnection !== null,

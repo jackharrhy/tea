@@ -1083,6 +1083,38 @@ try {
   result.checks.push(
     "selection brush queries consume volumes and undo restores them",
   );
+  const issuesPage = await browser.newPage();
+  await issuesPage.goto(`${mapsOrigin}/editor`);
+  await issuesPage.locator("#map-source").waitFor({ state: "visible" });
+  await issuesPage
+    .locator("#map-source")
+    .fill(
+      '{\n"classname" "worldspawn"\n}\n{\n"classname" "light"\n"origin" "not a vector"\n}\n',
+    );
+  await issuesPage.locator("#apply-source").click();
+  await issuesPage.locator("#issue-browser summary").first().click();
+  const originIssue = issuesPage.locator(
+    '.issue-row[data-issue-id^="invalid-origin:"]',
+  );
+  await originIssue.waitFor();
+  await originIssue.getByRole("button", { name: "Select" }).click();
+  await issuesPage.getByText(/Selected:.*origin/i).waitFor();
+  await originIssue.getByRole("button", { name: "Reveal" }).click();
+  await issuesPage.getByText(/Revealed:.*origin/i).waitFor();
+  await originIssue.getByRole("button", { name: "Hide" }).click();
+  assert.equal(await originIssue.count(), 0);
+  await issuesPage.locator("#show-hidden-issues").check();
+  await originIssue.getByRole("button", { name: "Unhide" }).click();
+  await originIssue
+    .getByRole("button", { name: "Reset invalid origin" })
+    .click();
+  await originIssue.waitFor({ state: "detached" });
+  await issuesPage.locator("#undo").click();
+  await originIssue.waitFor();
+  await issuesPage.close();
+  result.checks.push(
+    "Remix issue browser selects, filters, fixes, and undoes findings",
+  );
   const linkedPage = await browser.newPage();
   await installSiteToolMock(linkedPage);
   await linkedPage.goto(`${mapsOrigin}/editor`);

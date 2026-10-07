@@ -9,6 +9,7 @@ import { EditorProjectSync } from "./assets/editor-project-sync-panel.tsx";
 import { EditorHostedSource } from "./assets/editor-hosted-source-panel.tsx";
 import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
 import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
+import { EditorIssues } from "./assets/editor-issues-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -1075,20 +1076,7 @@ export function EditorPage() {
             <aside class="source-panel">
               <h1>Source</h1>
               <p id="selection-info">No selection</p>
-              <details id="issue-browser">
-                <summary id="issue-summary">Issues</summary>
-                <div class="issue-controls">
-                  <details>
-                    <summary>Filter types</summary>
-                    <div id="issue-filters" />
-                  </details>
-                  <label for="show-hidden-issues">
-                    <input id="show-hidden-issues" type="checkbox" /> Show
-                    hidden
-                  </label>
-                </div>
-                <ul id="issue-list" />
-              </details>
+              <EditorIssues />
               <details id="view-filters">
                 <summary id="view-filter-summary">View filters</summary>
                 <p>Local view only · map source stays unchanged</p>

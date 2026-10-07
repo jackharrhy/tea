@@ -116,6 +116,8 @@ For one selected face, the UV editor shows its texture grid and face polygon. Dr
 
 The material browser is a Remix client component that shows thumbnails for loaded project textures and generated development textures on standalone Quake and GoldSrc maps. Search, source, used-only, and usage-sort controls narrow the list. Choose a material for new brushes or apply it to the current selection; sample a selected face, select all visible faces or brushes using a material, copy its name, or replace matching uses in the current selection (the whole map when nothing is selected). The browser reports materials used by the map that are missing from the loaded sources. The editor supplies session actions and material updates through a browser event bridge.
 
+The issue browser is a Remix client component. It lists geometry, entity, link, and structure findings from the editor session, supports type and hidden filters, and can select, reveal, or fix a finding through that same session.
+
 The selected entity inspector shows editable properties. When a project supplies FGD or ENT definitions, it also shows suggested properties with choices, checkboxes, flag bits, and numeric controls. The raw key and value fields remain available for custom properties. Changes use the same local history or hosted semantic operations as other property edits.
 
 Align texture supports projection reset, world axes, flips, 90° rotation, edge alignment, justification, and fitting on selected faces or brushes. Reverse direction changes alignment cycling; Subdivide when fitting uses fractions of a texture. Fit and justify use project material dimensions when available, or both manually entered dimensions for a standalone or hosted map. The alignment command is undoable.
