@@ -54,7 +54,7 @@ The viewer toolbar and BSP drop overlay render through Remix. The toolbar follow
 
 ## Editor
 
-The Projects page can open a local `tea.maps.project.json` or legacy `worldview.project.json` folder directly into the editor. The folder handle is remembered on this device; the editor shows its maps for selection. Canceling the folder picker leaves the page in place.
+The Projects page can open a local `tea.maps.project.json` or legacy `worldview.project.json` folder directly into the editor. The folder handle is remembered on this device; the editor shows its maps for selection. Canceling the folder picker leaves the page in place. If Tea runs on the same browser origin as Worldview and finds detached local copies in Worldview's `worldview-editor` IndexedDB database, Projects offers an explicit import into Tea's local copy list. The import reads Worldview's records without changing them and preserves any Tea copy with the same ID. Browser storage on another origin is inaccessible; recovery version history also needs a separate transfer path before retiring Worldview.
 
 The editor document name, status message, and selection summary render through Remix client entries. The editor publishes their changes while keeping document and renderer state in its existing runtime.
 

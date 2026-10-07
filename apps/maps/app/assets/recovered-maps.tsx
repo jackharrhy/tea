@@ -8,6 +8,10 @@ import {
   type DetachedMapSummary,
 } from "./editor-detached-catalog.ts";
 import { openLocalProject } from "./project-local.ts";
+import {
+  countLegacyDetachedMaps,
+  importLegacyDetachedMaps,
+} from "./editor-legacy-local.ts";
 
 export const OpenLocalProject = clientEntry(
   `${import.meta.url}#OpenLocalProject`,
@@ -120,21 +124,67 @@ export const RecoveredMaps = clientEntry(
   function RecoveredMapsComponent(handle: Handle) {
     let copies: readonly DetachedMapSummary[] | null = null;
     let error: string | null = null;
+    let legacyCount = 0;
+    let legacyError: string | null = null;
+    let importing = false;
+    let importStatus = "";
 
     handle.queueTask(() => {
       void listDetachedMapSummaries()
-        .then((value) => {
-          copies = value;
+        .then((found) => {
+          copies = found;
           handle.update();
         })
         .catch((cause: unknown) => {
           error = message(cause);
           handle.update();
         });
+      void countLegacyDetachedMaps()
+        .then((count) => {
+          legacyCount = count;
+          handle.update();
+        })
+        .catch((cause: unknown) => {
+          legacyError = message(cause);
+          handle.update();
+        });
     });
+
+    async function importCopies() {
+      if (importing) return;
+      importing = true;
+      importStatus = "Importing local Worldview copies…";
+      handle.update();
+      try {
+        const result = await importLegacyDetachedMaps();
+        copies = await listDetachedMapSummaries();
+        importStatus = `Imported ${result.imported} Worldview copies; ${result.existing} were already in Tea.`;
+      } catch (cause) {
+        importStatus = message(cause);
+      } finally {
+        importing = false;
+        handle.update();
+      }
+    }
 
     return () => (
       <div id="detached-maps-list" class="project-list">
+        {legacyCount > 0 ? (
+          <button
+            id="import-worldview-copies"
+            type="button"
+            disabled={importing}
+            mix={on("click", () => void importCopies())}
+          >
+            Import {legacyCount} Worldview local copies
+          </button>
+        ) : null}
+        {legacyError ? (
+          <p role="status">
+            Worldview local copies are unavailable: {legacyError}
+          </p>
+        ) : null}
+        {importStatus ? <p role="status">{importStatus}</p> : null}
         {error
           ? `Recovered maps are unavailable: ${error}`
           : copies === null
