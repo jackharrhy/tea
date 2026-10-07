@@ -99,6 +99,46 @@ export const EditorDocumentSummary = clientEntry(
   },
 );
 
+export const EditorIssueStatus = clientEntry(
+  `${import.meta.url}#EditorIssueStatus`,
+  function EditorIssueStatusComponent(handle: Handle) {
+    let options: IssueBrowserOptions | null = null;
+    subscribeIssueState(handle, (state) => {
+      options = state.options;
+      handle.update();
+    });
+
+    return () => {
+      const issues = options?.session().issues ?? [];
+      const errors = issues.filter(
+        (issue) => issue.severity === "error",
+      ).length;
+      const warnings = issues.length - errors;
+      return (
+        <button
+          id="issue-status"
+          type="button"
+          aria-controls="issue-browser"
+          data-state={errors ? "error" : warnings ? "warning" : "clean"}
+          mix={on("click", () => {
+            window.dispatchEvent(new Event("tea-maps-inspector-show-map"));
+            const browser =
+              document.querySelector<HTMLDetailsElement>("#issue-browser");
+            if (browser) {
+              browser.open = true;
+              requestAnimationFrame(() =>
+                browser.scrollIntoView({ block: "nearest" }),
+              );
+            }
+          })}
+        >
+          Issues · {errors} errors · {warnings} warnings
+        </button>
+      );
+    };
+  },
+);
+
 export const EditorIssues = clientEntry(
   `${import.meta.url}#EditorIssues`,
   function EditorIssuesComponent(handle: Handle) {

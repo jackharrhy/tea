@@ -57,6 +57,15 @@ export const EditorInspectorToggle = clientEntry(
       state = next;
       handle.update();
     });
+    handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-inspector-show-map",
+        () => {
+          if (state?.inspectorOpen === false) state.toggleInspector();
+        },
+        { signal: handle.signal },
+      );
+    });
 
     return () => (
       <button
@@ -94,6 +103,11 @@ export const EditorInspectorTabs = clientEntry(
     }
 
     handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-inspector-show-map",
+        () => select("map"),
+        { signal: handle.signal },
+      );
       window.addEventListener(
         "tea-maps-inspector-selection",
         (event) => {

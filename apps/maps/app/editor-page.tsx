@@ -54,6 +54,7 @@ import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx
 import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
 import {
   EditorDocumentSummary,
+  EditorIssueStatus,
   EditorIssues,
 } from "./assets/editor-issues-panel.tsx";
 import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
@@ -88,11 +89,8 @@ export function EditorPage() {
             </a>
             <a href="/projects">Projects</a>
             <EditorDocumentName />
-            <EditorStatus />
-            <EditorPointerReadout />
             <EditorHostedPresenceStrip />
             <EditorThemeControl />
-            <EditorPerformanceToggle />
             <EditorInspectorToggle />
           </header>
           <nav class="editor-toolbar" aria-label="Editor actions">
@@ -269,6 +267,12 @@ export function EditorPage() {
             </aside>
             <EditorProjectMapSelector />
           </div>
+          <footer class="editor-statusbar">
+            <EditorStatus />
+            <EditorIssueStatus />
+            <EditorPointerReadout />
+            <EditorPerformanceToggle />
+          </footer>
         </main>
         <EditorPerformancePanel />
         <EditorSwitchMapDialog />

@@ -3344,8 +3344,12 @@ try {
       '{\n"classname" "worldspawn"\n}\n{\n"classname" "light"\n"origin" "not a vector"\n}\n',
     );
   await issuesPage.locator("#apply-source").click();
-  await issuesPage.locator("#inspector-tab-map").click();
-  await issuesPage.locator("#issue-browser summary").first().click();
+  await issuesPage.locator("#toggle-inspector").click();
+  await issuesPage.locator("#issue-status").click();
+  await issuesPage.locator("#editor-inspector").waitFor({ state: "visible" });
+  await issuesPage.waitForFunction(
+    () => document.querySelector("#issue-browser")?.open === true,
+  );
   const originIssue = issuesPage.locator(
     '.issue-row[data-issue-id^="invalid-origin:"]',
   );
