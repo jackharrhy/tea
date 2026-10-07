@@ -183,6 +183,9 @@ try {
       document.querySelector(".editor-workspace")?.dataset.inspectorOpen ===
       "false",
   );
+  await page.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
   assert.equal(await page.locator("#editor-inspector").isVisible(), false);
   await page.locator("#toggle-inspector").click();
   assert.equal(await page.locator("#editor-inspector").isVisible(), true);
