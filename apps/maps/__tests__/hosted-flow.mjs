@@ -1549,6 +1549,42 @@ try {
       selectionSetup.brushes,
     );
   }
+  await selectionPage.locator("#select-all").click();
+  await selectionPage
+    .getByText("Selected 2 visible, unlocked objects")
+    .waitFor();
+  await selectionPage.locator("#duplicate-selection").click();
+  await selectionPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
+        .brushes === 4,
+  );
+  await selectionPage.locator("#undo").click();
+  await selectionPage.locator("#hide-selection").click();
+  await selectionPage.locator("#show-all:not([disabled])").waitFor();
+  await selectionPage.locator("#show-all").click();
+  await selectionPage.locator("#select-all").click();
+  await selectionPage.locator("#lock-selection").click();
+  await selectionPage.locator("#unlock-all:not([disabled])").waitFor();
+  await selectionPage.locator("#unlock-all").click();
+  await selectionPage.locator("#invert-selection").click();
+  await selectionPage.getByText(/Selection (inverted|cleared)/).waitFor();
+  await selectionPage.locator("#select-all").click();
+  await selectionPage.locator("#delete-selection").click();
+  await selectionPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
+        .brushes === 0,
+  );
+  await selectionPage.locator("#undo").click();
+  await selectionPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
+        .brushes === 2,
+  );
+  result.checks.push(
+    "Remix selection commands duplicate, hide, lock, invert, and delete with Undo",
+  );
   await selectionPage.locator("#view-filters summary").click();
   await selectionPage.locator("#show-world-brushes").uncheck();
   await selectionPage.getByText("View filters · 2 filtered").waitFor();

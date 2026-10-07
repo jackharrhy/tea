@@ -195,6 +195,7 @@ import {
   type SelectionBrushMode,
   type SelectionBrushProjection,
 } from "./editor-selection-brushes-bridge.ts";
+import { initEditorSelectionCommands } from "./editor-selection-commands-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -241,22 +242,18 @@ const savePropertyButton = document.querySelector<HTMLButtonElement>(
 const removePropertyButton = document.querySelector<HTMLButtonElement>(
   "#remove-entity-property",
 )!;
-const deleteButton =
-  document.querySelector<HTMLButtonElement>("#delete-selection")!;
-const duplicateButton = document.querySelector<HTMLButtonElement>(
-  "#duplicate-selection",
-)!;
-const hideSelectionButton =
-  document.querySelector<HTMLButtonElement>("#hide-selection")!;
-const isolateSelectionButton =
-  document.querySelector<HTMLButtonElement>("#isolate-selection")!;
-const showAllButton = document.querySelector<HTMLButtonElement>("#show-all")!;
-const focusSelectionButton =
-  document.querySelector<HTMLButtonElement>("#focus-selection")!;
-const lockSelectionButton =
-  document.querySelector<HTMLButtonElement>("#lock-selection")!;
-const unlockAllButton =
-  document.querySelector<HTMLButtonElement>("#unlock-all")!;
+const selectionCommands = initEditorSelectionCommands({
+  delete: deleteSelection,
+  duplicate: duplicateSelection,
+  selectAll: () => selectObjects("all"),
+  invert: () => selectObjects("invert"),
+  focus: focusSelection,
+  hide: hideSelection,
+  isolate: isolateSelection,
+  showAll: showAllSelection,
+  lock: lockSelection,
+  unlockAll: unlockAllSelection,
+});
 const repeatCommandsButton =
   document.querySelector<HTMLButtonElement>("#repeat-commands")!;
 const clearRepeatCommandsButton = document.querySelector<HTMLButtonElement>(
@@ -1491,19 +1488,19 @@ function refreshSelection() {
     pointOrigin.value = pointEntity.properties.origin ?? "";
   }
   updatePointButton.disabled = !pointEntity || !editing;
-  deleteButton.disabled = (!brushId && pointIds.length === 0) || !editing;
-  duplicateButton.disabled = (!brushId && pointIds.length === 0) || !editing;
+  const objectCommandDisabled = (!brushId && pointIds.length === 0) || !editing;
   copySelectionButton.disabled = !selection;
   snapToGridButton.disabled =
     hostedMap !== null ||
     (brushIds.length === 0 && selectedFaceReferences(selection).length === 0);
-  hideSelectionButton.disabled =
-    hostedMap !== null || (!brushId && pointIds.length === 0);
-  isolateSelectionButton.disabled = hideSelectionButton.disabled;
-  showAllButton.disabled = hostedMap !== null || !session.canShowAll;
-  focusSelectionButton.disabled = !selection || !renderer;
-  lockSelectionButton.disabled = hideSelectionButton.disabled;
-  unlockAllButton.disabled = hostedMap !== null || !session.canUnlockAll;
+  selectionCommands.update({
+    deleteDisabled: objectCommandDisabled,
+    duplicateDisabled: objectCommandDisabled,
+    hideDisabled: hostedMap !== null || (!brushId && pointIds.length === 0),
+    showAllDisabled: hostedMap !== null || !session.canShowAll,
+    focusDisabled: !selection || !renderer,
+    unlockAllDisabled: hostedMap !== null || !session.canUnlockAll,
+  });
   repeatCommandsButton.disabled = !session.canRepeatCommands || !editing;
   repeatCommandsButton.textContent = session.repeatCommandCount
     ? `Repeat ${session.repeatCommandCount}`
@@ -2256,8 +2253,8 @@ function showViewportContextMenu(event: EditorViewportContextMenuEvent) {
   const selectionActions: ContextAction[] = [
     {
       label: "Focus selection",
-      disabled: focusSelectionButton.disabled,
-      run: () => focusSelectionButton.click(),
+      disabled: selectionCommands.state.focusDisabled,
+      run: focusSelection,
     },
     {
       label: "Copy selection",
@@ -2266,28 +2263,28 @@ function showViewportContextMenu(event: EditorViewportContextMenuEvent) {
     },
     {
       label: "Duplicate selection",
-      disabled: duplicateButton.disabled,
-      run: () => duplicateButton.click(),
+      disabled: selectionCommands.state.duplicateDisabled,
+      run: duplicateSelection,
     },
     {
       label: "Hide selection",
-      disabled: hideSelectionButton.disabled,
-      run: () => hideSelectionButton.click(),
+      disabled: selectionCommands.state.hideDisabled,
+      run: hideSelection,
     },
     {
       label: "Isolate selection",
-      disabled: isolateSelectionButton.disabled,
-      run: () => isolateSelectionButton.click(),
+      disabled: selectionCommands.state.hideDisabled,
+      run: isolateSelection,
     },
     {
       label: "Delete selection",
-      disabled: deleteButton.disabled,
-      run: () => deleteButton.click(),
+      disabled: selectionCommands.state.deleteDisabled,
+      run: deleteSelection,
     },
     {
       label: "Show all hidden",
-      disabled: showAllButton.disabled,
-      run: () => showAllButton.click(),
+      disabled: selectionCommands.state.showAllDisabled,
+      run: showAllSelection,
     },
   ];
   const createActions: ContextAction[] = [
@@ -3209,16 +3206,18 @@ removePropertyButton.addEventListener("click", () => {
   refreshPropertyActions();
 });
 
-deleteButton.addEventListener("click", () => {
+function deleteSelection() {
+  if (selectionCommands.state.deleteDisabled) return;
   if (!applyWorkingSource()) return;
   try {
     session.deleteSelected();
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
-duplicateButton.addEventListener("click", () => {
+function duplicateSelection() {
+  if (selectionCommands.state.duplicateDisabled) return;
   if (!applyWorkingSource()) return;
   try {
     session.duplicateSelected(
@@ -3228,7 +3227,7 @@ duplicateButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
 function selectObjects(mode: "all" | "invert") {
   if (!applyWorkingSource()) return;
@@ -3249,12 +3248,6 @@ function selectObjects(mode: "all" | "invert") {
         : "Selection cleared";
 }
 
-document
-  .querySelector<HTMLButtonElement>("#select-all")!
-  .addEventListener("click", () => selectObjects("all"));
-document
-  .querySelector<HTMLButtonElement>("#invert-selection")!
-  .addEventListener("click", () => selectObjects("invert"));
 function runSelectionBrushQuery(
   mode: SelectionBrushMode,
   projection?: SelectionBrushProjection,
@@ -3278,26 +3271,32 @@ function runSelectionBrushQuery(
     status.textContent = error instanceof Error ? error.message : String(error);
   }
 }
-hideSelectionButton.addEventListener("click", () => {
+function hideSelection() {
+  if (selectionCommands.state.hideDisabled) return;
   if (!hostedMap && applyWorkingSource()) session.hideSelected();
-});
-isolateSelectionButton.addEventListener("click", () => {
+}
+function isolateSelection() {
+  if (selectionCommands.state.hideDisabled) return;
   if (!hostedMap && applyWorkingSource()) session.isolateSelected();
-});
-showAllButton.addEventListener("click", () => {
+}
+function showAllSelection() {
+  if (selectionCommands.state.showAllDisabled) return;
   if (!hostedMap && applyWorkingSource()) session.showAll();
-});
-focusSelectionButton.addEventListener("click", () => {
+}
+function focusSelection() {
+  if (selectionCommands.state.focusDisabled) return;
   if (!renderer?.focusSelection())
     status.textContent = "Select an object to focus";
   else scheduleRender();
-});
-lockSelectionButton.addEventListener("click", () => {
+}
+function lockSelection() {
+  if (selectionCommands.state.hideDisabled) return;
   if (!hostedMap && applyWorkingSource()) session.lockSelected();
-});
-unlockAllButton.addEventListener("click", () => {
+}
+function unlockAllSelection() {
+  if (selectionCommands.state.unlockAllDisabled) return;
   if (!hostedMap && applyWorkingSource()) session.unlockAll();
-});
+}
 function repeatRecordedCommands() {
   if (!viewportCanEdit()) return;
   try {
@@ -3644,7 +3643,7 @@ document.addEventListener("keydown", (event) => {
   }
   if (!textEditingTarget(event.target) && event.key === "Home") {
     event.preventDefault();
-    focusSelectionButton.click();
+    if (!selectionCommands.state.focusDisabled) focusSelection();
     return;
   }
   if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
@@ -4285,7 +4284,7 @@ async function showVersionsFromControls() {
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected)",
+  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all)",
 )) {
   button.disabled = false;
 }

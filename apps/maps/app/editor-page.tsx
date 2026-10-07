@@ -14,7 +14,7 @@ import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
 import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
 import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
 import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
-import { EditorSelectionBrushes } from "./assets/editor-selection-brushes-panel.tsx";
+import { EditorSelectionCommands } from "./assets/editor-selection-commands-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -91,37 +91,7 @@ export function EditorPage() {
               value="DEV/GRID"
             />
             <datalist id="material-choices" />
-            <button id="delete-selection" type="button" disabled>
-              Delete selection
-            </button>
-            <button id="duplicate-selection" type="button" disabled>
-              Duplicate
-            </button>
-            <button id="select-all" type="button" disabled>
-              Select all
-            </button>
-            <button id="invert-selection" type="button" disabled>
-              Invert selection
-            </button>
-            <EditorSelectionBrushes />
-            <button id="focus-selection" type="button" disabled>
-              Focus selection
-            </button>
-            <button id="hide-selection" type="button" disabled>
-              Hide selection
-            </button>
-            <button id="isolate-selection" type="button" disabled>
-              Isolate selection
-            </button>
-            <button id="show-all" type="button" disabled>
-              Show all
-            </button>
-            <button id="lock-selection" type="button" disabled>
-              Lock selection
-            </button>
-            <button id="unlock-all" type="button" disabled>
-              Unlock all
-            </button>
+            <EditorSelectionCommands />
             <label for="grid-size">Grid size</label>
             <select id="grid-size">
               {[1, 2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
