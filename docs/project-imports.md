@@ -38,6 +38,8 @@ The editor's hosted Project resources panel now renders through a Remix client e
 
 The hosted picker's Recovery copies control now renders through a Remix client entry. It lists detached collaboration drafts stored in this browser and hands the selected copy to the editor's guarded open flow.
 
+The hosted project and map picker controls now render through a Remix client entry. They load authorized projects, create maps, and pass open and compare actions to the editor while publishing the selected project to the access and resource panels.
+
 The read-only local and hosted source comparison now renders through a Remix client entry, including the first differing line and both source snapshots.
 
 The editor material browser now renders and filters texture thumbnails through a Remix client entry. Its session actions still use the editor's existing selection and source guards.

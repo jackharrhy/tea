@@ -1764,6 +1764,52 @@ try {
   result.checks.push(
     "Remix editor recent-project menu renders and invokes stored folders",
   );
+  await page.goto(
+    `${mapsOrigin}/editor?hostedProject=${projectUrl.split("/").at(-1)}`,
+  );
+  await page.locator("#hosted-project-create summary").click();
+  await page.locator("#hosted-project-name").fill("Picker project");
+  await page.locator("#hosted-project-create-button").click();
+  await page.getByText("Created Picker project").waitFor();
+  assert.equal(
+    await page.locator("#hosted-editor-project option:checked").textContent(),
+    "Picker project",
+  );
+  await page.locator("#hosted-map-create summary").click();
+  await page.locator("#hosted-map-name").fill("picker.map");
+  assert.equal(
+    await page.locator("#hosted-map-name").inputValue(),
+    "picker.map",
+  );
+  await page.locator("#hosted-map-create-button").click();
+  await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
+  await page.getByRole("button", { name: "Discard" }).click();
+  try {
+    await page
+      .getByText("Picker project / picker.map opened")
+      .waitFor({ timeout: 5000 });
+  } catch (cause) {
+    throw new Error(
+      `Picker map did not open: ${JSON.stringify({
+        pickerStatus: await page.locator("#hosted-editor-status").textContent(),
+        editorStatus: await page.locator("#editor-status").textContent(),
+        selectedProject: await page
+          .locator("#hosted-editor-project")
+          .inputValue(),
+        selectedMap: await page.locator("#hosted-editor-map").inputValue(),
+        switchOpen: await page
+          .locator("#switch-map-dialog")
+          .evaluate((dialog) => dialog.open),
+        errors,
+      })}`,
+      { cause },
+    );
+  }
+  assert.equal(
+    await page.locator("#hosted-editor-map option:checked").textContent(),
+    "picker.map",
+  );
+  result.checks.push("Remix hosted picker creates and opens a map");
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {

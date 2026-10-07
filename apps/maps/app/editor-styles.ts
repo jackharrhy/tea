@@ -377,6 +377,7 @@ export const editorStyles = css({
     gap: "0.4rem",
   },
   "& .hosted-presence-panel": { display: "contents" },
+  "& .hosted-picker-controls": { display: "contents" },
   "& .detached-editor-controls": { display: "contents" },
   "& .hosted-share[hidden]": { display: "none" },
   "& #hosted-share-link": {

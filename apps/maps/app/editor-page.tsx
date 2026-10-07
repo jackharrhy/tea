@@ -3,6 +3,7 @@ import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx"
 import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx";
 import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.tsx";
+import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -845,81 +846,9 @@ export function EditorPage() {
           <details id="hosted-editor-picker" class="hosted-editor-picker">
             <summary>Hosted maps</summary>
             <div class="hosted-editor-fields">
-              <p id="hosted-editor-status" role="status">
-                Connecting to Maps service
-              </p>
-              <a
-                id="hosted-editor-login"
-                href="/auth/login?returnTo=/editor"
-                hidden
-              >
-                Sign in to Maps
-              </a>
-              <label for="hosted-editor-project">Project</label>
-              <select id="hosted-editor-project" disabled></select>
-              <details id="hosted-project-create" hidden>
-                <summary>Create hosted project</summary>
-                <form id="hosted-project-create-form">
-                  <label for="hosted-project-name">Project name</label>
-                  <input
-                    id="hosted-project-name"
-                    name="name"
-                    maxLength={120}
-                    required
-                  />
-                  <label for="hosted-project-game">Game</label>
-                  <select id="hosted-project-game" name="game">
-                    <option value="quake">Quake</option>
-                    <option value="goldsrc">GoldSrc</option>
-                    <option value="gower">Gower Complex</option>
-                  </select>
-                  <button id="hosted-project-create-button" type="submit">
-                    Create project
-                  </button>
-                </form>
-              </details>
-              <label for="hosted-editor-map">Map</label>
-              <select id="hosted-editor-map" disabled></select>
-              <details id="hosted-map-create" hidden>
-                <summary>Create hosted map</summary>
-                <form id="hosted-map-create-form">
-                  <label for="hosted-map-name">Map name</label>
-                  <input
-                    id="hosted-map-name"
-                    name="name"
-                    value="untitled.map"
-                    maxLength={120}
-                    required
-                  />
-                  <label for="hosted-map-format">Format</label>
-                  <select id="hosted-map-format" name="format">
-                    <option value="valve-220">Valve 220</option>
-                    <option value="quake">Classic Quake</option>
-                  </select>
-                  <label for="hosted-map-file">
-                    Existing .map file (optional)
-                  </label>
-                  <input
-                    id="hosted-map-file"
-                    type="file"
-                    accept=".map,text/plain"
-                  />
-                  <button id="hosted-map-create-button" type="submit">
-                    Create map
-                  </button>
-                </form>
-              </details>
+              <EditorHostedPicker />
               <EditorHostedResources />
               <EditorHostedAccess />
-              <button id="hosted-editor-open" type="button" disabled>
-                Open hosted map
-              </button>
-              <button id="hosted-editor-compare" type="button" disabled>
-                Compare with current source
-              </button>
-              <button id="hosted-editor-copy" type="button" disabled>
-                Edit a local copy
-              </button>
               <button id="hosted-source-open" type="button" disabled>
                 Edit hosted source
               </button>
