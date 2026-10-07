@@ -7,6 +7,46 @@ import {
   listDetachedMapSummaries,
   type DetachedMapSummary,
 } from "./editor-detached-catalog.ts";
+import { openLocalProject } from "./project-local.ts";
+
+export const OpenLocalProject = clientEntry(
+  `${import.meta.url}#OpenLocalProject`,
+  function OpenLocalProjectComponent(handle: Handle) {
+    let opening = false;
+    let error: string | null = null;
+
+    async function open() {
+      if (opening) return;
+      opening = true;
+      error = null;
+      handle.update();
+      try {
+        const id = await openLocalProject();
+        if (id)
+          location.href = `/editor?recentProject=${encodeURIComponent(id)}`;
+      } catch (cause) {
+        error = message(cause);
+      } finally {
+        opening = false;
+        handle.update();
+      }
+    }
+
+    return () => (
+      <div>
+        <button
+          id="projects-open-local"
+          type="button"
+          disabled={opening}
+          mix={on("click", () => void open())}
+        >
+          Open local project folder
+        </button>
+        {error ? <p role="alert">{error}</p> : null}
+      </div>
+    );
+  },
+);
 
 export const RecentProjects = clientEntry(
   `${import.meta.url}#RecentProjects`,

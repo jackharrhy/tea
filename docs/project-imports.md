@@ -34,6 +34,8 @@ Local Maps projects can use `tea.maps.project.json` with the existing project sc
 
 The editor's Recent projects menu now renders as a Remix client entry while retaining the editor's folder permission and unsaved-work handling. The viewer source controls and hosted project pages also use Remix client entries.
 
+The Projects page can open a local project folder directly through a Remix client entry. It validates Tea or legacy Worldview manifests, remembers the directory handle on this device, and opens the editor's map chooser. The hosted Maps page still checks a picked folder against its hosted project before opening it.
+
 The viewer Camera panel now renders through a Remix client entry while the renderer continues to own movement and camera state.
 
 The viewer Movement settings panel also renders through a Remix client entry; it listens to renderer movement changes and applies validated control values.

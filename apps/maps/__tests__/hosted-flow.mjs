@@ -3662,6 +3662,57 @@ try {
     "Projects page reopens the latest local recovery revision",
   );
 
+  const localProjectPage = await browser.newPage();
+  await localProjectPage.goto(`${mapsOrigin}/projects`);
+  await localProjectPage.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    const folder = await root.getDirectoryHandle("smoke-direct-local-project", {
+      create: true,
+    });
+    for (const [name, contents] of [
+      [
+        "tea.maps.project.json",
+        JSON.stringify({
+          schemaVersion: 1,
+          name: "Direct local project",
+          game: "quake",
+          mapRoots: ["."],
+          resources: { wads: [], spriteRoots: [], entityDefinitions: [] },
+          buildProfiles: [],
+        }),
+      ],
+      ["direct.map", '{\n"classname" "worldspawn"\n}\n'],
+    ]) {
+      const file = await folder.getFileHandle(name, { create: true });
+      const writer = await file.createWritable();
+      await writer.write(contents);
+      await writer.close();
+    }
+    Object.defineProperty(window, "showDirectoryPicker", {
+      configurable: true,
+      value: async () => folder,
+    });
+  });
+  await localProjectPage.locator("#projects-open-local").click();
+  await localProjectPage.waitForURL(/\/editor\?recentProject=/);
+  await localProjectPage
+    .getByRole("heading", { name: "Direct local project" })
+    .waitFor();
+  await localProjectPage
+    .getByRole("button", { name: "Open direct.map" })
+    .click();
+  await localProjectPage
+    .locator("#project-map-selector")
+    .waitFor({ state: "hidden" });
+  assert.equal(
+    await localProjectPage.locator("#document-name").textContent(),
+    "direct.map",
+  );
+  await localProjectPage.close();
+  result.checks.push(
+    "Projects page opens a local folder directly through the Remix control",
+  );
+
   await page.evaluate(async () => {
     const request = indexedDB.open("tea-maps-recent-projects", 1);
     const database = await new Promise((resolve, reject) => {
