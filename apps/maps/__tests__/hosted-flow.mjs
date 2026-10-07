@@ -560,6 +560,13 @@ try {
   await localBuildPage.waitForFunction(
     () => !document.querySelector("#build-export-once")?.disabled,
   );
+  await localBuildPage.locator("#game-profile").selectOption("goldsrc");
+  assert.equal(
+    await localBuildPage.locator("#game-profile").inputValue(),
+    "goldsrc",
+  );
+  await localBuildPage.locator("#game-profile").selectOption("quake");
+  await localBuildPage.locator("#build-profile").selectOption("final");
   assert.equal(
     await localBuildPage.locator("#export-after-build").isChecked(),
     false,
@@ -574,6 +581,12 @@ try {
       () => window.teaMapsLocalCompileRequests.length,
     ),
     1,
+  );
+  assert.equal(
+    await localBuildPage.evaluate(
+      () => window.teaMapsLocalCompileRequests[0].quality,
+    ),
+    "final",
   );
   assert.equal(
     await localBuildPage.locator("#export-after-build").isChecked(),
@@ -1073,6 +1086,7 @@ try {
   await page.locator("#hosted-builds summary").click();
   await page.getByText("0 builds · hosted compiler available").waitFor();
   assert.equal(await page.locator("#build-export-once").isDisabled(), true);
+  assert.equal(await page.locator("#game-profile").isDisabled(), true);
   await page.locator("#build-map").click();
   const download = page.getByRole("link", { name: "Download BSP" });
   try {

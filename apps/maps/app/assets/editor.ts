@@ -187,6 +187,7 @@ import {
   initEditorGroupsPanel,
   type EditorGroupCommand,
 } from "./editor-groups-bridge.ts";
+import { initEditorBuildControls } from "./editor-build-controls-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -308,17 +309,7 @@ const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
 const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
 const fileInput = document.querySelector<HTMLInputElement>("#open-map")!;
 const projectMaps = document.querySelector<HTMLSelectElement>("#project-maps")!;
-const buildProfile =
-  document.querySelector<HTMLSelectElement>("#build-profile")!;
-const gameProfile = document.querySelector<HTMLSelectElement>("#game-profile")!;
-const buildButton = document.querySelector<HTMLButtonElement>("#build-map")!;
-const buildExportOnceButton =
-  document.querySelector<HTMLButtonElement>("#build-export-once")!;
-const exportBuildButton =
-  document.querySelector<HTMLButtonElement>("#export-build")!;
 const exportStatus = document.querySelector<HTMLElement>("#export-status")!;
-const toggleCompiledButton =
-  document.querySelector<HTMLButtonElement>("#toggle-compiled")!;
 const buildStatus = document.querySelector<HTMLElement>("#build-status")!;
 const buildDetails =
   document.querySelector<HTMLDetailsElement>("#build-details")!;
@@ -446,6 +437,17 @@ let openGroupId: string | null = null;
 let selectedLayerId: string | null = null;
 const layersPanel = initEditorLayersPanel(runLayerCommand);
 const groupsPanel = initEditorGroupsPanel(runGroupCommand);
+const buildControls = initEditorBuildControls({
+  selectGame: selectGameProfile,
+  selectProfile(id) {
+    if (buildControls.state.profiles.some((profile) => profile.id === id))
+      buildControls.update({ profileId: id });
+  },
+  build: () => void runBuild(false),
+  buildExportOnce: () => void runBuild(true),
+  exportLatest: () => void exportCurrentBuild(),
+  togglePreview: () => showCompiledPreview(!compiledVisible),
+});
 let renderer: EditorSourceRenderer | null = null;
 window.addEventListener(editorThemeEvent, () => {
   renderer?.setTheme(editorRenderTheme());
@@ -511,6 +513,7 @@ let compiledSourceText: string | null = null;
 let compiledVisible = false;
 let buildGeneration = 0;
 let hostedBuildBusy = false;
+let localBuildBusy = false;
 let latestBuildExport: {
   readonly input: BuildExportInput;
   readonly document: MapDocument;
@@ -912,13 +915,15 @@ function showCompiledPreview(show: boolean) {
   perspectiveLabel.textContent = compiledVisible
     ? "Compiled preview"
     : "Perspective";
-  toggleCompiledButton.textContent = compiledVisible
-    ? "Show source"
-    : compiledDocument &&
-        (compiledDocument !== session.document ||
-          compiledSourceText !== source.value)
-      ? "Show compiled (stale)"
-      : "Show compiled";
+  buildControls.update({
+    previewLabel: compiledVisible
+      ? "Show source"
+      : compiledDocument &&
+          (compiledDocument !== session.document ||
+            compiledSourceText !== source.value)
+        ? "Show compiled (stale)"
+        : "Show compiled",
+  });
 }
 
 function refreshCompiledPreview() {
@@ -937,8 +942,10 @@ function clearCompiledPreview() {
   compiledPreview = null;
   compiledDocument = null;
   compiledSourceText = null;
-  toggleCompiledButton.disabled = true;
-  toggleCompiledButton.textContent = "Show compiled";
+  buildControls.update({
+    previewDisabled: true,
+    previewLabel: "Show compiled",
+  });
 }
 
 function renderExportSettings() {
@@ -996,7 +1003,7 @@ function isBuildExportCurrent(
 function refreshBuildExport() {
   const current =
     !!latestBuildExport && isBuildExportCurrent(latestBuildExport);
-  exportBuildButton.disabled = exportBusy || !current;
+  buildControls.update({ exportDisabled: exportBusy || !current });
   if (latestBuildExport && !current) {
     exportStatus.textContent = "Map changed; rebuild to export";
   } else if (
@@ -1036,7 +1043,7 @@ function installCompiledPreview(
   preview.addEventListener("ready", () => {
     if (compiledPreview !== preview) return;
     if (camera) preview.viewer?.setCamera(camera);
-    toggleCompiledButton.disabled = false;
+    buildControls.update({ previewDisabled: false });
     buildStatus.textContent = "Compiled preview ready";
     if (
       compiledDocument === session.document &&
@@ -1132,17 +1139,16 @@ function setProject(value: MapProject | null) {
   }
   projectBindings = null;
   loadCurrentExportSettings();
-  buildProfile.replaceChildren();
   const profiles = value?.manifest.buildProfiles.length
     ? value.manifest.buildProfiles
     : [
         { id: "preview", label: "Preview", quality: "preview" as const },
         { id: "final", label: "Final", quality: "final" as const },
       ];
-  for (const profile of profiles) {
-    buildProfile.add(new Option(profile.label, profile.id));
-  }
-  buildProfile.value = value?.manifest.defaultBuildProfile ?? profiles[0]!.id;
+  buildControls.update({
+    profiles: profiles.map(({ id, label }) => ({ id, label })),
+    profileId: value?.manifest.defaultBuildProfile ?? profiles[0]!.id,
+  });
   refreshResourceCatalog();
   if (value) return;
   projectMapSelector.hide();
@@ -1338,8 +1344,10 @@ function refreshSelection() {
   for (const button of Object.values(selectionBrushButtons))
     button.disabled = !selectionBrushReady;
   selectionBrushProjection.disabled = !selectionBrushReady;
-  gameProfile.value = activeGame();
-  gameProfile.disabled = project !== null || hostedMap !== null;
+  buildControls.update({
+    game: activeGame(),
+    gameDisabled: project !== null || hostedMap !== null,
+  });
   const faces = faceRefs.flatMap(({ brushId: ownerId, faceId }) => {
     const face = findBrush(session.document, ownerId)?.faces.find(
       (candidate) => candidate.id === faceId,
@@ -1966,10 +1974,14 @@ function setHostedEditability() {
     (readOnly && !hostedConnection) || latestPointer === null;
   document.querySelector<HTMLButtonElement>("#download-map")!.textContent =
     readOnly ? "Download copy" : "Download .map";
-  buildButton.textContent = readOnly ? "Build hosted BSP" : "Build BSP";
-  buildButton.disabled =
-    readOnly && (hostedMap?.role === "viewer" || hostedBuildBusy);
-  buildExportOnceButton.disabled = readOnly || buildButton.disabled;
+  const buildDisabled =
+    localBuildBusy ||
+    (readOnly && (hostedMap?.role === "viewer" || hostedBuildBusy));
+  buildControls.update({
+    buildLabel: readOnly ? "Build hosted BSP" : "Build BSP",
+    buildDisabled,
+    buildExportOnceDisabled: readOnly || buildDisabled,
+  });
   hostedSourceControls?.setAvailability();
   refreshSelection();
   issueBrowser.refresh();
@@ -2668,13 +2680,13 @@ pointEntityClassname.addEventListener("input", () => {
   );
 });
 
-gameProfile.addEventListener("change", () => {
-  if (project || hostedMap || !isWorldviewGameProfile(gameProfile.value)) {
-    gameProfile.value = activeGame();
+function selectGameProfile(value: string) {
+  if (project || hostedMap || !isWorldviewGameProfile(value)) {
+    buildControls.update({ game: activeGame() });
     return;
   }
-  if (gameProfile.value === localGame) return;
-  localGame = gameProfile.value;
+  if (value === localGame) return;
+  localGame = value;
   renderer?.setMaterials(currentMaterials());
   materialBrowser.setMaterials(currentMaterials());
   buildGeneration += 1;
@@ -2684,7 +2696,7 @@ gameProfile.addEventListener("change", () => {
   refreshBuildExport();
   refreshSelection();
   scheduleDraftSave();
-});
+}
 
 document
   .querySelector<HTMLButtonElement>("#new-map")!
@@ -3969,12 +3981,18 @@ async function exportLatestBuild(settings: ExportSettings): Promise<void> {
 }
 
 async function runBuild(exportOnce: boolean) {
+  if (
+    buildControls.state.buildDisabled ||
+    (exportOnce && buildControls.state.buildExportOnceDisabled)
+  )
+    return;
   if (!applyWorkingSource()) return;
   const selected = project?.manifest.buildProfiles.find(
-    (profile) => profile.id === buildProfile.value,
+    (profile) => profile.id === buildControls.state.profileId,
   );
   const quality =
-    selected?.quality ?? (buildProfile.value === "final" ? "final" : "preview");
+    selected?.quality ??
+    (buildControls.state.profileId === "final" ? "final" : "preview");
   if (hostedMap) {
     const map = hostedMap;
     const document = session.document;
@@ -3982,7 +4000,10 @@ async function runBuild(exportOnce: boolean) {
     const cameraAtStart = compiledPreviewCamera();
     const generation = ++buildGeneration;
     hostedBuildBusy = true;
-    buildButton.disabled = true;
+    buildControls.update({
+      buildDisabled: true,
+      buildExportOnceDisabled: true,
+    });
     buildDetails.hidden = true;
     buildStatus.textContent = `Checking hosted ${quality} build…`;
     try {
@@ -4045,11 +4066,11 @@ async function runBuild(exportOnce: boolean) {
   const settingsAtStart = exportSettings;
   const autoExport = settingsAtStart.afterBuild || exportOnce;
   const generation = ++buildGeneration;
+  localBuildBusy = true;
   latestBuildExport = null;
   exportStatus.textContent = "";
   refreshBuildExport();
-  buildButton.disabled = true;
-  buildExportOnceButton.disabled = true;
+  buildControls.update({ buildDisabled: true, buildExportOnceDisabled: true });
   buildStatus.textContent = `Building ${quality}…`;
   buildDetails.hidden = true;
   try {
@@ -4189,28 +4210,22 @@ async function runBuild(exportOnce: boolean) {
     buildStatus.textContent =
       error instanceof Error ? error.message : String(error);
   } finally {
+    localBuildBusy = false;
     setHostedEditability();
   }
 }
 
-buildButton.addEventListener("click", () => void runBuild(false));
-buildExportOnceButton.addEventListener("click", () => void runBuild(true));
-
-exportBuildButton.addEventListener("click", async () => {
+async function exportCurrentBuild() {
   refreshBuildExport();
   const latest = latestBuildExport;
-  if (!latest || exportBuildButton.disabled) return;
+  if (!latest || buildControls.state.exportDisabled) return;
   try {
     await exportLatestBuild(exportSettings);
   } catch (error) {
     exportStatus.textContent =
       error instanceof Error ? error.message : String(error);
   }
-});
-
-toggleCompiledButton.addEventListener("click", () => {
-  showCompiledPreview(!compiledVisible);
-});
+}
 
 document
   .querySelector<HTMLButtonElement>("#download-map")!
@@ -4342,15 +4357,14 @@ document
   });
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #toggle-compiled, #export-build), #apply-source",
+  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #build-map, #build-export-once, #toggle-compiled, #export-build), #apply-source",
 )) {
   button.disabled = false;
 }
 source.disabled = false;
-buildProfile.disabled = false;
+buildControls.update({ profileDisabled: false });
 loadCurrentExportSettings();
-refreshSelection();
-issueBrowser.refresh();
+setHostedEditability();
 const sourceComparison = initSourceComparison();
 projectSyncControls = initProjectSyncDialog({
   linked(updated) {

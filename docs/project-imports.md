@@ -46,6 +46,8 @@ The export settings controls now render through a Remix client entry. The editor
 
 The editor also offers a one-shot local Build & export action using the current export settings. It does not change the per-project automatic export preference, and a failed bundle falls back to a raw BSP download.
 
+Game and Build profile selectors, build and export actions, and the compiled-preview toggle now render through a Remix client entry. The editor still runs builds, assembles bundles, and loads previews.
+
 The perspective FOV control now renders through a Remix client entry. Its browser-local default still applies before the editor's renderer starts, and camera changes update the control.
 
 The References panel now renders through a Remix client entry. It loads, snapshots, offsets, hides, and removes read-only scenes while the editor retains the scene list for renderer recreation.

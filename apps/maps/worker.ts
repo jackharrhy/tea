@@ -41,6 +41,7 @@ const clientEntryFiles = {
   "editor-layers-panel.tsx": browserAssets.editorLayers,
   "editor-groups-panel.tsx": browserAssets.editorGroups,
   "editor-export-settings-panel.tsx": browserAssets.editorExportSettings,
+  "editor-build-controls-panel.tsx": browserAssets.editorBuildControls,
   "editor-detached-maps-panel.tsx": browserAssets.editorDetachedMaps,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,

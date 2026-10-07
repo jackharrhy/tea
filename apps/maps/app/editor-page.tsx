@@ -10,6 +10,7 @@ import { EditorReferences } from "./assets/editor-references-panel.tsx";
 import { EditorLayers } from "./assets/editor-layers-panel.tsx";
 import { EditorGroups } from "./assets/editor-groups-panel.tsx";
 import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
+import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -91,32 +92,9 @@ export function EditorPage() {
             <button id="show-versions" type="button" disabled>
               Recovery versions
             </button>
-            <label for="game-profile">Game</label>
-            <select id="game-profile">
-              <option value="quake">Quake</option>
-              <option value="goldsrc">GoldSrc</option>
-              <option value="quake2">Quake II</option>
-              <option value="gower">Gower Complex</option>
-            </select>
-            <label for="build-profile">Build profile</label>
-            <select id="build-profile" disabled>
-              <option value="preview">Preview</option>
-              <option value="final">Final</option>
-            </select>
-            <button id="build-map" type="button" disabled>
-              Build BSP
-            </button>
-            <button id="build-export-once" type="button" disabled>
-              Build &amp; export
-            </button>
-            <button id="export-build" type="button" disabled>
-              Export build
-            </button>
+            <EditorBuildControls />
             <span id="export-status" role="status" />
             <EditorExportSettings />
-            <button id="toggle-compiled" type="button" disabled>
-              Show compiled
-            </button>
             <span id="build-status" role="status" />
             <details id="build-details" hidden>
               <summary>Build messages</summary>
