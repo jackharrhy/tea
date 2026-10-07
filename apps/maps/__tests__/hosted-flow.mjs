@@ -2197,9 +2197,27 @@ try {
     }),
     projectUrl.split("/").at(-1),
   );
+  assert.equal(
+    await page.locator("#project-sync-map").inputValue(),
+    "maps/alpha.map",
+  );
+  await page.locator("#project-sync-pull:not([disabled])").click();
+  await page
+    .locator("#project-sync-summary")
+    .filter({ hasText: /In sync/ })
+    .waitFor();
+  assert.equal(
+    await page.evaluate(async () => {
+      const root = await window.showDirectoryPicker();
+      const mapDirectory = await root.getDirectoryHandle("maps");
+      const handle = await mapDirectory.getFileHandle("alpha.map");
+      return (await handle.getFile()).text();
+    }),
+    hostedMapSource,
+  );
   await page.locator("#project-sync-close").click();
   result.checks.push(
-    "Remix Tea local project chooser, link writing, and source comparison",
+    "Remix Tea local project chooser, link writing, source comparison, and Pull to disk",
   );
   await page.locator("#hosted-editor-picker summary").first().click();
   await page.waitForFunction(
@@ -2220,6 +2238,33 @@ try {
   await page.locator("#source-compare-close").click();
   result.checks.push(
     "Remix hosted source comparison keeps read-only snapshots",
+  );
+  await page.evaluate(async () => {
+    const root = await window.showDirectoryPicker();
+    const mapDirectory = await root.getDirectoryHandle("maps");
+    const handle = await mapDirectory.getFileHandle("alpha.map");
+    const source = await (await handle.getFile()).text();
+    const writer = await handle.createWritable();
+    await writer.write(`${source}\n// tea project sync push\n`);
+    await writer.close();
+  });
+  await page.locator("#project-sync-open:not([disabled])").click();
+  await page
+    .locator("#project-sync-summary")
+    .filter({ hasText: /Local changed/ })
+    .waitFor();
+  await page.locator("#project-sync-push:not([disabled])").click();
+  await page
+    .locator("#project-sync-summary")
+    .filter({ hasText: /In sync/ })
+    .waitFor();
+  const pushedMap = await (
+    await page.request.get(`${mapsOrigin}/api/maps/${hostedMapId}`)
+  ).json();
+  assert.match(pushedMap.map.source, /\/\/ tea project sync push/);
+  await page.locator("#project-sync-close").click();
+  result.checks.push(
+    "Remix project sync pushes a reviewed disk edit to hosted storage",
   );
   const projectSiteTools = await page.evaluate(async () => {
     const tools = window.teaMapsTestTools;
