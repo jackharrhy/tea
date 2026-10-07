@@ -165,6 +165,11 @@ export const EditorHostedPicker = clientEntry(
               `/api/maps/${encodeURIComponent(initialMap)}`,
               HostedMapResponseSchema,
             );
+            if (initialProject && map.projectId !== initialProject) {
+              status = "Hosted map does not belong to this project";
+              handle.update();
+              return;
+            }
             if (projects.some((item) => item.id === map.projectId)) {
               await loadProject(map.projectId, map.id);
               if (project?.id === map.projectId) await openMap(map.id, map);

@@ -1993,6 +1993,39 @@ try {
   );
   const hostedMapId = new URL(hostedEditorUrl).searchParams.get("hostedMap");
   assert.ok(hostedMapId);
+  const hostedProjectId = projectUrl.split("/").at(-1);
+  assert.ok(hostedProjectId);
+  const legacyProject = `/project/${hostedProjectId}-smoke-project`;
+  for (const [from, to] of [
+    [legacyProject, `/projects/${hostedProjectId}`],
+    [`${legacyProject}/new-map`, `/projects/${hostedProjectId}/new-map`],
+    [`${legacyProject}/resources`, `/projects/${hostedProjectId}/resources`],
+    [`${legacyProject}/access`, `/projects/${hostedProjectId}/access`],
+    [
+      `${legacyProject}/map/${hostedMapId}-smoke-map`,
+      `/editor?hostedProject=${hostedProjectId}&hostedMap=${hostedMapId}`,
+    ],
+  ]) {
+    const response = await page.request.get(`${mapsOrigin}${from}`, {
+      maxRedirects: 0,
+    });
+    assert.equal(response.status(), 308, from);
+    assert.equal(
+      new URL(response.headers().location).pathname +
+        new URL(response.headers().location).search,
+      to,
+    );
+  }
+  await page.goto(`${mapsOrigin}${legacyProject}/map/${hostedMapId}-smoke-map`);
+  await page.getByText("Smoke Project / smoke.map opened").waitFor();
+  await page.goto(
+    `${mapsOrigin}/project/0123456789ab/map/${hostedMapId}-smoke-map`,
+  );
+  await page
+    .locator("#hosted-editor-status")
+    .getByText("Hosted map does not belong to this project")
+    .waitFor();
+  result.checks.push("Worldview hosted project and map links reach Tea routes");
   await page.goto(
     `${mapsOrigin}/?hostedProject=${projectUrl.split("/").at(-1)}&hostedMap=${hostedMapId}`,
   );

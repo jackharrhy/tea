@@ -12,6 +12,7 @@ export default defineConfig({
         "/new-map",
         "/projects",
         "/projects/*",
+        "/project/*",
         "/api/*",
         "/auth/*",
         "/sync/*",

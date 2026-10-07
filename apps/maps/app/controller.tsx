@@ -5,6 +5,33 @@ import { EditorPage } from "./editor-page.tsx";
 import { ProjectsPage } from "./projects-page.tsx";
 import { NewMapPage } from "./new-map-page.tsx";
 
+function legacyId(reference: string): string | null {
+  const id = reference.split("-", 1)[0];
+  return /^[a-z0-9]{12}$/.test(id) ? id : null;
+}
+
+function redirectLegacy(request: Request, pathname: string) {
+  const destination = new URL(request.url);
+  destination.pathname = pathname;
+  return Response.redirect(destination, 308);
+}
+
+function redirectLegacyMap(request: Request, projectId: string, mapId: string) {
+  const destination = new URL(request.url);
+  destination.pathname = "/editor";
+  destination.search = "";
+  destination.searchParams.set("hostedProject", projectId);
+  destination.searchParams.set("hostedMap", mapId);
+  return Response.redirect(destination, 308);
+}
+
+function legacyProject(request: Request, reference: string, section = "") {
+  const id = legacyId(reference);
+  return id
+    ? redirectLegacy(request, `/projects/${id}${section}`)
+    : new Response("Not found", { status: 404 });
+}
+
 export default createController(routes, {
   actions: {
     home(context) {
@@ -49,6 +76,37 @@ export default createController(routes, {
       return context.render(
         <ProjectsPage projectId={context.params.projectId} section="access" />,
       );
+    },
+    legacyProject(context) {
+      return legacyProject(context.request, context.params.projectRef);
+    },
+    legacyProjectNewMap(context) {
+      return legacyProject(
+        context.request,
+        context.params.projectRef,
+        "/new-map",
+      );
+    },
+    legacyProjectResources(context) {
+      return legacyProject(
+        context.request,
+        context.params.projectRef,
+        "/resources",
+      );
+    },
+    legacyProjectAccess(context) {
+      return legacyProject(
+        context.request,
+        context.params.projectRef,
+        "/access",
+      );
+    },
+    legacyHostedMap(context) {
+      const projectId = legacyId(context.params.projectRef);
+      const mapId = legacyId(context.params.mapRef);
+      return projectId && mapId
+        ? redirectLegacyMap(context.request, projectId, mapId)
+        : new Response("Not found", { status: 404 });
     },
   },
 });
