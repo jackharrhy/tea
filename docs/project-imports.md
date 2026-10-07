@@ -18,6 +18,8 @@ At that baseline, `npm run ref:check` and `npm run radio:check` passed. Both Cel
 
 A route-registration audit of the Worldview service at that baseline found 29 routes. Tea's Maps service retains every route ID with the same HTTP method and path pattern, and adds two checkpoint reads (`get-map-checkpoint-source` and `list-map-checkpoints`). This checks the public route surface; the hosted browser flow and service tests cover behavior separately.
 
+Tea runs a focused WebGPU browser check for both Maps surfaces: brush creation, canvas selection and dragging, Undo, and a generated BSP in the viewer. This adds renderer evidence beyond the WebGPU-free hosted flow. Worldview's wider GPU interaction and owned-game corpus cases remain a separate parity gate before a replacement decision.
+
 ## Cloudflare configuration
 
 Cloudflare's new [`cf` CLI](https://developers.cloudflare.com/cf/) uses `cloudflare.config.ts` and is currently in beta. [Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/) says to convert Wrangler projects explicitly; its Durable Object lifecycle declaration differs from Wrangler migrations. [Celld currently reads only `wrangler.jsonc` or `wrangler.json`](https://celld.dev/docs/cloudflare-compat/#wrangler-configuration), so Ref, Radio, and the Maps collaboration Worker retain Wrangler-compatible configs for their shared runtime. Do not run `cf init`, `cf dev`, or `cf deploy` in those workspaces without an explicit dual-config migration that passes both Cloudflare and Celld checks. The Cloudflare-only CMS edge and Maps UI apps use `cf` and `cloudflare.config.ts` with the Cloudflare Vite plugin.

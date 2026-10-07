@@ -94,3 +94,5 @@ jobs:
           CELLD_BIN="$RUNNER_TEMP/ref-celld" npm run test:celld --workspace @tea/ref -- --output "$RUNNER_TEMP/ref-celld-smoke.json"
       - if: steps.select.outputs.maps_hosted == 'true'
         run: npm run test:hosted --workspace @tea/maps -- --output "$RUNNER_TEMP/maps-hosted-smoke.json"
+      - if: steps.select.outputs.maps_hosted == 'true'
+        run: npm run test:gpu --workspace @tea/maps
