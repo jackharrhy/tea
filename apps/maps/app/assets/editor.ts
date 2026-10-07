@@ -62,7 +62,7 @@ import {
   defineWorldViewElement,
   type WorldViewElement,
 } from "@tea/maps-renderer/element";
-import type { WorldSource } from "@tea/maps-renderer";
+import type { CameraUpdate, WorldSource } from "@tea/maps-renderer";
 import type {
   CollaborationPresence,
   HostedMapLaunch,
@@ -1012,10 +1012,23 @@ function refreshBuildExport() {
   }
 }
 
+function compiledPreviewCamera(): CameraUpdate | null {
+  const camera = renderer?.viewportCamera("perspective");
+  return camera
+    ? {
+        position: [...camera.position],
+        yaw: camera.yaw,
+        pitch: camera.pitch,
+        fieldOfView: camera.fieldOfViewDegrees,
+      }
+    : null;
+}
+
 function installCompiledPreview(
   previewSource: WorldSource,
   documentAtBuild: MapDocument,
   sourceAtBuild: string,
+  camera: CameraUpdate | null,
 ) {
   clearCompiledPreview();
   defineWorldViewElement();
@@ -1027,6 +1040,7 @@ function installCompiledPreview(
   preview.source = previewSource;
   preview.addEventListener("ready", () => {
     if (compiledPreview !== preview) return;
+    if (camera) preview.viewer?.setCamera(camera);
     toggleCompiledButton.disabled = false;
     buildStatus.textContent = "Compiled preview ready";
     if (
@@ -3957,6 +3971,7 @@ buildButton.addEventListener("click", async () => {
     const map = hostedMap;
     const document = session.document;
     const sourceAtStart = source.value;
+    const cameraAtStart = compiledPreviewCamera();
     const generation = ++buildGeneration;
     hostedBuildBusy = true;
     buildButton.disabled = true;
@@ -3992,6 +4007,7 @@ buildButton.addEventListener("click", async () => {
           { bsp: hostedBuildArtifactPath(map.id, result.id, bsp.sha256) },
           document,
           sourceAtStart,
+          cameraAtStart,
         );
       } else {
         buildStatus.textContent =
@@ -4011,6 +4027,7 @@ buildButton.addEventListener("click", async () => {
   }
   const document = session.document;
   const sourceAtStart = source.value;
+  const cameraAtStart = compiledPreviewCamera();
   const projectAtStart = project;
   const gameAtStart = activeGame();
   const bindingsAtStart = projectBindings;
@@ -4101,6 +4118,7 @@ buildButton.addEventListener("click", async () => {
                 previewSourceWithExportAssets(previewSource, prepared),
                 document,
                 sourceAtStart,
+                cameraAtStart,
               );
             }
             if (autoExport) {
@@ -4131,7 +4149,12 @@ buildButton.addEventListener("click", async () => {
             if (autoExport) downloadBsp(result);
             if (previewSource) {
               buildStatus.textContent = `${autoExport ? "BSP downloaded" : buildOutcome} · loading compiled preview without companion assets`;
-              installCompiledPreview(previewSource, document, sourceAtStart);
+              installCompiledPreview(
+                previewSource,
+                document,
+                sourceAtStart,
+                cameraAtStart,
+              );
             } else if (autoExport) {
               buildStatus.textContent =
                 "BSP downloaded · automatic export unavailable";
@@ -4139,7 +4162,12 @@ buildButton.addEventListener("click", async () => {
           });
       } else if (previewSource) {
         buildStatus.textContent += " · loading compiled preview";
-        installCompiledPreview(previewSource, document, sourceAtStart);
+        installCompiledPreview(
+          previewSource,
+          document,
+          sourceAtStart,
+          cameraAtStart,
+        );
       } else {
         clearCompiledPreview();
         buildStatus.textContent +=
@@ -4423,7 +4451,12 @@ hostedBuildControls = initHostedBuilds({
       if (hostedMap?.id !== map.id || hostedMap.mapVersion !== build.mapVersion)
         return;
       buildStatus.textContent = "Loading hosted compiled preview";
-      installCompiledPreview(previewSource, session.document, source.value);
+      installCompiledPreview(
+        previewSource,
+        session.document,
+        source.value,
+        compiledPreviewCamera(),
+      );
     })().catch((error: unknown) => {
       buildStatus.textContent =
         error instanceof Error ? error.message : String(error);
