@@ -61,6 +61,7 @@ export const mapsStyles = css({
     "padding-top": "0.65rem",
   },
   "& .inspector-body": { "padding-top": "1rem" },
+  "& .viewer-diagnostics": { display: "contents" },
   "& .inspector-body section": { "padding-bottom": "1rem" },
   "& .inspector-body output": { "white-space": "pre-line" },
   "& .entity-support output": { display: "block", "padding-top": "0.65rem" },

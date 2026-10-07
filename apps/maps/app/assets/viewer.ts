@@ -7,7 +7,6 @@ import type {
   CameraState,
   WorldSource,
 } from "@tea/maps-renderer";
-import { initViewerTools } from "./viewer-tools.ts";
 import { sourceFromFiles, sourceName } from "./world-input.ts";
 
 defineWorldViewElement();
@@ -20,7 +19,7 @@ const name = document.querySelector<HTMLElement>("#map-name")!;
 const viewer = document.createElement("world-view") as WorldViewElement;
 viewer.setAttribute("controls", "walk");
 viewport.append(viewer);
-const viewerTools = initViewerTools(viewer);
+let initialCamera: CameraState | undefined;
 window.dispatchEvent(new Event("tea-maps-viewer-element-ready"));
 
 viewer.addEventListener("progress", (event) => {
@@ -29,6 +28,7 @@ viewer.addEventListener("progress", (event) => {
     : "Loading map";
 });
 viewer.addEventListener("ready", () => {
+  if (initialCamera) viewer.viewer?.setCamera(initialCamera);
   status.textContent =
     "Ready · click the map to look around · V switches walk/fly";
 });
@@ -46,8 +46,8 @@ function open(
 ) {
   name.textContent = label;
   status.textContent = "Loading map";
-  viewerTools.reset();
-  viewerTools.setInitialCamera(options?.camera);
+  initialCamera = options?.camera;
+  window.dispatchEvent(new Event("tea-maps-viewer-reset"));
   viewer.source = source;
   viewer.walkabilitySource = options?.walkability ?? null;
 }

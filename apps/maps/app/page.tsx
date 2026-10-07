@@ -7,6 +7,7 @@ import { ViewerMovementPanel } from "./assets/viewer-movement-panel.tsx";
 import { ViewerOverviewPanel } from "./assets/viewer-overview-panel.tsx";
 import { ViewerWalkabilityPanel } from "./assets/viewer-walkability-panel.tsx";
 import { ViewerAudioPanel } from "./assets/viewer-audio-panel.tsx";
+import { ViewerDiagnosticsPanel } from "./assets/viewer-diagnostics-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -36,26 +37,12 @@ export function MapsPage() {
             <details class="inspector" open>
               <summary>Map tools</summary>
               <div class="inspector-body">
-                <section aria-label="Map details">
-                  <h2>Map details</h2>
-                  <output id="map-details">Load a map to inspect it</output>
-                  <output id="map-warnings" class="hint"></output>
-                </section>
-                <section aria-label="Entity support">
-                  <details class="entity-support">
-                    <summary>Entity support</summary>
-                    <output id="entity-counts">
-                      Load a map to inspect entities
-                    </output>
-                    <ul id="entity-classes"></ul>
-                  </details>
-                </section>
+                <ViewerDiagnosticsPanel />
                 <ViewerCameraPanel />
                 <ViewerMovementPanel />
                 <ViewerOverviewPanel />
                 <ViewerWalkabilityPanel />
                 <ViewerAudioPanel />
-                <output id="map-tool-status" role="status"></output>
               </div>
             </details>
             <HostedViewerPanel />

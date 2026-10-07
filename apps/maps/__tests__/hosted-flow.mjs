@@ -810,7 +810,26 @@ try {
   await movementPage.close();
   result.checks.push("Remix viewer movement settings update renderer controls");
   const cameraPage = await browser.newPage();
+  const cameraPageErrors = [];
+  const cameraRequestFailures = [];
+  cameraPage.on("pageerror", (error) => cameraPageErrors.push(error.message));
+  cameraPage.on("requestfailed", (request) =>
+    cameraRequestFailures.push(
+      `${request.url()}: ${request.failure()?.errorText}`,
+    ),
+  );
+  await cameraPage.addInitScript(() => {
+    window.teaMapsViewerElementReady = false;
+    window.addEventListener(
+      "tea-maps-viewer-element-ready",
+      () => {
+        window.teaMapsViewerElementReady = true;
+      },
+      { once: true },
+    );
+  });
   await cameraPage.goto(mapsOrigin);
+  await cameraPage.waitForFunction(() => window.teaMapsViewerElementReady);
   await cameraPage.locator("#viewport world-view").waitFor();
   await cameraPage.evaluate(() => {
     const element = document.querySelector("#viewport world-view");
@@ -981,33 +1000,56 @@ try {
       },
     });
   });
-  await cameraPage.waitForFunction(
-    () => {
-      const world = window.cameraProbe.world;
-      const diagnostics = {
-        format: "quake",
-        version: 29,
-        triangles: 0,
-        faces: 0,
-        batches: 0,
-        materials: 0,
-        lightmapPages: 0,
-        sprites: 0,
-        loadedSounds: 0,
-        loadedMusic: 0,
-        playerSounds: 0,
-        loadMilliseconds: 0,
-        warnings: [],
-      };
-      document
-        .querySelector("#viewport world-view")
-        .dispatchEvent(
-          new CustomEvent("ready", { detail: { world, diagnostics } }),
-        );
-      return !document.querySelector("#field-of-view").disabled;
-    },
-    undefined,
-    { timeout: 60_000 },
+  try {
+    await cameraPage.waitForFunction(
+      () => {
+        const world = window.cameraProbe.world;
+        const diagnostics = {
+          format: "quake",
+          version: 29,
+          triangles: 0,
+          faces: 0,
+          batches: 0,
+          materials: 0,
+          lightmapPages: 0,
+          sprites: 0,
+          loadedSounds: 0,
+          loadedMusic: 0,
+          playerSounds: 0,
+          loadMilliseconds: 0,
+          warnings: [],
+        };
+        document
+          .querySelector("#viewport world-view")
+          .dispatchEvent(
+            new CustomEvent("ready", { detail: { world, diagnostics } }),
+          );
+        return !document.querySelector("#field-of-view").disabled;
+      },
+      undefined,
+      { timeout: 60_000 },
+    );
+  } catch (error) {
+    const viewerState = await cameraPage.evaluate(() => ({
+      readyState: document.readyState,
+      viewerWorld: !!document.querySelector("#viewport world-view")?.viewer
+        ?.world,
+      fieldOfView: document.querySelector("#field-of-view")?.outerHTML,
+      details: document.querySelector("#map-details")?.textContent,
+    }));
+    throw new Error(
+      `Viewer panels did not become ready: ${JSON.stringify({ viewerState, cameraPageErrors, cameraRequestFailures })}`,
+      { cause: error },
+    );
+  }
+  await cameraPage.locator("#map-details").getByText("QUAKE 29").waitFor();
+  assert.equal(
+    await cameraPage.locator("#entity-counts").textContent(),
+    "0 supported · 0 partial · 0 baked · 0 skipped",
+  );
+  assert.equal(
+    await cameraPage.locator("#entity-classes li").textContent(),
+    "No partial or skipped entity classes",
   );
   await cameraPage.locator("#field-of-view").fill("90");
   assert.equal(await cameraPage.locator("#field-of-view").inputValue(), "90");
@@ -1119,6 +1161,14 @@ try {
     await cameraPage.locator("#walkability-status").textContent(),
     "walkability sidecar could not be loaded: invalid graph",
   );
+  assert.match(
+    (await cameraPage.locator("#map-warnings").textContent()) ?? "",
+    /walkability sidecar could not be loaded: invalid graph/,
+  );
+  assert.equal(
+    await cameraPage.locator("#map-tool-status").textContent(),
+    "walkability sidecar could not be loaded: invalid graph",
+  );
   await cameraPage.locator("#enable-audio:enabled").waitFor();
   await cameraPage.locator("#enable-audio").click();
   assert.equal(
@@ -1170,6 +1220,14 @@ try {
     audioCalls.filter((call) => call.action === "stop"),
     [{ action: "stop" }],
   );
+  await cameraPage.evaluate(() =>
+    window.dispatchEvent(new Event("tea-maps-viewer-reset")),
+  );
+  assert.equal(
+    await cameraPage.locator("#map-details").textContent(),
+    "Loading map",
+  );
+  assert.equal(await cameraPage.locator("#map-tool-status").textContent(), "");
   await cameraPage.close();
   result.checks.push("Remix viewer field of view accepts typed camera values");
   result.checks.push(
@@ -1181,6 +1239,7 @@ try {
   result.checks.push(
     "Remix viewer audio controls follow renderer playback state",
   );
+  result.checks.push("Remix viewer diagnostics render map and warning state");
   const viewerFolder = join(state, "viewer-fixture");
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
   await writeFile(join(viewerFolder, "maps", "folder.bsp"), bsp);
