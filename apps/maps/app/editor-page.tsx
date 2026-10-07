@@ -23,13 +23,7 @@ import { EditorEntityCreation } from "./assets/editor-entity-creation-panel.tsx"
 import { EditorTransforms } from "./assets/editor-transforms-panel.tsx";
 import { EditorGeometry, EditorCsg } from "./assets/editor-geometry-panel.tsx";
 import { EditorEntityInspector } from "./assets/editor-entity-inspector-panel.tsx";
-import { EditorFaceBasics } from "./assets/editor-face-basics-panel.tsx";
-import {
-  EditorFaceProjectionFields,
-  EditorTextureAlignment,
-} from "./assets/editor-face-texture-panel.tsx";
-import { EditorSurface } from "./assets/editor-surface-panel.tsx";
-import { EditorUvControls } from "./assets/editor-uv-controls-panel.tsx";
+import { EditorFaceInspector } from "./assets/editor-face-inspector-panel.tsx";
 import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
 import { EditorClipHull } from "./assets/editor-clip-hull-panel.tsx";
 import { EditorSweepPanel } from "./assets/editor-sweep-panel.tsx";
@@ -224,26 +218,7 @@ export function EditorPage() {
               <EditorDocumentSummary />
               <EditorIssues />
               <EditorVisibility />
-              <div id="face-inspector" hidden>
-                <h2>Brush and face</h2>
-                <EditorFaceBasics />
-                <div id="face-projection" hidden>
-                  <h3>Face projection</h3>
-                  <EditorFaceProjectionFields />
-                  <div class="uv-editor-frame">
-                    <svg
-                      id="uv-editor"
-                      viewBox="0 0 320 220"
-                      role="application"
-                      aria-label="Selected face UV editor"
-                      tabIndex={0}
-                    />
-                    <EditorUvControls />
-                  </div>
-                </div>
-                <EditorTextureAlignment />
-                <EditorSurface />
-              </div>
+              <EditorFaceInspector />
               <EditorMaterialBrowser />
               <EditorEntityInspector />
               <EditorSourcePanel />

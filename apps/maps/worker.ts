@@ -22,6 +22,7 @@ const clientEntryFiles = {
   "editor-hosted-access-panel.tsx": browserAssets.editorHostedAccess,
   "editor-hosted-presence-panel.tsx": browserAssets.editorHostedPresence,
   "editor-pointer-readout.tsx": browserAssets.editorPointerReadout,
+  "editor-face-inspector-panel.tsx": browserAssets.editorFaceInspector,
   "editor-readouts.tsx": browserAssets.editorReadouts,
   "editor-project-map-selector-panel.tsx": browserAssets.projectMapSelector,
   "editor-theme-control.tsx": browserAssets.editorTheme,

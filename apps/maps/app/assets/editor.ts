@@ -348,8 +348,28 @@ const clipHull = initEditorClipHull({
 });
 const perspectiveLabel =
   document.querySelector<HTMLElement>("#perspective-label")!;
-const faceInspector = document.querySelector<HTMLElement>("#face-inspector")!;
-const faceProjection = document.querySelector<HTMLElement>("#face-projection")!;
+let faceInspectorVisible = false;
+let faceProjectionVisible = false;
+function setFaceInspectorVisibility(
+  visible: boolean,
+  projectionVisible: boolean,
+) {
+  if (
+    visible === faceInspectorVisible &&
+    projectionVisible === faceProjectionVisible
+  )
+    return;
+  faceInspectorVisible = visible;
+  faceProjectionVisible = projectionVisible;
+  document.documentElement.dataset.faceInspectorVisible = String(visible);
+  document.documentElement.dataset.faceProjectionVisible =
+    String(projectionVisible);
+  window.dispatchEvent(
+    new CustomEvent("tea-maps-face-inspector-visibility", {
+      detail: { visible, projectionVisible },
+    }),
+  );
+}
 const switchMapDialog = initEditorSwitchMapDialog();
 const versionsDialog =
   document.querySelector<HTMLDialogElement>("#versions-dialog")!;
@@ -1597,8 +1617,8 @@ function refreshSelection() {
       : null,
   );
   uvControls.update({ disabled: !uvVertices || !editing });
-  faceInspector.hidden = brushIds.length === 0 && faces.length === 0;
-  faceProjection.hidden = faces.length === 0;
+  const hasFaceSelection = brushIds.length > 0 || faces.length > 0;
+  setFaceInspectorVisibility(hasFaceSelection, faces.length > 0);
   const faceBrush =
     brushIds.length === 1
       ? findBrush(session.document, brushIds[0]!)
@@ -1614,7 +1634,7 @@ function refreshSelection() {
       );
   const sharedMaterial = materials.every((value) => value === materials[0]);
   const selectedMaterial = sharedMaterial ? (materials[0] ?? "") : "";
-  const materialDisabled = faceInspector.hidden || !editing;
+  const materialDisabled = !hasFaceSelection || !editing;
   faceBasics.update({
     summary: faces.length
       ? `${faces.length} ${faces.length === 1 ? "face" : "faces"} selected`
@@ -1684,7 +1704,7 @@ function refreshSelection() {
     heightPlaceholder: catalogMaterial
       ? String(catalogMaterial.logicalHeight ?? catalogMaterial.height)
       : "",
-    alignmentDisabled: faceInspector.hidden || !editing,
+    alignmentDisabled: !hasFaceSelection || !editing,
   });
   refreshSurfaceInspector(faces, editing);
   const selectedEntity =

@@ -54,6 +54,8 @@ The viewport pointer readout now renders in a Remix client entry using the edito
 
 The editor status message and selection summary now render through Remix client entries, following editor events rather than direct DOM writes.
 
+The selected brush and face inspector shell now follows editor selection through a Remix client entry, including the projection section around its existing face controls.
+
 The editor's source textarea and Apply source control now render through a Remix client entry. The editor retains parsing, draft recovery, and source-safe save decisions.
 
 The local project map chooser now renders and filters rows as a Remix client entry while the editor retains filesystem access and guarded map switching.
