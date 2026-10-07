@@ -53,6 +53,7 @@ import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
 import { EditorPointerReadout } from "./assets/editor-pointer-readout.tsx";
 import {
   EditorDocumentName,
+  EditorPerspectiveLabel,
   EditorSelectionInfo,
   EditorStatus,
 } from "./assets/editor-readouts.tsx";
@@ -130,7 +131,7 @@ export function EditorPage() {
             <section class="viewports" aria-label="Map viewports">
               <div class="viewport-frame">
                 <div class="perspective-header">
-                  <span id="perspective-label">Perspective</span>
+                  <EditorPerspectiveLabel />
                   <EditorFov />
                   <EditorWorkspaceToggle />
                 </div>

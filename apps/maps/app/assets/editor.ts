@@ -346,8 +346,12 @@ const clipHull = initEditorClipHull({
   createHull,
   discardHull: () => renderer?.clearHullPoints(),
 });
-const perspectiveLabel =
-  document.querySelector<HTMLElement>("#perspective-label")!;
+function setPerspectiveLabel(label: string) {
+  document.documentElement.dataset.editorPerspectiveLabel = label;
+  window.dispatchEvent(
+    new CustomEvent("tea-maps-editor-perspective-label", { detail: label }),
+  );
+}
 let faceInspectorVisible = false;
 let faceProjectionVisible = false;
 function setFaceInspectorVisibility(
@@ -1080,9 +1084,7 @@ function showCompiledPreview(show: boolean) {
     if (compiledVisible) compiledPreview.viewer?.start();
     else compiledPreview.viewer?.stop();
   }
-  perspectiveLabel.textContent = compiledVisible
-    ? "Compiled preview"
-    : "Perspective";
+  setPerspectiveLabel(compiledVisible ? "Compiled preview" : "Perspective");
   buildControls.update({
     previewLabel: compiledVisible
       ? "Show source"

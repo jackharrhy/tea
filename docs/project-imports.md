@@ -56,6 +56,8 @@ The editor document name, status message, and selection summary now render throu
 
 The selected brush and face inspector shell now follows editor selection through a Remix client entry, including the projection section around its existing face controls.
 
+The Perspective viewport label now follows source and compiled preview changes through a Remix client entry.
+
 The editor's source textarea and Apply source control now render through a Remix client entry. The editor retains parsing, draft recovery, and source-safe save decisions.
 
 The local project map chooser now renders and filters rows as a Remix client entry while the editor retains filesystem access and guarded map switching.

@@ -26,6 +26,28 @@ export const EditorDocumentName = clientEntry(
   },
 );
 
+export const EditorPerspectiveLabel = clientEntry(
+  `${import.meta.url}#EditorPerspectiveLabel`,
+  function EditorPerspectiveLabelComponent(handle: Handle) {
+    let label = "Perspective";
+
+    handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-editor-perspective-label",
+        (event) => {
+          label = (event as CustomEvent<string>).detail;
+          handle.update();
+        },
+        { signal: handle.signal },
+      );
+      label = document.documentElement.dataset.editorPerspectiveLabel ?? label;
+      handle.update();
+    });
+
+    return () => <span id="perspective-label">{label}</span>;
+  },
+);
+
 export const EditorStatus = clientEntry(
   `${import.meta.url}#EditorStatus`,
   function EditorStatusComponent(handle: Handle) {
