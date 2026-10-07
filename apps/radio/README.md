@@ -38,7 +38,7 @@ npm run radio:check
 
 The Tea copy uses Worker name `tea-radio` and bucket name `tea-radio-tracks` so it can be validated separately. Tea's root `compose.yml` serves it at `radio.localhost` with an independent `radio-data` volume. The original Radio repository and its Newport deployment continue publishing and serving `ghcr.io/jackharrhy/radio` during the bake period. A production handoff will require a verified storage copy and an infrastructure change.
 
-The application image includes Radio and copies `/usr/local/bin/celld` from a digest-pinned Celld 0.5.1 image in the [Celld fork](https://github.com/jackharrhy/celld) with native SQLite object storage. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse a candidate on an isolated store; update the default only after its upgrade and cold-restore checks pass. The original repository currently publishes the `linux/amd64` image as
+The application image includes Radio and copies `/usr/local/bin/celld` from a digest-pinned Celld 0.6.2 image in the [Celld fork](https://github.com/jackharrhy/celld) with native SQLite object storage. Its published binary matches the release binary used for Radio's 0.5.1-to-0.6.2 upgrade, 1 GiB media, and cold-restore smokes. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse another runtime on an isolated store. The original repository currently publishes the `linux/amd64` image as
 `ghcr.io/jackharrhy/radio:latest`, `:main`, and a commit tag. Tea does not publish this image yet.
 The `dev.jackharrhy.radio.celld-image` image label records the bundled Celld binary.
 
@@ -91,18 +91,18 @@ This optional check requires Celld, SQLite's `sqlite3` CLI, and Playwright Chrom
 
 For a full read-only comparison of two running instances, set `RADIO_SOURCE_URL`, `RADIO_SOURCE_PASSWORD`, `RADIO_TEA_URL`, and `RADIO_TEA_PASSWORD` privately, then run `npm run compare:instances --workspace @tea/radio -- --output /safe/place/radio-comparison.json`. Use distinct origins and pause every room before the comparison; playing positions change with time and are rejected. Keep both datasets free of other writes until it finishes. The command compares the complete room directory, ordered track metadata, paused position, volume, and every track's streamed SHA-256, byte count, content type, and suffix range. It only joins rooms as a temporary listener. The optional report is created with private file permissions and fails if its path already exists. A match is evidence for the copied dataset at that moment; preserve the source backup and perform the separate routing cutover only after reviewing it. The command does not compare listener presence or edit history.
 
-### Upgrading Celld 0.4 to 0.5
+### Upgrading an existing Celld store
 
-The fork now follows upstream Celld 0.5.1. Its alarm storage format changes when opening older
-state. Before deploying the first 0.5 image, stop Radio and back up the entire persistent
-`/app/.celld` mount, including the authoritative SQLite database and any WAL, and record the
-current Radio image digest. Keep the runtime stopped while taking that backup. Qualify the
-upgrade on a disposable copy first, then deploy through the ordinary infra update flow.
+Celld 0.5.1 changed alarm storage format when opening older 0.4 state. Before upgrading any
+existing Celld store, stop Radio and back up the entire persistent `/app/.celld` mount, including
+the authoritative SQLite database and any WAL, and record the current Radio image digest. Keep the
+runtime stopped while taking that backup. Qualify the upgrade on a disposable copy first, then
+deploy through the ordinary infra update flow.
 
-Do not point the old runtime at state opened by 0.5. To roll back, stop the new runtime, restore
-the complete pre-upgrade backup, and use the recorded old image. Clearing replica files alone
-does not undo the migration. The upgrade does not change Radio's room IDs, track keys, or 1 GiB
-upload limit.
+Do not point an old runtime at state opened by a newer version. To roll back, stop the new runtime,
+restore the complete pre-upgrade backup, and use the recorded old image. Clearing replica files
+alone does not undo the migration. The tested 0.5.1-to-0.6.2 upgrade preserves Radio's room IDs,
+track keys, and 1 GiB upload limit.
 
 ## Real Celld verification
 

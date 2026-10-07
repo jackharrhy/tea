@@ -27,6 +27,8 @@ export const EditorRecentProjects = clientEntry(
       handle.update();
     }
 
+    handle.queueTask(() => void refresh());
+
     async function openProject(project: RecentProject) {
       busyId = project.id;
       error = null;

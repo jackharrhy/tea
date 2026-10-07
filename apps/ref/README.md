@@ -77,4 +77,4 @@ For a self-hosted runtime, [Celld](https://celld.dev/docs/) accepts this Wrangle
 
 Tea's root `compose.yml` builds `apps/ref/Dockerfile` and serves `ref.localhost` with a separate `ref-data` volume. It uses `REF_PASSWORD` from the Compose environment, or a local development password if unset. Celld stores its authoritative SQLite object store under `/app/.celld/object-store/` and replicas under `/app/.celld/state/`; preserve the entire mount for backups. The original Newport deployment and `ghcr.io/jackharrhy/ref` image remain sourced from the original repository during the bake period. Moving production requires a verified backup, restore into the new store, and a separate infrastructure update.
 
-The Dockerfile pins the verified Celld 0.5.1 image by digest. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse a candidate runtime on an isolated store; change the default only after its upgrade and cold-restore checks pass.
+The Dockerfile pins the fork's Celld 0.6.2 image by digest. Its published binary matches the release binary used for Ref's browser and cold-restore smoke. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse another runtime on an isolated store.
