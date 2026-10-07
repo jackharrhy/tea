@@ -127,6 +127,18 @@ try {
       .evaluate((element) => Boolean(element.viewer?.world)),
     true,
   );
+  await page.locator("#example").selectOption("goldsrc");
+  await page.getByRole("button", { name: "Open example" }).click();
+  await page
+    .locator("#map-details")
+    .getByText(/GOLDSRC-BSP30 30/)
+    .waitFor();
+  assert.equal(
+    await page
+      .locator("#viewport world-view")
+      .evaluate((element) => element.viewer?.diagnostics?.format),
+    "goldsrc-bsp30",
+  );
   assert.deepEqual(pageErrors, []);
   console.log(
     JSON.stringify({
@@ -135,7 +147,7 @@ try {
         "WebGPU editor initializes four viewports",
         "Top viewport selects and drags a brush",
         "Undo restores the pre-drag source",
-        "WebGPU viewer loads a generated Quake BSP",
+        "WebGPU viewer switches from Quake to GoldSrc BSP",
       ],
     }),
   );
