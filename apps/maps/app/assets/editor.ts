@@ -99,6 +99,7 @@ import { initEditorMaterialBrowser } from "./editor-material-browser.ts";
 import { createTextureUvEditor } from "./editor-uv.ts";
 import { initSourceComparison } from "./editor-source-compare.ts";
 import { initProjectSyncDialog } from "./editor-project-sync-dialog.ts";
+import { initProjectMapSelector } from "./editor-project-map-selector.ts";
 import { initEditorPerformance } from "./editor-performance.ts";
 import { initHostedPresence } from "./editor-hosted-presence.ts";
 import {
@@ -527,6 +528,15 @@ let remoteParticipants: readonly CollaborationPresence[] = [];
 let hostedControls: ReturnType<typeof initHostedEditor> | null = null;
 let hostedBuildControls: ReturnType<typeof initHostedBuilds> | null = null;
 let projectSyncControls: ReturnType<typeof initProjectSyncDialog> | null = null;
+const projectMapSelector = initProjectMapSelector({
+  openMap(path) {
+    projectMaps.value = path;
+    projectMaps.dispatchEvent(new Event("change"));
+  },
+  openSync() {
+    document.querySelector<HTMLButtonElement>("#project-sync-open")!.click();
+  },
+});
 let hostedSourceControls: ReturnType<typeof initHostedSourceDialog> | null =
   null;
 let inspectedEntityId: EntityId | null = null;
@@ -1126,6 +1136,7 @@ function setProject(value: MapProject | null) {
   buildProfile.value = value?.manifest.defaultBuildProfile ?? profiles[0]!.id;
   refreshResourceCatalog();
   if (value) return;
+  projectMapSelector.hide();
   activeProjectPath = null;
   activeRecentProjectId = null;
   projectMaps.replaceChildren(new Option("No project open", ""));
@@ -3726,8 +3737,16 @@ async function openProjectDirectory(
 ) {
   const opened = await openMapProject(directory);
   const bindings = await openProjectBuildBindings(directory).catch(() => null);
+  if (!(await mayReplaceMap())) return;
   persistDraft();
+  leaveHostedMap();
+  openedFile = null;
+  openedFingerprint = null;
+  mapName = "tea-map.map";
+  documentId = crypto.randomUUID();
+  savedSource = emptySource;
   setProject(opened);
+  setMap(createEmptyDocument());
   projectBindings = bindings;
   projectRecoveryScope = bindings?.scopeId ?? crypto.randomUUID();
   loadCurrentExportSettings();
@@ -3747,10 +3766,7 @@ async function openProjectDirectory(
     recentId ??
     null;
   status.textContent = `${opened.manifest.name}: ${opened.maps.length} maps${bindings ? "" : " · build profile choices will not be remembered"}`;
-  if (lastMapPath && opened.maps.some((entry) => entry.path === lastMapPath)) {
-    projectMaps.value = lastMapPath;
-    projectMaps.dispatchEvent(new Event("change"));
-  }
+  projectMapSelector.show(opened.manifest.name, opened.maps, lastMapPath);
 }
 
 async function openRecentProject(id: string, requestPermission: boolean) {
@@ -3862,6 +3878,7 @@ projectMaps.addEventListener("change", async () => {
     activeProjectPath = path;
     documentId = identity;
     setMap(document, parsed.source);
+    projectMapSelector.hide();
     if (activeRecentProjectId)
       void rememberRecentProjectMap(activeRecentProjectId, path).catch(
         () => {},

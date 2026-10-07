@@ -893,10 +893,83 @@ export const editorStyles = css({
   },
   "& .editor-workspace": {
     display: "grid",
+    position: "relative",
     "grid-template-columns":
       "minmax(0, 1fr) 0 minmax(16rem, var(--inspector-width, 20rem))",
     "min-height": "0",
   },
+  "& .editor-workspace[data-choosing-map='true']": {
+    "min-height": "min(70vh, 42rem)",
+  },
+  "& .editor-workspace[data-choosing-map='true'] > .viewports, & .editor-workspace[data-choosing-map='true'] > #inspector-resizer, & .editor-workspace[data-choosing-map='true'] > .source-panel":
+    {
+      visibility: "hidden",
+    },
+  "& #project-map-selector": {
+    position: "absolute",
+    inset: "0",
+    "z-index": "8",
+    overflow: "auto",
+    display: "grid",
+    "align-items": "start",
+    "justify-items": "center",
+    padding: "clamp(2rem, 7vh, 5rem) 1.5rem",
+    background: "#10221c",
+  },
+  "& #project-map-selector[hidden]": { display: "none" },
+  "& .project-map-selector-content": { width: "min(100%, 42rem)" },
+  "& .project-map-selector-content > p": { color: "#abc4b0" },
+  "& .project-map-selector-content h1": { margin: "0.3rem 0" },
+  "& .project-map-selector-list": {
+    margin: "2rem 0 1rem",
+    border: "1px solid #456856",
+    background: "#162923",
+  },
+  "& .project-map-selector-heading": {
+    display: "flex",
+    "align-items": "center",
+    "justify-content": "space-between",
+    gap: "1rem",
+    padding: "0.7rem 1rem",
+    "border-bottom": "1px solid #456856",
+  },
+  "& #project-map-selector-filter": {
+    width: "min(14rem, 50%)",
+    padding: "0.5rem",
+    color: "#e0e9e2",
+    background: "#10291e",
+    border: "1px solid #72967b",
+    "border-radius": "5px",
+  },
+  "& #project-map-selector-filter[hidden]": { display: "none" },
+  "& #project-map-selector-rows:empty": { padding: "1rem" },
+  "& .project-map-selector-row": {
+    display: "flex",
+    "align-items": "center",
+    gap: "1rem",
+    width: "100%",
+    padding: "0.9rem 1rem",
+    color: "#e0e9e2",
+    background: "transparent",
+    "text-align": "left",
+    "border-bottom": "1px solid #355b45",
+    "border-radius": "0",
+  },
+  "& .project-map-selector-row:hover, & .project-map-selector-row:focus-visible":
+    {
+      background: "#234535",
+    },
+  "& .project-map-selector-row span:first-child": {
+    flex: "1",
+    "min-width": "0",
+  },
+  "& .project-map-selector-row strong, & .project-map-selector-row small": {
+    display: "block",
+    overflow: "hidden",
+    "text-overflow": "ellipsis",
+    "white-space": "nowrap",
+  },
+  "& .project-map-selector-row small": { color: "#abc4b0" },
   "& .viewports": {
     display: "grid",
     position: "relative",

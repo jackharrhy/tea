@@ -448,6 +448,56 @@ try {
   result.checks.push(
     "hosted BSP build queue, compiler request, history, and artifact download",
   );
+  await page.goto(`${mapsOrigin}/editor`);
+  await page.evaluate(() => {
+    const manifest = JSON.stringify({
+      schemaVersion: 1,
+      name: "Smoke local project",
+      game: "quake",
+      mapRoots: ["maps"],
+      resources: { wads: [], spriteRoots: [], entityDefinitions: [] },
+      buildProfiles: [],
+    });
+    const file = (name, source) => ({
+      kind: "file",
+      name,
+      getFile: async () => new File([source], name),
+    });
+    const maps = Object.fromEntries(
+      ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"].map((name) => [
+        `${name}.map`,
+        file(`${name}.map`, '{\n"classname" "worldspawn"\n}\n'),
+      ]),
+    );
+    const directory = (name, children) => ({
+      kind: "directory",
+      name,
+      getFileHandle: async (child) => children[child],
+      getDirectoryHandle: async (child) => children[child],
+      async *entries() {
+        yield* Object.entries(children);
+      },
+    });
+    const root = directory("smoke", {
+      "worldview.project.json": file("worldview.project.json", manifest),
+      maps: directory("maps", maps),
+    });
+    window.showDirectoryPicker = async () => root;
+  });
+  await page.locator("#open-project").click();
+  await page.locator("#project-map-selector").waitFor({ state: "visible" });
+  assert.equal(await page.locator(".project-map-selector-row").count(), 6);
+  await page.locator("#project-map-selector-filter").fill("beta");
+  assert.equal(await page.locator(".project-map-selector-row").count(), 1);
+  await page.getByRole("button", { name: "Open maps/beta.map" }).click();
+  await page.locator("#project-map-selector").waitFor({ state: "hidden" });
+  assert.equal(
+    await page.locator("#project-maps").inputValue(),
+    "maps/beta.map",
+  );
+  await page.locator("#open-project").click();
+  await page.locator("#project-map-selector").waitFor({ state: "visible" });
+  result.checks.push("local project map chooser and filtered map selection");
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {
