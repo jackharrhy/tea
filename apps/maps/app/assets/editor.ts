@@ -190,6 +190,11 @@ import { initEditorBuildControls } from "./editor-build-controls-bridge.ts";
 import { initEditorDocumentControls } from "./editor-document-controls-bridge.ts";
 import { initEditorSourcePanel } from "./editor-source-bridge.ts";
 import { initEditorProjectContext } from "./editor-project-context-bridge.ts";
+import {
+  initEditorSelectionBrushes,
+  type SelectionBrushMode,
+  type SelectionBrushProjection,
+} from "./editor-selection-brushes-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -257,18 +262,7 @@ const repeatCommandsButton =
 const clearRepeatCommandsButton = document.querySelector<HTMLButtonElement>(
   "#clear-repeat-commands",
 )!;
-const selectionBrushButtons = {
-  touching: document.querySelector<HTMLButtonElement>(
-    "#selection-brush-touching",
-  )!,
-  inside: document.querySelector<HTMLButtonElement>("#selection-brush-inside")!,
-  "inside-projected": document.querySelector<HTMLButtonElement>(
-    "#selection-brush-projected",
-  )!,
-};
-const selectionBrushProjection = document.querySelector<HTMLSelectElement>(
-  "#selection-brush-projection",
-)!;
+const selectionBrushes = initEditorSelectionBrushes(runSelectionBrushQuery);
 const nudgeButtons =
   document.querySelectorAll<HTMLButtonElement>("[data-nudge-axis]");
 const snapToGridButton =
@@ -1327,9 +1321,7 @@ function refreshSelection() {
           isEditorGroupEntity(entity) ||
           isEditorLayerEntity(entity)),
     );
-  for (const button of Object.values(selectionBrushButtons))
-    button.disabled = !selectionBrushReady;
-  selectionBrushProjection.disabled = !selectionBrushReady;
+  selectionBrushes.setEnabled(selectionBrushReady);
   buildControls.update({
     game: activeGame(),
     gameDisabled: project !== null || hostedMap !== null,
@@ -3263,35 +3255,28 @@ document
 document
   .querySelector<HTMLButtonElement>("#invert-selection")!
   .addEventListener("click", () => selectObjects("invert"));
-for (const [mode, button] of Object.entries(selectionBrushButtons) as [
-  keyof typeof selectionBrushButtons,
-  HTMLButtonElement,
-][]) {
-  button.addEventListener("click", () => {
-    if (!viewportCanEdit()) return;
-    try {
-      const projection =
-        mode === "inside-projected"
-          ? (selectionBrushProjection.value as "xy" | "xz" | "yz")
-          : undefined;
-      const result = session.selectWithSelectionBrushes(mode, projection);
-      if (!result) {
-        status.textContent = "Select one or more structural brushes first";
-        return;
-      }
-      const count = result.selectedBrushCount + result.selectedEntityCount;
-      const relationship =
-        mode === "touching"
-          ? "touching"
-          : mode === "inside"
-            ? "enclosed"
-            : `${projection} enclosed`;
-      status.textContent = `Consumed ${result.removedBrushCount} selection ${result.removedBrushCount === 1 ? "brush" : "brushes"} · selected ${count} ${relationship} ${count === 1 ? "object" : "objects"}`;
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
+function runSelectionBrushQuery(
+  mode: SelectionBrushMode,
+  projection?: SelectionBrushProjection,
+) {
+  if (!viewportCanEdit()) return;
+  try {
+    const result = session.selectWithSelectionBrushes(mode, projection);
+    if (!result) {
+      status.textContent = "Select one or more structural brushes first";
+      return;
     }
-  });
+    const count = result.selectedBrushCount + result.selectedEntityCount;
+    const relationship =
+      mode === "touching"
+        ? "touching"
+        : mode === "inside"
+          ? "enclosed"
+          : `${projection} enclosed`;
+    status.textContent = `Consumed ${result.removedBrushCount} selection ${result.removedBrushCount === 1 ? "brush" : "brushes"} · selected ${count} ${relationship} ${count === 1 ? "object" : "objects"}`;
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
 }
 hideSelectionButton.addEventListener("click", () => {
   if (!hostedMap && applyWorkingSource()) session.hideSelected();
@@ -4300,7 +4285,7 @@ async function showVersionsFromControls() {
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build)",
+  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected)",
 )) {
   button.disabled = false;
 }

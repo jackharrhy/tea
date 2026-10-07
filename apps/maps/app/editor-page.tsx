@@ -14,6 +14,7 @@ import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
 import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
 import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
 import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
+import { EditorSelectionBrushes } from "./assets/editor-selection-brushes-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -102,34 +103,7 @@ export function EditorPage() {
             <button id="invert-selection" type="button" disabled>
               Invert selection
             </button>
-            <details id="selection-brush-tools">
-              <summary>Selection brushes</summary>
-              <div
-                class="selection-brush-actions"
-                role="group"
-                aria-label="Selection brush commands"
-              >
-                <button id="selection-brush-touching" type="button" disabled>
-                  Select touching
-                </button>
-                <button id="selection-brush-inside" type="button" disabled>
-                  Select enclosed
-                </button>
-                <label for="selection-brush-projection">2D plane</label>
-                <select id="selection-brush-projection" disabled>
-                  <option value="xy">XY</option>
-                  <option value="xz">XZ</option>
-                  <option value="yz">YZ</option>
-                </select>
-                <button id="selection-brush-projected" type="button" disabled>
-                  Select enclosed in 2D
-                </button>
-              </div>
-              <p>
-                Selected structural brushes define the volume and are removed.
-                Undo restores them.
-              </p>
-            </details>
+            <EditorSelectionBrushes />
             <button id="focus-selection" type="button" disabled>
               Focus selection
             </button>

@@ -134,6 +134,8 @@ The editor header offers System, Dark, and Light themes. The choice is saved in 
 
 Selection brushes use selected structural brushes as volumes to select touching or enclosed objects, including a chosen XY, XZ, or YZ projection. The command removes the selection brushes and selects the matches in one undoable edit; Undo restores the brushes.
 
+The Selection brushes controls render through a Remix client component. The editor still validates the selected volume and commits the query as one history operation.
+
 When editing inside a linked group that has another copy, entity properties can be marked Independent in the inspector. A new protected property stays in the open copy, while edits to ordinary properties continue to synchronize. The checkbox beside an existing property can add or remove that protection.
 
 Viewport picking treats closed groups as one selection, opens a group on activation, and expands a brush entity pick to its sibling brushes. With several brushes selected, picking a face in Face mode selects matching faces across them. Paint selection reports the resulting count in the editor status.

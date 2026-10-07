@@ -1521,10 +1521,16 @@ try {
     "Select touching",
     "Select enclosed in 2D",
   ]) {
+    if (label === "Select enclosed in 2D")
+      await selectionPage
+        .locator("#selection-brush-projection")
+        .selectOption("xz");
     await selectionPage
       .getByRole("button", { name: label, exact: true })
       .click();
     await selectionPage.getByText(/Consumed 1 selection brush/).waitFor();
+    if (label === "Select enclosed in 2D")
+      await selectionPage.getByText(/selected 1 xz enclosed object/).waitFor();
     assert.equal(
       await selectionPage.evaluate(
         () =>
