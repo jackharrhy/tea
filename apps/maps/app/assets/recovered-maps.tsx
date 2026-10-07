@@ -10,6 +10,8 @@ import {
 import { openLocalProject } from "./project-local.ts";
 import {
   countLegacyDetachedMaps,
+  exportLegacyDetachedMaps,
+  importDetachedArchive,
   importLegacyDetachedMaps,
 } from "./editor-legacy-local.ts";
 
@@ -167,18 +169,82 @@ export const RecoveredMaps = clientEntry(
       }
     }
 
+    async function downloadLegacyCopies() {
+      if (importing) return;
+      importing = true;
+      importStatus = "Preparing Worldview copy archive…";
+      handle.update();
+      try {
+        const blob = await exportLegacyDetachedMaps();
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "worldview-local-copies.json";
+        anchor.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1_000);
+        importStatus = "Downloaded Worldview local copies";
+      } catch (cause) {
+        importStatus = message(cause);
+      } finally {
+        importing = false;
+        handle.update();
+      }
+    }
+
+    async function importFile(file: File) {
+      if (importing) return;
+      importing = true;
+      importStatus = "Importing Worldview copy archive…";
+      handle.update();
+      try {
+        const result = await importDetachedArchive(file);
+        copies = await listDetachedMapSummaries();
+        importStatus = `Imported ${result.imported} Worldview copies; ${result.existing} were already in Tea.`;
+      } catch (cause) {
+        importStatus = message(cause);
+      } finally {
+        importing = false;
+        handle.update();
+      }
+    }
+
     return () => (
       <div id="detached-maps-list" class="project-list">
         {legacyCount > 0 ? (
-          <button
-            id="import-worldview-copies"
-            type="button"
-            disabled={importing}
-            mix={on("click", () => void importCopies())}
-          >
-            Import {legacyCount} Worldview local copies
-          </button>
+          <div>
+            <button
+              id="import-worldview-copies"
+              type="button"
+              disabled={importing}
+              mix={on("click", () => void importCopies())}
+            >
+              Import {legacyCount} Worldview local copies
+            </button>
+            <button
+              id="download-worldview-copies"
+              type="button"
+              disabled={importing}
+              mix={on("click", () => void downloadLegacyCopies())}
+            >
+              Download Worldview copies
+            </button>
+          </div>
         ) : null}
+        <label for="import-worldview-copies-file">
+          Import Worldview copies from a file
+        </label>
+        <input
+          id="import-worldview-copies-file"
+          type="file"
+          accept=".json,application/json"
+          disabled={importing}
+          mix={on<HTMLInputElement>("change", (event) => {
+            const input = event.currentTarget;
+            const file = input.files?.[0];
+            input.value = "";
+            if (file) void importFile(file);
+          })}
+        />
         {legacyError ? (
           <p role="status">
             Worldview local copies are unavailable: {legacyError}

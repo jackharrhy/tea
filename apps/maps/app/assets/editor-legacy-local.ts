@@ -1,4 +1,5 @@
 import { openDB, type DBSchema } from "idb";
+import { z } from "zod";
 import {
   DetachedHostedMapSchema,
   type DetachedHostedMap,
@@ -11,6 +12,13 @@ import {
 interface LegacyEditorDatabase extends DBSchema {
   "detached-maps": { key: string; value: DetachedHostedMap };
 }
+
+const DetachedArchiveSchema = z.strictObject({
+  kind: z.literal("tea-maps-worldview-detached"),
+  version: z.literal(1),
+  copies: z.array(DetachedHostedMapSchema),
+});
+const MAX_ARCHIVE_BYTES = 128 * 1_024 * 1_024;
 
 async function legacyDetachedMaps(): Promise<readonly DetachedHostedMap[]> {
   if (!indexedDB.databases) return [];
@@ -31,11 +39,10 @@ export async function countLegacyDetachedMaps(): Promise<number> {
   return (await legacyDetachedMaps()).length;
 }
 
-export async function importLegacyDetachedMaps(): Promise<{
+async function importCopies(copies: readonly DetachedHostedMap[]): Promise<{
   imported: number;
   existing: number;
 }> {
-  const copies = await legacyDetachedMaps();
   if (!copies.length) return { imported: 0, existing: 0 };
   const destination = await openEditorDatabase();
   const transaction = destination.transaction(
@@ -64,4 +71,32 @@ export async function importLegacyDetachedMaps(): Promise<{
     throw cause;
   }
   return { imported, existing };
+}
+
+export async function importLegacyDetachedMaps() {
+  return importCopies(await legacyDetachedMaps());
+}
+
+export async function exportLegacyDetachedMaps(): Promise<Blob> {
+  const copies = await legacyDetachedMaps();
+  const archive = new Blob(
+    [
+      JSON.stringify({
+        kind: "tea-maps-worldview-detached",
+        version: 1,
+        copies,
+      }),
+    ],
+    { type: "application/json" },
+  );
+  if (archive.size > MAX_ARCHIVE_BYTES)
+    throw new Error("Worldview copy archive exceeds 128 MiB");
+  return archive;
+}
+
+export async function importDetachedArchive(file: File) {
+  if (file.size > MAX_ARCHIVE_BYTES)
+    throw new Error("Worldview copy archive exceeds 128 MiB");
+  const parsed = DetachedArchiveSchema.parse(JSON.parse(await file.text()));
+  return importCopies(parsed.copies);
 }

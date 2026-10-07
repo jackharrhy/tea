@@ -126,7 +126,7 @@ export const browserAssets = import.meta.env.DEV
       editorContextMenu: "/assets/editorContextMenu-Q5K6ECJZ.js",
       editorDetachedMaps: "/assets/editorDetachedMaps-C2WGM4DU.js",
       newMap: "/assets/newMap-CVIL6WEE.js",
-      recoveredMaps: "/assets/recoveredMaps-X5ZTTWID.js",
+      recoveredMaps: "/assets/recoveredMaps-MYHTAU3X.js",
       hostedProjects: "/assets/hostedProjects-JPBCLSNW.js",
       hostedViewerPanel: "/assets/hostedViewerPanel-LZD7N6R7.js",
       viewerSourcePanel: "/assets/viewerSourcePanel-HXRMDIOI.js",

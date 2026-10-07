@@ -14,6 +14,8 @@ import {
 import { IndexedDbCollaborationOutbox } from "../editor-collaboration-outbox.ts";
 import {
   countLegacyDetachedMaps,
+  exportLegacyDetachedMaps,
+  importDetachedArchive,
   importLegacyDetachedMaps,
 } from "../editor-legacy-local.ts";
 
@@ -77,4 +79,13 @@ it("imports same-origin Worldview copies without changing their source or Tea ed
   const source = await openDB("worldview-editor");
   expect(await source.get("detached-maps", copy.id)).toEqual(copy);
   source.close();
+
+  const archive = await exportLegacyDetachedMaps();
+  await deleteEditorDatabase();
+  expect(
+    await importDetachedArchive(new File([archive], "worldview-copies.json")),
+  ).toEqual({ imported: 1, existing: 0 });
+  expect(
+    await new IndexedDbCollaborationOutbox().loadDetached(copy.id),
+  ).toEqual(copy);
 });
