@@ -95,7 +95,7 @@ export const browserAssets = import.meta.env.DEV
       editorHostedPicker: "/assets/editorHostedPicker-NGBKQZEV.js",
       editorHostedBuilds: "/assets/editorHostedBuilds-ADTCZO3A.js",
       editorFov: "/assets/editorFov-DY4PO5X5.js",
-      editorWorkspaceToggle: "/assets/editorWorkspaceToggle-2B5MIJKW.js",
+      editorWorkspaceToggle: "/assets/editorWorkspaceToggle-XD5KM4EA.js",
       editorReferences: "/assets/editorReferences-2C5MTSJJ.js",
       editorLayers: "/assets/editorLayers-77BQNZXH.js",
       editorGroups: "/assets/editorGroups-LJ5IIC7Z.js",
