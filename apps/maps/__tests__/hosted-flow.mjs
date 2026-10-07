@@ -654,6 +654,46 @@ try {
     "Remix document controls open source, download preserved and normalized copies, and switch maps",
   );
 
+  const sourceEditorPage = await browser.newPage();
+  await sourceEditorPage.goto(`${mapsOrigin}/editor`);
+  await sourceEditorPage.locator("#map-source:not([disabled])").waitFor();
+  const sourceDraftInitial =
+    '{\n"classname" "worldspawn"\n"message" "tea_source_draft"\n}\n';
+  const editedSource = sourceDraftInitial.replace(
+    "source_draft",
+    "source_mid_draft",
+  );
+  await sourceEditorPage.locator("#map-source").fill(sourceDraftInitial);
+  await sourceEditorPage.locator("#map-source").evaluate((textarea) => {
+    const cursor = textarea.value.indexOf("draft");
+    textarea.focus();
+    textarea.setSelectionRange(cursor, cursor);
+  });
+  await sourceEditorPage.keyboard.type("mid_");
+  await sourceEditorPage.getByText("Source has unapplied edits").waitFor();
+  assert.equal(
+    await sourceEditorPage.locator("#map-source").inputValue(),
+    editedSource,
+  );
+  await delay(600);
+  await sourceEditorPage.reload();
+  await sourceEditorPage.locator("#map-source:not([disabled])").waitFor();
+  assert.equal(
+    await sourceEditorPage.locator("#map-source").inputValue(),
+    editedSource,
+  );
+  await sourceEditorPage.locator("#apply-source").click();
+  const appliedDownload = sourceEditorPage.waitForEvent("download");
+  await sourceEditorPage.locator("#download-map").click();
+  assert.match(
+    await readFile(await (await appliedDownload).path(), "utf8"),
+    /tea_source_mid_draft/,
+  );
+  await sourceEditorPage.close();
+  result.checks.push(
+    "Remix source editor keeps unapplied drafts through reload and applies them",
+  );
+
   const sourcePage = await browser.newPage();
   await sourcePage.goto(`${mapsOrigin}/?example=quake`);
   await sourcePage.locator("#map-name").getByText("Quake sky").waitFor();

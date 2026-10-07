@@ -12,6 +12,7 @@ import { EditorGroups } from "./assets/editor-groups-panel.tsx";
 import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
 import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
 import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
+import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -947,17 +948,7 @@ export function EditorPage() {
                   </button>
                 </div>
               </div>
-              <label for="map-source">Valve map source</label>
-              <p id="source-save-warning" role="status" hidden />
-              <textarea
-                id="map-source"
-                spellCheck={false}
-                aria-label="Valve map source"
-                disabled
-              />
-              <button id="apply-source" type="button" disabled>
-                Apply source
-              </button>
+              <EditorSourcePanel />
               <p>
                 Choose a viewport tool to draw, move, or place objects.
                 Middle-drag pans; right-drag looks around in Perspective. Apply

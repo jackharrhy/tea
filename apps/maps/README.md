@@ -34,6 +34,8 @@ Open `/editor` to create a map, load an example, add, select, duplicate, move, r
 
 The New, Example, Open, Save, Export normalized, checkpoint, Recovery versions, and Download controls render through a Remix client component. The editor retains file-handle checks, source-preserving save plans, recovery persistence, and the Save, Discard, or Cancel guard.
 
+The Valve map source textarea, save warning, and Apply source action render through a Remix client component. The editor still parses source, tracks unapplied drafts, persists recovery, and decides whether a source-preserving save is safe.
+
 The Recent projects menu remembers up to 12 local project folders in this browser and the last opened map in each. Reopening a folder checks its current file permission and shows the project map chooser with the last map marked. If local storage is unavailable, Open project still works without recents.
 
 The editor's Recent projects menu is a Remix client component. It loads stored folders when opened and hands the chosen folder to the editor's existing permission and unsaved-work flow.

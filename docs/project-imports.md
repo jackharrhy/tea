@@ -24,6 +24,8 @@ The editor's Recent projects menu now renders as a Remix client entry while reta
 
 The editor's document controls now render through a Remix client entry. The editor still checks file handles and source save plans, writes recovery checkpoints, and guards map replacement.
 
+The editor's source textarea and Apply source control now render through a Remix client entry. The editor retains parsing, draft recovery, and source-safe save decisions.
+
 The local project map chooser now renders and filters rows as a Remix client entry while the editor retains filesystem access and guarded map switching.
 
 The hosted share link and live participant list now render as a Remix client entry. The editor keeps room membership, operations, and viewport overlays.

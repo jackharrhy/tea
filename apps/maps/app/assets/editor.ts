@@ -188,13 +188,17 @@ import {
 } from "./editor-groups-bridge.ts";
 import { initEditorBuildControls } from "./editor-build-controls-bridge.ts";
 import { initEditorDocumentControls } from "./editor-document-controls-bridge.ts";
+import { initEditorSourcePanel } from "./editor-source-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
 const hostedPresence = initHostedPresence((message) => {
   status.textContent = message;
 });
-const source = document.querySelector<HTMLTextAreaElement>("#map-source")!;
+const source = initEditorSourcePanel({
+  input: onSourceInput,
+  apply: applyWorkingSource,
+});
 const selectionInfo = document.querySelector<HTMLElement>("#selection-info")!;
 const pointInspector = document.querySelector<HTMLElement>(
   "#point-entity-inspector",
@@ -552,9 +556,6 @@ let dragDuplicateBase: ReturnType<
 const emptySource = serializeMap(createEmptyDocument());
 let savedSource = emptySource;
 let mapSourceState = rebaseMapSource(session.document, emptySource);
-const sourceSaveWarning = document.querySelector<HTMLElement>(
-  "#source-save-warning",
-)!;
 let latestPointer: EditorPointerPositionEvent | null = null;
 let uvPreviewCandidate: ReturnType<
   EditorSession["createTextureTransformDeltaCandidate"]
@@ -1189,15 +1190,15 @@ function sourcePreview(): string {
 function refreshSource() {
   if (hostedMap) {
     source.value = hostedMap.source;
-    sourceSaveWarning.hidden = true;
+    source.setWarning(null);
   } else {
     const plan = planMapSave(session.document, mapSourceState);
     source.value = plan.status === "safe" ? plan.text : plan.normalizedText;
-    sourceSaveWarning.hidden = plan.status === "safe";
-    sourceSaveWarning.textContent =
+    source.setWarning(
       plan.status === "blocked"
         ? `${plan.diagnostics.map(({ message }) => message).join(" ")} Use Export normalized for a separate copy; Save and Download cannot overwrite this source.`
-        : "";
+        : null,
+    );
   }
   refreshCompiledPreview();
   refreshBuildExport();
@@ -1966,8 +1967,6 @@ function setHostedEditability() {
     readOnly && !hostedConnection;
   document.querySelector<HTMLButtonElement>("#add-point-entity")!.disabled =
     readOnly && !hostedConnection;
-  document.querySelector<HTMLButtonElement>("#apply-source")!.disabled =
-    readOnly;
   documentControls.update({
     saveDisabled: readOnly,
     checkpointDisabled:
@@ -2592,14 +2591,14 @@ window.addEventListener(
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") persistDraft();
 });
-source.addEventListener("input", () => {
+function onSourceInput() {
   refreshCompiledPreview();
   refreshBuildExport();
   if (hostedMap) return;
   status.textContent = "Source has unapplied edits";
   session.select(null);
   scheduleDraftSave();
-});
+}
 
 let activeViewportTool = viewportTool.value;
 
@@ -3928,12 +3927,6 @@ projectMaps.addEventListener("change", async () => {
   await openProjectMap(projectMaps.value);
 });
 
-document
-  .querySelector<HTMLButtonElement>("#apply-source")!
-  .addEventListener("click", () => {
-    applyWorkingSource();
-  });
-
 async function exportLatestBuild(settings: ExportSettings): Promise<void> {
   const latest = latestBuildExport;
   if (!latest || !isBuildExportCurrent(latest)) {
@@ -4327,7 +4320,7 @@ async function showVersionsFromControls() {
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build), #apply-source",
+  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build)",
 )) {
   button.disabled = false;
 }
