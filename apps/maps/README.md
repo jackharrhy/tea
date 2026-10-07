@@ -36,6 +36,8 @@ The Recent projects menu remembers up to 12 local project folders in this browse
 
 The editor's Recent projects menu is a Remix client component. It loads stored folders when opened and hands the chosen folder to the editor's existing permission and unsaved-work flow.
 
+Recovery versions now renders as a Remix client component. It lists local versions or hosted checkpoints, protects local versions, and asks the editor to open a detached copy through its existing Save, Discard, or Cancel guard.
+
 Opening a local project shows its maps in a searchable Remix client component. Choosing a row hands the path to the editor's guarded map-switch flow; Project sync opens the existing sync dialog.
 
 Open `/projects` to browse hosted projects and recent local project folders. A hosted project has its own `/projects/:projectId` page for maps and links to the viewer and editor. Its Open local project action checks a selected folder's game and existing hosted link, remembers the handle on this device, and opens it in the editor. Owners and editors create a map at `/projects/:projectId/new-map`; `/projects/:projectId/resources` lists member downloads and lets owners upload files, import copies from Artbin when the service is configured, and remove mounts; `/projects/:projectId/access` lets owners manage member roles. Create a hosted project from the projects page. Local folders remain on the current device; the Projects page can reopen a recent folder in the editor after checking browser permission. The editor's project controls remain available while these routes bake.

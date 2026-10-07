@@ -4,6 +4,7 @@ import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx"
 import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
+import { EditorVersions } from "./assets/editor-versions-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -1453,18 +1454,7 @@ export function EditorPage() {
             <button value="cancel">Cancel</button>
           </form>
         </dialog>
-        <dialog id="versions-dialog" aria-labelledby="versions-title">
-          <h2 id="versions-title">Recovery versions</h2>
-          <p>
-            Local restores open a copy to save to a file. Hosted checkpoints
-            record map versions.
-          </p>
-          <div id="versions-list"></div>
-          <p id="versions-status" role="status"></p>
-          <button id="close-versions" type="button">
-            Close
-          </button>
-        </dialog>
+        <EditorVersions />
         <dialog id="project-sync-dialog" aria-labelledby="project-sync-title">
           <h2 id="project-sync-title">Project sync</h2>
           <p id="project-sync-status" role="status"></p>

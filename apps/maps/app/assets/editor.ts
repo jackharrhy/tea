@@ -73,10 +73,8 @@ import type {
 import {
   createEditorCheckpoint,
   latestEditorVersion,
-  listEditorVersions,
   loadEditorDraft,
   saveEditorDraft,
-  setEditorVersionProtected,
   type EditorDraft,
   type EditorVersion,
 } from "./editor-draft.ts";
@@ -89,9 +87,12 @@ import {
 } from "./editor-hosted-resource-loader.ts";
 import {
   createHostedCheckpoint,
-  listHostedCheckpoints,
   readHostedCheckpointSource,
 } from "./editor-hosted-checkpoints.ts";
+import type {
+  VersionsRefreshRequest,
+  VersionsRestoreRequest,
+} from "./editor-versions-panel.tsx";
 import { createFaceDragController } from "./editor-face-drag.ts";
 import { applyViewportPick } from "./editor-picking.ts";
 import { createEditorSweep } from "./editor-sweep.ts";
@@ -469,8 +470,6 @@ const switchMapDialog =
   document.querySelector<HTMLDialogElement>("#switch-map-dialog")!;
 const versionsDialog =
   document.querySelector<HTMLDialogElement>("#versions-dialog")!;
-const versionsList = document.querySelector<HTMLElement>("#versions-list")!;
-const versionsStatus = document.querySelector<HTMLElement>("#versions-status")!;
 const checkpointLabel =
   document.querySelector<HTMLInputElement>("#checkpoint-label")!;
 const checkpointButton =
@@ -4372,108 +4371,53 @@ document
     status.textContent = `Exported ${normalizedName} as a separate copy`;
   });
 
-function showVersionError(error: unknown) {
-  versionsStatus.textContent =
-    error instanceof Error ? error.message : String(error);
+function refreshVersions() {
+  window.dispatchEvent(
+    new CustomEvent<VersionsRefreshRequest>("tea-maps-versions-refresh", {
+      detail: { mapId: hostedMap?.id ?? null },
+    }),
+  );
 }
 
-async function renderVersions() {
-  if (hostedMap) {
-    const mapId = hostedMap.id;
-    const checkpoints = await listHostedCheckpoints(mapId);
-    if (hostedMap?.id !== mapId) return;
-    versionsList.replaceChildren();
-    versionsStatus.textContent = checkpoints.length
-      ? "Restoring opens a detached local copy; the hosted map stays unchanged."
-      : "No hosted checkpoints for this map yet";
-    for (const checkpoint of checkpoints) {
-      const row = document.createElement("div");
-      row.className = "version-row";
-      const description = document.createElement("span");
-      description.textContent = `${checkpoint.name} · hosted v${checkpoint.mapVersion} · ${new Date(checkpoint.createdAt).toLocaleString()}`;
-      const restore = document.createElement("button");
-      restore.type = "button";
-      restore.textContent = "Restore copy";
-      restore.addEventListener("click", async () => {
-        restore.disabled = true;
-        try {
-          const current = hostedMap;
-          if (!current || current.id !== mapId) return;
-          const snapshot = await readHostedCheckpointSource(
-            mapId,
-            checkpoint.id,
-          );
-          const parsed = parseMapSource(snapshot.source);
-          if (hostedMap?.id !== mapId || !(await mayReplaceMap())) return;
-          clearOpenedFile();
-          localGame = current.game;
-          mapName = `${current.slug}.map`;
-          setMap(parsed.document, parsed.source);
-          source.value = snapshot.source;
-          scheduleDraftSave();
-          versionsDialog.close();
-          status.textContent = `Restored hosted checkpoint “${snapshot.checkpoint.name}” as a local copy · save to a file when ready`;
-        } catch (error) {
-          showVersionError(error);
-        } finally {
-          restore.disabled = false;
-        }
-      });
-      row.append(description, restore);
-      versionsList.append(row);
+window.addEventListener("tea-maps-versions-restore", (event) => {
+  event.preventDefault();
+  const request = (event as CustomEvent<VersionsRestoreRequest>).detail;
+  void (async () => {
+    if (request.kind === "hosted") {
+      const current = hostedMap;
+      if (!current || current.id !== request.mapId) return;
+      const snapshot = await readHostedCheckpointSource(
+        request.mapId,
+        request.checkpointId,
+      );
+      const parsed = parseMapSource(snapshot.source);
+      if (hostedMap?.id !== request.mapId || !(await mayReplaceMap())) return;
+      clearOpenedFile();
+      localGame = current.game;
+      mapName = `${current.slug}.map`;
+      setMap(parsed.document, parsed.source);
+      source.value = snapshot.source;
+      scheduleDraftSave();
+      versionsDialog.close();
+      status.textContent = `Restored hosted checkpoint “${snapshot.checkpoint.name}” as a local copy · save to a file when ready`;
+      return;
     }
-    return;
-  }
-  const versions = await listEditorVersions();
-  versionsList.replaceChildren();
-  versionsStatus.textContent = versions.length
-    ? ""
-    : "No recovery versions on this device yet";
-  for (const version of versions) {
-    const row = document.createElement("div");
-    row.className = "version-row";
-    const description = document.createElement("span");
-    description.textContent = `${version.protected ? "★ " : ""}${version.fileName} · ${version.label} · ${new Date(version.createdAt).toLocaleString()}`;
-    const actions = document.createElement("div");
-    actions.className = "version-actions";
-    const restore = document.createElement("button");
-    restore.type = "button";
-    restore.textContent = "Restore copy";
-    restore.addEventListener("click", async () => {
-      try {
-        const parsed = parseMapSource(version.committedSource);
-        if (!(await mayReplaceMap())) return;
-        clearOpenedFile();
-        localGame = version.game ?? "quake";
-        mapName = version.fileName;
-        setMap(
-          version.document ?? parsed.document,
-          version.sourceState ?? parsed.source,
-        );
-        source.value = version.workingSource;
-        scheduleDraftSave();
-        versionsDialog.close();
-        status.textContent = `Restored ${version.label} as a local copy · save to a file when ready`;
-      } catch (error) {
-        showVersionError(error);
-      }
-    });
-    const protect = document.createElement("button");
-    protect.type = "button";
-    protect.textContent = version.protected ? "Unprotect" : "Protect";
-    protect.addEventListener("click", async () => {
-      try {
-        await setEditorVersionProtected(version.id, !version.protected);
-        await renderVersions();
-      } catch (error) {
-        showVersionError(error);
-      }
-    });
-    actions.append(restore, protect);
-    row.append(description, actions);
-    versionsList.append(row);
-  }
-}
+    const { version } = request;
+    const parsed = parseMapSource(version.committedSource);
+    if (!(await mayReplaceMap())) return;
+    clearOpenedFile();
+    localGame = version.game ?? "quake";
+    mapName = version.fileName;
+    setMap(
+      version.document ?? parsed.document,
+      version.sourceState ?? parsed.source,
+    );
+    source.value = version.workingSource;
+    scheduleDraftSave();
+    versionsDialog.close();
+    status.textContent = `Restored ${version.label} as a local copy · save to a file when ready`;
+  })().then(request.resolve, request.reject);
+});
 
 checkpointButton.addEventListener("click", async () => {
   if (hostedMap) {
@@ -4491,7 +4435,7 @@ checkpointButton.addEventListener("click", async () => {
       if (hostedMap?.id !== map.id) return;
       checkpointLabel.value = "";
       status.textContent = `Hosted checkpoint “${checkpoint.name}” saved at v${checkpoint.mapVersion}`;
-      if (versionsDialog.open) await renderVersions();
+      if (versionsDialog.open) refreshVersions();
     } catch (error) {
       status.textContent =
         error instanceof Error ? error.message : String(error);
@@ -4516,18 +4460,16 @@ checkpointButton.addEventListener("click", async () => {
 document
   .querySelector<HTMLButtonElement>("#show-versions")!
   .addEventListener("click", async () => {
-    versionsDialog.showModal();
     try {
       if (!hostedMap) persistDraft();
       await saveQueue;
-      await renderVersions();
+      versionsDialog.showModal();
+      refreshVersions();
     } catch (error) {
-      showVersionError(error);
+      status.textContent =
+        error instanceof Error ? error.message : String(error);
     }
   });
-document
-  .querySelector<HTMLButtonElement>("#close-versions")!
-  .addEventListener("click", () => versionsDialog.close());
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
   ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #toggle-compiled, #export-build), #apply-source",

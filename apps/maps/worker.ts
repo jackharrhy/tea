@@ -25,6 +25,7 @@ const clientEntryFiles = {
   "editor-theme-control.tsx": browserAssets.editorTheme,
   "recovered-maps.tsx": browserAssets.recoveredMaps,
   "editor-recent-projects-panel.tsx": browserAssets.editorRecentProjects,
+  "editor-versions-panel.tsx": browserAssets.editorVersions,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,
   "viewer-source-panel.tsx": browserAssets.viewerSourcePanel,

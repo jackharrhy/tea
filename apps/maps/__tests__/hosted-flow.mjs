@@ -666,6 +666,21 @@ try {
   result.checks.push(
     "hosted map creation, editor launch, and Remix presence and access UI",
   );
+  await page.locator("#create-checkpoint").waitFor({ state: "visible" });
+  await page.waitForFunction(
+    () => !document.querySelector("#create-checkpoint")?.disabled,
+  );
+  await page.locator("#checkpoint-label").fill("Before build");
+  await page.locator("#create-checkpoint").click();
+  await page.getByText(/Hosted checkpoint “Before build” saved/).waitFor();
+  await page.locator("#show-versions").click();
+  await page
+    .locator("#versions-list .version-row")
+    .filter({ hasText: "Before build" })
+    .getByRole("button", { name: "Restore copy" })
+    .waitFor();
+  await page.locator("#close-versions").click();
+  result.checks.push("Remix recovery versions list hosted checkpoints");
   await page.locator("#hosted-builds summary").click();
   await page.getByText("0 builds · hosted compiler available").waitFor();
   await page.locator("#build-map").click();
@@ -1324,10 +1339,30 @@ try {
   });
   await page.locator("#show-versions").click();
   await page.locator("#versions-dialog").waitFor({ state: "visible" });
-  await page
+  const recoveryRow = page
     .locator("#versions-list .version-row")
-    .filter({ hasText: "recovered-hosted.map · Revision 1" })
-    .waitFor();
+    .filter({ hasText: "recovered-hosted.map · Revision 1" });
+  await recoveryRow.waitFor();
+  await recoveryRow.getByRole("button", { name: "Protect" }).click();
+  await recoveryRow.getByRole("button", { name: "Unprotect" }).waitFor();
+  await recoveryRow.getByRole("button", { name: "Unprotect" }).click();
+  await recoveryRow.getByRole("button", { name: "Protect" }).waitFor();
+  await recoveryRow.getByRole("button", { name: "Restore copy" }).click();
+  await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
+  await page
+    .locator("#switch-map-dialog")
+    .getByRole("button", { name: "Cancel" })
+    .click();
+  await page.getByText("Restore cancelled").waitFor();
+  assert.equal(
+    (
+      await page.evaluate(() =>
+        window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}),
+      )
+    ).counts.brushes,
+    1,
+  );
+  result.checks.push("Remix recovery versions protect and guarded restore");
   await page.locator("#close-versions").click();
   await page.goto(`${mapsOrigin}/projects`);
   const recoveredLink = page
