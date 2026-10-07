@@ -9,6 +9,7 @@
     "deploy:celld": "celld deploy .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:source-cutover": "node __tests__/celld-source-cutover.mjs",
     "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example",
     "check": "npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run"
   },
