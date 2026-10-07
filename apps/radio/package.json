@@ -1,0 +1,41 @@
+{
+  "name": "@tea/radio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "npm run build && npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run",
+    "dev": "npm run build && wrangler dev",
+    "dev:celld": "npm run build && celld dev",
+    "postinstall": "node scripts/sync-icon-font.mjs",
+    "deploy:celld": "npm run build && celld deploy .",
+    "start": "celld",
+    "test": "npm run build && npm run test:remix && npm run test:worker",
+    "test:remix": "cd ../.. && NODE_ENV=test remix test \"apps/radio/app/**/__tests__/**/*.test{,.browser}.{ts,tsx}\" --type server --type browser",
+    "test:worker": "vitest run --config vitest.config.ts",
+    "test:celld": "NODE_ENV=production npm run build && node scripts/test-celld.mjs",
+    "test:source-cutover": "node __tests__/source-cutover-smoke.mjs",
+    "compare:instances": "node scripts/compare-instances.mjs",
+    "typecheck": "tsc --noEmit",
+    "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example"
+  },
+  "dependencies": {
+    "@chenglou/pretext": "^0.0.8",
+    "@material-symbols/font-400": "^0.46.0",
+    "remix": "3.0.0"
+  },
+  "devDependencies": {
+    "@azure/storage-blob": "^12.33.0",
+    "@cloudflare/vitest-plugin": "^1.1.2",
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.62.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.127.1"
+  },
+  "engines": {
+    "node": ">=24.3.0"
+  }
+}

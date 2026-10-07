@@ -1,0 +1,27 @@
+{
+  "name": "@tea/maps-compiler",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "npm run build && node --enable-source-maps dist/server.js",
+    "start": "node --enable-source-maps dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@tea/maps-editor": "0.1.0",
+    "@tea/maps-protocol": "0.1.0",
+    "@tea/request-body": "0.1.0",
+    "remix": "3.0.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

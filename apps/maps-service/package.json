@@ -1,0 +1,37 @@
+{
+  "name": "@tea/maps-service",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "npm run build && node --enable-source-maps dist/server.js",
+    "start": "node --enable-source-maps dist/server.js",
+    "compare:data": "node scripts/compare-data.mjs",
+    "test:source-cutover": "npm run build && node __tests__/source-cutover.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@tea/maps-renderer": "0.1.0",
+    "@tea/maps-editor": "0.1.0",
+    "@tea/maps-protocol": "0.1.0",
+    "@tea/request-body": "0.1.0",
+    "@sindresorhus/slugify": "^3.0.1",
+    "fflate": "^0.8.3",
+    "nanoid": "^6.0.1",
+    "remix": "3.0.0",
+    "undici": "^7.29.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=24.3.0"
+  }
+}

@@ -1,0 +1,283 @@
+# Bringing projects into Tea
+
+Ref and Radio are copied into Tea as `@tea/ref` and `@tea/radio`. Their original repositories and deployments continue running during validation. Maps is Worldview's Tea identity. Its renderer, editor primitives, protocol, collaboration Worker, local compiler helper, Remix viewer, editor, project maps, resources, and access pages, and a hosted-service bake copy live in Tea. The editor and hosted pages run through Remix 3; broader workflow and owned-game parity still need review before replacement.
+
+## Shared runtime boundary
+
+Ref and Radio are Remix 3 Workers with prebuilt browser assets, SQLite Durable Objects, WebSockets, R2-compatible object bindings, and Celld containers. Worldview's collaboration service also uses a Worker, Durable Objects, and Celld. Each imported app owns its own Worker entrypoint, Wrangler config, bindings, container, checks, and persistent data. Tea's local Compose services use distinct volumes and development credentials.
+
+The Tea Maps hosted service also reads `TEA_MAPS_*` compiler, public-origin, and token-introspection settings rather than the original `WORLDVIEW_*` settings. The Tea local compiler likewise uses `TEA_MAPS_*` game, tool, launch, listener, and limit settings; its default browser origins include only Tea Maps. The Tea Workers use new names and bucket names while they bake. Do not point them at an original project's `.wrangler/`, `.celld/`, R2 bucket, or production host. A cutover needs a recoverable source backup, a verified copy into the destination, checks of IDs and media bytes, and then a separate infrastructure update. Ref's archive commands support its board-level transfer. Radio's real Celld smoke verifies acknowledged state and media after a crash; an actual production transfer needs the Celld object-store migration and comparison described in its README.
+
+For ready PRs and `main`, CI checks affected Ref browser flows on Wrangler and on the Celld binary selected by its Dockerfile. Draft PR pushes run affected workspace checks without the slower integration smokes. The Celld smoke kills the runtime, clears the replica cache, and reopens the copied board from the separate authoritative SQLite store. Radio's Celld smoke performs the same cold restore for room state and audio bytes. These checks use disposable stores; they do not prove a production data transfer.
+
+## Source audit
+
+On 2026-10-07, the clean source worktrees were at Ref `8d6eca7edb19`, Radio `a53595efc5c6`, and Worldview `622fae386f09`. These are review baselines for later upstream changes, not deployment revisions. A syntax-tree comparison of Ref and Radio's corresponding app files found the expected Tea branding and Remix import changes. Ref also broadens link-preview control-character filtering and uses event listeners in its browser board; Radio's unused custom frame resolver is omitted in favor of the installed Remix 3 default. No source repository was changed by this audit.
+
+At that baseline, `npm run ref:check` and `npm run radio:check` passed. Both Celld cold-restore smokes passed with the binary from image digest `sha256:b173e540c3eeb5aa8dda232e275a3f28b8e9567df070e3227c511be9055695f2` (`celld 0.5.1`). Ref reopened its board, links, media, and WebSocket after a SIGKILL and empty replica cache. Radio reopened its directory, queue, playback state, and audio bytes after the same failure. Those checks established the 0.5.1 baseline before Tea moved its Dockerfiles to the qualified 0.6.2 digest. A candidate image can still be selected explicitly at build time. These checks used temporary stores; they do not verify a production copy.
+
+[Celld fork PR #1](https://github.com/jackharrhy/celld/pull/1) merged upstream 0.6.2 into the fork without changing running deployments. The fork's image workflow now updates `latest` only on an explicit `fork-*` release tag; the main-branch build publishes only a SHA-tagged image. The fork still needs standalone SQLite storage, offline copying, runtime secret overrides, its R2 full-read response repair, and the working-set memory rule; upstream has not replaced those features. The sync branch passed Rust checks, local-store conformance, Ref's cold-restore smoke, and Radio's 0.5.1-to-0.6.2 upgrade smoke with exact 8 MiB audio bytes and another cold restore. A candidate debug binary passed Radio's 1 GiB upload and cold restore in a one-CPU, one-GiB container with a disk-backed store and zero OOM kills. The fork's Docker image CI passed. On 2026-10-07, a local image built from the fork's release-profile Dockerfile at `ed162bf` passed its Rust tests, clippy, and local-store conformance. Tea Radio built with that image passed the full 1 GiB container smoke: exact audio SHA-256, browser playback, byte ranges, WebSocket state, and SIGKILL/empty-replica restore with one CPU, one GiB of memory, and zero OOM kills. The tested Radio image was `sha256:f350137a5345d3a173ef1b51d24fea7622bb4f48f444780f20622c65e85bb166`; its Celld binary SHA-256 was `e1e0f69f1e00b91cbdbaa92b796ce7da440188fa15e1da9f4bff460656eef4fe`. The same release binary passed Ref's browser and cold-restore smoke. The original applications remain on their existing deployments and image selection.
+
+The merged fork published `ghcr.io/jackharrhy/celld@sha256:e8faeb233cfe7d29f385a64dcac41dc4dd1d8a9de849f54f2ad4a2b4fbb884fa` under its merge commit SHA tag. Its extracted `celld 0.6.2` binary has SHA-256 `e1e0f69f1e00b91cbdbaa92b796ce7da440188fa15e1da9f4bff460656eef4fe`, exactly the release binary qualified by the Ref, Radio, and Maps smokes recorded in this guide. Tea’s three Celld-backed Dockerfiles now pin this published image digest for their separate bake copies. The fork’s `latest` tag remains at the previous 0.5.1 digest `sha256:b173e540c3eeb5aa8dda232e275a3f28b8e9567df070e3227c511be9055695f2`. This promotion changes no original repository, data store, or running deployment.
+
+Ref's optional `test:archive:source` check also passed against the original Ref checkout at `8d6eca7edb19` and the Tea copy on 2026-10-07. It created one board with two items (one uploaded image and one link), used the original archive command to back it up, restored into an isolated Tea Celld store, repeated the restore, and compared the source and Tea archives including media digests. This checks archive compatibility across the two codebases. A production transfer still needs a fresh backup and verification against the actual deployment data.
+
+Radio's optional `test:source-cutover` check passed against a disposable Celld 0.5.1 SQLite store generated by original Radio `a53595e`. Copying that store and starting Tea with its default `tea-radio` identity did not expose the original room or audio, because the source used the `radio` Worker identity and `radio-tracks` logical bucket. Tea now has an explicit `wrangler.celld-cutover.jsonc` and `RADIO_CELLD_DEPLOY_CONFIG` startup choice for an isolated copied store. With that choice, Tea reopened the source room, track ID, queue title, volume, paused position, and exact WAV bytes including a suffix range. Tea then changed the copied room's track title and volume, killed Celld, cleared its replica cache, and verified those writes and audio after a cold restore. The default Tea identity remains separate; no original deployment or production store was touched.
+
+Radio also has `compare:instances` for a full read-only comparison of two paused, running instances before routing changes. A disposable original Radio store copied into a separate Tea Celld runtime matched across two room directory entries and one 8 MiB audio track, including metadata, complete SHA-256, and suffix ranges. The comparator rejected the same copied store when Tea used its default new logical Worker identity, because that instance lacked the source room directory. This verifies both a match and a detectable mismatch on fixture data; a production comparison must cover every actual room and track after source writes stop.
+
+Maps collaboration has an explicit `wrangler.celld-cutover.jsonc` and `TEA_MAPS_CELLD_DEPLOY_CONFIG` startup choice for a copied Worldview Celld store. The opt-in `test:source-cutover` runs original Worldview and Tea against separate disposable stores with the original Worker identity, compares a map snapshot and checkpoint, and checks a Tea source edit after a crash and empty replica restore. It passed with original Worldview on Celld 0.5.1 and Tea on the fork's 0.6.2 release binary. The default Tea Worker identity remains separate. A production transfer needs a fresh backup and verification of actual map IDs, source hashes, checkpoints, and ticket-secret coordination before routing changes.
+
+The Tea Maps collaboration Dockerfile also built against the local 0.6.2 release-profile fork image from `ed162bf` (Tea image `sha256:822d152224ffb90366072fbbe0c0d8e2d12814fe30e82715e68b6d211971c2f1`). Its normal container entrypoint diagnosed and deployed the Worker, accepted a ticketed map and checkpoint, and returned both after a forced container kill and an empty replica cache on the same disposable SQLite volume. The restored map source hash and checkpoint ID matched the values before the kill; Docker reported no OOM kill. This validates the container startup path on fixture data, not a production transfer.
+
+Maps collaboration also has `compare:cells`, which enumerates every map ID from a stopped hosted-service database and reads snapshots and checkpoint metadata from two separately running copied Celld stores. It verifies each Tea checkpoint source against its recorded hash. The original source Worker does not expose historical checkpoint source reads, so an original-to-Tea comparison reports `metadata-only`. A strict `--require-source-checkpoints` mode compares every historical source byte between two isolated Tea runtimes started from copied stores, while preserving the untouched source backup. The disposable cutover rehearsal now passes with original Worldview on Celld 0.5.1, Tea on the fork's Celld 0.6.2 debug binary, two copied map cells, one full historical checkpoint-body comparison, rejection of a Tea-only edit, and SIGKILL/empty-replica recovery. A separate mock-runtime check rejects damaged checkpoint text and unavailable source detail. Production data still needs its own stopped backup and comparison before routing changes.
+
+The Maps hosted service now has a read-only `compare:data` command for two stopped copies of the original and Tea service data roots. It checks SQLite integrity, foreign keys, every table's schema and rows, and every local blob's content-addressed bytes. Every mounted resource and retained build artifact must also resolve to a blob of its recorded size, so identically incomplete copies fail; a missing map row or corrupted blob fails too. An opt-in source cutover rehearsal passed against the original Worldview service's built database and blob store: Tea reopened the original project and map IDs, membership, session, resource bytes, and terminal build record from a stopped copy, then added a map without changing the source. This covers local hosted metadata, uploads, imported Artbin bytes, and build artifacts; Production OAuth client policy and callback routing, map-cell state, and configuration for new Artbin imports remain separate cutover checks. No production data has been copied.
+
+A route-registration audit of the Worldview service at that baseline found 29 routes. Tea's Maps service retains every route ID with the same HTTP method and path pattern, and adds two checkpoint reads (`get-map-checkpoint-source` and `list-map-checkpoints`). This checks the public route surface; the hosted browser flow and service tests cover behavior separately.
+
+Tea runs a focused WebGPU browser check for both Maps surfaces: brush creation, canvas selection and dragging, Undo, a compiled BSP preview and source toggle, a Quake-to-GoldSrc BSP switch, overview PNG export, walkability sidecar round-trip, a generated BSP2 load, and a generated Quake II BSP38 with WAL and PCX assets. This adds renderer evidence beyond the WebGPU-free hosted flow. Worldview's wider GPU interactions and owned-game resource and rendering cases remain a separate parity gate before a replacement decision.
+
+A source-to-Tea inventory of the viewer controls found Worldview's geometry and entity diagnostics, camera, movement, walkability, reticle and warnings, overview, and audio controls represented in Tea's Remix panels. This establishes the control surface, not visual or behavioral parity for every owned game.
+
+A headless WebGPU spot check opened the same ignored Ricochet `rc_arena` fixture in Worldview and Tea at its saved camera. Both reported 4,005 triangles, and the captured geometry, materials, and lighting showed no visible discrepancy. The apps use different viewport sizes, so this is a qualitative comparison rather than a pixel match; the private game screenshots stay outside Git.
+
+Two more read-only WebGPU spot checks opened owned Quake II `mgu1m1` and Quake BSP2 `map2b` fixtures in both viewers at their starting cameras. Quake II matched at 107,408 triangles, 48,898 faces, 12,606 batches, and 24,270 materials; BSP2 matched at 144,082 triangles, 65,611 faces, 783 batches, and 198 materials. The captured geometry, materials, and lighting showed no visible discrepancy at those cameras, though viewport sizes differ. Tea returned real 404s for absent optional texture and WAD probes; Worldview's Vite dev server returned its HTML page with HTTP 200 for an absent PNG, so raw response counts are not a reliable asset-parity measure. Both apps fetched the present Quake II WAL and BSP2 WAD; Tea reported no missing textures. The private captures stay outside Git. These checks do not establish full-map or interaction parity.
+
+A separate browser host loads the built `@tea/maps-renderer/standalone` element without the Maps UI. It verifies pointer lock and mouse look inside the element, audible sound from a generated BSP, audio resume without reloading, and interaction while the BSP request is pending. This checks the importable runtime boundary as well as the in-app viewer.
+
+On 2026-10-07, Tea parsed the ignored Worldview Steam corpus read-only: all 2,242 BSPs passed, with 1,461 GoldSrc BSP30, 336 Quake II BSP38, 379 Quake BSP29, and 66 BSP2 maps. These format counts match Worldview's September 2 compatibility report. Tea also reports 280 `unusable-miptex` warnings absent from that older report; a sampled map produces the same warning in Worldview's local built parser. Tea discovered 47 playable Steam fixtures, plus one separate local BSP2 fixture, and loaded five representative Quake, GoldSrc, Quake II, and BSP2 maps with their assets through its WebGPU viewer. The optional full-catalog WebGPU pass opened all 47 Steam fixtures, checking Ready state, rendered faces, and BSP fetches. The five focused fixtures additionally check palette, WAL/WAD asset fetches, and missing-asset warnings. A private full-catalog asset report recorded warnings and 404 requests for each fixture. None of the 47 fixtures reported a missing texture or palette diagnostic. The Quake II image and WAL candidate order matches Worldview’s source. The 404 count includes normal probes for alternate texture and skybox extensions, and some fixtures request assets absent from the extracted game data; it cannot by itself establish an app regression. Quake II skybox dimension warnings use the same validation as Worldview's source. These checks read Worldview's files in place; the broad pass does not assert complete asset parity for every game.
+
+## Cloudflare configuration
+
+Cloudflare's new [`cf` CLI](https://developers.cloudflare.com/cf/) uses `cloudflare.config.ts` and is currently in beta. [Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/) says to convert Wrangler projects explicitly; its Durable Object lifecycle declaration differs from Wrangler migrations. [Celld currently reads only `wrangler.jsonc` or `wrangler.json`](https://celld.dev/docs/cloudflare-compat/#wrangler-configuration), so Ref, Radio, and the Maps collaboration Worker retain Wrangler-compatible configs for their shared runtime. Do not run `cf init`, `cf dev`, or `cf deploy` in those workspaces without an explicit dual-config migration that passes both Cloudflare and Celld checks. The Cloudflare-only CMS edge and Maps UI apps use `cf` and `cloudflare.config.ts` with the Cloudflare Vite plugin.
+
+## Maps slices
+
+Worldview is a monorepo, rather than one app. Tea's viewer opens generated example maps, local BSP and accompanying asset files, a browser-selected game folder, or a remote BSP URL with game asset overrides. Folder selection preserves game-relative asset paths, offers each BSP, and reads adjacent Worldview camera and walkability sidecars. Its first editor route uses the copied map core and WebGPU renderer for four viewports, session-backed brush creation, selection, duplication, movement, rotation, scaling, deletion, and undo/redo, `.map` import, guarded file saving where browser file handles are available, and download. It reads existing Worldview project manifests to list and switch local maps and loads their FGD, DEF, and ENT entity definitions, WAD2/WAD3 materials, Quake II WAL textures, PNG/JPEG/TGA replacements, and GoldSrc sprite roots. Project build profiles now choose preview or final quality for local BSP downloads through the machine-local compiler helper; supported BSP results can be inspected in the perspective pane, and Quake II/Gower builds send the used textures and palette from ordered game roots. A successful build can be exported with referenced project assets and optional map source; the same captured assets feed its compiled preview. The browser remembers each project’s logical build profile to local compiler capability binding by directory handle and falls back when a capability disappears. Project-scoped export settings now support a chosen folder, source inclusion, and automatic export after build; build bundles now include referenced Quake, GoldSrc, and Quake II model companions found in project resources. The viewer can list hosted projects and open successful BSP build artifacts through a same-origin Worker pass through. The Maps Worker forwards ticketed `/sync/maps/:mapId/*` HTTP and WebSocket requests to the collaboration Worker. Owners and editors can send semantic brush edits and personalized undo and redo over the live room; the browser persists an operation outbox and detaches expired or conflicting work into reopenable local copies that retain their source anchors. Tea lists those local copies on its Projects page and opens their latest local recovery revision in the editor without changing the hosted map. The editor shows live participants, selections, pointers, and compatible previews. Hosted source replacement now uses the service’s version and hash preconditions, keeps browser drafts through conflicts, and lets the live room reconnect to the replacement. Tea's viewer exposes map diagnostics, camera controls, overview export, walkability sidecars, and audio. Tea's development viewer now discovers local BSP fixtures from an ignored directory and serves their game files only during development; sidecar labels, aliases, cameras, and walkability graphs work with fixture links. Tea now reads Worldview Steam corpus manifests, selects a bounded set of playable BSPs, serves extracted game assets in development, and can extract and check owned game installs with Tea workspace commands. Visible editor controls and collaboration panels now render through Remix client components; the framework-independent editor and renderer packages still own map state and GPU work. The embedded engine and editor primitives are intentionally reusable packages; the compiler, collaboration Worker, and hosted-project service are separate runtimes.
+
+The Maps viewer now opens Worldview camera and fixture links and can copy the current view URL. The editor now keeps bounded local source versions and protected checkpoints; recovery restores open as detached copies so the original disk file is never replaced by a version choice.
+
+Local Maps projects can use `tea.maps.project.json` with the existing project schema. Legacy `worldview.project.json` folders still open; linking one to Tea hosted sync creates a separate Tea manifest and leaves the legacy file unchanged. Tea opens its own manifest when both exist. BSP viewer sidecars use `.tea-maps.json` and `.tea-maps-walkability.json`, while their Worldview names remain readable; Tea names take priority when both exist. Walkability downloads use the Tea filename.
+
+The editor's Recent projects menu now renders as a Remix client entry while retaining the editor's folder permission and unsaved-work handling. The viewer source controls and hosted project pages also use Remix client entries.
+
+The Projects page can open a local project folder directly through a Remix client entry. It validates Tea or legacy Worldview manifests, remembers the directory handle on this device, and opens the editor's map chooser. The hosted Maps page still checks a picked folder against its hosted project before opening it.
+
+The viewer Camera panel now renders through a Remix client entry while the renderer continues to own movement and camera state.
+
+The viewer Movement settings panel also renders through a Remix client entry; it listens to renderer movement changes and applies validated control values.
+
+The viewer Overview panel renders through a Remix client entry and delegates PNG capture to the renderer.
+
+The viewer Walkability panel renders through a Remix client entry while generation, sidecar loading, and graph display remain renderer behavior.
+
+The viewer Audio panel renders through a Remix client entry while the renderer owns sound state and playback.
+
+The viewer Diagnostics panel renders map and entity summaries and warnings through Remix. The viewer entry retains the starting-camera handoff before ready events reach the panels.
+
+The viewer toolbar and file-drop overlay also render through Remix. The renderer entry publishes the active name and status while the drop component opens selected BSP files.
+
+The editor's document controls now render through a Remix client entry. The editor still checks file handles and source save plans, writes recovery checkpoints, and guards map replacement.
+
+The viewport pointer readout now renders in a Remix client entry using the editor renderer's snapped map position.
+
+The editor document name, status message, and selection summary now render through Remix client entries, following editor events rather than direct DOM writes.
+
+The selected brush and face inspector shell now follows editor selection through a Remix client entry, including the projection section around its existing face controls.
+
+The Perspective viewport label now follows source and compiled preview changes through a Remix client entry.
+
+The editor's source textarea and Apply source control now render through a Remix client entry. The editor retains parsing, draft recovery, and source-safe save decisions.
+
+The local project map chooser now renders and filters rows as a Remix client entry while the editor retains filesystem access and guarded map switching.
+
+The project map toolbar selector and resource messages now render through a Remix client entry; map changes still use the editor's guarded file flow.
+
+Selection-brush query controls now render through a Remix client entry; the editor keeps the geometry query and undoable operation.
+
+The selection command group now renders through a Remix client entry. Its context-menu and keyboard paths call the same editor actions as the buttons.
+
+Undo and Redo buttons now render through a Remix client entry; the editor retains local, hosted, and hull-point history routing.
+
+Brush and point entity creation controls now render through a Remix client entry, with project definition suggestions. The editor retains validation, defaults, placement bounds, and history transactions.
+
+Numeric transform controls now render through a Remix client entry. Move, nudge, Rotate, Scale, Shear, and Mirror still use the editor's geometry transactions and texture lock setting.
+
+Add box, Brush texture, and Constructive geometry controls now render through Remix client entries. The chosen texture still feeds shape, clip, hull, and convex merge creation while the editor runs the transactions.
+
+Clip and Convex hull tool panels now render through a Remix client entry while the editor keeps viewport previews and geometry commits.
+
+The face Sweep panel now renders through a Remix client entry while the editor keeps its geometry validation, previews, and batch creation transaction.
+
+The Vertex and Edge handle panel now renders through a Remix client entry while the editor keeps topology selection and edit transactions.
+
+The Draw shape panel now renders through a Remix client entry while the editor keeps shape validation, viewport previews, and brush creation transactions.
+
+The Rotate, Scale, and Shear tool panel now renders through a Remix client entry while the editor keeps pivot calculation, viewport previews, and transform transactions.
+
+The viewport context menu now renders through a Remix client entry while the editor supplies its actions and retains their transaction paths.
+
+Local Maps build results can now display leak paths and portal polygons in the source view, and launch a current successful BSP through a configured machine-local compiler profile. The Remix build controls expose these actions; hosted builds do not launch local processes.
+
+Tea now retains up to 20 machine-local build results per Maps editor document in browser IndexedDB. The local build history control can inspect messages and overlays and download retained BSP bytes; it does not change map source or use hosted storage.
+
+The Perspective Expand and Restore control now renders through a Remix client entry while the workspace retains per-map layout persistence and viewport rendering.
+
+Sync project and Edit hosted source open buttons now render through their Remix dialog entries using the editor's project and hosted-room availability.
+
+The selected point entity and entity properties inspector now renders through a Remix client entry, including definition driven fields and linked-copy protection. The editor retains validation, source guards, and property history.
+
+The selected face picker, numeric face geometry actions, and material application now render through a Remix client entry. The editor retains the geometry and material transactions.
+
+Face projection fields, texture alignment, and UV editor controls now render through Remix client entries; the editor retains the projection transactions, SVG gestures, project texture sizes, and manual fit options.
+
+The unsaved-map Save, Discard, or Cancel dialog now renders through a Remix client entry; the editor keeps the map replacement guard and save outcome check.
+
+Quake II surface contents, flags, mixed selections, unknown bits, and light value now render through a Remix client entry while the editor retains the surface edit transactions.
+
+Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.
+
+Viewport tool, grid size, and Texture lock now render through a Remix client entry. The editor and its tools read the same settings state for rendering and transactions.
+
+The hosted share link and live participant list now render as a Remix client entry. The editor keeps room membership, operations, and viewport overlays.
+
+The editor's hosted Project access panel now renders as a Remix client entry and uses the same member service calls as the dedicated Access page. The editor only publishes the selected project ID to this panel.
+
+The editor's Recovery versions dialog now renders local versions and hosted checkpoints through a Remix client entry. Protect and Unprotect operate on local versions; restoring a copy still goes through the editor's guarded map replacement flow.
+
+The editor's Project sync dialog now renders hosted map mappings and source comparisons through a Remix client entry. Link, pull, and push still use the existing checked source and file operations.
+
+The hosted source dialog now renders through a Remix client entry. The browser draft survives closing and reopening; replacing source still uses the service's version and hash checks and reconnects the live room.
+
+The editor's hosted Project resources panel now renders through a Remix client entry. It keeps owner-only upload, Artbin import, and removal actions, and tells the open editor when mounts change.
+
+The hosted picker's Recovery copies control now renders through a Remix client entry. It lists detached collaboration drafts stored in this browser and hands the selected copy to the editor's guarded open flow.
+
+The hosted project and map picker controls now render through a Remix client entry. They load authorized projects, create maps, and pass open and compare actions to the editor while publishing the selected project to the access and resource panels.
+
+The hosted build history now renders through a Remix client entry. It displays compiler availability, build results, downloads, and preview actions while the editor keeps build orchestration and preview loading.
+
+The export settings controls now render through a Remix client entry. The editor retains project-scoped persistence, build packaging, folder selection, permission checks, and file writes.
+
+The editor also offers a one-shot local Build & export action using the current export settings. It does not change the per-project automatic export preference, and a failed bundle falls back to a raw BSP download.
+
+Game and Build profile selectors, build and export actions, the compiled-preview toggle, status messages, and build logs now render through a Remix client entry. The editor still runs builds, assembles bundles, and loads previews.
+
+The perspective FOV control now renders through a Remix client entry. Its browser-local default still applies before the editor's renderer starts, and camera changes update the control.
+
+The References panel now renders through a Remix client entry. It loads, snapshots, offsets, hides, and removes read-only scenes while the editor retains the scene list for renderer recreation.
+
+The Layers panel now renders through a Remix client entry. Layer creation, ordering, flags, and membership still use the editor session's source and undo path.
+
+The Groups panel now renders through a Remix client entry. Nested and linked group operations still use the editor session's source, selection, and undo path.
+
+The read-only local and hosted source comparison now renders through a Remix client entry, including the first differing line and both source snapshots.
+
+The editor material browser now renders and filters texture thumbnails through a Remix client entry. Its session actions still use the editor's existing selection and source guards.
+
+The editor issue browser now renders findings and filters through a Remix client entry. Select, Reveal, and Fix still call the editor session and preserve its edit guards.
+
+The editor's local view filters and entity link visibility controls now render through a Remix client entry. Brush and class visibility stays in the editor session, and the selected link mode is applied to new renderers.
+
+The editor Performance button and diagnostics panel now render through Remix client entries. The existing frame and CPU timing collector publishes bounded samples to the panel while it is open.
+
+The Tea editor now exposes exact shear and mirror transforms, Worldview view filters, and entity link visibility modes alongside the copied map issue diagnostics, type filters, local finding visibility, object reveal, and undoable repairs. It can create, rename, activate, reorder, hide, lock, isolate, and remove TrenchBroom-compatible layers, and move objects between them. It can create, rename, open, close, link duplicate, unlink, and ungroup TrenchBroom-compatible object groups. Group metadata survives source saving and hosted collaboration operations, and opening a group locks viewport interaction with objects outside it.
+
+The entity inspector now exposes linked-group property protection. While editing an open linked copy, users can keep an existing or newly added property independent of its siblings.
+
+Viewport picking now follows Worldview's closed-group and brush-entity selection rules, including opening a group on activation and selecting matching faces across a multi-brush selection in Face mode.
+
+The four-viewport editor also exposes Worldview's clip, perspective hull, and face sweep tools. Clip previews back, split, and front results for selected brushes; hull creation previews a brush from placed face points. Sweep previews one or more selected faces through a configurable path and destination cap. All three commit through the session history and hosted semantic operation path.
+
+Selection brushes now expose touching, enclosed, and XY/XZ/YZ projected queries in Tea. Each query consumes selected structural brushes, selects the matching objects, and can be undone as one edit.
+
+Vertex and edge tools now expose the copied renderer's component handles in Tea. Drag, snap, insertion, keyboard nudge, and hull-safe deletion use the copied session candidates and the editor's normal history and hosted operation path.
+
+Draw shape now uses Worldview's simple-shape generator for cuboids, stairs, arches, cylinders, cones, and both sphere types. Its bounding-box gesture previews the generated brush set, then commits that set as one creation transaction.
+
+Rotate, scale, and shear now have viewport manipulators and a shared movable pivot. Exact toolbar transforms can use that pivot, and the renderer gesture candidates follow the session history and hosted operation path.
+
+The Maps editor can load or snapshot read-only reference maps, edit project-defined entity properties with typed controls, adjust its perspective FOV, switch to a perspective-only view, resize its panes, and restore per-map camera and layout state from browser storage.
+
+Opening a local folder project now shows a searchable map chooser before editing. It marks the last opened map when that history is available and asks about unsaved work before replacing the current map.
+
+Local Maps saving now uses Worldview's source-preserving save plan. A blocked patch cannot overwrite the opened file or silently become a normal download; Export normalized creates a separate copy. Recovery snapshots retain the semantic document and source anchors.
+
+The editor also has Worldview's opt-in performance sampling: bounded browser frame cadence and renderer CPU submission timing, with a 30-second JSON capture.
+
+Its material browser now exposes loaded project and development textures as searchable thumbnails, with source and usage filters, selection commands, and scoped replacement through the editor session.
+
+The selected-face UV editor now previews offset, rotation, and scale drags against the map renderer and commits them through the same session and hosted operation path. It supports a movable pivot, framing, pan and zoom, and adjustable snap grids.
+
+The Tea editor now exposes WebMCP site tools for live document inspection, bounded object, issue, and material lists, and source slices in browsers that support `document.modelContext`. Tools frame the view and choose a viewport tool. Authoring tools select objects and faces, create boxes and point entities, translate, rotate, scale, shear, duplicate, or delete selections, edit materials and entity properties, and use local or personalized hosted history with document revision guards. Document tools can open a map from an authorized local project folder or replace the current source as a detached copy, with explicit confirmation for discarded work or replacement.
+
+The hosted service's separate MCP endpoint advertises `tea_maps_*` tools and the `tea-maps` server identity. It accepts the old `worldview_*` names as call aliases during migration, and browser grants link to Tea's canonical project route. The default scope is the copied `worldview:admin` value. `TEA_MAPS_MCP_SCOPE` lets Tea advertise and require a new scope when Fourm's policy and grants are ready. The current Fourm policy binds the old scope to Worldview's `https://worldview.harrhy.xyz/mcp` resource; a future Tea public MCP origin needs a separate Fourm policy and client-grant update before it can issue matching production tokens.
+
+Tea's hosted service uses its own `tea_maps_*` session, automation, and OAuth cookie names. A copied Worldview database does not make an original browser cookie valid in Tea; users sign in again after a future host cutover.
+
+A local browser rehearsal used a temporary Fourm SQLite database and a disposable public `tea-maps` client registered for `http://localhost:8790/auth/callback`. The actual Fourm application authorized a temporary administrator through its login and consent pages, returned to Tea's Remix Projects route, and Tea's `/api/session` returned that user with only a `tea_maps_session` cookie on the Maps origin. The temporary database was removed after the processes stopped. This verifies the local browser callback and cookie path against Fourm; production Fourm client registration, redirect and MCP resource policy, Artbin service credentials, and live deployment routing remain unverified. Tea's hosted service and local Compose now require separate `TEA_MAPS_ARTBIN_*` settings before enabling Artbin, so the bake copy does not inherit Worldview's machine credentials.
+
+A separate local Artbin rehearsal ran the actual Fourm and Artbin applications against disposable SQLite databases and a temporary asset directory. A dedicated Tea Maps service client obtained both asset scopes from Fourm; Artbin validated its token through a separate resource-server client. The Tea Maps hosted service searched the approved catalog, mounted a 63-byte FGD into a disposable project, and served the same SHA-256 bytes from its own blob store. The three processes and their data were removed afterward. This covers real server-to-server auth, catalog, import, and download with a small synthetic asset; it does not cover Artbin's production catalog, browser resource controls, or production credentials and routing.
+
+The hosted map picker can compare its selected hosted source with the current local editor source in a read-only dialog. This standalone comparison does not link maps or transfer source.
+
+The project sync dialog can pair a local folder project's maps with a Tea hosted project, inspect source and baseline status, and explicitly pull to disk or push to the hosted service. It validates game and face syntax, checks both copies again before a write, and keeps the baseline in browser storage. Linking an original Worldview project creates a separate `tea.maps.project.json`, preserving its legacy manifest and origin. When both manifests exist, Tea opens its own.
+
+Hosted Maps editing now exposes the room share link and participant presence details in Tea's editor, alongside its existing remote selection, pointer, and preview overlays. The presence panel can continue as an independent local copy through the same recovery-aware path as the hosted picker. Its browser flow checks that the room closes, local editing remains available, and the hosted source hash stays unchanged.
+
+The Remix editor header now mirrors Worldview's visible collaboration entry point: it shows the live room count and participant initials, reports connecting or reconnecting state, and opens the hosted panel. Read-only viewers see their map status without being counted as room participants.
+
+The Tea editor can now create hosted projects and maps through the copied service API. A new map may start empty or import a checked local `.map` source, and the created map opens in the Tea editor.
+
+The Remix `/projects` page lists hosted projects and recent local folders, and `/projects/:projectId` lists hosted maps with links to editing and built-map viewing. A separate New map route lets owners and editors create hosted maps. The project also has Resources and Access routes. Owners can upload resources, import copies from configured Artbin, remove mounts, and manage member roles; members can download mounts. The hosted project page can open a local folder after checking its game and hosted link. Local project links reopen the recent folder in the editor when browser permission persists; the editor's Recent projects menu can request folder permission again when needed. These pages use the existing same-origin service API and keep the original editor controls available during validation.
+
+The Maps hosted browser check runs disposable OAuth, Artbin, and compiler fixtures with the real Tea Maps Worker, service, and collaboration Worker. It verifies unauthenticated access control, OAuth callback, project and map creation, owner and viewer roles, a second editor joining the room and synchronizing an edit and Undo, resource upload and download, Artbin import, editor launch, hosted build queueing, and BSP artifact download through the live same-origin proxy. The compiler fixture checks integration rather than the native toolchain, which has its own workspace checks. This covers the local integration path; it does not use an original Worldview account or deployment.
+
+The Remix `/new-map` page now carries Worldview's standalone setup flow into Tea. It chooses a local map's name, game, and compatible face format before opening the editor, including Quake II's classic faces. The editor keeps its unsaved-change prompt when a new launch replaces a recovered draft.
+
+Hosted project resources now feed the open editor’s materials, entity definitions, and sprites, matching the local project resource path. Resource loads are cancelled when the map changes. Hosted project resources can now be listed, downloaded, uploaded, and removed in the Tea editor. Project owners can also search Artbin and import a checked asset through the copied hosted service when that integration is configured. Uploads use the copied service's contained path rules and limits; project owner access remains enforced by the service.
+
+Standalone Quake and GoldSrc maps can now import browser-local WAD packs; Quake maps can also use a custom palette. Tea restores these resources by map and game profile, uses them for editor materials and local builds, and includes the palette in portable bundles. The original Worldview editor remains in service while this copy is validated.
+
+Project owners can also manage signed-in users' editor and viewer roles in Tea. The copied service still enforces ownership and membership for access changes and room tickets.
+
+The editor's Build BSP action now calls the hosted build API for hosted maps, checks the reviewed map version, polls the server job, and exposes BSP history and downloads. The local compiler path remains for local maps and projects.
+
+Tea's local and hosted compilers name their generated, compile-only texture pack `tea_maps_dev.wad`. Worldview used `worldview_dev.wad`; the user's saved `.map` source is not rewritten by this build input change.
+
+<!-- prettier-ignore -->
+| Source boundary | Tea boundary | Validation |
+| --- | --- | --- |
+| `packages/worldview` | `packages/maps-renderer` | Copied public renderer and core parser; package and viewer checks pass |
+| `packages/worldview-editor` and `packages/worldview-protocol` | `packages/maps-editor` and `packages/maps-protocol` | Copied app-independent packages; 235 editor and 4 protocol tests pass |
+| `apps/viewer` and `apps/editor` | `apps/maps` | Remix viewer and four-viewport editor serve with advanced tools, hosted edits, and presence; broader Worldview UI and owned-game parity remain before replacement |
+| `apps/worldview-service` | `apps/maps-service` | All public routes use Remix controllers and Web Responses; Node hosts the listener and local storage |
+| `apps/compiler-service` | `apps/maps-compiler` | Copied the bounded native pipeline behind Remix routes; local HTTP and compiler tests pass |
+| `apps/collaboration-service` | `apps/maps-collaboration` | Copied the SQLite map cell and WebSocket protocol behind Remix routes; Worker tests pass |
+
+Worldview's MIT attribution and third-party notices accompany the adapted source. Never copy local game assets or commercial data. Keep the original npm packages and public deployment in place until Tea's replacements pass their consumer and browser checks and an explicit publication plan is ready. Worldview's browser-local project handles, recovery, detached maps, unsynced hosted operations, and browser-added WADs and palettes live in the `worldview-editor` IndexedDB database; Tea uses separate databases, and a new web origin cannot read the old origin's storage. When Tea runs on the same origin, its Projects page can explicitly import recent project folders, detached maps, recovery history, and browser-added resources without changing Worldview's records or replacing Tea records with matching IDs. Pending hosted operations with a valid recovery snapshot become independent local copies; they do not replay into Tea's hosted room. Missing recovery snapshots stop import and export so those maps can be reopened in Worldview first. Tea can download detached and pending local copies, recovery history, browser-added resources, and portable export preferences as a JSON archive for import on another origin. Browser directory handles cannot be included in the JSON archive; users must pick their folders again on the new origin. Imported recovery versions remain separate from Tea's new history and open as local copies after choosing a game, which Worldview did not record in the snapshot. Matching browser-added resources load with the local copy; project file assets still come from the selected folder. This transfer requires Tea to be served at the old origin before it is retired.
+
+<!-- prettier-ignore -->
+| Worldview browser store | Cutover handling |
+| --- | --- |
+| `local-projects` | Import folder handles on the old origin; choose folders again on a new origin |
+| `detached-maps`, `recovery-history`, `recovery-latest` | Import or archive as independent local copies and versions |
+| `collaboration-operations`, `collaboration-sessions` | Preserve pending edits as local copies when a recovery snapshot exists; never replay them into Tea rooms |
+| `asset-mounts` | Transfer browser-added WADs and palettes; project files still come from the selected folder |
+| `build-history` | Retained in Worldview; download build artifacts there if they must be kept, or rebuild in Tea |
+| `build-exports` | Import preferences on the old origin or from the archive; opening a matching legacy project applies them to its Tea folder identity, and a new origin requires choosing the export folder again |
+| `project-sync` | Relink to the Tea hosted project and inspect source differences before pulling or pushing |
+
+Before making Tea public, decide the repository-level license and Radio's license. The Tea root and Radio currently have no `LICENSE` file; Ref and each imported Worldview workspace keep their source MIT licenses. Tea preserves Worldview's full [third-party notice](../THIRD_PARTY_NOTICES.md) at the root and beside the independently packable Maps editor and renderer. This publication decision is separate from data and deployment cutover.
+
+Tea Maps now exposes hosted map checkpoints through the service and editor. The editor lists recorded versions and lets editors create them after live edits sync; a checkpoint can be reopened as an independent local source copy without changing the hosted map.
+
+Hosted BSP views and editor previews now resolve mounted WADs, palettes, game-tree textures, sprites, and sounds through the Tea project resource API. For GoldSrc builds, Tea reads the BSP sky name and selects a complete six-face set from the hosted project mounts when available.
+
+## Replacement gates
+
+- Ref: take a fresh archive after source writes stop, restore it into an isolated Tea instance, compare every board and media digest, then move routing with the source backup retained.
+- Radio: copy a consistent stopped Celld store, start Tea against that copy with the explicit original Worker and bucket identity, compare every paused room and track through `compare:instances`, and move routing only after the copied instance is verified.
+- Maps: compare the stopped hosted-service database and blobs with `compare:data`, then compare all collaboration map cells and checkpoint bodies on isolated copied Celld stores. Exercise real OAuth, Artbin, compiler, local project, and owned-game workflows against the Tea copy before moving traffic. The fixture and browser smokes in this guide do not establish that production parity.
+- Public release: decide Tea root and Radio licensing, update Fourm's MCP scope/resource policy for Tea's public origin, then set `TEA_MAPS_MCP_SCOPE` and the Tea public origin together before accepting its tokens. Point the original repositories at Tea only after their replacements and routing are verified.

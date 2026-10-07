@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { selectChecks } from "../affected.mjs";
+import { planChecks, selectChecks } from "../affected.mjs";
 
 const workspaces = [
   {
@@ -156,4 +156,31 @@ test("shared configuration and unrecognized files run all checks", () => {
     "unexpected/config.ts",
   ])
     assert.deepEqual(selectChecks([path], workspaces), all);
+});
+
+test("selected checks build untouched dependencies in dependency order", () => {
+  const graph = [
+    {
+      name: "app",
+      manifest: { scripts: { check: "test" }, dependencies: { protocol: "*" } },
+    },
+    {
+      name: "protocol",
+      manifest: {
+        scripts: { check: "test", build: "build" },
+        dependencies: { core: "*" },
+      },
+    },
+    { name: "core", manifest: { scripts: { check: "test", build: "build" } } },
+  ];
+  assert.deepEqual(planChecks(["app"], graph), [
+    { name: "core", script: "build" },
+    { name: "protocol", script: "build" },
+    { name: "app", script: "check" },
+  ]);
+  assert.deepEqual(planChecks(["app", "core"], graph), [
+    { name: "core", script: "check" },
+    { name: "protocol", script: "build" },
+    { name: "app", script: "check" },
+  ]);
 });

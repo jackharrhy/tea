@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "cf dev",
     "typecheck": "tsc --noEmit",
     "test": "cd ../.. && NODE_ENV=test remix test --type server 'apps/cms-edge/**/*.test.{ts,tsx}'",
-    "check": "wrangler types worker-configuration.d.ts && npm run typecheck && npm test && wrangler deploy --dry-run",
-    "deploy": "wrangler deploy"
+    "check": "cf workers types && npm run typecheck && npm test && cf build",
+    "deploy": "cf deploy"
   },
   "dependencies": {
     "@tea/logger": "0.1.0",
@@ -16,8 +16,10 @@
     "remix": "3.0.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.sha-52b0dc0e9",
     "@types/node": "^26.6.4",
+    "cf": "^1.0.0-beta.13",
     "typescript": "^5.9.3",
-    "wrangler": "^4.45.0"
+    "vite": "^8.3.3"
   }
 }

@@ -1,13 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node", "./worker-configuration.d.ts"],
+    "types": ["node", "./.cloudflare/types/index.d.ts"],
     "noEmit": true
   },
   "include": [
     "app/**/*.ts",
     "app/**/*.tsx",
     "worker.ts",
-    "worker-configuration.d.ts"
+    "cloudflare.config.ts",
+    "vite.config.ts",
+    ".cloudflare/types/index.d.ts"
   ]
 }

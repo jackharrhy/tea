@@ -1,0 +1,43 @@
+{
+  "name": "@tea/maps-editor",
+  "version": "0.1.0",
+  "description": "Valve 220 map editor primitives",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./render": {
+      "types": "./dist/render/index.d.ts",
+      "import": "./dist/render/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@tea/maps-renderer": "0.1.0",
+    "typegpu": "0.12.5",
+    "wgpu-matrix": "^3.4.2",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@fast-check/vitest": "^0.4.1",
+    "@types/node": "^26.6.4",
+    "@webgpu/types": "^0.1.72",
+    "typescript": "^7.0.2",
+    "unplugin-typegpu": "0.12.3",
+    "vite": "^8.3.3",
+    "vitest": "^4.1.11"
+  }
+}

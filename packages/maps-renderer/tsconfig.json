@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "types": ["node", "@webgpu/types"]
+  },
+  "include": ["src", "__tests__", "vite.config.ts", "vite.standalone.config.ts"]
+}

@@ -54,8 +54,86 @@ services:
     networks:
       - web
 
+  ref:
+    build:
+      context: .
+      dockerfile: apps/ref/Dockerfile
+    environment:
+      CELLD_VAR_REF_PASSWORD: ${REF_PASSWORD:-tea-ref-local-password}
+    volumes:
+      - ref-data:/app/.celld
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ref.rule: "Host(`ref.localhost`)"
+      traefik.http.routers.ref.entrypoints: web
+      traefik.http.services.ref.loadbalancer.server.port: "8080"
+    networks:
+      - web
+
+  radio:
+    build:
+      context: .
+      dockerfile: apps/radio/Dockerfile
+    environment:
+      CELLD_VAR_RADIO_PASSWORD: ${RADIO_PASSWORD:-tea-radio-local-password}
+      CELLD_VAR_RADIO_SESSION_SECRET: ${RADIO_SESSION_SECRET:-tea-radio-local-session-secret-change-me}
+    volumes:
+      - radio-data:/app/.celld
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.radio.rule: "Host(`radio.localhost`)"
+      traefik.http.routers.radio.entrypoints: web
+      traefik.http.services.radio.loadbalancer.server.port: "44100"
+    networks:
+      - web
+
+  maps-collaboration:
+    build:
+      context: .
+      dockerfile: apps/maps-collaboration/Dockerfile
+    environment:
+      CELLD_VAR_TEA_MAPS_REALTIME_TICKET_SECRET: ${MAPS_REALTIME_TICKET_SECRET:-tea-maps-local-realtime-ticket-secret-change-me}
+    ports:
+      - "127.0.0.1:8787:44100"
+    volumes:
+      - maps-collaboration-data:/app/.celld
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.maps-collaboration.rule: "Host(`maps-sync.localhost`)"
+      traefik.http.routers.maps-collaboration.entrypoints: web
+      traefik.http.services.maps-collaboration.loadbalancer.server.port: "44100"
+    networks:
+      - web
+
+  maps-service:
+    build:
+      context: .
+      dockerfile: apps/maps-service/Dockerfile
+    environment:
+      TEA_MAPS_URL: http://localhost:8790
+      TEA_MAPS_COLLABORATION_URL: http://maps-collaboration:44100
+      TEA_MAPS_REALTIME_TICKET_SECRET: ${MAPS_REALTIME_TICKET_SECRET:-tea-maps-local-realtime-ticket-secret-change-me}
+      FOURM_URL: ${FOURM_URL:-http://host.docker.internal:8000}
+      TEA_MAPS_ARTBIN_URL: ${TEA_MAPS_ARTBIN_URL:-}
+      TEA_MAPS_ARTBIN_CLIENT_ID: ${TEA_MAPS_ARTBIN_CLIENT_ID:-}
+      TEA_MAPS_ARTBIN_CLIENT_SECRET: ${TEA_MAPS_ARTBIN_CLIENT_SECRET:-}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "127.0.0.1:8792:8792"
+    volumes:
+      - maps-service-data:/app/data
+    depends_on:
+      - maps-collaboration
+    networks:
+      - web
+
 volumes:
   cms-data:
+  ref-data:
+  radio-data:
+  maps-collaboration-data:
+  maps-service-data:
 
 configs:
   andrew-local-site:

@@ -1,0 +1,2 @@
+RADIO_PASSWORD="choose-a-local-password"
+RADIO_SESSION_SECRET="replace-with-at-least-32-random-characters"

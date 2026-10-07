@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "radio",
+  "main": "worker.ts",
+  "compatibility_date": "2026-08-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "RADIO_ROOMS", "class_name": "RadioRoomCell" },
+      { "name": "ROOM_DIRECTORY", "class_name": "RoomDirectoryCell" },
+    ],
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RadioRoomCell"] },
+    { "tag": "v2", "new_sqlite_classes": ["RoomDirectoryCell"] },
+  ],
+  "r2_buckets": [{ "binding": "TRACKS", "bucket_name": "radio-tracks" }],
+}

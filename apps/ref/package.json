@@ -1,0 +1,35 @@
+{
+  "name": "@tea/ref",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "npm run build && wrangler dev --port 8787",
+    "dev:celld": "npm run build && celld dev --no-watch",
+    "deploy:celld": "npm run build && celld deploy .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "smoke": "node scripts/smoke.mjs",
+    "test:celld": "npm run build && node __tests__/celld-smoke.mjs",
+    "test:archive:source": "node __tests__/source-archive-smoke.mjs",
+    "backup": "node scripts/archive.mjs backup",
+    "restore": "node scripts/archive.mjs restore",
+    "check": "npm run build && npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run",
+    "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example"
+  },
+  "dependencies": {
+    "remix": "3.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.127.1"
+  },
+  "engines": {
+    "node": ">=24.3.0"
+  }
+}

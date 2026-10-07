@@ -1,4 +1,8 @@
-import { createEdgeRouter, type EdgeConfig } from "./app/index.tsx";
+import {
+  createEdgeRouter,
+  type Bindings,
+  type EdgeConfig,
+} from "./app/index.tsx";
 import { createLogger } from "@tea/logger";
 
 const logger = createLogger({ service: "cms-edge" });
@@ -18,7 +22,7 @@ const config: EdgeConfig = {
 };
 
 export default {
-  fetch(request: Request, env: Env) {
+  fetch(request: Request, env: Bindings) {
     return logger.request(request, () =>
       createEdgeRouter(env, config).fetch(request),
     );
