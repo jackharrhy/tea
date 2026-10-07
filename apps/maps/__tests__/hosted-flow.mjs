@@ -2987,6 +2987,10 @@ try {
   await selectionPage
     .getByText("Selected 2 visible, unlocked objects")
     .waitFor();
+  await selectionPage
+    .locator("#selection-info")
+    .getByText("2 brushes selected")
+    .waitFor();
   await selectionPage.locator("#duplicate-selection").click();
   await selectionPage.waitForFunction(
     () =>
@@ -3088,6 +3092,7 @@ try {
   result.checks.push(
     "Remix view filters update visible brushes and entity link mode",
   );
+  result.checks.push("Remix editor readouts follow status and selection");
   const issuesPage = await browser.newPage();
   await issuesPage.goto(`${mapsOrigin}/editor`);
   await issuesPage.locator("#map-source").waitFor({ state: "visible" });

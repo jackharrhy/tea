@@ -50,6 +50,8 @@ The editor's document controls now render through a Remix client entry. The edit
 
 The viewport pointer readout now renders in a Remix client entry using the editor renderer's snapped map position.
 
+The editor status message and selection summary now render through Remix client entries, following editor events rather than direct DOM writes.
+
 The editor's source textarea and Apply source control now render through a Remix client entry. The editor retains parsing, draft recovery, and source-safe save decisions.
 
 The local project map chooser now renders and filters rows as a Remix client entry while the editor retains filesystem access and guarded map switching.

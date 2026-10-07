@@ -58,6 +58,10 @@ import {
 import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
 import { EditorPointerReadout } from "./assets/editor-pointer-readout.tsx";
 import {
+  EditorSelectionInfo,
+  EditorStatus,
+} from "./assets/editor-readouts.tsx";
+import {
   EditorPerformancePanel,
   EditorPerformanceToggle,
 } from "./assets/editor-performance-panel.tsx";
@@ -81,9 +85,7 @@ export function EditorPage() {
             </a>
             <a href="/projects">Projects</a>
             <strong>Map editor</strong>
-            <span id="editor-status" role="status">
-              Starting…
-            </span>
+            <EditorStatus />
             <EditorPointerReadout />
             <EditorThemeControl />
             <EditorPerformanceToggle />
@@ -218,7 +220,7 @@ export function EditorPage() {
             />
             <aside class="source-panel">
               <h1>Source</h1>
-              <p id="selection-info">No selection</p>
+              <EditorSelectionInfo />
               <EditorDocumentSummary />
               <EditorIssues />
               <EditorVisibility />

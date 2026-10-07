@@ -233,7 +233,20 @@ import { initEditorUvControls } from "./editor-uv-controls-bridge.ts";
 import { initEditorSwitchMapDialog } from "./editor-switch-map-bridge.ts";
 import { initEditorClipHull } from "./editor-clip-hull-bridge.ts";
 
-const status = document.querySelector<HTMLElement>("#editor-status")!;
+let statusText = "Starting…";
+const status = {
+  get textContent() {
+    return statusText;
+  },
+  set textContent(value: string) {
+    if (value === statusText) return;
+    statusText = value;
+    document.documentElement.dataset.editorStatus = value;
+    window.dispatchEvent(
+      new CustomEvent("tea-maps-editor-status", { detail: value }),
+    );
+  },
+};
 const performanceDiagnostics = initEditorPerformance();
 const hostedPresence = initHostedPresence((message) => {
   status.textContent = message;
@@ -242,7 +255,20 @@ const source = initEditorSourcePanel({
   input: onSourceInput,
   apply: applyWorkingSource,
 });
-const selectionInfo = document.querySelector<HTMLElement>("#selection-info")!;
+let selectionText = "No selection";
+const selectionInfo = {
+  get textContent() {
+    return selectionText;
+  },
+  set textContent(value: string) {
+    if (value === selectionText) return;
+    selectionText = value;
+    document.documentElement.dataset.editorSelection = value;
+    window.dispatchEvent(
+      new CustomEvent("tea-maps-editor-selection", { detail: value }),
+    );
+  },
+};
 const selectionCommands = initEditorSelectionCommands({
   delete: deleteSelection,
   duplicate: duplicateSelection,
