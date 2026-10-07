@@ -6,6 +6,7 @@ import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.ts
 import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorFov } from "./assets/editor-fov-panel.tsx";
+import { EditorReferences } from "./assets/editor-references-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -806,28 +807,7 @@ export function EditorPage() {
                 </button>
               </div>
             </details>
-            <details id="reference-tools">
-              <summary>References</summary>
-              <div class="reference-controls">
-                <span id="reference-count">0 loaded</span>
-                <button id="load-reference" type="button">
-                  Load .map
-                </button>
-                <input
-                  id="reference-file"
-                  type="file"
-                  accept=".map,text/plain"
-                  hidden
-                />
-                <button id="snapshot-reference" type="button">
-                  Snapshot current map
-                </button>
-                <button id="clear-references" type="button" disabled>
-                  Clear
-                </button>
-              </div>
-              <div id="reference-list" class="reference-list" />
-            </details>
+            <EditorReferences />
             <button id="undo" type="button" disabled>
               Undo
             </button>

@@ -104,6 +104,8 @@ Select all and Invert selection operate on visible, unlocked objects. Local maps
 
 References can load another `.map` or snapshot the current document into a read-only scene beside the working map. Each reference can be shown, hidden, offset on X/Y/Z, or removed; Clear removes them all. References are editor overlays and are not saved into map source or included in a build.
 
+The References panel is a Remix client component. Its scene list stays in the editor so a renderer created after a reference is added receives those overlays.
+
 The perspective viewport has a vertical FOV control from 20° to 120°. Its default is saved in this browser, can be reset to the current default, and can be restored to the factory 60° setting. The control is unavailable while the compiled preview is showing.
 
 The FOV control is a Remix client component. The editor applies its saved default to a new renderer and publishes camera changes to the control.

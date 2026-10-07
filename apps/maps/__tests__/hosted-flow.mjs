@@ -406,8 +406,58 @@ try {
       document.querySelector("#editor-fov-trigger")?.textContent?.trim() ===
       "FOV 60°",
   );
+  await themePage.locator("#editor-fov summary").click();
+  await themePage.waitForFunction(
+    () => !document.querySelector("#editor-fov")?.open,
+  );
+  await themePage.waitForFunction(
+    () => !document.querySelector("#snapshot-reference")?.disabled,
+  );
+  if (
+    !(await themePage
+      .locator("#reference-tools")
+      .evaluate((details) => details.open))
+  ) {
+    await themePage.locator("#reference-tools summary").click();
+  }
+  await themePage.waitForFunction(
+    () => document.querySelector("#reference-tools")?.open,
+    undefined,
+    { timeout: 5000 },
+  );
+  await themePage.locator("#snapshot-reference").click();
+  await themePage.waitForFunction(
+    () =>
+      document.querySelector("#reference-count")?.textContent === "1 loaded",
+  );
+  const referenceRow = themePage.locator("#reference-list .reference-row");
+  await referenceRow.locator("input[type='number']").first().fill("128");
+  await referenceRow.locator("input[type='number']").first().press("Tab");
+  assert.equal(
+    await referenceRow.locator("input[type='number']").first().inputValue(),
+    "128",
+  );
+  await referenceRow.locator("input[type='checkbox']").uncheck();
+  await referenceRow.getByRole("button", { name: "Remove" }).click();
+  await themePage.waitForFunction(
+    () =>
+      document.querySelector("#reference-count")?.textContent === "0 loaded",
+  );
+  await themePage.locator("#reference-file").setInputFiles({
+    name: "fixture.map",
+    mimeType: "text/plain",
+    buffer: Buffer.from(await themePage.locator("#map-source").inputValue()),
+  });
+  await referenceRow.getByText("fixture.map").waitFor();
+  await themePage.locator("#clear-references").click();
+  await themePage.waitForFunction(
+    () =>
+      document.querySelector("#reference-count")?.textContent === "0 loaded",
+  );
   await themePage.close();
-  result.checks.push("editor theme and Remix FOV control persist preferences");
+  result.checks.push(
+    "editor theme, Remix FOV, and reference controls work without WebGPU",
+  );
 
   const sourcePage = await browser.newPage();
   await sourcePage.goto(`${mapsOrigin}/?example=quake`);
