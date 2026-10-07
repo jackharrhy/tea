@@ -44,7 +44,7 @@ The viewer toolbar and BSP drop overlay render through Remix. The toolbar follow
 
 ## Editor
 
-The editor status message and selection summary render through Remix client entries. The editor publishes status and selection changes while keeping document and renderer state in its existing runtime.
+The editor document name, status message, and selection summary render through Remix client entries. The editor publishes their changes while keeping document and renderer state in its existing runtime.
 
 The selected brush and face inspector shell also renders through Remix. Selection state controls its visibility and the face projection section; the existing face controls remain separate Remix client entries inside it.
 

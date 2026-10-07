@@ -1,5 +1,31 @@
 import { clientEntry, type Handle } from "remix/component";
 
+export const EditorDocumentName = clientEntry(
+  `${import.meta.url}#EditorDocumentName`,
+  function EditorDocumentNameComponent(handle: Handle) {
+    let name = "tea-map.map";
+
+    handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-editor-document-name",
+        (event) => {
+          name = (event as CustomEvent<string>).detail;
+          handle.update();
+        },
+        { signal: handle.signal },
+      );
+      name = document.documentElement.dataset.editorDocumentName ?? name;
+      handle.update();
+    });
+
+    return () => (
+      <strong id="document-name" title={name}>
+        {name}
+      </strong>
+    );
+  },
+);
+
 export const EditorStatus = clientEntry(
   `${import.meta.url}#EditorStatus`,
   function EditorStatusComponent(handle: Handle) {

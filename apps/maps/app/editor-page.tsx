@@ -52,6 +52,7 @@ import {
 import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
 import { EditorPointerReadout } from "./assets/editor-pointer-readout.tsx";
 import {
+  EditorDocumentName,
   EditorSelectionInfo,
   EditorStatus,
 } from "./assets/editor-readouts.tsx";
@@ -78,7 +79,7 @@ export function EditorPage() {
               tea/maps
             </a>
             <a href="/projects">Projects</a>
-            <strong>Map editor</strong>
+            <EditorDocumentName />
             <EditorStatus />
             <EditorPointerReadout />
             <EditorThemeControl />

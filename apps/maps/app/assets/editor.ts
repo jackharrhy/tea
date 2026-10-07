@@ -467,6 +467,14 @@ let saveQueue = Promise.resolve();
 let openedFile: MapFileHandle | null = null;
 let openedFingerprint: string | null = null;
 let mapName = "tea-map.map";
+function setMapName(name: string) {
+  if (mapName === name) return;
+  mapName = name;
+  document.documentElement.dataset.editorDocumentName = name;
+  window.dispatchEvent(
+    new CustomEvent("tea-maps-editor-document-name", { detail: name }),
+  );
+}
 let documentId: string = crypto.randomUUID();
 let projectRecoveryScope: string = crypto.randomUUID();
 let project: MapProject | null = null;
@@ -2276,7 +2284,7 @@ async function openHostedMap(map: HostedMapLaunch): Promise<boolean> {
   openedFingerprint = null;
   setProject(null);
   localGame = map.game;
-  mapName = `${map.slug}.map`;
+  setMapName(`${map.slug}.map`);
   savedSource = map.source;
   hostedMap = map;
   hostedConnectionState = map.role === "viewer" ? "viewing" : "connecting";
@@ -2358,7 +2366,7 @@ function openDetachedCopy(
   setProject(null);
   localGame = recovery?.game ?? copy.profile;
   documentId = copy.documentKey;
-  mapName = recovery?.fileName ?? copy.fileName;
+  setMapName(recovery?.fileName ?? copy.fileName);
   savedSource = "";
   setMap(
     recovery?.document ?? copy.document,
@@ -2412,7 +2420,7 @@ function clearOpenedFile() {
   leaveHostedMap();
   openedFile = null;
   openedFingerprint = null;
-  mapName = "tea-map.map";
+  setMapName("tea-map.map");
   documentId = crypto.randomUUID();
   setProject(null);
   savedSource = emptySource;
@@ -2688,7 +2696,7 @@ async function saveCurrentMap(): Promise<boolean> {
     );
     openedFile = handle;
     openedFingerprint = fingerprint;
-    mapName = handle.name;
+    setMapName(handle.name);
     savedSource = serializeMap(session.document);
     mapSourceState = rebaseMapSource(session.document, text);
     refreshSource();
@@ -2707,7 +2715,7 @@ try {
   const draft = await loadEditorDraft();
   if (draft) {
     documentId = draft.documentId;
-    mapName = draft.fileName;
+    setMapName(draft.fileName);
     savedSource = draft.savedSource ?? emptySource;
     localGame = draft.game ?? "quake";
     const parsed = parseMapSource(draft.committedSource);
@@ -3919,7 +3927,7 @@ function openRecoveredLocalCopy(recovery: EditorVersion, fileName: string) {
   localGame = recovery.game ?? "quake";
   openedFile = null;
   openedFingerprint = null;
-  mapName = fileName;
+  setMapName(fileName);
   documentId = crypto.randomUUID();
   savedSource = emptySource;
   const parsed = parseMapSource(recovery.committedSource);
@@ -3950,7 +3958,7 @@ async function openMapFile(file: File, handle: MapFileHandle | null) {
     setProject(null);
     openedFile = handle;
     openedFingerprint = handle ? mapSourceFingerprint(text) : null;
-    mapName = file.name;
+    setMapName(file.name);
     documentId = identity;
     savedSource = diskSource;
     setMap(document, parsed.source);
@@ -3981,7 +3989,7 @@ async function openProjectDirectory(
   leaveHostedMap();
   openedFile = null;
   openedFingerprint = null;
-  mapName = "tea-map.map";
+  setMapName("tea-map.map");
   documentId = crypto.randomUUID();
   savedSource = emptySource;
   setProject(opened);
@@ -4093,7 +4101,7 @@ async function openProjectMap(
     }
     openedFile = entry.handle;
     openedFingerprint = mapSourceFingerprint(text);
-    mapName = entry.handle.name;
+    setMapName(entry.handle.name);
     savedSource = diskSource;
     activeProjectPath = path;
     documentId = identity;
@@ -4500,7 +4508,7 @@ window.addEventListener("tea-maps-versions-restore", (event) => {
       if (hostedMap?.id !== request.mapId || !(await mayReplaceMap())) return;
       clearOpenedFile();
       localGame = current.game;
-      mapName = `${current.slug}.map`;
+      setMapName(`${current.slug}.map`);
       setMap(parsed.document, parsed.source);
       source.value = snapshot.source;
       scheduleDraftSave();
@@ -4513,7 +4521,7 @@ window.addEventListener("tea-maps-versions-restore", (event) => {
     if (!(await mayReplaceMap())) return;
     clearOpenedFile();
     localGame = version.game ?? "quake";
-    mapName = version.fileName;
+    setMapName(version.fileName);
     setMap(
       version.document ?? parsed.document,
       version.sourceState ?? parsed.source,
@@ -4724,7 +4732,7 @@ if (newMapUrl.searchParams.get("newMap") === "1") {
       if (!(await mayReplaceMap())) return;
       clearOpenedFile();
       localGame = game;
-      mapName = name.toLowerCase().endsWith(".map") ? name : `${name}.map`;
+      setMapName(name.toLowerCase().endsWith(".map") ? name : `${name}.map`);
       const document = { ...createEmptyDocument(), faceSyntax: format };
       savedSource = serializeMap(document);
       setMap(document);
@@ -4795,7 +4803,7 @@ void registerEditorWebMcpTools(
       localGame = game;
       openedFile = null;
       openedFingerprint = null;
-      mapName = name;
+      setMapName(name);
       documentId = crypto.randomUUID();
       savedSource = "";
       setMap(parsed.document, parsed.source);

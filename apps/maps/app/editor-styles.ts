@@ -108,6 +108,12 @@ export const editorStyles = css({
     background: "var(--editor-panel)",
   },
   "& .editor-brand": { "font-weight": "800", "letter-spacing": "0.05em" },
+  "& #document-name": {
+    "min-width": "0",
+    overflow: "hidden",
+    "text-overflow": "ellipsis",
+    "white-space": "nowrap",
+  },
   "& #editor-status": {
     "margin-left": "auto",
     "font-size": "0.85rem",

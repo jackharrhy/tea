@@ -52,7 +52,7 @@ The editor's document controls now render through a Remix client entry. The edit
 
 The viewport pointer readout now renders in a Remix client entry using the editor renderer's snapped map position.
 
-The editor status message and selection summary now render through Remix client entries, following editor events rather than direct DOM writes.
+The editor document name, status message, and selection summary now render through Remix client entries, following editor events rather than direct DOM writes.
 
 The selected brush and face inspector shell now follows editor selection through a Remix client entry, including the projection section around its existing face controls.
 

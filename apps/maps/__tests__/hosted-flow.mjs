@@ -348,6 +348,7 @@ try {
   await setupPage.getByRole("button", { name: "Open editor" }).click();
   await setupPage.waitForURL(/\/editor\?.*newMap=1/);
   assert.equal(new URL(setupPage.url()).searchParams.get("game"), "goldsrc");
+  await setupPage.locator("#document-name").getByText("smoke.map").waitFor();
   await setupPage.close();
   result.checks.push("Remix new-map form keeps name and compatible format");
 
