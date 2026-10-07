@@ -35,14 +35,17 @@ export const EditorHostedPresenceStrip = clientEntry(
 
     return () => {
       const connected = state?.connection === "connected";
-      const names =
+      const collaborators =
         state?.connection === "connected"
           ? [
-              state.displayName,
-              ...state.participants.map((person) => person.displayName),
+              { displayName: state.displayName, color: null },
+              ...state.participants.map(({ displayName, color }) => ({
+                displayName,
+                color,
+              })),
             ]
           : [];
-      const people = names.length;
+      const people = collaborators.length;
       const label = connected
         ? `Live · ${people}`
         : state?.connection === "connecting"
@@ -73,9 +76,13 @@ export const EditorHostedPresenceStrip = clientEntry(
           <span>{label}</span>
           {connected && (
             <span class="hosted-presence-people" aria-hidden="true">
-              {names.slice(0, 3).map((name) => (
-                <span class="hosted-presence-person" title={name}>
-                  {name.charAt(0).toUpperCase()}
+              {collaborators.slice(0, 3).map((person) => (
+                <span
+                  class="hosted-presence-person"
+                  data-color={person.color ?? undefined}
+                  title={person.displayName}
+                >
+                  {person.displayName.charAt(0).toUpperCase()}
                 </span>
               ))}
               {people > 3 && <span>+{people - 3}</span>}
@@ -156,7 +163,7 @@ export const EditorHostedPresence = clientEntry(
             {connected ? <li>{current.displayName} (you)</li> : null}
             {connected &&
               current.participants.map((participant) => (
-                <li>
+                <li data-color={participant.color ?? undefined}>
                   {[
                     participant.displayName,
                     participant.viewport,

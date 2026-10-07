@@ -12,9 +12,25 @@ export function hostedShareUrl(mapId: string, origin: string): string {
 interface VisibleParticipant {
   readonly actorId: string;
   readonly displayName: string;
+  readonly color: string | null;
   readonly viewport: string;
   readonly selectedCount: number;
   readonly editing: boolean;
+}
+
+function viewportLabel(viewport: CollaborationPresence["viewport"]): string {
+  switch (viewport) {
+    case "xy":
+      return "Top";
+    case "xz":
+      return "Front";
+    case "yz":
+      return "Side";
+    case "perspective":
+      return "3D";
+    default:
+      return "Idle";
+  }
 }
 
 export interface HostedPresenceState {
@@ -66,7 +82,8 @@ export function initHostedPresence(status: (message: string) => void) {
               (participant) => ({
                 actorId: participant.actorId,
                 displayName: participant.displayName ?? participant.actorId,
-                viewport: participant.viewport ?? "No viewport",
+                color: participant.color ?? null,
+                viewport: viewportLabel(participant.viewport),
                 selectedCount: participant.selectedObjectIds?.length ?? 0,
                 editing: !!participant.preview,
               }),

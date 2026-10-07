@@ -156,11 +156,44 @@ export const editorStyles = css({
     width: "1.15rem",
     height: "1.15rem",
     "border-radius": "50%",
-    color: "var(--editor-panel)",
-    background: "var(--editor-ink)",
+    color: "var(--editor-ink)",
+    background: "var(--editor-field)",
+    border: "2px solid var(--collaborator-color, var(--editor-ink))",
     "font-size": "0.65rem",
     "font-weight": "700",
   },
+  "& .hosted-presence-person[data-color='red'], & #hosted-participant-list li[data-color='red']":
+    {
+      "--collaborator-color": "#f26b65",
+    },
+  "& .hosted-presence-person[data-color='orange'], & #hosted-participant-list li[data-color='orange']":
+    {
+      "--collaborator-color": "#fca365",
+    },
+  "& .hosted-presence-person[data-color='yellow'], & #hosted-participant-list li[data-color='yellow']":
+    {
+      "--collaborator-color": "#eac960",
+    },
+  "& .hosted-presence-person[data-color='green'], & #hosted-participant-list li[data-color='green']":
+    {
+      "--collaborator-color": "#76d896",
+    },
+  "& .hosted-presence-person[data-color='cyan'], & #hosted-participant-list li[data-color='cyan']":
+    {
+      "--collaborator-color": "#64ceda",
+    },
+  "& .hosted-presence-person[data-color='blue'], & #hosted-participant-list li[data-color='blue']":
+    {
+      "--collaborator-color": "#7a9df2",
+    },
+  "& .hosted-presence-person[data-color='violet'], & #hosted-participant-list li[data-color='violet']":
+    {
+      "--collaborator-color": "#b18bf2",
+    },
+  "& .hosted-presence-person[data-color='pink'], & #hosted-participant-list li[data-color='pink']":
+    {
+      "--collaborator-color": "#ee8ab6",
+    },
   "& .editor-theme-choice": {
     display: "flex",
     "align-items": "center",
@@ -468,6 +501,7 @@ export const editorStyles = css({
   "& #hosted-participant-list li": {
     padding: "0.3rem 0.45rem",
     border: "1px solid var(--editor-border)",
+    "border-left": "3px solid var(--collaborator-color, var(--editor-border))",
     "border-radius": "999px",
     "font-size": "0.75rem",
   },
