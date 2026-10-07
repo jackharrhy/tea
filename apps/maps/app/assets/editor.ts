@@ -197,6 +197,7 @@ import {
 } from "./editor-selection-brushes-bridge.ts";
 import { initEditorSelectionCommands } from "./editor-selection-commands-bridge.ts";
 import { initEditorEditActions } from "./editor-edit-actions-bridge.ts";
+import { initEditorToolSettings } from "./editor-tool-settings-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -266,9 +267,10 @@ const editActions = initEditorEditActions({
 const selectionBrushes = initEditorSelectionBrushes(runSelectionBrushQuery);
 const nudgeButtons =
   document.querySelectorAll<HTMLButtonElement>("[data-nudge-axis]");
-const gridSizeInput = document.querySelector<HTMLSelectElement>("#grid-size")!;
-const textureLockInput =
-  document.querySelector<HTMLInputElement>("#texture-lock")!;
+const toolSettings = initEditorToolSettings({
+  selectTool: activateViewportTool,
+  textureLockChanged: () => sweepTool.refresh(),
+});
 const makeEntityButton =
   document.querySelector<HTMLButtonElement>("#make-brush-entity")!;
 const makeStructuralButton =
@@ -305,8 +307,6 @@ const perspectiveLabel =
 const materialChoices =
   document.querySelector<HTMLDataListElement>("#material-choices")!;
 const boxMaterial = document.querySelector<HTMLInputElement>("#box-material")!;
-const viewportTool =
-  document.querySelector<HTMLSelectElement>("#viewport-tool")!;
 const clipTools = document.querySelector<HTMLElement>("#clip-tools")!;
 const clipPointsLabel = document.querySelector<HTMLElement>("#clip-points")!;
 const applyClipButton =
@@ -655,8 +655,8 @@ const workspace = initEditorWorkspace({
 const clipboard = createEditorClipboard({
   session: () => session,
   pointer: () => latestPointer,
-  gridSize: () => Number(gridSizeInput.value),
-  textureLock: () => textureLockInput.checked,
+  gridSize: () => toolSettings.state.gridSize,
+  textureLock: () => toolSettings.state.textureLock,
   canPaste: () => !hostedMap || !!hostedConnection,
   hosted: () => hostedMap !== null,
   prepare: applyWorkingSource,
@@ -673,7 +673,7 @@ const contextMenu = createEditorContextMenu(
 const faceDrag = createFaceDragController({
   session: () => session,
   renderer: () => renderer,
-  textureLock: () => textureLockInput.checked,
+  textureLock: () => toolSettings.state.textureLock,
   canEdit: viewportCanEdit,
   status: (message) => {
     status.textContent = message;
@@ -696,9 +696,9 @@ const sweepTool = createEditorSweep({
   session: () => session,
   renderer: () => renderer,
   viewState: () => rendererViewState,
-  tool: () => viewportTool.value,
-  gridSize: () => Number(gridSizeInput.value),
-  textureLock: () => textureLockInput.checked,
+  tool: () => toolSettings.state.tool,
+  gridSize: () => toolSettings.state.gridSize,
+  textureLock: () => toolSettings.state.textureLock,
   canEdit: viewportCanEdit,
   status: (message) => {
     status.textContent = message;
@@ -709,10 +709,10 @@ const topologyTool = createEditorTopology({
   session: () => session,
   renderer: () => renderer,
   viewState: () => rendererViewState,
-  tool: () => viewportTool.value,
+  tool: () => toolSettings.state.tool,
   viewport: () => latestPointer?.viewport ?? "xy",
-  gridSize: () => Number(gridSizeInput.value),
-  textureLock: () => textureLockInput.checked,
+  gridSize: () => toolSettings.state.gridSize,
+  textureLock: () => toolSettings.state.textureLock,
   canEdit: viewportCanEdit,
   status: (message) => {
     status.textContent = message;
@@ -723,7 +723,7 @@ const shapeTool = createEditorShapes({
   session: () => session,
   renderer: () => renderer,
   viewState: () => rendererViewState,
-  tool: () => viewportTool.value,
+  tool: () => toolSettings.state.tool,
   material: () => boxMaterial.value.trim() || "DEV/GRID",
   openGroupEntityId: () =>
     deriveEditorGroups(session.document).find(
@@ -738,11 +738,11 @@ const transformTool = createEditorTransform({
   session: () => session,
   renderer: () => renderer,
   viewState: () => rendererViewState,
-  tool: () => viewportTool.value,
+  tool: () => toolSettings.state.tool,
   bounds: selectedObjectBounds,
   topology: topologyTool.selection,
-  gridSize: () => Number(gridSizeInput.value),
-  textureLock: () => textureLockInput.checked,
+  gridSize: () => toolSettings.state.gridSize,
+  textureLock: () => toolSettings.state.textureLock,
   canEdit: viewportCanEdit,
   applyNumeric: (tool) =>
     ({ rotate: rotateButton, scale: scaleButton, shear: shearButton })[
@@ -1603,7 +1603,7 @@ function refreshSelection() {
 
 function refreshClipPreview() {
   clipCandidate = null;
-  const active = viewportTool.value === "clip";
+  const active = toolSettings.state.tool === "clip";
   clipTools.hidden = !active;
   const selection = session.selection;
   if (active && clipPlanePoints && selection) {
@@ -1653,7 +1653,7 @@ function handleClipPlaneChange(event: EditorClipPlaneEvent) {
 }
 
 function refreshHullControls() {
-  const active = viewportTool.value === "hull";
+  const active = toolSettings.state.tool === "hull";
   hullTools.hidden = !active;
   hullPointsLabel.textContent = `${hullPointCount} point${hullPointCount === 1 ? "" : "s"}`;
   createHullButton.disabled =
@@ -1931,7 +1931,9 @@ function setHostedEditability() {
   if (readOnly && !hostedConnection) {
     activateViewportTool("select");
   }
-  viewportTool.disabled = !renderer || (readOnly && !hostedConnection);
+  toolSettings.update({
+    toolDisabled: !renderer || (readOnly && !hostedConnection),
+  });
   source.disabled = readOnly;
   document.querySelector<HTMLButtonElement>("#add-box")!.disabled =
     readOnly && !hostedConnection;
@@ -2177,7 +2179,7 @@ function handleViewportPick(
     selection,
     intent,
     openGroupId,
-    activeTool: viewportTool.value,
+    activeTool: toolSettings.state.tool,
   });
   if (result.kind === "close-group") {
     closeOpenGroup(true);
@@ -2359,7 +2361,7 @@ function handleBrushDrag(event: EditorBrushDragEvent) {
       const candidate = session.translateObjectDuplicationCandidate(
         dragDuplicateBase,
         event.delta,
-        textureLockInput.checked,
+        toolSettings.state.textureLock,
       );
       if (event.phase === "preview") {
         renderer?.setPreviewDocument(
@@ -2379,7 +2381,7 @@ function handleBrushDrag(event: EditorBrushDragEvent) {
     const candidate = session.createObjectTranslationCandidate(
       event.selection,
       event.delta,
-      textureLockInput.checked,
+      toolSettings.state.textureLock,
     );
     if (!candidate) return;
     if (event.phase === "preview") {
@@ -2524,7 +2526,7 @@ if (!navigator.gpu) {
       fov.applyInitial(renderer);
       visibility.applyRenderer();
       renderer.setTool(
-        viewportTool.value as
+        toolSettings.state.tool as
           | "select"
           | "face"
           | "clip"
@@ -2576,17 +2578,17 @@ function onSourceInput() {
   scheduleDraftSave();
 }
 
-let activeViewportTool = viewportTool.value;
+let activeViewportTool = toolSettings.state.tool;
 
 function activateViewportTool(next: string) {
   if (hostedMap && !hostedConnection) {
     next = "select";
   }
   const previous = activeViewportTool;
-  viewportTool.value = next;
+  toolSettings.update({ tool: next });
   activeViewportTool = next;
   renderer?.setTool(
-    viewportTool.value as
+    next as
       | "select"
       | "face"
       | "clip"
@@ -2608,11 +2610,6 @@ function activateViewportTool(next: string) {
   transformTool.refresh();
   if (next === "sweep" && previous !== "sweep") sweepTool.enter();
 }
-
-viewportTool.addEventListener("change", () =>
-  activateViewportTool(viewportTool.value),
-);
-textureLockInput.addEventListener("change", () => sweepTool.refresh());
 
 for (const [mode, button] of Object.entries(clipModeButtons) as [
   BrushClipMode,
@@ -2801,11 +2798,11 @@ function runGroupCommand(command: EditorGroupCommand) {
         return;
       }
       case "linked": {
-        const grid = Number(gridSizeInput.value);
+        const grid = toolSettings.state.gridSize;
         const groupId = session.linkedDuplicateSelected(
           createSequentialIdFactory(`tea-linked-${crypto.randomUUID()}`),
           [grid, grid, 0],
-          textureLockInput.checked,
+          toolSettings.state.textureLock,
         );
         status.textContent = groupId
           ? "Created linked duplicate · edits to either opened group update both"
@@ -3034,7 +3031,7 @@ for (const [operation, button] of Object.entries(faceGeometryButtons) as [
                 createSequentialIdFactory(
                   `tea-face-stamp-${crypto.randomUUID()}`,
                 ),
-                textureLockInput.checked,
+                toolSettings.state.textureLock,
               );
       if (!changed) status.textContent = "Select a face for this operation";
     } catch (error) {
@@ -3319,12 +3316,12 @@ for (const button of nudgeButtons) {
     if (!viewportCanEdit()) return;
     const axis = button.dataset.nudgeAxis;
     const index = axis === "X" ? 0 : axis === "Y" ? 1 : 2;
-    const grid = Number(gridSizeInput.value);
+    const grid = toolSettings.state.gridSize;
     const direction = Number(button.dataset.nudgeDirection);
     const delta: [number, number, number] = [0, 0, 0];
     delta[index] = grid * direction;
     try {
-      if (!session.translateSelected(delta, textureLockInput.checked)) {
+      if (!session.translateSelected(delta, toolSettings.state.textureLock)) {
         status.textContent = "Select an object to nudge";
       }
     } catch (error) {
@@ -3339,9 +3336,9 @@ function snapSelectionToGrid() {
   try {
     if (
       !session.snapSelectionToGrid(
-        Number(gridSizeInput.value),
+        toolSettings.state.gridSize,
         createSequentialIdFactory(`tea-grid-${crypto.randomUUID()}`),
-        textureLockInput.checked,
+        toolSettings.state.textureLock,
       )
     ) {
       status.textContent = "Selection is already on the grid";
@@ -3443,7 +3440,7 @@ moveButton.addEventListener("click", () => {
   try {
     session.translateSelected(
       [delta[0]!, delta[1]!, delta[2]!],
-      textureLockInput.checked,
+      toolSettings.state.textureLock,
     );
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
@@ -3471,7 +3468,7 @@ rotateButton.addEventListener("click", () => {
       [...pivot],
       axis,
       input.valueAsNumber,
-      textureLockInput.checked,
+      toolSettings.state.textureLock,
       transformTool.updateAngles(),
     );
     if (candidate) session.commitDocumentCandidate(candidate);
@@ -3501,7 +3498,7 @@ scaleButton.addEventListener("click", () => {
       session.selection!,
       [...pivot],
       [factors[0]!, factors[1]!, factors[2]!],
-      textureLockInput.checked,
+      toolSettings.state.textureLock,
       transformTool.updateAngles(),
     );
     if (candidate) session.commitDocumentCandidate(candidate);
@@ -3535,7 +3532,7 @@ shearButton.addEventListener("click", () => {
       sourceAxis,
       targetAxis,
       offset / span,
-      textureLockInput.checked,
+      toolSettings.state.textureLock,
       transformTool.updateAngles(),
     );
     if (candidate) session.commitDocumentCandidate(candidate);
@@ -3552,7 +3549,7 @@ for (const [axis, button] of flipButtons.entries()) {
       status.textContent = "Select objects to mirror";
       return;
     }
-    const grid = Number(gridSizeInput.value);
+    const grid = toolSettings.state.gridSize;
     const pivot = ([0, 1, 2] as const).map(
       (component) =>
         Math.round(
@@ -3563,7 +3560,7 @@ for (const [axis, button] of flipButtons.entries()) {
       session.flipSelected(
         pivot,
         axis as TransformAxis,
-        textureLockInput.checked,
+        toolSettings.state.textureLock,
       );
     } catch (error) {
       status.textContent =
@@ -3603,7 +3600,8 @@ document.addEventListener("keydown", (event) => {
     return;
   }
   if (
-    (viewportTool.value === "vertex" || viewportTool.value === "edge") &&
+    (toolSettings.state.tool === "vertex" ||
+      toolSettings.state.tool === "edge") &&
     !textEditingTarget(event.target)
   ) {
     if (event.key === "Escape") {
@@ -3624,7 +3622,7 @@ document.addEventListener("keydown", (event) => {
       return;
     }
   }
-  if (viewportTool.value === "sweep" && !textEditingTarget(event.target)) {
+  if (toolSettings.state.tool === "sweep" && !textEditingTarget(event.target)) {
     if (event.key === "Escape") {
       event.preventDefault();
       sweepTool.escape();
@@ -3636,7 +3634,7 @@ document.addEventListener("keydown", (event) => {
       return;
     }
   }
-  if (viewportTool.value === "hull" && !textEditingTarget(event.target)) {
+  if (toolSettings.state.tool === "hull" && !textEditingTarget(event.target)) {
     if (event.key === "Escape" && renderer?.clearHullPoints()) {
       event.preventDefault();
       return;
@@ -4467,7 +4465,7 @@ void registerEditorWebMcpTools(
     hostedMap,
     renderer,
     materials: currentMaterials(),
-    activeTool: viewportTool.value,
+    activeTool: toolSettings.state.tool,
     canUndo: hostedMap
       ? (hostedConnection?.canUndo() ?? false)
       : session.canUndo,

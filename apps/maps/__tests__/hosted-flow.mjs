@@ -1481,6 +1481,47 @@ try {
   result.checks.push(
     "browser site tool opens an authorized project map with explicit discard",
   );
+  const toolSettingsPage = await browser.newPage();
+  await installSiteToolMock(toolSettingsPage);
+  await toolSettingsPage.goto(`${mapsOrigin}/editor`);
+  await toolSettingsPage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "face" });
+  });
+  assert.equal(
+    await toolSettingsPage.locator("#viewport-tool").inputValue(),
+    "face",
+  );
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools
+      .get("tea_maps_set_tool")
+      .execute({ tool: "select" });
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [10, 10, 10],
+      max: [50, 50, 50],
+      material: "STONE",
+    });
+  });
+  await toolSettingsPage.locator("#grid-size").selectOption("32");
+  await toolSettingsPage.locator("#texture-lock").uncheck();
+  await toolSettingsPage.locator("#snap-to-grid").click();
+  const snappedBounds = await toolSettingsPage.evaluate(
+    () =>
+      window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "brush" }).objects[0].bounds,
+  );
+  assert.deepEqual(snappedBounds, { min: [0, 0, 0], max: [64, 64, 64] });
+  await toolSettingsPage.close();
+  result.checks.push(
+    "Remix tool, grid, and texture-lock controls update live editor settings",
+  );
   const selectionPage = await browser.newPage();
   await installSiteToolMock(selectionPage);
   await selectionPage.goto(`${mapsOrigin}/editor`);

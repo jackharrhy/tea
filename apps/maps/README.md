@@ -160,6 +160,8 @@ For Quake II and Gower maps, selected faces also expose surface contents flags, 
 
 The editor can copy selected objects as portable `.map` text, paste at the last viewport pointer or at their original coordinates, and copy or paste a selected face's material and mapping attributes. Clipboard buttons keep an in-editor copy when system clipboard access is unavailable. Hosted editors with a room session can paste while online or reconnecting; the resulting semantic operation persists in the local outbox before publication. Viewers and failed room joins cannot paste. Hosted paste checks the room's edit-count and source-size limits before commit. The grid size control and Snap selection align selected brush or face vertices, and Texture lock applies to movement, rotation, scaling, snapping, and paste.
 
+Viewport tool, grid size, and Texture lock render through a Remix client component. The editor keeps tool activation, renderer availability, and geometry operations; the component publishes the current settings to them.
+
 Snap selection, Repeat, Clear repeat, Copy, and both Paste actions render through a Remix client component. The editor owns the transaction, repeat history, clipboard fallback, and hosted edit checks.
 
 ## Migration boundary

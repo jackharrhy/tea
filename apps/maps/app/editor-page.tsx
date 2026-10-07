@@ -16,6 +16,7 @@ import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
 import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
 import { EditorSelectionCommands } from "./assets/editor-selection-commands-panel.tsx";
 import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
+import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -69,21 +70,7 @@ export function EditorPage() {
             <button id="add-box" type="button" disabled>
               Add box
             </button>
-            <label for="viewport-tool">Viewport tool</label>
-            <select id="viewport-tool" disabled>
-              <option value="select">Select and move</option>
-              <option value="face">Face</option>
-              <option value="clip">Clip brush</option>
-              <option value="hull">Convex hull brush</option>
-              <option value="sweep">Sweep faces</option>
-              <option value="vertex">Vertex edit</option>
-              <option value="edge">Edge edit</option>
-              <option value="rotate">Rotate</option>
-              <option value="scale">Scale</option>
-              <option value="shear">Shear</option>
-              <option value="create">Draw shape</option>
-              <option value="entity">Place point entity</option>
-            </select>
+            <EditorToolSettings />
             <label for="box-material">Brush texture</label>
             <input
               id="box-material"
@@ -93,17 +80,6 @@ export function EditorPage() {
             />
             <datalist id="material-choices" />
             <EditorSelectionCommands />
-            <label for="grid-size">Grid size</label>
-            <select id="grid-size">
-              {[1, 2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
-                <option value={String(size)} selected={size === 16}>
-                  {size}
-                </option>
-              ))}
-            </select>
-            <label for="texture-lock">
-              <input id="texture-lock" type="checkbox" checked /> Texture lock
-            </label>
             <EditorEditActions />
             <div class="transform-tools" role="group" aria-label="Brush entity">
               <label for="brush-entity-classname">Brush entity</label>
