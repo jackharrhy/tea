@@ -68,8 +68,8 @@ const successfulCompilerFetch: typeof fetch = async (_input, init) => {
     JSON.parse(String(init?.body)),
   );
   expect(request.mapText).toContain("worldspawn");
-  expect(request.mapText).toContain("worldview_dev.wad");
-  expect(request.assets?.[0]?.name).toBe("worldview_dev.wad");
+  expect(request.mapText).toContain("tea_maps_dev.wad");
+  expect(request.assets?.[0]?.name).toBe("tea_maps_dev.wad");
   expect(
     Buffer.from(request.assets![0]!.base64, "base64").subarray(0, 4).toString(),
   ).toBe("WAD2");

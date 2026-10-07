@@ -68,11 +68,9 @@ describe("hosted build textures", () => {
       [],
       store(null),
     );
-    expect(result.assets.map(({ name }) => name)).toEqual([
-      "worldview_dev.wad",
-    ]);
+    expect(result.assets.map(({ name }) => name)).toEqual(["tea_maps_dev.wad"]);
     const document = parseMap(result.mapText);
-    expect(document.entities[0]?.properties.wad).toBe("worldview_dev.wad");
+    expect(document.entities[0]?.properties.wad).toBe("tea_maps_dev.wad");
     expect(result.mapText).toContain("DEV_FLOOR");
     expect(parseMap(source).entities[0]?.properties.wad).toBeUndefined();
     const wad = parseWad(result.assets[0]!.bytes);
@@ -130,7 +128,7 @@ describe("hosted build textures", () => {
     expect(sent.lumps.map(({ name }) => name)).toEqual(["CUSTOM"]);
     expect(result.assets[1]!.bytes.byteLength).toBeLessThan(bytes.byteLength);
     expect(parseMap(result.mapText).entities[0]?.properties.wad).toBe(
-      "worldview_dev.wad;project_1.wad",
+      "tea_maps_dev.wad;project_1.wad",
     );
   });
 

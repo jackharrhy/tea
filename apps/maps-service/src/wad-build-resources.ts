@@ -72,7 +72,7 @@ export async function prepareWadBuildResources(
   }
   const development = developmentTexturePack(game, palette)!;
   assets.unshift({
-    name: "worldview_dev.wad",
+    name: "tea_maps_dev.wad",
     mediaType: "application/x-wad",
     bytes: new Uint8Array(development.wad),
   });

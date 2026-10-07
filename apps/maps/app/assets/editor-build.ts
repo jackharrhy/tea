@@ -48,7 +48,7 @@ async function compileAssets(
   const pack = developmentTexturePack(game, standalone?.palette ?? undefined);
   if (pack) {
     assets.push({
-      name: "worldview_dev.wad",
+      name: "tea_maps_dev.wad",
       mediaType: "application/x-wad",
       data: pack.wad,
     });

@@ -234,6 +234,8 @@ Project owners can also manage signed-in users' editor and viewer roles in Tea. 
 
 The editor's Build BSP action now calls the hosted build API for hosted maps, checks the reviewed map version, polls the server job, and exposes BSP history and downloads. The local compiler path remains for local maps and projects.
 
+Tea's local and hosted compilers name their generated, compile-only texture pack `tea_maps_dev.wad`. Worldview used `worldview_dev.wad`; the user's saved `.map` source is not rewritten by this build input change.
+
 <!-- prettier-ignore -->
 | Source boundary | Tea boundary | Validation |
 | --- | --- | --- |

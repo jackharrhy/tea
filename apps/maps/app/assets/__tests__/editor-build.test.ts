@@ -80,9 +80,9 @@ describe("local map build", () => {
       quality: "preview",
       profileId: "default",
     });
-    expect(request?.mapText).toContain("worldview_dev.wad");
+    expect(request?.mapText).toContain("tea_maps_dev.wad");
     expect(request?.assets?.map(({ name }) => name)).toEqual([
-      "worldview_dev.wad",
+      "tea_maps_dev.wad",
     ]);
     expect(built.previewSource?.bsp).toBeInstanceOf(File);
     expect(built.previewSource?.wads).toHaveLength(1);
@@ -104,7 +104,7 @@ describe("local map build", () => {
       service,
     );
     expect(request?.assets?.map(({ name }) => name)).toEqual([
-      "worldview_dev.wad",
+      "tea_maps_dev.wad",
       "custom.wad",
     ]);
     expect(custom.previewSource?.palette).toBeInstanceOf(File);
