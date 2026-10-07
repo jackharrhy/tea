@@ -45,7 +45,7 @@ Counter-Strike entities use a 250-unit player speed cap.
 
 ## Load game assets
 
-`gameBaseUrl` points to an extracted Quake, GoldSrc, or Quake II game or mod directory. Worldview
+`gameBaseUrl` points to an extracted Quake, GoldSrc, or Quake II game or mod directory. The renderer
 uses the usual game paths for BSPs, WADs, palettes, skyboxes, sprites, sounds, and Quake II
 textures. Individual sources and resolvers can override that layout.
 
@@ -118,7 +118,7 @@ graph should be an error.
 
 ## Generate walkability
 
-Worldview can sample the standing-player collision hull and build a directed graph of places a
+The renderer can sample the standing-player collision hull and build a directed graph of places a
 player can walk, jump to, or drop from:
 
 ```ts
@@ -139,7 +139,7 @@ viewer.setWalkabilityVisible(true);
 const saved = serializeWalkability(graph);
 viewer.setWalkability(parseWalkability(saved));
 
-await viewer.loadWalkability("/maps/c1a0.worldview-walkability.json", {
+await viewer.loadWalkability("/maps/c1a0.tea-maps-walkability.json", {
   signal,
 });
 ```
@@ -150,8 +150,9 @@ graph or map starts loading. The graph records one-way connections, blocked prob
 components, and local ceiling heights. It is collision data for inspection and overview cutaways,
 not a gameplay navigation mesh.
 
-The development viewer can generate and inspect graphs from `Map > Walkability`. Save a local
-fixture graph as `<map>.worldview-walkability.json` beside its BSP to load it automatically.
+The Tea viewer can generate and inspect graphs in its Walkability panel. Save a local
+fixture graph as `<map>.tea-maps-walkability.json` beside its BSP to load it automatically. It also
+reads existing `<map>.worldview-walkability.json` files.
 
 ## Use the web component
 
@@ -185,7 +186,7 @@ map.source = {
   wads: ["/api/wads/halflife.wad"],
   resolveWad: ({ basename }) => `/api/wads/${basename}`,
 };
-map.walkabilitySource = "/api/maps/c1a0.worldview-walkability.json";
+map.walkabilitySource = "/api/maps/c1a0.tea-maps-walkability.json";
 map.walkabilityVisible = true;
 ```
 
@@ -202,11 +203,11 @@ aborts stale work.
 The standalone module registers the element for pages without a build step:
 
 ```html
-<script type="module" src="/vendor/worldview/standalone.js"></script>
+<script type="module" src="/vendor/tea-maps/standalone.js"></script>
 <world-view game-base-url="/games/id1/" src="maps/start.bsp"></world-view>
 ```
 
-Run `npm run test:browser:viewer` in this repository for headless WebGPU checks, including the
+Run `npm run test:embed --workspace @tea/maps` in this repository for browser checks, including the
 packaged element's shadow-root pointer lock and gesture-activated audio. These tests use generated
 maps and WAVs to measure camera movement, nonzero audio output, and recovery from suspended audio
 without requiring game files or speakers.
@@ -225,7 +226,7 @@ import {
 
 ## Game data
 
-Worldview includes the standard Quake color lookup table as a documented compatibility-data
+The renderer includes the standard Quake color lookup table as a documented compatibility-data
 exception. Provide your maps, texture packs, custom or Quake II palettes, skyboxes, sprites, and
 sounds separately, with permission to use them.
 
