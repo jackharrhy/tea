@@ -740,7 +740,7 @@ try {
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
   await writeFile(join(viewerFolder, "maps", "folder.bsp"), bsp);
   await writeFile(
-    join(viewerFolder, "maps", "folder.worldview.json"),
+    join(viewerFolder, "maps", "folder.tea-maps.json"),
     JSON.stringify({ label: "Folder smoke" }),
   );
   await sourcePage.locator("#folder").setInputFiles(viewerFolder);

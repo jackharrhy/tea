@@ -74,7 +74,7 @@ function cameraDefinition(value: unknown, filename: string) {
 async function fixtureMetadata(
   filename: string,
   fixtureRoot: string,
-): Promise<FixtureMetadata> {
+): Promise<FixtureMetadata | null> {
   try {
     const resolved = await realpath(filename);
     if (!contained(fixtureRoot, resolved))
@@ -84,7 +84,7 @@ async function fixtureMetadata(
       throw new Error("metadata must be an object");
     return parsed as FixtureMetadata;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return {};
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw new Error(
       `${filename}: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error },
@@ -132,12 +132,14 @@ export async function discoverLocalFixtures(localRoot: string) {
         );
       const steamLevel = steamLevels.get(filename);
       const relativeBsp = path.relative(fixtureRoot, filename);
-      const sidecar = filename.replace(/\.bsp$/iu, ".worldview.json");
-      const walkability = filename.replace(
-        /\.bsp$/iu,
-        ".worldview-walkability.json",
-      );
-      const metadata = await fixtureMetadata(sidecar, realFixtureRoot);
+      const teaSidecar = filename.replace(/\.bsp$/iu, ".tea-maps.json");
+      const worldviewSidecar = filename.replace(/\.bsp$/iu, ".worldview.json");
+      const teaMetadata = await fixtureMetadata(teaSidecar, realFixtureRoot);
+      const sidecar = teaMetadata ? teaSidecar : worldviewSidecar;
+      const metadata =
+        teaMetadata ??
+        (await fixtureMetadata(worldviewSidecar, realFixtureRoot)) ??
+        {};
       const id = steamLevel
         ? `steam-corpus/${steamLevel.game.slug}/${steamLevel.mapPath}`
         : files.length === 1
@@ -179,14 +181,24 @@ export async function discoverLocalFixtures(localRoot: string) {
             ? steamLevel.game.anchorCamera
             : undefined
           : cameraDefinition(metadata.camera, sidecar);
-      let hasWalkability = false;
-      try {
-        const resolved = await realpath(walkability);
-        hasWalkability =
-          contained(realFixtureRoot, resolved) &&
-          (await stat(resolved)).isFile();
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      let walkability: string | null = null;
+      for (const suffix of [
+        ".tea-maps-walkability.json",
+        ".worldview-walkability.json",
+      ]) {
+        const candidate = filename.replace(/\.bsp$/iu, suffix);
+        try {
+          const resolved = await realpath(candidate);
+          if (
+            contained(realFixtureRoot, resolved) &&
+            (await stat(resolved)).isFile()
+          ) {
+            walkability = candidate;
+            break;
+          }
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+        }
       }
       fixtures.push({
         id,
@@ -204,7 +216,7 @@ export async function discoverLocalFixtures(localRoot: string) {
         ...(camera
           ? { camera: { ...camera, fieldOfView: camera.fieldOfView ?? 75 } }
           : {}),
-        ...(hasWalkability
+        ...(walkability
           ? {
               walkability: `${fixtureBase}${publicPath(path.relative(fixtureRoot, walkability))}`,
             }

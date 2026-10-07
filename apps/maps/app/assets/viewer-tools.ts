@@ -484,7 +484,7 @@ export function initViewerTools(element: WorldViewElement): {
     if (!graph) return;
     download(
       new Blob([serializeWalkability(graph)], { type: "application/json" }),
-      `${safeMapName()}.worldview-walkability.json`,
+      `${safeMapName()}.tea-maps-walkability.json`,
     );
     toolStatus.textContent = "Walkability sidecar downloaded";
   });

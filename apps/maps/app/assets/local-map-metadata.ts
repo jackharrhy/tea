@@ -54,15 +54,25 @@ export async function localMapMetadata(
 ): Promise<LocalMapMetadata> {
   const list = [...files];
   const stem = localMapPath(bsp).replace(/\.bsp$/iu, "");
-  const sidecarName = `${stem}.worldview.json`;
-  const sidecar = list.find(
-    (file) => localMapPath(file).toLowerCase() === sidecarName.toLowerCase(),
-  );
-  const walkabilityName = `${stem}.worldview-walkability.json`;
-  const walkability = list.find(
-    (file) =>
-      localMapPath(file).toLowerCase() === walkabilityName.toLowerCase(),
-  );
+  const sidecar = [".tea-maps.json", ".worldview.json"]
+    .map((suffix) =>
+      list.find(
+        (file) =>
+          localMapPath(file).toLowerCase() === `${stem}${suffix}`.toLowerCase(),
+      ),
+    )
+    .find(Boolean);
+  const walkability = [
+    ".tea-maps-walkability.json",
+    ".worldview-walkability.json",
+  ]
+    .map((suffix) =>
+      list.find(
+        (file) =>
+          localMapPath(file).toLowerCase() === `${stem}${suffix}`.toLowerCase(),
+      ),
+    )
+    .find(Boolean);
   if (!sidecar) {
     return {
       label: localMapPath(bsp),
@@ -73,8 +83,9 @@ export async function localMapMetadata(
   try {
     metadata = JSON.parse(await sidecar.text());
   } catch {
-    throw new Error(`${sidecarName}: invalid JSON`);
+    throw new Error(`${localMapPath(sidecar)}: invalid JSON`);
   }
+  const sidecarName = localMapPath(sidecar);
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata))
     throw new Error(`${sidecarName}: metadata must be an object`);
   const record = metadata as Record<string, unknown>;

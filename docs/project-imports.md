@@ -28,7 +28,7 @@ Worldview is a monorepo, rather than one app. Tea's viewer opens generated examp
 
 The Maps viewer now opens Worldview camera and fixture links and can copy the current view URL. The editor now keeps bounded local source versions and protected checkpoints; recovery restores open as detached copies so the original disk file is never replaced by a version choice.
 
-Local Maps projects can use `tea.maps.project.json` with the existing project schema. Legacy `worldview.project.json` folders still open, and hosted sync writes to the manifest that was opened. A folder with both filenames is rejected until the owner chooses one, avoiding an ambiguous sync target.
+Local Maps projects can use `tea.maps.project.json` with the existing project schema. Legacy `worldview.project.json` folders still open, and hosted sync writes to the manifest that was opened. A folder with both filenames is rejected until the owner chooses one, avoiding an ambiguous sync target. BSP viewer sidecars use `.tea-maps.json` and `.tea-maps-walkability.json`, while their Worldview names remain readable; Tea names take priority when both exist. Walkability downloads use the Tea filename.
 
 The editor's Recent projects menu now renders as a Remix client entry while retaining the editor's folder permission and unsaved-work handling. The viewer source controls and hosted project pages also use Remix client entries.
 

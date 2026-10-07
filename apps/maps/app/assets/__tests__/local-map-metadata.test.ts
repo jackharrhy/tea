@@ -8,6 +8,30 @@ function localFile(path: string, contents = ""): File {
 }
 
 describe("local map sidecars", () => {
+  it("prefers Tea metadata and walkability beside a BSP", async () => {
+    const bsp = localFile("valve/maps/room.bsp");
+    const tea = localFile(
+      "valve/maps/room.tea-maps.json",
+      JSON.stringify({ label: "Tea room" }),
+    );
+    const worldview = localFile(
+      "valve/maps/room.worldview.json",
+      JSON.stringify({ label: "Worldview room" }),
+    );
+    const teaWalkability = localFile(
+      "valve/maps/room.tea-maps-walkability.json",
+    );
+    const worldviewWalkability = localFile(
+      "valve/maps/room.worldview-walkability.json",
+    );
+    expect(
+      await localMapMetadata(
+        [bsp, worldview, worldviewWalkability, tea, teaWalkability],
+        bsp,
+      ),
+    ).toEqual({ label: "Tea room", walkability: teaWalkability });
+  });
+
   it("uses the matching Worldview label, camera, and walkability graph", async () => {
     const bsp = localFile("valve/maps/room.bsp");
     const metadata = localFile(
