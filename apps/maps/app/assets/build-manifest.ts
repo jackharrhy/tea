@@ -73,8 +73,8 @@ export const browserAssets = import.meta.env.DEV
     }
   : {
       entry: "/assets/entry-JCK7T7IM.js",
-      viewer: "/assets/viewer-HEXRCHQM.js",
-      editor: "/assets/editor-SY4FJ3DI.js",
+      viewer: "/assets/viewer-JLLYFOTF.js",
+      editor: "/assets/editor-GI5K7PWQ.js",
       editorTheme: "/assets/editorTheme-EU7X55BI.js",
       editorHostedPresence: "/assets/editorHostedPresence-K3EFKIYS.js",
       editorPointerReadout: "/assets/editorPointerReadout-CRVBM7FX.js",
@@ -125,7 +125,7 @@ export const browserAssets = import.meta.env.DEV
       editorTransformTool: "/assets/editorTransformTool-U42NO7RF.js",
       editorContextMenu: "/assets/editorContextMenu-Q5K6ECJZ.js",
       editorDetachedMaps: "/assets/editorDetachedMaps-RIWYQ4UU.js",
-      newMap: "/assets/newMap-T6QTR72A.js",
+      newMap: "/assets/newMap-CVIL6WEE.js",
       recoveredMaps: "/assets/recoveredMaps-PUMAIP6R.js",
       hostedProjects: "/assets/hostedProjects-2NGXEQEE.js",
       hostedViewerPanel: "/assets/hostedViewerPanel-LZD7N6R7.js",

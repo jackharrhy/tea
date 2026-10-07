@@ -133,6 +133,7 @@ import {
   downloadMapCopy,
   pickMapFile,
   pickMapSaveFile,
+  supportsMapOpenPicker,
   supportsMapSavePicker,
   writeMapFile,
   type MapFileHandle,
@@ -3841,6 +3842,8 @@ async function runHistoryAction(action: "undo" | "redo") {
 }
 
 document.addEventListener("keydown", (event) => {
+  if (event.defaultPrevented) return;
+  const editingText = textEditingTarget(event.target);
   if (event.key === "Escape" && uvEditor.cancel()) {
     event.preventDefault();
     return;
@@ -3848,7 +3851,7 @@ document.addEventListener("keydown", (event) => {
   if (
     (toolSettings.state.tool === "vertex" ||
       toolSettings.state.tool === "edge") &&
-    !textEditingTarget(event.target)
+    !editingText
   ) {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -3868,7 +3871,7 @@ document.addEventListener("keydown", (event) => {
       return;
     }
   }
-  if (toolSettings.state.tool === "sweep" && !textEditingTarget(event.target)) {
+  if (toolSettings.state.tool === "sweep" && !editingText) {
     if (event.key === "Escape") {
       event.preventDefault();
       sweepTool.escape();
@@ -3880,7 +3883,7 @@ document.addEventListener("keydown", (event) => {
       return;
     }
   }
-  if (toolSettings.state.tool === "hull" && !textEditingTarget(event.target)) {
+  if (toolSettings.state.tool === "hull" && !editingText) {
     if (event.key === "Escape" && renderer?.clearHullPoints()) {
       event.preventDefault();
       return;
@@ -3891,13 +3894,100 @@ document.addEventListener("keydown", (event) => {
       return;
     }
   }
-  if (!textEditingTarget(event.target) && event.key === "Home") {
+  if (!editingText && event.key === "Home") {
     event.preventDefault();
     if (!selectionCommands.state.focusDisabled) focusSelection();
     return;
   }
-  if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
-  if (textEditingTarget(event.target)) return;
+  if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+    if (event.key.toLowerCase() === "o") {
+      event.preventDefault();
+      if (supportsMapOpenPicker()) void openPickerFromControls();
+      else document.querySelector<HTMLInputElement>("#open-map")?.click();
+      return;
+    }
+    if (event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      void saveCurrentMap();
+      return;
+    }
+  }
+  if (editingText) return;
+  if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+    const gridSizes = [1, 2, 4, 8, 16, 32, 64, 128, 256];
+    const directIndex = /^Digit([1-9])$/.exec(event.code)?.[1];
+    const currentIndex = gridSizes.indexOf(toolSettings.state.gridSize);
+    const nextIndex = directIndex
+      ? Number(directIndex) - 1
+      : event.key === "["
+        ? Math.max(0, currentIndex - 1)
+        : event.key === "]"
+          ? Math.min(gridSizes.length - 1, currentIndex + 1)
+          : -1;
+    if (nextIndex >= 0 && toolSettings.state.tool !== "sweep") {
+      event.preventDefault();
+      toolSettings.update({ gridSize: gridSizes[nextIndex]! });
+      return;
+    }
+    const tool = {
+      b: "hull",
+      n: "entity",
+      g: "hull",
+      f: "face",
+      w: "sweep",
+      v: "vertex",
+      e: "edge",
+      c: "clip",
+      r: "rotate",
+      s: "scale",
+      h: "shear",
+    }[event.key.toLowerCase()];
+    if (tool) {
+      event.preventDefault();
+      activateViewportTool(toolSettings.state.tool === tool ? "select" : tool);
+      return;
+    }
+  }
+  if (event.key === "Escape" && openGroupId) {
+    event.preventDefault();
+    runGroupCommand({ type: "close" });
+    return;
+  }
+  if (event.key === "Escape" && session.selection) {
+    event.preventDefault();
+    session.select(null);
+    status.textContent = "Cleared the object selection";
+    return;
+  }
+  if (event.key === "Delete" || event.key === "Backspace") {
+    event.preventDefault();
+    deleteSelection();
+    return;
+  }
+  if (!(event.ctrlKey || event.metaKey)) return;
+  if (event.altKey && event.key.toLowerCase() === "v" && !event.shiftKey) {
+    event.preventDefault();
+    pasteInPlace();
+    return;
+  }
+  if (event.altKey && event.key.toLowerCase() === "d" && !event.shiftKey) {
+    event.preventDefault();
+    runGroupCommand({ type: "linked" });
+    return;
+  }
+  if (event.altKey) return;
+  if (event.key.toLowerCase() === "g") {
+    event.preventDefault();
+    runGroupCommand(
+      event.shiftKey ? { type: "ungroup" } : { type: "create", name: "Group" },
+    );
+    return;
+  }
+  if (event.key.toLowerCase() === "d" && !event.shiftKey) {
+    event.preventDefault();
+    duplicateSelection();
+    return;
+  }
   if (event.shiftKey && event.key.toLowerCase() === "r") {
     event.preventDefault();
     repeatRecordedCommands();

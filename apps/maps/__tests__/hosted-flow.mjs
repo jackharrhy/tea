@@ -2391,6 +2391,75 @@ try {
   result.checks.push(
     "Remix tool, Clip/Hull, topology, shape, transform pivot, grid, and texture-lock controls update live editor settings",
   );
+  await toolSettingsPage.evaluate(() => document.activeElement?.blur());
+  await toolSettingsPage.keyboard.press("f");
+  await toolSettingsPage.waitForFunction(
+    () => document.querySelector("#viewport-tool")?.value === "face",
+  );
+  await toolSettingsPage.keyboard.press("f");
+  await toolSettingsPage.waitForFunction(
+    () => document.querySelector("#viewport-tool")?.value === "select",
+  );
+  await toolSettingsPage.keyboard.press("1");
+  await toolSettingsPage.waitForFunction(
+    () => document.querySelector("#grid-size")?.value === "1",
+  );
+  await toolSettingsPage.keyboard.press("]");
+  await toolSettingsPage.waitForFunction(
+    () => document.querySelector("#grid-size")?.value === "2",
+  );
+  await toolSettingsPage.keyboard.press("6");
+  await toolSettingsPage.waitForFunction(
+    () => document.querySelector("#grid-size")?.value === "32",
+  );
+  result.checks.push(
+    "Worldview tool and grid keyboard shortcuts work in the Remix editor",
+  );
+  const shortcutBrushCount = await toolSettingsPage.evaluate(
+    () =>
+      window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "brush" }).objects.length,
+  );
+  await toolSettingsPage.locator("#select-all").click();
+  await toolSettingsPage.evaluate(() => document.activeElement?.blur());
+  await toolSettingsPage.keyboard.press("Control+d");
+  await toolSettingsPage.waitForFunction(
+    (count) =>
+      window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "brush" }).objects.length ===
+      count + 1,
+    shortcutBrushCount,
+  );
+  await toolSettingsPage.keyboard.press("Control+z");
+  await toolSettingsPage.waitForFunction(
+    (count) =>
+      window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "brush" }).objects.length === count,
+    shortcutBrushCount,
+  );
+  await toolSettingsPage.locator("#select-all").click();
+  await toolSettingsPage.evaluate(() => document.activeElement?.blur());
+  await toolSettingsPage.keyboard.press("Delete");
+  await toolSettingsPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "brush" }).objects.length === 0,
+  );
+  await toolSettingsPage.keyboard.press("Control+z");
+  await toolSettingsPage.waitForFunction(
+    (count) =>
+      window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "brush" }).objects.length === count,
+    shortcutBrushCount,
+  );
+  result.checks.push(
+    "Keyboard duplicate and Delete edit the document and Undo restores it",
+  );
   await toolSettingsPage.evaluate(async () => {
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
