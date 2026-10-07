@@ -216,6 +216,7 @@ import {
 import { initEditorSurface } from "./editor-surface-bridge.ts";
 import { initEditorUvControls } from "./editor-uv-controls-bridge.ts";
 import { initEditorSwitchMapDialog } from "./editor-switch-map-bridge.ts";
+import { initEditorClipHull } from "./editor-clip-hull-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -293,25 +294,15 @@ const historyControls = initEditorHistory({
   redo: () => void runHistoryAction("redo"),
 });
 const projectContext = initEditorProjectContext(openProjectMap);
+const clipHull = initEditorClipHull({
+  setClipMode,
+  applyClip,
+  resetClip: () => renderer?.clearClipPlane(),
+  createHull,
+  discardHull: () => renderer?.clearHullPoints(),
+});
 const perspectiveLabel =
   document.querySelector<HTMLElement>("#perspective-label")!;
-const clipTools = document.querySelector<HTMLElement>("#clip-tools")!;
-const clipPointsLabel = document.querySelector<HTMLElement>("#clip-points")!;
-const applyClipButton =
-  document.querySelector<HTMLButtonElement>("#apply-clip")!;
-const resetClipButton =
-  document.querySelector<HTMLButtonElement>("#reset-clip")!;
-const clipModeButtons: Readonly<Record<BrushClipMode, HTMLButtonElement>> = {
-  back: document.querySelector<HTMLButtonElement>("#clip-back")!,
-  split: document.querySelector<HTMLButtonElement>("#clip-split")!,
-  front: document.querySelector<HTMLButtonElement>("#clip-front")!,
-};
-const hullTools = document.querySelector<HTMLElement>("#hull-tools")!;
-const hullPointsLabel = document.querySelector<HTMLElement>("#hull-points")!;
-const createHullButton =
-  document.querySelector<HTMLButtonElement>("#create-hull")!;
-const discardHullButton =
-  document.querySelector<HTMLButtonElement>("#discard-hull")!;
 const faceInspector = document.querySelector<HTMLElement>("#face-inspector")!;
 const faceProjection = document.querySelector<HTMLElement>("#face-projection")!;
 const switchMapDialog = initEditorSwitchMapDialog();
@@ -1491,7 +1482,6 @@ function refreshSelection() {
 function refreshClipPreview() {
   clipCandidate = null;
   const active = toolSettings.state.tool === "clip";
-  clipTools.hidden = !active;
   const selection = session.selection;
   if (active && clipPlanePoints && selection) {
     try {
@@ -1519,18 +1509,16 @@ function refreshClipPreview() {
   } else {
     renderer?.setDocument(session.document, selection, rendererViewState);
   }
-  clipPointsLabel.textContent = clipPoints.length
-    ? `${clipPoints.length} point${clipPoints.length === 1 ? "" : "s"}: ${clipPoints.map((point) => point.join(", ")).join(" · ")}`
-    : "Place two or three points";
-  for (const [mode, button] of Object.entries(clipModeButtons) as [
-    BrushClipMode,
-    HTMLButtonElement,
-  ][]) {
-    button.setAttribute("aria-pressed", String(mode === clipMode));
-  }
-  applyClipButton.disabled =
-    !clipCandidate || (hostedMap !== null && !hostedConnection);
-  resetClipButton.disabled = clipPoints.length === 0;
+  clipHull.update({
+    clipVisible: active,
+    clipPoints: clipPoints.length
+      ? `${clipPoints.length} point${clipPoints.length === 1 ? "" : "s"}: ${clipPoints.map((point) => point.join(", ")).join(" · ")}`
+      : "Place two or three points",
+    clipMode,
+    clipApplyDisabled:
+      !clipCandidate || (hostedMap !== null && !hostedConnection),
+    clipResetDisabled: clipPoints.length === 0,
+  });
 }
 
 function handleClipPlaneChange(event: EditorClipPlaneEvent) {
@@ -1541,12 +1529,14 @@ function handleClipPlaneChange(event: EditorClipPlaneEvent) {
 
 function refreshHullControls() {
   const active = toolSettings.state.tool === "hull";
-  hullTools.hidden = !active;
-  hullPointsLabel.textContent = `${hullPointCount} point${hullPointCount === 1 ? "" : "s"}`;
-  createHullButton.disabled =
-    !active || !hullCandidate || (hostedMap !== null && !hostedConnection);
-  discardHullButton.disabled =
-    !active || (hullPointCount === 0 && !renderer?.hullHistoryActive);
+  clipHull.update({
+    hullVisible: active,
+    hullPoints: `${hullPointCount} point${hullPointCount === 1 ? "" : "s"}`,
+    hullCreateDisabled:
+      !active || !hullCandidate || (hostedMap !== null && !hostedConnection),
+    hullDiscardDisabled:
+      !active || (hullPointCount === 0 && !renderer?.hullHistoryActive),
+  });
   if (renderer?.hullHistoryActive) {
     historyControls.update({
       undoDisabled: !renderer.canUndoHull,
@@ -2490,16 +2480,12 @@ function activateViewportTool(next: string) {
   if (next === "sweep" && previous !== "sweep") sweepTool.enter();
 }
 
-for (const [mode, button] of Object.entries(clipModeButtons) as [
-  BrushClipMode,
-  HTMLButtonElement,
-][]) {
-  button.addEventListener("click", () => {
-    clipMode = mode;
-    refreshClipPreview();
-  });
+function setClipMode(mode: BrushClipMode) {
+  clipMode = mode;
+  refreshClipPreview();
 }
-applyClipButton.addEventListener("click", () => {
+
+function applyClip() {
   if (!clipCandidate || !viewportCanEdit()) return;
   const candidate = clipCandidate;
   clipCandidate = null;
@@ -2513,17 +2499,16 @@ applyClipButton.addEventListener("click", () => {
     status.textContent = error instanceof Error ? error.message : String(error);
     refreshClipPreview();
   }
-});
-resetClipButton.addEventListener("click", () => renderer?.clearClipPlane());
-createHullButton.addEventListener("click", () => {
+}
+
+function createHull() {
   if (!hullCandidate || !viewportCanEdit()) return;
   try {
     renderer?.commitHullBrush();
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
-discardHullButton.addEventListener("click", () => renderer?.clearHullPoints());
+}
 
 function refreshPointEntityPlacementBounds() {
   renderer?.setEntityPlacementBounds(
@@ -3474,7 +3459,7 @@ document.addEventListener("keydown", (event) => {
     }
     if (event.key === "Enter" && hullCandidate) {
       event.preventDefault();
-      createHullButton.click();
+      createHull();
       return;
     }
   }

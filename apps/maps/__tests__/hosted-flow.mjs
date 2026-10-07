@@ -1523,6 +1523,28 @@ try {
     "face",
   );
   await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "clip" });
+  });
+  await toolSettingsPage.locator("#clip-tools").waitFor({ state: "visible" });
+  assert.equal(
+    await toolSettingsPage.locator("#apply-clip").isDisabled(),
+    true,
+  );
+  await toolSettingsPage.locator("#clip-front").click();
+  assert.equal(
+    await toolSettingsPage.locator("#clip-front").getAttribute("aria-pressed"),
+    "true",
+  );
+  await toolSettingsPage.evaluate(() => {
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "hull" });
+  });
+  await toolSettingsPage.locator("#hull-tools").waitFor({ state: "visible" });
+  await toolSettingsPage.locator("#clip-tools").waitFor({ state: "hidden" });
+  assert.equal(
+    await toolSettingsPage.locator("#create-hull").isDisabled(),
+    true,
+  );
+  await toolSettingsPage.evaluate(() => {
     window.teaMapsTestTools
       .get("tea_maps_set_tool")
       .execute({ tool: "select" });
@@ -1548,7 +1570,7 @@ try {
   assert.deepEqual(snappedBounds, { min: [0, 0, 0], max: [64, 64, 64] });
   await toolSettingsPage.close();
   result.checks.push(
-    "Remix tool, grid, and texture-lock controls update live editor settings",
+    "Remix tool, Clip/Hull, grid, and texture-lock controls update live editor settings",
   );
   const geometryPage = await browser.newPage();
   await installSiteToolMock(geometryPage);

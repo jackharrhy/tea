@@ -30,6 +30,7 @@ import {
 import { EditorSurface } from "./assets/editor-surface-panel.tsx";
 import { EditorUvControls } from "./assets/editor-uv-controls-panel.tsx";
 import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
+import { EditorClipHull } from "./assets/editor-clip-hull-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -86,44 +87,7 @@ export function EditorPage() {
             <EditorEditActions />
             <EditorEntityCreation />
             <EditorTransforms />
-            <div id="clip-tools" class="clip-tools" hidden>
-              <span id="clip-points">Place two or three points</span>
-              <div role="group" aria-label="Clip result">
-                <button id="clip-back" type="button" aria-pressed="true">
-                  Keep back
-                </button>
-                <button id="clip-split" type="button" aria-pressed="false">
-                  Split
-                </button>
-                <button id="clip-front" type="button" aria-pressed="false">
-                  Keep front
-                </button>
-              </div>
-              <button id="apply-clip" type="button" disabled>
-                Apply clip
-              </button>
-              <button id="reset-clip" type="button" disabled>
-                Reset points
-              </button>
-              <p>
-                Click two or three snapped points in a viewport, or double-click
-                a face to match its plane. Drag an orange point to adjust it.
-              </p>
-            </div>
-            <div id="hull-tools" class="hull-tools" hidden>
-              <span id="hull-points">0 points</span>
-              <button id="create-hull" type="button" disabled>
-                Create hull
-              </button>
-              <button id="discard-hull" type="button" disabled>
-                Discard points
-              </button>
-              <p>
-                In the perspective viewport, click a reference face for one
-                point, double-click for its vertices, or drag a rectangle. Enter
-                creates the hull; Escape discards its points.
-              </p>
-            </div>
+            <EditorClipHull />
             <div id="sweep-tools" class="sweep-tools" hidden>
               <strong>Sweep selected faces</strong>
               <span id="sweep-count">0 brushes</span>
