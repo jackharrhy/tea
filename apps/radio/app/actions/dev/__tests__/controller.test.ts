@@ -35,7 +35,7 @@ it("renders the development kitchen sink with representative radio states", asyn
   let html = await response.text();
 
   assert.equal(response.status, 200);
-  assert.match(html, /<title>Radio \/ UI<\/title>/);
+  assert.match(html, /<title>UI · tea\/radio<\/title>/);
   assert.match(html, /signed out/);
   assert.match(html, /aria-label="Rooms"/);
   assert.match(html, /name="room" value="cozy"[^>]*data-selected="true"/);

@@ -1,6 +1,6 @@
 # @tea/ref
 
-A small, private board for images and links. This Tea app is adapted from the separate Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. There are no user accounts or shared spaces. One password opens every board. The original Ref deployment remains independent while this copy is validated.
+A small, private board for images and links. The Tea copy presents itself as `tea/ref` while retaining Ref's board format and storage contract. This app is adapted from the separate Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. There are no user accounts or shared spaces. One password opens every board. The original Ref deployment remains independent while this copy is validated.
 
 ## Run locally
 

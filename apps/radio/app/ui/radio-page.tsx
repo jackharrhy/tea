@@ -10,7 +10,10 @@ export function RadioPage(
   handle: Handle<{ snapshot: RoomSnapshot; roomName: string }>,
 ) {
   return () => (
-    <Document title="Radio" head={<RadioHead />}>
+    <Document
+      title={`${handle.props.roomName} · tea/radio`}
+      head={<RadioHead />}
+    >
       <main mix={[desktopThemeStyle, pageStyle]}>
         <RadioRoom
           initialSnapshot={handle.props.snapshot}

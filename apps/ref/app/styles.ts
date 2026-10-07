@@ -35,7 +35,7 @@ export const refStyles = css({
   "& .wordmark": {
     "font-size": "23px",
     "font-weight": "700",
-    "letter-spacing": "-0.09em",
+    "letter-spacing": "-0.04em",
     "line-height": "1",
   },
   "& .wordmark span": {

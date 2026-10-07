@@ -1,6 +1,6 @@
 # @tea/radio
 
-A multi-room synchronized audio player copied from the separate Radio repository for validation in Tea. Remix renders the application inside a Worker, and each
+A multi-room synchronized audio player copied from the separate Radio repository for validation in Tea. Its pages and title bar use the `tea/radio` identity while preserving existing room and media APIs. Remix renders the application inside a Worker, and each
 named room is a Celld/Cloudflare-compatible Durable Object with private SQLite state and
 hibernatable WebSockets. Audio content lives in the `TRACKS` R2-compatible object binding.
 

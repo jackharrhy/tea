@@ -158,10 +158,10 @@ const glyphCandidates = [
 
 export function KitchenSinkPage() {
   return () => (
-    <Document title="Radio / UI" head={<KitchenSinkHead />}>
+    <Document title="UI · tea/radio" head={<KitchenSinkHead />}>
       <main mix={[desktopThemeStyle, sinkStyle.page]}>
         <header mix={sinkStyle.toolbar}>
-          <strong>radio/ui</strong>
+          <strong>tea/radio/ui</strong>
           <nav aria-label="Kitchen sink sections" mix={sinkStyle.nav}>
             <a href="#home">home</a>
             <a href="#tokens">tokens</a>

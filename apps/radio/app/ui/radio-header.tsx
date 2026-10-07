@@ -17,6 +17,12 @@ export function RadioHeader(
     return (
       <header mix={[desktopStyle.titleBar, radioHeaderStyle.header]}>
         <nav aria-label="Breadcrumb" mix={radioHeaderStyle.breadcrumbs}>
+          <a href={routes.home.href()} mix={radioHeaderStyle.brandLink}>
+            tea/radio
+          </a>
+          <span aria-hidden="true" mix={radioHeaderStyle.separator}>
+            /
+          </span>
           {roomName ? (
             <a href={routes.home.href()} mix={radioHeaderStyle.roomsLink}>
               <span aria-hidden="true" mix={radioHeaderStyle.backIcon}>
@@ -82,6 +88,15 @@ const radioHeaderStyle = {
     fontWeight: 400,
     lineHeight: "20px",
     whiteSpace: "nowrap",
+  }),
+  brandLink: css({
+    color: "#fff",
+    fontWeight: 700,
+    textDecoration: "none",
+    "&:focus-visible": {
+      outline: "1px solid #fff",
+      outlineOffset: "1px",
+    },
   }),
   roomsLink: css({
     minWidth: 0,

@@ -8,7 +8,7 @@ export interface DocumentProps {
   title?: string;
 }
 
-const DEFAULT_TITLE = readAppDisplayName("Radio");
+const DEFAULT_TITLE = "tea/radio";
 
 export function Document(handle: Handle<DocumentProps>) {
   return () => {
@@ -37,8 +37,4 @@ export function Document(handle: Handle<DocumentProps>) {
       </html>
     );
   };
-}
-
-function readAppDisplayName(value: string): string {
-  return value.startsWith("%%") ? "Remix App" : decodeURIComponent(value);
 }

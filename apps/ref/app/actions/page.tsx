@@ -10,7 +10,7 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#f6f6f4" />
-        <title>{handle.props.title} · Ref</title>
+        <title>{handle.props.title} · tea/ref</title>
         <link rel="icon" href="/favicon.svg" />
       </head>
       <body>{handle.props.children}</body>
@@ -24,7 +24,7 @@ export function AuthPage(handle: Handle<{ error?: string }>) {
       <main class="auth-page">
         <form method="post" action="/login" class="auth-form">
           <a class="wordmark" href="/">
-            ref<span>.</span>
+            tea<span>/ref</span>
           </a>
           <label for="password">Password</label>
           <div class="auth-row">
@@ -57,7 +57,7 @@ export function HomePage(
       <main class="home-page">
         <header class="site-header">
           <a class="wordmark" href="/">
-            ref<span>.</span>
+            tea<span>/ref</span>
           </a>
           <form method="post" action="/logout">
             <button class="quiet-button" type="submit">
