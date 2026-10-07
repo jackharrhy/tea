@@ -124,6 +124,40 @@ export const EditorBuildControls = clientEntry(
             <summary>Build messages</summary>
             <pre id="build-output">{state?.buildOutput ?? ""}</pre>
           </details>
+          <details id="local-build-history" hidden={state?.localHistoryHidden}>
+            <summary>Local build history</summary>
+            <label for="local-build-select">Retained builds</label>
+            <select
+              id="local-build-select"
+              value={state?.selectedLocalBuildId ?? ""}
+              disabled={!context || !state?.localHistory.length}
+              mix={on<HTMLSelectElement>("change", (event) =>
+                context?.actions.inspectLocalBuild(event.currentTarget.value),
+              )}
+            >
+              <option value="">Choose a build</option>
+              {state?.localHistory.map((build) => (
+                <option value={build.id}>{build.label}</option>
+              ))}
+            </select>
+            <button
+              id="local-build-download"
+              type="button"
+              disabled={
+                !context ||
+                !state?.localHistory.some(
+                  (build) =>
+                    build.id === state.selectedLocalBuildId && build.hasBsp,
+                )
+              }
+              mix={on("click", () => context?.actions.downloadLocalBuild())}
+            >
+              Download BSP
+            </button>
+            <span id="local-build-history-status" role="status">
+              {state?.localHistoryStatus ?? ""}
+            </span>
+          </details>
         </div>
       );
     };

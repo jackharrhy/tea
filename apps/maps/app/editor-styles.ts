@@ -258,6 +258,28 @@ export const editorStyles = css({
     color: "var(--editor-secondary-ink)",
   },
   "& #build-details summary": { cursor: "pointer", "font-size": "0.85rem" },
+  "& #local-build-history": {
+    flex: "1 1 100%",
+    padding: "0.45rem 0.65rem",
+    border: "1px solid var(--editor-border)",
+    "border-radius": "5px",
+  },
+  "& #local-build-history summary": {
+    cursor: "pointer",
+    "font-size": "0.85rem",
+  },
+  "& #local-build-select": {
+    color: "var(--editor-ink)",
+    background: "var(--editor-field)",
+    border: "1px solid var(--editor-border)",
+    "border-radius": "5px",
+    padding: "0.4rem",
+    margin: "0.3rem 0.5rem",
+  },
+  "& #local-build-history-status": {
+    "font-size": "0.85rem",
+    color: "var(--editor-secondary-ink)",
+  },
   "& #build-output": {
     "max-width": "34rem",
     "max-height": "18rem",

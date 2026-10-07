@@ -164,6 +164,11 @@ import {
 } from "./editor-context-menu.ts";
 import { buildMap, downloadBsp, launchLocalBuild } from "./editor-build.ts";
 import {
+  listLocalBuilds,
+  recordLocalBuild,
+  type LocalBuildRecord,
+} from "./editor-local-build-history.ts";
+import {
   downloadBuildFile,
   packageBuildExport,
   prepareBuildExport,
@@ -335,6 +340,8 @@ const buildControls = initEditorBuildControls({
   toggleLeak: () => buildOverlays.toggleLeak(),
   togglePortals: () => buildOverlays.togglePortals(),
   launch: () => void launchCurrentBuild(),
+  inspectLocalBuild: (id) => inspectLocalBuild(id),
+  downloadLocalBuild: () => downloadSelectedLocalBuild(),
 });
 const documentControls = initEditorDocumentControls({
   newMap: newMapFromControls,
@@ -428,6 +435,8 @@ let latestLaunch: {
   readonly name: string;
   readonly game: WorldviewGameProfile;
 } | null = null;
+let localBuildRecords: readonly LocalBuildRecord[] = [];
+let localHistoryGeneration = 0;
 let latestBuildExport: {
   readonly input: BuildExportInput;
   readonly document: MapDocument;
@@ -931,6 +940,80 @@ function refreshBuildLaunch() {
     launchDisabled:
       launchBusy || !latestLaunch || !isBuildLaunchCurrent(latestLaunch),
   });
+}
+
+function localBuildMessages(result: MapCompileResult): string {
+  return [
+    ...result.diagnostics.map(
+      (entry) => `${entry.severity}: ${entry.stage}: ${entry.message}`,
+    ),
+    ...result.logs.map((entry) => `${entry.stage}:\n${entry.text}`),
+  ].join("\n\n");
+}
+
+async function refreshLocalBuildHistory(selectedId = "") {
+  const generation = ++localHistoryGeneration;
+  const mapKey = hostedMap ? null : documentId;
+  localBuildRecords = [];
+  buildControls.update({
+    localHistoryHidden: !mapKey,
+    localHistory: [],
+    selectedLocalBuildId: "",
+    localHistoryStatus: mapKey ? "Loading retained builds" : "",
+  });
+  if (!mapKey) return;
+  try {
+    const records = await listLocalBuilds(mapKey);
+    if (
+      generation !== localHistoryGeneration ||
+      documentId !== mapKey ||
+      hostedMap
+    )
+      return;
+    localBuildRecords = records;
+    buildControls.update({
+      localHistory: records.map((record) => ({
+        id: record.id,
+        label: `${record.result.status} · ${new Date(record.createdAt).toLocaleString()} · r${record.result.sourceDocumentRevision}`,
+        hasBsp: record.result.artifacts.some(
+          (artifact) => artifact.kind === "bsp",
+        ),
+      })),
+      selectedLocalBuildId: records.some((record) => record.id === selectedId)
+        ? selectedId
+        : "",
+      localHistoryStatus: records.length
+        ? `${records.length} retained local ${records.length === 1 ? "build" : "builds"}`
+        : "No local builds yet",
+    });
+  } catch (error) {
+    if (generation === localHistoryGeneration)
+      buildControls.update({
+        localHistoryStatus: `Build history unavailable: ${error instanceof Error ? error.message : String(error)}`,
+      });
+  }
+}
+
+function inspectLocalBuild(id: string) {
+  const record = localBuildRecords.find((candidate) => candidate.id === id);
+  if (!record) return;
+  latestLaunch = null;
+  refreshBuildLaunch();
+  buildOverlays.inspect(record.result);
+  const output = localBuildMessages(record.result);
+  buildControls.update({
+    selectedLocalBuildId: id,
+    buildOutput: output,
+    buildLogVisible: output.length > 0,
+    buildStatus: `Showing retained build ${record.result.buildId.slice(0, 8)} from revision ${record.result.sourceDocumentRevision}`,
+  });
+}
+
+function downloadSelectedLocalBuild() {
+  const record = localBuildRecords.find(
+    (candidate) => candidate.id === buildControls.state.selectedLocalBuildId,
+  );
+  if (record) downloadBsp(record.result);
 }
 
 function compiledPreviewCamera(): CameraUpdate | null {
@@ -1715,6 +1798,7 @@ function setMap(value: MapDocument, sourceState?: MapSourceState) {
   refreshSelection();
   renderer?.focusDocument();
   workspace.switchDocument(hostedMap ? `hosted:${hostedMap.id}` : documentId);
+  void refreshLocalBuildHistory();
   refreshSource();
   scheduleRender();
 }
@@ -2371,6 +2455,7 @@ try {
   status.textContent = "Local recovery is unavailable; download your map";
 }
 workspace.switchDocument(documentId);
+void refreshLocalBuildHistory();
 materialBrowser.setMaterials(currentMaterials());
 refreshStatus();
 scheduleDraftSave();
@@ -3891,6 +3976,7 @@ async function runBuild(exportOnce: boolean) {
   const preferredProfileId =
     selected && bindingsAtStart?.preferred(selected.id);
   const nameAtStart = mapName;
+  const documentKeyAtStart = documentId;
   const settingsAtStart = exportSettings;
   const autoExport = settingsAtStart.afterBuild || exportOnce;
   const generation = ++buildGeneration;
@@ -3914,13 +4000,21 @@ async function runBuild(exportOnce: boolean) {
         game: gameAtStart,
         ...(preferredProfileId ? { preferredProfileId } : {}),
       });
-    buildControls.buildOutput = [
-      ...result.diagnostics.map(
-        (entry) => `${entry.severity}: ${entry.stage}: ${entry.message}`,
-      ),
-      ...result.logs.map((entry) => `${entry.stage}:\n${entry.text}`),
-    ].join("\n\n");
+    buildControls.buildOutput = localBuildMessages(result);
     buildControls.buildLogHidden = buildControls.buildOutput.length === 0;
+    void recordLocalBuild(documentKeyAtStart, result)
+      .then(() => {
+        if (documentId === documentKeyAtStart && !hostedMap)
+          void refreshLocalBuildHistory(
+            `${documentKeyAtStart}:${result.buildId}`,
+          );
+      })
+      .catch((error: unknown) => {
+        if (documentId === documentKeyAtStart && !hostedMap)
+          buildControls.update({
+            localHistoryStatus: `Build history could not save: ${error instanceof Error ? error.message : String(error)}`,
+          });
+      });
     if (selected && bindingsAtStart && project === projectAtStart) {
       try {
         await bindingsAtStart.remember(selected.id, profileId);

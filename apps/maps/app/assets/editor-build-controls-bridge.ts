@@ -21,6 +21,14 @@ export interface EditorBuildControlState {
   readonly buildStatus: string;
   readonly buildOutput: string;
   readonly buildLogVisible: boolean;
+  readonly localHistoryHidden: boolean;
+  readonly localHistory: readonly {
+    readonly id: string;
+    readonly label: string;
+    readonly hasBsp: boolean;
+  }[];
+  readonly selectedLocalBuildId: string;
+  readonly localHistoryStatus: string;
 }
 
 export interface EditorBuildControlActions {
@@ -33,6 +41,8 @@ export interface EditorBuildControlActions {
   readonly toggleLeak: () => void;
   readonly togglePortals: () => void;
   readonly launch: () => void;
+  readonly inspectLocalBuild: (id: string) => void;
+  readonly downloadLocalBuild: () => void;
 }
 
 export interface EditorBuildControlsContext {
@@ -65,6 +75,10 @@ export function initEditorBuildControls(actions: EditorBuildControlActions) {
     buildStatus: "",
     buildOutput: "",
     buildLogVisible: false,
+    localHistoryHidden: false,
+    localHistory: [],
+    selectedLocalBuildId: "",
+    localHistoryStatus: "",
   };
   let ready = false;
 
