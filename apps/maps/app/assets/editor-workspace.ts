@@ -45,6 +45,12 @@ const record = z.strictObject({
 type WorkspaceRecord = z.infer<typeof record>;
 type Layout = WorkspaceRecord["layout"];
 
+export interface EditorWorkspaceState {
+  readonly perspectiveOnly: boolean;
+  readonly ready: boolean;
+  readonly toggle: () => void;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -55,8 +61,6 @@ export function initEditorWorkspace(options: {
 }) {
   const workspace = document.querySelector<HTMLElement>(".editor-workspace")!;
   const viewports = document.querySelector<HTMLElement>(".viewports")!;
-  const toggle =
-    document.querySelector<HTMLButtonElement>("#perspective-only")!;
   const handles = [...document.querySelectorAll<HTMLElement>("[data-resize]")];
   const orthoFrames = KINDS.slice(1).map(
     (kind) =>
@@ -72,6 +76,25 @@ export function initEditorWorkspace(options: {
   let applying = false;
   let dirty = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
+
+  function publishState() {
+    window.dispatchEvent(
+      new CustomEvent<EditorWorkspaceState>("tea-maps-workspace-state", {
+        detail: {
+          perspectiveOnly,
+          ready,
+          toggle() {
+            perspectiveOnly = !perspectiveOnly;
+            applyPerspectiveOnly();
+            changed();
+          },
+        },
+      }),
+    );
+  }
+
+  window.addEventListener("tea-maps-workspace-ready", publishState);
+  window.dispatchEvent(new Event("tea-maps-workspace-bridge-ready"));
 
   function completeCameras() {
     const { perspective, xy, xz, yz } = cameras;
@@ -145,12 +168,7 @@ export function initEditorWorkspace(options: {
       if (handle.dataset.resize !== "inspector")
         handle.hidden = perspectiveOnly;
     }
-    toggle.textContent = perspectiveOnly ? "Restore" : "Expand";
-    toggle.setAttribute(
-      "aria-label",
-      perspectiveOnly ? "Restore four viewports" : "Show Perspective only",
-    );
-    toggle.setAttribute("aria-pressed", String(perspectiveOnly));
+    publishState();
     options
       .renderer()
       ?.setRenderedViewports(perspectiveOnly ? ["perspective"] : KINDS);
@@ -268,11 +286,6 @@ export function initEditorWorkspace(options: {
       changed();
     });
   }
-  toggle.addEventListener("click", () => {
-    perspectiveOnly = !perspectiveOnly;
-    applyPerspectiveOnly();
-    changed();
-  });
   window.addEventListener("pagehide", flush);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") flush();
@@ -289,7 +302,7 @@ export function initEditorWorkspace(options: {
     },
     applyInitial(renderer: EditorSourceRenderer) {
       ready = true;
-      toggle.disabled = false;
+      publishState();
       applying = true;
       try {
         if (saved) renderer.restoreViewportCameras(saved.cameras);

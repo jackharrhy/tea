@@ -162,6 +162,8 @@ The Rotate, Scale, and Shear tool panel renders through a Remix client component
 
 The viewport context menu renders through a Remix client component, including keyboard navigation and focus handling. The editor still supplies the current actions and runs them through its existing transactions.
 
+The Perspective Expand and Restore control renders through a Remix client component. The workspace still owns saved per-map layout, viewport visibility, resize handles, and camera restoration.
+
 The selected point entity and entity properties inspector renders through a Remix client component. Project definitions supply choices, flags, checkboxes, and numeric fields; linked copies can keep individual properties independent. The editor still validates classnames and origins and commits property edits through its history.
 
 The selected face picker, numeric Extrude, Split, and Stamp controls, and material application render through a Remix client component. The editor still runs those geometry and material edits through its session and source guard.

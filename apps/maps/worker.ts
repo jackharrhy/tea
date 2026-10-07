@@ -37,6 +37,7 @@ const clientEntryFiles = {
   "editor-hosted-picker-panel.tsx": browserAssets.editorHostedPicker,
   "editor-hosted-builds-panel.tsx": browserAssets.editorHostedBuilds,
   "editor-fov-panel.tsx": browserAssets.editorFov,
+  "editor-workspace-toggle.tsx": browserAssets.editorWorkspaceToggle,
   "editor-references-panel.tsx": browserAssets.editorReferences,
   "editor-layers-panel.tsx": browserAssets.editorLayers,
   "editor-groups-panel.tsx": browserAssets.editorGroups,

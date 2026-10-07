@@ -54,6 +54,8 @@ The Rotate, Scale, and Shear tool panel now renders through a Remix client entry
 
 The viewport context menu now renders through a Remix client entry while the editor supplies its actions and retains their transaction paths.
 
+The Perspective Expand and Restore control now renders through a Remix client entry while the workspace retains per-map layout persistence and viewport rendering.
+
 Sync project and Edit hosted source open buttons now render through their Remix dialog entries using the editor's project and hosted-room availability.
 
 The selected point entity and entity properties inspector now renders through a Remix client entry, including definition driven fields and linked-copy protection. The editor retains validation, source guards, and property history.

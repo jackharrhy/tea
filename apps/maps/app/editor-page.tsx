@@ -6,6 +6,7 @@ import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.ts
 import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorFov } from "./assets/editor-fov-panel.tsx";
+import { EditorWorkspaceToggle } from "./assets/editor-workspace-toggle.tsx";
 import { EditorReferences } from "./assets/editor-references-panel.tsx";
 import { EditorLayers } from "./assets/editor-layers-panel.tsx";
 import { EditorGroups } from "./assets/editor-groups-panel.tsx";
@@ -129,15 +130,7 @@ export function EditorPage() {
                 <div class="perspective-header">
                   <span id="perspective-label">Perspective</span>
                   <EditorFov />
-                  <button
-                    id="perspective-only"
-                    type="button"
-                    aria-pressed="false"
-                    aria-label="Show Perspective only"
-                    disabled
-                  >
-                    Expand
-                  </button>
+                  <EditorWorkspaceToggle />
                 </div>
                 <canvas
                   id="perspective"
