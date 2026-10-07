@@ -138,6 +138,8 @@ The Selection brushes controls render through a Remix client component. The edit
 
 The selection command buttons render through a Remix client component. Delete, duplicate, select all, invert, focus, hide, isolate, show all, lock, and unlock use the editor's same actions from the toolbar, context menu, and keyboard shortcuts.
 
+Undo and Redo buttons render through a Remix client component. The editor still chooses local, hosted personalized, or temporary hull-point history and supplies the current action labels.
+
 When editing inside a linked group that has another copy, entity properties can be marked Independent in the inspector. A new protected property stays in the open copy, while edits to ordinary properties continue to synchronize. The checkbox beside an existing property can add or remove that protection.
 
 Viewport picking treats closed groups as one selection, opens a group on activation, and expands a brush entity pick to its sibling brushes. With several brushes selected, picking a face in Face mode selects matching faces across them. Paint selection reports the resulting count in the editor status.

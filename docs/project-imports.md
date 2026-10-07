@@ -34,6 +34,8 @@ Selection-brush query controls now render through a Remix client entry; the edit
 
 The selection command group now renders through a Remix client entry. Its context-menu and keyboard paths call the same editor actions as the buttons.
 
+Undo and Redo buttons now render through a Remix client entry; the editor retains local, hosted, and hull-point history routing.
+
 Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.
 
 Viewport tool, grid size, and Texture lock now render through a Remix client entry. The editor and its tools read the same settings state for rendering and transactions.

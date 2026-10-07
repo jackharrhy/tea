@@ -17,6 +17,7 @@ import { EditorProjectContextPanel } from "./assets/editor-project-context-panel
 import { EditorSelectionCommands } from "./assets/editor-selection-commands-panel.tsx";
 import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
 import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
+import { EditorHistory } from "./assets/editor-history-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -546,12 +547,7 @@ export function EditorPage() {
             <EditorGroups />
             <EditorLayers />
             <EditorReferences />
-            <button id="undo" type="button" disabled>
-              Undo
-            </button>
-            <button id="redo" type="button" disabled>
-              Redo
-            </button>
+            <EditorHistory />
           </nav>
           <details id="hosted-editor-picker" class="hosted-editor-picker">
             <summary>Hosted maps</summary>

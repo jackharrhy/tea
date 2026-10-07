@@ -1600,6 +1600,21 @@ try {
       window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
         .brushes === 4,
   );
+  assert.match(
+    (await selectionPage.locator("#undo").getAttribute("title")) ?? "",
+    /^Undo /,
+  );
+  await selectionPage.locator("#undo").click();
+  assert.match(
+    (await selectionPage.locator("#redo").getAttribute("title")) ?? "",
+    /^Redo /,
+  );
+  await selectionPage.locator("#redo").click();
+  await selectionPage.waitForFunction(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
+        .brushes === 4,
+  );
   await selectionPage.locator("#undo").click();
   await selectionPage.locator("#hide-selection").click();
   await selectionPage.locator("#show-all:not([disabled])").waitFor();
@@ -1624,7 +1639,7 @@ try {
         .brushes === 2,
   );
   result.checks.push(
-    "Remix selection commands duplicate, hide, lock, invert, and delete with Undo",
+    "Remix selection commands duplicate, hide, lock, invert, and delete with Undo and Redo",
   );
   await selectionPage.locator("#select-all").click();
   await selectionPage.locator("#copy-selection").click();

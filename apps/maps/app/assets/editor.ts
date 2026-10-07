@@ -198,6 +198,7 @@ import {
 import { initEditorSelectionCommands } from "./editor-selection-commands-bridge.ts";
 import { initEditorEditActions } from "./editor-edit-actions-bridge.ts";
 import { initEditorToolSettings } from "./editor-tool-settings-bridge.ts";
+import { initEditorHistory } from "./editor-history-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -299,8 +300,10 @@ const csgButtons = {
 };
 const csgThickness =
   document.querySelector<HTMLInputElement>("#csg-thickness")!;
-const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
-const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
+const historyControls = initEditorHistory({
+  undo: () => void runHistoryAction("undo"),
+  redo: () => void runHistoryAction("redo"),
+});
 const projectContext = initEditorProjectContext(openProjectMap);
 const perspectiveLabel =
   document.querySelector<HTMLElement>("#perspective-label")!;
@@ -1546,20 +1549,18 @@ function refreshSelection() {
     openGroupId,
   });
   refreshLayers();
-  undoButton.disabled = hostedMap
-    ? !hostedConnection?.canUndo()
-    : !session.canUndo;
-  redoButton.disabled = hostedMap
-    ? !hostedConnection?.canRedo()
-    : !session.canRedo;
   const undoLabel = hostedMap
     ? hostedConnection?.undoLabel()
     : session.undoLabel;
   const redoLabel = hostedMap
     ? hostedConnection?.redoLabel()
     : session.redoLabel;
-  undoButton.title = undoLabel ? `Undo ${undoLabel}` : "Undo";
-  redoButton.title = redoLabel ? `Redo ${redoLabel}` : "Redo";
+  historyControls.update({
+    undoDisabled: hostedMap ? !hostedConnection?.canUndo() : !session.canUndo,
+    redoDisabled: hostedMap ? !hostedConnection?.canRedo() : !session.canRedo,
+    undoTitle: undoLabel ? `Undo ${undoLabel}` : "Undo",
+    redoTitle: redoLabel ? `Redo ${redoLabel}` : "Redo",
+  });
   const viewState = session.objectViewState;
   const openGroup = deriveEditorGroups(session.document).find(
     (group) => group.id === openGroupId,
@@ -1661,10 +1662,12 @@ function refreshHullControls() {
   discardHullButton.disabled =
     !active || (hullPointCount === 0 && !renderer?.hullHistoryActive);
   if (renderer?.hullHistoryActive) {
-    undoButton.disabled = !renderer.canUndoHull;
-    redoButton.disabled = !renderer.canRedoHull;
-    undoButton.title = "Undo hull point";
-    redoButton.title = "Redo hull point";
+    historyControls.update({
+      undoDisabled: !renderer.canUndoHull,
+      redoDisabled: !renderer.canRedoHull,
+      undoTitle: "Undo hull point",
+      redoTitle: "Redo hull point",
+    });
   }
 }
 
@@ -3588,12 +3591,6 @@ async function runHistoryAction(action: "undo" | "redo") {
   if (applyWorkingSource()) session[action]();
 }
 
-undoButton.addEventListener("click", () => {
-  void runHistoryAction("undo");
-});
-redoButton.addEventListener("click", () => {
-  void runHistoryAction("redo");
-});
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && uvEditor.cancel()) {
     event.preventDefault();
