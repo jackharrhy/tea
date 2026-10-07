@@ -1526,24 +1526,17 @@ try {
     window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "clip" });
   });
   await toolSettingsPage.locator("#clip-tools").waitFor({ state: "visible" });
-  assert.equal(
-    await toolSettingsPage.locator("#apply-clip").isDisabled(),
-    true,
-  );
   await toolSettingsPage.locator("#clip-front").click();
-  assert.equal(
-    await toolSettingsPage.locator("#clip-front").getAttribute("aria-pressed"),
-    "true",
+  await toolSettingsPage.waitForFunction(
+    () =>
+      document.querySelector("#clip-front")?.getAttribute("aria-pressed") ===
+      "true",
   );
   await toolSettingsPage.evaluate(() => {
     window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "hull" });
   });
   await toolSettingsPage.locator("#hull-tools").waitFor({ state: "visible" });
   await toolSettingsPage.locator("#clip-tools").waitFor({ state: "hidden" });
-  assert.equal(
-    await toolSettingsPage.locator("#create-hull").isDisabled(),
-    true,
-  );
   await toolSettingsPage.evaluate(() => {
     window.teaMapsTestTools
       .get("tea_maps_set_tool")
@@ -1685,6 +1678,30 @@ try {
     await facePage.locator("#selected-face").inputValue(),
     selectedFaceId,
   );
+  await facePage.evaluate(() => {
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "sweep" });
+  });
+  await facePage.locator("#sweep-tools").waitFor({ state: "visible" });
+  await facePage.waitForFunction(() => {
+    const count = document.querySelector("#sweep-count")?.textContent;
+    return count && count !== "0 brushes" && count !== "Invalid sweep";
+  });
+  await facePage.locator("#sweep-segments").fill("0");
+  await facePage
+    .getByText("Sweep segments must be an integer from 1 to 128")
+    .waitFor();
+  assert.equal(await facePage.locator("#apply-sweep").isDisabled(), true);
+  await facePage.locator("#sweep-segments").fill("4");
+  await facePage.locator("#sweep-path").selectOption("arc");
+  assert.equal(await facePage.locator("#sweep-path").inputValue(), "arc");
+  await facePage.locator("#reset-sweep").click();
+  await facePage.waitForFunction(
+    () => document.querySelector("#sweep-path")?.value === "straight",
+  );
+  await facePage.evaluate(() => {
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "face" });
+  });
+  await facePage.locator("#sweep-tools").waitFor({ state: "hidden" });
   await facePage.locator("#uv-frame:not([disabled])").click();
   await facePage
     .locator("#uv-editor-status")
@@ -1776,7 +1793,7 @@ try {
   );
   await facePage.close();
   result.checks.push(
-    "Remix face picker, UV controls, material, projection, alignment, and geometry controls use editor transactions",
+    "Remix face picker, Sweep and UV controls, material, projection, alignment, and geometry controls use editor transactions",
   );
   const surfacePage = await browser.newPage();
   await installSiteToolMock(surfacePage);

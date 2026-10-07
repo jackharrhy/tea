@@ -7,7 +7,6 @@ import {
   type EditorSession,
   type SweepCandidate,
   type SweepOptions,
-  type SweepPath,
   type SweepTransform,
   type Vec3,
 } from "@tea/maps-editor/core";
@@ -15,13 +14,14 @@ import {
   type EditorSourceRenderer,
   type EditorSweepDragEvent,
 } from "@tea/maps-editor/render";
+import { initEditorSweepPanel } from "./editor-sweep-bridge.ts";
 
 function vector(values: readonly number[]): Vec3 {
   return [values[0]!, values[1]!, values[2]!];
 }
 
-function readNumber(input: HTMLInputElement): number {
-  const value = input.value.trim() === "" ? NaN : Number(input.value);
+function readNumber(raw: string): number {
+  const value = raw.trim() === "" ? NaN : Number(raw);
   if (!Number.isFinite(value))
     throw new Error("Sweep values must be finite numbers");
   return value;
@@ -38,26 +38,6 @@ export function createEditorSweep(options: {
   status(message: string): void;
   selectTool(): void;
 }) {
-  const section = document.querySelector<HTMLElement>("#sweep-tools")!;
-  const count = document.querySelector<HTMLElement>("#sweep-count")!;
-  const applyButton =
-    document.querySelector<HTMLButtonElement>("#apply-sweep")!;
-  const resetButton =
-    document.querySelector<HTMLButtonElement>("#reset-sweep")!;
-  const translationInputs = (["x", "y", "z"] as const).map((axis) =>
-    document.querySelector<HTMLInputElement>(`#sweep-translate-${axis}`)!,
-  );
-  const rotationInputs = (["x", "y", "z"] as const).map((axis) =>
-    document.querySelector<HTMLInputElement>(`#sweep-rotate-${axis}`)!,
-  );
-  const scaleInput = document.querySelector<HTMLInputElement>("#sweep-scale")!;
-  const pathInput = document.querySelector<HTMLSelectElement>("#sweep-path")!;
-  const segmentsInput =
-    document.querySelector<HTMLInputElement>("#sweep-segments")!;
-  const iterationsInput =
-    document.querySelector<HTMLInputElement>("#sweep-iterations")!;
-  const snapInput = document.querySelector<HTMLInputElement>("#sweep-snap")!;
-
   let candidate: SweepCandidate | null = null;
   let prefix = `tea-sweep-${crypto.randomUUID()}`;
   let transform: SweepTransform = {
@@ -73,6 +53,11 @@ export function createEditorSweep(options: {
   };
   let dragBase: SweepTransform | null = null;
   let escapeReset = false;
+  const panel = initEditorSweepPanel({
+    inputChanged: handleInput,
+    apply,
+    reset,
+  });
 
   function initialTransform(): SweepTransform {
     const session = options.session();
@@ -93,17 +78,21 @@ export function createEditorSweep(options: {
   }
 
   function syncInputs() {
-    translationInputs.forEach((input, axis) => {
-      input.value = String(transform.translation[axis]);
+    panel.update({
+      fields: {
+        translateX: String(transform.translation[0]),
+        translateY: String(transform.translation[1]),
+        translateZ: String(transform.translation[2]),
+        rotateX: String(transform.rotationDegrees[0]),
+        rotateY: String(transform.rotationDegrees[1]),
+        rotateZ: String(transform.rotationDegrees[2]),
+        scale: String(transform.scale),
+        segments: String(sweepOptions.segments),
+        iterations: String(sweepOptions.iterations),
+      },
+      path: sweepOptions.path,
+      snap: sweepOptions.snapToInteger,
     });
-    rotationInputs.forEach((input, axis) => {
-      input.value = String(transform.rotationDegrees[axis]);
-    });
-    scaleInput.value = String(transform.scale);
-    pathInput.value = sweepOptions.path;
-    segmentsInput.value = String(sweepOptions.segments);
-    iterationsInput.value = String(sweepOptions.iterations);
-    snapInput.checked = sweepOptions.snapToInteger;
   }
 
   function restoreDocument() {
@@ -116,15 +105,14 @@ export function createEditorSweep(options: {
 
   function refresh(announce = false) {
     const active = options.tool() === "sweep";
-    section.hidden = !active;
+    panel.update({ visible: active });
     if (!active) return;
     candidate = null;
     const session = options.session();
     const faces = selectedFaceReferences(session.selection);
     if (faces.length === 0) {
       restoreDocument();
-      count.textContent = "0 brushes";
-      applyButton.disabled = true;
+      panel.update({ count: "0 brushes", applyDisabled: true });
       if (announce)
         options.status("Select one or more brush faces before sweeping");
       return;
@@ -153,16 +141,17 @@ export function createEditorSweep(options: {
         );
       options.renderer()?.setSweepCaps(next.destinationCaps);
       const amount = next.insertions.length;
-      count.textContent = `${amount} ${amount === 1 ? "brush" : "brushes"}`;
-      applyButton.disabled = !options.canEdit();
+      panel.update({
+        count: `${amount} ${amount === 1 ? "brush" : "brushes"}`,
+        applyDisabled: !options.canEdit(),
+      });
       if (announce)
         options.status(
           `Sweep preview: ${faces.length} faces → ${amount} brushes`,
         );
     } catch (error) {
       restoreDocument();
-      count.textContent = "Invalid sweep";
-      applyButton.disabled = true;
+      panel.update({ count: "Invalid sweep", applyDisabled: true });
       options.status(error instanceof Error ? error.message : String(error));
     }
   }
@@ -189,7 +178,7 @@ export function createEditorSweep(options: {
   function leave() {
     candidate = null;
     dragBase = null;
-    section.hidden = true;
+    panel.update({ visible: false });
     options.renderer()?.setSweepCaps([]);
     restoreDocument();
   }
@@ -248,11 +237,16 @@ export function createEditorSweep(options: {
   }
 
   function readInputs() {
-    const translation = vector(translationInputs.map(readNumber));
-    const rotationDegrees = vector(rotationInputs.map(readNumber));
-    const scale = readNumber(scaleInput);
-    const segments = readNumber(segmentsInput);
-    const iterations = readNumber(iterationsInput);
+    const { fields, path, snap } = panel.state;
+    const translation = vector(
+      [fields.translateX, fields.translateY, fields.translateZ].map(readNumber),
+    );
+    const rotationDegrees = vector(
+      [fields.rotateX, fields.rotateY, fields.rotateZ].map(readNumber),
+    );
+    const scale = readNumber(fields.scale);
+    const segments = readNumber(fields.segments);
+    const iterations = readNumber(fields.iterations);
     if (scale <= 0 || scale > 20)
       throw new Error("Sweep scale must be greater than 0 and at most 20");
     if (!Number.isInteger(segments) || segments < 1 || segments > 128)
@@ -261,43 +255,25 @@ export function createEditorSweep(options: {
       throw new Error("Sweep iterations must be an integer from 1 to 64");
     transform = { translation, rotationDegrees, scale };
     sweepOptions = {
-      path: pathInput.value as SweepPath,
+      path,
       segments,
       iterations,
-      snapToInteger: snapInput.checked,
+      snapToInteger: snap,
     };
     escapeReset = false;
     refresh();
   }
 
-  for (const input of [
-    ...translationInputs,
-    ...rotationInputs,
-    scaleInput,
-    pathInput,
-    segmentsInput,
-    iterationsInput,
-    snapInput,
-  ]) {
-    input.addEventListener("input", () => {
-      try {
-        readInputs();
-      } catch (error) {
-        candidate = null;
-        applyButton.disabled = true;
-        restoreDocument();
-        options.status(error instanceof Error ? error.message : String(error));
-      }
-    });
-    input.addEventListener("keydown", (event) => {
-      if ((event as KeyboardEvent).key === "Enter") {
-        event.preventDefault();
-        apply();
-      }
-    });
+  function handleInput() {
+    try {
+      readInputs();
+    } catch (error) {
+      candidate = null;
+      panel.update({ applyDisabled: true });
+      restoreDocument();
+      options.status(error instanceof Error ? error.message : String(error));
+    }
   }
-  applyButton.addEventListener("click", apply);
-  resetButton.addEventListener("click", reset);
 
   return {
     enter,

@@ -31,6 +31,7 @@ import { EditorSurface } from "./assets/editor-surface-panel.tsx";
 import { EditorUvControls } from "./assets/editor-uv-controls-panel.tsx";
 import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
 import { EditorClipHull } from "./assets/editor-clip-hull-panel.tsx";
+import { EditorSweepPanel } from "./assets/editor-sweep-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -88,88 +89,7 @@ export function EditorPage() {
             <EditorEntityCreation />
             <EditorTransforms />
             <EditorClipHull />
-            <div id="sweep-tools" class="sweep-tools" hidden>
-              <strong>Sweep selected faces</strong>
-              <span id="sweep-count">0 brushes</span>
-              <div class="sweep-fields">
-                <span>Destination</span>
-                <label for="sweep-translate-x">X</label>
-                <input
-                  id="sweep-translate-x"
-                  type="number"
-                  step="1"
-                  value="0"
-                />
-                <label for="sweep-translate-y">Y</label>
-                <input
-                  id="sweep-translate-y"
-                  type="number"
-                  step="1"
-                  value="0"
-                />
-                <label for="sweep-translate-z">Z</label>
-                <input
-                  id="sweep-translate-z"
-                  type="number"
-                  step="1"
-                  value="64"
-                />
-                <span>Rotation</span>
-                <label for="sweep-rotate-x">X</label>
-                <input id="sweep-rotate-x" type="number" step="5" value="0" />
-                <label for="sweep-rotate-y">Y</label>
-                <input id="sweep-rotate-y" type="number" step="5" value="0" />
-                <label for="sweep-rotate-z">Z</label>
-                <input id="sweep-rotate-z" type="number" step="5" value="0" />
-                <label for="sweep-scale">Scale</label>
-                <input
-                  id="sweep-scale"
-                  type="number"
-                  min="0.05"
-                  max="20"
-                  step="0.05"
-                  value="1"
-                />
-                <label for="sweep-path">Path</label>
-                <select id="sweep-path">
-                  <option value="straight">Straight</option>
-                  <option value="arc">Arc</option>
-                  <option value="s-bend">S-bend</option>
-                </select>
-                <label for="sweep-segments">Segments</label>
-                <input
-                  id="sweep-segments"
-                  type="number"
-                  min="1"
-                  max="128"
-                  step="1"
-                  value="4"
-                />
-                <label for="sweep-iterations">Iterations</label>
-                <input
-                  id="sweep-iterations"
-                  type="number"
-                  min="1"
-                  max="64"
-                  step="1"
-                  value="1"
-                />
-                <label for="sweep-snap">
-                  <input id="sweep-snap" type="checkbox" /> Snap vertices
-                </label>
-                <button id="reset-sweep" type="button">
-                  Reset
-                </button>
-                <button id="apply-sweep" type="button" disabled>
-                  Apply sweep
-                </button>
-              </div>
-              <p>
-                Drag the destination cap in the perspective viewport to move,
-                rotate, or scale it. Enter applies; Escape resets, then leaves
-                the tool.
-              </p>
-            </div>
+            <EditorSweepPanel />
             <div id="topology-tools" class="topology-tools" hidden>
               <strong id="topology-title">Vertex edit</strong>
               <span>
