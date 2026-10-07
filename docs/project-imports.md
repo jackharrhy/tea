@@ -12,7 +12,7 @@ When affected, CI checks Ref's browser flow on Wrangler and on the Celld binary 
 
 ## Cloudflare configuration
 
-Cloudflare's new [`cf` CLI](https://developers.cloudflare.com/cf/) uses `cloudflare.config.ts` and is currently in beta. [Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/) says to convert Wrangler projects explicitly; its Durable Object lifecycle declaration differs from Wrangler migrations. Celld currently reads only `wrangler.jsonc` or `wrangler.json`, so Ref, Radio, and the Maps collaboration Worker retain Wrangler-compatible configs for their shared runtime. Do not run `cf init`, `cf dev`, or `cf deploy` in those workspaces without an explicit dual-config migration that passes both Cloudflare and Celld checks. The Cloudflare-only CMS edge and Maps UI apps use `cf` and `cloudflare.config.ts` with the Cloudflare Vite plugin.
+Cloudflare's new [`cf` CLI](https://developers.cloudflare.com/cf/) uses `cloudflare.config.ts` and is currently in beta. [Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/) says to convert Wrangler projects explicitly; its Durable Object lifecycle declaration differs from Wrangler migrations. [Celld currently reads only `wrangler.jsonc` or `wrangler.json`](https://celld.dev/docs/cloudflare-compat/#wrangler-configuration), so Ref, Radio, and the Maps collaboration Worker retain Wrangler-compatible configs for their shared runtime. Do not run `cf init`, `cf dev`, or `cf deploy` in those workspaces without an explicit dual-config migration that passes both Cloudflare and Celld checks. The Cloudflare-only CMS edge and Maps UI apps use `cf` and `cloudflare.config.ts` with the Cloudflare Vite plugin.
 
 ## Maps slices
 
@@ -25,6 +25,8 @@ The editor's Recent projects menu now renders as a Remix client entry while reta
 The Tea editor now exposes exact shear and mirror transforms, Worldview view filters, and entity link visibility modes alongside the copied map issue diagnostics, type filters, local finding visibility, object reveal, and undoable repairs. It can create, rename, activate, reorder, hide, lock, isolate, and remove TrenchBroom-compatible layers, and move objects between them. It can create, rename, open, close, link duplicate, unlink, and ungroup TrenchBroom-compatible object groups. Group metadata survives source saving and hosted collaboration operations, and opening a group locks viewport interaction with objects outside it.
 
 The entity inspector now exposes linked-group property protection. While editing an open linked copy, users can keep an existing or newly added property independent of its siblings.
+
+Viewport picking now follows Worldview's closed-group and brush-entity selection rules, including opening a group on activation and selecting matching faces across a multi-brush selection in Face mode.
 
 The four-viewport editor also exposes Worldview's clip, perspective hull, and face sweep tools. Clip previews back, split, and front results for selected brushes; hull creation previews a brush from placed face points. Sweep previews one or more selected faces through a configurable path and destination cap. All three commit through the session history and hosted semantic operation path.
 

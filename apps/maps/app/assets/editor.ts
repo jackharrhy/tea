@@ -92,6 +92,7 @@ import {
   readHostedCheckpointSource,
 } from "./editor-hosted-checkpoints.ts";
 import { createFaceDragController } from "./editor-face-drag.ts";
+import { applyViewportPick } from "./editor-picking.ts";
 import { createEditorSweep } from "./editor-sweep.ts";
 import { initEditorReferences } from "./editor-references.ts";
 import {
@@ -2257,32 +2258,22 @@ function handleViewportPick(
   selection: Parameters<EditorSession["select"]>[0],
   intent: EditorPickIntent,
 ) {
-  if (!selection) {
-    if (!intent.objectAdditive) session.select(null);
-  } else if (selection.faceId && selection.brushId) {
-    if (intent.expansion === "brush")
-      session.selectBrushFaces(
-        selection.brushId,
-        intent.additive,
-        selection.faceId,
-      );
-    else if (intent.expansion === "coplanar")
-      session.selectConnectedCoplanarFaces(
-        { brushId: selection.brushId, faceId: selection.faceId },
-        intent.additive,
-      );
-    else
-      session.selectFace(
-        { brushId: selection.brushId, faceId: selection.faceId },
-        intent.additive,
-      );
-  } else if (selection.brushId) {
-    session.selectBrush(selection.brushId, intent.objectAdditive);
-  } else if (selection.entityId) {
-    session.selectPointEntity(selection.entityId, intent.objectAdditive);
-  } else {
+  const result = applyViewportPick({
+    session,
+    selection,
+    intent,
+    openGroupId,
+    activeTool: viewportTool.value,
+  });
+  if (result.kind === "close-group") {
+    closeOpenGroup(true);
+  } else if (result.kind === "open-group") {
+    openGroupId = result.group.id;
+    session.setEditingGroup(result.group.id);
+    renderer?.setOpenGroupId(result.group.id);
     session.select(selection);
-  }
+    status.textContent = `Opened ${result.group.name} · objects outside the group are locked`;
+  } else if (result.status) status.textContent = result.status;
 }
 
 function showViewportContextMenu(event: EditorViewportContextMenuEvent) {

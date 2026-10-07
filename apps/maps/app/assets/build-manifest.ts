@@ -18,7 +18,7 @@ export const browserAssets = import.meta.env.DEV
   : {
       entry: "/assets/entry-MNYX3R3Y.js",
       viewer: "/assets/viewer-QUKXNIM4.js",
-      editor: "/assets/editor-5XX3AF7A.js",
+      editor: "/assets/editor-MZJW6HZA.js",
       editorRecentProjects: "/assets/editorRecentProjects-EZDAY56U.js",
       newMap: "/assets/newMap-K3ZO5YVZ.js",
       recoveredMaps: "/assets/recoveredMaps-MQI3ZAAR.js",
