@@ -4,7 +4,7 @@ Maps is Tea's Remix 3 BSP viewer and early map editor. `worker.ts` delegates `/`
 
 ## Develop
 
-From the repo root, run `npm ci`, `npm run check --workspace @tea/maps`, then `npm run dev --workspace @tea/maps`. The dev command builds stable browser asset names under `dist/client-dev`, watches changes, and runs `cf dev` at `http://localhost:8790`. Production builds use hashed assets under `dist/client`, so a check can run while the dev server remains open. The app uses the `cf` CLI and Cloudflare Vite plugin. The separate collaboration Worker keeps Wrangler for Celld compatibility.
+From the repo root, run `npm ci`, `npm run check --workspace @tea/maps`, then `npm run dev --workspace @tea/maps`. The dev command builds stable browser asset names under `dist/client-dev`, watches changes, and runs `cf dev` at `http://localhost:8790`. Production builds use hashed assets under `dist/client`, so a check can run while the dev server remains open. The browser build checks that every Remix client entry has a bundle input and Worker asset mapping. The app uses the `cf` CLI and Cloudflare Vite plugin. The separate collaboration Worker keeps Wrangler for Celld compatibility.
 
 The hosted viewer needs `@tea/maps-service` running at `http://127.0.0.1:8792` for local use. Set `TEA_MAPS_SERVICE_ORIGIN` when building or deploying the Worker for another backend origin. Set the service's `TEA_MAPS_URL` to the public Maps UI origin, locally `http://localhost:8790`, so OAuth callbacks and same origin mutation checks agree. The backend address is a trusted deployment setting. The example, local file, and remote URL modes work without the service.
 

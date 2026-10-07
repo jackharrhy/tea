@@ -65,12 +65,6 @@ const clientEntrySourceNames = {
   projectAccess: "project-access-page.tsx",
   projectResources: "project-resources-page.tsx",
 };
-if (!watch) {
-  await fs.rm(output, { recursive: true, force: true });
-  await fs.cp(path.join(root, "public"), output, { recursive: true });
-}
-await fs.mkdir(path.join(output, "assets"), { recursive: true });
-
 const options = {
   absWorkingDir: root,
   entryPoints: {
@@ -175,6 +169,64 @@ const options = {
     },
   ],
 };
+
+async function checkClientEntries() {
+  const assets = path.join(root, "app", "assets");
+  const sourceNames = Object.values(clientEntrySourceNames);
+  const registered = new Set(sourceNames);
+  const discovered = [];
+  for (const filename of await fs.readdir(assets)) {
+    if (!/\.tsx?$/u.test(filename)) continue;
+    const source = await fs.readFile(path.join(assets, filename), "utf8");
+    if (/\bclientEntry\s*\(/u.test(source)) discovered.push(filename);
+  }
+  const missing = discovered.filter((filename) => !registered.has(filename));
+  const stale = sourceNames.filter(
+    (filename) => !discovered.includes(filename),
+  );
+  if (missing.length || stale.length)
+    throw new Error(
+      `Maps client entry registry is out of sync: missing ${missing.join(", ") || "none"}; stale ${stale.join(", ") || "none"}`,
+    );
+
+  const worker = await fs.readFile(path.join(root, "worker.ts"), "utf8");
+  const workerMappings = new Map(
+    [...worker.matchAll(/"([^"]+\.tsx?)": browserAssets\.([A-Za-z]\w*)/gu)].map(
+      ([, filename, name]) => [filename, name],
+    ),
+  );
+  for (const [name, filename] of Object.entries(clientEntrySourceNames)) {
+    if (options.entryPoints[name] !== `app/assets/${filename}`)
+      throw new Error(`Maps client entry ${name} has no browser build input`);
+    if (workerMappings.get(filename) !== name)
+      throw new Error(
+        `Maps client entry ${filename} has no Worker asset mapping`,
+      );
+  }
+  const extraInputs = Object.keys(options.entryPoints).filter(
+    (name) =>
+      !["entry", "viewer", "editor"].includes(name) &&
+      !Object.hasOwn(clientEntrySourceNames, name),
+  );
+  if (extraInputs.length)
+    throw new Error(
+      `Maps browser build has stale client entries: ${extraInputs.join(", ")}`,
+    );
+  const unmapped = [...workerMappings.keys()].filter(
+    (filename) => !registered.has(filename),
+  );
+  if (unmapped.length)
+    throw new Error(
+      `Maps Worker has stale client entries: ${unmapped.join(", ")}`,
+    );
+}
+
+await checkClientEntries();
+if (!watch) {
+  await fs.rm(output, { recursive: true, force: true });
+  await fs.cp(path.join(root, "public"), output, { recursive: true });
+}
+await fs.mkdir(path.join(output, "assets"), { recursive: true });
 
 if (watch) {
   const buildContext = await context(options);
