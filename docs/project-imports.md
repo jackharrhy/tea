@@ -42,6 +42,8 @@ Numeric transform controls now render through a Remix client entry. Move, nudge,
 
 Add box, Brush texture, and Constructive geometry controls now render through Remix client entries. The chosen texture still feeds shape, clip, hull, and convex merge creation while the editor runs the transactions.
 
+The selected point entity and entity properties inspector now renders through a Remix client entry, including definition driven fields and linked-copy protection. The editor retains validation, source guards, and property history.
+
 Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.
 
 Viewport tool, grid size, and Texture lock now render through a Remix client entry. The editor and its tools read the same settings state for rendering and transactions.

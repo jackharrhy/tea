@@ -99,7 +99,7 @@ import { createEditorSweep } from "./editor-sweep.ts";
 import { initEditorReferences } from "./editor-references.ts";
 import {
   canProtectEntityProperties,
-  renderEntityProperties,
+  entityPropertyRows,
 } from "./editor-entity-properties.ts";
 import { initEditorFov } from "./editor-fov.ts";
 import { initEditorWorkspace } from "./editor-workspace.ts";
@@ -205,6 +205,7 @@ import {
   initEditorGeometry,
   type CsgOperation,
 } from "./editor-geometry-bridge.ts";
+import { initEditorEntityInspector } from "./editor-entity-inspector-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -216,41 +217,6 @@ const source = initEditorSourcePanel({
   apply: applyWorkingSource,
 });
 const selectionInfo = document.querySelector<HTMLElement>("#selection-info")!;
-const pointInspector = document.querySelector<HTMLElement>(
-  "#point-entity-inspector",
-)!;
-const pointClassname = document.querySelector<HTMLInputElement>(
-  "#selected-point-classname",
-)!;
-const pointOrigin = document.querySelector<HTMLInputElement>(
-  "#selected-point-origin",
-)!;
-const updatePointButton = document.querySelector<HTMLButtonElement>(
-  "#update-point-entity",
-)!;
-const entityProperties =
-  document.querySelector<HTMLElement>("#entity-properties")!;
-const propertyList = document.querySelector<HTMLElement>(
-  "#entity-property-list",
-)!;
-const propertyKey = document.querySelector<HTMLInputElement>(
-  "#entity-property-key",
-)!;
-const propertyValue = document.querySelector<HTMLInputElement>(
-  "#entity-property-value",
-)!;
-const propertyProtectionOption = document.querySelector<HTMLElement>(
-  "#entity-property-protection-option",
-)!;
-const propertyProtected = document.querySelector<HTMLInputElement>(
-  "#entity-property-protected",
-)!;
-const savePropertyButton = document.querySelector<HTMLButtonElement>(
-  "#save-entity-property",
-)!;
-const removePropertyButton = document.querySelector<HTMLButtonElement>(
-  "#remove-entity-property",
-)!;
 const selectionCommands = initEditorSelectionCommands({
   delete: deleteSelection,
   duplicate: duplicateSelection,
@@ -291,6 +257,14 @@ const transforms = initEditorTransforms({
   flip: flipSelection,
 });
 const geometry = initEditorGeometry({ addBox, runCsg });
+const entityInspector = initEditorEntityInspector({
+  refreshPropertyActions,
+  updatePoint: updatePointEntity,
+  saveProperty,
+  removeProperty,
+  commitProperty: commitEntityProperty,
+  protectProperty: setEntityPropertyProtection,
+});
 const historyControls = initEditorHistory({
   undo: () => void runHistoryAction("undo"),
   redo: () => void runHistoryAction("redo"),
@@ -1427,44 +1401,30 @@ function refreshSelection() {
   refreshSurfaceInspector(faces, editing);
   const selectedEntity =
     pointEntity ?? (brushIds.length === 1 ? owners[0] : undefined);
-  entityProperties.hidden = !selectedEntity;
-  if (inspectedEntityId !== (selectedEntity?.id ?? null)) {
-    propertyKey.value = "";
-    propertyValue.value = "";
-    inspectedEntityId = selectedEntity?.id ?? null;
-  }
-  if (selectedEntity) {
-    const canProtect = canProtectEntityProperties(
-      session.document,
-      selectedEntity,
-      openGroupId,
-    );
-    propertyProtectionOption.hidden = !canProtect;
-    propertyProtected.disabled = !editing || !canProtect;
-    if (!canProtect) propertyProtected.checked = false;
-    renderEntityProperties({
-      list: propertyList,
-      entity: selectedEntity,
-      definitions: currentDefinitions(),
-      editable: editing,
-      canProtect,
-      commit: commitEntityProperty,
-      protect: setEntityPropertyProtection,
-    });
-  } else {
-    propertyList.replaceChildren();
-    propertyProtectionOption.hidden = true;
-    propertyProtected.checked = false;
-  }
-  propertyKey.disabled = !selectedEntity || !editing;
-  propertyValue.disabled = !selectedEntity || !editing;
+  const selectedEntityId = selectedEntity?.id ?? null;
+  const selectionChanged = inspectedEntityId !== selectedEntityId;
+  inspectedEntityId = selectedEntityId;
+  const canProtect = selectedEntity
+    ? canProtectEntityProperties(session.document, selectedEntity, openGroupId)
+    : false;
+  entityInspector.update({
+    propertiesVisible: !!selectedEntity,
+    propertyRows: selectedEntity
+      ? entityPropertyRows(selectedEntity, currentDefinitions())
+      : [],
+    propertyProtectionAvailable: canProtect,
+    propertyDisabled: !selectedEntity || !editing,
+    pointVisible: !!pointEntity,
+    pointClassname: pointEntity?.properties.classname ?? "",
+    pointOrigin: pointEntity?.properties.origin ?? "",
+    pointDisabled: !pointEntity || !editing,
+    ...(selectionChanged
+      ? { propertyKey: "", propertyValue: "", propertyProtected: false }
+      : !canProtect
+        ? { propertyProtected: false }
+        : {}),
+  });
   refreshPropertyActions();
-  pointInspector.hidden = !pointEntity;
-  if (pointEntity) {
-    pointClassname.value = pointEntity.properties.classname ?? "";
-    pointOrigin.value = pointEntity.properties.origin ?? "";
-  }
-  updatePointButton.disabled = !pointEntity || !editing;
   const objectCommandDisabled = (!brushId && pointIds.length === 0) || !editing;
   editActions.update({
     copyDisabled: !selection,
@@ -1715,20 +1675,21 @@ function handleHullCreate(event: EditorHullCreateEvent) {
 }
 
 function refreshPropertyActions() {
-  const key = propertyKey.value.trim();
+  const key = entityInspector.state.propertyKey.trim();
   const entity = session.document.entities.find(
     (candidate) => candidate.id === inspectedEntityId,
   );
   const editing = !hostedMap || hostedConnection !== null;
-  savePropertyButton.disabled =
-    !entity || !editing || !key || key.startsWith("_tb_");
-  removePropertyButton.disabled =
-    !entity ||
-    !editing ||
-    !key ||
-    key === "classname" ||
-    key.startsWith("_tb_") ||
-    !(key in entity.properties);
+  entityInspector.update({
+    saveDisabled: !entity || !editing || !key || key.startsWith("_tb_"),
+    removeDisabled:
+      !entity ||
+      !editing ||
+      !key ||
+      key === "classname" ||
+      key.startsWith("_tb_") ||
+      !(key in entity.properties),
+  });
 }
 
 function handleSessionChange(change: { kind: string }) {
@@ -2919,12 +2880,16 @@ function addPointEntity() {
   }
 }
 
-updatePointButton.addEventListener("click", () => {
+function updatePointEntity() {
+  if (entityInspector.state.pointDisabled) return;
   if (!applyWorkingSource()) return;
   const entityId = selectedPointEntityIds(session.selection)[0];
   if (!entityId) return;
-  const classname = pointClassname.value.trim();
-  const coordinates = pointOrigin.value.trim().split(/\s+/).map(Number);
+  const classname = entityInspector.state.pointClassname.trim();
+  const coordinates = entityInspector.state.pointOrigin
+    .trim()
+    .split(/\s+/)
+    .map(Number);
   if (!classname || classname.toLowerCase() === "worldspawn") {
     status.textContent = "Enter a point entity classname";
     return;
@@ -2942,7 +2907,7 @@ updatePointButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
 selectedMaterial.addEventListener("input", () => {
   applyMaterialButton.disabled =
@@ -3098,8 +3063,6 @@ surfaceValue.addEventListener("change", () => {
   }
 });
 
-propertyKey.addEventListener("input", refreshPropertyActions);
-
 function commitEntityProperty(
   key: string,
   next: string | null,
@@ -3151,17 +3114,19 @@ function setEntityPropertyProtection(key: string, protect: boolean) {
   }
 }
 
-savePropertyButton.addEventListener("click", () => {
+function saveProperty() {
+  if (entityInspector.state.saveDisabled) return;
   commitEntityProperty(
-    propertyKey.value.trim(),
-    propertyValue.value,
-    propertyProtected.checked,
+    entityInspector.state.propertyKey.trim(),
+    entityInspector.state.propertyValue,
+    entityInspector.state.propertyProtected,
   );
-  propertyProtected.checked = false;
-});
+  entityInspector.update({ propertyProtected: false });
+}
 
-removePropertyButton.addEventListener("click", () => {
-  const key = propertyKey.value.trim();
+function removeProperty() {
+  if (entityInspector.state.removeDisabled) return;
+  const key = entityInspector.state.propertyKey.trim();
   if (
     !inspectedEntityId ||
     !key ||
@@ -3170,10 +3135,9 @@ removePropertyButton.addEventListener("click", () => {
   )
     return;
   commitEntityProperty(key, null);
-  propertyKey.value = "";
-  propertyValue.value = "";
+  entityInspector.update({ propertyKey: "", propertyValue: "" });
   refreshPropertyActions();
-});
+}
 
 function deleteSelection() {
   if (selectionCommands.state.deleteDisabled) return;

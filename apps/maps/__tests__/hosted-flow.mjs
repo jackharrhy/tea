@@ -1641,6 +1641,71 @@ try {
   await entityPage
     .getByText("Point origin needs three finite coordinates")
     .waitFor();
+  await entityPage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    const point = tools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.find((entity) => entity.classname === "light");
+    if (!point) throw new Error("Created point entity was not found");
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      mode: "objects",
+      entityIds: [point.id],
+    });
+  });
+  await entityPage.locator("#point-entity-inspector").waitFor({
+    state: "visible",
+  });
+  await entityPage
+    .locator("#selected-point-classname")
+    .fill("info_player_start");
+  await entityPage.locator("#selected-point-origin").fill("10 20 30");
+  await entityPage.locator("#update-point-entity:not([disabled])").click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.some(
+        (entity) =>
+          entity.classname === "info_player_start" &&
+          entity.properties.origin === "10 20 30",
+      ),
+  );
+  await entityPage.locator("#entity-property-key").fill("message");
+  await entityPage.locator("#entity-property-value").fill("Welcome");
+  await entityPage.locator("#save-entity-property:not([disabled])").click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.some((entity) => entity.properties.message === "Welcome"),
+  );
+  await entityPage
+    .locator("#entity-property-list")
+    .getByText("message")
+    .waitFor();
+  const messageField = entityPage
+    .locator("#entity-property-list .entity-property-row")
+    .filter({ hasText: "message" })
+    .locator('input[type="text"]');
+  await messageField.fill("Welcome again");
+  await messageField.press("Tab");
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.some((entity) => entity.properties.message === "Welcome again"),
+  );
+  await entityPage.locator("#remove-entity-property:not([disabled])").click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.every((entity) => entity.properties.message === undefined),
+  );
   const entityBrush = await entityPage.evaluate(() => {
     const tools = window.teaMapsTestTools;
     const before = tools.get("tea_maps_inspect_editor").execute({});

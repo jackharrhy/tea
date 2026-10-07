@@ -21,6 +21,7 @@ import { EditorHistory } from "./assets/editor-history-panel.tsx";
 import { EditorEntityCreation } from "./assets/editor-entity-creation-panel.tsx";
 import { EditorTransforms } from "./assets/editor-transforms-panel.tsx";
 import { EditorGeometry, EditorCsg } from "./assets/editor-geometry-panel.tsx";
+import { EditorEntityInspector } from "./assets/editor-entity-inspector-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -592,47 +593,7 @@ export function EditorPage() {
                 </details>
               </div>
               <EditorMaterialBrowser />
-              <div id="point-entity-inspector" hidden>
-                <h2>Selected point entity</h2>
-                <label for="selected-point-classname">Classname</label>
-                <input id="selected-point-classname" type="text" />
-                <label for="selected-point-origin">Origin (X Y Z)</label>
-                <input id="selected-point-origin" type="text" />
-                <button id="update-point-entity" type="button" disabled>
-                  Update entity
-                </button>
-              </div>
-              <div id="entity-properties" hidden>
-                <h2>Entity properties</h2>
-                <div
-                  id="entity-property-list"
-                  aria-label="Existing properties"
-                />
-                <label for="entity-property-key">Key</label>
-                <input
-                  id="entity-property-key"
-                  type="text"
-                  autoComplete="off"
-                />
-                <label for="entity-property-value">Value</label>
-                <input id="entity-property-value" type="text" />
-                <label
-                  id="entity-property-protection-option"
-                  for="entity-property-protected"
-                  hidden
-                >
-                  <input id="entity-property-protected" type="checkbox" />
-                  Keep new property independent in this linked copy
-                </label>
-                <div class="entity-property-actions">
-                  <button id="save-entity-property" type="button" disabled>
-                    Save property
-                  </button>
-                  <button id="remove-entity-property" type="button" disabled>
-                    Remove property
-                  </button>
-                </div>
-              </div>
+              <EditorEntityInspector />
               <EditorSourcePanel />
               <p>
                 Choose a viewport tool to draw, move, or place objects.
