@@ -74,7 +74,7 @@ export const browserAssets = import.meta.env.DEV
   : {
       entry: "/assets/entry-JCK7T7IM.js",
       viewer: "/assets/viewer-HEXRCHQM.js",
-      editor: "/assets/editor-RW3V6Y2G.js",
+      editor: "/assets/editor-PRBFCKTB.js",
       editorTheme: "/assets/editorTheme-EU7X55BI.js",
       editorHostedPresence: "/assets/editorHostedPresence-PIENC5CI.js",
       editorPointerReadout: "/assets/editorPointerReadout-CRVBM7FX.js",
@@ -87,7 +87,7 @@ export const browserAssets = import.meta.env.DEV
       editorProjectSync: "/assets/editorProjectSync-VFGNIGOG.js",
       editorHostedSource: "/assets/editorHostedSource-LJQ5OEBN.js",
       editorSourceCompare: "/assets/editorSourceCompare-WOERPHEG.js",
-      editorMaterialBrowser: "/assets/editorMaterialBrowser-QA2LKBDD.js",
+      editorMaterialBrowser: "/assets/editorMaterialBrowser-6PIZ74EJ.js",
       editorIssues: "/assets/editorIssues-UF2BJEDO.js",
       editorVisibility: "/assets/editorVisibility-ECXA22KB.js",
       editorPerformancePanel: "/assets/editorPerformancePanel-GFBCNHZX.js",

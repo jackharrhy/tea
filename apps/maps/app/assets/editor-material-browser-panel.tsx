@@ -172,6 +172,16 @@ export const EditorMaterialBrowser = clientEntry(
         Boolean(replaceSource.trim() && replaceTarget.trim()) &&
         replaceSource.trim().toLowerCase() !==
           replaceTarget.trim().toLowerCase();
+      const selection = context?.session().selection;
+      const selectedFaces = selection ? selectedFaceReferences(selection) : [];
+      const selectedBrushes = selection ? selectedBrushIds(selection) : [];
+      const replaceScope = selectedFaces.length
+        ? `${selectedFaces.length} selected ${selectedFaces.length === 1 ? "face" : "faces"}. Replacement selects changed faces.`
+        : selectedBrushes.length
+          ? `${selectedBrushes.length} selected ${selectedBrushes.length === 1 ? "brush" : "brushes"}. Replacement affects matching faces.`
+          : selection
+            ? "Selection has no brush faces to replace."
+            : "No selection. Replacement affects the whole map and selects changed faces.";
 
       return (
         <details id="material-browser" open>
@@ -355,6 +365,7 @@ export const EditorMaterialBrowser = clientEntry(
             </button>
           </div>
           <div class="material-replace-controls">
+            <p id="material-replace-scope">{replaceScope}</p>
             <label for="material-replace-source">Find</label>
             <input
               id="material-replace-source"

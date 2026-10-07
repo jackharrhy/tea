@@ -117,6 +117,37 @@ async function stop(processState) {
   }
 }
 
+async function installViewerLoadProbe(page) {
+  await page.addInitScript(() => {
+    window.teaMapsViewerElementReady = false;
+    window.teaMapsViewerSourceStarted = false;
+    window.teaMapsViewerLoadSettled = false;
+    window.addEventListener(
+      "tea-maps-viewer-element-ready",
+      () => {
+        window.teaMapsViewerElementReady = true;
+      },
+      { once: true },
+    );
+    window.addEventListener("tea-maps-open-source", () => {
+      window.teaMapsViewerSourceStarted = true;
+      window.teaMapsViewerLoadSettled = false;
+    });
+    for (const type of ["ready", "error"])
+      document.addEventListener(
+        type,
+        (event) => {
+          if (
+            window.teaMapsViewerSourceStarted &&
+            event.target?.localName === "world-view"
+          )
+            window.teaMapsViewerLoadSettled = true;
+        },
+        true,
+      );
+  });
+}
+
 async function installSiteToolMock(page) {
   await page.addInitScript(() => {
     const tools = new Map();
@@ -771,18 +802,11 @@ try {
     /^Position: /,
   );
   const movementPage = await browser.newPage();
-  await movementPage.addInitScript(() => {
-    window.teaMapsViewerElementReady = false;
-    window.addEventListener(
-      "tea-maps-viewer-element-ready",
-      () => {
-        window.teaMapsViewerElementReady = true;
-      },
-      { once: true },
-    );
-  });
+  await installViewerLoadProbe(movementPage);
   await movementPage.goto(mapsOrigin);
-  await movementPage.waitForFunction(() => window.teaMapsViewerElementReady);
+  await movementPage.waitForFunction(
+    () => window.teaMapsViewerElementReady && window.teaMapsViewerLoadSettled,
+  );
   await movementPage.locator("#viewport world-view").waitFor();
   await movementPage.evaluate(() => {
     const element = document.querySelector("#viewport world-view");
@@ -851,18 +875,11 @@ try {
       `${request.url()}: ${request.failure()?.errorText}`,
     ),
   );
-  await cameraPage.addInitScript(() => {
-    window.teaMapsViewerElementReady = false;
-    window.addEventListener(
-      "tea-maps-viewer-element-ready",
-      () => {
-        window.teaMapsViewerElementReady = true;
-      },
-      { once: true },
-    );
-  });
+  await installViewerLoadProbe(cameraPage);
   await cameraPage.goto(mapsOrigin);
-  await cameraPage.waitForFunction(() => window.teaMapsViewerElementReady);
+  await cameraPage.waitForFunction(
+    () => window.teaMapsViewerElementReady && window.teaMapsViewerLoadSettled,
+  );
   await cameraPage.locator("#viewport world-view").waitFor();
   await cameraPage.evaluate(() => {
     const element = document.querySelector("#viewport world-view");
@@ -1568,6 +1585,10 @@ try {
   await page.locator("#material-filter").fill("no-such-material");
   await page.getByText("No materials match this view").waitFor();
   await page.locator("#material-filter").fill("");
+  await page
+    .locator("#material-replace-scope")
+    .getByText(/No selection.*whole map/)
+    .waitFor();
   assert.equal(
     await page
       .locator("#material-grid canvas")
@@ -2450,6 +2471,10 @@ try {
     },
     [firstGeometryBrush, secondGeometryBrush],
   );
+  await geometryPage
+    .locator("#material-replace-scope")
+    .getByText(/2 selected brushes/)
+    .waitFor();
   await geometryPage.locator("#csg-tools summary").click();
   await geometryPage.locator("#csg-merge:not([disabled])").click();
   await geometryPage.getByText(/Convex merge applied/).waitFor();

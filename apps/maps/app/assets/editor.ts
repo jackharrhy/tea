@@ -2016,6 +2016,7 @@ function handleSessionChange(change: { kind: string }) {
     issueBrowser.refresh();
     materialBrowser.refresh();
   }
+  if (change.kind === "selection") materialBrowser.refresh();
   if (change.kind === "view") issueBrowser.refresh();
   refreshSelection();
 }
