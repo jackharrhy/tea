@@ -74,9 +74,9 @@ export const browserAssets = import.meta.env.DEV
   : {
       entry: "/assets/entry-JCK7T7IM.js",
       viewer: "/assets/viewer-HEXRCHQM.js",
-      editor: "/assets/editor-PRBFCKTB.js",
+      editor: "/assets/editor-OR7DNLAP.js",
       editorTheme: "/assets/editorTheme-EU7X55BI.js",
-      editorHostedPresence: "/assets/editorHostedPresence-SU5JXDUX.js",
+      editorHostedPresence: "/assets/editorHostedPresence-ZAJYCZRG.js",
       editorPointerReadout: "/assets/editorPointerReadout-CRVBM7FX.js",
       editorFaceInspector: "/assets/editorFaceInspector-EBY6XTGZ.js",
       editorReadouts: "/assets/editorReadouts-66BXEAFW.js",
