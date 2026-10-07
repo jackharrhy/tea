@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { encodeGoldSrcWad3, encodeQuakeWad2 } from "@tea/maps-editor/core";
 import { createQuakePalette } from "@tea/maps-renderer/core";
-import { openMapProject, type MapDirectoryHandle } from "../editor-project.ts";
+import {
+  legacyProjectExportScope,
+  openMapProject,
+  type MapDirectoryHandle,
+} from "../editor-project.ts";
 import type { MapFileHandle } from "../editor-files.ts";
 
 type FileEntry = MapFileHandle & { readonly kind: "file" };
@@ -131,6 +135,7 @@ describe("local map projects", () => {
     const project = await openMapProject(root);
     expect(project.manifestFileName).toBe("tea.maps.project.json");
     expect(project.manifest.name).toBe("Test project");
+    expect(await legacyProjectExportScope(project)).toBeNull();
 
     const ambiguous = directory("project", {
       "tea.maps.project.json": teaFile,
@@ -139,9 +144,9 @@ describe("local map projects", () => {
         JSON.stringify(manifest),
       ),
     });
-    expect((await openMapProject(ambiguous)).manifestFileName).toBe(
-      "tea.maps.project.json",
-    );
+    const opened = await openMapProject(ambiguous);
+    expect(opened.manifestFileName).toBe("tea.maps.project.json");
+    expect(await legacyProjectExportScope(opened)).toBe("test project:project");
   });
 
   it("discovers nested maps once across overlapping roots", async () => {

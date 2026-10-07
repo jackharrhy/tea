@@ -100,6 +100,28 @@ export async function importExportSettings(
   }
 }
 
+export async function adoptExportSettings(
+  sourceScopeId: string,
+  targetScopeId: string,
+): Promise<boolean> {
+  if (sourceScopeId === targetScopeId) return false;
+  const db = await openExportDatabase();
+  try {
+    const transaction = db.transaction("settings", "readwrite");
+    const store = transaction.objectStore("settings");
+    const [source, target] = await Promise.all([
+      store.get(sourceScopeId),
+      store.get(targetScopeId),
+    ]);
+    if (source && !target)
+      await store.add({ ...source, scopeId: targetScopeId });
+    await transaction.done;
+    return !!source && !target;
+  } finally {
+    db.close();
+  }
+}
+
 export function directoryExportSupported(): boolean {
   return typeof window !== "undefined" && "showDirectoryPicker" in window;
 }

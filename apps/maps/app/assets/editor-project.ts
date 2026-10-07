@@ -59,6 +59,25 @@ export interface MapProject {
   readonly spriteDiagnostics: readonly string[];
 }
 
+export async function legacyProjectExportScope(
+  project: MapProject,
+): Promise<string | null> {
+  let name = project.manifest.name;
+  if (project.manifestFileName !== "worldview.project.json") {
+    try {
+      const legacyFile = await project.handle.getFileHandle(
+        "worldview.project.json",
+      );
+      name = parseWorldviewProject(
+        await (await legacyFile.getFile()).text(),
+      ).name;
+    } catch {
+      return null;
+    }
+  }
+  return `${name.toLowerCase()}:${project.handle.name.toLowerCase()}`;
+}
+
 interface DirectoryPickerWindow extends Window {
   showDirectoryPicker?: (options: {
     readonly mode: "readwrite";

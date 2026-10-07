@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import {
+  adoptExportSettings,
   defaultExportSettings,
   loadExportSettings,
   saveExportSettings,
@@ -27,6 +28,33 @@ it("keeps export preferences in their project scope", async () => {
   });
   expect(await loadExportSettings("project-b")).toEqual(
     defaultExportSettings("project-b"),
+  );
+});
+
+it("applies imported legacy project choices to Tea's folder identity once", async () => {
+  await saveExportSettings({
+    ...defaultExportSettings("legacy-name:folder"),
+    includeSource: true,
+    afterBuild: true,
+  });
+
+  expect(
+    await adoptExportSettings("legacy-name:folder", "tea-project-id"),
+  ).toBe(true);
+  expect(await loadExportSettings("tea-project-id")).toEqual({
+    ...defaultExportSettings("tea-project-id"),
+    includeSource: true,
+    afterBuild: true,
+  });
+  await saveExportSettings({
+    ...defaultExportSettings("tea-project-id"),
+    includeSource: false,
+  });
+  expect(
+    await adoptExportSettings("legacy-name:folder", "tea-project-id"),
+  ).toBe(false);
+  expect(await loadExportSettings("tea-project-id")).toEqual(
+    defaultExportSettings("tea-project-id"),
   );
 });
 

@@ -141,6 +141,7 @@ import {
   type MapFileHandle,
 } from "./editor-files.ts";
 import {
+  legacyProjectExportScope,
   openMapProject,
   pickProjectDirectory,
   supportsProjectPicker,
@@ -187,6 +188,7 @@ import {
   type BuildExportInput,
 } from "./editor-build-export.ts";
 import {
+  adoptExportSettings,
   defaultExportSettings,
   loadExportSettings,
   pickExportDirectory,
@@ -4119,6 +4121,13 @@ async function openProjectDirectory(
   setMap(createEmptyDocument());
   projectBindings = bindings;
   projectRecoveryScope = bindings?.scopeId ?? crypto.randomUUID();
+  if (bindings) {
+    const legacyScopeId = await legacyProjectExportScope(opened);
+    if (legacyScopeId)
+      await adoptExportSettings(legacyScopeId, bindings.scopeId).catch(
+        () => false,
+      );
+  }
   loadCurrentExportSettings();
   activeProjectPath = null;
   projectContext.update({
