@@ -116,106 +116,108 @@ export async function waitForHostedBuild(
   return build;
 }
 
+export interface HostedBuildHistoryContext {
+  readonly map: HostedMapLaunch | null;
+  readonly builds: readonly HostedBuild[];
+  readonly status: string;
+  readonly refreshing: boolean;
+  readonly refresh: () => void;
+  readonly preview: (build: HostedBuild, artifactPath: string) => void;
+  readonly currentVersion: () => number | null;
+}
+
 export function initHostedBuilds(options: {
   readonly map: () => HostedMapLaunch | null;
   readonly preview: (build: HostedBuild, artifactPath: string) => void;
   readonly onUpdate: (build: HostedBuild, durationHint?: string) => void;
 }) {
-  const root = document.querySelector<HTMLDetailsElement>("#hosted-builds")!;
-  const status = document.querySelector<HTMLElement>("#hosted-builds-status")!;
-  const list = document.querySelector<HTMLUListElement>("#hosted-builds-list")!;
-  const refreshButton = document.querySelector<HTMLButtonElement>(
-    "#hosted-builds-refresh",
-  )!;
   let generation = 0;
   let active: AbortController | null = null;
+  let ready = false;
+  let map: HostedMapLaunch | null = null;
+  let builds: readonly HostedBuild[] = [];
+  let status = "";
+  let refreshing = false;
 
-  function render(builds: readonly HostedBuild[], map: HostedMapLaunch) {
-    list.replaceChildren();
-    if (builds.length === 0) {
-      const empty = document.createElement("li");
-      empty.textContent = "No hosted builds yet";
-      list.append(empty);
-      return;
-    }
-    for (const build of builds.toSorted((a, b) => b.createdAt - a.createdAt)) {
-      const row = document.createElement("li");
-      const label = document.createElement("span");
-      label.textContent = `${build.quality} · v${build.mapVersion} · ${build.status}${build.result?.error ? ` · ${build.result.error}` : ""}`;
-      row.append(label);
-      const bsp = build.result?.artifacts?.find(
-        (artifact) => artifact.kind === "bsp",
-      );
-      if (bsp && build.status === "succeeded") {
-        const path = hostedBuildArtifactPath(map.id, build.id, bsp.sha256);
-        const download = document.createElement("a");
-        download.href = path;
-        download.download = bsp.name;
-        download.textContent = "Download BSP";
-        row.append(download);
-        if (build.mapVersion === options.map()?.mapVersion) {
-          const preview = document.createElement("button");
-          preview.type = "button";
-          preview.textContent = "Preview";
-          preview.addEventListener("click", () => options.preview(build, path));
-          row.append(preview);
-        }
-      }
-      list.append(row);
-    }
+  function publish() {
+    if (!ready) return;
+    window.dispatchEvent(
+      new CustomEvent<HostedBuildHistoryContext>(
+        "tea-maps-hosted-builds-state",
+        {
+          detail: {
+            map,
+            builds,
+            status,
+            refreshing,
+            refresh: refreshCurrent,
+            preview: options.preview,
+            currentVersion: () => options.map()?.mapVersion ?? null,
+          },
+        },
+      ),
+    );
   }
 
-  async function refresh(map: HostedMapLaunch, version: number) {
-    refreshButton.disabled = true;
-    status.textContent = "Loading hosted builds";
+  async function refresh(selected: HostedMapLaunch, version: number) {
+    refreshing = true;
+    status = "Loading hosted builds";
+    publish();
     try {
-      const response = await listHostedBuilds(map.id);
-      if (version !== generation || options.map()?.id !== map.id)
+      const response = await listHostedBuilds(selected.id);
+      if (version !== generation || options.map()?.id !== selected.id)
         return response;
-      render(response.builds, map);
-      status.textContent = response.capability
+      builds = response.builds;
+      status = response.capability
         ? `${response.builds.length} builds · hosted compiler available${response.capability.durationHint ? ` · ${response.capability.durationHint}` : ""}`
         : `${response.builds.length} builds · hosted compiler unavailable`;
       return response;
     } finally {
-      if (version === generation) refreshButton.disabled = false;
+      if (version === generation) {
+        refreshing = false;
+        publish();
+      }
     }
   }
 
-  refreshButton.addEventListener("click", () => {
-    const map = options.map();
-    if (!map) return;
-    void refresh(map, generation).catch((error: unknown) => {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
+  function refreshCurrent() {
+    const selected = options.map();
+    if (!selected) return;
+    const version = generation;
+    void refresh(selected, version).catch((cause: unknown) => {
+      if (version !== generation) return;
+      status = cause instanceof Error ? cause.message : String(cause);
+      publish();
     });
+  }
+
+  window.addEventListener("tea-maps-hosted-builds-ready", () => {
+    ready = true;
+    publish();
   });
+  window.dispatchEvent(new Event("tea-maps-hosted-builds-bridge-ready"));
 
   return {
-    setMap(map: HostedMapLaunch | null) {
+    setMap(next: HostedMapLaunch | null) {
       ++generation;
       active?.abort(new Error("Hosted map changed"));
       active = null;
-      root.hidden = !map;
-      list.replaceChildren();
-      status.textContent = "";
-      if (map) {
-        void refresh(map, generation).catch((error: unknown) => {
-          if (options.map()?.id === map.id)
-            status.textContent =
-              error instanceof Error ? error.message : String(error);
-        });
-      }
+      map = next;
+      builds = [];
+      status = "";
+      refreshing = false;
+      publish();
+      if (next) refreshCurrent();
     },
     async build(quality: BuildQuality): Promise<HostedBuild> {
-      const map = options.map();
-      if (!map) throw new Error("Open a hosted map first");
-      if (map.role === "viewer")
+      const selected = options.map();
+      if (!selected) throw new Error("Open a hosted map first");
+      if (selected.role === "viewer")
         throw new Error("Editor access required to build");
       if (active) throw new Error("A hosted build is already being watched");
       const version = generation;
-      const available = await listHostedBuilds(map.id);
-      if (version !== generation || options.map()?.id !== map.id)
+      const available = await listHostedBuilds(selected.id);
+      if (version !== generation || options.map()?.id !== selected.id)
         throw new Error("Hosted map changed before the build started");
       if (!available.capability)
         throw new Error("Hosted compiler is unavailable for this map");
@@ -224,20 +226,20 @@ export function initHostedBuilds(options: {
       active = controller;
       try {
         const created = await queueHostedBuild(
-          map.id,
+          selected.id,
           quality,
-          map.mapVersion,
+          selected.mapVersion,
           fetch,
           controller.signal,
         );
         if (version === generation) options.onUpdate(created, durationHint);
-        const result = await waitForHostedBuild(map.id, created, {
+        const result = await waitForHostedBuild(selected.id, created, {
           signal: controller.signal,
           onUpdate(build) {
             if (version === generation) options.onUpdate(build, durationHint);
           },
         });
-        if (version === generation) await refresh(map, version);
+        if (version === generation) await refresh(selected, version);
         return result;
       } finally {
         if (active === controller) active = null;

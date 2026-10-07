@@ -84,6 +84,8 @@ Project owners can use Project access to find users who have signed in to Maps, 
 
 For an open hosted map, Build BSP queues a preview or final job against the server's current map version. Tea waits for the job and shows diagnostics and logs. When the service advertises an expected duration, the editor displays it beside compiler availability and while the build is queued or running. Hosted build history lists past jobs and their BSP downloads; a successful build for the current map version can open in the perspective preview. A new preview starts at the perspective camera captured when the build was requested; opening an earlier build from history uses the current camera. The hosted preview resolves the project’s current mounted companion assets through the authenticated service. Builds require owner or editor access and a configured hosted compiler. The browser waits for its queued room edits to sync before requesting a build. Local projects continue to use the separate machine-local compiler helper.
 
+Hosted build history is a Remix client component. The editor keeps the build request, live status, and preview loading; the history panel renders builds, compiler availability, downloads, and preview actions.
+
 With a local map open, **Compare with current source** fetches the selected hosted map and shows both sources as read-only snapshots. It includes unapplied text edits on the local side and reports the first different line and hosted version. Comparing does not save or replace either source.
 
 The comparison dialog is a Remix client component; the editor supplies snapshots after the hosted map fetch completes.

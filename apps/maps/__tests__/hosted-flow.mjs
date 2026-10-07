@@ -901,8 +901,25 @@ try {
   assert.equal(compileRequests.length, 1);
   assert.match(compileRequests[0].mapText, /worldspawn/);
   assert.equal(compileRequests[0].expectedDocumentRevision, 1);
+  await page.waitForFunction(() =>
+    /Compiled preview (ready|unavailable)/.test(
+      document.querySelector("#build-status")?.textContent ?? "",
+    ),
+  );
+  await page.locator("#build-status").evaluate((status) => {
+    status.textContent = "Awaiting history preview";
+  });
+  await page
+    .locator("#hosted-builds-list button")
+    .filter({ hasText: "Preview" })
+    .click();
+  await page.waitForFunction(() =>
+    /Compiled preview (ready|unavailable)/.test(
+      document.querySelector("#build-status")?.textContent ?? "",
+    ),
+  );
   result.checks.push(
-    "hosted BSP build queue, compiler request, history, and artifact download",
+    "hosted BSP build queue, compiler request, history, artifact download, and preview",
   );
   const hostedMapId = new URL(hostedEditorUrl).searchParams.get("hostedMap");
   assert.ok(hostedMapId);

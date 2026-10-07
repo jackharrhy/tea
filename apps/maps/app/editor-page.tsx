@@ -4,6 +4,7 @@ import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx"
 import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.tsx";
 import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
+import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -129,14 +130,7 @@ export function EditorPage() {
               <summary>Build messages</summary>
               <pre id="build-output" />
             </details>
-            <details id="hosted-builds" hidden>
-              <summary>Hosted build history</summary>
-              <button id="hosted-builds-refresh" type="button">
-                Refresh builds
-              </button>
-              <p id="hosted-builds-status" role="status"></p>
-              <ul id="hosted-builds-list"></ul>
-            </details>
+            <EditorHostedBuilds />
             <button id="add-box" type="button" disabled>
               Add box
             </button>
