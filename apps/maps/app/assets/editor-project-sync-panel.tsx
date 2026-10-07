@@ -20,6 +20,42 @@ const statusLabels = {
   conflict: "Both changed",
 } as const;
 
+export const EditorProjectSyncOpen = clientEntry(
+  `${import.meta.url}#EditorProjectSyncOpen`,
+  function EditorProjectSyncOpenComponent(handle: Handle) {
+    let context: ProjectSyncContext | null = null;
+
+    handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-project-sync-bridge-ready",
+        () =>
+          window.dispatchEvent(new Event("tea-maps-project-sync-button-ready")),
+        { signal: handle.signal },
+      );
+      window.addEventListener(
+        "tea-maps-project-sync-project",
+        (event) => {
+          context = (event as CustomEvent<ProjectSyncContext>).detail;
+          handle.update();
+        },
+        { signal: handle.signal },
+      );
+      window.dispatchEvent(new Event("tea-maps-project-sync-button-ready"));
+    });
+
+    return () => (
+      <button
+        id="project-sync-open"
+        type="button"
+        disabled={!context?.ready || !context.project}
+        mix={on("click", () => context?.open())}
+      >
+        Sync project
+      </button>
+    );
+  },
+);
+
 export const EditorProjectSync = clientEntry(
   `${import.meta.url}#EditorProjectSync`,
   function EditorProjectSyncComponent(handle: Handle) {

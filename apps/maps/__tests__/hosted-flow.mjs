@@ -1421,6 +1421,12 @@ try {
   result.checks.push(
     "Remix project map toolbar switches files and honors cancel, Escape, discard, and save",
   );
+  await page.locator("#project-sync-open:not([disabled])").click();
+  await page.locator("#project-sync-dialog").waitFor({ state: "visible" });
+  await page
+    .locator("#project-sync-dialog")
+    .getByRole("button", { name: "Close" })
+    .click();
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   await page.locator("#project-map-selector-sync").click();

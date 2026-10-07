@@ -26,6 +26,44 @@ function closeSourceDialog() {
   document.querySelector<HTMLDialogElement>("#hosted-source-dialog")?.close();
 }
 
+export const EditorHostedSourceOpen = clientEntry(
+  `${import.meta.url}#EditorHostedSourceOpen`,
+  function EditorHostedSourceOpenComponent(handle: Handle) {
+    let context: HostedSourceContext | null = null;
+
+    handle.queueTask(() => {
+      window.addEventListener(
+        "tea-maps-hosted-source-bridge-ready",
+        () =>
+          window.dispatchEvent(
+            new Event("tea-maps-hosted-source-button-ready"),
+          ),
+        { signal: handle.signal },
+      );
+      window.addEventListener(
+        "tea-maps-hosted-source-context",
+        (event) => {
+          context = (event as CustomEvent<HostedSourceContext>).detail;
+          handle.update();
+        },
+        { signal: handle.signal },
+      );
+      window.dispatchEvent(new Event("tea-maps-hosted-source-button-ready"));
+    });
+
+    return () => (
+      <button
+        id="hosted-source-open"
+        type="button"
+        disabled={!context?.canOpen}
+        mix={on("click", () => context?.open())}
+      >
+        Edit hosted source
+      </button>
+    );
+  },
+);
+
 export const EditorHostedSource = clientEntry(
   `${import.meta.url}#EditorHostedSource`,
   function EditorHostedSourceComponent(handle: Handle) {

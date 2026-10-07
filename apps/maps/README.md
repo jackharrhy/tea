@@ -48,6 +48,8 @@ Opening a local project shows its maps in a searchable Remix client component. C
 
 The project map toolbar selector and resource messages render through a Remix client component. The editor supplies discovered paths and diagnostics, and it still checks unsaved work before switching maps.
 
+Sync project and Edit hosted source open buttons render through the same Remix client entries as their dialogs. Their bridges publish project and room availability, while the dialogs retain linking, source draft, and save behavior.
+
 Open `/projects` to browse hosted projects and recent local project folders. A hosted project has its own `/projects/:projectId` page for maps and links to the viewer and editor. Its Open local project action checks a selected folder's game and existing hosted link, remembers the handle on this device, and opens it in the editor. Owners and editors create a map at `/projects/:projectId/new-map`; `/projects/:projectId/resources` lists member downloads and lets owners upload files, import copies from Artbin when the service is configured, and remove mounts; `/projects/:projectId/access` lets owners manage member roles. Create a hosted project from the projects page. Local folders remain on the current device; the Projects page can reopen a recent folder in the editor after checking browser permission. The editor's project controls remain available while these routes bake.
 
 Open `/new-map` to choose the name, game, and source format for a new local map. Quake II starts with classic faces, while GoldSrc and Gower use Valve 220. The route opens a detached map in the editor; save it to a file to keep a disk copy. Replacing an unsaved editor map still requires the editor's Save, Discard, or Cancel choice.

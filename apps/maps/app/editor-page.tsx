@@ -40,8 +40,14 @@ import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
-import { EditorProjectSync } from "./assets/editor-project-sync-panel.tsx";
-import { EditorHostedSource } from "./assets/editor-hosted-source-panel.tsx";
+import {
+  EditorProjectSync,
+  EditorProjectSyncOpen,
+} from "./assets/editor-project-sync-panel.tsx";
+import {
+  EditorHostedSource,
+  EditorHostedSourceOpen,
+} from "./assets/editor-hosted-source-panel.tsx";
 import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
 import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
 import { EditorIssues } from "./assets/editor-issues-panel.tsx";
@@ -80,9 +86,7 @@ export function EditorPage() {
             <EditorDocumentControls />
             <EditorRecentProjects />
             <EditorProjectContextPanel />
-            <button id="project-sync-open" type="button" disabled>
-              Sync project
-            </button>
+            <EditorProjectSyncOpen />
             <EditorBuildControls />
             <EditorExportSettings />
             <EditorHostedBuilds />
@@ -109,9 +113,7 @@ export function EditorPage() {
               <EditorHostedPicker />
               <EditorHostedResources />
               <EditorHostedAccess />
-              <button id="hosted-source-open" type="button" disabled>
-                Edit hosted source
-              </button>
+              <EditorHostedSourceOpen />
               <EditorHostedPresence />
               <EditorDetachedMaps />
               <p>

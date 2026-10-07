@@ -2,6 +2,8 @@ import type { HostedMapLaunch } from "@tea/maps-protocol";
 import type { HostedEditorConnection } from "./editor-hosted-collaboration.ts";
 
 export interface HostedSourceContext {
+  readonly canOpen: boolean;
+  readonly open: () => void;
   readonly current: () => {
     readonly map: HostedMapLaunch;
     readonly connection: HostedEditorConnection | null;
@@ -10,40 +12,43 @@ export interface HostedSourceContext {
   readonly status: (message: string) => void;
 }
 
-export function initHostedSourceDialog(options: HostedSourceContext) {
-  const openButton = document.querySelector<HTMLButtonElement>(
-    "#hosted-source-open",
-  )!;
+export function initHostedSourceDialog(
+  options: Omit<HostedSourceContext, "canOpen" | "open">,
+) {
   let ready = false;
+  let canOpen = false;
 
   function setAvailability() {
     const current = options.current();
-    openButton.disabled =
-      !ready ||
-      !current ||
-      current.map.role === "viewer" ||
-      !current.connection;
+    canOpen = !!(
+      ready &&
+      current &&
+      current.map.role !== "viewer" &&
+      current.connection
+    );
+    publish();
   }
 
   window.addEventListener("tea-maps-hosted-source-ready", () => {
     ready = true;
-    publish();
     setAvailability();
   });
   function publish() {
     window.dispatchEvent(
       new CustomEvent<HostedSourceContext>("tea-maps-hosted-source-context", {
-        detail: options,
+        detail: { ...options, canOpen, open },
       }),
     );
+  }
+  function open() {
+    if (canOpen) window.dispatchEvent(new Event("tea-maps-hosted-source-open"));
   }
   window.addEventListener(
     "tea-maps-hosted-source-availability",
     setAvailability,
   );
-  openButton.addEventListener("click", () => {
-    if (ready) window.dispatchEvent(new Event("tea-maps-hosted-source-open"));
-  });
+  window.addEventListener("tea-maps-hosted-source-button-ready", publish);
+  window.dispatchEvent(new Event("tea-maps-hosted-source-bridge-ready"));
   publish();
 
   return {
