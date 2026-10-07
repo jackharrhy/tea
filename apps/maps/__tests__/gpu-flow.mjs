@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -9,6 +9,11 @@ import { syntheticQuakeBsp } from "../app/assets/synthetic.ts";
 const teaRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const testCorpusAll = process.argv.includes("--corpus-all");
 const testCorpus = process.argv.includes("--corpus") || testCorpusAll;
+const assetReportPath = process.argv
+  .find((argument) => argument.startsWith("--asset-report="))
+  ?.slice("--asset-report=".length);
+if (assetReportPath && !testCorpusAll)
+  throw new Error("--asset-report requires --corpus-all");
 if (testCorpus && !process.env.TEA_MAPS_LOCAL_FIXTURE_ROOT)
   throw new Error(
     "Set TEA_MAPS_LOCAL_FIXTURE_ROOT to the existing local fixture directory",
@@ -51,6 +56,7 @@ async function waitForServer() {
 
 let browser;
 let corpusFixtures = 0;
+const assetReport = [];
 try {
   await waitForServer();
   browser = await chromium.launch({ headless: true, args: flags });
@@ -390,6 +396,18 @@ try {
         fetched.some((path) => path.endsWith(".bsp")),
         `${id} did not fetch its BSP`,
       );
+      assetReport.push({
+        id,
+        format: diagnostics.format,
+        warnings:
+          (await page.locator("#map-warnings").textContent())?.trim() ?? "",
+        failedFetches: localResponses
+          .filter((response) => response.status >= 400)
+          .map((response) => ({
+            path: new URL(response.url).pathname,
+            status: response.status,
+          })),
+      });
       if (!format) {
         corpusFixtures += 1;
         continue;
@@ -452,4 +470,9 @@ try {
   await browser?.close();
   if (server.pid && server.exitCode === null && server.signalCode === null)
     process.kill(-server.pid, "SIGKILL");
+  if (assetReportPath)
+    await writeFile(assetReportPath, JSON.stringify(assetReport, null, 2), {
+      flag: "wx",
+      mode: 0o600,
+    });
 }
