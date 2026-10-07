@@ -2393,29 +2393,42 @@ async function openDetachedCopyAfterConfirmation(
   return true;
 }
 
-async function makeLocalCopy() {
+let localCopyRequest: Promise<void> | null = null;
+
+function makeLocalCopy(): Promise<void> {
+  if (localCopyRequest) return localCopyRequest;
   const map = hostedMap;
-  if (!map) return;
-  const detached = await new IndexedDbCollaborationOutbox().detach(
-    map.id,
-    "Opened an independent local copy",
-    Date.now(),
-  );
-  if (detached) {
-    openDetachedCopy(detached);
-    return;
-  }
-  localGame = map.game;
-  leaveHostedMap();
-  openedFile = null;
-  openedFingerprint = null;
-  setProject(null);
-  documentId = crypto.randomUUID();
-  savedSource = emptySource;
-  setMap(map.document);
-  source.value = map.source;
-  scheduleDraftSave();
-  status.textContent = `Local copy of ${map.name} · save to a file when ready`;
+  if (!map) return Promise.resolve();
+  const generation = hostedGeneration;
+  const request = (async () => {
+    try {
+      const detached = await new IndexedDbCollaborationOutbox().detach(
+        map.id,
+        "Opened an independent local copy",
+        Date.now(),
+      );
+      if (hostedGeneration !== generation || hostedMap?.id !== map.id) return;
+      if (detached) {
+        openDetachedCopy(detached);
+        return;
+      }
+      localGame = map.game;
+      leaveHostedMap();
+      openedFile = null;
+      openedFingerprint = null;
+      setProject(null);
+      documentId = crypto.randomUUID();
+      savedSource = emptySource;
+      setMap(map.document);
+      source.value = map.source;
+      scheduleDraftSave();
+      status.textContent = `Local copy of ${map.name} · save to a file when ready`;
+    } finally {
+      localCopyRequest = null;
+    }
+  })();
+  localCopyRequest = request;
+  return request;
 }
 
 function clearOpenedFile() {
