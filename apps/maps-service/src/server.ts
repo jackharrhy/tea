@@ -158,15 +158,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         "tea-maps-local-realtime-ticket-secret-change-me",
       ),
     ),
-    ...(process.env.ARTBIN_URL &&
-    process.env.FOURM_SERVICE_CLIENT_ID &&
-    process.env.FOURM_SERVICE_CLIENT_SECRET
+    ...(process.env.TEA_MAPS_ARTBIN_URL &&
+    process.env.TEA_MAPS_ARTBIN_CLIENT_ID &&
+    process.env.TEA_MAPS_ARTBIN_CLIENT_SECRET
       ? {
           artbin: new ArtbinClient({
-            url: process.env.ARTBIN_URL,
+            url: process.env.TEA_MAPS_ARTBIN_URL,
             fourmUrl: environment("FOURM_URL", "http://127.0.0.1:8000"),
-            clientId: process.env.FOURM_SERVICE_CLIENT_ID,
-            clientSecret: process.env.FOURM_SERVICE_CLIENT_SECRET,
+            clientId: process.env.TEA_MAPS_ARTBIN_CLIENT_ID,
+            clientSecret: process.env.TEA_MAPS_ARTBIN_CLIENT_SECRET,
           }),
         }
       : {}),
