@@ -1,6 +1,6 @@
 # @tea/maps-collaboration
 
-This Remix 3 Worker owns live map sessions, authoritative SQLite map state, operation receipts, and checkpoints. `src/routes.ts` and `src/index.ts` route authenticated HTTP and WebSocket requests to the `MapCell` Durable Object in `src/map-cell.ts`. It consumes `@tea/maps-editor/core` and `@tea/maps-protocol`; `@tea/maps-service` issues its signed access tickets. `/health` is an unauthenticated runtime check.
+This Remix 3 Worker owns live map sessions, authoritative SQLite map state, operation receipts, and checkpoints. `src/routes.ts` and `src/index.ts` route authenticated HTTP and WebSocket requests to the `MapCell` Durable Object in `src/map-cell.ts`. It consumes `@tea/maps-editor/core` and `@tea/maps-protocol`; `@tea/maps-service` issues its signed access tickets. `/health` is an unauthenticated runtime check. The [MIT license](LICENSE) accompanies the copied source.
 
 From the repo root, run `npm ci`, build `@tea/maps-renderer`, `@tea/maps-editor`, and `@tea/maps-protocol`, then run `npm run check --workspace @tea/maps-collaboration`. The check generates Worker types, typechecks, runs Worker and Durable Object tests in `__tests__/`, and bundles a Wrangler dry run. `npm run dev --workspace @tea/maps-collaboration` starts the local Worker. Set `TEA_MAPS_REALTIME_TICKET_SECRET` in an ignored `.dev.vars` file, using `.dev.vars.example` as a template.
 

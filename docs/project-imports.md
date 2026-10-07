@@ -252,7 +252,7 @@ Tea's local and hosted compilers name their generated, compile-only texture pack
 
 Worldview's MIT attribution and third-party notices accompany the adapted source. Never copy local game assets or commercial data. Keep the original npm packages and public deployment in place until Tea's replacements pass their consumer and browser checks and an explicit publication plan is ready.
 
-Before making Tea public, decide the repository-level license and Radio's license. The Tea root and Radio currently have no `LICENSE` file; Ref and the imported Worldview app, editor, and renderer keep their source MIT licenses. Tea preserves Worldview's full [third-party notice](../THIRD_PARTY_NOTICES.md) at the root and beside the independently packable Maps editor and renderer. This publication decision is separate from data and deployment cutover.
+Before making Tea public, decide the repository-level license and Radio's license. The Tea root and Radio currently have no `LICENSE` file; Ref and each imported Worldview workspace keep their source MIT licenses. Tea preserves Worldview's full [third-party notice](../THIRD_PARTY_NOTICES.md) at the root and beside the independently packable Maps editor and renderer. This publication decision is separate from data and deployment cutover.
 
 Tea Maps now exposes hosted map checkpoints through the service and editor. The editor lists recorded versions and lets editors create them after live edits sync; a checkpoint can be reopened as an independent local source copy without changing the hosted map.
 
