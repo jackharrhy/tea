@@ -78,7 +78,7 @@ The picker's Recovery copies control is a Remix client component. It reads detac
 
 The hosted project and map picker is a Remix client component. It loads the signed-in user's projects, creates projects and maps, and offers open, compare, and local-copy actions. Opening a map still goes through the editor's guarded map switch, while the selected project is published to the access and resource panels.
 
-The Hosted maps section shows a copyable link to the open map and lists live participants with their viewport and selection count. Remix renders this share and presence panel from the editor's room state; recipients still need access to the hosted project.
+The Hosted maps section shows a copyable link to the open map and lists live participants with their viewport and selection count. Remix renders this share and presence panel from the editor's room state. It counts participants only after the live room connects and shows reconnecting status if the connection drops; viewer access shows the map without claiming a live session. Recipients still need access to the hosted project.
 
 The hosted source editor is a Remix client component. It saves a browser draft while typing and when closed, recovers that draft on reopen, and can discard, download, or submit it. Submission keeps the version and source-hash checks and waits for live edits to finish before replacing the map.
 

@@ -120,6 +120,7 @@ describe("hosted editor room", () => {
         updates.push(source);
       },
       status: () => {},
+      connection: () => {},
       presence,
       history: () => {},
       detached: () => {},
@@ -268,6 +269,7 @@ describe("hosted editor room", () => {
       {
         update: () => {},
         status: () => {},
+        connection: () => {},
         presence: () => {},
         history: () => {},
         detached,

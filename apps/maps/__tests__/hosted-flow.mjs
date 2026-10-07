@@ -890,7 +890,6 @@ try {
     await observer.locator("#hosted-artbin-import").isHidden(),
     true,
   );
-  await observer.close();
   result.checks.push("owner grants viewer access with read-only project pages");
 
   await page.getByRole("link", { name: "Resources" }).click();
@@ -969,6 +968,17 @@ try {
     );
   }
   const hostedEditorUrl = page.url();
+  await observer.goto(hostedEditorUrl);
+  await observer.waitForFunction(() =>
+    document
+      .querySelector("#hosted-participants")
+      ?.textContent?.includes("Viewing hosted map"),
+  );
+  assert.equal(
+    await observer.locator("#hosted-participant-list li").count(),
+    0,
+  );
+  await observer.close();
   assert.deepEqual(errors, []);
   await page.locator("#material-filter").fill("no-such-material");
   await page.getByText("No materials match this view").waitFor();
@@ -1081,6 +1091,10 @@ try {
     hostedEditorUrl,
   );
   await page.getByText("1 person here").waitFor();
+  assert.equal(
+    await page.evaluate(() => window.teaMapsHostedPresence.connection),
+    "connected",
+  );
   assert.equal(await page.locator("#hosted-participant-list li").count(), 1);
   await page.locator("#hosted-project-access").waitFor({ state: "visible" });
   await page.locator("#hosted-project-access summary").click();

@@ -20,6 +20,7 @@ interface VisibleParticipant {
 export interface HostedPresenceState {
   readonly mapId: string;
   readonly displayName: string;
+  readonly connection: "viewing" | "connecting" | "connected" | "disconnected";
   readonly participants: readonly VisibleParticipant[];
 }
 
@@ -54,18 +55,22 @@ export function initHostedPresence(status: (message: string) => void) {
     update(
       map: HostedMapLaunch | null,
       participants: readonly CollaborationPresence[],
+      connection: HostedPresenceState["connection"] | null,
     ) {
       const state: HostedPresenceState | null = map
         ? {
             mapId: map.id,
             displayName: map.displayName,
-            participants: participants.map((participant) => ({
-              actorId: participant.actorId,
-              displayName: participant.displayName ?? participant.actorId,
-              viewport: participant.viewport ?? "No viewport",
-              selectedCount: participant.selectedObjectIds?.length ?? 0,
-              editing: !!participant.preview,
-            })),
+            connection: connection ?? "viewing",
+            participants: (connection === "connected" ? participants : []).map(
+              (participant) => ({
+                actorId: participant.actorId,
+                displayName: participant.displayName ?? participant.actorId,
+                viewport: participant.viewport ?? "No viewport",
+                selectedCount: participant.selectedObjectIds?.length ?? 0,
+                editing: !!participant.preview,
+              }),
+            ),
           }
         : null;
       const visibleState = JSON.stringify(state);

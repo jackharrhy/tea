@@ -38,6 +38,7 @@ export const EditorHostedPresence = clientEntry(
 
     return () => {
       const current = state;
+      const connected = current?.connection === "connected";
       return (
         <div class="hosted-presence-panel">
           <div id="hosted-share" class="hosted-share" hidden={!current}>
@@ -60,24 +61,31 @@ export const EditorHostedPresence = clientEntry(
             </button>
           </div>
           <output id="hosted-participants" aria-live="polite">
-            {current
+            {connected
               ? `${current.participants.length + 1} ${current.participants.length === 0 ? "person" : "people"} here`
-              : ""}
+              : current?.connection === "connecting"
+                ? "Connecting to live room…"
+                : current?.connection === "disconnected"
+                  ? "Reconnecting to live room…"
+                  : current
+                    ? "Viewing hosted map"
+                    : ""}
           </output>
           <ul id="hosted-participant-list" aria-label="Live collaborators">
-            {current ? <li>{current.displayName} (you)</li> : null}
-            {current?.participants.map((participant) => (
-              <li>
-                {[
-                  participant.displayName,
-                  participant.viewport,
-                  participant.selectedCount
-                    ? `${participant.selectedCount} selected`
-                    : "No selection",
-                  ...(participant.editing ? ["Editing"] : []),
-                ].join(" · ")}
-              </li>
-            ))}
+            {connected ? <li>{current.displayName} (you)</li> : null}
+            {connected &&
+              current.participants.map((participant) => (
+                <li>
+                  {[
+                    participant.displayName,
+                    participant.viewport,
+                    participant.selectedCount
+                      ? `${participant.selectedCount} selected`
+                      : "No selection",
+                    ...(participant.editing ? ["Editing"] : []),
+                  ].join(" · ")}
+                </li>
+              ))}
           </ul>
         </div>
       );

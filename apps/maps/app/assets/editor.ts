@@ -479,6 +479,12 @@ let activeProjectPath: string | null = null;
 let activeRecentProjectId: string | null = null;
 let hostedMap: HostedMapLaunch | null = null;
 let hostedConnection: HostedEditorConnection | null = null;
+let hostedConnectionState:
+  | "viewing"
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | null = null;
 let hostedGeneration = 0;
 let remoteParticipants: readonly CollaborationPresence[] = [];
 let hostedControls: ReturnType<typeof initHostedEditor> | null = null;
@@ -898,7 +904,7 @@ const collaboratorColors: Readonly<
 };
 
 function renderPresence() {
-  hostedPresence.update(hostedMap, remoteParticipants);
+  hostedPresence.update(hostedMap, remoteParticipants, hostedConnectionState);
   const overlays: EditorRemotePresenceOverlay[] = remoteParticipants.map(
     (participant) => {
       const preview = participant.preview;
@@ -2173,6 +2179,7 @@ function leaveHostedMap() {
   hostedGeneration += 1;
   hostedConnection?.close();
   hostedConnection = null;
+  hostedConnectionState = null;
   hostedMap = null;
   hostedResourceGeneration += 1;
   hostedResourceAbort?.abort();
@@ -2223,6 +2230,7 @@ async function openHostedMap(map: HostedMapLaunch): Promise<boolean> {
   mapName = `${map.slug}.map`;
   savedSource = map.source;
   hostedMap = map;
+  hostedConnectionState = map.role === "viewer" ? "viewing" : "connecting";
   setMap(map.document);
   void refreshHostedResources(map);
   hostedBuildControls?.setMap(map);
@@ -2242,6 +2250,12 @@ async function openHostedMap(map: HostedMapLaunch): Promise<boolean> {
       },
       status(message) {
         if (generation === hostedGeneration) status.textContent = message;
+      },
+      connection(state) {
+        if (generation !== hostedGeneration) return;
+        hostedConnectionState = state;
+        if (state !== "connected") remoteParticipants = [];
+        renderPresence();
       },
       presence(participants) {
         if (generation !== hostedGeneration) return;
@@ -2266,10 +2280,13 @@ async function openHostedMap(map: HostedMapLaunch): Promise<boolean> {
       return false;
     }
     hostedConnection = connection;
+    if (!connection) hostedConnectionState = "disconnected";
     renderPresence();
     setHostedEditability();
     refreshStatus();
   } catch (error) {
+    hostedConnectionState = "disconnected";
+    renderPresence();
     status.textContent = error instanceof Error ? error.message : String(error);
   }
   return true;

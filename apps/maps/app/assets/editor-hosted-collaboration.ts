@@ -31,6 +31,7 @@ interface HostedEditorCallbacks {
   presence(participants: readonly CollaborationPresence[]): void;
   history(): void;
   status(message: string): void;
+  connection(state: "connecting" | "connected" | "disconnected"): void;
   detached(copy: DetachedHostedMap): void;
   failure(error: unknown): void;
 }
@@ -344,7 +345,10 @@ export async function connectHostedEditor(
         );
     },
     onConnectionChange(state) {
-      if (!stopped) callbacks.status(`Hosted map · ${state}`);
+      if (!stopped) {
+        callbacks.connection(state);
+        callbacks.status(`Hosted map · ${state}`);
+      }
     },
   });
   const presenceInterval = setInterval(() => {
