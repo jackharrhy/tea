@@ -1,7 +1,7 @@
 import { browserAssets } from "./assets/build-manifest.ts";
-import { examples } from "./assets/examples.ts";
 import { mapsStyles } from "./styles.ts";
 import { HostedViewerPanel } from "./assets/hosted-viewer-panel.tsx";
+import { ViewerSourcePanel } from "./assets/viewer-source-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -27,102 +27,7 @@ export function MapsPage() {
               Open a BSP with its WADs and other assets, or load a hosted map by
               URL.
             </p>
-            <form id="example-form">
-              <label for="example">Explore an example</label>
-              <select id="example" name="example">
-                {examples
-                  .filter((example) => example.selectable)
-                  .map((example) => (
-                    <option value={example.id}>{example.label}</option>
-                  ))}
-                <optgroup id="local-examples" label="Local fixtures"></optgroup>
-              </select>
-              <button type="submit">Open example</button>
-              <p class="hint">Generated maps; no game files needed.</p>
-              <p id="local-fixtures-status" class="hint" role="status"></p>
-            </form>
-            <form id="files-form">
-              <label for="files">Local map and assets</label>
-              <input
-                id="files"
-                name="files"
-                type="file"
-                multiple
-                accept=".bsp,.wad,.lmp,.pal,.pcx,.wal,.spr,.wav,.mp3,.ogg,.tga,.png,.jpg,.jpeg"
-              />
-              <button type="submit">Open files</button>
-              <p class="hint">
-                Files stay in this browser. Include the map’s WADs for its
-                textures.
-              </p>
-            </form>
-            <form id="folder-form">
-              <label for="folder">Local game folder</label>
-              <input id="folder" type="file" multiple />
-              <label for="folder-map">Map in folder</label>
-              <select id="folder-map" disabled></select>
-              <button id="folder-open" type="submit" disabled>
-                Open folder map
-              </button>
-              <p id="folder-status" class="hint" role="status">
-                Choose a game or mod folder containing maps and assets. Files
-                stay in this browser.
-              </p>
-            </form>
-            <form id="url-form">
-              <label for="bsp-url">BSP URL</label>
-              <input
-                id="bsp-url"
-                name="bsp"
-                type="text"
-                placeholder="https://example.com/maps/map.bsp"
-                required
-              />
-              <label for="game-base-url">Game asset root (optional)</label>
-              <input
-                id="game-base-url"
-                name="gameBase"
-                type="text"
-                placeholder="https://example.com/game/"
-              />
-              <details class="url-overrides">
-                <summary>Asset overrides</summary>
-                <div class="url-overrides-fields">
-                  <label for="palette-url">Palette URL</label>
-                  <input
-                    id="palette-url"
-                    type="text"
-                    placeholder="gfx/palette.lmp"
-                  />
-                  <label for="wad-base-url">WAD base URL</label>
-                  <input
-                    id="wad-base-url"
-                    type="text"
-                    placeholder="https://example.com/wads/"
-                  />
-                  <label for="skybox-base-url">Skybox base URL</label>
-                  <input
-                    id="skybox-base-url"
-                    type="text"
-                    placeholder="https://example.com/env/"
-                  />
-                  <label for="sprite-base-url">Sprite base URL</label>
-                  <input
-                    id="sprite-base-url"
-                    type="text"
-                    placeholder="https://example.com/sprites/"
-                  />
-                  <label for="sound-base-url">Sound base URL</label>
-                  <input
-                    id="sound-base-url"
-                    type="text"
-                    placeholder="https://example.com/sound/"
-                  />
-                </div>
-              </details>
-              <button type="submit">Open URL</button>
-              <p class="hint">Remote hosts must allow browser CORS requests.</p>
-            </form>
+            <ViewerSourcePanel />
             <details class="inspector" open>
               <summary>Map tools</summary>
               <div class="inspector-body">

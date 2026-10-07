@@ -351,6 +351,60 @@ try {
   await setupPage.close();
   result.checks.push("Remix new-map form keeps name and compatible format");
 
+  const sourcePage = await browser.newPage();
+  await sourcePage.goto(`${mapsOrigin}/?example=quake`);
+  await sourcePage.locator("#map-name").getByText("Quake sky").waitFor();
+  await sourcePage.locator("#example").selectOption("goldsrc");
+  await sourcePage.getByRole("button", { name: "Open example" }).click();
+  await sourcePage.waitForURL(/\?example=goldsrc$/);
+  await sourcePage.locator("#map-name").getByText("GoldSrc room").waitFor();
+  const viewerFolder = join(state, "viewer-fixture");
+  await mkdir(join(viewerFolder, "maps"), { recursive: true });
+  await writeFile(join(viewerFolder, "maps", "folder.bsp"), bsp);
+  await writeFile(
+    join(viewerFolder, "maps", "folder.worldview.json"),
+    JSON.stringify({ label: "Folder smoke" }),
+  );
+  await sourcePage.locator("#folder").setInputFiles(viewerFolder);
+  await sourcePage.getByText("1 map found").waitFor();
+  await sourcePage.getByRole("button", { name: "Open folder map" }).click();
+  await sourcePage.locator("#map-name").getByText("Folder smoke").waitFor();
+  await sourcePage.locator("#files").setInputFiles({
+    name: "smoke.bsp",
+    mimeType: "application/octet-stream",
+    buffer: bsp,
+  });
+  await sourcePage.getByRole("button", { name: "Open files" }).click();
+  await sourcePage.locator("#map-name").getByText("smoke.bsp").waitFor();
+  assert.equal(new URL(sourcePage.url()).search, "");
+  const remoteBsp = `${mapsOrigin}/missing.bsp`;
+  await sourcePage.locator("#bsp-url").fill(remoteBsp);
+  await sourcePage.getByRole("button", { name: "Open URL" }).click();
+  try {
+    await sourcePage
+      .locator("#map-name")
+      .getByText("missing.bsp")
+      .waitFor({ timeout: 5_000 });
+  } catch (error) {
+    throw new Error(
+      `Remote BSP did not open: ${JSON.stringify({
+        url: sourcePage.url(),
+        input: await sourcePage.locator("#bsp-url").inputValue(),
+        name: await sourcePage.locator("#map-name").textContent(),
+        status: await sourcePage.locator("#viewer-status").textContent(),
+      })}`,
+      { cause: error },
+    );
+  }
+  assert.equal(new URL(sourcePage.url()).searchParams.get("bsp"), remoteBsp);
+  await sourcePage.reload();
+  await sourcePage.locator("#map-name").getByText("missing.bsp").waitFor();
+  assert.equal(await sourcePage.locator("#bsp-url").inputValue(), remoteBsp);
+  await sourcePage.close();
+  result.checks.push(
+    "Remix viewer picker opens examples, folders, files, and URLs",
+  );
+
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -457,6 +511,12 @@ try {
 
   await page.getByRole("link", { name: "Resources" }).click();
   await page.getByText("No project resources yet").waitFor();
+  assert.equal(
+    await page
+      .locator("#project-resource-folder")
+      .getAttribute("webkitdirectory"),
+    "",
+  );
   await page.locator("#hosted-artbin-query").fill("catalog");
   await page.locator('#hosted-artbin-search button[type="submit"]').click();
   await page.getByText("catalog.fgd").waitFor();
@@ -861,14 +921,14 @@ try {
   await page.waitForFunction(
     () =>
       document.querySelector("#switch-map-dialog")?.open ||
-      document
-        .querySelector("#editor-status")
-        ?.textContent?.includes("live editing"),
+      /live editing|Hosted map · connected/.test(
+        document.querySelector("#editor-status")?.textContent ?? "",
+      ),
   );
   if (await page.locator("#switch-map-dialog").isVisible())
     await page.getByRole("button", { name: "Discard" }).click();
   try {
-    await page.getByText(/live editing/).waitFor();
+    await page.getByText(/live editing|Hosted map · connected/).waitFor();
   } catch (error) {
     throw new Error(
       `Hosted editor did not reconnect: ${JSON.stringify({ url: page.url(), status: await page.locator("#editor-status").textContent(), dialog: await page.locator("#switch-map-dialog").isVisible(), errors })}`,

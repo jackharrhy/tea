@@ -44,6 +44,7 @@ export const mapsStyles = css({
   "& h2": { "font-size": "1.2rem", margin: "0" },
   "& p": { "line-height": "1.55", margin: "0" },
   "& form": { display: "grid", gap: "0.65rem" },
+  "& .source-panel": { display: "grid", gap: "1.5rem" },
   "& .hosted, & .inspector-body, & .inspector-body section": {
     display: "grid",
     gap: "0.65rem",

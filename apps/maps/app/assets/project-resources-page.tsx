@@ -5,7 +5,7 @@ import {
   type HostedProject,
   type HostedResourceMount,
 } from "@tea/maps-protocol";
-import { clientEntry, on, type Handle } from "remix/component";
+import { clientEntry, on, ref, type Handle } from "remix/component";
 import {
   listHostedResources,
   mountHostedAsset,
@@ -247,7 +247,9 @@ export const ProjectResources = clientEntry(
                       id="project-resource-folder"
                       type="file"
                       multiple
-                      {...{ webkitdirectory: "" }}
+                      mix={ref((node: HTMLInputElement) => {
+                        node.setAttribute("webkitdirectory", "");
+                      })}
                     />
                     <button
                       id="project-resource-folder-button"

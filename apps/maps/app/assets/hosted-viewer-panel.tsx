@@ -135,7 +135,7 @@ export const HostedViewerPanel = clientEntry(
             : undefined;
         const label = `${maps.find((map) => map.id === mapId)?.name ?? "Map"} · ${build.quality}`;
         window.dispatchEvent(
-          new CustomEvent("tea-maps-open-hosted-build", {
+          new CustomEvent("tea-maps-open-source", {
             detail: { source, label, camera },
           }),
         );

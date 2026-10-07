@@ -29,19 +29,23 @@ const router = createRouter<AppContext>({
               ? browserAssets.hostedProjects
               : sourceId.endsWith("/app/assets/hosted-viewer-panel.tsx")
                 ? browserAssets.hostedViewerPanel
-                : sourceId.endsWith("/app/assets/new-map-setup.tsx")
-                  ? browserAssets.newMap
-                  : sourceId.endsWith("/app/assets/project-maps.tsx")
-                    ? browserAssets.projectMaps
-                    : sourceId.endsWith("/app/assets/project-new-map.tsx")
-                      ? browserAssets.projectNewMap
-                      : sourceId.endsWith("/app/assets/project-access-page.tsx")
-                        ? browserAssets.projectAccess
+                : sourceId.endsWith("/app/assets/viewer-source-panel.tsx")
+                  ? browserAssets.viewerSourcePanel
+                  : sourceId.endsWith("/app/assets/new-map-setup.tsx")
+                    ? browserAssets.newMap
+                    : sourceId.endsWith("/app/assets/project-maps.tsx")
+                      ? browserAssets.projectMaps
+                      : sourceId.endsWith("/app/assets/project-new-map.tsx")
+                        ? browserAssets.projectNewMap
                         : sourceId.endsWith(
-                              "/app/assets/project-resources-page.tsx",
+                              "/app/assets/project-access-page.tsx",
                             )
-                          ? browserAssets.projectResources
-                          : null;
+                          ? browserAssets.projectAccess
+                          : sourceId.endsWith(
+                                "/app/assets/project-resources-page.tsx",
+                              )
+                            ? browserAssets.projectResources
+                            : null;
           if (!href) throw new Error(`Unknown Maps client entry ${sourceId}`);
           return {
             href,
