@@ -649,6 +649,33 @@ try {
     "TEST_MATERIAL",
   );
   result.checks.push("Remix material browser filters and activates materials");
+  await page.locator("#performance-toggle").click();
+  await page.locator("#performance-panel").waitFor({ state: "visible" });
+  assert.equal(
+    await page.locator("#performance-toggle").getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.locator("#performance-record").click();
+  await page.waitForFunction(() =>
+    /Recording.*[1-9][0-9]* frames/.test(
+      document.querySelector("#performance-capture")?.textContent ?? "",
+    ),
+  );
+  await page.locator("#performance-record").click();
+  await page.locator("#performance-report").click();
+  const performanceReport = JSON.parse(
+    await page.locator("#performance-json").inputValue(),
+  );
+  assert.ok(performanceReport.summary.frames > 0);
+  assert.equal(
+    performanceReport.summary.frames,
+    performanceReport.samples.length,
+  );
+  await page.locator("#performance-toggle").click();
+  await page.locator("#performance-panel").waitFor({ state: "hidden" });
+  result.checks.push(
+    "Remix performance panel records and exports frame timings",
+  );
   try {
     await page.locator("#hosted-share").waitFor({ state: "visible" });
   } catch (error) {

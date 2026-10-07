@@ -11,6 +11,10 @@ import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx
 import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
 import { EditorIssues } from "./assets/editor-issues-panel.tsx";
 import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
+import {
+  EditorPerformancePanel,
+  EditorPerformanceToggle,
+} from "./assets/editor-performance-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -35,9 +39,7 @@ export function EditorPage() {
               Starting…
             </span>
             <EditorThemeControl />
-            <button id="performance-toggle" type="button" aria-pressed="false">
-              Performance
-            </button>
+            <EditorPerformanceToggle />
           </header>
           <nav class="editor-toolbar" aria-label="Editor actions">
             <button id="new-map" type="button" disabled>
@@ -1293,43 +1295,7 @@ export function EditorPage() {
             <EditorProjectMapSelector />
           </div>
         </main>
-        <section
-          id="performance-panel"
-          aria-label="Performance diagnostics"
-          hidden
-        >
-          <strong id="performance-heading">Performance · 0 browser FPS</strong>
-          <span id="performance-frames">Last 0 frames</span>
-          <svg
-            viewBox="0 0 240 60"
-            role="img"
-            aria-label="Frame time graph, 0 to 60 milliseconds"
-          >
-            <path class="performance-budget" d="M0 43.33H240 M0 26.66H240" />
-            <polyline id="performance-graph" fill="none" />
-          </svg>
-          <span id="performance-slow">Slow frames: 0</span>
-          <span id="performance-render">Editor: 0 render calls</span>
-          <small>
-            Browser cadence includes idle time. Editor draws on demand. CPU
-            timing excludes GPU execution. Graph guides: 16.7 / 33.3 ms.
-          </small>
-          <div class="performance-actions">
-            <button id="performance-record" type="button">
-              Record 30 seconds
-            </button>
-            <button id="performance-report" type="button" disabled>
-              Show capture JSON
-            </button>
-          </div>
-          <span id="performance-capture">Capture: 0 frames</span>
-          <textarea
-            id="performance-json"
-            aria-label="Performance capture JSON"
-            readOnly
-            hidden
-          />
-        </section>
+        <EditorPerformancePanel />
         <dialog id="switch-map-dialog" aria-labelledby="switch-map-title">
           <h2 id="switch-map-title">Save this map?</h2>
           <p>Choose what to do with changes before opening another map.</p>

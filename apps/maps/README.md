@@ -102,6 +102,8 @@ Expand switches between the four viewport layout and a perspective-only view. Th
 
 The Performance control samples visible-tab animation frame cadence and editor render CPU submission time only while open. It shows a bounded frame graph and can record up to 30 seconds of timing samples as copyable JSON. GPU execution time and map contents are not included.
 
+The Performance button and panel render as Remix client components. The editor's timing collector publishes sampling updates four times per second and skips render timing when the panel is closed.
+
 The editor header offers System, Dark, and Light themes. The choice is saved in this browser and updates the editor controls and viewport renderer; System follows operating system changes.
 
 Selection brushes use selected structural brushes as volumes to select touching or enclosed objects, including a chosen XY, XZ, or YZ projection. The command removes the selection brushes and selects the matches in one undoable edit; Undo restores the brushes.

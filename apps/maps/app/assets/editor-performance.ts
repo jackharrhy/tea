@@ -30,28 +30,14 @@ export function summarizeTimings(samples: readonly TimingSample[]) {
   };
 }
 
+export interface PerformanceState {
+  readonly enabled: boolean;
+  readonly recording: boolean;
+  readonly samples: readonly TimingSample[];
+  readonly capture: readonly TimingSample[];
+}
+
 export function initEditorPerformance() {
-  const toggle = document.querySelector<HTMLButtonElement>(
-    "#performance-toggle",
-  )!;
-  const panel = document.querySelector<HTMLElement>("#performance-panel")!;
-  const heading = document.querySelector<HTMLElement>("#performance-heading")!;
-  const frames = document.querySelector<HTMLElement>("#performance-frames")!;
-  const graph =
-    document.querySelector<SVGPolylineElement>("#performance-graph")!;
-  const slow = document.querySelector<HTMLElement>("#performance-slow")!;
-  const render = document.querySelector<HTMLElement>("#performance-render")!;
-  const record = document.querySelector<HTMLButtonElement>(
-    "#performance-record",
-  )!;
-  const report = document.querySelector<HTMLButtonElement>(
-    "#performance-report",
-  )!;
-  const captureLabel = document.querySelector<HTMLElement>(
-    "#performance-capture",
-  )!;
-  const json =
-    document.querySelector<HTMLTextAreaElement>("#performance-json")!;
   let enabled = false;
   let recording = false;
   let samples: TimingSample[] = [];
@@ -63,26 +49,23 @@ export function initEditorPerformance() {
   let renderCalls = 0;
   let renderCpuMs = 0;
 
-  function update() {
-    const stats = summarizeTimings(samples);
-    const captured = summarizeTimings(capture);
-    heading.textContent = `Performance · ${stats.fps.toFixed(0)} browser FPS`;
-    frames.textContent = `Last ${stats.frames} frames · p95 ${stats.p95Ms.toFixed(1)} ms · worst ${stats.maxMs.toFixed(1)} ms`;
-    graph.setAttribute(
-      "points",
-      samples
-        .slice(-120)
-        .map(
-          (sample, index) =>
-            `${index * 2},${60 - Math.min(60, sample.frameMs)}`,
-        )
-        .join(" "),
+  function publish() {
+    window.dispatchEvent(
+      new CustomEvent<PerformanceState>("tea-maps-performance-state", {
+        detail: {
+          enabled,
+          recording,
+          samples,
+          capture,
+        },
+      }),
     );
-    slow.textContent = `Slow frames: ${stats.over33Ms} above 33 ms · ${stats.over50Ms} above 50 ms`;
-    render.textContent = `Editor: ${stats.renderCalls} render calls · ${stats.meanRenderCpuMs.toFixed(2)} ms CPU/call`;
-    record.textContent = recording ? "Stop recording" : "Record 30 seconds";
-    report.disabled = recording || capture.length === 0;
-    captureLabel.textContent = `${recording ? "Recording — move around the viewport" : "Capture"}: ${captured.frames} frames · ${captured.over50Ms} above 50 ms · worst ${captured.maxMs.toFixed(1)} ms`;
+  }
+
+  function resetBaseline() {
+    previous = 0;
+    renderCalls = 0;
+    renderCpuMs = 0;
   }
 
   function tick(now: number) {
@@ -107,7 +90,7 @@ export function initEditorPerformance() {
     renderCpuMs = 0;
     if (now - published >= 250) {
       published = now;
-      update();
+      publish();
     }
     frame = requestAnimationFrame(tick);
   }
@@ -117,17 +100,11 @@ export function initEditorPerformance() {
     recording = false;
     cancelAnimationFrame(frame);
     document.removeEventListener("visibilitychange", resetBaseline);
-    panel.hidden = true;
-    toggle.setAttribute("aria-pressed", "false");
+    publish();
   }
 
-  function resetBaseline() {
-    previous = 0;
-    renderCalls = 0;
-    renderCpuMs = 0;
-  }
-
-  toggle.addEventListener("click", () => {
+  window.addEventListener("tea-maps-performance-ready", publish);
+  window.addEventListener("tea-maps-performance-toggle", () => {
     if (enabled) {
       stop();
       return;
@@ -135,44 +112,28 @@ export function initEditorPerformance() {
     enabled = true;
     samples = [];
     resetBaseline();
-    panel.hidden = false;
-    toggle.setAttribute("aria-pressed", "true");
     document.addEventListener("visibilitychange", resetBaseline);
-    update();
+    publish();
     frame = requestAnimationFrame(tick);
   });
-  record.addEventListener("click", () => {
+  window.addEventListener("tea-maps-performance-record", () => {
     if (recording) recording = false;
     else {
       capture = [];
       started = performance.now();
       recording = true;
-      json.hidden = true;
-      json.value = "";
     }
-    update();
+    publish();
   });
-  report.addEventListener("click", () => {
-    json.value = JSON.stringify(
-      {
-        version: 1,
-        summary: summarizeTimings(capture),
-        description:
-          "Visible-tab animation frame cadence and editor CPU submission timing; not GPU timings.",
-        samples: capture,
-      },
-      null,
-      2,
-    );
-    json.hidden = false;
-  });
+  window.addEventListener("tea-maps-performance-dispose", stop);
   window.addEventListener("pagehide", stop, { once: true });
+  publish();
 
   return {
     isEnabled: () => enabled,
     recordRender(cpuMs: number) {
       if (!enabled) return;
-      renderCalls += 1;
+      renderCalls++;
       renderCpuMs += cpuMs;
     },
   };
