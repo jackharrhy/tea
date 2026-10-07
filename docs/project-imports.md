@@ -36,6 +36,8 @@ The hosted source dialog now renders through a Remix client entry. The browser d
 
 The editor's hosted Project resources panel now renders through a Remix client entry. It keeps owner-only upload, Artbin import, and removal actions, and tells the open editor when mounts change.
 
+The hosted picker's Recovery copies control now renders through a Remix client entry. It lists detached collaboration drafts stored in this browser and hands the selected copy to the editor's guarded open flow.
+
 The read-only local and hosted source comparison now renders through a Remix client entry, including the first differing line and both source snapshots.
 
 The editor material browser now renders and filters texture thumbnails through a Remix client entry. Its session actions still use the editor's existing selection and source guards.

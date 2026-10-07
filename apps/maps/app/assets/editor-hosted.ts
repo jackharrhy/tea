@@ -13,10 +13,11 @@ import {
   createHostedProject,
 } from "./editor-hosted-create.ts";
 import { initEditorHostedResources } from "./editor-hosted-resources-bridge.ts";
-import {
-  IndexedDbCollaborationOutbox,
-  type DetachedHostedMap,
-} from "./editor-collaboration.ts";
+import type { DetachedHostedMap } from "./editor-collaboration.ts";
+
+export interface DetachedMapsContext {
+  readonly openDetached: (copy: DetachedHostedMap) => Promise<boolean>;
+}
 
 export function initHostedEditor(options: {
   open(map: HostedMapLaunch): Promise<boolean>;
@@ -72,13 +73,20 @@ export function initHostedEditor(options: {
   const copyButton = document.querySelector<HTMLButtonElement>(
     "#hosted-editor-copy",
   )!;
-  const detachedMaps = document.querySelector<HTMLSelectElement>(
-    "#detached-editor-map",
-  )!;
-  const detachedOpen = document.querySelector<HTMLButtonElement>(
-    "#detached-editor-open",
-  )!;
-  const outbox = new IndexedDbCollaborationOutbox();
+  let detachedReady = false;
+  function publishDetached() {
+    if (!detachedReady) return;
+    window.dispatchEvent(
+      new CustomEvent<DetachedMapsContext>("tea-maps-detached-state", {
+        detail: { openDetached: options.openDetached },
+      }),
+    );
+  }
+  window.addEventListener("tea-maps-detached-ready", () => {
+    detachedReady = true;
+    publishDetached();
+  });
+  window.dispatchEvent(new Event("tea-maps-detached-bridge-ready"));
   const access = initHostedAccess();
   const initialMap = new URL(location.href).searchParams.get("hostedMap");
   const initialProject = new URL(location.href).searchParams.get(
@@ -305,34 +313,6 @@ export function initHostedEditor(options: {
           error instanceof Error ? error.message : String(error);
       });
   });
-  async function refreshDetached() {
-    const copies = await outbox.listDetached();
-    detachedMaps.replaceChildren();
-    for (const copy of copies) {
-      detachedMaps.add(
-        new Option(
-          `${copy.fileName} · ${new Date(copy.createdAt).toLocaleString()}`,
-          copy.id,
-        ),
-      );
-    }
-    detachedMaps.disabled = copies.length === 0;
-    detachedOpen.disabled = copies.length === 0;
-  }
-  detachedOpen.addEventListener("click", () => {
-    void outbox
-      .loadDetached(detachedMaps.value)
-      .then(async (copy) => {
-        if (copy) await options.openDetached(copy);
-      })
-      .catch((error: unknown) => {
-        status.textContent =
-          error instanceof Error ? error.message : String(error);
-      });
-  });
-  void refreshDetached().catch(() => {
-    status.textContent = "Local recovery copies are unavailable";
-  });
   void loadSession().catch((error: unknown) => {
     status.textContent = error instanceof Error ? error.message : String(error);
   });
@@ -343,7 +323,7 @@ export function initHostedEditor(options: {
       refreshCompareAvailability();
       copyButton.disabled = !value;
       if (value) picker.open = true;
-      void refreshDetached();
+      publishDetached();
     },
   };
 }

@@ -3,6 +3,7 @@ import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx"
 import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx";
 import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.tsx";
+import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
@@ -923,11 +924,7 @@ export function EditorPage() {
                 Edit hosted source
               </button>
               <EditorHostedPresence />
-              <label for="detached-editor-map">Recovery copies</label>
-              <select id="detached-editor-map" disabled></select>
-              <button id="detached-editor-open" type="button" disabled>
-                Open recovery copy
-              </button>
+              <EditorDetachedMaps />
               <p>
                 Hosted members can edit with live sync. Source changes replace
                 the hosted map after a version check. Recovery copies and source

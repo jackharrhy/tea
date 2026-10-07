@@ -34,6 +34,7 @@ const clientEntryFiles = {
   "editor-visibility-panel.tsx": browserAssets.editorVisibility,
   "editor-performance-panel.tsx": browserAssets.editorPerformancePanel,
   "editor-hosted-resources-panel.tsx": browserAssets.editorHostedResources,
+  "editor-detached-maps-panel.tsx": browserAssets.editorDetachedMaps,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,
   "viewer-source-panel.tsx": browserAssets.viewerSourcePanel,
