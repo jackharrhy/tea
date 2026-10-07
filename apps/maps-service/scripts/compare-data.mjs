@@ -191,6 +191,15 @@ try {
     targetPath,
     "Compare separate source and Tea data roots",
   );
+  const [sourceDatabase, targetDatabase] = await Promise.all([
+    stat(join(sourceRoot, "maps.db")),
+    stat(join(targetRoot, "maps.db")),
+  ]);
+  assert.ok(
+    sourceDatabase.dev !== targetDatabase.dev ||
+      sourceDatabase.ino !== targetDatabase.ino,
+    "Compare independent Maps database files",
+  );
   comparison.source = await report(sourceRoot);
   comparison.target = await report(targetRoot);
   comparison.mismatches = [];

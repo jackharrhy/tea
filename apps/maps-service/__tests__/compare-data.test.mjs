@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   copyFile,
+  link,
   mkdir,
   mkdtemp,
   rm,
@@ -122,6 +123,17 @@ test("compares copied hosted metadata and blob bytes, and catches divergence", a
       aliasedRoot.report.error,
       /separate source and Tea data roots/,
     );
+
+    await unlink(join(target, "maps.db"));
+    await link(join(source, "maps.db"), join(target, "maps.db"));
+    const linkedDatabase = compare(source, target);
+    assert.equal(linkedDatabase.exitCode, 1);
+    assert.match(
+      linkedDatabase.report.error,
+      /independent Maps database files/,
+    );
+    await unlink(join(target, "maps.db"));
+    await copyFile(join(source, "maps.db"), join(target, "maps.db"));
 
     await unlink(sourceBlob);
     await unlink(targetBlob);
