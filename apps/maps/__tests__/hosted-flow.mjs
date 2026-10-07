@@ -543,6 +543,9 @@ try {
     const tools = window.teaMapsTestTools;
     const inspect = () => tools.get("tea_maps_inspect_editor").execute({});
     const before = inspect();
+    const activeTool = tools
+      .get("tea_maps_set_tool")
+      .execute({ tool: "rotate" });
     const created = tools.get("tea_maps_create_box").execute({
       expectedDocumentId: before.documentId,
       expectedRevision: before.revision,
@@ -577,9 +580,30 @@ try {
       expectedRevision: translated.revision,
       action: "undo",
     });
-    const applied = tools.get("tea_maps_apply_material").execute({
+    const rotated = tools.get("tea_maps_rotate_selection").execute({
       expectedDocumentId: before.documentId,
       expectedRevision: undone.revision,
+      pivot: [32, 32, 32],
+      axis: "z",
+      degrees: 90,
+    });
+    const scaled = tools.get("tea_maps_scale_selection").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: rotated.revision,
+      pivot: [32, 32, 32],
+      factors: [1.5, 1, 1],
+    });
+    const sheared = tools.get("tea_maps_shear_selection").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: scaled.revision,
+      pivot: [32, 32, 32],
+      sourceAxis: "x",
+      targetAxis: "y",
+      factor: 0.25,
+    });
+    const applied = tools.get("tea_maps_apply_material").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: sheared.revision,
       material: "BRICK",
     });
     const material = tools.get("tea_maps_list_materials").execute({
@@ -614,11 +638,15 @@ try {
     return {
       names: [...tools.keys()],
       before,
+      activeTool,
       created,
       selected,
       translated,
       staleError,
       undone,
+      rotated,
+      scaled,
+      sheared,
       applied,
       material,
       property,
@@ -630,7 +658,8 @@ try {
       source: tools.get("tea_maps_get_map_source").execute({}),
     };
   });
-  assert.equal(siteTools.names.length, 14);
+  assert.equal(siteTools.names.length, 19);
+  assert.equal(siteTools.activeTool.activeTool, "rotate");
   assert.equal(siteTools.inspection.name, "tea-map.map");
   assert.equal(siteTools.inspection.counts.brushes, 1);
   assert.equal(siteTools.objects.total, 3);
@@ -639,6 +668,7 @@ try {
   ]);
   assert.ok(siteTools.translated.revision > siteTools.created.revision);
   assert.ok(siteTools.undone.revision > siteTools.translated.revision);
+  assert.ok(siteTools.sheared.revision > siteTools.undone.revision);
   assert.equal(siteTools.material.materials[0].faceCount, 6);
   assert.ok(siteTools.point.revision > siteTools.property.revision);
   assert.ok(siteTools.deleted.revision > siteTools.duplicated.revision);

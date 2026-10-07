@@ -4552,6 +4552,7 @@ void registerEditorWebMcpTools(
     hostedMap,
     renderer,
     materials: currentMaterials(),
+    activeTool: viewportTool.value,
     canUndo: hostedMap
       ? (hostedConnection?.canUndo() ?? false)
       : session.canUndo,
@@ -4569,6 +4570,9 @@ void registerEditorWebMcpTools(
     async history(action) {
       if (hostedMap) await hostedConnection![action]();
       else session[action]();
+    },
+    setTool(next) {
+      activateViewportTool(next);
     },
     status(message) {
       status.textContent = `Site tool: ${message}`;
