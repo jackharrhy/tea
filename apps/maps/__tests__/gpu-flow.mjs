@@ -6,6 +6,9 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
 const teaRoot = fileURLToPath(new URL("../../..", import.meta.url));
+const testCorpus = process.argv.includes("--corpus");
+if (testCorpus && !process.env.TEA_MAPS_LOCAL_FIXTURE_ROOT)
+  throw new Error("Set TEA_MAPS_LOCAL_FIXTURE_ROOT to the existing local fixture directory");
 const origin = "http://localhost:8790";
 const flags = [
   "--enable-features=Vulkan",
@@ -73,14 +76,10 @@ try {
   assert.equal(gpu, true, "WebGPU software adapter is unavailable");
   await page.locator("#xy[data-face-alignment-count]").waitFor();
   await page.locator("#add-box:enabled").click();
-  await page.waitForFunction(
-    () => document.querySelector("#brush-count")?.textContent === "1",
-  );
+  await page.waitForFunction(() => document.querySelector("#brush-count")?.textContent === "1");
   const before = await page.evaluate(() => ({
-    revision: window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
-      .revision,
-    source: window.teaMapsTestTools.get("tea_maps_get_map_source").execute({})
-      .text,
+    revision: window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).revision,
+    source: window.teaMapsTestTools.get("tea_maps_get_map_source").execute({}).text,
   }));
   const bounds = await page.locator("#xy").boundingBox();
   assert.ok(bounds, "Top viewport has no bounds");
@@ -97,20 +96,16 @@ try {
   await page.mouse.up();
   await page.waitForFunction(
     (revision) =>
-      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
-        .revision > revision,
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).revision > revision,
     before.revision,
   );
   const afterDrag = await page.evaluate(
-    () =>
-      window.teaMapsTestTools.get("tea_maps_get_map_source").execute({}).text,
+    () => window.teaMapsTestTools.get("tea_maps_get_map_source").execute({}).text,
   );
   assert.notEqual(afterDrag, before.source, "Viewport drag did not move brush");
   await page.locator("#undo").click();
   await page.waitForFunction(
-    (source) =>
-      window.teaMapsTestTools.get("tea_maps_get_map_source").execute({})
-        .text === source,
+    (source) => window.teaMapsTestTools.get("tea_maps_get_map_source").execute({}).text === source,
     before.source,
   );
   await page.goto(`${origin}/?example=quake`);
@@ -191,6 +186,37 @@ try {
     await page.locator("#map-warnings").textContent(),
     /missing.*(texture|palette)/i,
   );
+  if (testCorpus) {
+    page.setDefaultTimeout(90_000);
+    const catalog = await (await fetch(`${origin}/local-fixtures.json`)).json();
+    const cases = [
+      ["steam-corpus/thirty-flights-of-loving/bar1", "quake2-bsp38"],
+      ["steam-corpus/ricochet/rc_arena", "goldsrc-bsp30"],
+      ["steam-corpus/fleshcancer/dm1", "quake-bsp29"],
+      ["steam-corpus/quake-ii/mgu1m1", "quake2-bsp38"],
+    ];
+    for (const [id, format] of cases) {
+      assert.ok(
+        catalog.some((fixture) => fixture.id === id),
+        `${id} is absent from the local fixture catalog`,
+      );
+      await page.goto(`${origin}/?fixture=${encodeURIComponent(id)}`);
+      await page
+        .locator("#viewer-status")
+        .getByText(/^Ready/)
+        .waitFor();
+      const diagnostics = await page
+        .locator("#viewport world-view")
+        .evaluate((element) => element.viewer?.diagnostics);
+      assert.equal(diagnostics?.format, format, `${id} format`);
+      assert.ok(diagnostics.triangles > 0, `${id} has no rendered faces`);
+      assert.doesNotMatch(
+        await page.locator("#map-warnings").textContent(),
+        /missing.*(texture|palette)/i,
+        `${id} has missing assets`,
+      );
+    }
+  }
   assert.deepEqual(pageErrors, []);
   console.log(
     JSON.stringify({
@@ -203,6 +229,7 @@ try {
         "Overview exports a PNG and walkability sidecar round-trips",
         "WebGPU viewer opens a generated BSP2 map",
         "WebGPU viewer loads a generated Quake II map with its assets",
+        ...(testCorpus ? ["WebGPU viewer loads four owned-game corpus fixtures in place"] : []),
       ],
     }),
   );
