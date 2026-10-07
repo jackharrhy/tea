@@ -391,8 +391,8 @@ export async function compileNativeMap(
       "Quake II project assets cannot be combined with TEA_MAPS_GAME_DIR; use one game tree for this build",
     );
   }
-  const workingDirectory = await mkdtemp(join(tmpdir(), "worldview-compile-"));
-  const expectedPrefix = join(tmpdir(), "worldview-compile-");
+  const workingDirectory = await mkdtemp(join(tmpdir(), "tea-maps-compile-"));
+  const expectedPrefix = join(tmpdir(), "tea-maps-compile-");
   if (!workingDirectory.startsWith(expectedPrefix)) {
     throw new Error("Refusing to use an unexpected compiler working directory");
   }
