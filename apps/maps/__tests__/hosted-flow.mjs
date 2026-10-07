@@ -1365,10 +1365,7 @@ try {
       ]),
     );
     const root = fixture.directory("smoke", {
-      "worldview.project.json": fixture.file(
-        "worldview.project.json",
-        manifest,
-      ),
+      "tea.maps.project.json": fixture.file("tea.maps.project.json", manifest),
       maps: fixture.directory("maps", mapFiles),
     });
     window.showDirectoryPicker = async () => root;
@@ -1486,9 +1483,17 @@ try {
     );
   }
   await page.getByText(/No common sync point · hosted version/).waitFor();
+  assert.equal(
+    await page.evaluate(async () => {
+      const root = await window.showDirectoryPicker();
+      const handle = await root.getFileHandle("tea.maps.project.json");
+      return JSON.parse(await (await handle.getFile()).text()).hosted.projectId;
+    }),
+    projectUrl.split("/").at(-1),
+  );
   await page.locator("#project-sync-close").click();
   result.checks.push(
-    "Remix local project chooser and linked source comparison",
+    "Remix Tea local project chooser, link writing, and source comparison",
   );
   await page.locator("#hosted-editor-picker summary").first().click();
   await page.waitForFunction(
