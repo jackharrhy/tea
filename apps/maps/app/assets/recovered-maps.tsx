@@ -284,8 +284,12 @@ export const RecoveredMaps = clientEntry(
               disabled={importing}
               mix={on("click", () => void downloadLegacyWork())}
             >
-              Download Worldview local work
+              Download Worldview maps and browser resources
             </button>
+            <p>
+              Local build history and export settings stay in Worldview. Save
+              builds you need there; relink project sync in Tea.
+            </p>
           </div>
         ) : null}
         <label for="import-worldview-copies-file">
