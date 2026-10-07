@@ -11,6 +11,7 @@ import { EditorLayers } from "./assets/editor-layers-panel.tsx";
 import { EditorGroups } from "./assets/editor-groups-panel.tsx";
 import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
 import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
+import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -52,19 +53,7 @@ export function EditorPage() {
             <EditorPerformanceToggle />
           </header>
           <nav class="editor-toolbar" aria-label="Editor actions">
-            <button id="new-map" type="button" disabled>
-              New map
-            </button>
-            <button id="example-map" type="button" disabled>
-              Example scene
-            </button>
-            <button id="open-map-button" type="button" disabled>
-              Open .map
-            </button>
-            <input id="open-map" type="file" accept=".map,text/plain" />
-            <button id="open-project" type="button" disabled>
-              Open project
-            </button>
+            <EditorDocumentControls />
             <EditorRecentProjects />
             <label for="project-maps">Project maps</label>
             <select id="project-maps" disabled>
@@ -78,20 +67,6 @@ export function EditorPage() {
               <summary>Project resource messages</summary>
               <ul id="project-resource-messages" />
             </details>
-            <button id="save-map" type="button" disabled>
-              Save .map
-            </button>
-            <button id="export-normalized" type="button" disabled>
-              Export normalized
-            </button>
-            <label for="checkpoint-label">Checkpoint label</label>
-            <input id="checkpoint-label" type="text" placeholder="Optional" />
-            <button id="create-checkpoint" type="button" disabled>
-              Save checkpoint
-            </button>
-            <button id="show-versions" type="button" disabled>
-              Recovery versions
-            </button>
             <EditorBuildControls />
             <EditorExportSettings />
             <EditorHostedBuilds />
@@ -678,9 +653,6 @@ export function EditorPage() {
             </button>
             <button id="redo" type="button" disabled>
               Redo
-            </button>
-            <button id="download-map" type="button" disabled>
-              Download .map
             </button>
           </nav>
           <details id="hosted-editor-picker" class="hosted-editor-picker">

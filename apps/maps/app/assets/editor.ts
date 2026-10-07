@@ -133,7 +133,6 @@ import {
   downloadMapCopy,
   pickMapFile,
   pickMapSaveFile,
-  supportsMapOpenPicker,
   supportsMapSavePicker,
   writeMapFile,
   type MapFileHandle,
@@ -188,6 +187,7 @@ import {
   type EditorGroupCommand,
 } from "./editor-groups-bridge.ts";
 import { initEditorBuildControls } from "./editor-build-controls-bridge.ts";
+import { initEditorDocumentControls } from "./editor-document-controls-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -307,7 +307,6 @@ const csgThickness =
   document.querySelector<HTMLInputElement>("#csg-thickness")!;
 const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
 const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
-const fileInput = document.querySelector<HTMLInputElement>("#open-map")!;
 const projectMaps = document.querySelector<HTMLSelectElement>("#project-maps")!;
 const perspectiveLabel =
   document.querySelector<HTMLElement>("#perspective-label")!;
@@ -416,10 +415,6 @@ const switchMapDialog =
   document.querySelector<HTMLDialogElement>("#switch-map-dialog")!;
 const versionsDialog =
   document.querySelector<HTMLDialogElement>("#versions-dialog")!;
-const checkpointLabel =
-  document.querySelector<HTMLInputElement>("#checkpoint-label")!;
-const checkpointButton =
-  document.querySelector<HTMLButtonElement>("#create-checkpoint")!;
 const canvases = {
   perspective: document.querySelector<HTMLCanvasElement>("#perspective")!,
   xy: document.querySelector<HTMLCanvasElement>("#xy")!,
@@ -442,6 +437,18 @@ const buildControls = initEditorBuildControls({
   buildExportOnce: () => void runBuild(true),
   exportLatest: () => void exportCurrentBuild(),
   togglePreview: () => showCompiledPreview(!compiledVisible),
+});
+const documentControls = initEditorDocumentControls({
+  newMap: newMapFromControls,
+  exampleMap: exampleMapFromControls,
+  openPicker: openPickerFromControls,
+  openFile: (file) => openMapFile(file, null),
+  openProject: openProjectFromControls,
+  save: saveCurrentMap,
+  exportNormalized: exportNormalizedMap,
+  checkpoint: createCheckpointFromControls,
+  showVersions: showVersionsFromControls,
+  download: downloadCurrentMap,
 });
 let renderer: EditorSourceRenderer | null = null;
 window.addEventListener(editorThemeEvent, () => {
@@ -1961,14 +1968,15 @@ function setHostedEditability() {
     readOnly && !hostedConnection;
   document.querySelector<HTMLButtonElement>("#apply-source")!.disabled =
     readOnly;
-  document.querySelector<HTMLButtonElement>("#save-map")!.disabled = readOnly;
-  checkpointButton.disabled =
-    readOnly && (hostedMap?.role === "viewer" || !hostedConnection);
+  documentControls.update({
+    saveDisabled: readOnly,
+    checkpointDisabled:
+      readOnly && (hostedMap?.role === "viewer" || !hostedConnection),
+    downloadLabel: readOnly ? "Download copy" : "Download .map",
+  });
   pasteOriginalButton.disabled = readOnly && !hostedConnection;
   pasteCursorButton.disabled =
     (readOnly && !hostedConnection) || latestPointer === null;
-  document.querySelector<HTMLButtonElement>("#download-map")!.textContent =
-    readOnly ? "Download copy" : "Download .map";
   const buildDisabled =
     localBuildBusy ||
     (readOnly && (hostedMap?.role === "viewer" || hostedBuildBusy));
@@ -2693,21 +2701,17 @@ function selectGameProfile(value: string) {
   scheduleDraftSave();
 }
 
-document
-  .querySelector<HTMLButtonElement>("#new-map")!
-  .addEventListener("click", async () => {
-    if (!(await mayReplaceMap())) return;
-    clearOpenedFile();
-    setMap(createEmptyDocument());
-  });
+async function newMapFromControls() {
+  if (!(await mayReplaceMap())) return;
+  clearOpenedFile();
+  setMap(createEmptyDocument());
+}
 
-document
-  .querySelector<HTMLButtonElement>("#example-map")!
-  .addEventListener("click", async () => {
-    if (!(await mayReplaceMap())) return;
-    clearOpenedFile();
-    setMap(createStarterDocument());
-  });
+async function exampleMapFromControls() {
+  if (!(await mayReplaceMap())) return;
+  clearOpenedFile();
+  setMap(createStarterDocument());
+}
 
 document
   .querySelector<HTMLButtonElement>("#add-box")!
@@ -3761,28 +3765,15 @@ async function openMapFile(file: File, handle: MapFileHandle | null) {
   }
 }
 
-document
-  .querySelector<HTMLButtonElement>("#open-map-button")!
-  .addEventListener("click", async () => {
-    if (!supportsMapOpenPicker()) {
-      fileInput.click();
-      return;
-    }
-    try {
-      const handle = await pickMapFile();
-      if (handle) await openMapFile(await handle.getFile(), handle);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
-
-fileInput.addEventListener("change", async () => {
-  const file = fileInput.files?.[0];
-  fileInput.value = "";
-  if (file) await openMapFile(file, null);
-});
+async function openPickerFromControls() {
+  try {
+    const handle = await pickMapFile();
+    if (handle) await openMapFile(await handle.getFile(), handle);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
+}
 
 async function openProjectDirectory(
   directory: MapDirectoryHandle,
@@ -3850,23 +3841,20 @@ window.addEventListener("tea-maps-open-recent-project", (event) => {
   );
 });
 
-document
-  .querySelector<HTMLButtonElement>("#open-project")!
-  .addEventListener("click", async () => {
-    if (!supportsProjectPicker()) {
-      status.textContent =
-        "This browser cannot open project folders; open a .map file instead";
-      return;
-    }
-    try {
-      const directory = await pickProjectDirectory();
-      if (directory) await openProjectDirectory(directory);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
+async function openProjectFromControls() {
+  if (!supportsProjectPicker()) {
+    status.textContent =
+      "This browser cannot open project folders; open a .map file instead";
+    return;
+  }
+  try {
+    const directory = await pickProjectDirectory();
+    if (directory) await openProjectDirectory(directory);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
+}
 
 async function openProjectMap(
   path: string,
@@ -3945,10 +3933,6 @@ document
   .addEventListener("click", () => {
     applyWorkingSource();
   });
-
-document
-  .querySelector<HTMLButtonElement>("#save-map")!
-  .addEventListener("click", saveCurrentMap);
 
 async function exportLatestBuild(settings: ExportSettings): Promise<void> {
   const latest = latestBuildExport;
@@ -4222,34 +4206,30 @@ async function exportCurrentBuild() {
   }
 }
 
-document
-  .querySelector<HTMLButtonElement>("#download-map")!
-  .addEventListener("click", () => {
-    if (hostedMap) {
-      downloadMapCopy(mapName, hostedMap.source);
-      return;
-    }
-    if (!applyWorkingSource()) return;
-    const plan = planMapSave(session.document, mapSourceState);
-    if (plan.status === "blocked") {
-      status.textContent = `${plan.diagnostics.map(({ message }) => message).join(" ")} Use Export normalized to download a separate copy.`;
-      return;
-    }
-    downloadMapCopy(mapName, plan.text);
-  });
-document
-  .querySelector<HTMLButtonElement>("#export-normalized")!
-  .addEventListener("click", () => {
-    if (hostedMap) {
-      status.textContent =
-        "Open a local copy before exporting normalized source";
-      return;
-    }
-    if (!applyWorkingSource()) return;
-    const normalizedName = mapName.replace(/\.map$/i, "") + ".normalized.map";
-    downloadMapCopy(normalizedName, serializeMap(session.document));
-    status.textContent = `Exported ${normalizedName} as a separate copy`;
-  });
+function downloadCurrentMap() {
+  if (hostedMap) {
+    downloadMapCopy(mapName, hostedMap.source);
+    return;
+  }
+  if (!applyWorkingSource()) return;
+  const plan = planMapSave(session.document, mapSourceState);
+  if (plan.status === "blocked") {
+    status.textContent = `${plan.diagnostics.map(({ message }) => message).join(" ")} Use Export normalized to download a separate copy.`;
+    return;
+  }
+  downloadMapCopy(mapName, plan.text);
+}
+
+function exportNormalizedMap() {
+  if (hostedMap) {
+    status.textContent = "Open a local copy before exporting normalized source";
+    return;
+  }
+  if (!applyWorkingSource()) return;
+  const normalizedName = mapName.replace(/\.map$/i, "") + ".normalized.map";
+  downloadMapCopy(normalizedName, serializeMap(session.document));
+  status.textContent = `Exported ${normalizedName} as a separate copy`;
+}
 
 function refreshVersions() {
   window.dispatchEvent(
@@ -4299,60 +4279,55 @@ window.addEventListener("tea-maps-versions-restore", (event) => {
   })().then(request.resolve, request.reject);
 });
 
-checkpointButton.addEventListener("click", async () => {
+async function createCheckpointFromControls(label: string): Promise<boolean> {
   if (hostedMap) {
     const map = hostedMap;
-    if (!hostedConnection || map.role === "viewer") return;
-    checkpointButton.disabled = true;
+    if (!hostedConnection || map.role === "viewer") return false;
     try {
       if (await hostedConnection.pending()) {
         throw new Error("Wait for live brush edits to finish syncing");
       }
       const checkpoint = await createHostedCheckpoint(
         map.id,
-        checkpointLabel.value.trim() || `Checkpoint v${map.mapVersion}`,
+        label.trim() || `Checkpoint v${map.mapVersion}`,
       );
-      if (hostedMap?.id !== map.id) return;
-      checkpointLabel.value = "";
+      if (hostedMap?.id !== map.id) return false;
       status.textContent = `Hosted checkpoint “${checkpoint.name}” saved at v${checkpoint.mapVersion}`;
       if (versionsDialog.open) refreshVersions();
+      return true;
     } catch (error) {
       status.textContent =
         error instanceof Error ? error.message : String(error);
+      return false;
     } finally {
       setHostedEditability();
     }
-    return;
   }
   try {
     persistDraft();
     await saveQueue;
-    const version = await createEditorCheckpoint(
-      captureDraft(),
-      checkpointLabel.value,
-    );
-    checkpointLabel.value = "";
+    const version = await createEditorCheckpoint(captureDraft(), label);
     status.textContent = `Protected checkpoint “${version.label}” saved on this device`;
+    return true;
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+    return false;
+  }
+}
+
+async function showVersionsFromControls() {
+  try {
+    if (!hostedMap) persistDraft();
+    await saveQueue;
+    versionsDialog.showModal();
+    refreshVersions();
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
-document
-  .querySelector<HTMLButtonElement>("#show-versions")!
-  .addEventListener("click", async () => {
-    try {
-      if (!hostedMap) persistDraft();
-      await saveQueue;
-      versionsDialog.showModal();
-      refreshVersions();
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
+}
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #build-map, #build-export-once, #toggle-compiled, #export-build), #apply-source",
+  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build), #apply-source",
 )) {
   button.disabled = false;
 }

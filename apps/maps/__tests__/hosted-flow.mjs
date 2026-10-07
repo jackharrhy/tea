@@ -605,6 +605,55 @@ try {
     "one-shot local build export reports bundle failure and downloads BSP without changing preference",
   );
 
+  const documentPage = await browser.newPage();
+  await documentPage.goto(`${mapsOrigin}/editor`);
+  await documentPage.waitForFunction(
+    () => !document.querySelector("#open-map-button")?.disabled,
+  );
+  const portableSource =
+    '{\n"classname" "worldspawn"\n"message" "tea_document_fixture"\n}\n';
+  await documentPage.locator("#open-map").setInputFiles({
+    name: "portable.map",
+    mimeType: "text/plain",
+    buffer: Buffer.from(portableSource),
+  });
+  await documentPage.waitForFunction(() =>
+    document
+      .querySelector("#map-source")
+      ?.value.includes("tea_document_fixture"),
+  );
+  const mapDownload = documentPage.waitForEvent("download");
+  await documentPage.locator("#download-map").click();
+  const downloadedMap = await mapDownload;
+  assert.equal(downloadedMap.suggestedFilename(), "portable.map");
+  assert.equal(
+    await readFile(await downloadedMap.path(), "utf8"),
+    portableSource,
+  );
+  const normalizedDownload = documentPage.waitForEvent("download");
+  await documentPage.locator("#export-normalized").click();
+  assert.equal(
+    (await normalizedDownload).suggestedFilename(),
+    "portable.normalized.map",
+  );
+  await documentPage.locator("#new-map").click();
+  await documentPage.waitForFunction(
+    () =>
+      !document
+        .querySelector("#map-source")
+        ?.value.includes("tea_document_fixture"),
+  );
+  await documentPage.locator("#example-map").click();
+  await documentPage.waitForFunction(() =>
+    document
+      .querySelector("#map-source")
+      ?.value.includes("Worldview editor starter"),
+  );
+  await documentPage.close();
+  result.checks.push(
+    "Remix document controls open source, download preserved and normalized copies, and switch maps",
+  );
+
   const sourcePage = await browser.newPage();
   await sourcePage.goto(`${mapsOrigin}/?example=quake`);
   await sourcePage.locator("#map-name").getByText("Quake sky").waitFor();
@@ -1076,6 +1125,11 @@ try {
     );
   }
   result.checks.push("Remix hosted source draft recovery, discard, and save");
+  assert.equal(await page.locator("#save-map").isDisabled(), true);
+  assert.equal(
+    await page.locator("#download-map").textContent(),
+    "Download copy",
+  );
   await page.locator("#create-checkpoint").waitFor({ state: "visible" });
   await page.waitForFunction(
     () => !document.querySelector("#create-checkpoint")?.disabled,
@@ -1083,6 +1137,9 @@ try {
   await page.locator("#checkpoint-label").fill("Before build");
   await page.locator("#create-checkpoint").click();
   await page.getByText(/Hosted checkpoint “Before build” saved/).waitFor();
+  await page.waitForFunction(
+    () => document.querySelector("#checkpoint-label")?.value === "",
+  );
   await page.locator("#show-versions").click();
   await page
     .locator("#versions-list .version-row")
