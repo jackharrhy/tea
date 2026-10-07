@@ -48,6 +48,8 @@ The perspective FOV control now renders through a Remix client entry. Its browse
 
 The References panel now renders through a Remix client entry. It loads, snapshots, offsets, hides, and removes read-only scenes while the editor retains the scene list for renderer recreation.
 
+The Layers panel now renders through a Remix client entry. Layer creation, ordering, flags, and membership still use the editor session's source and undo path.
+
 The read-only local and hosted source comparison now renders through a Remix client entry, including the first differing line and both source snapshots.
 
 The editor material browser now renders and filters texture thumbnails through a Remix client entry. Its session actions still use the editor's existing selection and source guards.

@@ -7,6 +7,7 @@ import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorFov } from "./assets/editor-fov-panel.tsx";
 import { EditorReferences } from "./assets/editor-references-panel.tsx";
+import { EditorLayers } from "./assets/editor-layers-panel.tsx";
 import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
@@ -727,71 +728,7 @@ export function EditorPage() {
                 </button>
               </div>
             </details>
-            <details id="layer-tools">
-              <summary>Layers</summary>
-              <div class="layer-controls">
-                <label for="layer-select">Layer</label>
-                <select id="layer-select" aria-label="Map layer" />
-                <span id="layer-count" />
-                <label for="layer-name">Name</label>
-                <input id="layer-name" type="text" autoComplete="off" />
-                <button id="rename-layer" type="button" disabled>
-                  Rename
-                </button>
-                <button id="activate-layer" type="button" disabled>
-                  Make active
-                </button>
-                <button id="move-to-layer" type="button" disabled>
-                  Move selection
-                </button>
-                <button id="select-layer-contents" type="button" disabled>
-                  Select contents
-                </button>
-                <button id="isolate-layer" type="button" disabled>
-                  Isolate
-                </button>
-                <label for="layer-hidden">
-                  <input id="layer-hidden" type="checkbox" /> Hidden
-                </label>
-                <label for="layer-locked">
-                  <input id="layer-locked" type="checkbox" /> Locked
-                </label>
-                <label for="layer-omit">
-                  <input id="layer-omit" type="checkbox" /> Omit from build
-                </label>
-                <button id="layer-up" type="button" disabled>
-                  Move up
-                </button>
-                <button id="layer-down" type="button" disabled>
-                  Move down
-                </button>
-                <button id="remove-layer" type="button" disabled>
-                  Remove layer
-                </button>
-                <label for="new-layer-name">New layer</label>
-                <input
-                  id="new-layer-name"
-                  type="text"
-                  value="Layer"
-                  autoComplete="off"
-                />
-                <button id="create-layer" type="button" disabled>
-                  Add layer
-                </button>
-                <button id="show-all-layers" type="button" disabled>
-                  Show all
-                </button>
-                <button id="hide-all-layers" type="button" disabled>
-                  Hide all
-                </button>
-                <button id="unlock-all-layers" type="button" disabled>
-                  Unlock all
-                </button>
-                <button id="lock-all-layers" type="button" disabled>
-                  Lock all
-                </button>
-              </div>
-            </details>
+            <EditorLayers />
             <EditorReferences />
             <button id="undo" type="button" disabled>
               Undo

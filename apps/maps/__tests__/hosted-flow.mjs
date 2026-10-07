@@ -410,6 +410,39 @@ try {
   await themePage.waitForFunction(
     () => !document.querySelector("#editor-fov")?.open,
   );
+  await themePage.locator("#layer-tools summary").click();
+  await themePage.locator("#new-layer-name").fill("Sketch");
+  await themePage.locator("#create-layer").click();
+  await themePage
+    .getByRole("option", { name: "Sketch · active" })
+    .waitFor({ state: "attached" });
+  const sketchLayerId = await themePage.locator("#layer-select").inputValue();
+  assert.ok(sketchLayerId);
+  await themePage.locator("#layer-name").fill("Plan");
+  await themePage.locator("#rename-layer").click();
+  await themePage
+    .getByRole("option", { name: "Plan · active" })
+    .waitFor({ state: "attached" });
+  await themePage.locator("#layer-omit").check();
+  await themePage.locator("#new-layer-name").fill("Review");
+  await themePage.locator("#create-layer").click();
+  await themePage
+    .getByRole("option", { name: "Review · active" })
+    .waitFor({ state: "attached" });
+  await themePage.locator("#layer-select").selectOption(sketchLayerId);
+  assert.equal(await themePage.locator("#layer-name").inputValue(), "Plan");
+  assert.equal(await themePage.locator("#layer-omit").isChecked(), true);
+  await themePage.locator("#layer-down").click();
+  assert.equal(
+    await themePage
+      .locator("#layer-select option")
+      .last()
+      .getAttribute("value"),
+    sketchLayerId,
+  );
+  await themePage.locator("#layer-hidden").check();
+  await themePage.locator("#show-all-layers").click();
+  assert.equal(await themePage.locator("#layer-hidden").isChecked(), false);
   await themePage.waitForFunction(
     () => !document.querySelector("#snapshot-reference")?.disabled,
   );
@@ -475,7 +508,7 @@ try {
   await themePage.getByText("Destination: Downloads").waitFor();
   await themePage.close();
   result.checks.push(
-    "editor theme, Remix FOV, references, and export settings work without WebGPU",
+    "editor theme, Remix FOV, layers, references, and export settings work without WebGPU",
   );
 
   const sourcePage = await browser.newPage();

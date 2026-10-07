@@ -179,6 +179,10 @@ import {
   type ExportSettings,
 } from "./editor-export-settings.ts";
 import { initEditorExportSettingsPanel } from "./editor-export-settings-bridge.ts";
+import {
+  initEditorLayersPanel,
+  type EditorLayerCommand,
+} from "./editor-layers-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -305,31 +309,6 @@ const groupButtons = {
   linked: document.querySelector<HTMLButtonElement>("#linked-duplicate-group")!,
   unlink: document.querySelector<HTMLButtonElement>("#unlink-group")!,
   ungroup: document.querySelector<HTMLButtonElement>("#ungroup-selection")!,
-};
-const layerSelect = document.querySelector<HTMLSelectElement>("#layer-select")!;
-const layerName = document.querySelector<HTMLInputElement>("#layer-name")!;
-const newLayerName =
-  document.querySelector<HTMLInputElement>("#new-layer-name")!;
-const layerCount = document.querySelector<HTMLElement>("#layer-count")!;
-const layerButtons = {
-  create: document.querySelector<HTMLButtonElement>("#create-layer")!,
-  rename: document.querySelector<HTMLButtonElement>("#rename-layer")!,
-  activate: document.querySelector<HTMLButtonElement>("#activate-layer")!,
-  move: document.querySelector<HTMLButtonElement>("#move-to-layer")!,
-  select: document.querySelector<HTMLButtonElement>("#select-layer-contents")!,
-  isolate: document.querySelector<HTMLButtonElement>("#isolate-layer")!,
-  remove: document.querySelector<HTMLButtonElement>("#remove-layer")!,
-  up: document.querySelector<HTMLButtonElement>("#layer-up")!,
-  down: document.querySelector<HTMLButtonElement>("#layer-down")!,
-  showAll: document.querySelector<HTMLButtonElement>("#show-all-layers")!,
-  hideAll: document.querySelector<HTMLButtonElement>("#hide-all-layers")!,
-  unlockAll: document.querySelector<HTMLButtonElement>("#unlock-all-layers")!,
-  lockAll: document.querySelector<HTMLButtonElement>("#lock-all-layers")!,
-};
-const layerFlags = {
-  hidden: document.querySelector<HTMLInputElement>("#layer-hidden")!,
-  locked: document.querySelector<HTMLInputElement>("#layer-locked")!,
-  "omit-from-export": document.querySelector<HTMLInputElement>("#layer-omit")!,
 };
 const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
 const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
@@ -469,6 +448,7 @@ const canvases = {
 let session = new EditorSession(createEmptyDocument());
 let openGroupId: string | null = null;
 let selectedLayerId: string | null = null;
+const layersPanel = initEditorLayersPanel(runLayerCommand);
 let renderer: EditorSourceRenderer | null = null;
 window.addEventListener(editorThemeEvent, () => {
   renderer?.setTheme(editorRenderTheme());
@@ -1289,61 +1269,13 @@ function refreshLayers() {
   if (!layers.some((layer) => layer.id === selectedLayerId)) {
     selectedLayerId = null;
   }
-  const selected = layers.find((layer) => layer.id === selectedLayerId);
-  const custom = layers.filter((layer) => layer.id !== null);
-  const customIndex = custom.findIndex((layer) => layer.id === selectedLayerId);
-  const editing = !hostedMap || hostedConnection !== null;
-  layerSelect.replaceChildren(
-    ...layers.map(
-      (layer) =>
-        new Option(
-          `${layer.name}${layer.id === session.activeLayerId ? " · active" : ""}`,
-          layer.id ?? "",
-        ),
-    ),
-  );
-  layerSelect.value = selectedLayerId ?? "";
-  layerSelect.disabled = layers.length === 0;
-  layerCount.textContent = selected
-    ? `${selected.brushIds.length} brushes · ${selected.pointEntityIds.length} point entities`
-    : "";
-  if (document.activeElement !== layerName)
-    layerName.value = selected?.name ?? "";
-  layerName.disabled = !editing || selectedLayerId === null;
-  newLayerName.disabled = !editing;
-  layerButtons.create.disabled = !editing;
-  layerButtons.rename.disabled = !editing || selectedLayerId === null;
-  layerButtons.activate.disabled =
-    !editing || selectedLayerId === session.activeLayerId;
-  layerButtons.move.disabled =
-    !editing || !session.selection || !!session.selection.faceId;
-  layerButtons.select.disabled =
-    !selected ||
-    selected.hidden ||
-    selected.locked ||
-    selected.brushIds.length + selected.pointEntityIds.length === 0;
-  layerButtons.isolate.disabled = !editing || layers.length < 2;
-  layerButtons.remove.disabled = !editing || selectedLayerId === null;
-  layerButtons.up.disabled = !editing || customIndex <= 0;
-  layerButtons.down.disabled =
-    !editing || customIndex < 0 || customIndex >= custom.length - 1;
-  for (const [flag, checkbox] of Object.entries(layerFlags) as [
-    keyof typeof layerFlags,
-    HTMLInputElement,
-  ][]) {
-    checkbox.checked = Boolean(
-      selected?.[flag === "omit-from-export" ? "omitFromExport" : flag],
-    );
-    checkbox.disabled = !editing || !selected;
-  }
-  for (const button of [
-    layerButtons.showAll,
-    layerButtons.hideAll,
-    layerButtons.unlockAll,
-    layerButtons.lockAll,
-  ]) {
-    button.disabled = !editing || layers.length === 0;
-  }
+  layersPanel.publish({
+    layers,
+    selectedLayerId,
+    activeLayerId: session.activeLayerId,
+    editing: !hostedMap || hostedConnection !== null,
+    hasObjectSelection: !!session.selection && !session.selection.faceId,
+  });
 }
 
 function refreshSelection() {
@@ -2933,11 +2865,6 @@ groupButtons.ungroup.addEventListener("click", () => {
   }
 });
 
-layerSelect.addEventListener("change", () => {
-  selectedLayerId = layerSelect.value || null;
-  refreshLayers();
-});
-
 function editLayer(action: () => void) {
   if (!viewportCanEdit()) {
     refreshLayers();
@@ -2952,91 +2879,83 @@ function editLayer(action: () => void) {
   }
 }
 
-layerButtons.create.addEventListener("click", () => {
-  const name = newLayerName.value.trim();
-  if (!name) {
-    status.textContent = "Enter a layer name";
-    return;
-  }
-  editLayer(() => {
-    if (openGroupId) closeOpenGroup(false);
-    selectedLayerId = session.createLayer(
-      name,
-      createSequentialIdFactory(`tea-layer-${crypto.randomUUID()}`),
-    );
-  });
-});
-
-layerButtons.rename.addEventListener("click", () => {
-  const name = layerName.value.trim();
-  if (!selectedLayerId || !name) {
-    status.textContent = "Select a custom layer and enter a name";
-    return;
-  }
-  editLayer(() => session.renameLayer(selectedLayerId!, name));
-});
-
-layerButtons.activate.addEventListener("click", () => {
-  if (openGroupId) closeOpenGroup(false);
-  try {
-    session.setActiveLayer(selectedLayerId);
-    refreshLayers();
-  } catch (error) {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  }
-});
-
-layerButtons.move.addEventListener("click", () => {
-  editLayer(() => {
-    if (!session.moveSelectedToLayer(selectedLayerId)) {
-      status.textContent = "Selection is already in this layer";
+function runLayerCommand(command: EditorLayerCommand) {
+  switch (command.type) {
+    case "choose":
+      selectedLayerId = command.id;
+      refreshLayers();
+      return;
+    case "create": {
+      const name = command.name.trim();
+      if (!name) {
+        status.textContent = "Enter a layer name";
+        return;
+      }
+      editLayer(() => {
+        if (openGroupId) closeOpenGroup(false);
+        selectedLayerId = session.createLayer(
+          name,
+          createSequentialIdFactory(`tea-layer-${crypto.randomUUID()}`),
+        );
+      });
+      return;
     }
-  });
-});
-
-layerButtons.select.addEventListener("click", () => {
-  session.selectAllInLayer(selectedLayerId);
-});
-
-layerButtons.isolate.addEventListener("click", () => {
-  editLayer(() => session.isolateLayer(selectedLayerId));
-});
-
-layerButtons.remove.addEventListener("click", () => {
-  if (!selectedLayerId) return;
-  editLayer(() => session.removeLayer(selectedLayerId!));
-});
-
-for (const [direction, button] of [
-  [-1, layerButtons.up],
-  [1, layerButtons.down],
-] as const) {
-  button.addEventListener("click", () => {
-    if (!selectedLayerId) return;
-    editLayer(() => session.reorderLayer(selectedLayerId!, direction));
-  });
-}
-
-for (const [flag, checkbox] of Object.entries(layerFlags) as [
-  keyof typeof layerFlags,
-  HTMLInputElement,
-][]) {
-  checkbox.addEventListener("change", () => {
-    editLayer(() =>
-      session.setLayerFlag(selectedLayerId, flag, checkbox.checked),
-    );
-  });
-}
-
-for (const [button, flag, value] of [
-  [layerButtons.showAll, "hidden", false],
-  [layerButtons.hideAll, "hidden", true],
-  [layerButtons.unlockAll, "locked", false],
-  [layerButtons.lockAll, "locked", true],
-] as const) {
-  button.addEventListener("click", () => {
-    editLayer(() => session.setAllLayersFlag(flag, value));
-  });
+    case "rename": {
+      const name = command.name.trim();
+      if (!selectedLayerId || !name) {
+        status.textContent = "Select a custom layer and enter a name";
+        return;
+      }
+      editLayer(() => session.renameLayer(selectedLayerId!, name));
+      return;
+    }
+    case "activate":
+      if (openGroupId) closeOpenGroup(false);
+      try {
+        session.setActiveLayer(selectedLayerId);
+        refreshLayers();
+      } catch (error) {
+        status.textContent =
+          error instanceof Error ? error.message : String(error);
+      }
+      return;
+    case "move":
+      editLayer(() => {
+        if (!session.moveSelectedToLayer(selectedLayerId)) {
+          status.textContent = "Selection is already in this layer";
+        }
+      });
+      return;
+    case "select":
+      session.selectAllInLayer(selectedLayerId);
+      refreshLayers();
+      return;
+    case "isolate":
+      editLayer(() => session.isolateLayer(selectedLayerId));
+      return;
+    case "remove":
+      if (selectedLayerId)
+        editLayer(() => session.removeLayer(selectedLayerId!));
+      return;
+    case "up":
+    case "down":
+      if (selectedLayerId)
+        editLayer(() =>
+          session.reorderLayer(
+            selectedLayerId!,
+            command.type === "up" ? -1 : 1,
+          ),
+        );
+      return;
+    case "flag":
+      editLayer(() =>
+        session.setLayerFlag(selectedLayerId, command.flag, command.value),
+      );
+      return;
+    case "all":
+      editLayer(() => session.setAllLayersFlag(command.flag, command.value));
+      return;
+  }
 }
 
 document
