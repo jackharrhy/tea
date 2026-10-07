@@ -177,6 +177,20 @@ try {
       .evaluate((element) => element.viewer?.diagnostics?.format),
     "quake-bsp2",
   );
+  await page.goto(`${origin}/?example=quake2`);
+  await page
+    .locator("#viewer-status")
+    .getByText(/^Ready/)
+    .waitFor();
+  const quake2 = await page
+    .locator("#viewport world-view")
+    .evaluate((element) => element.viewer?.diagnostics);
+  assert.equal(quake2?.format, "quake2-bsp38");
+  assert.ok(quake2.triangles > 0, "Quake II example has no rendered faces");
+  assert.doesNotMatch(
+    await page.locator("#map-warnings").textContent(),
+    /missing.*(texture|palette)/i,
+  );
   assert.deepEqual(pageErrors, []);
   console.log(
     JSON.stringify({
@@ -188,6 +202,7 @@ try {
         "WebGPU viewer switches from Quake to GoldSrc BSP",
         "Overview exports a PNG and walkability sidecar round-trips",
         "WebGPU viewer opens a generated BSP2 map",
+        "WebGPU viewer loads a generated Quake II map with its assets",
       ],
     }),
   );

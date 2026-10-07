@@ -12,12 +12,18 @@ import {
   syntheticQuakeBsp2,
   syntheticQuakePalette,
 } from "./synthetic.ts";
+import {
+  syntheticQuake2Bsp,
+  syntheticQuake2Palette,
+  syntheticQuake2Wal,
+} from "./synthetic-quake2.ts";
 
 export const examples = [
   { id: "goldsrc", label: "GoldSrc room", selectable: true },
   { id: "alpha", label: "Alpha fence", selectable: true },
   { id: "water", label: "Water", selectable: true },
   { id: "quake", label: "Quake sky", selectable: true },
+  { id: "quake2", label: "Quake II room", selectable: true },
   { id: "audio", label: "Audio room", selectable: true },
   { id: "quake-bsp2", label: "Quake BSP2", selectable: false },
   { id: "goldsrc-sky", label: "GoldSrc sky test", selectable: false },
@@ -39,6 +45,14 @@ export function exampleSource(id: string): WorldSource | undefined {
       return { bsp: syntheticGoldSrcBsp("!wv_water") };
     case "quake":
       return { bsp: syntheticQuakeBsp(), palette: syntheticQuakePalette() };
+    case "quake2":
+      return {
+        bsp: syntheticQuake2Bsp(),
+        gameAssets: {
+          "pics/colormap.pcx": syntheticQuake2Palette(),
+          "textures/e1u1/fixture.wal": syntheticQuake2Wal(),
+        },
+      };
     case "quake-bsp2":
       return { bsp: syntheticQuakeBsp2(), palette: syntheticQuakePalette() };
     case "audio":
