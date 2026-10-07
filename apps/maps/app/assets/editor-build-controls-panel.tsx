@@ -91,6 +91,32 @@ export const EditorBuildControls = clientEntry(
           >
             {state?.previewLabel ?? "Show compiled"}
           </button>
+          <button
+            id="toggle-leak"
+            type="button"
+            aria-pressed={state?.leakActive ?? false}
+            disabled={!context || state?.leakDisabled}
+            mix={on("click", () => context?.actions.toggleLeak())}
+          >
+            Leak path
+          </button>
+          <button
+            id="toggle-portals"
+            type="button"
+            aria-pressed={state?.portalActive ?? false}
+            disabled={!context || state?.portalDisabled}
+            mix={on("click", () => context?.actions.togglePortals())}
+          >
+            Portals
+          </button>
+          <button
+            id="launch-build"
+            type="button"
+            disabled={!context || state?.launchDisabled}
+            mix={on("click", () => context?.actions.launch())}
+          >
+            Launch in engine
+          </button>
           <span id="build-status" role="status">
             {state?.buildStatus ?? ""}
           </span>

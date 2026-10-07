@@ -3,14 +3,16 @@ import {
   createStarterDocument,
   type MapBuildService,
   type MapCompileRequest,
+  type MapLaunchRequest,
 } from "@tea/maps-editor/core";
-import { buildMap } from "../editor-build.ts";
+import { buildMap, launchLocalBuild } from "../editor-build.ts";
 import type { MapProject } from "../editor-project.ts";
 import { syntheticQuakeBsp } from "../synthetic.ts";
 
 describe("local map build", () => {
   it("sends a compile-ready map and exposes a successful BSP to the viewer", async () => {
     let request: MapCompileRequest | undefined;
+    let launchRequest: MapLaunchRequest | undefined;
     const bsp = syntheticQuakeBsp();
     const service: MapBuildService = {
       backend: "remote",
@@ -25,7 +27,10 @@ describe("local map build", () => {
               qualities: ["preview", "final"],
             },
           ],
-          launchProfiles: [],
+          launchProfiles: [
+            { id: "quake-launch", label: "Quake", game: "quake" },
+            { id: "quake2-launch", label: "Quake II", game: "quake2" },
+          ],
         };
       },
       async compile(input) {
@@ -48,8 +53,14 @@ describe("local map build", () => {
           ],
         };
       },
-      async launch() {
-        throw new Error("Not used");
+      async launch(input) {
+        launchRequest = input;
+        return {
+          buildId: input.buildId,
+          profileId: input.profileId,
+          sourceDocumentRevision: input.expectedDocumentRevision,
+          launchedAt: 1,
+        };
       },
     };
 
@@ -74,6 +85,13 @@ describe("local map build", () => {
     ]);
     expect(built.previewSource?.bsp).toBeInstanceOf(File);
     expect(built.previewSource?.wads).toHaveLength(1);
+    expect(built.launchProfileId).toBe("quake-launch");
+    await launchLocalBuild(built.result, built.launchProfileId!, service);
+    expect(launchRequest).toMatchObject({
+      buildId: "test-build",
+      profileId: "quake-launch",
+      expectedDocumentRevision: built.result.sourceDocumentRevision,
+    });
   });
 
   it("uses later game roots for Quake II textures and includes the palette", async () => {

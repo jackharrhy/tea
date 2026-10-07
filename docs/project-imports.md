@@ -54,6 +54,8 @@ The Rotate, Scale, and Shear tool panel now renders through a Remix client entry
 
 The viewport context menu now renders through a Remix client entry while the editor supplies its actions and retains their transaction paths.
 
+Local Maps build results can now display leak paths and portal polygons in the source view, and launch a current successful BSP through a configured machine-local compiler profile. The Remix build controls expose these actions; hosted builds do not launch local processes.
+
 The Perspective Expand and Restore control now renders through a Remix client entry while the workspace retains per-map layout persistence and viewport rendering.
 
 Sync project and Edit hosted source open buttons now render through their Remix dialog entries using the editor's project and hosted-room availability.

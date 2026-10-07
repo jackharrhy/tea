@@ -13,6 +13,11 @@ export interface EditorBuildControlState {
   readonly exportStatus: string;
   readonly previewDisabled: boolean;
   readonly previewLabel: string;
+  readonly leakDisabled: boolean;
+  readonly leakActive: boolean;
+  readonly portalDisabled: boolean;
+  readonly portalActive: boolean;
+  readonly launchDisabled: boolean;
   readonly buildStatus: string;
   readonly buildOutput: string;
   readonly buildLogVisible: boolean;
@@ -25,6 +30,9 @@ export interface EditorBuildControlActions {
   readonly buildExportOnce: () => void;
   readonly exportLatest: () => void;
   readonly togglePreview: () => void;
+  readonly toggleLeak: () => void;
+  readonly togglePortals: () => void;
+  readonly launch: () => void;
 }
 
 export interface EditorBuildControlsContext {
@@ -49,6 +57,11 @@ export function initEditorBuildControls(actions: EditorBuildControlActions) {
     exportStatus: "",
     previewDisabled: true,
     previewLabel: "Show compiled",
+    leakDisabled: true,
+    leakActive: false,
+    portalDisabled: true,
+    portalActive: false,
+    launchDisabled: true,
     buildStatus: "",
     buildOutput: "",
     buildLogVisible: false,

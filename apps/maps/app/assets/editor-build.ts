@@ -4,6 +4,7 @@ import {
   materialUsageInDocument,
   RemoteMapCompiler,
   selectMapBuildProfile,
+  selectMapLaunchProfile,
   serializeMap,
   serializeMapForCompile,
   supportsCompiledBspPreview,
@@ -126,6 +127,7 @@ export async function buildMap(
 ): Promise<{
   result: MapCompileResult;
   profileId: string;
+  launchProfileId: string | null;
   previewSource: WorldSource | null;
   exportInput: BuildExportInput | null;
 }> {
@@ -208,7 +210,25 @@ export async function buildMap(
           project: input.project,
         }
       : null;
-  return { result, profileId: profile.id, previewSource, exportInput };
+  return {
+    result,
+    profileId: profile.id,
+    launchProfileId: selectMapLaunchProfile(capabilities, game)?.id ?? null,
+    previewSource,
+    exportInput,
+  };
+}
+
+export async function launchLocalBuild(
+  result: MapCompileResult,
+  profileId: string,
+  buildService: MapBuildService = compiler,
+) {
+  return buildService.launch({
+    buildId: result.buildId,
+    profileId,
+    expectedDocumentRevision: result.sourceDocumentRevision,
+  });
 }
 
 export function downloadBsp(result: MapCompileResult): boolean {

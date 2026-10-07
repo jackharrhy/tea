@@ -41,6 +41,7 @@ import {
   type FaceTextureAlignmentOptions,
   type FaceTextureProjectionField,
   type MapDocument,
+  type MapCompileResult,
   type MapFace,
   type MapSourceState,
   type SurfaceFlagDefinition,
@@ -102,6 +103,7 @@ import {
 } from "./editor-entity-properties.ts";
 import { initEditorFov } from "./editor-fov.ts";
 import { initEditorWorkspace } from "./editor-workspace.ts";
+import { createBuildOverlays } from "./editor-build-overlays.ts";
 import { initEditorMaterialBrowser } from "./editor-material-browser.ts";
 import { createTextureUvEditor } from "./editor-uv.ts";
 import { initSourceComparison } from "./editor-source-compare.ts";
@@ -160,7 +162,7 @@ import {
   type ContextAction,
   type ContextSection,
 } from "./editor-context-menu.ts";
-import { buildMap, downloadBsp } from "./editor-build.ts";
+import { buildMap, downloadBsp, launchLocalBuild } from "./editor-build.ts";
 import {
   downloadBuildFile,
   packageBuildExport,
@@ -330,6 +332,9 @@ const buildControls = initEditorBuildControls({
   buildExportOnce: () => void runBuild(true),
   exportLatest: () => void exportCurrentBuild(),
   togglePreview: () => showCompiledPreview(!compiledVisible),
+  toggleLeak: () => buildOverlays.toggleLeak(),
+  togglePortals: () => buildOverlays.togglePortals(),
+  launch: () => void launchCurrentBuild(),
 });
 const documentControls = initEditorDocumentControls({
   newMap: newMapFromControls,
@@ -344,6 +349,10 @@ const documentControls = initEditorDocumentControls({
   download: downloadCurrentMap,
 });
 let renderer: EditorSourceRenderer | null = null;
+const buildOverlays = createBuildOverlays({
+  renderer: () => renderer,
+  update: (state) => buildControls.update(state),
+});
 window.addEventListener(editorThemeEvent, () => {
   renderer?.setTheme(editorRenderTheme());
 });
@@ -409,6 +418,16 @@ let compiledVisible = false;
 let buildGeneration = 0;
 let hostedBuildBusy = false;
 let localBuildBusy = false;
+let launchBusy = false;
+let latestLaunch: {
+  readonly result: MapCompileResult;
+  readonly profileId: string;
+  readonly document: MapDocument;
+  readonly sourceText: string;
+  readonly project: MapProject | null;
+  readonly name: string;
+  readonly game: WorldviewGameProfile;
+} | null = null;
 let latestBuildExport: {
   readonly input: BuildExportInput;
   readonly document: MapDocument;
@@ -892,6 +911,26 @@ function refreshBuildExport() {
   ) {
     buildControls.exportStatus = "Bundle ready";
   }
+}
+
+function isBuildLaunchCurrent(candidate: NonNullable<typeof latestLaunch>) {
+  return (
+    latestLaunch === candidate &&
+    !localBuildBusy &&
+    !hostedMap &&
+    candidate.document === session.document &&
+    candidate.sourceText === source.value &&
+    candidate.project === project &&
+    candidate.name === mapName &&
+    candidate.game === activeGame()
+  );
+}
+
+function refreshBuildLaunch() {
+  buildControls.update({
+    launchDisabled:
+      launchBusy || !latestLaunch || !isBuildLaunchCurrent(latestLaunch),
+  });
 }
 
 function compiledPreviewCamera(): CameraUpdate | null {
@@ -1627,6 +1666,7 @@ function refreshPropertyActions() {
 function handleSessionChange(change: { kind: string }) {
   if (change.kind === "document" || change.kind === "history") {
     refreshSource();
+    refreshBuildLaunch();
     issueBrowser.refresh();
     materialBrowser.refresh();
   }
@@ -1659,9 +1699,12 @@ function setMap(value: MapDocument, sourceState?: MapSourceState) {
   latestPointer = null;
   editActions.update({ pastePointerDisabled: true });
   latestBuildExport = null;
+  latestLaunch = null;
+  refreshBuildLaunch();
   buildControls.exportStatus = "";
   refreshBuildExport();
   clearCompiledPreview();
+  buildOverlays.clear();
   unsubscribeSession();
   session = new EditorSession(value);
   mapSourceState = sourceState ?? rebaseMapSource(value, serializeMap(value));
@@ -2411,6 +2454,7 @@ if (!navigator.gpu) {
       );
       setHostedEditability();
       renderer.focusDocument();
+      buildOverlays.apply();
       workspace.applyInitial(renderer);
       renderPresence();
       refreshStatus();
@@ -2438,6 +2482,7 @@ document.addEventListener("visibilitychange", () => {
 function onSourceInput() {
   refreshCompiledPreview();
   refreshBuildExport();
+  refreshBuildLaunch();
   if (hostedMap) return;
   status.textContent = "Source has unapplied edits";
   session.select(null);
@@ -2527,8 +2572,11 @@ function selectGameProfile(value: string) {
   materialBrowser.setMaterials(currentMaterials());
   buildGeneration += 1;
   latestBuildExport = null;
+  latestLaunch = null;
+  refreshBuildLaunch();
   buildControls.exportStatus = "";
   clearCompiledPreview();
+  buildOverlays.clear();
   refreshBuildExport();
   refreshSelection();
   scheduleDraftSave();
@@ -3735,6 +3783,31 @@ async function exportLatestBuild(settings: ExportSettings): Promise<void> {
   }
 }
 
+async function launchCurrentBuild() {
+  const candidate = latestLaunch;
+  if (!candidate || !isBuildLaunchCurrent(candidate) || launchBusy) {
+    refreshBuildLaunch();
+    return;
+  }
+  launchBusy = true;
+  refreshBuildLaunch();
+  try {
+    const result = await launchLocalBuild(
+      candidate.result,
+      candidate.profileId,
+    );
+    if (latestLaunch === candidate)
+      buildControls.buildStatus = `Launched build ${result.buildId.slice(0, 8)} in engine`;
+  } catch (error) {
+    if (latestLaunch === candidate)
+      buildControls.buildStatus =
+        error instanceof Error ? error.message : String(error);
+  } finally {
+    launchBusy = false;
+    refreshBuildLaunch();
+  }
+}
+
 async function runBuild(exportOnce: boolean) {
   if (
     buildControls.state.buildDisabled ||
@@ -3823,20 +3896,24 @@ async function runBuild(exportOnce: boolean) {
   const generation = ++buildGeneration;
   localBuildBusy = true;
   latestBuildExport = null;
+  latestLaunch = null;
+  refreshBuildLaunch();
   buildControls.exportStatus = "";
   refreshBuildExport();
   buildControls.update({ buildDisabled: true, buildExportOnceDisabled: true });
   buildControls.buildStatus = `Building ${quality}…`;
   buildControls.buildLogHidden = true;
+  buildOverlays.clear();
   try {
-    const { result, profileId, previewSource, exportInput } = await buildMap({
-      document,
-      mapName: nameAtStart,
-      project: projectAtStart,
-      quality,
-      game: gameAtStart,
-      ...(preferredProfileId ? { preferredProfileId } : {}),
-    });
+    const { result, profileId, launchProfileId, previewSource, exportInput } =
+      await buildMap({
+        document,
+        mapName: nameAtStart,
+        project: projectAtStart,
+        quality,
+        game: gameAtStart,
+        ...(preferredProfileId ? { preferredProfileId } : {}),
+      });
     buildControls.buildOutput = [
       ...result.diagnostics.map(
         (entry) => `${entry.severity}: ${entry.stage}: ${entry.message}`,
@@ -3853,13 +3930,26 @@ async function runBuild(exportOnce: boolean) {
         buildControls.buildLogHidden = false;
       }
     }
-    if (
-      session.document !== document ||
-      project !== projectAtStart ||
-      activeGame() !== gameAtStart ||
-      mapName !== nameAtStart ||
-      source.value !== sourceAtStart
-    ) {
+    const resultIsCurrent =
+      session.document === document &&
+      project === projectAtStart &&
+      activeGame() === gameAtStart &&
+      mapName === nameAtStart &&
+      source.value === sourceAtStart;
+    if (resultIsCurrent) buildOverlays.inspect(result);
+    if (resultIsCurrent && result.status === "succeeded" && launchProfileId) {
+      latestLaunch = {
+        result,
+        profileId: launchProfileId,
+        document,
+        sourceText: sourceAtStart,
+        project: projectAtStart,
+        name: nameAtStart,
+        game: gameAtStart,
+      };
+      refreshBuildLaunch();
+    }
+    if (!resultIsCurrent) {
       buildControls.buildStatus =
         "Build finished; map changed, so result was not downloaded";
     } else if (
@@ -3966,6 +4056,7 @@ async function runBuild(exportOnce: boolean) {
       error instanceof Error ? error.message : String(error);
   } finally {
     localBuildBusy = false;
+    refreshBuildLaunch();
     setHostedEditability();
   }
 }
