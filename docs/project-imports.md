@@ -42,6 +42,8 @@ Its material browser now exposes loaded project and development textures as sear
 
 The selected-face UV editor now previews offset, rotation, and scale drags against the map renderer and commits them through the same session and hosted operation path. It supports a movable pivot, framing, pan and zoom, and adjustable snap grids.
 
+The Tea editor now exposes read-only WebMCP site tools for live document inspection, bounded object and issue lists, and source slices in browsers that support `document.modelContext`. Worldview's authoring site tools remain to be adapted to Tea's editor transactions.
+
 The hosted map picker can compare its selected hosted source with the current local editor source in a read-only dialog. This standalone comparison does not link maps or transfer source.
 
 The project sync dialog can pair a local folder project's maps with a Tea hosted project, inspect source and baseline status, and explicitly pull to disk or push to the hosted service. It validates game and face syntax, checks both copies again before a write, and keeps the baseline in browser storage. Opening an original Worldview project with a link to its old origin requires changing the link before syncing with Tea.

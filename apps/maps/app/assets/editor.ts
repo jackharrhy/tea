@@ -100,6 +100,7 @@ import { createTextureUvEditor } from "./editor-uv.ts";
 import { initSourceComparison } from "./editor-source-compare.ts";
 import { initProjectSyncDialog } from "./editor-project-sync-dialog.ts";
 import { initProjectMapSelector } from "./editor-project-map-selector.ts";
+import { registerEditorWebMcpTools } from "./editor-webmcp.ts";
 import { initEditorPerformance } from "./editor-performance.ts";
 import { initHostedPresence } from "./editor-hosted-presence.ts";
 import {
@@ -4538,3 +4539,14 @@ if (newMapUrl.searchParams.get("newMap") === "1") {
     });
   }
 }
+
+void registerEditorWebMcpTools(document, () => ({
+  session,
+  name: mapName,
+  workingSource: source.value,
+  sourceState: mapSourceState,
+  dirty: hasUnsavedChanges(),
+  project,
+  hostedMap,
+  renderer,
+}));

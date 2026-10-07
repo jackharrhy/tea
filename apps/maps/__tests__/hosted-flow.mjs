@@ -517,6 +517,38 @@ try {
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   result.checks.push("local project map chooser and filtered map selection");
+  const siteToolPage = await browser.newPage();
+  siteToolPage.on("pageerror", (error) => errors.push(error.message));
+  await siteToolPage.addInitScript(() => {
+    const tools = new Map();
+    Object.defineProperty(document, "modelContext", {
+      value: {
+        registerTool(tool) {
+          tools.set(tool.name, tool);
+        },
+      },
+    });
+    window.teaMapsTestTools = tools;
+  });
+  await siteToolPage.goto(`${mapsOrigin}/editor`);
+  await siteToolPage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  const siteTools = await siteToolPage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    return {
+      names: [...tools.keys()],
+      inspection: tools.get("tea_maps_inspect_editor").execute({}),
+      objects: tools.get("tea_maps_list_objects").execute({}),
+      source: tools.get("tea_maps_get_map_source").execute({}),
+    };
+  });
+  assert.equal(siteTools.names.length, 4);
+  assert.equal(siteTools.inspection.name, "tea-map.map");
+  assert.equal(siteTools.inspection.counts.entities, 1);
+  assert.equal(siteTools.objects.total, 1);
+  assert.match(siteTools.source.text, /worldspawn/);
+  result.checks.push("read-only browser WebMCP tools inspect the live editor");
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {

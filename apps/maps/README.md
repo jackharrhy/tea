@@ -106,4 +106,6 @@ The editor can copy selected objects as portable `.map` text, paste at the last 
 
 ## Migration boundary
 
+In browsers with the [WebMCP API](https://webmachinelearning.github.io/webmcp/), the editor registers four read-only `tea_maps_*` site tools to inspect the live document, list objects and issues, and read bounded source slices. Tool input is validated, and unsupported browsers continue using the normal editor. Authoring tools from Worldview have not moved yet.
+
 These are the first Maps slices. Worldview's remaining editor tools and collaboration UI still need to move. The service, compiler, and collaboration runtimes have separate Tea workspaces. The original Worldview app and deployment continue running. Worldview's [MIT license](LICENSE) accompanies adapted editor behavior. See the [migration guide](../../docs/project-imports.md), [renderer guide](../../packages/maps-renderer/README.md), and [editor core guide](../../packages/maps-editor/README.md).
