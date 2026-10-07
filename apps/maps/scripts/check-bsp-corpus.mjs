@@ -2,6 +2,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, normalize, resolve, sep } from "node:path";
+import { parseArgs } from "node:util";
 
 import { parseBsp } from "@tea/maps-renderer/core";
 
@@ -27,8 +28,15 @@ function corpusFile(root, relativePath) {
   return filename;
 }
 
+const { values, positionals } = parseArgs({
+  args: process.argv.slice(2),
+  options: { "read-only": { type: "boolean" } },
+  allowPositionals: true,
+});
+if (positionals.length > 1)
+  throw new Error("Pass one corpus manifest path at most");
 const manifestPath = resolve(
-  process.argv[2] ?? "local/steam-corpus/manifest.json",
+  positionals[0] ?? "local/steam-corpus/manifest.json",
 );
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 if (!Array.isArray(manifest.records))
@@ -65,7 +73,8 @@ const report = {
   failures,
 };
 const reportPath = join(dirname(manifestPath), "compatibility-report.json");
-await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+if (!values["read-only"])
+  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 
 console.log(`Checked ${report.total} BSP files`);
 for (const [format, count] of Object.entries(formats))
@@ -78,4 +87,8 @@ if (failures.length > 0) {
     console.error(`  ${failure.outputPath}: ${failure.message}`);
   process.exitCode = 1;
 } else console.log("All BSP files parsed successfully");
-console.log(`Report: ${reportPath}`);
+console.log(
+  values["read-only"]
+    ? "Read-only: no report written"
+    : `Report: ${reportPath}`,
+);

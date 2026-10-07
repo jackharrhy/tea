@@ -48,6 +48,7 @@ export const ViewerCameraPanel = clientEntry(
       );
       updateReticle();
       refreshCamera();
+      handle.update();
     }
 
     function refreshCamera() {

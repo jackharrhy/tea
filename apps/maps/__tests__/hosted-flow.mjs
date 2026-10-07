@@ -1032,6 +1032,7 @@ try {
           loadMilliseconds: 0,
           warnings: [],
         };
+        window.cameraProbe.diagnostics = diagnostics;
         document
           .querySelector("#viewport world-view")
           .dispatchEvent(
@@ -1070,6 +1071,20 @@ try {
   assert.deepEqual(await cameraPage.evaluate(() => window.cameraProbe.calls), [
     { fieldOfView: 90 },
   ]);
+  await cameraPage.evaluate(() => {
+    window.cameraProbe.camera.fieldOfView = 80;
+    document.querySelector("#viewport world-view").dispatchEvent(
+      new CustomEvent("ready", {
+        detail: {
+          world: window.cameraProbe.world,
+          diagnostics: window.cameraProbe.diagnostics,
+        },
+      }),
+    );
+  });
+  await cameraPage.waitForFunction(
+    () => document.querySelector("#field-of-view")?.value === "80",
+  );
   await cameraPage.locator("#download-overview:enabled").waitFor();
   await cameraPage.locator("#overview-z-min").fill("2");
   await cameraPage.locator("#download-overview").click();
