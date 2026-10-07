@@ -13,6 +13,7 @@ import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx"
 import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
 import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
 import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
+import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -56,18 +57,10 @@ export function EditorPage() {
           <nav class="editor-toolbar" aria-label="Editor actions">
             <EditorDocumentControls />
             <EditorRecentProjects />
-            <label for="project-maps">Project maps</label>
-            <select id="project-maps" disabled>
-              <option value="">No project open</option>
-            </select>
+            <EditorProjectContextPanel />
             <button id="project-sync-open" type="button" disabled>
               Sync project
             </button>
-            <span id="project-resource-info" role="status" />
-            <details id="project-resource-diagnostics" hidden>
-              <summary>Project resource messages</summary>
-              <ul id="project-resource-messages" />
-            </details>
             <EditorBuildControls />
             <EditorExportSettings />
             <EditorHostedBuilds />

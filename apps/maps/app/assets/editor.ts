@@ -189,6 +189,7 @@ import {
 import { initEditorBuildControls } from "./editor-build-controls-bridge.ts";
 import { initEditorDocumentControls } from "./editor-document-controls-bridge.ts";
 import { initEditorSourcePanel } from "./editor-source-bridge.ts";
+import { initEditorProjectContext } from "./editor-project-context-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -311,18 +312,9 @@ const csgThickness =
   document.querySelector<HTMLInputElement>("#csg-thickness")!;
 const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
 const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
-const projectMaps = document.querySelector<HTMLSelectElement>("#project-maps")!;
+const projectContext = initEditorProjectContext(openProjectMap);
 const perspectiveLabel =
   document.querySelector<HTMLElement>("#perspective-label")!;
-const projectResourceInfo = document.querySelector<HTMLElement>(
-  "#project-resource-info",
-)!;
-const projectResourceDiagnostics = document.querySelector<HTMLDetailsElement>(
-  "#project-resource-diagnostics",
-)!;
-const projectResourceMessages = document.querySelector<HTMLUListElement>(
-  "#project-resource-messages",
-)!;
 const materialChoices =
   document.querySelector<HTMLDataListElement>("#material-choices")!;
 const boxMaterial = document.querySelector<HTMLInputElement>("#box-material")!;
@@ -539,8 +531,7 @@ let hostedBuildControls: ReturnType<typeof initHostedBuilds> | null = null;
 let projectSyncControls: ReturnType<typeof initProjectSyncDialog> | null = null;
 const projectMapSelector = initProjectMapSelector({
   openMap(path) {
-    projectMaps.value = path;
-    projectMaps.dispatchEvent(new Event("change"));
+    void openProjectMap(path);
   },
   openSync() {
     projectSyncControls?.open();
@@ -1083,13 +1074,6 @@ function refreshResourceCatalog() {
   pointEntityClasses.replaceChildren();
   brushEntityClasses.replaceChildren();
   materialChoices.replaceChildren();
-  projectResourceMessages.replaceChildren();
-  projectResourceDiagnostics.hidden =
-    !resources ||
-    resources.definitionDiagnostics.length +
-      resources.materialDiagnostics.length +
-      resources.spriteDiagnostics.length ===
-      0;
   for (const material of resources?.materials ?? []) {
     const option = document.createElement("option");
     option.value = material.name;
@@ -1107,24 +1091,19 @@ function refreshResourceCatalog() {
       resources.definitionDiagnostics.length +
       resources.materialDiagnostics.length +
       resources.spriteDiagnostics.length;
-    projectResourceInfo.textContent = `${resources.definitions.all().length} entity classes · ${resources.materials.length} textures · ${resources.sprites.length} sprites${messages ? ` · ${messages} resource ${messages === 1 ? "message" : "messages"}` : ""}`;
-    for (const diagnostic of resources.definitionDiagnostics) {
-      const item = document.createElement("li");
-      item.textContent = `${diagnostic.severity}: ${diagnostic.sourcePath ?? "Definitions"}: ${diagnostic.message}`;
-      projectResourceMessages.append(item);
-    }
-    for (const diagnostic of resources.materialDiagnostics) {
-      const item = document.createElement("li");
-      item.textContent = diagnostic;
-      projectResourceMessages.append(item);
-    }
-    for (const diagnostic of resources.spriteDiagnostics) {
-      const item = document.createElement("li");
-      item.textContent = diagnostic;
-      projectResourceMessages.append(item);
-    }
+    projectContext.update({
+      resourceInfo: `${resources.definitions.all().length} entity classes · ${resources.materials.length} textures · ${resources.sprites.length} sprites${messages ? ` · ${messages} resource ${messages === 1 ? "message" : "messages"}` : ""}`,
+      diagnostics: [
+        ...resources.definitionDiagnostics.map(
+          (diagnostic) =>
+            `${diagnostic.severity}: ${diagnostic.sourcePath ?? "Definitions"}: ${diagnostic.message}`,
+        ),
+        ...resources.materialDiagnostics,
+        ...resources.spriteDiagnostics,
+      ],
+    });
   } else {
-    projectResourceInfo.textContent = "";
+    projectContext.update({ resourceInfo: "", diagnostics: [] });
   }
   refreshSelection();
 }
@@ -1157,9 +1136,13 @@ function setProject(value: MapProject | null) {
   projectMapSelector.hide();
   activeProjectPath = null;
   activeRecentProjectId = null;
-  projectMaps.replaceChildren(new Option("No project open", ""));
-  projectMaps.disabled = true;
-  projectResourceInfo.textContent = "";
+  projectContext.update({
+    projectName: null,
+    paths: [],
+    selectedPath: "",
+    resourceInfo: "",
+    diagnostics: [],
+  });
   refreshSelection();
 }
 
@@ -2023,7 +2006,7 @@ async function refreshHostedResources(map: HostedMapLaunch) {
   const controller = new AbortController();
   hostedResourceAbort = controller;
   const generation = ++hostedResourceGeneration;
-  projectResourceInfo.textContent = "Loading hosted project resources";
+  projectContext.update({ resourceInfo: "Loading hosted project resources" });
   try {
     const resources = await loadHostedEditorResources(
       map.projectId,
@@ -2038,7 +2021,9 @@ async function refreshHostedResources(map: HostedMapLaunch) {
   } catch (error) {
     if (generation !== hostedResourceGeneration || controller.signal.aborted)
       return;
-    projectResourceInfo.textContent = `Could not load hosted resources: ${error instanceof Error ? error.message : String(error)}`;
+    projectContext.update({
+      resourceInfo: `Could not load hosted resources: ${error instanceof Error ? error.message : String(error)}`,
+    });
   }
 }
 
@@ -3795,12 +3780,11 @@ async function openProjectDirectory(
   projectRecoveryScope = bindings?.scopeId ?? crypto.randomUUID();
   loadCurrentExportSettings();
   activeProjectPath = null;
-  projectMaps.replaceChildren();
-  projectMaps.add(new Option(`${opened.manifest.name} · choose a map`, ""));
-  for (const entry of opened.maps) {
-    projectMaps.add(new Option(entry.path, entry.path));
-  }
-  projectMaps.disabled = opened.maps.length === 0;
+  projectContext.update({
+    projectName: opened.manifest.name,
+    paths: opened.maps.map((entry) => entry.path),
+    selectedPath: "",
+  });
   activeRecentProjectId =
     (
       await rememberRecentProject(directory, opened.manifest.name).catch(
@@ -3866,7 +3850,7 @@ async function openProjectMap(
   const previous = activeProjectPath ?? "";
   const entry = project?.maps.find((projectMap) => projectMap.path === path);
   if (!entry) {
-    projectMaps.value = previous;
+    projectContext.update({ selectedPath: previous });
     if (siteTool) throw new Error(`Unknown project map ${path}`);
     return false;
   }
@@ -3883,7 +3867,7 @@ async function openProjectMap(
         siteTool.discardUnsavedChanges,
       );
     else if (!(await mayReplaceMap())) {
-      projectMaps.value = previous;
+      projectContext.update({ selectedPath: previous });
       return false;
     }
     persistDraft();
@@ -3904,7 +3888,7 @@ async function openProjectMap(
     activeProjectPath = path;
     documentId = identity;
     setMap(document, parsed.source);
-    projectMaps.value = path;
+    projectContext.update({ selectedPath: path });
     projectMapSelector.hide();
     if (activeRecentProjectId)
       void rememberRecentProjectMap(activeRecentProjectId, path).catch(
@@ -3916,16 +3900,12 @@ async function openProjectMap(
     }
     return true;
   } catch (error) {
-    projectMaps.value = previous;
+    projectContext.update({ selectedPath: previous });
     status.textContent = error instanceof Error ? error.message : String(error);
     if (siteTool) throw error;
     return false;
   }
 }
-
-projectMaps.addEventListener("change", async () => {
-  await openProjectMap(projectMaps.value);
-});
 
 async function exportLatestBuild(settings: ExportSettings): Promise<void> {
   const latest = latestBuildExport;

@@ -28,6 +28,8 @@ The editor's source textarea and Apply source control now render through a Remix
 
 The local project map chooser now renders and filters rows as a Remix client entry while the editor retains filesystem access and guarded map switching.
 
+The project map toolbar selector and resource messages now render through a Remix client entry; map changes still use the editor's guarded file flow.
+
 The hosted share link and live participant list now render as a Remix client entry. The editor keeps room membership, operations, and viewport overlays.
 
 The editor's hosted Project access panel now renders as a Remix client entry and uses the same member service calls as the dedicated Access page. The editor only publishes the selected project ID to this panel.

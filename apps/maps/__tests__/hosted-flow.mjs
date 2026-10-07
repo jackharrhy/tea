@@ -1349,6 +1349,50 @@ try {
     await page.locator("#project-maps").inputValue(),
     "maps/beta.map",
   );
+  assert.match(
+    (await page.locator("#project-resource-info").textContent()) ?? "",
+    /textures/,
+  );
+  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await page.waitForFunction(
+    () =>
+      window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
+        .name === "alpha.map",
+  );
+  const selectedMapDownload = page.waitForEvent("download");
+  await page.locator("#download-map").click();
+  assert.equal((await selectedMapDownload).suggestedFilename(), "alpha.map");
+  await page.locator("#project-maps").selectOption("maps/beta.map");
+  await page.waitForFunction(
+    () =>
+      window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
+        .name === "beta.map",
+  );
+  const beforeGuard = await page.locator("#map-source").inputValue();
+  await page.locator("#map-source").fill(`${beforeGuard}\n// pending\n`);
+  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
+  await page.locator('#switch-map-dialog button[value="cancel"]').click();
+  await page.waitForFunction(
+    () => document.querySelector("#project-maps")?.value === "maps/beta.map",
+  );
+  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
+  await page.locator('#switch-map-dialog button[value="discard"]').click();
+  await page.waitForFunction(
+    () =>
+      window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
+        .name === "alpha.map",
+  );
+  await page.locator("#project-maps").selectOption("maps/beta.map");
+  await page.waitForFunction(
+    () =>
+      window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
+        .name === "beta.map",
+  );
+  result.checks.push(
+    "Remix project map toolbar switches files and honors cancel and discard",
+  );
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   await page.locator("#project-map-selector-sync").click();
