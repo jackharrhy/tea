@@ -7,6 +7,7 @@ import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorFov } from "./assets/editor-fov-panel.tsx";
 import { EditorReferences } from "./assets/editor-references-panel.tsx";
+import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -107,23 +108,7 @@ export function EditorPage() {
               Export build
             </button>
             <span id="export-status" role="status" />
-            <label for="include-build-source">
-              <input id="include-build-source" type="checkbox" /> Include source
-            </label>
-            <label for="export-after-build">
-              <input id="export-after-build" type="checkbox" /> Export after
-              build
-            </label>
-            <span id="export-destination">Destination: Downloads</span>
-            <button id="choose-export-directory" type="button" disabled>
-              Choose export folder
-            </button>
-            <button id="use-export-downloads" type="button" hidden>
-              Use Downloads
-            </button>
-            <span class="hint">
-              Folder exports replace a file with the same map name.
-            </span>
+            <EditorExportSettings />
             <button id="toggle-compiled" type="button" disabled>
               Show compiled
             </button>

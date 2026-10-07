@@ -454,9 +454,28 @@ try {
     () =>
       document.querySelector("#reference-count")?.textContent === "0 loaded",
   );
+  await themePage.locator("#include-build-source").check();
+  await themePage.locator("#export-after-build").check();
+  await themePage.reload();
+  await themePage.waitForFunction(
+    () =>
+      document.querySelector("#include-build-source")?.checked &&
+      document.querySelector("#export-after-build")?.checked,
+  );
+  await themePage.evaluate(() => {
+    Object.defineProperty(window, "showDirectoryPicker", {
+      configurable: true,
+      value: async () => ({ kind: "directory", name: "Test exports" }),
+    });
+  });
+  await themePage.locator("#include-build-source").uncheck();
+  await themePage.locator("#choose-export-directory").click();
+  await themePage.getByText("Destination: Test exports").waitFor();
+  await themePage.locator("#use-export-downloads").click();
+  await themePage.getByText("Destination: Downloads").waitFor();
   await themePage.close();
   result.checks.push(
-    "editor theme, Remix FOV, and reference controls work without WebGPU",
+    "editor theme, Remix FOV, references, and export settings work without WebGPU",
   );
 
   const sourcePage = await browser.newPage();

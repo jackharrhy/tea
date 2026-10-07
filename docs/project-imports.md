@@ -42,6 +42,8 @@ The hosted project and map picker controls now render through a Remix client ent
 
 The hosted build history now renders through a Remix client entry. It displays compiler availability, build results, downloads, and preview actions while the editor keeps build orchestration and preview loading.
 
+The export settings controls now render through a Remix client entry. The editor retains project-scoped persistence, build packaging, folder selection, permission checks, and file writes.
+
 The perspective FOV control now renders through a Remix client entry. Its browser-local default still applies before the editor's renderer starts, and camera changes update the control.
 
 The References panel now renders through a Remix client entry. It loads, snapshots, offsets, hides, and removes read-only scenes while the editor retains the scene list for renderer recreation.

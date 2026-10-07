@@ -172,13 +172,13 @@ import {
 } from "./editor-build-export.ts";
 import {
   defaultExportSettings,
-  directoryExportSupported,
   loadExportSettings,
   pickExportDirectory,
   saveExportSettings,
   writeBuildExport,
   type ExportSettings,
 } from "./editor-export-settings.ts";
+import { initEditorExportSettingsPanel } from "./editor-export-settings-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -342,21 +342,6 @@ const buildButton = document.querySelector<HTMLButtonElement>("#build-map")!;
 const exportBuildButton =
   document.querySelector<HTMLButtonElement>("#export-build")!;
 const exportStatus = document.querySelector<HTMLElement>("#export-status")!;
-const includeBuildSource = document.querySelector<HTMLInputElement>(
-  "#include-build-source",
-)!;
-const exportAfterBuild = document.querySelector<HTMLInputElement>(
-  "#export-after-build",
-)!;
-const exportDestination = document.querySelector<HTMLElement>(
-  "#export-destination",
-)!;
-const chooseExportDirectory = document.querySelector<HTMLButtonElement>(
-  "#choose-export-directory",
-)!;
-const useExportDownloads = document.querySelector<HTMLButtonElement>(
-  "#use-export-downloads",
-)!;
 const toggleCompiledButton =
   document.querySelector<HTMLButtonElement>("#toggle-compiled")!;
 const buildStatus = document.querySelector<HTMLElement>("#build-status")!;
@@ -527,6 +512,21 @@ let projectBindings: ProjectBuildBindings | null = null;
 let exportSettings = defaultExportSettings("default");
 let exportSettingsGeneration = 0;
 let exportSettingsSave = Promise.resolve();
+const exportSettingsPanel = initEditorExportSettingsPanel({
+  configure: configureExportSettings,
+  async chooseDirectory() {
+    const scopeId = exportSettings.scopeId;
+    try {
+      const directory = await pickExportDirectory();
+      if (scopeId === exportSettings.scopeId)
+        configureExportSettings({ directory });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      exportStatus.textContent =
+        error instanceof Error ? error.message : String(error);
+    }
+  },
+});
 let exportBusy = false;
 let compiledPreview: WorldViewElement | null = null;
 let compiledDocument: MapDocument | null = null;
@@ -965,11 +965,7 @@ function clearCompiledPreview() {
 }
 
 function renderExportSettings() {
-  includeBuildSource.checked = exportSettings.includeSource;
-  exportAfterBuild.checked = exportSettings.afterBuild;
-  exportDestination.textContent = `Destination: ${exportSettings.directory?.name ?? "Downloads"}`;
-  chooseExportDirectory.hidden = !directoryExportSupported();
-  useExportDownloads.hidden = !exportSettings.directory;
+  exportSettingsPanel.setSettings(exportSettings);
 }
 
 function loadCurrentExportSettings() {
@@ -4052,28 +4048,6 @@ document
 document
   .querySelector<HTMLButtonElement>("#save-map")!
   .addEventListener("click", saveCurrentMap);
-
-includeBuildSource.addEventListener("change", () => {
-  configureExportSettings({ includeSource: includeBuildSource.checked });
-});
-exportAfterBuild.addEventListener("change", () => {
-  configureExportSettings({ afterBuild: exportAfterBuild.checked });
-});
-chooseExportDirectory.addEventListener("click", async () => {
-  const scopeId = exportSettings.scopeId;
-  try {
-    const directory = await pickExportDirectory();
-    if (scopeId === exportSettings.scopeId)
-      configureExportSettings({ directory });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") return;
-    exportStatus.textContent =
-      error instanceof Error ? error.message : String(error);
-  }
-});
-useExportDownloads.addEventListener("click", () => {
-  configureExportSettings({ directory: null });
-});
 
 async function exportLatestBuild(settings: ExportSettings): Promise<void> {
   const latest = latestBuildExport;
