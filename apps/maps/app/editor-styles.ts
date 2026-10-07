@@ -113,6 +113,12 @@ export const editorStyles = css({
     "font-size": "0.85rem",
     color: "var(--editor-muted)",
   },
+  "& #pointer-context": {
+    color: "var(--editor-muted)",
+    "font-size": "0.8rem",
+    "font-family": "ui-monospace, monospace",
+    "white-space": "nowrap",
+  },
   "& .editor-theme-choice": {
     display: "flex",
     "align-items": "center",

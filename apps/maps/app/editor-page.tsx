@@ -56,6 +56,7 @@ import {
   EditorIssues,
 } from "./assets/editor-issues-panel.tsx";
 import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
+import { EditorPointerReadout } from "./assets/editor-pointer-readout.tsx";
 import {
   EditorPerformancePanel,
   EditorPerformanceToggle,
@@ -83,6 +84,7 @@ export function EditorPage() {
             <span id="editor-status" role="status">
               Starting…
             </span>
+            <EditorPointerReadout />
             <EditorThemeControl />
             <EditorPerformanceToggle />
           </header>

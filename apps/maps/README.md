@@ -34,6 +34,8 @@ Open `/editor` to create a map, load an example, add, select, duplicate, move, r
 
 The New, Example, Open, Save, Export normalized, checkpoint, Recovery versions, and Download controls render through a Remix client component. The editor retains file-handle checks, source-preserving save plans, recovery persistence, and the Save, Discard, or Cancel guard.
 
+The editor header shows the grid-snapped map position under the pointer in the active viewport. Its readout is a Remix client component fed by the viewport renderer.
+
 The Save, Discard, or Cancel dialog also renders through a Remix client component. The editor continues to decide when unsaved work requires that choice and whether Save succeeded before switching maps.
 
 The Valve map source textarea, save warning, and Apply source action render through a Remix client component. The editor still parses source, tracks unapplied drafts, persists recovery, and decides whether a source-preserving save is safe.

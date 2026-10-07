@@ -369,6 +369,14 @@ try {
   await standalonePage.waitForFunction(
     () => document.querySelector("#brush-count")?.textContent === "3",
   );
+  await standalonePage.evaluate(() =>
+    window.dispatchEvent(
+      new CustomEvent("tea-maps-pointer-position", {
+        detail: { viewport: "xy", point: [64, 128, 0], surfaceNormal: null },
+      }),
+    ),
+  );
+  await standalonePage.getByText("XY · 64, 128, 0").waitFor();
   await standalonePage.locator("#game-profile").selectOption("quake");
   await standalonePage.getByText("Map resources", { exact: true }).click();
   await standalonePage.locator("#standalone-palette").setInputFiles({
@@ -383,7 +391,7 @@ try {
   await standalonePage.getByText(/0 WADs · Resources cleared/).waitFor();
   await standalonePage.close();
   result.checks.push(
-    "standalone resources, document summary, and viewport overlays render in the Remix editor",
+    "standalone resources, document summary, pointer readout, and viewport overlays render in the Remix editor",
   );
 
   const themePage = await browser.newPage();

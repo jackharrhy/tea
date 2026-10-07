@@ -21,6 +21,7 @@ declare module "remix/router" {
 const clientEntryFiles = {
   "editor-hosted-access-panel.tsx": browserAssets.editorHostedAccess,
   "editor-hosted-presence-panel.tsx": browserAssets.editorHostedPresence,
+  "editor-pointer-readout.tsx": browserAssets.editorPointerReadout,
   "editor-project-map-selector-panel.tsx": browserAssets.projectMapSelector,
   "editor-theme-control.tsx": browserAssets.editorTheme,
   "recovered-maps.tsx": browserAssets.recoveredMaps,

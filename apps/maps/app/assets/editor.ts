@@ -1988,6 +1988,9 @@ function setMap(value: MapDocument, sourceState?: MapSourceState) {
   dragDuplicateBase = null;
   faceDrag.reset();
   latestPointer = null;
+  window.dispatchEvent(
+    new CustomEvent("tea-maps-pointer-position", { detail: null }),
+  );
   editActions.update({ pastePointerDisabled: true });
   latestBuildExport = null;
   latestLaunch = null;
@@ -2720,6 +2723,9 @@ if (!navigator.gpu) {
         session.selectFacesWithLasso(faces, ensureSelected),
       onPointerPosition: (pointer) => {
         latestPointer = pointer;
+        window.dispatchEvent(
+          new CustomEvent("tea-maps-pointer-position", { detail: pointer }),
+        );
         editActions.update({
           pastePointerDisabled: hostedMap !== null && !hostedConnection,
         });
