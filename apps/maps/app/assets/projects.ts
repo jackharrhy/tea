@@ -10,7 +10,6 @@ import {
 } from "./editor-hosted-create.ts";
 import { openLinkedLocalProject } from "./project-local.ts";
 import { listRecentProjects } from "./editor-recent-projects.ts";
-import { listDetachedMapSummaries } from "./editor-detached-catalog.ts";
 import { readHostedApi } from "./hosted-api.ts";
 import { showProjectAccess } from "./project-access.ts";
 import { showProjectResources } from "./project-resources.ts";
@@ -79,23 +78,6 @@ async function showRecentProjects() {
   }
 }
 
-async function showDetachedMaps() {
-  const list = document.querySelector<HTMLElement>("#detached-maps-list")!;
-  const copies = await listDetachedMapSummaries();
-  if (!copies.length) {
-    list.textContent = "No recovered maps on this device";
-    return;
-  }
-  for (const copy of copies) {
-    const link = row(copy.name, copy.reason);
-    const open = document.createElement("a");
-    open.href = `/editor?detachedMap=${encodeURIComponent(copy.id)}`;
-    open.textContent = `Open copy · ${new Date(copy.createdAt).toLocaleString()}`;
-    link.append(open);
-    list.append(link);
-  }
-}
-
 async function showHostedProjects() {
   const session = await readHostedApi(
     "/api/session",
@@ -114,6 +96,7 @@ async function showHostedProjects() {
   if (!response.projects.length) list.textContent = "No hosted projects yet";
   for (const project of response.projects) {
     const link = document.createElement("a");
+    link.dataset.rmxDocument = "";
     link.className = "project-row";
     link.href = `/projects/${encodeURIComponent(project.id)}`;
     const title = document.createElement("strong");
@@ -163,9 +146,11 @@ function showMaps(project: HostedProject) {
     const actions = document.createElement("div");
     actions.className = "project-actions";
     const edit = document.createElement("a");
+    edit.dataset.rmxDocument = "";
     edit.href = `/editor?hostedMap=${encodeURIComponent(map.id)}`;
     edit.textContent = "Open in editor";
     const view = document.createElement("a");
+    view.dataset.rmxDocument = "";
     view.href = `/?hostedProject=${encodeURIComponent(project.id)}&hostedMap=${encodeURIComponent(map.id)}`;
     view.textContent = "View a build";
     actions.append(edit, view);
@@ -276,10 +261,6 @@ if (projectId) {
     status.textContent = message(error);
   });
 } else {
-  void showDetachedMaps().catch((error: unknown) => {
-    document.querySelector<HTMLElement>("#detached-maps-list")!.textContent =
-      `Recovered maps are unavailable: ${message(error)}`;
-  });
   void showRecentProjects().catch((error: unknown) => {
     document.querySelector<HTMLElement>("#local-projects-list")!.textContent =
       `Recent projects are unavailable: ${message(error)}`;

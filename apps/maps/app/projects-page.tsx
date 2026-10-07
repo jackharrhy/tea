@@ -1,6 +1,7 @@
 import type { Handle } from "remix/component";
 import { browserAssets } from "./assets/build-manifest.ts";
 import { projectsStyles } from "./projects-styles.ts";
+import { RecoveredMaps } from "./assets/recovered-maps.tsx";
 
 export function ProjectsPage(
   handle: Handle<{
@@ -24,20 +25,30 @@ export function ProjectsPage(
           data-section={handle.props.section ?? "maps"}
         >
           <header class="projects-header">
-            <a class="projects-brand" href="/">
+            <a class="projects-brand" href="/" data-rmx-document>
               tea/maps
             </a>
             <nav aria-label="Maps pages">
-              <a href="/">Viewer</a>
-              <a href="/editor">Editor</a>
+              <a href="/" data-rmx-document>
+                Viewer
+              </a>
+              <a href="/editor" data-rmx-document>
+                Editor
+              </a>
               <a
                 href="/projects"
+                data-rmx-document
                 aria-current={handle.props.projectId ? undefined : "page"}
               >
                 Projects
               </a>
             </nav>
-            <a id="projects-login" href="/auth/login?returnTo=/projects" hidden>
+            <a
+              id="projects-login"
+              href="/auth/login?returnTo=/projects"
+              data-rmx-document
+              hidden
+            >
               Sign in
             </a>
           </header>
@@ -82,17 +93,23 @@ export function ProjectsPage(
                     <h2 id="local-projects-title">Recent local projects</h2>
                     <div id="local-projects-list" class="project-list" />
                     <h3>Recovered maps</h3>
-                    <div id="detached-maps-list" class="project-list" />
+                    <RecoveredMaps />
                     <p class="projects-note">
                       Project folders stay on this device. Open a folder from
-                      the editor, or <a href="/new-map">create a local map</a>.
+                      the editor, or{" "}
+                      <a href="/new-map" data-rmx-document>
+                        create a local map
+                      </a>
+                      .
                     </p>
                   </section>
                 </div>
               </>
             ) : (
               <section class="project-detail">
-                <a href="/projects">← All projects</a>
+                <a href="/projects" data-rmx-document>
+                  ← All projects
+                </a>
                 <div class="project-title">
                   <div>
                     <h1 id="project-name">Project</h1>
@@ -101,6 +118,7 @@ export function ProjectsPage(
                   <a
                     id="project-manage"
                     href={`/editor?hostedProject=${handle.props.projectId}`}
+                    data-rmx-document
                   >
                     Manage in editor
                   </a>
@@ -108,6 +126,7 @@ export function ProjectsPage(
                 <nav class="project-tabs" aria-label="Project pages">
                   <a
                     href={`/projects/${handle.props.projectId}`}
+                    data-rmx-document
                     aria-current={
                       !handle.props.section || handle.props.section === "maps"
                         ? "page"
@@ -118,6 +137,7 @@ export function ProjectsPage(
                   </a>
                   <a
                     href={`/projects/${handle.props.projectId}/resources`}
+                    data-rmx-document
                     aria-current={
                       handle.props.section === "resources" ? "page" : undefined
                     }
@@ -127,6 +147,7 @@ export function ProjectsPage(
                   <a
                     id="project-access-tab"
                     href={`/projects/${handle.props.projectId}/access`}
+                    data-rmx-document
                     aria-current={
                       handle.props.section === "access" ? "page" : undefined
                     }
@@ -137,6 +158,7 @@ export function ProjectsPage(
                   <a
                     id="project-new-map-tab"
                     href={`/projects/${handle.props.projectId}/new-map`}
+                    data-rmx-document
                     aria-current={
                       handle.props.section === "new-map" ? "page" : undefined
                     }
@@ -260,6 +282,7 @@ export function ProjectsPage(
             )}
           </div>
         </main>
+        <script type="module" src={browserAssets.entry}></script>
         <script type="module" src={browserAssets.projects}></script>
       </body>
     </html>

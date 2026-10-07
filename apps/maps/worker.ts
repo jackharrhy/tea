@@ -1,5 +1,6 @@
 import { createRouter, type MiddlewareContext } from "remix/router";
 import { render } from "remix/middleware/render";
+import { browserAssets } from "./app/assets/build-manifest.ts";
 import controller from "./app/controller.tsx";
 import { routes } from "./app/routes.ts";
 import {
@@ -17,7 +18,23 @@ declare module "remix/router" {
   }
 }
 
-const router = createRouter<AppContext>({ middleware: [render()] });
+const router = createRouter<AppContext>({
+  middleware: [
+    render({
+      assets: {
+        async getScriptEntry(sourceId) {
+          if (!sourceId.endsWith("/app/assets/recovered-maps.tsx"))
+            throw new Error(`Unknown Maps client entry ${sourceId}`);
+          return {
+            href: browserAssets.recoveredMaps,
+            preloads: [],
+            importMap: { imports: {} },
+          };
+        },
+      },
+    }),
+  ],
+});
 router.map(routes, controller);
 
 export default {

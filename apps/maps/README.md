@@ -1,6 +1,6 @@
 # @tea/maps
 
-Maps is Tea's Remix 3 BSP viewer and early map editor. `worker.ts` delegates `/`, `/new-map`, `/editor`, and `/projects/*` to `app/controller.tsx`, passes `/api/*` and `/auth/*` to `@tea/maps-service`, forwards map room `/sync/*` requests to `@tea/maps-collaboration`, and serves built browser assets through the Worker asset binding. `cloudflare.config.ts` routes these dynamic paths to the Worker before checking static assets. The viewer uses `@tea/maps-renderer`; the four viewport editor uses `@tea/maps-editor`.
+Maps is Tea's Remix 3 BSP viewer and early map editor. `worker.ts` delegates `/`, `/new-map`, `/editor`, and `/projects/*` to `app/controller.tsx`, passes `/api/*` and `/auth/*` to `@tea/maps-service`, forwards map room `/sync/*` requests to `@tea/maps-collaboration`, and serves built browser assets through the Worker asset binding. `cloudflare.config.ts` routes these dynamic paths to the Worker before checking static assets. The viewer uses `@tea/maps-renderer`; the four viewport editor uses `@tea/maps-editor`. The Projects page renders its recovered-map list through a hydrated Remix client entry in `app/assets/recovered-maps.tsx`; its other browser controls still live in `app/assets/projects.ts`.
 
 ## Develop
 
