@@ -1710,6 +1710,95 @@ try {
   result.checks.push(
     "Remix face picker, material, projection, alignment, and geometry controls use editor transactions",
   );
+  const surfacePage = await browser.newPage();
+  await installSiteToolMock(surfacePage);
+  await surfacePage.goto(`${mapsOrigin}/editor`);
+  await surfacePage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  await surfacePage.locator("#game-profile").selectOption("quake2");
+  const surfaceBrush = await surfacePage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    const created = tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [64, 64, 64],
+      material: "STONE",
+    });
+    const brush = tools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "brush" })
+      .objects.find((candidate) => candidate.id === created.brushId);
+    if (!brush) throw new Error("Surface test brush was not found");
+    const after = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: after.documentId,
+      expectedRevision: after.revision,
+      mode: "faces",
+      faces: [{ brushId: brush.id, faceId: brush.faceIds[0] }],
+    });
+    return { id: brush.id, faceIds: brush.faceIds };
+  });
+  await surfacePage
+    .locator("#surface-attributes")
+    .waitFor({ state: "visible" });
+  await surfacePage.locator("#surface-attributes summary").click();
+  const lightFlag = surfacePage.locator("#surface-flags").getByLabel("Light", {
+    exact: true,
+  });
+  const beforeFlag = await surfacePage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await lightFlag.check();
+  await surfacePage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    beforeFlag,
+  );
+  const afterFlag = await surfacePage.evaluate(
+    () =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision,
+  );
+  await surfacePage.locator("#surface-value").fill("200");
+  await surfacePage.locator("#surface-value").press("Tab");
+  await surfacePage.waitForFunction(
+    (revision) =>
+      window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
+        .revision > revision,
+    afterFlag,
+  );
+  await surfacePage.evaluate(({ id, faceIds }) => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      mode: "faces",
+      faces: [
+        { brushId: id, faceId: faceIds[0] },
+        { brushId: id, faceId: faceIds[1] },
+      ],
+    });
+  }, surfaceBrush);
+  await surfacePage.waitForFunction(() => {
+    const checkbox = document.querySelector("#surface-flags input");
+    return checkbox?.indeterminate === true;
+  });
+  assert.equal(await lightFlag.getAttribute("aria-checked"), "mixed");
+  assert.equal(
+    await surfacePage.locator("#surface-value").getAttribute("placeholder"),
+    "Mixed",
+  );
+  await surfacePage.close();
+  result.checks.push(
+    "Remix Quake II surface flags and value preserve mixed face selection state",
+  );
   const entityPage = await browser.newPage();
   await installSiteToolMock(entityPage);
   await entityPage.goto(`${mapsOrigin}/editor`);

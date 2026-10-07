@@ -48,6 +48,8 @@ The selected face picker, numeric face geometry actions, and material applicatio
 
 Face projection fields and texture alignment now render through Remix client entries; the editor retains the projection transactions, project texture sizes, and manual fit options.
 
+Quake II surface contents, flags, mixed selections, unknown bits, and light value now render through a Remix client entry while the editor retains the surface edit transactions.
+
 Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.
 
 Viewport tool, grid size, and Texture lock now render through a Remix client entry. The editor and its tools read the same settings state for rendering and transactions.

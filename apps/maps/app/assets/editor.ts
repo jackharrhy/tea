@@ -213,6 +213,7 @@ import {
   initEditorFaceTexture,
   type ProjectionInputState,
 } from "./editor-face-texture-bridge.ts";
+import { initEditorSurface } from "./editor-surface-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -281,6 +282,10 @@ const faceTexture = initEditorFaceTexture({
   commitProjection,
   applyAlignment,
 });
+const surfacePanel = initEditorSurface({
+  commitValue: commitSurfaceValue,
+  setFlag: setSurfaceFlag,
+});
 const historyControls = initEditorHistory({
   undo: () => void runHistoryAction("undo"),
   redo: () => void runHistoryAction("redo"),
@@ -307,23 +312,6 @@ const discardHullButton =
   document.querySelector<HTMLButtonElement>("#discard-hull")!;
 const faceInspector = document.querySelector<HTMLElement>("#face-inspector")!;
 const faceProjection = document.querySelector<HTMLElement>("#face-projection")!;
-const surfaceAttributes = document.querySelector<HTMLDetailsElement>(
-  "#surface-attributes",
-)!;
-const surfaceContents =
-  document.querySelector<HTMLElement>("#surface-contents")!;
-const surfaceFlags = document.querySelector<HTMLElement>("#surface-flags")!;
-const unknownContents = document.querySelector<HTMLElement>(
-  "#surface-unknown-contents",
-)!;
-const unknownFlags = document.querySelector<HTMLElement>(
-  "#surface-unknown-flags",
-)!;
-const surfaceValue =
-  document.querySelector<HTMLInputElement>("#surface-value")!;
-const surfaceValueLabel = document.querySelector<HTMLLabelElement>(
-  "#surface-value-label",
-)!;
 const switchMapDialog =
   document.querySelector<HTMLDialogElement>("#switch-map-dialog")!;
 const versionsDialog =
@@ -1106,44 +1094,27 @@ function refreshSource() {
 
 function refreshSurfaceInspector(faces: readonly MapFace[], editing: boolean) {
   const semantics = worldviewGameProfile(activeGame()).surfaceSemantics;
-  surfaceAttributes.hidden = !semantics || faces.length === 0;
-  if (!semantics || faces.length === 0) return;
+  if (!semantics || faces.length === 0) {
+    surfacePanel.update({ visible: false, contents: [], flags: [] });
+    return;
+  }
 
-  function renderFlags(
-    container: HTMLElement,
-    unknownLabel: HTMLElement,
+  function flagChoices(
     field: "contents" | "flags",
     definitions: readonly SurfaceFlagDefinition[],
   ) {
     const values = faces.map((face) => face.surface[field] ?? 0);
-    container.replaceChildren();
-    for (const definition of definitions) {
-      const label = document.createElement("label");
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
+    const choices = definitions.map((definition) => {
       const enabled = values.filter(
         (value) => ((value >>> 0) & definition.value) === definition.value,
       ).length;
-      checkbox.checked = enabled === values.length;
-      checkbox.indeterminate = enabled > 0 && enabled < values.length;
-      checkbox.disabled = !editing;
-      checkbox.addEventListener("change", () => {
-        if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;
-        try {
-          session.setSelectedSurfaceFlag(
-            field,
-            definition.value,
-            checkbox.checked,
-          );
-        } catch (error) {
-          status.textContent =
-            error instanceof Error ? error.message : String(error);
-          refreshSelection();
-        }
-      });
-      label.append(checkbox, document.createTextNode(definition.label));
-      container.append(label);
-    }
+      return {
+        value: definition.value,
+        label: definition.label,
+        checked: enabled === values.length,
+        indeterminate: enabled > 0 && enabled < values.length,
+      };
+    });
     const unknown = [
       ...new Set(
         values.map(
@@ -1151,21 +1122,30 @@ function refreshSurfaceInspector(faces: readonly MapFace[], editing: boolean) {
         ),
       ),
     ];
-    unknownLabel.hidden = unknown.length === 1 && unknown[0] === 0;
-    unknownLabel.textContent =
-      unknown.length > 1
-        ? "Unknown bits: mixed"
-        : `Unknown bits: 0x${(unknown[0] ?? 0).toString(16)}`;
+    const unknownLabel =
+      unknown.length === 1 && unknown[0] === 0
+        ? null
+        : unknown.length > 1
+          ? "Unknown bits: mixed"
+          : `Unknown bits: 0x${(unknown[0] ?? 0).toString(16)}`;
+    return { choices, unknownLabel };
   }
 
-  renderFlags(surfaceContents, unknownContents, "contents", semantics.contents);
-  renderFlags(surfaceFlags, unknownFlags, "flags", semantics.flags);
+  const contents = flagChoices("contents", semantics.contents);
+  const flags = flagChoices("flags", semantics.flags);
   const values = faces.map((face) => face.surface.value ?? 0);
   const common = values.every((value) => value === values[0]);
-  surfaceValueLabel.textContent = semantics.valueLabel;
-  surfaceValue.value = common ? String(values[0] ?? 0) : "";
-  surfaceValue.placeholder = common ? "" : "Mixed";
-  surfaceValue.disabled = !editing;
+  surfacePanel.update({
+    visible: true,
+    contents: contents.choices,
+    flags: flags.choices,
+    unknownContents: contents.unknownLabel,
+    unknownFlags: flags.unknownLabel,
+    valueLabel: semantics.valueLabel,
+    value: common ? String(values[0] ?? 0) : "",
+    valuePlaceholder: common ? "" : "Mixed",
+    disabled: !editing,
+  });
 }
 
 function refreshLayers() {
@@ -2999,15 +2979,32 @@ function commitProjection(field: FaceTextureProjectionField, raw: string) {
   }
 }
 
-surfaceValue.addEventListener("change", () => {
+function setSurfaceFlag(
+  field: "contents" | "flags",
+  mask: number,
+  enabled: boolean,
+) {
+  if (!surfacePanel.state.visible || surfacePanel.state.disabled) return;
   if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;
   try {
-    session.setSelectedSurfaceValue(surfaceValue.valueAsNumber);
+    session.setSelectedSurfaceFlag(field, mask, enabled);
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
     refreshSelection();
   }
-});
+}
+
+function commitSurfaceValue(raw: string) {
+  if (!surfacePanel.state.visible || surfacePanel.state.disabled) return;
+  if (!applyWorkingSource() || (hostedMap && !hostedConnection)) return;
+  const value = raw.trim() ? Number(raw) : Number.NaN;
+  try {
+    session.setSelectedSurfaceValue(value);
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+    refreshSelection();
+  }
+}
 
 function commitEntityProperty(
   key: string,

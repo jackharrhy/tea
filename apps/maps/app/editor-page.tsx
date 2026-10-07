@@ -27,6 +27,7 @@ import {
   EditorFaceProjectionFields,
   EditorTextureAlignment,
 } from "./assets/editor-face-texture-panel.tsx";
+import { EditorSurface } from "./assets/editor-surface-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -496,23 +497,7 @@ export function EditorPage() {
                   </div>
                 </div>
                 <EditorTextureAlignment />
-                <details id="surface-attributes" hidden>
-                  <summary>Quake II surface</summary>
-                  <fieldset>
-                    <legend>Contents</legend>
-                    <div id="surface-contents" class="surface-flag-grid" />
-                    <p id="surface-unknown-contents" hidden />
-                  </fieldset>
-                  <fieldset>
-                    <legend>Surface flags</legend>
-                    <div id="surface-flags" class="surface-flag-grid" />
-                    <p id="surface-unknown-flags" hidden />
-                  </fieldset>
-                  <label for="surface-value" id="surface-value-label">
-                    Light value
-                  </label>
-                  <input id="surface-value" type="number" step="1" />
-                </details>
+                <EditorSurface />
               </div>
               <EditorMaterialBrowser />
               <EditorEntityInspector />
