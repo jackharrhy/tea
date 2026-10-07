@@ -17,6 +17,7 @@ const app = fileURLToPath(new URL("..", import.meta.url));
 const { values } = parseArgs({
   options: {
     binary: { type: "string", default: process.env.CELLD_BIN ?? "celld" },
+    "source-binary": { type: "string" },
     "source-app": {
       type: "string",
       default: resolvePath(teaRoot, "../worldview/apps/collaboration-service"),
@@ -30,10 +31,18 @@ const secret = randomBytes(32).toString("hex");
 const mapId = `cutover-${randomBytes(6).toString("hex")}`;
 const source = serializeMap(createStarterDocument());
 const sourceApp = resolvePath(values["source-app"]);
+const sourceBinary = values["source-binary"] ?? values.binary;
 let runtime;
 
-function run(cwd, env, args) {
-  const result = spawnSync(values.binary, args, {
+function binaryVersion(binary) {
+  const result = spawnSync(binary, ["--version"], { encoding: "utf8" });
+  if (result.error) throw result.error;
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
+}
+
+function run(cwd, env, args, binary = values.binary) {
+  const result = spawnSync(binary, args, {
     cwd,
     env,
     encoding: "utf8",
@@ -66,9 +75,9 @@ function environment(database, replicas, port, secretName) {
   };
 }
 
-async function start(cwd, env, label) {
+async function start(cwd, env, label, binary = values.binary) {
   const log = createWriteStream(join(state, `${label}.log`));
-  runtime = spawn(values.binary, ["--no-control-plane"], {
+  runtime = spawn(binary, ["--no-control-plane"], {
     cwd,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -154,19 +163,19 @@ try {
     sourcePort,
     "CELLD_VAR_WORLDVIEW_REALTIME_TICKET_SECRET",
   );
-  run(sourceApp, sourceEnv, [
-    "diagnose",
-    "--bucket",
-    sourceEnv.CELLD_BUCKET,
-    "--no-control-plane",
-  ]);
-  run(sourceApp, sourceEnv, [
-    "deploy",
-    ".",
-    "--bucket",
-    sourceEnv.CELLD_BUCKET,
-  ]);
-  await start(sourceApp, sourceEnv, "source");
+  run(
+    sourceApp,
+    sourceEnv,
+    ["diagnose", "--bucket", sourceEnv.CELLD_BUCKET, "--no-control-plane"],
+    sourceBinary,
+  );
+  run(
+    sourceApp,
+    sourceEnv,
+    ["deploy", ".", "--bucket", sourceEnv.CELLD_BUCKET],
+    sourceBinary,
+  );
+  await start(sourceApp, sourceEnv, "source", sourceBinary);
   const sourceOrigin = `http://127.0.0.1:${sourcePort}`;
   await ready(sourceOrigin);
   await request(sourceOrigin, "/initialize", "PUT", { source });
@@ -250,6 +259,8 @@ try {
     JSON.stringify({
       status: "passed",
       mapId,
+      sourceVersion: binaryVersion(sourceBinary),
+      targetVersion: binaryVersion(values.binary),
       checks: [
         "original map and checkpoint",
         "stopped SQLite backup",
