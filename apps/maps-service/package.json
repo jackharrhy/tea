@@ -7,6 +7,7 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "npm run build && node --enable-source-maps dist/server.js",
     "start": "node --enable-source-maps dist/server.js",
+    "compare:data": "node scripts/compare-data.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build"
