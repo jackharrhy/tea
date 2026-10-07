@@ -93,6 +93,8 @@ services:
       dockerfile: apps/maps-collaboration/Dockerfile
     environment:
       CELLD_VAR_TEA_MAPS_REALTIME_TICKET_SECRET: ${MAPS_REALTIME_TICKET_SECRET:-tea-maps-local-realtime-ticket-secret-change-me}
+    ports:
+      - "127.0.0.1:8787:44100"
     volumes:
       - maps-collaboration-data:/app/.celld
     labels:
