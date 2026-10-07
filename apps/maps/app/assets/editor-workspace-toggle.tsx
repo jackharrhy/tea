@@ -109,6 +109,7 @@ export const EditorInspector = clientEntry(
   `${import.meta.url}#EditorInspector`,
   function EditorInspectorComponent(handle: Handle) {
     let active: InspectorTab = "map";
+    let hydrated = false;
 
     function select(tab: InspectorTab) {
       active = tab;
@@ -140,6 +141,8 @@ export const EditorInspector = clientEntry(
           .inspectorOpen !== "false"
       )
         select(selection);
+      hydrated = true;
+      handle.update();
     });
 
     return () => (
@@ -153,6 +156,7 @@ export const EditorInspector = clientEntry(
               aria-controls={`inspector-panel-${tab}`}
               aria-selected={active === tab}
               tabIndex={active === tab ? 0 : -1}
+              disabled={!hydrated}
               mix={[
                 on("click", () => select(tab)),
                 on<HTMLButtonElement>("keydown", (event) => {
