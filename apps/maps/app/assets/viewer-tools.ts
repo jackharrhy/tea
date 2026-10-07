@@ -1,21 +1,11 @@
 import {
   analyzeEntitySupport,
-  planOverview,
   type CameraState,
   type MapDiagnostics,
-  type OverviewCaptureOptions,
 } from "@tea/maps-renderer";
 import type { WorldViewElement } from "@tea/maps-renderer/element";
 import { serializeWalkability } from "@tea/maps-renderer/walkability";
-
-function download(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
-}
+import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
 
 export function formatMapDetails(
   diagnostics: MapDiagnostics,
@@ -34,11 +24,6 @@ export function initViewerTools(element: WorldViewElement): {
   reset(): void;
   setInitialCamera(camera: CameraState | undefined): void;
 } {
-  const mapName = document.querySelector<HTMLElement>("#map-name")!;
-  const safeMapName = () =>
-    mapName.textContent
-      ?.replace(/\.bsp$/iu, "")
-      .replace(/[^a-z0-9_-]+/giu, "-") || "map";
   const details = document.querySelector<HTMLOutputElement>("#map-details")!;
   const warnings = document.querySelector<HTMLOutputElement>("#map-warnings")!;
   const entityCounts =
@@ -47,25 +32,6 @@ export function initViewerTools(element: WorldViewElement): {
     document.querySelector<HTMLUListElement>("#entity-classes")!;
   const toolStatus =
     document.querySelector<HTMLOutputElement>("#map-tool-status")!;
-  const overviewSize =
-    document.querySelector<HTMLSelectElement>("#overview-size")!;
-  const overviewLighting =
-    document.querySelector<HTMLSelectElement>("#overview-lighting")!;
-  const overviewRotation =
-    document.querySelector<HTMLSelectElement>("#overview-rotation")!;
-  const overviewCutaway =
-    document.querySelector<HTMLInputElement>("#overview-cutaway")!;
-  const overviewZMin =
-    document.querySelector<HTMLInputElement>("#overview-z-min")!;
-  const overviewZMax =
-    document.querySelector<HTMLInputElement>("#overview-z-max")!;
-  const overviewTransparent = document.querySelector<HTMLInputElement>(
-    "#overview-transparent",
-  )!;
-  const overviewStatus =
-    document.querySelector<HTMLOutputElement>("#overview-status")!;
-  const downloadOverview =
-    document.querySelector<HTMLButtonElement>("#download-overview")!;
   const spacing = document.querySelector<HTMLInputElement>(
     "#walkability-spacing",
   )!;
@@ -157,9 +123,6 @@ export function initViewerTools(element: WorldViewElement): {
     entityCounts.textContent = "Load a map to inspect entities";
     entityClasses.replaceChildren();
     toolStatus.textContent = "";
-    overviewStatus.textContent = "Load a map to export";
-    overviewZMin.value = "";
-    overviewZMax.value = "";
     walkabilityDetails.textContent = "No graph loaded";
     showWalkability.checked = false;
     audioDetails.textContent = "Load a map to enable sound";
@@ -168,9 +131,6 @@ export function initViewerTools(element: WorldViewElement): {
     musicTrack.replaceChildren(new Option("No map music", ""));
     musicStatus.textContent = "No map music";
     for (const control of [
-      overviewZMin,
-      overviewZMax,
-      downloadOverview,
       generateWalkability,
       showWalkability,
       downloadWalkability,
@@ -221,14 +181,7 @@ export function initViewerTools(element: WorldViewElement): {
     }
     warningMessages = [...event.detail.diagnostics.warnings];
     warnings.textContent = warningMessages.slice(0, 5).join("\n");
-    const overview = planOverview(event.detail.world);
-    overviewZMin.value = String(Math.floor(overview.bounds.min[2]));
-    overviewZMax.value = String(Math.ceil(overview.bounds.max[2]));
-    overviewStatus.textContent = "Ready to export";
     for (const control of [
-      overviewZMin,
-      overviewZMax,
-      downloadOverview,
       generateWalkability,
       walkabilityFile,
       enableAudio,
@@ -272,50 +225,6 @@ export function initViewerTools(element: WorldViewElement): {
     report(event.detail.error);
   });
 
-  downloadOverview.addEventListener("click", async () => {
-    const runtime = element.viewer;
-    if (!runtime?.world) return;
-    const zMin = overviewZMin.valueAsNumber;
-    const zMax = overviewZMax.valueAsNumber;
-    if (!Number.isFinite(zMin) || !Number.isFinite(zMax) || zMin > zMax) {
-      overviewStatus.textContent = "Lower height must not exceed upper height";
-      return;
-    }
-    downloadOverview.disabled = true;
-    overviewStatus.textContent = "Rendering overview";
-    try {
-      const [width, height = width] = overviewSize.value.split("x").map(Number);
-      const options: OverviewCaptureOptions = {
-        width,
-        height,
-        lighting:
-          overviewLighting.value === "fullbright"
-            ? "fullbright"
-            : "lightmapped",
-        rotation:
-          overviewRotation.value === "auto"
-            ? "auto"
-            : overviewRotation.value === "90"
-              ? 90
-              : 0,
-        zMin,
-        zMax,
-        cutaway: overviewCutaway.checked ? "auto" : "none",
-        background: overviewTransparent.checked
-          ? "transparent"
-          : [0.025, 0.035, 0.03, 1],
-      };
-      const result = await runtime.captureOverview(options);
-      if (element.viewer !== runtime) return;
-      download(result.image, `${safeMapName()}-overview.png`);
-      overviewStatus.textContent = `${result.layout.width} × ${result.layout.height}, ${result.layout.rotation}°${overviewCutaway.checked && runtime.walkability ? " · cutaway" : ""}`;
-    } catch (error) {
-      overviewStatus.textContent =
-        error instanceof Error ? error.message : String(error);
-    } finally {
-      downloadOverview.disabled = !element.viewer?.world;
-    }
-  });
   generateWalkability.addEventListener("click", async () => {
     const runtime = element.viewer;
     if (!runtime?.world) return;
@@ -355,9 +264,9 @@ export function initViewerTools(element: WorldViewElement): {
   downloadWalkability.addEventListener("click", () => {
     const graph = element.viewer?.walkability;
     if (!graph) return;
-    download(
+    downloadViewerFile(
       new Blob([serializeWalkability(graph)], { type: "application/json" }),
-      `${safeMapName()}.tea-maps-walkability.json`,
+      `${viewerMapFilename()}.tea-maps-walkability.json`,
     );
     toolStatus.textContent = "Walkability sidecar downloaded";
   });

@@ -30,6 +30,8 @@ The Camera panel is a Remix client component for reticle visibility, walk and fl
 
 Movement settings render through a Remix client component and update the renderer's walk and fly controls as each value changes.
 
+The Overview panel renders through Remix. It plans export height defaults from the loaded map, validates a chosen range, and asks the renderer to capture the PNG using the selected size, lighting, rotation, cutaway, and background.
+
 ## Editor
 
 Save and Download preserve untouched local `.map` source, including comments and unsupported constructs, when the source planner can patch an edit safely. If it cannot, both stop with a diagnostic. Export normalized downloads a separate `.normalized.map` copy and never writes the opened file. Local recovery snapshots retain the semantic document and source anchors along with unapplied text edits.

@@ -4,6 +4,7 @@ import { HostedViewerPanel } from "./assets/hosted-viewer-panel.tsx";
 import { ViewerSourcePanel } from "./assets/viewer-source-panel.tsx";
 import { ViewerCameraPanel } from "./assets/viewer-camera-panel.tsx";
 import { ViewerMovementPanel } from "./assets/viewer-movement-panel.tsx";
+import { ViewerOverviewPanel } from "./assets/viewer-overview-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -49,47 +50,7 @@ export function MapsPage() {
                 </section>
                 <ViewerCameraPanel />
                 <ViewerMovementPanel />
-                <section aria-label="Map overview">
-                  <h2>Overview</h2>
-                  <label for="overview-size">Image size</label>
-                  <select id="overview-size">
-                    <option value="512">512 × 512</option>
-                    <option value="1024" selected>
-                      1024 × 1024
-                    </option>
-                    <option value="1024x768">1024 × 768</option>
-                    <option value="2048">2048 × 2048</option>
-                  </select>
-                  <label for="overview-lighting">Lighting</label>
-                  <select id="overview-lighting">
-                    <option value="lightmapped">Lightmapped</option>
-                    <option value="fullbright">Fullbright</option>
-                  </select>
-                  <label for="overview-rotation">Rotation</label>
-                  <select id="overview-rotation">
-                    <option value="auto">Auto</option>
-                    <option value="0">0°</option>
-                    <option value="90">90°</option>
-                  </select>
-                  <label class="toggle" for="overview-cutaway">
-                    <input id="overview-cutaway" type="checkbox" checked />
-                    Auto cutaway with walkability graph
-                  </label>
-                  <label for="overview-z-min">Lower height</label>
-                  <input id="overview-z-min" type="number" step="1" disabled />
-                  <label for="overview-z-max">Upper height</label>
-                  <input id="overview-z-max" type="number" step="1" disabled />
-                  <label class="toggle" for="overview-transparent">
-                    <input id="overview-transparent" type="checkbox" checked />
-                    Transparent background
-                  </label>
-                  <output id="overview-status" class="hint">
-                    Load a map to export
-                  </output>
-                  <button id="download-overview" type="button" disabled>
-                    Download overview
-                  </button>
-                </section>
+                <ViewerOverviewPanel />
                 <section aria-label="Walkability graph">
                   <h2>Walkability</h2>
                   <label for="walkability-spacing">Sample spacing</label>

@@ -820,22 +820,6 @@ try {
       pitch: 0,
       fieldOfView: 75,
     };
-    const calls = [];
-    window.cameraProbe = { camera, calls };
-    Object.defineProperty(element, "viewer", {
-      configurable: true,
-      value: {
-        world: {},
-        camera,
-        movementMode: "walk",
-        setCamera(update) {
-          calls.push(update);
-          Object.assign(camera, update);
-        },
-      },
-    });
-  });
-  await cameraPage.waitForFunction(() => {
     const world = {
       models: [],
       entities: [],
@@ -844,6 +828,35 @@ try {
       bounds: { min: [0, 0, 0], max: [1, 1, 1] },
       musicTracks: [],
     };
+    const calls = [];
+    const captureCalls = [];
+    window.cameraProbe = { camera, calls, world, captureCalls };
+    Object.defineProperty(element, "viewer", {
+      configurable: true,
+      value: {
+        world,
+        camera,
+        movementMode: "walk",
+        setCamera(update) {
+          calls.push(update);
+          Object.assign(camera, update);
+        },
+        async captureOverview(options) {
+          captureCalls.push(options);
+          return {
+            image: new Blob(["png"], { type: "image/png" }),
+            layout: {
+              width: options.width,
+              height: options.height,
+              rotation: options.rotation,
+            },
+          };
+        },
+      },
+    });
+  });
+  await cameraPage.waitForFunction(() => {
+    const world = window.cameraProbe.world;
     const diagnostics = {
       format: "quake",
       version: 29,
@@ -872,8 +885,48 @@ try {
   assert.deepEqual(await cameraPage.evaluate(() => window.cameraProbe.calls), [
     { fieldOfView: 90 },
   ]);
+  await cameraPage.locator("#download-overview:enabled").waitFor();
+  await cameraPage.locator("#overview-z-min").fill("2");
+  await cameraPage.locator("#download-overview").click();
+  assert.equal(
+    await cameraPage.locator("#overview-status").textContent(),
+    "Lower height must not exceed upper height",
+  );
+  assert.deepEqual(
+    await cameraPage.evaluate(() => window.cameraProbe.captureCalls),
+    [],
+  );
+  await cameraPage.locator("#overview-z-min").fill("0");
+  await cameraPage.locator("#overview-size").selectOption("1024x768");
+  await cameraPage.locator("#overview-lighting").selectOption("fullbright");
+  await cameraPage.locator("#overview-rotation").selectOption("90");
+  await cameraPage.locator("#overview-cutaway").uncheck();
+  await cameraPage.locator("#overview-transparent").uncheck();
+  const [overviewDownload] = await Promise.all([
+    cameraPage.waitForEvent("download"),
+    cameraPage.locator("#download-overview").click(),
+  ]);
+  assert.match(overviewDownload.suggestedFilename(), /-overview\.png$/);
+  assert.deepEqual(
+    await cameraPage.evaluate(() => window.cameraProbe.captureCalls),
+    [
+      {
+        width: 1024,
+        height: 768,
+        lighting: "fullbright",
+        rotation: 90,
+        zMin: 0,
+        zMax: 1,
+        cutaway: "none",
+        background: [0.025, 0.035, 0.03, 1],
+      },
+    ],
+  );
   await cameraPage.close();
   result.checks.push("Remix viewer field of view accepts typed camera values");
+  result.checks.push(
+    "Remix viewer overview validates and downloads capture options",
+  );
   const viewerFolder = join(state, "viewer-fixture");
   await mkdir(join(viewerFolder, "maps"), { recursive: true });
   await writeFile(join(viewerFolder, "maps", "folder.bsp"), bsp);
