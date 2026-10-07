@@ -21,7 +21,10 @@ import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx"
 import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
 import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
 import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
-import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
+import {
+  EditorProjectContextPanel,
+  EditorProjectResourcesPanel,
+} from "./assets/editor-project-context-panel.tsx";
 import { EditorSelectionCommands } from "./assets/editor-selection-commands-panel.tsx";
 import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
 import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
@@ -220,6 +223,7 @@ export function EditorPage() {
                 data-inspector-panel="map"
               >
                 <EditorDocumentSummary />
+                <EditorProjectResourcesPanel />
                 <EditorLayers />
                 <EditorIssues />
                 <EditorVisibility />

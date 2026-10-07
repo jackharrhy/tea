@@ -443,7 +443,6 @@ try {
   );
   await standalonePage.getByText("XY · 64, 128, 0").waitFor();
   await standalonePage.locator("#game-profile").selectOption("quake");
-  await standalonePage.getByText("Map resources", { exact: true }).click();
   await standalonePage.locator("#standalone-palette").setInputFiles({
     name: "custom.lmp",
     mimeType: "application/octet-stream",

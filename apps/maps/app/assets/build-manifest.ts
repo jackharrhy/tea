@@ -103,7 +103,7 @@ export const browserAssets = import.meta.env.DEV
       editorBuildControls: "/assets/editorBuildControls-CJLUOI7A.js",
       editorDocumentControls: "/assets/editorDocumentControls-7W7DXZPM.js",
       editorSource: "/assets/editorSource-7PC2RFMG.js",
-      editorProjectContext: "/assets/editorProjectContext-HBGSAV4J.js",
+      editorProjectContext: "/assets/editorProjectContext-SWDOFEG4.js",
       editorSelectionBrushes: "/assets/editorSelectionBrushes-S46HNPHI.js",
       editorSelectionCommands: "/assets/editorSelectionCommands-H2DHPAE2.js",
       editorEditActions: "/assets/editorEditActions-HFBGIOCD.js",

@@ -1,26 +1,33 @@
 import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorProjectContext } from "./editor-project-context-bridge.ts";
 
+function subscribeProjectContext(
+  handle: Handle,
+  update: (context: EditorProjectContext) => void,
+) {
+  handle.queueTask(() => {
+    window.addEventListener(
+      "tea-maps-project-context-bridge-ready",
+      () => window.dispatchEvent(new Event("tea-maps-project-context-ready")),
+      { signal: handle.signal },
+    );
+    window.addEventListener(
+      "tea-maps-project-context-state",
+      (event) => update((event as CustomEvent<EditorProjectContext>).detail),
+      { signal: handle.signal },
+    );
+    window.dispatchEvent(new Event("tea-maps-project-context-ready"));
+  });
+}
+
 export const EditorProjectContextPanel = clientEntry(
   `${import.meta.url}#EditorProjectContextPanel`,
   function EditorProjectContextPanelComponent(handle: Handle) {
     let context: EditorProjectContext | null = null;
 
-    handle.queueTask(() => {
-      window.addEventListener(
-        "tea-maps-project-context-bridge-ready",
-        () => window.dispatchEvent(new Event("tea-maps-project-context-ready")),
-        { signal: handle.signal },
-      );
-      window.addEventListener(
-        "tea-maps-project-context-state",
-        (event) => {
-          context = (event as CustomEvent<EditorProjectContext>).detail;
-          handle.update();
-        },
-        { signal: handle.signal },
-      );
-      window.dispatchEvent(new Event("tea-maps-project-context-ready"));
+    subscribeProjectContext(handle, (next) => {
+      context = next;
+      handle.update();
     });
 
     return () => {
@@ -46,6 +53,26 @@ export const EditorProjectContextPanel = clientEntry(
               <option value={path}>{path}</option>
             ))}
           </select>
+        </div>
+      );
+    };
+  },
+);
+
+export const EditorProjectResourcesPanel = clientEntry(
+  `${import.meta.url}#EditorProjectResourcesPanel`,
+  function EditorProjectResourcesPanelComponent(handle: Handle) {
+    let context: EditorProjectContext | null = null;
+    subscribeProjectContext(handle, (next) => {
+      context = next;
+      handle.update();
+    });
+
+    return () => {
+      const state = context?.state;
+      return (
+        <div mix={css({ display: "contents" })}>
+          <h2>Map resources</h2>
           <span id="project-resource-info" role="status">
             {state?.resourceInfo ?? ""}
           </span>
@@ -61,68 +88,62 @@ export const EditorProjectContextPanel = clientEntry(
             </ul>
           </details>
           {state?.standalone && (
-            <details>
-              <summary>Map resources</summary>
-              <div
-                mix={css({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                })}
+            <div
+              id="standalone-resource-fields"
+              mix={css({
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: "0.4rem",
+              })}
+            >
+              <label for="standalone-wads" mix={css({ cursor: "pointer" })}>
+                Add WAD
+              </label>
+              <input
+                id="standalone-wads"
+                type="file"
+                accept=".wad"
+                multiple
+                mix={[
+                  css({ maxWidth: "8rem" }),
+                  on<HTMLInputElement>("change", (event) => {
+                    const input = event.currentTarget;
+                    void context?.addWads([...(input.files ?? [])]);
+                    input.value = "";
+                  }),
+                ]}
+              />
+              <label for="standalone-palette" mix={css({ cursor: "pointer" })}>
+                Quake palette
+              </label>
+              <input
+                id="standalone-palette"
+                type="file"
+                accept=".lmp,.pal,.dat"
+                disabled={state.standaloneGame !== "quake"}
+                mix={[
+                  css({ maxWidth: "8rem" }),
+                  on<HTMLInputElement>("change", (event) => {
+                    const input = event.currentTarget;
+                    const file = input.files?.[0];
+                    if (file) void context?.setPalette(file);
+                    input.value = "";
+                  }),
+                ]}
+              />
+              <span role="status">
+                {state.standaloneWadCount} WADs
+                {state.standalonePalette ? " · custom palette" : ""}
+                {state.standaloneMessage ? ` · ${state.standaloneMessage}` : ""}
+              </span>
+              <button
+                type="button"
+                mix={on("click", () => void context?.clearResources())}
               >
-                <label for="standalone-wads" mix={css({ cursor: "pointer" })}>
-                  Add WAD
-                </label>
-                <input
-                  id="standalone-wads"
-                  type="file"
-                  accept=".wad"
-                  multiple
-                  mix={[
-                    css({ maxWidth: "8rem" }),
-                    on<HTMLInputElement>("change", (event) => {
-                      const input = event.currentTarget;
-                      void context?.addWads([...(input.files ?? [])]);
-                      input.value = "";
-                    }),
-                  ]}
-                />
-                <label
-                  for="standalone-palette"
-                  mix={css({ cursor: "pointer" })}
-                >
-                  Quake palette
-                </label>
-                <input
-                  id="standalone-palette"
-                  type="file"
-                  accept=".lmp,.pal,.dat"
-                  disabled={state.standaloneGame !== "quake"}
-                  mix={[
-                    css({ maxWidth: "8rem" }),
-                    on<HTMLInputElement>("change", (event) => {
-                      const input = event.currentTarget;
-                      const file = input.files?.[0];
-                      if (file) void context?.setPalette(file);
-                      input.value = "";
-                    }),
-                  ]}
-                />
-                <span role="status">
-                  {state.standaloneWadCount} WADs
-                  {state.standalonePalette ? " · custom palette" : ""}
-                  {state.standaloneMessage
-                    ? ` · ${state.standaloneMessage}`
-                    : ""}
-                </span>
-                <button
-                  type="button"
-                  mix={on("click", () => void context?.clearResources())}
-                >
-                  Clear resources
-                </button>
-              </div>
-            </details>
+                Clear resources
+              </button>
+            </div>
           )}
         </div>
       );

@@ -233,7 +233,7 @@ The editor's Build BSP action now calls the hosted build API for hosted maps, ch
 | --- | --- | --- |
 | `packages/worldview` | `packages/maps-renderer` | Copied public renderer and core parser; package and viewer checks pass |
 | `packages/worldview-editor` and `packages/worldview-protocol` | `packages/maps-editor` and `packages/maps-protocol` | Copied app-independent packages; 235 editor and 4 protocol tests pass |
-| `apps/viewer` and `apps/editor` | `apps/maps` | Remix viewer and four-viewport editor slices serve; hosted brush edits and presence use the room protocol, while advanced tools remain |
+| `apps/viewer` and `apps/editor` | `apps/maps` | Remix viewer and four-viewport editor serve with advanced tools, hosted edits, and presence; broader Worldview UI and owned-game parity remain before replacement |
 | `apps/worldview-service` | `apps/maps-service` | All public routes use Remix controllers and Web Responses; Node hosts the listener and local storage |
 | `apps/compiler-service` | `apps/maps-compiler` | Copied the bounded native pipeline behind Remix routes; local HTTP and compiler tests pass |
 | `apps/collaboration-service` | `apps/maps-collaboration` | Copied the SQLite map cell and WebSocket protocol behind Remix routes; Worker tests pass |
