@@ -545,6 +545,20 @@ try {
   result.checks.push(
     "hosted BSP build queue, compiler request, history, and artifact download",
   );
+  const hostedMapId = new URL(hostedEditorUrl).searchParams.get("hostedMap");
+  assert.ok(hostedMapId);
+  await page.goto(
+    `${mapsOrigin}/?hostedProject=${projectUrl.split("/").at(-1)}&hostedMap=${hostedMapId}`,
+  );
+  await page.getByText("Choose a compiled build to view").waitFor();
+  await page.getByRole("button", { name: "Open compiled map" }).click();
+  await page.waitForURL(/hostedBuild=[a-f0-9-]{36}/);
+  await page.getByText("smoke.map · preview").waitFor();
+  await page.reload();
+  await page.getByText("smoke.map · preview").waitFor();
+  result.checks.push("Remix hosted viewer picker opens a compiled map");
+  await page.goto(hostedEditorUrl);
+  await page.locator("#hosted-builds summary").click();
   await page.route(/\/api\/maps\/[^/]+\/builds$/, async (route) => {
     if (route.request().method() !== "GET") return route.continue();
     const response = await route.fetch();

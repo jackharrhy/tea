@@ -1,6 +1,7 @@
 import { browserAssets } from "./assets/build-manifest.ts";
 import { examples } from "./assets/examples.ts";
 import { mapsStyles } from "./styles.ts";
+import { HostedViewerPanel } from "./assets/hosted-viewer-panel.tsx";
 
 export function MapsPage() {
   return () => (
@@ -398,34 +399,7 @@ export function MapsPage() {
                 <output id="map-tool-status" role="status"></output>
               </div>
             </details>
-            <section class="hosted" aria-label="Hosted maps">
-              <h2>Hosted maps</h2>
-              <p id="hosted-status" role="status">
-                Connecting to Maps service
-              </p>
-              <a id="hosted-login" href="/auth/login?returnTo=/" hidden>
-                Sign in to Maps
-              </a>
-              <button id="hosted-logout" type="button" hidden>
-                Sign out
-              </button>
-              <label for="hosted-project">Project</label>
-              <select id="hosted-project" disabled></select>
-              <label for="hosted-map">Map</label>
-              <select id="hosted-map" disabled></select>
-              <label for="hosted-build">Compiled build</label>
-              <select id="hosted-build" disabled></select>
-              <button id="hosted-open" type="button" disabled>
-                Open compiled map
-              </button>
-              <button id="hosted-inspect" type="button" disabled>
-                Inspect map source
-              </button>
-              <p class="hint">
-                Build artifacts are private to project members. A map needs a
-                successful build before it can open here.
-              </p>
-            </section>
+            <HostedViewerPanel />
           </aside>
           <section class="viewport-panel" aria-label="Map viewer">
             <div class="toolbar">
@@ -443,6 +417,7 @@ export function MapsPage() {
           </section>
         </main>
         <script type="module" src={browserAssets.viewer}></script>
+        <script type="module" src={browserAssets.entry}></script>
       </body>
     </html>
   );

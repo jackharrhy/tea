@@ -8,7 +8,6 @@ import type {
   WorldSource,
 } from "@tea/maps-renderer";
 import { exampleSource, examples } from "./examples.ts";
-import { initHostedViewer } from "./hosted-viewer.ts";
 import {
   fixtureCamera,
   loadLocalFixtures,
@@ -101,10 +100,16 @@ function replaceQuery(parameters: Record<string, string>) {
   history.replaceState(null, "", url);
 }
 
-initHostedViewer(
-  (source, label, camera) => open(source, label, { camera }),
-  replaceQuery,
-);
+window.addEventListener("tea-maps-open-hosted-build", (event) => {
+  const detail = (
+    event as CustomEvent<{
+      source: WorldSource;
+      label: string;
+      camera?: CameraState;
+    }>
+  ).detail;
+  open(detail.source, detail.label, { camera: detail.camera });
+});
 
 function openExample(id: string, camera?: CameraState) {
   const local = localFixtures.find(
