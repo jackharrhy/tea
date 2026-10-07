@@ -497,7 +497,28 @@ try {
   await page.locator("#project-map-name").fill("smoke.map");
   await page.locator("#project-map-create-form button").click();
   await page.waitForURL(/\/editor\?hostedMap=[a-z0-9]{12}$/);
-  await page.getByText("Smoke Project / smoke.map opened").waitFor();
+  try {
+    await page.getByText("Smoke Project / smoke.map opened").waitFor();
+  } catch (error) {
+    throw new Error(
+      `Created hosted map did not open: ${JSON.stringify({
+        url: page.url(),
+        status: await page
+          .locator("#editor-status")
+          .textContent()
+          .catch(() => null),
+        project: await (
+          await page.request.get(
+            `${mapsOrigin}/api/projects/${projectUrl.split("/").at(-1)}`,
+          )
+        )
+          .json()
+          .catch(() => null),
+        errors,
+      })}`,
+      { cause: error },
+    );
+  }
   const hostedEditorUrl = page.url();
   assert.deepEqual(errors, []);
   result.checks.push(

@@ -7,7 +7,6 @@ import { clientEntry, on, type Handle } from "remix/component";
 export const NewMapSetup = clientEntry(
   `${import.meta.url}#NewMapSetup`,
   function NewMapSetupComponent(handle: Handle) {
-    let name = "untitled.map";
     let game: WorldviewGameProfile = "quake";
     let format: "quake" | "valve-220" = "valve-220";
 
@@ -35,13 +34,10 @@ export const NewMapSetup = clientEntry(
           <input
             id="new-map-name"
             name="name"
-            value={name}
+            defaultValue="untitled.map"
             required
             maxLength={120}
             autoFocus
-            mix={on<HTMLInputElement>("input", (event) => {
-              name = (event.currentTarget as HTMLInputElement).value;
-            })}
           />
           <label for="new-map-game">Game</label>
           <select

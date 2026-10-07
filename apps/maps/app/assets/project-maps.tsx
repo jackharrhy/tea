@@ -6,12 +6,7 @@ import {
 import { clientEntry, on, type Handle } from "remix/component";
 import { readHostedApi } from "./hosted-api.ts";
 import { openLinkedLocalProject } from "./project-local.ts";
-
-const gameNames = {
-  quake: "Quake",
-  goldsrc: "GoldSrc",
-  gower: "Gower Complex",
-};
+import { ProjectDetailHeader } from "./project-detail-header.tsx";
 
 export const ProjectMaps = clientEntry(
   `${import.meta.url}#ProjectMaps`,
@@ -80,65 +75,15 @@ export const ProjectMaps = clientEntry(
         ) : null}
         {project ? (
           <div>
-            <a href="/projects" data-rmx-document>
-              ← All projects
-            </a>
-            <div class="project-title">
-              <div>
-                <h1 id="project-name">{project.name}</h1>
-                <p id="project-meta">
-                  {gameNames[project.game]} · {project.role}
-                </p>
-              </div>
-              <a
-                id="project-manage"
-                href={`/editor?hostedProject=${encodeURIComponent(project.id)}`}
-                data-rmx-document
-              >
-                Manage in editor
-              </a>
-            </div>
-            <nav class="project-tabs" aria-label="Project pages">
-              <a
-                href={`/projects/${encodeURIComponent(project.id)}`}
-                aria-current="page"
-                data-rmx-document
-              >
-                Maps
-              </a>
-              <a
-                href={`/projects/${encodeURIComponent(project.id)}/resources`}
-                data-rmx-document
-              >
-                Resources
-              </a>
-              {project.role === "owner" ? (
-                <a
-                  id="project-access-tab"
-                  href={`/projects/${encodeURIComponent(project.id)}/access`}
-                  data-rmx-document
-                >
-                  Access
-                </a>
-              ) : null}
-              {project.role !== "viewer" ? (
-                <a
-                  id="project-new-map-tab"
-                  href={`/projects/${encodeURIComponent(project.id)}/new-map`}
-                  data-rmx-document
-                >
-                  New map
-                </a>
-              ) : null}
-              <button
-                id="project-open-local"
-                type="button"
-                disabled={openingLocal}
-                mix={on("click", () => void openLocalProject())}
-              >
-                Open local project
-              </button>
-            </nav>
+            <ProjectDetailHeader project={project} section="maps" />
+            <button
+              id="project-open-local"
+              type="button"
+              disabled={openingLocal}
+              mix={on("click", () => void openLocalProject())}
+            >
+              Open local project
+            </button>
             <h2>Maps</h2>
             <div id="project-maps-list" class="project-list">
               {project.maps.length === 0

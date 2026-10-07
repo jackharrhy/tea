@@ -9,14 +9,16 @@ export const browserAssets = import.meta.env.DEV
       recoveredMaps: "/assets/recoveredMaps.js",
       hostedProjects: "/assets/hostedProjects.js",
       projectMaps: "/assets/projectMaps.js",
+      projectNewMap: "/assets/projectNewMap.js",
     }
   : {
       entry: "/assets/entry-EQR26F2M.js",
       viewer: "/assets/viewer-WCFS7BZW.js",
       editor: "/assets/editor-MCIVP5GQ.js",
-      projects: "/assets/projects-X4HDXCPJ.js",
-      newMap: "/assets/newMap-MIMPSZEW.js",
+      projects: "/assets/projects-DSUTMSK5.js",
+      newMap: "/assets/newMap-TQA43RM2.js",
       recoveredMaps: "/assets/recoveredMaps-WTE6RWE6.js",
       hostedProjects: "/assets/hostedProjects-HBOUVLFL.js",
-      projectMaps: "/assets/projectMaps-WFBIVDNF.js",
+      projectMaps: "/assets/projectMaps-BE32GZGP.js",
+      projectNewMap: "/assets/projectNewMap-ZHBS66TV.js",
     };

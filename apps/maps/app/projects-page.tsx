@@ -4,6 +4,7 @@ import { projectsStyles } from "./projects-styles.ts";
 import { RecentProjects, RecoveredMaps } from "./assets/recovered-maps.tsx";
 import { HostedProjects } from "./assets/hosted-projects.tsx";
 import { ProjectMaps } from "./assets/project-maps.tsx";
+import { ProjectNewMap } from "./assets/project-new-map.tsx";
 
 export function ProjectsPage(
   handle: Handle<{
@@ -46,8 +47,8 @@ export function ProjectsPage(
               </a>
             </nav>
             {handle.props.projectId &&
-            handle.props.section &&
-            handle.props.section !== "maps" ? (
+            (handle.props.section === "resources" ||
+              handle.props.section === "access") ? (
               <a
                 id="projects-login"
                 href="/auth/login?returnTo=/projects"
@@ -60,8 +61,8 @@ export function ProjectsPage(
           </header>
           <div class="projects-content">
             {handle.props.projectId &&
-            handle.props.section &&
-            handle.props.section !== "maps" ? (
+            (handle.props.section === "resources" ||
+              handle.props.section === "access") ? (
               <p id="projects-status" role="status">
                 Loading projects…
               </p>
@@ -95,6 +96,8 @@ export function ProjectsPage(
               </>
             ) : !handle.props.section || handle.props.section === "maps" ? (
               <ProjectMaps projectId={handle.props.projectId} />
+            ) : handle.props.section === "new-map" ? (
+              <ProjectNewMap projectId={handle.props.projectId} />
             ) : (
               <section class="project-detail">
                 <a href="/projects" data-rmx-document>
@@ -144,43 +147,11 @@ export function ProjectsPage(
                     id="project-new-map-tab"
                     href={`/projects/${handle.props.projectId}/new-map`}
                     data-rmx-document
-                    aria-current={
-                      handle.props.section === "new-map" ? "page" : undefined
-                    }
                     hidden
                   >
                     New map
                   </a>
                 </nav>
-                {handle.props.section === "new-map" ? (
-                  <section id="project-map-create" hidden>
-                    <h2>New map</h2>
-                    <form id="project-map-create-form">
-                      <label for="project-map-name">Map name</label>
-                      <input
-                        id="project-map-name"
-                        name="name"
-                        value="untitled.map"
-                        required
-                        maxLength={120}
-                      />
-                      <label for="project-map-format">Format</label>
-                      <select id="project-map-format" name="format">
-                        <option value="valve-220">Valve 220</option>
-                        <option value="quake">Classic Quake</option>
-                      </select>
-                      <label for="project-map-file">
-                        Existing .map file (optional)
-                      </label>
-                      <input
-                        id="project-map-file"
-                        type="file"
-                        accept=".map,text/plain"
-                      />
-                      <button type="submit">Create map</button>
-                    </form>
-                  </section>
-                ) : null}
                 {handle.props.section === "resources" ? (
                   <>
                     <h2>Resources</h2>
@@ -258,7 +229,8 @@ export function ProjectsPage(
         </main>
         {!handle.props.projectId ||
         !handle.props.section ||
-        handle.props.section === "maps" ? (
+        handle.props.section === "maps" ||
+        handle.props.section === "new-map" ? (
           <script type="module" src={browserAssets.entry}></script>
         ) : (
           <script type="module" src={browserAssets.projects}></script>
