@@ -629,6 +629,26 @@ try {
   }
   const hostedEditorUrl = page.url();
   assert.deepEqual(errors, []);
+  await page.locator("#material-filter").fill("no-such-material");
+  await page.getByText("No materials match this view").waitFor();
+  await page.locator("#material-filter").fill("");
+  assert.equal(
+    await page
+      .locator("#material-grid canvas")
+      .first()
+      .evaluate((canvas) =>
+        Array.from(
+          canvas.getContext("2d").getImageData(0, 0, 72, 72).data,
+        ).some((value, index) => index % 4 === 3 && value > 0),
+      ),
+    true,
+  );
+  await page.locator("#material-current").fill("TEST_MATERIAL");
+  assert.equal(
+    await page.locator("#box-material").inputValue(),
+    "TEST_MATERIAL",
+  );
+  result.checks.push("Remix material browser filters and activates materials");
   try {
     await page.locator("#hosted-share").waitFor({ state: "visible" });
   } catch (error) {

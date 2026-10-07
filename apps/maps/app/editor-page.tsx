@@ -8,6 +8,7 @@ import { EditorVersions } from "./assets/editor-versions-panel.tsx";
 import { EditorProjectSync } from "./assets/editor-project-sync-panel.tsx";
 import { EditorHostedSource } from "./assets/editor-hosted-source-panel.tsx";
 import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
+import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -1275,81 +1276,7 @@ export function EditorPage() {
                   <input id="surface-value" type="number" step="1" />
                 </details>
               </div>
-              <details id="material-browser" open>
-                <summary>
-                  Material browser · <span id="material-count">0 loaded</span>
-                </summary>
-                <p id="material-coverage" role="status" hidden />
-                <div class="material-browser-controls">
-                  <label for="material-filter">Search</label>
-                  <input
-                    id="material-filter"
-                    type="search"
-                    placeholder="Material name"
-                  />
-                  <label for="material-sort">Sort</label>
-                  <select id="material-sort">
-                    <option value="name">Name</option>
-                    <option value="usage">Usage</option>
-                  </select>
-                  <label for="material-source">Source</label>
-                  <select id="material-source">
-                    <option value="all">All sources</option>
-                  </select>
-                  <label for="material-used-only">
-                    <input id="material-used-only" type="checkbox" /> Used only
-                  </label>
-                </div>
-                <div
-                  id="material-grid"
-                  class="material-grid"
-                  aria-label="Loaded materials"
-                />
-                <button id="material-more" type="button" hidden>
-                  Show more materials
-                </button>
-                <div class="material-browser-actions">
-                  <label for="material-current">Current material</label>
-                  <input
-                    id="material-current"
-                    type="text"
-                    list="material-choices"
-                    value="DEV_FLOOR"
-                  />
-                  <button id="material-apply" type="button">
-                    Apply
-                  </button>
-                  <button id="material-sample" type="button">
-                    Sample selection
-                  </button>
-                  <button id="material-select-faces" type="button">
-                    Select faces
-                  </button>
-                  <button id="material-select-brushes" type="button">
-                    Select brushes
-                  </button>
-                  <button id="material-copy-name" type="button">
-                    Copy name
-                  </button>
-                </div>
-                <div class="material-replace-controls">
-                  <label for="material-replace-source">Find</label>
-                  <input
-                    id="material-replace-source"
-                    type="text"
-                    list="material-choices"
-                  />
-                  <label for="material-replace-target">Replace with</label>
-                  <input
-                    id="material-replace-target"
-                    type="text"
-                    list="material-choices"
-                  />
-                  <button id="material-replace" type="button">
-                    Replace material uses
-                  </button>
-                </div>
-              </details>
+              <EditorMaterialBrowser />
               <div id="point-entity-inspector" hidden>
                 <h2>Selected point entity</h2>
                 <label for="selected-point-classname">Classname</label>
