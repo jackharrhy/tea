@@ -103,11 +103,32 @@ services:
     networks:
       - web
 
+  maps-service:
+    build:
+      context: .
+      dockerfile: apps/maps-service/Dockerfile
+    environment:
+      TEA_MAPS_URL: http://localhost:8790
+      TEA_MAPS_COLLABORATION_URL: http://maps-collaboration:44100
+      TEA_MAPS_REALTIME_TICKET_SECRET: ${MAPS_REALTIME_TICKET_SECRET:-tea-maps-local-realtime-ticket-secret-change-me}
+      FOURM_URL: ${FOURM_URL:-http://host.docker.internal:8000}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "127.0.0.1:8792:8792"
+    volumes:
+      - maps-service-data:/app/data
+    depends_on:
+      - maps-collaboration
+    networks:
+      - web
+
 volumes:
   cms-data:
   ref-data:
   radio-data:
   maps-collaboration-data:
+  maps-service-data:
 
 configs:
   andrew-local-site:
