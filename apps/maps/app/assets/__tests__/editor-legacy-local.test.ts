@@ -2,7 +2,10 @@ import "fake-indexeddb/auto";
 import { deleteDB, openDB } from "idb";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import {
+  createBoxBrush,
+  createSequentialIdFactory,
   createStarterDocument,
+  insertBrush,
   rebaseMapSource,
   serializeMap,
 } from "@tea/maps-editor/core";
@@ -178,4 +181,108 @@ it("accepts an earlier detached-only archive", async () => {
     copies: { imported: 0, existing: 0 },
     recovery: { imported: 0, existing: 0 },
   });
+});
+
+it("preserves unsynced Worldview hosted edits as a portable local copy", async () => {
+  const before = createStarterDocument();
+  const brush = createBoxBrush(
+    [0, 0, 0],
+    [64, 64, 64],
+    "STONE",
+    createSequentialIdFactory("pending"),
+  );
+  const document = insertBrush(before, before.entities[0]!.id, brush);
+  const operation = {
+    schemaVersion: 1,
+    operationId: "alice:1",
+    transactionId: "alice:1",
+    actorId: "alice",
+    baseMapVersion: 4,
+    label: "Offline brush",
+    edits: [
+      {
+        kind: "insert-brush",
+        entityId: before.entities[0]!.id,
+        insertionIndex: before.entities[0]!.primitives.length,
+        brush,
+      },
+    ],
+  };
+  const recovery = {
+    version: 1,
+    mapId: "pending-map",
+    documentKey: "hosted-map:pending-map",
+    fileName: "pending.map",
+    profile: "quake",
+    document,
+    source: rebaseMapSource(before, serializeMap(before)),
+    savedDocumentRevision: before.revision,
+    mapVersion: 4,
+    updatedAt: 100,
+  };
+  const storedOperation = {
+    version: 1,
+    key: "pending-map\u0000alice:1",
+    mapId: "pending-map",
+    operation,
+    encodedBytes: 100,
+    recordedAt: 100,
+    localSequence: 1,
+  };
+  const session = {
+    version: 1,
+    mapId: "pending-map",
+    mapVersion: 4,
+    dirtySince: 100,
+    operationCount: 1,
+    encodedBytes: 100,
+    recovery,
+    updatedAt: 100,
+  };
+  const legacy = await openDB("worldview-editor", 3, {
+    upgrade(database) {
+      database.createObjectStore("collaboration-operations", {
+        keyPath: "key",
+      });
+      database.createObjectStore("collaboration-sessions", {
+        keyPath: "mapId",
+      });
+    },
+  });
+  await legacy.put("collaboration-operations", storedOperation);
+  await legacy.put("collaboration-sessions", session);
+  legacy.close();
+
+  expect(await countLegacyLocalData()).toEqual({ copies: 1, recovery: 0 });
+  expect(await importLegacyLocalData()).toEqual({
+    copies: { imported: 1, existing: 0 },
+    recovery: { imported: 0, existing: 0 },
+  });
+  const [copy] = await new IndexedDbCollaborationOutbox().listDetached();
+  expect(copy).toMatchObject({
+    originalMapId: "pending-map",
+    document,
+    operationCount: 1,
+    encodedBytes: 100,
+  });
+  const archive = await exportLegacyLocalArchive();
+  await deleteEditorDatabase();
+  expect(
+    await importLegacyLocalArchive(new File([archive], "pending.json")),
+  ).toEqual({
+    copies: { imported: 1, existing: 0 },
+    recovery: { imported: 0, existing: 0 },
+  });
+  expect(
+    await new IndexedDbCollaborationOutbox().loadDetached(copy!.id),
+  ).toEqual(copy);
+  const source = await openDB("worldview-editor");
+  expect(
+    await source.get("collaboration-operations", storedOperation.key),
+  ).toEqual(storedOperation);
+  await source.put("collaboration-sessions", { ...session, recovery: null });
+  source.close();
+  await expect(countLegacyLocalData()).rejects.toThrow(
+    "without a recovery snapshot",
+  );
 });

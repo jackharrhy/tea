@@ -83,7 +83,7 @@ const RecoverySnapshotSchema = z.strictObject({
   updatedAt: z.number().int().nonnegative(),
 }) satisfies z.ZodType<HostedMapRecoverySnapshot>;
 
-const StoredOperationSchema = z.strictObject({
+export const StoredOperationSchema = z.strictObject({
   version: z.literal(1),
   key: z.string().min(1).max(4_096),
   mapId: z.string().min(1).max(256),
@@ -93,7 +93,7 @@ const StoredOperationSchema = z.strictObject({
   localSequence: z.number().int().nonnegative(),
 }) satisfies z.ZodType<StoredCollaborationOperation>;
 
-const StoredSessionSchema = z.strictObject({
+export const StoredSessionSchema = z.strictObject({
   version: z.literal(1),
   mapId: z.string().min(1).max(256),
   mapVersion: z.number().int().nonnegative(),

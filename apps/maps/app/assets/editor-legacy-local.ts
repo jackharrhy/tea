@@ -1,9 +1,13 @@
-import { openDB, type DBSchema } from "idb";
+import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { z } from "zod";
 import { MapDocumentSchema, MapSourceStateSchema } from "@tea/maps-editor/core";
 import {
   DetachedHostedMapSchema,
+  StoredOperationSchema,
+  StoredSessionSchema,
   type DetachedHostedMap,
+  type StoredCollaborationOperation,
+  type StoredCollaborationSession,
 } from "./editor-collaboration-outbox.ts";
 import {
   EDITOR_STORES,
@@ -20,6 +24,14 @@ interface LegacyEditorDatabase extends DBSchema {
   "recovery-history": { key: string; value: LegacyRecoverySnapshot };
   "recovery-latest": { key: string; value: LegacyRecoverySnapshot };
   "local-projects": { key: string; value: LegacyLocalProject };
+  "collaboration-operations": {
+    key: string;
+    value: StoredCollaborationOperation;
+  };
+  "collaboration-sessions": {
+    key: string;
+    value: StoredCollaborationSession;
+  };
 }
 
 interface LegacyLocalProject {
@@ -129,6 +141,72 @@ export async function importLegacyLocalProjects() {
   return importRecentProjects(await legacyLocalProjects());
 }
 
+async function pendingHostedCopies(
+  legacy: IDBPDatabase<LegacyEditorDatabase>,
+): Promise<readonly DetachedHostedMap[]> {
+  if (!legacy.objectStoreNames.contains("collaboration-operations")) return [];
+  if (!legacy.objectStoreNames.contains("collaboration-sessions"))
+    throw new Error("Worldview hosted edits have no session records");
+  const transaction = legacy.transaction(
+    ["collaboration-operations", "collaboration-sessions"],
+    "readonly",
+  );
+  const [operationValues, sessionValues]: unknown[][] = await Promise.all([
+    transaction.objectStore("collaboration-operations").getAll(),
+    transaction.objectStore("collaboration-sessions").getAll(),
+  ]);
+  await transaction.done;
+  const operations = operationValues.map((value) =>
+    StoredOperationSchema.parse(value),
+  );
+  const sessions = new Map(
+    sessionValues.map((value) => {
+      const session = StoredSessionSchema.parse(value);
+      return [session.mapId, session] as const;
+    }),
+  );
+  const byMap = Map.groupBy(operations, (operation) => operation.mapId);
+  return Promise.all(
+    [...byMap].map(async ([mapId, pending]) => {
+      const session = sessions.get(mapId);
+      const recovery = session?.recovery;
+      if (!recovery || recovery.mapId !== mapId)
+        throw new Error(
+          `Worldview has unsynced edits for ${mapId} without a recovery snapshot; reopen that map in Worldview before importing`,
+        );
+      const encodedBytes = pending.reduce(
+        (total, operation) => total + operation.encodedBytes,
+        0,
+      );
+      if (encodedBytes <= 0)
+        throw new Error(`Worldview has invalid unsynced edits for ${mapId}`);
+      const keys = pending.map((operation) => operation.key).toSorted();
+      const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(JSON.stringify(keys)),
+      );
+      const id = `worldview-pending:${[...new Uint8Array(digest)]
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("")}`;
+      return DetachedHostedMapSchema.parse({
+        version: 1,
+        id,
+        originalMapId: mapId,
+        documentKey: `detached-hosted:${id}`,
+        fileName: recovery.fileName,
+        profile: recovery.profile,
+        document: recovery.document,
+        source: recovery.source,
+        originalMapVersion: session.mapVersion,
+        createdAt: recovery.updatedAt,
+        reason: "Unsynced Worldview hosted edits imported as a local copy",
+        operationCount: pending.length,
+        encodedBytes,
+      });
+    }),
+  );
+}
+
 async function legacyLocalData(): Promise<{
   copies: readonly DetachedHostedMap[];
   recovery: readonly LegacyRecoverySnapshot[];
@@ -157,8 +235,12 @@ async function legacyLocalData(): Promise<{
         return [snapshot.snapshotId, snapshot] as const;
       }),
     );
+    const pending = await pendingHostedCopies(legacy);
     return {
-      copies: copies.map((value) => DetachedHostedMapSchema.parse(value)),
+      copies: [
+        ...copies.map((value) => DetachedHostedMapSchema.parse(value)),
+        ...pending,
+      ],
       recovery: [...recovery.values()],
     };
   } finally {

@@ -2378,7 +2378,6 @@ function openDetachedCopy(
     profile: WorldviewGameProfile;
   },
   recovery?: EditorVersion | null,
-  workingSource?: string,
 ) {
   const parsed = recovery ? parseMapSource(recovery.committedSource) : null;
   leaveHostedMap();
@@ -2393,8 +2392,7 @@ function openDetachedCopy(
     recovery?.document ?? copy.document,
     recovery?.sourceState ?? parsed?.source ?? copy.source,
   );
-  source.value =
-    workingSource ?? recovery?.workingSource ?? copy.source.originalText;
+  source.value = recovery?.workingSource ?? sourcePreview();
   persistDraft();
   status.textContent = `Local recovery copy ${mapName} · save to a file when ready`;
 }
@@ -4868,7 +4866,6 @@ if (launchLegacyRecovery)
         profile: game,
       },
       null,
-      serializeMap(snapshot.document),
     );
     await saveQueue;
     legacyRecoveryUrl.searchParams.delete("legacyRecovery");
