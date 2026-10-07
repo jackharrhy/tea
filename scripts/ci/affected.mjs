@@ -132,8 +132,18 @@ if (
 ) {
   let checks;
   try {
+    const paths = changedPaths(
+      process.env.BASE_SHA,
+      process.env.HEAD_SHA || "HEAD",
+    );
     checks = selectChecks(
-      changedPaths(process.env.BASE_SHA, process.env.HEAD_SHA || "HEAD"),
+      process.env.DRAFT_PR === "true"
+        ? paths.filter(
+            (path) =>
+              path !== ".github/workflows/check.yml" &&
+              path !== "scripts/ci/affected.mjs",
+          )
+        : paths,
       loadWorkspaces(),
     );
   } catch (error) {
