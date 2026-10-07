@@ -3934,6 +3934,40 @@ try {
     "picker.map",
   );
   result.checks.push("Remix hosted picker creates and opens a map");
+  await page.locator("#hosted-presence-toggle").getByText("Live · 1").waitFor();
+  const localCopyMapId = await page.evaluate(
+    () => window.teaMapsHostedPresence.mapId,
+  );
+  const hostedBeforeLocalCopy = (
+    await (
+      await page.request.get(`${mapsOrigin}/api/maps/${localCopyMapId}`)
+    ).json()
+  ).map;
+  await page.locator("#hosted-local-copy").click();
+  await page.waitForFunction(
+    () =>
+      !new URL(location.href).searchParams.has("hostedMap") &&
+      window.teaMapsHostedPresence === null,
+  );
+  await page.getByText("Local copy of picker.map").waitFor();
+  assert.equal(
+    await page.locator("#map-source").inputValue(),
+    hostedBeforeLocalCopy.source,
+  );
+  await page.locator("#add-box:not([disabled])").click();
+  await page.waitForFunction(
+    () => document.querySelector("#brush-count")?.textContent === "1",
+  );
+  const hostedAfterLocalCopy = (
+    await (
+      await page.request.get(`${mapsOrigin}/api/maps/${localCopyMapId}`)
+    ).json()
+  ).map;
+  assert.equal(
+    hostedAfterLocalCopy.sourceSha256,
+    hostedBeforeLocalCopy.sourceSha256,
+  );
+  result.checks.push("Remix presence panel leaves room as a local copy");
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {

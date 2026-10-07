@@ -196,7 +196,7 @@ The hosted map picker can compare its selected hosted source with the current lo
 
 The project sync dialog can pair a local folder project's maps with a Tea hosted project, inspect source and baseline status, and explicitly pull to disk or push to the hosted service. It validates game and face syntax, checks both copies again before a write, and keeps the baseline in browser storage. Opening an original Worldview project with a link to its old origin requires changing the link before syncing with Tea.
 
-Hosted Maps editing now exposes the room share link and participant presence details in Tea's editor, alongside its existing remote selection, pointer, and preview overlays.
+Hosted Maps editing now exposes the room share link and participant presence details in Tea's editor, alongside its existing remote selection, pointer, and preview overlays. The presence panel can continue as an independent local copy through the same recovery-aware path as the hosted picker. Its browser flow checks that the room closes, local editing remains available, and the hosted source hash stays unchanged.
 
 The Remix editor header now mirrors Worldview's visible collaboration entry point: it shows the live room count and participant initials, reports connecting or reconnecting state, and opens the hosted panel. Read-only viewers see their map status without being counted as room participants.
 

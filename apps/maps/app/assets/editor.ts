@@ -250,7 +250,7 @@ const status = {
 const performanceDiagnostics = initEditorPerformance();
 const hostedPresence = initHostedPresence((message) => {
   status.textContent = message;
-});
+}, makeLocalCopy);
 const source = initEditorSourcePanel({
   input: onSourceInput,
   apply: applyWorkingSource,

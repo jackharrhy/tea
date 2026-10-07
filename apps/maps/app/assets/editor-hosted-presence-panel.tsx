@@ -4,6 +4,7 @@ import {
   hostedShareUrl,
   onHostedPresenceChange,
   reportHostedPresenceStatus,
+  requestHostedLocalCopy,
 } from "./editor-hosted-presence.ts";
 
 export const EditorHostedPresenceStrip = clientEntry(
@@ -175,6 +176,15 @@ export const EditorHostedPresence = clientEntry(
                 </li>
               ))}
           </ul>
+          {current && (
+            <button
+              id="hosted-local-copy"
+              type="button"
+              mix={on("click", requestHostedLocalCopy)}
+            >
+              Continue as local copy
+            </button>
+          )}
         </div>
       );
     };

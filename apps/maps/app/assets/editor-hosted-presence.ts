@@ -42,6 +42,7 @@ export interface HostedPresenceState {
 
 const changeEvent = "tea-maps-hosted-presence-change";
 const statusEvent = "tea-maps-hosted-presence-status";
+const localCopyEvent = "tea-maps-hosted-local-copy";
 type PresenceWindow = Window & {
   teaMapsHostedPresence?: HostedPresenceState | null;
 };
@@ -61,10 +62,22 @@ export function reportHostedPresenceStatus(message: string): void {
   window.dispatchEvent(new CustomEvent(statusEvent, { detail: message }));
 }
 
-export function initHostedPresence(status: (message: string) => void) {
+export function requestHostedLocalCopy(): void {
+  window.dispatchEvent(new Event(localCopyEvent));
+}
+
+export function initHostedPresence(
+  status: (message: string) => void,
+  makeLocalCopy: () => Promise<void>,
+) {
   let lastVisibleState = "";
   window.addEventListener(statusEvent, (event) => {
     status((event as CustomEvent<string>).detail);
+  });
+  window.addEventListener(localCopyEvent, () => {
+    void makeLocalCopy().catch((error: unknown) => {
+      status(error instanceof Error ? error.message : String(error));
+    });
   });
 
   return {
