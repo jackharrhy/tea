@@ -2251,9 +2251,13 @@ try {
   await toolSettingsPage.waitForFunction(
     () => document.documentElement.dataset.teaMapsSiteTools === "ready",
   );
-  await toolSettingsPage.evaluate(() => {
-    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "face" });
-  });
+  const faceTool = await toolSettingsPage.evaluate(() =>
+    window.teaMapsTestTools.get("tea_maps_set_tool").execute({ tool: "face" }),
+  );
+  assert.equal(faceTool.activeTool, "face");
+  await toolSettingsPage.waitForFunction(
+    () => document.querySelector("#viewport-tool")?.value === "face",
+  );
   assert.equal(
     await toolSettingsPage.locator("#viewport-tool").inputValue(),
     "face",
