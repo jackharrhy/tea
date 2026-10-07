@@ -1,8 +1,11 @@
 import {
   BrushIdSchema,
   DocumentIdSchema,
+  EntityIdSchema,
+  FaceIdSchema,
   brushesInDocument,
   createBoxBrush,
+  createFaceSelection,
   createObjectSelection,
   createSequentialIdFactory,
   deriveBrush,
@@ -18,6 +21,7 @@ import {
   serializeMap,
   Vec3Schema,
   type EditorSession,
+  type EditorMaterial,
   type MapSourceState,
 } from "@tea/maps-editor/core";
 import type { EditorSourceRenderer } from "@tea/maps-editor/render";
@@ -58,6 +62,7 @@ interface EditorState {
   readonly renderer: EditorSourceRenderer | null;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
+  readonly materials: readonly EditorMaterial[];
 }
 
 interface EditorActions {
@@ -80,6 +85,7 @@ const changesView = {
   destructiveHint: false,
   openWorldHint: false,
 } as const;
+const destructive = { ...changesView, destructiveHint: true } as const;
 const expectedDocument = {
   expectedDocumentId: DocumentIdSchema,
   expectedRevision: z.number().int().nonnegative(),
@@ -230,6 +236,7 @@ export function editorWebMcpTools(
                   selected: selectedBrushes.has(brush.id),
                   ownerEntityId: entity.id,
                   faceCount: brush.faces.length,
+                  faceIds: brush.faces.map((face) => face.id),
                   materials: [
                     ...new Set(brush.faces.map((face) => face.material)),
                   ].toSorted(),
@@ -294,6 +301,65 @@ export function editorWebMcpTools(
     }),
     tool(
       z.strictObject({
+        query: z.string().max(256).default(""),
+        usedOnly: z.boolean().default(false),
+        ...pagination,
+      }),
+      {
+        name: "tea_maps_list_materials",
+        description:
+          "List used or loaded map materials with usage counts and image dimensions.",
+        execute({ query: rawQuery, usedOnly, offset, limit }) {
+          const current = state();
+          const usages = new Map(
+            materialUsageInDocument(current.session.document).map((usage) => [
+              usage.material.toLowerCase(),
+              usage,
+            ]),
+          );
+          const names = new Map<string, string>();
+          for (const usage of usages.values())
+            names.set(usage.material.toLowerCase(), usage.material);
+          if (!usedOnly) {
+            for (const material of current.materials)
+              names.set(material.name.toLowerCase(), material.name);
+          }
+          const loaded = new Map(
+            current.materials.map((material) => [
+              material.name.toLowerCase(),
+              material,
+            ]),
+          );
+          const query = rawQuery.trim().toLowerCase();
+          const materials = [...names].flatMap(([key, name]) => {
+            const material = loaded.get(key);
+            const usage = usages.get(key);
+            const entry = {
+              name,
+              loaded: !!material,
+              sourceName: material?.sourceName ?? null,
+              width: material?.width ?? null,
+              height: material?.height ?? null,
+              faceCount: usage?.faceCount ?? 0,
+              brushCount: usage?.brushCount ?? 0,
+            };
+            return !query || JSON.stringify(entry).toLowerCase().includes(query)
+              ? [entry]
+              : [];
+          });
+          materials.sort((left, right) => left.name.localeCompare(right.name));
+          return {
+            revision: current.session.document.revision,
+            total: materials.length,
+            offset,
+            limit,
+            materials: materials.slice(offset, offset + limit),
+          };
+        },
+      },
+    ),
+    tool(
+      z.strictObject({
         mode: z.enum(["save", "original", "normalized"]).default("save"),
         offset: z.number().int().nonnegative().default(0),
         maxChars: z.number().int().min(1).max(100_000).default(20_000),
@@ -331,28 +397,81 @@ export function editorWebMcpTools(
       z.discriminatedUnion("mode", [
         z.strictObject({ ...expectedDocument, mode: z.literal("clear") }),
         z.strictObject({ ...expectedDocument, mode: z.literal("all") }),
+        z.strictObject({ ...expectedDocument, mode: z.literal("invert") }),
         z.strictObject({
           ...expectedDocument,
           mode: z.literal("objects"),
           brushIds: z.array(BrushIdSchema).max(1_024).default([]),
+          entityIds: z.array(EntityIdSchema).max(1_024).default([]),
+        }),
+        z.strictObject({
+          ...expectedDocument,
+          mode: z.literal("faces"),
+          faces: z
+            .array(
+              z.strictObject({
+                brushId: BrushIdSchema,
+                faceId: FaceIdSchema,
+              }),
+            )
+            .min(1)
+            .max(1_024),
+        }),
+        z.strictObject({
+          ...expectedDocument,
+          mode: z.literal("issue"),
+          issueId: z.string().min(1).max(512),
+        }),
+        z.strictObject({
+          ...expectedDocument,
+          mode: z.enum(["material-faces", "material-brushes"]),
+          material: z.string().trim().min(1).max(256),
         }),
       ]),
       {
         name: "tea_maps_select",
         description:
-          "Select live brushes, select all editable objects, or clear the editor selection.",
+          "Select live objects, faces, issues, or material uses; select all, invert, or clear the selection.",
         annotations: changesView,
         execute(input) {
           const current = assertDocument(input);
           if (input.mode === "clear") current.session.select(null);
           else if (input.mode === "all") current.session.selectAllEditable();
-          else {
+          else if (input.mode === "invert")
+            current.session.invertObjectSelection();
+          else if (input.mode === "issue") {
+            if (!current.session.selectIssue(input.issueId))
+              throw new Error(`Unknown or empty issue ${input.issueId}`);
+          } else if (input.mode === "material-faces")
+            current.session.selectFacesUsingMaterial(input.material);
+          else if (input.mode === "material-brushes")
+            current.session.selectBrushesUsingMaterial(input.material);
+          else if (input.mode === "faces") {
+            for (const face of input.faces) {
+              const brush = findBrush(current.session.document, face.brushId);
+              if (
+                !brush?.faces.some((candidate) => candidate.id === face.faceId)
+              )
+                throw new Error(`Unknown face ${face.brushId}/${face.faceId}`);
+            }
+            current.session.select(createFaceSelection(input.faces));
+          } else if (input.mode === "objects") {
             const brushIds = [...new Set(input.brushIds)];
+            const entityIds = [...new Set(input.entityIds)];
             for (const id of brushIds) {
               if (!findBrush(current.session.document, id))
                 throw new Error(`Unknown brush ${id}`);
             }
-            current.session.select(createObjectSelection(brushIds, []));
+            const pointIds = new Set(
+              pointEntitiesInDocument(current.session.document).map(
+                (entity) => entity.id,
+              ),
+            );
+            for (const id of entityIds) {
+              if (!pointIds.has(id))
+                throw new Error(`Unknown point entity ${id}`);
+            }
+            current.session.select(createObjectSelection(brushIds, entityIds));
           }
           actions.status("updated the selection");
           return {
@@ -427,6 +546,149 @@ export function editorWebMcpTools(
         },
       },
     ),
+    tool(
+      z.strictObject({
+        ...expectedDocument,
+        classname: z.string().trim().min(1).max(256),
+        origin: Vec3Schema,
+        properties: z
+          .record(z.string().max(256), z.string().max(16_384))
+          .refine((properties) => Object.keys(properties).length <= 128)
+          .default({}),
+      }),
+      {
+        name: "tea_maps_create_point_entity",
+        description:
+          "Create and select a point entity with raw properties as one undoable editor transaction.",
+        annotations: changesView,
+        execute(input) {
+          const current = assertDocument(input);
+          actions.prepareEdit();
+          current.session.createPointEntity(
+            input.classname,
+            input.origin,
+            createSequentialIdFactory(`tea-site-tool-${crypto.randomUUID()}`),
+            input.properties,
+          );
+          actions.status(`created ${input.classname}`);
+          return {
+            documentId: current.session.document.id,
+            revision: current.session.document.revision,
+            entityId: current.session.selection?.entityId ?? null,
+            selection: selection(current),
+          };
+        },
+      },
+    ),
+    tool(
+      z.strictObject({
+        ...expectedDocument,
+        material: z.string().trim().min(1).max(256),
+      }),
+      {
+        name: "tea_maps_apply_material",
+        description:
+          "Apply a material to the selected brushes or faces as one undoable editor transaction.",
+        annotations: changesView,
+        execute(input) {
+          const current = assertDocument(input);
+          actions.prepareEdit();
+          if (!current.session.applyMaterial(input.material))
+            throw new Error(
+              "The requested material change did not edit the document",
+            );
+          actions.status(`applied material ${input.material}`);
+          return {
+            documentId: current.session.document.id,
+            revision: current.session.document.revision,
+            selection: selection(current),
+          };
+        },
+      },
+    ),
+    tool(
+      z.strictObject({
+        ...expectedDocument,
+        entityId: EntityIdSchema,
+        key: z.string().trim().min(1).max(256),
+        value: z.string().max(16_384).nullable(),
+        protect: z.boolean().default(false),
+      }),
+      {
+        name: "tea_maps_edit_entity_property",
+        description:
+          "Add, update, or remove one raw entity property as an undoable editor transaction.",
+        annotations: changesView,
+        execute(input) {
+          const current = assertDocument(input);
+          actions.prepareEdit();
+          if (
+            !current.session.setEntityProperty(
+              input.entityId,
+              input.key,
+              input.value,
+              input.protect,
+            )
+          )
+            throw new Error(
+              "The requested property change did not edit the document",
+            );
+          actions.status(`updated entity property ${input.key}`);
+          return {
+            documentId: current.session.document.id,
+            revision: current.session.document.revision,
+          };
+        },
+      },
+    ),
+    tool(
+      z.strictObject({
+        ...expectedDocument,
+        delta: Vec3Schema,
+        textureLock: z.boolean().default(true),
+      }),
+      {
+        name: "tea_maps_duplicate_selection",
+        description:
+          "Duplicate selected objects with an offset as one undoable editor transaction.",
+        annotations: changesView,
+        execute(input) {
+          const current = assertDocument(input);
+          actions.prepareEdit();
+          if (
+            !current.session.duplicateSelected(
+              createSequentialIdFactory(`tea-site-tool-${crypto.randomUUID()}`),
+              input.delta,
+              input.textureLock,
+            )
+          )
+            throw new Error("The selected objects could not be duplicated");
+          actions.status("duplicated the selection");
+          return {
+            documentId: current.session.document.id,
+            revision: current.session.document.revision,
+            selection: selection(current),
+          };
+        },
+      },
+    ),
+    tool(z.strictObject(expectedDocument), {
+      name: "tea_maps_delete_selection",
+      description:
+        "Delete selected objects as one undoable editor transaction.",
+      annotations: destructive,
+      execute(input) {
+        const current = assertDocument(input);
+        actions.prepareEdit();
+        if (!current.session.deleteSelected())
+          throw new Error("The selected objects could not be deleted");
+        actions.status("deleted the selection");
+        return {
+          documentId: current.session.document.id,
+          revision: current.session.document.revision,
+        };
+      },
+    }),
     tool(
       z.strictObject({
         ...expectedDocument,

@@ -577,6 +577,40 @@ try {
       expectedRevision: translated.revision,
       action: "undo",
     });
+    const applied = tools.get("tea_maps_apply_material").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: undone.revision,
+      material: "BRICK",
+    });
+    const material = tools.get("tea_maps_list_materials").execute({
+      query: "BRICK",
+      usedOnly: true,
+    });
+    const worldspawn = tools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" }).objects[0];
+    const property = tools.get("tea_maps_edit_entity_property").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: applied.revision,
+      entityId: worldspawn.id,
+      key: "message",
+      value: "Site tool map",
+    });
+    const point = tools.get("tea_maps_create_point_entity").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: property.revision,
+      classname: "info_player_start",
+      origin: [32, 32, 32],
+    });
+    const duplicated = tools.get("tea_maps_duplicate_selection").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: point.revision,
+      delta: [16, 0, 0],
+    });
+    const deleted = tools.get("tea_maps_delete_selection").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: duplicated.revision,
+    });
     return {
       names: [...tools.keys()],
       before,
@@ -585,20 +619,30 @@ try {
       translated,
       staleError,
       undone,
+      applied,
+      material,
+      property,
+      point,
+      duplicated,
+      deleted,
       inspection: inspect(),
       objects: tools.get("tea_maps_list_objects").execute({}),
       source: tools.get("tea_maps_get_map_source").execute({}),
     };
   });
-  assert.equal(siteTools.names.length, 8);
+  assert.equal(siteTools.names.length, 14);
   assert.equal(siteTools.inspection.name, "tea-map.map");
   assert.equal(siteTools.inspection.counts.brushes, 1);
-  assert.equal(siteTools.objects.total, 2);
+  assert.equal(siteTools.objects.total, 3);
   assert.deepEqual(siteTools.selected.selection.brushIds, [
     siteTools.created.brushId,
   ]);
   assert.ok(siteTools.translated.revision > siteTools.created.revision);
   assert.ok(siteTools.undone.revision > siteTools.translated.revision);
+  assert.equal(siteTools.material.materials[0].faceCount, 6);
+  assert.ok(siteTools.point.revision > siteTools.property.revision);
+  assert.ok(siteTools.deleted.revision > siteTools.duplicated.revision);
+  assert.equal(siteTools.inspection.counts.pointEntities, 1);
   assert.match(siteTools.staleError, /Stale document revision/);
   assert.match(siteTools.source.text, /worldspawn/);
   result.checks.push(
@@ -609,6 +653,15 @@ try {
   await page.waitForFunction(
     () => document.documentElement.dataset.teaMapsSiteTools === "ready",
   );
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#switch-map-dialog")?.open ||
+      document
+        .querySelector("#editor-status")
+        ?.textContent?.includes("live editing"),
+  );
+  if (await page.locator("#switch-map-dialog").isVisible())
+    await page.getByRole("button", { name: "Discard" }).click();
   await page.getByText(/live editing/).waitFor();
   const hostedToolEdit = await page.evaluate(() => {
     const tools = window.teaMapsTestTools;

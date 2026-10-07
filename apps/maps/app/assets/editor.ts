@@ -4551,6 +4551,7 @@ void registerEditorWebMcpTools(
     project,
     hostedMap,
     renderer,
+    materials: currentMaterials(),
     canUndo: hostedMap
       ? (hostedConnection?.canUndo() ?? false)
       : session.canUndo,
