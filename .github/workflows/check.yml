@@ -33,7 +33,7 @@ jobs:
         run: npm ci
       - if: steps.select.outputs.any == 'true'
         run: npm run tooling:check
-      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.browser == 'true'
+      - if: steps.select.outputs.browser == 'true'
         run: npx playwright install --only-shell chromium
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
         run: npm exec --workspace @tea/maps -- playwright install --only-shell chromium
