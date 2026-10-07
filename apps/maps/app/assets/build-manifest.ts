@@ -74,7 +74,7 @@ export const browserAssets = import.meta.env.DEV
   : {
       entry: "/assets/entry-JCK7T7IM.js",
       viewer: "/assets/viewer-JLLYFOTF.js",
-      editor: "/assets/editor-OAF3GVPY.js",
+      editor: "/assets/editor-W46N32N3.js",
       editorTheme: "/assets/editorTheme-EU7X55BI.js",
       editorHostedPresence: "/assets/editorHostedPresence-K3EFKIYS.js",
       editorPointerReadout: "/assets/editorPointerReadout-CRVBM7FX.js",
@@ -126,7 +126,7 @@ export const browserAssets = import.meta.env.DEV
       editorContextMenu: "/assets/editorContextMenu-Q5K6ECJZ.js",
       editorDetachedMaps: "/assets/editorDetachedMaps-QD7LL45H.js",
       newMap: "/assets/newMap-CVIL6WEE.js",
-      recoveredMaps: "/assets/recoveredMaps-2JSZZSK6.js",
+      recoveredMaps: "/assets/recoveredMaps-244BOHGA.js",
       hostedProjects: "/assets/hostedProjects-X7TWKGVQ.js",
       hostedViewerPanel: "/assets/hostedViewerPanel-LZD7N6R7.js",
       viewerSourcePanel: "/assets/viewerSourcePanel-HXRMDIOI.js",

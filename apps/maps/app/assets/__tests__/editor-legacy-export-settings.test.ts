@@ -9,6 +9,10 @@ import {
   loadExportSettings,
   saveExportSettings,
 } from "../editor-export-settings.ts";
+import {
+  exportLegacyLocalArchive,
+  importLegacyLocalArchive,
+} from "../editor-legacy-local.ts";
 
 beforeEach(async () => {
   await deleteDB("worldview-editor");
@@ -68,4 +72,36 @@ it("imports Worldview export preferences without replacing Tea preferences or th
     source,
   );
   sourceDatabase.close();
+});
+
+it("carries portable export choices across origins without a folder handle", async () => {
+  const sourceDatabase = await openDB("worldview-editor", 1, {
+    upgrade(database) {
+      database.createObjectStore("build-exports", { keyPath: "scopeId" });
+    },
+  });
+  await sourceDatabase.put("build-exports", {
+    scopeId: "project-a",
+    quality: "final",
+    includeSource: true,
+    afterBuild: true,
+    directory: null,
+  });
+  sourceDatabase.close();
+
+  const archive = await exportLegacyLocalArchive();
+  expect(JSON.parse(await archive.text())).toMatchObject({
+    version: 4,
+    exports: [{ scopeId: "project-a", includeSource: true, afterBuild: true }],
+  });
+  await deleteDB("worldview-editor");
+  expect(
+    await importLegacyLocalArchive(new File([archive], "worldview-local.json")),
+  ).toMatchObject({ exports: { imported: 1, existing: 0 } });
+  expect(await loadExportSettings("project-a")).toEqual({
+    scopeId: "project-a",
+    includeSource: true,
+    afterBuild: true,
+    directory: null,
+  });
 });

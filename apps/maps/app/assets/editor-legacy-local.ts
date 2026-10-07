@@ -26,6 +26,11 @@ import {
   toPortableLegacyMount,
   type LegacyBrowserMount,
 } from "./editor-legacy-mounts.ts";
+import {
+  importPortableLegacyExportSettings,
+  portableExportSettingsSchema,
+  portableLegacyExportSettings,
+} from "./editor-legacy-export-settings.ts";
 
 interface LegacyEditorDatabase extends DBSchema {
   "detached-maps": { key: string; value: DetachedHostedMap };
@@ -109,6 +114,10 @@ const LocalArchiveV3Schema = z.strictObject({
   copies: z.array(DetachedHostedMapSchema),
   recovery: z.array(LegacyRecoverySnapshotSchema),
   mounts: z.array(PortableLegacyMountSchema),
+});
+const LocalArchiveV4Schema = LocalArchiveV3Schema.extend({
+  version: z.literal(4),
+  exports: z.array(portableExportSettingsSchema),
 });
 const MAX_ARCHIVE_BYTES = 128 * 1_024 * 1_024;
 
@@ -340,11 +349,13 @@ async function importLocalData(data: {
   copies: readonly DetachedHostedMap[];
   recovery: readonly LegacyRecoverySnapshot[];
   mounts: readonly LegacyBrowserMount[];
+  exports?: readonly z.infer<typeof portableExportSettingsSchema>[];
 }) {
   const copies = await importCopies(data.copies);
   const recovery = await importRecovery(data.recovery);
   const mounts = await importLegacyBrowserMounts(data.mounts);
-  return { copies, recovery, mounts };
+  const exports = await importPortableLegacyExportSettings(data.exports ?? []);
+  return { copies, recovery, mounts, exports };
 }
 
 export async function importLegacyLocalData() {
@@ -357,10 +368,11 @@ export async function exportLegacyLocalArchive(): Promise<Blob> {
     [
       JSON.stringify({
         kind: "tea-maps-worldview-local",
-        version: 3,
+        version: 4,
         copies: data.copies,
         recovery: data.recovery,
         mounts: await Promise.all(data.mounts.map(toPortableLegacyMount)),
+        exports: await portableLegacyExportSettings(),
       }),
     ],
     { type: "application/json" },
@@ -383,11 +395,19 @@ export async function importLegacyLocalArchive(file: File) {
     });
   const v2 = LocalArchiveV2Schema.safeParse(value);
   if (v2.success) return importLocalData({ ...v2.data, mounts: [] });
-  const v3 = LocalArchiveV3Schema.parse(value);
+  const v3 = LocalArchiveV3Schema.safeParse(value);
+  if (v3.success)
+    return importLocalData({
+      copies: v3.data.copies,
+      recovery: v3.data.recovery,
+      mounts: await Promise.all(v3.data.mounts.map(fromPortableLegacyMount)),
+    });
+  const v4 = LocalArchiveV4Schema.parse(value);
   return importLocalData({
-    copies: v3.copies,
-    recovery: v3.recovery,
-    mounts: await Promise.all(v3.mounts.map(fromPortableLegacyMount)),
+    copies: v4.copies,
+    recovery: v4.recovery,
+    mounts: await Promise.all(v4.mounts.map(fromPortableLegacyMount)),
+    exports: v4.exports,
   });
 }
 

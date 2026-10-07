@@ -143,6 +143,7 @@ it("transfers local copies and recovery history while preserving both originals 
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 1, existing: 0 },
     mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
   expect(
     await new IndexedDbCollaborationOutbox().loadDetached(copy.id),
@@ -161,6 +162,7 @@ it("transfers local copies and recovery history while preserving both originals 
     copies: { imported: 0, existing: 1 },
     recovery: { imported: 0, existing: 1 },
     mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
   expect(
     (await new IndexedDbCollaborationOutbox().loadDetached(copy.id))?.reason,
@@ -185,6 +187,7 @@ it("transfers local copies and recovery history while preserving both originals 
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 1, existing: 0 },
     mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
   expect(
     await new IndexedDbCollaborationOutbox().loadDetached(copy.id),
@@ -194,7 +197,7 @@ it("transfers local copies and recovery history while preserving both originals 
   );
 });
 
-it("accepts earlier archives without resource mounts", async () => {
+it("accepts earlier archive versions", async () => {
   const archive = new File(
     [
       JSON.stringify({
@@ -209,6 +212,7 @@ it("accepts earlier archives without resource mounts", async () => {
     copies: { imported: 0, existing: 0 },
     recovery: { imported: 0, existing: 0 },
     mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
   const v2 = new File(
     [
@@ -225,6 +229,25 @@ it("accepts earlier archives without resource mounts", async () => {
     copies: { imported: 0, existing: 0 },
     recovery: { imported: 0, existing: 0 },
     mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
+  });
+  const v3 = new File(
+    [
+      JSON.stringify({
+        kind: "tea-maps-worldview-local",
+        version: 3,
+        copies: [],
+        recovery: [],
+        mounts: [],
+      }),
+    ],
+    "worldview-local-v3.json",
+  );
+  expect(await importLegacyLocalArchive(v3)).toEqual({
+    copies: { imported: 0, existing: 0 },
+    recovery: { imported: 0, existing: 0 },
+    mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
 });
 
@@ -269,13 +292,14 @@ it("carries browser WADs and palettes through an archive into recovery copies", 
     mounts: 2,
   });
   const archive = await exportLegacyLocalArchive();
-  expect(JSON.parse(await archive.text())).toMatchObject({ version: 3 });
+  expect(JSON.parse(await archive.text())).toMatchObject({ version: 4 });
   expect(
     await importLegacyLocalArchive(new File([archive], "resources.json")),
   ).toEqual({
     copies: { imported: 0, existing: 0 },
     recovery: { imported: 0, existing: 0 },
     mounts: { imported: 2, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
   expect(await installLegacyRecoveryResources("source", "copy", "quake")).toBe(
     true,
@@ -376,6 +400,7 @@ it("preserves unsynced Worldview hosted edits as a portable local copy", async (
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 0, existing: 0 },
     mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
   const [copy] = await new IndexedDbCollaborationOutbox().listDetached();
   expect(copy).toMatchObject({
@@ -392,6 +417,7 @@ it("preserves unsynced Worldview hosted edits as a portable local copy", async (
     copies: { imported: 1, existing: 0 },
     recovery: { imported: 0, existing: 0 },
     mounts: { imported: 0, existing: 0 },
+    exports: { imported: 0, existing: 0 },
   });
   expect(
     await new IndexedDbCollaborationOutbox().loadDetached(copy!.id),

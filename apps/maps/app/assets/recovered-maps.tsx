@@ -284,7 +284,7 @@ export const RecoveredMaps = clientEntry(
         const result = await importLegacyLocalArchive(file);
         copies = await listDetachedMapSummaries();
         recovery = await listImportedLegacyRecovery();
-        importStatus = `Imported ${result.copies.imported} local copies, ${result.recovery.imported} recovery versions, and ${result.mounts.imported} resource mounts; ${result.copies.existing + result.recovery.existing + result.mounts.existing} were already in Tea.`;
+        importStatus = `Imported ${result.copies.imported} local copies, ${result.recovery.imported} recovery versions, ${result.mounts.imported} resource mounts, and ${result.exports.imported} export preferences; ${result.copies.existing + result.recovery.existing + result.mounts.existing + result.exports.existing} were already in Tea.`;
       } catch (cause) {
         importStatus = message(cause);
       } finally {
@@ -295,26 +295,32 @@ export const RecoveredMaps = clientEntry(
 
     return () => (
       <div id="detached-maps-list" class="project-list">
-        {legacyCounts.copies + legacyCounts.recovery + legacyCounts.mounts >
+        {legacyCounts.copies +
+          legacyCounts.recovery +
+          legacyCounts.mounts +
+          legacyExportCount >
         0 ? (
           <div>
-            <button
-              id="import-worldview-copies"
-              type="button"
-              disabled={importing}
-              mix={on("click", () => void importFromThisOrigin())}
-            >
-              Import {legacyCounts.copies} Worldview copies and{" "}
-              {legacyCounts.recovery} recovery versions, and{" "}
-              {legacyCounts.mounts} resource mounts
-            </button>
+            {legacyCounts.copies + legacyCounts.recovery + legacyCounts.mounts >
+            0 ? (
+              <button
+                id="import-worldview-copies"
+                type="button"
+                disabled={importing}
+                mix={on("click", () => void importFromThisOrigin())}
+              >
+                Import {legacyCounts.copies} Worldview copies and{" "}
+                {legacyCounts.recovery} recovery versions, and{" "}
+                {legacyCounts.mounts} resource mounts
+              </button>
+            ) : null}
             <button
               id="download-worldview-copies"
               type="button"
               disabled={importing}
               mix={on("click", () => void downloadLegacyWork())}
             >
-              Download Worldview maps and browser resources
+              Download Worldview maps, resources, and export preferences
             </button>
           </div>
         ) : null}
