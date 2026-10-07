@@ -666,6 +666,106 @@ try {
   result.checks.push(
     "hosted map creation, editor launch, and Remix presence and access UI",
   );
+  try {
+    await page.waitForFunction(
+      () => !document.querySelector("#hosted-source-open")?.disabled,
+      null,
+      { timeout: 5000 },
+    );
+  } catch (cause) {
+    throw new Error(
+      `Hosted source editor did not become available: ${await page.locator("#editor-status").textContent()}`,
+      { cause },
+    );
+  }
+  await page.locator("#hosted-source-open").click();
+  await page.locator("#hosted-source-dialog").waitFor({ state: "visible" });
+  const originalHostedSource = await page
+    .locator("#hosted-source-draft")
+    .inputValue();
+  const revisedHostedSource = `// Format: Valve\n${originalHostedSource}`;
+  await page.locator("#hosted-source-draft").fill(revisedHostedSource);
+  await page.waitForFunction(
+    async ({ mapId, source }) => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("tea-maps-hosted-source-drafts", 1);
+        request.addEventListener("error", () => reject(request.error));
+        request.addEventListener("success", () => resolve(request.result));
+      });
+      try {
+        const draft = await new Promise((resolve, reject) => {
+          const request = db
+            .transaction("drafts")
+            .objectStore("drafts")
+            .get(mapId);
+          request.addEventListener("error", () => reject(request.error));
+          request.addEventListener("success", () => resolve(request.result));
+        });
+        return draft?.source === source;
+      } finally {
+        db.close();
+      }
+    },
+    {
+      mapId: new URL(hostedEditorUrl).searchParams.get("hostedMap"),
+      source: revisedHostedSource,
+    },
+    { timeout: 5000 },
+  );
+  const closeDraft = `${revisedHostedSource}// Close before debounce\n`;
+  await page.locator("#hosted-source-draft").fill(closeDraft);
+  await page.locator("#hosted-source-close").click();
+  await page.locator("#hosted-source-open").click();
+  try {
+    await page
+      .getByText("Recovered a source draft from this device")
+      .waitFor({ timeout: 5000 });
+  } catch (cause) {
+    throw new Error(
+      `Hosted draft was not recovered: ${JSON.stringify({
+        dialogOpen: await page
+          .locator("#hosted-source-dialog")
+          .evaluate((dialog) => dialog.open),
+        status: await page.locator("#hosted-source-status").textContent(),
+        source: await page.locator("#hosted-source-draft").inputValue(),
+      })}`,
+      { cause },
+    );
+  }
+  assert.equal(
+    await page.locator("#hosted-source-draft").inputValue(),
+    closeDraft,
+  );
+  await page.locator("#hosted-source-reload").click();
+  await page.getByText(/Editing hosted version/).waitFor();
+  assert.equal(
+    await page.locator("#hosted-source-draft").inputValue(),
+    originalHostedSource,
+  );
+  await page.locator("#hosted-source-draft").fill(revisedHostedSource);
+  await page.locator("#hosted-source-save").click();
+  await page.locator("#hosted-source-dialog").waitFor({ state: "hidden" });
+  const revisedHostedMap = (
+    await (
+      await page.request.get(
+        `${mapsOrigin}/api/maps/${new URL(hostedEditorUrl).searchParams.get("hostedMap")}`,
+      )
+    ).json()
+  ).map;
+  assert.equal(revisedHostedMap.source, revisedHostedSource);
+  try {
+    await page.waitForFunction(
+      (source) => document.querySelector("#map-source")?.value === source,
+      revisedHostedSource,
+      { timeout: 10_000 },
+    );
+  } catch (cause) {
+    throw new Error(
+      `Hosted room did not load saved source: ${await page.locator("#editor-status").textContent()}`,
+      { cause },
+    );
+  }
+  result.checks.push("Remix hosted source draft recovery, discard, and save");
   await page.locator("#create-checkpoint").waitFor({ state: "visible" });
   await page.waitForFunction(
     () => !document.querySelector("#create-checkpoint")?.disabled,
@@ -685,7 +785,21 @@ try {
   await page.getByText("0 builds · hosted compiler available").waitFor();
   await page.locator("#build-map").click();
   const download = page.getByRole("link", { name: "Download BSP" });
-  await download.waitFor({ timeout: 30_000 });
+  try {
+    await download.waitFor({ timeout: 8000 });
+  } catch (cause) {
+    throw new Error(
+      `Hosted build did not finish: ${JSON.stringify({
+        status: await page
+          .locator("#build-status")
+          .textContent()
+          .catch(() => null),
+        history: await page.locator("#hosted-builds").textContent(),
+        requests: compileRequests.length,
+      })}`,
+      { cause },
+    );
+  }
   const artifact = await page.request.get(
     `${mapsOrigin}${await download.getAttribute("href")}`,
   );
@@ -693,7 +807,7 @@ try {
   assert.deepEqual(await artifact.body(), bsp);
   assert.equal(compileRequests.length, 1);
   assert.match(compileRequests[0].mapText, /worldspawn/);
-  assert.equal(compileRequests[0].expectedDocumentRevision, 0);
+  assert.equal(compileRequests[0].expectedDocumentRevision, 1);
   result.checks.push(
     "hosted BSP build queue, compiler request, history, and artifact download",
   );

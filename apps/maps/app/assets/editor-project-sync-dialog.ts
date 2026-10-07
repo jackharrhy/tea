@@ -14,6 +14,7 @@ export function initProjectSyncDialog(
     document.querySelector<HTMLButtonElement>("#project-sync-open")!;
   let project: MapProject | null = null;
   let ready = false;
+  let pendingOpen = false;
 
   function publish() {
     window.dispatchEvent(
@@ -34,15 +35,27 @@ export function initProjectSyncDialog(
     ready = true;
     openButton.disabled = !project;
     publish();
+    if (pendingOpen) {
+      pendingOpen = false;
+      open();
+    }
   });
-  openButton.addEventListener("click", () => {
-    if (project && ready)
-      window.dispatchEvent(new Event("tea-maps-project-sync-open"));
-  });
+  function open() {
+    if (!project) return;
+    if (!ready) {
+      pendingOpen = true;
+      return;
+    }
+    window.dispatchEvent(new Event("tea-maps-project-sync-open"));
+  }
+  openButton.addEventListener("click", open);
+  publish();
 
   return {
+    open,
     setProject(value: MapProject | null) {
       project = value;
+      if (!value) pendingOpen = false;
       openButton.disabled = !ready || !value;
       if (ready) publish();
     },

@@ -27,6 +27,7 @@ const clientEntryFiles = {
   "editor-recent-projects-panel.tsx": browserAssets.editorRecentProjects,
   "editor-versions-panel.tsx": browserAssets.editorVersions,
   "editor-project-sync-panel.tsx": browserAssets.editorProjectSync,
+  "editor-hosted-source-panel.tsx": browserAssets.editorHostedSource,
   "hosted-projects.tsx": browserAssets.hostedProjects,
   "hosted-viewer-panel.tsx": browserAssets.hostedViewerPanel,
   "viewer-source-panel.tsx": browserAssets.viewerSourcePanel,

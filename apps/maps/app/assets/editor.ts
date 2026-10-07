@@ -557,7 +557,7 @@ const projectMapSelector = initProjectMapSelector({
     projectMaps.dispatchEvent(new Event("change"));
   },
   openSync() {
-    document.querySelector<HTMLButtonElement>("#project-sync-open")!.click();
+    projectSyncControls?.open();
   },
 });
 let hostedSourceControls: ReturnType<typeof initHostedSourceDialog> | null =

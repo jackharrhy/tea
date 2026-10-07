@@ -66,6 +66,8 @@ The Hosted maps picker opens an authorized map snapshot from `@tea/maps-service`
 
 The Hosted maps section shows a copyable link to the open map and lists live participants with their viewport and selection count. Remix renders this share and presence panel from the editor's room state; recipients still need access to the hosted project.
 
+The hosted source editor is a Remix client component. It saves a browser draft while typing and when closed, recovers that draft on reopen, and can discard, download, or submit it. Submission keeps the version and source-hash checks and waits for live edits to finish before replacing the map.
+
 Signed-in users can create a hosted project from the editor's Hosted maps section. Owners and editors can create a map in the selected project, optionally importing a `.map` file of at most 2 MiB. Tea checks the source syntax against the selected format before upload and opens the created map. Hosted projects currently support Quake, GoldSrc, and Gower; classic Quake map syntax is offered only for Quake projects.
 
 Opening a hosted map now loads its mounted WADs, palette, FGD/DEF/ENT definitions, sprites, and supported texture assets into the editor. Resource diagnostics appear beside the map controls. Changes to the open project’s mounts refresh those editor resources; switching maps cancels an older load.

@@ -6,6 +6,7 @@ import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-p
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
 import { EditorProjectSync } from "./assets/editor-project-sync-panel.tsx";
+import { EditorHostedSource } from "./assets/editor-hosted-source-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -1485,31 +1486,7 @@ export function EditorPage() {
             Close
           </button>
         </dialog>
-        <dialog id="hosted-source-dialog" aria-labelledby="hosted-source-title">
-          <h2 id="hosted-source-title">Edit hosted source</h2>
-          <p>
-            Saving replaces the hosted map source. Live brush edits must finish
-            syncing first. A conflicting version keeps this draft on your
-            device.
-          </p>
-          <label for="hosted-source-draft">Map source</label>
-          <textarea id="hosted-source-draft" spellCheck={false} />
-          <p id="hosted-source-status" role="status"></p>
-          <div class="hosted-source-actions">
-            <button id="hosted-source-save" type="button">
-              Save hosted source
-            </button>
-            <button id="hosted-source-download" type="button">
-              Download draft
-            </button>
-            <button id="hosted-source-reload" type="button">
-              Discard draft and reload
-            </button>
-            <button id="hosted-source-close" type="button">
-              Close
-            </button>
-          </div>
-        </dialog>
+        <EditorHostedSource />
         <div
           id="viewport-context-menu"
           role="menu"

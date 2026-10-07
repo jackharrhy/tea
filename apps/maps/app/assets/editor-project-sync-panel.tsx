@@ -24,6 +24,7 @@ export const EditorProjectSync = clientEntry(
   `${import.meta.url}#EditorProjectSync`,
   function EditorProjectSyncComponent(handle: Handle) {
     let context: ProjectSyncContext | null = null;
+    let receivedContext = false;
     let project: MapProject | null = null;
     let projectId = "";
     let loadedProject: HostedProject | null = null;
@@ -107,8 +108,13 @@ export const EditorProjectSync = clientEntry(
     handle.queueTask(() => {
       window.addEventListener(
         "tea-maps-project-sync-project",
-        (event) =>
-          setContext((event as CustomEvent<ProjectSyncContext>).detail),
+        (event) => {
+          setContext((event as CustomEvent<ProjectSyncContext>).detail);
+          if (!receivedContext) {
+            receivedContext = true;
+            window.dispatchEvent(new Event("tea-maps-project-sync-ready"));
+          }
+        },
         { signal: handle.signal },
       );
       window.addEventListener(
