@@ -1,0 +1,28 @@
+{
+  "name": "@tea/maps-collaboration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:celld": "celld dev --no-watch",
+    "deploy:celld": "celld deploy .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example",
+    "check": "npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run"
+  },
+  "dependencies": {
+    "@tea/maps-editor": "0.1.0",
+    "@tea/maps-protocol": "0.1.0",
+    "remix": "3.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.1.6",
+    "@cloudflare/workers-types": "5.20260908.1",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.127.1"
+  }
+}

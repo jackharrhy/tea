@@ -1,0 +1,2 @@
+export const MAX_PROJECT_ASSET_BYTES = 1024 * 1024 * 1024;
+export const MAX_RESOURCE_FILE_BYTES = 512 * 1024 * 1024;

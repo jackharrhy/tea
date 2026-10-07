@@ -27,11 +27,70 @@ jobs:
         run: npm ci
       - if: steps.select.outputs.any == 'true'
         run: npm run tooling:check
+      - if: steps.select.outputs.browser == 'true'
+        run: npx playwright install --with-deps chromium
       - if: steps.select.outputs.any == 'true'
         env:
           SELECTED_CHECKS: ${{ steps.select.outputs.selected }}
         run: node scripts/ci/run-checks.mjs
       - if: steps.select.outputs.cms == 'true'
-        run: npx playwright install --with-deps chromium
-      - if: steps.select.outputs.cms == 'true'
         run: npm run test:browser --workspace @tea/cms
+      - if: steps.select.outputs.ref == 'true'
+        run: |
+          set -eu
+          ref_smoke_dir=$(mktemp -d "$RUNNER_TEMP/tea-ref-smoke.XXXXXX")
+          ref_smoke_password=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
+          printf 'REF_PASSWORD=%s\n' "$ref_smoke_password" > "$ref_smoke_dir/secrets.env"
+          (
+            cd apps/ref
+            ../../node_modules/.bin/wrangler dev --port 8788 --persist-to "$ref_smoke_dir/state" --env-file "$ref_smoke_dir/secrets.env"
+          ) > "$ref_smoke_dir/wrangler.log" 2>&1 &
+          ref_server_pid=$!
+          trap 'kill "$ref_server_pid" 2>/dev/null || true; wait "$ref_server_pid" 2>/dev/null || true; rm -rf "$ref_smoke_dir"' EXIT
+          ref_ready=false
+          for ((attempt = 0; attempt < 60; attempt++)); do
+            if curl --fail --silent http://127.0.0.1:8788/health > /dev/null; then
+              ref_ready=true
+              break
+            fi
+            if ! kill -0 "$ref_server_pid" 2>/dev/null; then break; fi
+            sleep 1
+          done
+          if [ "$ref_ready" != true ]; then
+            cat "$ref_smoke_dir/wrangler.log"
+            exit 1
+          fi
+          REF_SMOKE_URL=http://127.0.0.1:8788 REF_SMOKE_PASSWORD="$ref_smoke_password" npm run smoke --workspace @tea/ref || {
+            cat "$ref_smoke_dir/wrangler.log"
+            exit 1
+          }
+      - if: steps.select.outputs.radio == 'true'
+        run: |
+          set -eu
+          radio_celld_image=$(sed -n 's/^ARG CELLD_IMAGE=//p' apps/radio/Dockerfile)
+          case "$radio_celld_image" in
+            ghcr.io/jackharrhy/celld:?* | ghcr.io/jackharrhy/celld@sha256:?*) ;;
+            *) echo "Radio Dockerfile must select a published jackharrhy/celld image" >&2; exit 1 ;;
+          esac
+          docker pull "$radio_celld_image"
+          radio_celld_container=$(docker create "$radio_celld_image" --version)
+          trap 'docker rm "$radio_celld_container" > /dev/null' EXIT
+          docker cp "$radio_celld_container:/usr/local/bin/celld" "$RUNNER_TEMP/celld"
+          chmod +x "$RUNNER_TEMP/celld"
+          CELLD_BIN="$RUNNER_TEMP/celld" npm run test:celld --workspace @tea/radio -- --output "$RUNNER_TEMP/radio-celld-smoke.json"
+      - if: steps.select.outputs.ref == 'true'
+        run: |
+          set -eu
+          ref_celld_image=$(sed -n 's/^ARG CELLD_IMAGE=//p' apps/ref/Dockerfile)
+          case "$ref_celld_image" in
+            ghcr.io/jackharrhy/celld:?* | ghcr.io/jackharrhy/celld@sha256:?*) ;;
+            *) echo "Ref Dockerfile must select a published jackharrhy/celld image" >&2; exit 1 ;;
+          esac
+          docker pull "$ref_celld_image"
+          ref_celld_container=$(docker create "$ref_celld_image" --version)
+          trap 'docker rm "$ref_celld_container" > /dev/null' EXIT
+          docker cp "$ref_celld_container:/usr/local/bin/celld" "$RUNNER_TEMP/ref-celld"
+          chmod +x "$RUNNER_TEMP/ref-celld"
+          CELLD_BIN="$RUNNER_TEMP/ref-celld" npm run test:celld --workspace @tea/ref -- --output "$RUNNER_TEMP/ref-celld-smoke.json"
+      - if: steps.select.outputs.maps_hosted == 'true'
+        run: npm run test:hosted --workspace @tea/maps -- --output "$RUNNER_TEMP/maps-hosted-smoke.json"

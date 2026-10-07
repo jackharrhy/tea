@@ -1,0 +1,9 @@
+# @tea/maps-collaboration
+
+This Remix 3 Worker owns live map sessions, authoritative SQLite map state, operation receipts, and checkpoints. `src/routes.ts` and `src/index.ts` route authenticated HTTP and WebSocket requests to the `MapCell` Durable Object in `src/map-cell.ts`. It consumes `@tea/maps-editor/core` and `@tea/maps-protocol`; `@tea/maps-service` issues its signed access tickets. `/health` is an unauthenticated runtime check.
+
+From the repo root, run `npm ci`, build `@tea/maps-renderer`, `@tea/maps-editor`, and `@tea/maps-protocol`, then run `npm run check --workspace @tea/maps-collaboration`. The check generates Worker types, typechecks, runs Worker and Durable Object tests in `__tests__/`, and bundles a Wrangler dry run. `npm run dev --workspace @tea/maps-collaboration` starts the local Worker. Set `TEA_MAPS_REALTIME_TICKET_SECRET` in an ignored `.dev.vars` file, using `.dev.vars.example` as a template.
+
+The Tea Worker is named `tea-maps-collaboration`. Its `MAP_CELLS` binding has an independent SQLite migration and storage namespace. Celld reads `wrangler.jsonc`, so this workspace retains Wrangler configuration. `docker compose up --build maps-collaboration` runs it at `maps-sync.localhost` with a separate local volume and development ticket secret. The Maps app forwards same-origin `/sync/maps/:mapId/*` requests here; its editor now joins the room for semantic brush edits with a bounded, durable browser outbox. Both this Worker and `@tea/maps-service` need the same ticket secret. Do not connect it to the original Worldview cell namespace or production credentials.
+
+Checkpoint metadata is listed at `GET /sync/maps/:mapId/checkpoints`. A ticketed `GET /sync/maps/:mapId/checkpoints/:checkpointId` returns its stored source for detached recovery; the endpoint does not change the live map.
