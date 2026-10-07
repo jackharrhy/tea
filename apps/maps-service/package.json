@@ -8,6 +8,7 @@
     "dev": "npm run build && node --enable-source-maps dist/server.js",
     "start": "node --enable-source-maps dist/server.js",
     "compare:data": "node scripts/compare-data.mjs",
+    "test:source-cutover": "npm run build && node __tests__/source-cutover.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build"
