@@ -309,11 +309,6 @@ const undoButton = document.querySelector<HTMLButtonElement>("#undo")!;
 const redoButton = document.querySelector<HTMLButtonElement>("#redo")!;
 const fileInput = document.querySelector<HTMLInputElement>("#open-map")!;
 const projectMaps = document.querySelector<HTMLSelectElement>("#project-maps")!;
-const exportStatus = document.querySelector<HTMLElement>("#export-status")!;
-const buildStatus = document.querySelector<HTMLElement>("#build-status")!;
-const buildDetails =
-  document.querySelector<HTMLDetailsElement>("#build-details")!;
-const buildOutput = document.querySelector<HTMLElement>("#build-output")!;
 const perspectiveLabel =
   document.querySelector<HTMLElement>("#perspective-label")!;
 const projectResourceInfo = document.querySelector<HTMLElement>(
@@ -501,7 +496,7 @@ const exportSettingsPanel = initEditorExportSettingsPanel({
         configureExportSettings({ directory });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      exportStatus.textContent =
+      buildControls.exportStatus =
         error instanceof Error ? error.message : String(error);
     }
   },
@@ -965,7 +960,7 @@ function loadCurrentExportSettings() {
     })
     .catch(() => {
       if (generation === exportSettingsGeneration)
-        exportStatus.textContent =
+        buildControls.exportStatus =
           "Export settings will only last for this session";
     });
 }
@@ -982,7 +977,7 @@ function configureExportSettings(
   exportSettingsSave = exportSettingsSave
     .then(() => saveExportSettings(settings))
     .catch(() => {
-      exportStatus.textContent =
+      buildControls.exportStatus =
         "Export settings will only last for this session";
     });
 }
@@ -1005,12 +1000,12 @@ function refreshBuildExport() {
     !!latestBuildExport && isBuildExportCurrent(latestBuildExport);
   buildControls.update({ exportDisabled: exportBusy || !current });
   if (latestBuildExport && !current) {
-    exportStatus.textContent = "Map changed; rebuild to export";
+    buildControls.exportStatus = "Map changed; rebuild to export";
   } else if (
     latestBuildExport &&
-    exportStatus.textContent === "Map changed; rebuild to export"
+    buildControls.exportStatus === "Map changed; rebuild to export"
   ) {
-    exportStatus.textContent = "Bundle ready";
+    buildControls.exportStatus = "Bundle ready";
   }
 }
 
@@ -1044,7 +1039,7 @@ function installCompiledPreview(
     if (compiledPreview !== preview) return;
     if (camera) preview.viewer?.setCamera(camera);
     buildControls.update({ previewDisabled: false });
-    buildStatus.textContent = "Compiled preview ready";
+    buildControls.buildStatus = "Compiled preview ready";
     if (
       compiledDocument === session.document &&
       compiledSourceText === source.value
@@ -1057,7 +1052,7 @@ function installCompiledPreview(
   preview.addEventListener("error", (event) => {
     if (compiledPreview !== preview) return;
     clearCompiledPreview();
-    buildStatus.textContent = `Compiled preview unavailable: ${event.detail.error.message}`;
+    buildControls.buildStatus = `Compiled preview unavailable: ${event.detail.error.message}`;
   });
   compiledPreview = preview;
   compiledDocument = documentAtBuild;
@@ -1129,7 +1124,7 @@ function refreshResourceCatalog() {
 function setProject(value: MapProject | null) {
   const previousGame = activeGame();
   latestBuildExport = null;
-  exportStatus.textContent = "";
+  buildControls.exportStatus = "";
   refreshBuildExport();
   project = value;
   projectSyncControls?.setProject(value);
@@ -1809,7 +1804,7 @@ function setMap(value: MapDocument, sourceState?: MapSourceState) {
   latestPointer = null;
   pasteCursorButton.disabled = true;
   latestBuildExport = null;
-  exportStatus.textContent = "";
+  buildControls.exportStatus = "";
   refreshBuildExport();
   clearCompiledPreview();
   unsubscribeSession();
@@ -2691,7 +2686,7 @@ function selectGameProfile(value: string) {
   materialBrowser.setMaterials(currentMaterials());
   buildGeneration += 1;
   latestBuildExport = null;
-  exportStatus.textContent = "";
+  buildControls.exportStatus = "";
   clearCompiledPreview();
   refreshBuildExport();
   refreshSelection();
@@ -3964,14 +3959,14 @@ async function exportLatestBuild(settings: ExportSettings): Promise<void> {
   exportBusy = true;
   refreshBuildExport();
   try {
-    exportStatus.textContent = "Packaging build…";
+    buildControls.exportStatus = "Packaging build…";
     const file = await packageBuildExport(latest.input, settings.includeSource);
     if (!isBuildExportCurrent(latest)) {
       throw new Error("The map changed while packaging the export");
     }
     if (settings.directory) await writeBuildExport(settings.directory, file);
     else downloadBuildFile(file);
-    exportStatus.textContent = settings.directory
+    buildControls.exportStatus = settings.directory
       ? `Exported ${settings.directory.name}/${file.name}`
       : `Downloaded ${file.name}`;
   } finally {
@@ -4004,14 +3999,14 @@ async function runBuild(exportOnce: boolean) {
       buildDisabled: true,
       buildExportOnceDisabled: true,
     });
-    buildDetails.hidden = true;
-    buildStatus.textContent = `Checking hosted ${quality} build…`;
+    buildControls.buildLogHidden = true;
+    buildControls.buildStatus = `Checking hosted ${quality} build…`;
     try {
       if ((await new IndexedDbCollaborationOutbox().pending(map.id)).length > 0)
         throw new Error("Wait for hosted edits to sync before building");
       const result = await hostedBuildControls!.build(quality);
       if (generation !== buildGeneration || hostedMap?.id !== map.id) return;
-      buildOutput.textContent = [
+      buildControls.buildOutput = [
         ...(result.result?.diagnostics ?? []).map(
           (entry) => `${entry.severity}: ${entry.stage}: ${entry.message}`,
         ),
@@ -4020,18 +4015,18 @@ async function runBuild(exportOnce: boolean) {
         ),
         ...(result.result?.error ? [result.result.error] : []),
       ].join("\n\n");
-      buildDetails.hidden = buildOutput.textContent.length === 0;
+      buildControls.buildLogHidden = buildControls.buildOutput.length === 0;
       const bsp = result.result?.artifacts?.find(
         (artifact) => artifact.kind === "bsp",
       );
       if (result.status !== "succeeded" || !bsp) {
-        buildStatus.textContent = "Hosted build failed; see build messages";
+        buildControls.buildStatus = "Hosted build failed; see build messages";
       } else if (
         result.mapVersion === hostedMap.mapVersion &&
         session.document === document &&
         source.value === sourceAtStart
       ) {
-        buildStatus.textContent = "Hosted build succeeded · loading preview";
+        buildControls.buildStatus = "Hosted build succeeded · loading preview";
         installCompiledPreview(
           { bsp: hostedBuildArtifactPath(map.id, result.id, bsp.sha256) },
           document,
@@ -4039,12 +4034,12 @@ async function runBuild(exportOnce: boolean) {
           cameraAtStart,
         );
       } else {
-        buildStatus.textContent =
+        buildControls.buildStatus =
           "Hosted build succeeded for an earlier map version; use build history to download it";
       }
     } catch (error) {
       if (generation === buildGeneration && hostedMap?.id === map.id)
-        buildStatus.textContent =
+        buildControls.buildStatus =
           error instanceof Error ? error.message : String(error);
     } finally {
       if (generation === buildGeneration) {
@@ -4068,11 +4063,11 @@ async function runBuild(exportOnce: boolean) {
   const generation = ++buildGeneration;
   localBuildBusy = true;
   latestBuildExport = null;
-  exportStatus.textContent = "";
+  buildControls.exportStatus = "";
   refreshBuildExport();
   buildControls.update({ buildDisabled: true, buildExportOnceDisabled: true });
-  buildStatus.textContent = `Building ${quality}…`;
-  buildDetails.hidden = true;
+  buildControls.buildStatus = `Building ${quality}…`;
+  buildControls.buildLogHidden = true;
   try {
     const { result, profileId, previewSource, exportInput } = await buildMap({
       document,
@@ -4082,20 +4077,20 @@ async function runBuild(exportOnce: boolean) {
       game: gameAtStart,
       ...(preferredProfileId ? { preferredProfileId } : {}),
     });
-    buildOutput.textContent = [
+    buildControls.buildOutput = [
       ...result.diagnostics.map(
         (entry) => `${entry.severity}: ${entry.stage}: ${entry.message}`,
       ),
       ...result.logs.map((entry) => `${entry.stage}:\n${entry.text}`),
     ].join("\n\n");
-    buildDetails.hidden = buildOutput.textContent.length === 0;
+    buildControls.buildLogHidden = buildControls.buildOutput.length === 0;
     if (selected && bindingsAtStart && project === projectAtStart) {
       try {
         await bindingsAtStart.remember(selected.id, profileId);
       } catch {
-        buildOutput.textContent +=
+        buildControls.buildOutput +=
           "\n\nBuild profile choice could not be saved in this browser";
-        buildDetails.hidden = false;
+        buildControls.buildLogHidden = false;
       }
     }
     if (
@@ -4105,7 +4100,7 @@ async function runBuild(exportOnce: boolean) {
       mapName !== nameAtStart ||
       source.value !== sourceAtStart
     ) {
-      buildStatus.textContent =
+      buildControls.buildStatus =
         "Build finished; map changed, so result was not downloaded";
     } else if (
       result.status === "succeeded" &&
@@ -4113,11 +4108,11 @@ async function runBuild(exportOnce: boolean) {
     ) {
       if (!autoExport) downloadBsp(result);
       const buildOutcome = autoExport ? "Build succeeded" : "BSP downloaded";
-      buildStatus.textContent = `${buildOutcome} · ${Math.round(result.elapsedMilliseconds / 1000)}s`;
+      buildControls.buildStatus = `${buildOutcome} · ${Math.round(result.elapsedMilliseconds / 1000)}s`;
       if (exportInput) {
-        exportStatus.textContent = "Preparing bundle…";
+        buildControls.exportStatus = "Preparing bundle…";
         if (previewSource) {
-          buildStatus.textContent += " · preparing preview resources";
+          buildControls.buildStatus += " · preparing preview resources";
         }
         void prepareBuildExport(exportInput)
           .then(async (prepared) => {
@@ -4140,10 +4135,10 @@ async function runBuild(exportOnce: boolean) {
               game: gameAtStart,
             };
             const preparedBuild = latestBuildExport;
-            exportStatus.textContent = "Bundle ready";
+            buildControls.exportStatus = "Bundle ready";
             refreshBuildExport();
             if (previewSource) {
-              buildStatus.textContent = `${buildOutcome} · loading compiled preview`;
+              buildControls.buildStatus = `${buildOutcome} · loading compiled preview`;
               installCompiledPreview(
                 previewSourceWithExportAssets(previewSource, prepared),
                 document,
@@ -4157,9 +4152,9 @@ async function runBuild(exportOnce: boolean) {
               } catch (error) {
                 if (!isBuildExportCurrent(preparedBuild)) return;
                 downloadBsp(result);
-                buildStatus.textContent =
+                buildControls.buildStatus =
                   "BSP downloaded · automatic export unavailable";
-                exportStatus.textContent =
+                buildControls.exportStatus =
                   error instanceof Error ? error.message : String(error);
               }
             }
@@ -4174,11 +4169,11 @@ async function runBuild(exportOnce: boolean) {
               mapName !== nameAtStart
             )
               return;
-            exportStatus.textContent =
+            buildControls.exportStatus =
               error instanceof Error ? error.message : String(error);
             if (autoExport) downloadBsp(result);
             if (previewSource) {
-              buildStatus.textContent = `${autoExport ? "BSP downloaded" : buildOutcome} · loading compiled preview without companion assets`;
+              buildControls.buildStatus = `${autoExport ? "BSP downloaded" : buildOutcome} · loading compiled preview without companion assets`;
               installCompiledPreview(
                 previewSource,
                 document,
@@ -4186,12 +4181,12 @@ async function runBuild(exportOnce: boolean) {
                 cameraAtStart,
               );
             } else if (autoExport) {
-              buildStatus.textContent =
+              buildControls.buildStatus =
                 "BSP downloaded · automatic export unavailable";
             }
           });
       } else if (previewSource) {
-        buildStatus.textContent += " · loading compiled preview";
+        buildControls.buildStatus += " · loading compiled preview";
         installCompiledPreview(
           previewSource,
           document,
@@ -4200,14 +4195,14 @@ async function runBuild(exportOnce: boolean) {
         );
       } else {
         clearCompiledPreview();
-        buildStatus.textContent +=
+        buildControls.buildStatus +=
           " · compiled preview unavailable for this format";
       }
     } else {
-      buildStatus.textContent = "Build failed; see build messages";
+      buildControls.buildStatus = "Build failed; see build messages";
     }
   } catch (error) {
-    buildStatus.textContent =
+    buildControls.buildStatus =
       error instanceof Error ? error.message : String(error);
   } finally {
     localBuildBusy = false;
@@ -4222,7 +4217,7 @@ async function exportCurrentBuild() {
   try {
     await exportLatestBuild(exportSettings);
   } catch (error) {
-    exportStatus.textContent =
+    buildControls.exportStatus =
       error instanceof Error ? error.message : String(error);
   }
 }
@@ -4390,25 +4385,25 @@ projectSyncControls.setProject(project);
 hostedBuildControls = initHostedBuilds({
   map: () => hostedMap,
   onUpdate(build, durationHint) {
-    buildStatus.textContent = `Hosted ${build.quality} build · ${build.status} · v${build.mapVersion}${(build.status === "queued" || build.status === "running") && durationHint ? ` · ${durationHint}` : ""}`;
+    buildControls.buildStatus = `Hosted ${build.quality} build · ${build.status} · v${build.mapVersion}${(build.status === "queued" || build.status === "running") && durationHint ? ` · ${durationHint}` : ""}`;
   },
   preview(build, artifactPath) {
     void (async () => {
       const map = hostedMap;
       if (!map || map.mapVersion !== build.mapVersion) {
-        buildStatus.textContent = "This build is from an earlier map version";
+        buildControls.buildStatus = "This build is from an earlier map version";
         return;
       }
       if (
         (await new IndexedDbCollaborationOutbox().pending(map.id)).length > 0
       ) {
-        buildStatus.textContent =
+        buildControls.buildStatus =
           "Wait for hosted edits to sync before previewing";
         return;
       }
       if (hostedMap?.id !== map.id || hostedMap.mapVersion !== build.mapVersion)
         return;
-      buildStatus.textContent = "Loading hosted preview resources";
+      buildControls.buildStatus = "Loading hosted preview resources";
       const mounts = await listHostedResources(map.projectId);
       if (hostedMap?.id !== map.id || hostedMap.mapVersion !== build.mapVersion)
         return;
@@ -4419,7 +4414,7 @@ hostedBuildControls = initHostedBuilds({
       );
       if (hostedMap?.id !== map.id || hostedMap.mapVersion !== build.mapVersion)
         return;
-      buildStatus.textContent = "Loading hosted compiled preview";
+      buildControls.buildStatus = "Loading hosted compiled preview";
       installCompiledPreview(
         previewSource,
         session.document,
@@ -4427,7 +4422,7 @@ hostedBuildControls = initHostedBuilds({
         compiledPreviewCamera(),
       );
     })().catch((error: unknown) => {
-      buildStatus.textContent =
+      buildControls.buildStatus =
         error instanceof Error ? error.message : String(error);
     });
   },

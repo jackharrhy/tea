@@ -93,13 +93,7 @@ export function EditorPage() {
               Recovery versions
             </button>
             <EditorBuildControls />
-            <span id="export-status" role="status" />
             <EditorExportSettings />
-            <span id="build-status" role="status" />
-            <details id="build-details" hidden>
-              <summary>Build messages</summary>
-              <pre id="build-output" />
-            </details>
             <EditorHostedBuilds />
             <button id="add-box" type="button" disabled>
               Add box

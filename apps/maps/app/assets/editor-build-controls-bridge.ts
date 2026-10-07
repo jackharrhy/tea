@@ -10,8 +10,12 @@ export interface EditorBuildControlState {
   readonly buildLabel: string;
   readonly buildExportOnceDisabled: boolean;
   readonly exportDisabled: boolean;
+  readonly exportStatus: string;
   readonly previewDisabled: boolean;
   readonly previewLabel: string;
+  readonly buildStatus: string;
+  readonly buildOutput: string;
+  readonly buildLogVisible: boolean;
 }
 
 export interface EditorBuildControlActions {
@@ -42,8 +46,12 @@ export function initEditorBuildControls(actions: EditorBuildControlActions) {
     buildLabel: "Build BSP",
     buildExportOnceDisabled: true,
     exportDisabled: true,
+    exportStatus: "",
     previewDisabled: true,
     previewLabel: "Show compiled",
+    buildStatus: "",
+    buildOutput: "",
+    buildLogVisible: false,
   };
   let ready = false;
 
@@ -65,13 +73,39 @@ export function initEditorBuildControls(actions: EditorBuildControlActions) {
   });
   window.dispatchEvent(new Event("tea-maps-build-controls-bridge-ready"));
 
+  function update(patch: Partial<EditorBuildControlState>) {
+    state = { ...state, ...patch };
+    publish();
+  }
+
   return {
     get state() {
       return state;
     },
-    update(patch: Partial<EditorBuildControlState>) {
-      state = { ...state, ...patch };
-      publish();
+    update,
+    get exportStatus() {
+      return state.exportStatus;
+    },
+    set exportStatus(value: string) {
+      update({ exportStatus: value });
+    },
+    get buildStatus() {
+      return state.buildStatus;
+    },
+    set buildStatus(value: string) {
+      update({ buildStatus: value });
+    },
+    get buildOutput() {
+      return state.buildOutput;
+    },
+    set buildOutput(value: string) {
+      update({ buildOutput: value });
+    },
+    get buildLogHidden() {
+      return !state.buildLogVisible;
+    },
+    set buildLogHidden(value: boolean) {
+      update({ buildLogVisible: !value });
     },
   };
 }

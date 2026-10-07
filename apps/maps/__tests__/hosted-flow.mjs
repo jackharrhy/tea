@@ -576,6 +576,14 @@ try {
   const exportedBuild = await oneShotDownload;
   assert.equal(exportedBuild.suggestedFilename(), "tea-map.bsp");
   assert.deepEqual(await readFile(await exportedBuild.path()), bsp);
+  await localBuildPage.waitForFunction(() => {
+    const message = document.querySelector("#export-status")?.textContent;
+    return !!message && message !== "Preparing bundle…";
+  });
+  assert.match(
+    await localBuildPage.locator("#export-status").textContent(),
+    /texture lump is truncated/,
+  );
   assert.equal(
     await localBuildPage.evaluate(
       () => window.teaMapsLocalCompileRequests.length,
@@ -594,7 +602,7 @@ try {
   );
   await localBuildPage.close();
   result.checks.push(
-    "one-shot local build export downloads BSP without changing preference",
+    "one-shot local build export reports bundle failure and downloads BSP without changing preference",
   );
 
   const sourcePage = await browser.newPage();
@@ -1107,6 +1115,11 @@ try {
   const artifact = await page.request.get(
     `${mapsOrigin}${await download.getAttribute("href")}`,
   );
+  await page.locator("#build-details").waitFor({ state: "visible" });
+  assert.match(
+    await page.locator("#build-output").textContent(),
+    /fixture build/,
+  );
   assert.equal(artifact.status(), 200);
   assert.deepEqual(await artifact.body(), bsp);
   assert.equal(compileRequests.length, 1);
@@ -1118,15 +1131,24 @@ try {
     ),
   );
   await page.locator("#build-status").evaluate((status) => {
-    status.textContent = "Awaiting history preview";
+    window.teaMapsBuildStatusChanges = [];
+    new MutationObserver(() => {
+      window.teaMapsBuildStatusChanges.push(
+        document.querySelector("#build-status")?.textContent ?? "",
+      );
+    }).observe(status.parentElement, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
   });
   await page
     .locator("#hosted-builds-list button")
     .filter({ hasText: "Preview" })
     .click();
   await page.waitForFunction(() =>
-    /Compiled preview (ready|unavailable)/.test(
-      document.querySelector("#build-status")?.textContent ?? "",
+    window.teaMapsBuildStatusChanges?.some((message) =>
+      /Compiled preview (ready|unavailable)/.test(message),
     ),
   );
   result.checks.push(

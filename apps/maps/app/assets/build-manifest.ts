@@ -40,7 +40,7 @@ export const browserAssets = import.meta.env.DEV
   : {
       entry: "/assets/entry-JCK7T7IM.js",
       viewer: "/assets/viewer-25BRIEA7.js",
-      editor: "/assets/editor-QZBXAFHI.js",
+      editor: "/assets/editor-OOGDD5SY.js",
       editorTheme: "/assets/editorTheme-O2RSVMSI.js",
       editorHostedPresence: "/assets/editorHostedPresence-7MLOPJCL.js",
       editorHostedAccess: "/assets/editorHostedAccess-MXGH443S.js",
@@ -62,7 +62,7 @@ export const browserAssets = import.meta.env.DEV
       editorLayers: "/assets/editorLayers-77BQNZXH.js",
       editorGroups: "/assets/editorGroups-LJ5IIC7Z.js",
       editorExportSettings: "/assets/editorExportSettings-FX2YRVRC.js",
-      editorBuildControls: "/assets/editorBuildControls-J757KIDH.js",
+      editorBuildControls: "/assets/editorBuildControls-VP34CHBC.js",
       editorDetachedMaps: "/assets/editorDetachedMaps-N7QOI3H6.js",
       newMap: "/assets/newMap-ZARICV5J.js",
       recoveredMaps: "/assets/recoveredMaps-SRGQRCID.js",

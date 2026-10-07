@@ -80,6 +80,9 @@ export const EditorBuildControls = clientEntry(
           >
             Export build
           </button>
+          <span id="export-status" role="status">
+            {state?.exportStatus ?? ""}
+          </span>
           <button
             id="toggle-compiled"
             type="button"
@@ -88,6 +91,13 @@ export const EditorBuildControls = clientEntry(
           >
             {state?.previewLabel ?? "Show compiled"}
           </button>
+          <span id="build-status" role="status">
+            {state?.buildStatus ?? ""}
+          </span>
+          <details id="build-details" hidden={!state?.buildLogVisible}>
+            <summary>Build messages</summary>
+            <pre id="build-output">{state?.buildOutput ?? ""}</pre>
+          </details>
         </div>
       );
     };
