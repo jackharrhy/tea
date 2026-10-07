@@ -5,6 +5,7 @@ import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
+import { EditorProjectSync } from "./assets/editor-project-sync-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
 
 export function EditorPage() {
@@ -1455,65 +1456,7 @@ export function EditorPage() {
           </form>
         </dialog>
         <EditorVersions />
-        <dialog id="project-sync-dialog" aria-labelledby="project-sync-title">
-          <h2 id="project-sync-title">Project sync</h2>
-          <p id="project-sync-status" role="status"></p>
-          <div id="project-sync-setup" hidden>
-            <label for="project-sync-id">Hosted project ID</label>
-            <input
-              id="project-sync-id"
-              type="text"
-              placeholder="12-character project ID"
-            />
-            <button id="project-sync-load" type="button">
-              Load hosted maps
-            </button>
-            <div id="project-sync-mappings"></div>
-            <button id="project-sync-link" type="button" disabled>
-              Save project links
-            </button>
-          </div>
-          <div id="project-sync-linked" hidden>
-            <label for="project-sync-map">Linked map</label>
-            <select id="project-sync-map"></select>
-            <button id="project-sync-relink" type="button">
-              Change project links
-            </button>
-            <button id="project-sync-inspect" type="button">
-              Compare sources
-            </button>
-            <p id="project-sync-summary"></p>
-            <div class="source-compare-columns">
-              <div>
-                <label for="project-sync-local">Local file</label>
-                <textarea id="project-sync-local" readOnly spellCheck={false} />
-              </div>
-              <div>
-                <label for="project-sync-hosted">Hosted map</label>
-                <textarea
-                  id="project-sync-hosted"
-                  readOnly
-                  spellCheck={false}
-                />
-              </div>
-            </div>
-            <p>
-              Pull replaces the local file. Push replaces the hosted source.
-              Review both copies before choosing a direction.
-            </p>
-            <div class="project-sync-actions">
-              <button id="project-sync-pull" type="button" disabled>
-                Pull hosted to disk
-              </button>
-              <button id="project-sync-push" type="button" disabled>
-                Push disk to hosted
-              </button>
-            </div>
-          </div>
-          <button id="project-sync-close" type="button">
-            Close
-          </button>
-        </dialog>
+        <EditorProjectSync />
         <dialog
           id="source-compare-dialog"
           aria-labelledby="source-compare-title"

@@ -721,9 +721,14 @@ try {
   await page.locator("#hosted-builds-refresh").click();
   await page.getByText("Large maps may take several minutes").waitFor();
   result.checks.push("hosted compiler duration hint in editor");
+  const hostedMapSource = (
+    await (
+      await page.request.get(`${mapsOrigin}/api/maps/${hostedMapId}`)
+    ).json()
+  ).map.source;
   await installSiteToolMock(page);
   await page.goto(`${mapsOrigin}/editor`);
-  await page.evaluate(() => {
+  await page.evaluate((sourceText) => {
     const manifest = JSON.stringify({
       schemaVersion: 1,
       name: "Smoke local project",
@@ -733,11 +738,23 @@ try {
       buildProfiles: [],
     });
     const fixture = {
-      file(name, source) {
+      file(name, initialSource) {
+        let source = initialSource;
         return {
           kind: "file",
           name,
           getFile: async () => new File([source], name),
+          async createWritable() {
+            let next = source;
+            return {
+              async write(data) {
+                next = typeof data === "string" ? data : await data.text();
+              },
+              async close() {
+                source = next;
+              },
+            };
+          },
         };
       },
       directory(name, children) {
@@ -755,7 +772,7 @@ try {
     const mapFiles = Object.fromEntries(
       ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"].map((name) => [
         `${name}.map`,
-        fixture.file(`${name}.map`, '{\n"classname" "worldspawn"\n}\n'),
+        fixture.file(`${name}.map`, `// Format: Valve\n${sourceText}`),
       ]),
     );
     const root = fixture.directory("smoke", {
@@ -766,7 +783,7 @@ try {
       maps: fixture.directory("maps", mapFiles),
     });
     window.showDirectoryPicker = async () => root;
-  });
+  }, hostedMapSource);
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   assert.equal(await page.locator(".project-map-selector-row").count(), 6);
@@ -782,8 +799,30 @@ try {
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   await page.locator("#project-map-selector-sync").click();
   await page.locator("#project-sync-dialog").waitFor({ state: "visible" });
+  await page.locator("#project-sync-id").fill(projectUrl.split("/").at(-1));
+  await page.locator("#project-sync-load").click();
+  await page.getByText("Smoke Project: 1 hosted maps available").waitFor();
+  assert.equal(await page.locator("#project-sync-mappings select").count(), 6);
+  await page
+    .locator("#project-sync-mappings select")
+    .first()
+    .selectOption(hostedMapId);
+  await page.locator("#project-sync-link").click();
+  try {
+    await page
+      .locator("#project-sync-linked")
+      .waitFor({ state: "visible", timeout: 5000 });
+  } catch (cause) {
+    throw new Error(
+      `Project link did not open: ${await page.locator("#project-sync-status").textContent()}`,
+      { cause },
+    );
+  }
+  await page.getByText(/No common sync point · hosted version/).waitFor();
   await page.locator("#project-sync-close").click();
-  result.checks.push("local project map chooser and filtered map selection");
+  result.checks.push(
+    "Remix local project chooser and linked source comparison",
+  );
   const projectSiteTools = await page.evaluate(async () => {
     const tools = window.teaMapsTestTools;
     const inspect = () => tools.get("tea_maps_inspect_editor").execute({});
