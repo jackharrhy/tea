@@ -117,6 +117,20 @@ async function stop(processState) {
   }
 }
 
+async function installSiteToolMock(page) {
+  await page.addInitScript(() => {
+    const tools = new Map();
+    Object.defineProperty(document, "modelContext", {
+      value: {
+        registerTool(tool) {
+          tools.set(tool.name, tool);
+        },
+      },
+    });
+    window.teaMapsTestTools = tools;
+  });
+}
+
 try {
   const [servicePort, collaborationPort, fourmPort, compilerPort] =
     await Promise.all([freePort(), freePort(), freePort(), freePort()]);
@@ -428,6 +442,7 @@ try {
   await page.locator("#project-map-create-form button").click();
   await page.waitForURL(/\/editor\?hostedMap=[a-z0-9]{12}$/);
   await page.getByText("Smoke Project / smoke.map opened").waitFor();
+  const hostedEditorUrl = page.url();
   assert.deepEqual(errors, []);
   result.checks.push(
     "hosted map creation and editor launch through live collaboration service",
@@ -519,36 +534,114 @@ try {
   result.checks.push("local project map chooser and filtered map selection");
   const siteToolPage = await browser.newPage();
   siteToolPage.on("pageerror", (error) => errors.push(error.message));
-  await siteToolPage.addInitScript(() => {
-    const tools = new Map();
-    Object.defineProperty(document, "modelContext", {
-      value: {
-        registerTool(tool) {
-          tools.set(tool.name, tool);
-        },
-      },
-    });
-    window.teaMapsTestTools = tools;
-  });
+  await installSiteToolMock(siteToolPage);
   await siteToolPage.goto(`${mapsOrigin}/editor`);
   await siteToolPage.waitForFunction(
     () => document.documentElement.dataset.teaMapsSiteTools === "ready",
   );
-  const siteTools = await siteToolPage.evaluate(() => {
+  const siteTools = await siteToolPage.evaluate(async () => {
     const tools = window.teaMapsTestTools;
+    const inspect = () => tools.get("tea_maps_inspect_editor").execute({});
+    const before = inspect();
+    const created = tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [64, 64, 64],
+      material: "STONE",
+    });
+    const afterCreate = inspect();
+    const selected = tools.get("tea_maps_select").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: afterCreate.revision,
+      mode: "objects",
+      brushIds: [created.brushId],
+    });
+    const translated = tools.get("tea_maps_translate_selection").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: afterCreate.revision,
+      delta: [16, 0, 0],
+    });
+    let staleError = "";
+    try {
+      tools.get("tea_maps_translate_selection").execute({
+        expectedDocumentId: before.documentId,
+        expectedRevision: afterCreate.revision,
+        delta: [16, 0, 0],
+      });
+    } catch (error) {
+      staleError = error.message;
+    }
+    const undone = await tools.get("tea_maps_history").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: translated.revision,
+      action: "undo",
+    });
     return {
       names: [...tools.keys()],
-      inspection: tools.get("tea_maps_inspect_editor").execute({}),
+      before,
+      created,
+      selected,
+      translated,
+      staleError,
+      undone,
+      inspection: inspect(),
       objects: tools.get("tea_maps_list_objects").execute({}),
       source: tools.get("tea_maps_get_map_source").execute({}),
     };
   });
-  assert.equal(siteTools.names.length, 4);
+  assert.equal(siteTools.names.length, 8);
   assert.equal(siteTools.inspection.name, "tea-map.map");
-  assert.equal(siteTools.inspection.counts.entities, 1);
-  assert.equal(siteTools.objects.total, 1);
+  assert.equal(siteTools.inspection.counts.brushes, 1);
+  assert.equal(siteTools.objects.total, 2);
+  assert.deepEqual(siteTools.selected.selection.brushIds, [
+    siteTools.created.brushId,
+  ]);
+  assert.ok(siteTools.translated.revision > siteTools.created.revision);
+  assert.ok(siteTools.undone.revision > siteTools.translated.revision);
+  assert.match(siteTools.staleError, /Stale document revision/);
   assert.match(siteTools.source.text, /worldspawn/);
-  result.checks.push("read-only browser WebMCP tools inspect the live editor");
+  result.checks.push(
+    "browser WebMCP tools inspect and edit the live editor with revision guards",
+  );
+  await installSiteToolMock(page);
+  await page.goto(hostedEditorUrl);
+  await page.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  await page.getByText(/live editing/).waitFor();
+  const hostedToolEdit = await page.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    const created = tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [64, 64, 64],
+      material: "STONE",
+    });
+    return { before, created };
+  });
+  assert.equal(hostedToolEdit.before.hostedMap.role, "owner");
+  await page.getByText(/Hosted map saved/).waitFor({ timeout: 20_000 });
+  await page.reload();
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#switch-map-dialog")?.open ||
+      document
+        .querySelector("#editor-status")
+        ?.textContent?.includes("live editing"),
+  );
+  if (await page.locator("#switch-map-dialog").isVisible())
+    await page.getByRole("button", { name: "Discard" }).click();
+  await page.getByText(/live editing/).waitFor();
+  const hostedAfterReload = await page.evaluate(() =>
+    window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}),
+  );
+  assert.equal(hostedAfterReload.counts.brushes, 1);
+  result.checks.push(
+    "browser WebMCP authoring survives hosted room persistence",
+  );
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {

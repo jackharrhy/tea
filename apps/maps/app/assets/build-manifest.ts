@@ -7,8 +7,8 @@ export const browserAssets = import.meta.env.DEV
       newMap: "/assets/newMap.js",
     }
   : {
-      viewer: "/assets/viewer-PWUQFEMW.js",
-      editor: "/assets/editor-CNT7RY2O.js",
-      projects: "/assets/projects-KAYU3RB6.js",
-      newMap: "/assets/newMap-GZPJMSR3.js",
+      viewer: "/assets/viewer-INOQQQQB.js",
+      editor: "/assets/editor-ENBWE2AJ.js",
+      projects: "/assets/projects-WS4X7BZ4.js",
+      newMap: "/assets/newMap-RFV2IIH7.js",
     };

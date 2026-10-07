@@ -1,8 +1,14 @@
 import {
+  BrushIdSchema,
+  DocumentIdSchema,
   brushesInDocument,
+  createBoxBrush,
+  createObjectSelection,
+  createSequentialIdFactory,
   deriveBrush,
   deriveEditorGroups,
   deriveEditorLayers,
+  findBrush,
   materialUsageInDocument,
   planMapSave,
   pointEntitiesInDocument,
@@ -10,6 +16,7 @@ import {
   selectedFaceReferences,
   selectedPointEntityIds,
   serializeMap,
+  Vec3Schema,
   type EditorSession,
   type MapSourceState,
 } from "@tea/maps-editor/core";
@@ -25,11 +32,12 @@ interface WebMcpTool {
   readonly description: string;
   readonly inputSchema: JsonObject;
   readonly annotations: Readonly<{
-    readOnlyHint: true;
-    idempotentHint: true;
+    readOnlyHint: boolean;
+    idempotentHint?: boolean;
+    destructiveHint?: boolean;
     openWorldHint: false;
   }>;
-  execute(input: unknown): JsonObject;
+  execute(input: unknown): JsonObject | Promise<JsonObject>;
 }
 
 interface WebMcpModelContext {
@@ -48,6 +56,14 @@ interface EditorState {
   readonly project: MapProject | null;
   readonly hostedMap: HostedMapLaunch | null;
   readonly renderer: EditorSourceRenderer | null;
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+}
+
+interface EditorActions {
+  prepareEdit(): void;
+  history(action: "undo" | "redo"): Promise<void>;
+  status(message: string): void;
 }
 
 const pagination = {
@@ -59,20 +75,30 @@ const readOnly = {
   idempotentHint: true,
   openWorldHint: false,
 } as const;
+const changesView = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  openWorldHint: false,
+} as const;
+const expectedDocument = {
+  expectedDocumentId: DocumentIdSchema,
+  expectedRevision: z.number().int().nonnegative(),
+};
 
 function tool<Schema extends z.ZodType>(
   schema: Schema,
   definition: {
     readonly name: string;
     readonly description: string;
-    execute(input: z.output<Schema>): JsonObject;
+    readonly annotations?: WebMcpTool["annotations"];
+    execute(input: z.output<Schema>): JsonObject | Promise<JsonObject>;
   },
 ): WebMcpTool {
   return {
     name: definition.name,
     description: definition.description,
     inputSchema: z.toJSONSchema(schema) as JsonObject,
-    annotations: readOnly,
+    annotations: definition.annotations ?? readOnly,
     execute(input) {
       const parsed = schema.safeParse(input);
       if (!parsed.success) {
@@ -98,7 +124,23 @@ function selection(state: EditorState) {
 
 export function editorWebMcpTools(
   state: () => EditorState,
+  actions: EditorActions,
 ): readonly WebMcpTool[] {
+  function assertDocument(input: {
+    expectedDocumentId: string;
+    expectedRevision: number;
+  }): EditorState {
+    const current = state();
+    const document = current.session.document;
+    if (document.id !== input.expectedDocumentId)
+      throw new Error(`Stale document identity: current ID is ${document.id}`);
+    if (document.revision !== input.expectedRevision)
+      throw new Error(
+        `Stale document revision: current revision is ${document.revision}`,
+      );
+    return current;
+  }
+
   return [
     tool(z.strictObject({}), {
       name: "tea_maps_inspect_editor",
@@ -117,8 +159,8 @@ export function editorWebMcpTools(
           format: document.faceSyntax,
           dirty: current.dirty,
           selection: selection(current),
-          canUndo: current.session.canUndo,
-          canRedo: current.session.canRedo,
+          canUndo: current.canUndo,
+          canRedo: current.canRedo,
           counts: {
             entities: document.entities.length,
             pointEntities: pointEntitiesInDocument(document).length,
@@ -285,12 +327,139 @@ export function editorWebMcpTools(
         },
       },
     ),
+    tool(
+      z.discriminatedUnion("mode", [
+        z.strictObject({ ...expectedDocument, mode: z.literal("clear") }),
+        z.strictObject({ ...expectedDocument, mode: z.literal("all") }),
+        z.strictObject({
+          ...expectedDocument,
+          mode: z.literal("objects"),
+          brushIds: z.array(BrushIdSchema).max(1_024).default([]),
+        }),
+      ]),
+      {
+        name: "tea_maps_select",
+        description:
+          "Select live brushes, select all editable objects, or clear the editor selection.",
+        annotations: changesView,
+        execute(input) {
+          const current = assertDocument(input);
+          if (input.mode === "clear") current.session.select(null);
+          else if (input.mode === "all") current.session.selectAllEditable();
+          else {
+            const brushIds = [...new Set(input.brushIds)];
+            for (const id of brushIds) {
+              if (!findBrush(current.session.document, id))
+                throw new Error(`Unknown brush ${id}`);
+            }
+            current.session.select(createObjectSelection(brushIds, []));
+          }
+          actions.status("updated the selection");
+          return {
+            revision: current.session.document.revision,
+            selection: selection(current),
+          };
+        },
+      },
+    ),
+    tool(
+      z.strictObject({
+        ...expectedDocument,
+        delta: Vec3Schema,
+        textureLock: z.boolean().default(true),
+      }),
+      {
+        name: "tea_maps_translate_selection",
+        description:
+          "Move selected brushes and point entities as one undoable editor transaction.",
+        annotations: changesView,
+        execute(input) {
+          const current = assertDocument(input);
+          actions.prepareEdit();
+          if (
+            !current.session.translateSelected(input.delta, input.textureLock)
+          )
+            throw new Error(
+              "The requested translation did not change the document",
+            );
+          actions.status("translated the selection");
+          return {
+            documentId: current.session.document.id,
+            revision: current.session.document.revision,
+            selection: selection(current),
+          };
+        },
+      },
+    ),
+    tool(
+      z.strictObject({
+        ...expectedDocument,
+        min: Vec3Schema,
+        max: Vec3Schema,
+        material: z.string().trim().min(1).max(256),
+      }),
+      {
+        name: "tea_maps_create_box",
+        description:
+          "Create and select a six-face box brush as one undoable editor transaction.",
+        annotations: changesView,
+        execute(input) {
+          const current = assertDocument(input);
+          actions.prepareEdit();
+          if (input.min.some((value, index) => value >= input.max[index]!))
+            throw new Error("max must be greater than min on every axis");
+          const brush = createBoxBrush(
+            input.min,
+            input.max,
+            input.material,
+            createSequentialIdFactory(`tea-site-tool-${crypto.randomUUID()}`),
+          );
+          current.session.commitCreationCandidate(
+            current.session.createBrushCandidate(brush),
+          );
+          actions.status(`created brush ${brush.id}`);
+          return {
+            documentId: current.session.document.id,
+            revision: current.session.document.revision,
+            brushId: brush.id,
+            selection: selection(current),
+          };
+        },
+      },
+    ),
+    tool(
+      z.strictObject({
+        ...expectedDocument,
+        action: z.enum(["undo", "redo"]),
+      }),
+      {
+        name: "tea_maps_history",
+        description:
+          "Undo or redo one live editor transaction, including personalized hosted history.",
+        annotations: changesView,
+        async execute(input) {
+          const current = assertDocument(input);
+          actions.prepareEdit();
+          if (input.action === "undo" ? !current.canUndo : !current.canRedo)
+            throw new Error(`Nothing to ${input.action}`);
+          await actions.history(input.action);
+          actions.status(`${input.action} completed`);
+          const updated = state();
+          return {
+            documentId: updated.session.document.id,
+            revision: updated.session.document.revision,
+            selection: selection(updated),
+          };
+        },
+      },
+    ),
   ];
 }
 
 export async function registerEditorWebMcpTools(
   document: Document,
   state: () => EditorState,
+  actions: EditorActions,
 ): Promise<void> {
   const root = document.documentElement;
   const modelContext = (
@@ -302,7 +471,7 @@ export async function registerEditorWebMcpTools(
   }
   const controller = new AbortController();
   window.addEventListener("pagehide", () => controller.abort(), { once: true });
-  const tools = editorWebMcpTools(state);
+  const tools = editorWebMcpTools(state, actions);
   const registrations = await Promise.allSettled(
     tools.map((entry) =>
       modelContext.registerTool(entry, { signal: controller.signal }),

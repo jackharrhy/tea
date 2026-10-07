@@ -42,7 +42,7 @@ Its material browser now exposes loaded project and development textures as sear
 
 The selected-face UV editor now previews offset, rotation, and scale drags against the map renderer and commits them through the same session and hosted operation path. It supports a movable pivot, framing, pan and zoom, and adjustable snap grids.
 
-The Tea editor now exposes read-only WebMCP site tools for live document inspection, bounded object and issue lists, and source slices in browsers that support `document.modelContext`. Worldview's authoring site tools remain to be adapted to Tea's editor transactions.
+The Tea editor now exposes WebMCP site tools for live document inspection, bounded object and issue lists, and source slices in browsers that support `document.modelContext`. The first authoring tools select brushes, create boxes, translate selections, and use local or personalized hosted history with document revision guards. Worldview's other authoring site tools remain to be adapted to Tea's editor transactions.
 
 The hosted map picker can compare its selected hosted source with the current local editor source in a read-only dialog. This standalone comparison does not link maps or transfer source.
 

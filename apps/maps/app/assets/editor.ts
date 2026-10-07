@@ -4540,13 +4540,37 @@ if (newMapUrl.searchParams.get("newMap") === "1") {
   }
 }
 
-void registerEditorWebMcpTools(document, () => ({
-  session,
-  name: mapName,
-  workingSource: source.value,
-  sourceState: mapSourceState,
-  dirty: hasUnsavedChanges(),
-  project,
-  hostedMap,
-  renderer,
-}));
+void registerEditorWebMcpTools(
+  document,
+  () => ({
+    session,
+    name: mapName,
+    workingSource: source.value,
+    sourceState: mapSourceState,
+    dirty: hasUnsavedChanges(),
+    project,
+    hostedMap,
+    renderer,
+    canUndo: hostedMap
+      ? (hostedConnection?.canUndo() ?? false)
+      : session.canUndo,
+    canRedo: hostedMap
+      ? (hostedConnection?.canRedo() ?? false)
+      : session.canRedo,
+  }),
+  {
+    prepareEdit() {
+      if (hostedMap && !hostedConnection)
+        throw new Error("Join the hosted room before editing");
+      if (source.value !== sourcePreview())
+        throw new Error("Apply source edits before using site tools");
+    },
+    async history(action) {
+      if (hostedMap) await hostedConnection![action]();
+      else session[action]();
+    },
+    status(message) {
+      status.textContent = `Site tool: ${message}`;
+    },
+  },
+);
