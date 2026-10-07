@@ -18,6 +18,7 @@ import { EditorSelectionCommands } from "./assets/editor-selection-commands-pane
 import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
 import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
 import { EditorHistory } from "./assets/editor-history-panel.tsx";
+import { EditorEntityCreation } from "./assets/editor-entity-creation-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -82,45 +83,7 @@ export function EditorPage() {
             <datalist id="material-choices" />
             <EditorSelectionCommands />
             <EditorEditActions />
-            <div class="transform-tools" role="group" aria-label="Brush entity">
-              <label for="brush-entity-classname">Brush entity</label>
-              <input
-                id="brush-entity-classname"
-                type="text"
-                list="brush-entity-classes"
-                value="func_detail"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <datalist id="brush-entity-classes" />
-              <button id="make-brush-entity" type="button" disabled>
-                Make entity
-              </button>
-              <button id="make-structural" type="button" disabled>
-                Make structural
-              </button>
-            </div>
-            <div class="transform-tools" role="group" aria-label="Point entity">
-              <label for="point-entity-classname">Point entity</label>
-              <input
-                id="point-entity-classname"
-                type="text"
-                list="point-entity-classes"
-                value="info_player_start"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <datalist id="point-entity-classes" />
-              <label for="point-origin-x">X</label>
-              <input id="point-origin-x" type="number" value="0" />
-              <label for="point-origin-y">Y</label>
-              <input id="point-origin-y" type="number" value="0" />
-              <label for="point-origin-z">Z</label>
-              <input id="point-origin-z" type="number" value="64" />
-              <button id="add-point-entity" type="button" disabled>
-                Add point
-              </button>
-            </div>
+            <EditorEntityCreation />
             <div
               class="transform-tools"
               role="group"

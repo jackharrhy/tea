@@ -1522,6 +1522,88 @@ try {
   result.checks.push(
     "Remix tool, grid, and texture-lock controls update live editor settings",
   );
+  const entityPage = await browser.newPage();
+  await installSiteToolMock(entityPage);
+  await entityPage.goto(`${mapsOrigin}/editor`);
+  await entityPage.waitForFunction(
+    () => document.documentElement.dataset.teaMapsSiteTools === "ready",
+  );
+  await entityPage.locator("#point-entity-classname").fill("light");
+  await entityPage.locator("#point-origin-x").fill("24");
+  await entityPage.locator("#point-origin-y").fill("48");
+  await entityPage.locator("#point-origin-z").fill("96");
+  await entityPage.locator("#add-point-entity").click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.some(
+        (entity) =>
+          entity.classname === "light" &&
+          entity.properties.origin === "24 48 96",
+      ),
+  );
+  await entityPage.locator("#undo").click();
+  await entityPage.waitForFunction(
+    () =>
+      !window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "entity" })
+        .objects.some((entity) => entity.classname === "light"),
+  );
+  await entityPage.locator("#redo").click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.some((entity) => entity.classname === "light"),
+  );
+  await entityPage.locator("#point-origin-y").fill("");
+  await entityPage.locator("#add-point-entity").click();
+  await entityPage
+    .getByText("Point origin needs three finite coordinates")
+    .waitFor();
+  const entityBrush = await entityPage.evaluate(() => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    return tools.get("tea_maps_create_box").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      min: [0, 0, 0],
+      max: [64, 64, 64],
+      material: "STONE",
+    }).brushId;
+  });
+  await entityPage.evaluate((brushId) => {
+    const tools = window.teaMapsTestTools;
+    const before = tools.get("tea_maps_inspect_editor").execute({});
+    tools.get("tea_maps_select").execute({
+      expectedDocumentId: before.documentId,
+      expectedRevision: before.revision,
+      mode: "objects",
+      brushIds: [brushId],
+    });
+  }, entityBrush);
+  await entityPage.locator("#brush-entity-classname").fill("func_detail");
+  await entityPage.locator("#make-brush-entity:not([disabled])").click();
+  await entityPage.waitForFunction(() =>
+    window.teaMapsTestTools
+      .get("tea_maps_list_objects")
+      .execute({ kind: "entity" })
+      .objects.some((entity) => entity.classname === "func_detail"),
+  );
+  await entityPage.locator("#make-structural:not([disabled])").click();
+  await entityPage.waitForFunction(
+    () =>
+      !window.teaMapsTestTools
+        .get("tea_maps_list_objects")
+        .execute({ kind: "entity" })
+        .objects.some((entity) => entity.classname === "func_detail"),
+  );
+  await entityPage.close();
+  result.checks.push(
+    "Remix entity controls create point and brush entities, validate origin, and restore structural geometry",
+  );
   const selectionPage = await browser.newPage();
   await installSiteToolMock(selectionPage);
   await selectionPage.goto(`${mapsOrigin}/editor`);

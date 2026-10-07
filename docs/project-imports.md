@@ -36,6 +36,8 @@ The selection command group now renders through a Remix client entry. Its contex
 
 Undo and Redo buttons now render through a Remix client entry; the editor retains local, hosted, and hull-point history routing.
 
+Brush and point entity creation controls now render through a Remix client entry, with project definition suggestions. The editor retains validation, defaults, placement bounds, and history transactions.
+
 Clipboard, repeat, and snap action buttons now render through a Remix client entry; the editor retains the clipboard fallback, history, and hosted edit checks.
 
 Viewport tool, grid size, and Texture lock now render through a Remix client entry. The editor and its tools read the same settings state for rendering and transactions.

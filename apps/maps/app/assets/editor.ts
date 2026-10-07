@@ -199,6 +199,7 @@ import { initEditorSelectionCommands } from "./editor-selection-commands-bridge.
 import { initEditorEditActions } from "./editor-edit-actions-bridge.ts";
 import { initEditorToolSettings } from "./editor-tool-settings-bridge.ts";
 import { initEditorHistory } from "./editor-history-bridge.ts";
+import { initEditorEntityCreation } from "./editor-entity-creation-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -272,10 +273,12 @@ const toolSettings = initEditorToolSettings({
   selectTool: activateViewportTool,
   textureLockChanged: () => sweepTool.refresh(),
 });
-const makeEntityButton =
-  document.querySelector<HTMLButtonElement>("#make-brush-entity")!;
-const makeStructuralButton =
-  document.querySelector<HTMLButtonElement>("#make-structural")!;
+const entityCreation = initEditorEntityCreation({
+  pointClassnameChanged: refreshPointEntityPlacementBounds,
+  makeBrushEntity,
+  makeStructural,
+  addPoint: addPointEntity,
+});
 const moveButton =
   document.querySelector<HTMLButtonElement>("#move-selection")!;
 const rotateButton =
@@ -327,9 +330,6 @@ const createHullButton =
   document.querySelector<HTMLButtonElement>("#create-hull")!;
 const discardHullButton =
   document.querySelector<HTMLButtonElement>("#discard-hull")!;
-const pointEntityClassname = document.querySelector<HTMLInputElement>(
-  "#point-entity-classname",
-)!;
 const faceInspector = document.querySelector<HTMLElement>("#face-inspector")!;
 const faceSummary = document.querySelector<HTMLElement>(
   "#face-inspector-summary",
@@ -390,12 +390,6 @@ const surfaceValue =
   document.querySelector<HTMLInputElement>("#surface-value")!;
 const surfaceValueLabel = document.querySelector<HTMLLabelElement>(
   "#surface-value-label",
-)!;
-const pointEntityClasses = document.querySelector<HTMLDataListElement>(
-  "#point-entity-classes",
-)!;
-const brushEntityClasses = document.querySelector<HTMLDataListElement>(
-  "#brush-entity-classes",
 )!;
 const switchMapDialog =
   document.querySelector<HTMLDialogElement>("#switch-map-dialog")!;
@@ -1057,25 +1051,25 @@ function refreshResourceCatalog() {
   renderer?.setSprites(resources?.sprites ?? []);
   renderer?.setEntityPlacementBounds(
     pointEntityDefinition(
-      pointEntityClassname.value.trim(),
+      entityCreation.state.pointClassname.trim(),
       resources?.definitions,
     ).bounds,
   );
-  pointEntityClasses.replaceChildren();
-  brushEntityClasses.replaceChildren();
   materialChoices.replaceChildren();
   for (const material of resources?.materials ?? []) {
     const option = document.createElement("option");
     option.value = material.name;
     materialChoices.append(option);
   }
-  for (const definition of resources?.definitions.all() ?? []) {
-    const option = document.createElement("option");
-    option.value = definition.classname;
-    option.label = definition.label;
-    if (definition.kind === "point") pointEntityClasses.append(option);
-    if (definition.kind === "brush") brushEntityClasses.append(option);
-  }
+  const definitions = resources?.definitions.all() ?? [];
+  entityCreation.update({
+    pointClasses: definitions
+      .filter((definition) => definition.kind === "point")
+      .map(({ classname, label }) => ({ classname, label })),
+    brushClasses: definitions
+      .filter((definition) => definition.kind === "brush")
+      .map(({ classname, label }) => ({ classname, label })),
+  });
   if (resources) {
     const messages =
       resources.definitionDiagnostics.length +
@@ -1516,13 +1510,16 @@ function refreshSelection() {
   for (const button of nudgeButtons) {
     button.disabled = (!brushId && pointIds.length === 0) || !editing;
   }
-  makeEntityButton.disabled = !brushId || !editing;
-  makeStructuralButton.disabled =
-    !brushId ||
-    !editing ||
-    owners.every(
-      (entity) => entity?.properties.classname?.toLowerCase() === "worldspawn",
-    );
+  entityCreation.update({
+    makeBrushDisabled: !brushId || !editing,
+    makeStructuralDisabled:
+      !brushId ||
+      !editing ||
+      owners.every(
+        (entity) =>
+          entity?.properties.classname?.toLowerCase() === "worldspawn",
+      ),
+  });
   moveButton.disabled = (!brushId && pointIds.length === 0) || !editing;
   rotateButton.disabled = !brushId || !editing;
   scaleButton.disabled = !brushId || !editing;
@@ -1940,8 +1937,7 @@ function setHostedEditability() {
   source.disabled = readOnly;
   document.querySelector<HTMLButtonElement>("#add-box")!.disabled =
     readOnly && !hostedConnection;
-  document.querySelector<HTMLButtonElement>("#add-point-entity")!.disabled =
-    readOnly && !hostedConnection;
+  entityCreation.update({ addPointDisabled: readOnly && !hostedConnection });
   documentControls.update({
     saveDisabled: readOnly,
     checkpointDisabled:
@@ -2299,8 +2295,9 @@ function showViewportContextMenu(event: EditorViewportContextMenuEvent) {
       run: () => clipboard.paste("pointer"),
     },
     {
-      label: `Place ${pointEntityClassname.value.trim() || "point entity"} here`,
-      disabled: !event.pointEntityOrigin || !pointEntityClassname.value.trim(),
+      label: `Place ${entityCreation.state.pointClassname.trim() || "point entity"} here`,
+      disabled:
+        !event.pointEntityOrigin || !entityCreation.state.pointClassname.trim(),
       run: () =>
         handlePointEntityPlace({
           viewport: event.viewport,
@@ -2323,7 +2320,7 @@ function showViewportContextMenu(event: EditorViewportContextMenuEvent) {
 
 function handlePointEntityPlace(event: EditorPointEntityPlaceEvent) {
   if (!viewportCanEdit()) return;
-  const classname = pointEntityClassname.value.trim();
+  const classname = entityCreation.state.pointClassname.trim();
   if (!classname || classname.toLowerCase() === "worldspawn") {
     status.textContent = "Enter a point entity classname";
     return;
@@ -2544,7 +2541,8 @@ if (!navigator.gpu) {
           | "entity",
       );
       renderer.setEntityPlacementBounds(
-        pointEntityDefinition(pointEntityClassname.value.trim()).bounds,
+        pointEntityDefinition(entityCreation.state.pointClassname.trim())
+          .bounds,
       );
       setHostedEditability();
       renderer.focusDocument();
@@ -2649,14 +2647,14 @@ createHullButton.addEventListener("click", () => {
 });
 discardHullButton.addEventListener("click", () => renderer?.clearHullPoints());
 
-pointEntityClassname.addEventListener("input", () => {
+function refreshPointEntityPlacementBounds() {
   renderer?.setEntityPlacementBounds(
     pointEntityDefinition(
-      pointEntityClassname.value.trim(),
+      entityCreation.state.pointClassname.trim(),
       currentDefinitions(),
     ).bounds,
   );
-});
+}
 
 function selectGameProfile(value: string) {
   if (project || hostedMap || !isWorldviewGameProfile(value)) {
@@ -2919,38 +2917,31 @@ function runLayerCommand(command: EditorLayerCommand) {
   }
 }
 
-document
-  .querySelector<HTMLButtonElement>("#add-point-entity")!
-  .addEventListener("click", () => {
-    if (!applyWorkingSource()) return;
-    const classname = document
-      .querySelector<HTMLInputElement>("#point-entity-classname")!
-      .value.trim();
-    const coordinates = (["x", "y", "z"] as const).map(
-      (axis) =>
-        document.querySelector<HTMLInputElement>(`#point-origin-${axis}`)!
-          .valueAsNumber,
+function addPointEntity() {
+  if (entityCreation.state.addPointDisabled || !applyWorkingSource()) return;
+  const classname = entityCreation.state.pointClassname.trim();
+  const coordinates = entityCreation.state.pointOrigin.map((value) =>
+    value.trim() ? Number(value) : Number.NaN,
+  );
+  if (!classname || classname.toLowerCase() === "worldspawn") {
+    status.textContent = "Enter a point entity classname";
+    return;
+  }
+  if (coordinates.some((value) => !Number.isFinite(value))) {
+    status.textContent = "Point origin needs three finite coordinates";
+    return;
+  }
+  try {
+    session.createPointEntity(
+      classname,
+      [coordinates[0]!, coordinates[1]!, coordinates[2]!],
+      createSequentialIdFactory(`tea-${crypto.randomUUID()}`),
+      pointEntityDefinition(classname, currentDefinitions()).defaults,
     );
-    if (!classname || classname.toLowerCase() === "worldspawn") {
-      status.textContent = "Enter a point entity classname";
-      return;
-    }
-    if (coordinates.some((value) => !Number.isFinite(value))) {
-      status.textContent = "Point origin needs three finite coordinates";
-      return;
-    }
-    try {
-      session.createPointEntity(
-        classname,
-        [coordinates[0]!, coordinates[1]!, coordinates[2]!],
-        createSequentialIdFactory(`tea-${crypto.randomUUID()}`),
-        pointEntityDefinition(classname, currentDefinitions()).defaults,
-      );
-    } catch (error) {
-      status.textContent =
-        error instanceof Error ? error.message : String(error);
-    }
-  });
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  }
+}
 
 updatePointButton.addEventListener("click", () => {
   if (!applyWorkingSource()) return;
@@ -3388,11 +3379,10 @@ window.addEventListener("paste", (event) => {
   clipboard.pasteText(text, latestPointer ? "pointer" : "original");
 });
 
-makeEntityButton.addEventListener("click", () => {
+function makeBrushEntity() {
+  if (entityCreation.state.makeBrushDisabled) return;
   if (!applyWorkingSource()) return;
-  const classname = document
-    .querySelector<HTMLInputElement>("#brush-entity-classname")!
-    .value.trim();
+  const classname = entityCreation.state.brushClassname.trim();
   if (!classname) {
     status.textContent = "Enter a brush entity classname";
     return;
@@ -3419,16 +3409,17 @@ makeEntityButton.addEventListener("click", () => {
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
-makeStructuralButton.addEventListener("click", () => {
+function makeStructural() {
+  if (entityCreation.state.makeStructuralDisabled) return;
   if (!applyWorkingSource()) return;
   try {
     session.makeSelectedStructural();
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : String(error);
   }
-});
+}
 
 moveButton.addEventListener("click", () => {
   if (!applyWorkingSource()) return;
@@ -4285,7 +4276,7 @@ async function showVersionsFromControls() {
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all, #repeat-commands, #clear-repeat-commands, #paste-original)",
+  ".editor-toolbar button:not(#delete-selection, #duplicate-selection, #hide-selection, #isolate-selection, #show-all, #snap-to-grid, #copy-selection, #paste-cursor, #make-brush-entity, #make-structural, #add-point-entity, #move-selection, #rotate-selection, #scale-selection, #undo, #redo, #new-map, #example-map, #open-map-button, #open-project, #save-map, #export-normalized, #create-checkpoint, #show-versions, #download-map, #build-map, #build-export-once, #toggle-compiled, #export-build, #selection-brush-touching, #selection-brush-inside, #selection-brush-projected, #select-all, #invert-selection, #focus-selection, #lock-selection, #unlock-all, #repeat-commands, #clear-repeat-commands, #paste-original)",
 )) {
   button.disabled = false;
 }
