@@ -292,7 +292,7 @@ export const RecoveredMaps = clientEntry(
               {snapshot.label} · {snapshot.document.faceSyntax} ·{" "}
               {new Date(snapshot.updatedAt).toLocaleString()}
             </small>
-            <form action="/editor" method="get">
+            <form action="/editor" method="get" data-rmx-document>
               <input
                 type="hidden"
                 name="legacyRecovery"
