@@ -1600,7 +1600,6 @@ try {
     .locator("#hosted-presence-toggle")
     .getByText("Viewing hosted map")
     .waitFor();
-  await observer.close();
   assert.deepEqual(errors, []);
   result.checks.push("Remix header presence and hosted panel toggle");
   await page.locator("#material-filter").fill("no-such-material");
@@ -1738,6 +1737,48 @@ try {
     "Access role for Test Observer",
   );
   assert.equal(await editorAccessRole.inputValue(), "viewer");
+  await editorAccessRole.selectOption("editor");
+  await page
+    .locator("#hosted-access-list")
+    .getByRole("button", { name: "Update" })
+    .click();
+  await page.waitForFunction(() =>
+    document
+      .querySelector("#hosted-access-status")
+      ?.textContent?.includes("2 members"),
+  );
+  await observer.goto(hostedEditorUrl);
+  await observer
+    .locator("#hosted-presence-toggle")
+    .getByText("Live · 2")
+    .waitFor();
+  await page.locator("#hosted-presence-toggle").getByText("Live · 2").waitFor();
+  const collaborator = page
+    .locator("#hosted-participant-list li")
+    .filter({ hasText: "Test Observer" });
+  await collaborator.waitFor();
+  assert.match(
+    await collaborator.getAttribute("data-color"),
+    /^(red|orange|yellow|green|cyan|blue|violet|pink)$/,
+  );
+  await collaborator.getByText("Idle").waitFor();
+  const initialBrushCount = Number(
+    await page.locator("#brush-count").textContent(),
+  );
+  await observer.locator("#add-box:not([disabled])").click();
+  await page.waitForFunction(
+    (count) =>
+      Number(document.querySelector("#brush-count")?.textContent) === count + 1,
+    initialBrushCount,
+  );
+  await observer.locator("#undo:not([disabled])").click();
+  await page.waitForFunction(
+    (count) =>
+      Number(document.querySelector("#brush-count")?.textContent) === count,
+    initialBrushCount,
+  );
+  await observer.close();
+  result.checks.push("two hosted editors share presence, edits, and undo");
   result.checks.push(
     "hosted map creation, editor launch, and Remix presence and access UI",
   );
@@ -1868,6 +1909,13 @@ try {
   await page.getByText("0 builds · hosted compiler available").waitFor();
   assert.equal(await page.locator("#build-export-once").isDisabled(), true);
   assert.equal(await page.locator("#game-profile").isDisabled(), true);
+  const buildMapVersion = (
+    await (
+      await page.request.get(
+        `${mapsOrigin}/api/maps/${new URL(hostedEditorUrl).searchParams.get("hostedMap")}`,
+      )
+    ).json()
+  ).map.mapVersion;
   await page.locator("#build-map").click();
   const download = page.getByRole("link", { name: "Download BSP" });
   try {
@@ -1897,7 +1945,7 @@ try {
   assert.deepEqual(await artifact.body(), bsp);
   assert.equal(compileRequests.length, 1);
   assert.match(compileRequests[0].mapText, /worldspawn/);
-  assert.equal(compileRequests[0].expectedDocumentRevision, 1);
+  assert.equal(compileRequests[0].expectedDocumentRevision, buildMapVersion);
   await page.waitForFunction(() =>
     /Compiled preview (ready|unavailable)/.test(
       document.querySelector("#build-status")?.textContent ?? "",
