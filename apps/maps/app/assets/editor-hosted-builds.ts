@@ -119,7 +119,7 @@ export async function waitForHostedBuild(
 export function initHostedBuilds(options: {
   readonly map: () => HostedMapLaunch | null;
   readonly preview: (build: HostedBuild, artifactPath: string) => void;
-  readonly onUpdate: (build: HostedBuild) => void;
+  readonly onUpdate: (build: HostedBuild, durationHint?: string) => void;
 }) {
   const root = document.querySelector<HTMLDetailsElement>("#hosted-builds")!;
   const status = document.querySelector<HTMLElement>("#hosted-builds-status")!;
@@ -174,7 +174,7 @@ export function initHostedBuilds(options: {
         return response;
       render(response.builds, map);
       status.textContent = response.capability
-        ? `${response.builds.length} builds · hosted compiler available`
+        ? `${response.builds.length} builds · hosted compiler available${response.capability.durationHint ? ` · ${response.capability.durationHint}` : ""}`
         : `${response.builds.length} builds · hosted compiler unavailable`;
       return response;
     } finally {
@@ -219,6 +219,7 @@ export function initHostedBuilds(options: {
         throw new Error("Hosted map changed before the build started");
       if (!available.capability)
         throw new Error("Hosted compiler is unavailable for this map");
+      const durationHint = available.capability.durationHint;
       const controller = new AbortController();
       active = controller;
       try {
@@ -229,11 +230,11 @@ export function initHostedBuilds(options: {
           fetch,
           controller.signal,
         );
-        if (version === generation) options.onUpdate(created);
+        if (version === generation) options.onUpdate(created, durationHint);
         const result = await waitForHostedBuild(map.id, created, {
           signal: controller.signal,
           onUpdate(build) {
-            if (version === generation) options.onUpdate(build);
+            if (version === generation) options.onUpdate(build, durationHint);
           },
         });
         if (version === generation) await refresh(map, version);

@@ -4392,8 +4392,8 @@ projectSyncControls = initProjectSyncDialog({
 projectSyncControls.setProject(project);
 hostedBuildControls = initHostedBuilds({
   map: () => hostedMap,
-  onUpdate(build) {
-    buildStatus.textContent = `Hosted ${build.quality} build · ${build.status} · v${build.mapVersion}`;
+  onUpdate(build, durationHint) {
+    buildStatus.textContent = `Hosted ${build.quality} build · ${build.status} · v${build.mapVersion}${(build.status === "queued" || build.status === "running") && durationHint ? ` · ${durationHint}` : ""}`;
   },
   preview(build, artifactPath) {
     void (async () => {

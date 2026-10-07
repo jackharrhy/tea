@@ -448,6 +448,16 @@ try {
   result.checks.push(
     "hosted BSP build queue, compiler request, history, and artifact download",
   );
+  await page.route(/\/api\/maps\/[^/]+\/builds$/, async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    const response = await route.fetch();
+    const payload = await response.json();
+    payload.capability.durationHint = "Large maps may take several minutes";
+    await route.fulfill({ response, json: payload });
+  });
+  await page.locator("#hosted-builds-refresh").click();
+  await page.getByText("Large maps may take several minutes").waitFor();
+  result.checks.push("hosted compiler duration hint in editor");
   await page.goto(`${mapsOrigin}/editor`);
   await page.evaluate(() => {
     const manifest = JSON.stringify({
@@ -458,29 +468,38 @@ try {
       resources: { wads: [], spriteRoots: [], entityDefinitions: [] },
       buildProfiles: [],
     });
-    const file = (name, source) => ({
-      kind: "file",
-      name,
-      getFile: async () => new File([source], name),
-    });
-    const maps = Object.fromEntries(
+    const fixture = {
+      file(name, source) {
+        return {
+          kind: "file",
+          name,
+          getFile: async () => new File([source], name),
+        };
+      },
+      directory(name, children) {
+        return {
+          kind: "directory",
+          name,
+          getFileHandle: async (child) => children[child],
+          getDirectoryHandle: async (child) => children[child],
+          async *entries() {
+            yield* Object.entries(children);
+          },
+        };
+      },
+    };
+    const mapFiles = Object.fromEntries(
       ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"].map((name) => [
         `${name}.map`,
-        file(`${name}.map`, '{\n"classname" "worldspawn"\n}\n'),
+        fixture.file(`${name}.map`, '{\n"classname" "worldspawn"\n}\n'),
       ]),
     );
-    const directory = (name, children) => ({
-      kind: "directory",
-      name,
-      getFileHandle: async (child) => children[child],
-      getDirectoryHandle: async (child) => children[child],
-      async *entries() {
-        yield* Object.entries(children);
-      },
-    });
-    const root = directory("smoke", {
-      "worldview.project.json": file("worldview.project.json", manifest),
-      maps: directory("maps", maps),
+    const root = fixture.directory("smoke", {
+      "worldview.project.json": fixture.file(
+        "worldview.project.json",
+        manifest,
+      ),
+      maps: fixture.directory("maps", mapFiles),
     });
     window.showDirectoryPicker = async () => root;
   });
