@@ -94,6 +94,7 @@ export function EditorPage() {
             <EditorDocumentName />
             <EditorHostedPresenceStrip />
             <EditorThemeControl />
+            <EditorPerformanceToggle />
             <EditorInspectorToggle />
           </header>
           <nav class="editor-toolbar" aria-label="Editor actions">
@@ -275,7 +276,6 @@ export function EditorPage() {
             <EditorStatus />
             <EditorIssueStatus />
             <EditorPointerReadout />
-            <EditorPerformanceToggle />
           </footer>
         </main>
         <EditorPerformancePanel />
