@@ -117,9 +117,6 @@ export function EditorPage() {
             <EditorShapePanel />
             <EditorTransformToolPanel />
             <EditorCsg />
-            <EditorGroups />
-            <EditorLayers />
-            <EditorReferences />
           </nav>
           <details id="hosted-editor-picker" class="hosted-editor-picker">
             <summary>Hosted maps</summary>
@@ -234,8 +231,10 @@ export function EditorPage() {
                 data-inspector-panel="map"
               >
                 <EditorDocumentSummary />
+                <EditorLayers />
                 <EditorIssues />
                 <EditorVisibility />
+                <EditorReferences />
               </section>
               <section
                 id="inspector-panel-entity"
@@ -245,6 +244,7 @@ export function EditorPage() {
                 hidden
               >
                 <EditorEntityInspector />
+                <EditorGroups />
               </section>
               <section
                 id="inspector-panel-face"

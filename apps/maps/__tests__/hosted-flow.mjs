@@ -3390,6 +3390,7 @@ try {
       origin: [32, 32, 32],
     });
   });
+  await linkedPage.locator("#inspector-tab-entity").click();
   await linkedPage.locator("#group-tools summary").click();
   await linkedPage.locator("#group-name").fill("Review group");
   await linkedPage.locator("#group-selection").click();
