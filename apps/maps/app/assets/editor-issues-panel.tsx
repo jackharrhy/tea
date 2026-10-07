@@ -9,6 +9,95 @@ import type {
   IssueBrowserOptions,
   IssueBrowserState,
 } from "./editor-issues.ts";
+import { summarizeEditorDocument } from "./editor-document-summary.ts";
+
+function subscribeIssueState(
+  handle: Handle,
+  update: (state: IssueBrowserState) => void,
+) {
+  handle.queueTask(() => {
+    window.addEventListener(
+      "tea-maps-issues-bridge-ready",
+      () => window.dispatchEvent(new Event("tea-maps-issues-ready")),
+      { signal: handle.signal },
+    );
+    window.addEventListener(
+      "tea-maps-issues-state",
+      (event) => update((event as CustomEvent<IssueBrowserState>).detail),
+      { signal: handle.signal },
+    );
+    window.dispatchEvent(new Event("tea-maps-issues-ready"));
+  });
+}
+
+export const EditorDocumentSummary = clientEntry(
+  `${import.meta.url}#EditorDocumentSummary`,
+  function EditorDocumentSummaryComponent(handle: Handle) {
+    let options: IssueBrowserOptions | null = null;
+    subscribeIssueState(handle, (state) => {
+      options = state.options;
+      handle.update();
+    });
+
+    return () => {
+      const session = options?.session();
+      const summary = session
+        ? summarizeEditorDocument(session.document, session.objectViewState)
+        : null;
+      return (
+        <details id="document-summary">
+          <summary>
+            Document
+            {summary
+              ? ` · r${summary.revision} · ${summary.brushCount} brushes`
+              : ""}
+          </summary>
+          <dl>
+            <div>
+              <dt>Revision</dt>
+              <dd id="document-revision">{summary?.revision ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Entities</dt>
+              <dd id="entity-count">{summary?.entityCount ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Brushes</dt>
+              <dd id="brush-count">{summary?.brushCount ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Groups</dt>
+              <dd id="group-count">{summary?.groupCount ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Hidden</dt>
+              <dd id="hidden-object-count">
+                {summary?.hiddenObjectCount ?? 0}
+              </dd>
+            </div>
+            <div>
+              <dt>Locked</dt>
+              <dd id="locked-object-count">
+                {summary?.lockedObjectCount ?? 0}
+              </dd>
+            </div>
+            <div>
+              <dt>Geometry</dt>
+              <dd
+                id="geometry-state"
+                data-state={summary?.geometryErrorCount ? "error" : "valid"}
+              >
+                {summary?.geometryErrorCount
+                  ? `${summary.geometryErrorCount} errors`
+                  : "valid"}
+              </dd>
+            </div>
+          </dl>
+        </details>
+      );
+    };
+  },
+);
 
 export const EditorIssues = clientEntry(
   `${import.meta.url}#EditorIssues`,
@@ -21,26 +110,13 @@ export const EditorIssues = clientEntry(
     const hiddenIds = new Set<string>();
     let showHidden = false;
 
-    handle.queueTask(() => {
-      window.addEventListener(
-        "tea-maps-issues-bridge-ready",
-        () => window.dispatchEvent(new Event("tea-maps-issues-ready")),
-        { signal: handle.signal },
-      );
-      window.addEventListener(
-        "tea-maps-issues-state",
-        (event) => {
-          const state = (event as CustomEvent<IssueBrowserState>).detail;
-          options = state.options;
-          if (state.resetRevision !== resetRevision) {
-            resetRevision = state.resetRevision;
-            hiddenIds.clear();
-          }
-          handle.update();
-        },
-        { signal: handle.signal },
-      );
-      window.dispatchEvent(new Event("tea-maps-issues-ready"));
+    subscribeIssueState(handle, (state) => {
+      options = state.options;
+      if (state.resetRevision !== resetRevision) {
+        resetRevision = state.resetRevision;
+        hiddenIds.clear();
+      }
+      handle.update();
     });
 
     function reportError(cause: unknown) {

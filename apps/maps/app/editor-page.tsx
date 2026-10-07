@@ -51,7 +51,10 @@ import {
 } from "./assets/editor-hosted-source-panel.tsx";
 import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
 import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
-import { EditorIssues } from "./assets/editor-issues-panel.tsx";
+import {
+  EditorDocumentSummary,
+  EditorIssues,
+} from "./assets/editor-issues-panel.tsx";
 import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
 import {
   EditorPerformancePanel,
@@ -214,6 +217,7 @@ export function EditorPage() {
             <aside class="source-panel">
               <h1>Source</h1>
               <p id="selection-info">No selection</p>
+              <EditorDocumentSummary />
               <EditorIssues />
               <EditorVisibility />
               <div id="face-inspector" hidden>

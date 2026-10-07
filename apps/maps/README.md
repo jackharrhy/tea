@@ -192,6 +192,8 @@ Standalone Quake and GoldSrc maps can import WAD texture packs from the editor t
 
 The issue browser is a Remix client component. It lists geometry, entity, link, and structure findings from the editor session, supports type and hidden filters, and can select, reveal, or fix a finding through that same session.
 
+The Document summary beside it reports revision, entity, brush, and group counts, hidden and locked objects, and geometry errors from the current editor session. It updates when the map or its view state changes.
+
 View filters and entity link visibility are Remix client controls. They filter world and special brushes or entity classes locally without changing map source; the editor keeps the link display mode when its renderer is recreated.
 
 The selected entity inspector shows editable properties. When a project supplies FGD or ENT definitions, it also shows suggested properties with choices, checkboxes, flag bits, and numeric controls. The raw key and value fields remain available for custom properties. Changes use the same local history or hosted semantic operations as other property edits.

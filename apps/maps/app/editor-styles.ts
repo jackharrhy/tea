@@ -586,11 +586,31 @@ export const editorStyles = css({
     "border-radius": "5px",
     padding: "0.4rem",
   },
-  "& #issue-browser": {
+  "& #document-summary, & #issue-browser": {
     "border-block": "1px solid var(--editor-soft-border)",
     padding: "0.6rem 0",
   },
-  "& #issue-browser summary": { cursor: "pointer" },
+  "& #document-summary summary, & #issue-browser summary": {
+    cursor: "pointer",
+  },
+  "& #document-summary dl": {
+    display: "grid",
+    gap: "0.25rem",
+    margin: "0.6rem 0 0",
+  },
+  "& #document-summary dl > div": {
+    display: "flex",
+    "justify-content": "space-between",
+    gap: "1rem",
+  },
+  "& #document-summary dt": { color: "var(--editor-muted)" },
+  "& #document-summary dd": {
+    margin: "0",
+    "font-variant-numeric": "tabular-nums",
+  },
+  "& #geometry-state[data-state='error']": {
+    color: "var(--editor-danger-bright)",
+  },
   "& #issue-summary": { "font-weight": "700" },
   "& .issue-controls": {
     display: "flex",
