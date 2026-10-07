@@ -166,6 +166,8 @@ The FOV control is a Remix client component. The editor applies its saved defaul
 
 Expand switches between the four viewport layout and a perspective-only view. Inspector in the header hides or restores the inspector so the viewports can use the space. The inspector has Map, Entity, Face, and Source tabs; selecting an object or face opens its matching tab. Map contains imported WAD and palette controls, project resource messages, layers, references, visibility, and issues; the project map selector stays in the action bar. The dividers between viewport panes and beside the inspector support dragging or arrow keys. Tea saves the pane sizes, view mode, inspector visibility, and camera positions per map in this browser and restores them when that map is reopened.
 
+The inspector tabs and panels render under one Remix client component. Selecting a tab changes component state; the editor publishes selection changes without directly showing or hiding panel elements.
+
 The Performance control samples visible-tab animation frame cadence and editor render CPU submission time only while open. It shows a bounded frame graph and can record up to 30 seconds of timing samples as copyable JSON. GPU execution time and map contents are not included.
 
 The Performance button and panel render as Remix client components. The editor's timing collector publishes sampling updates four times per second and skips render timing when the panel is closed.

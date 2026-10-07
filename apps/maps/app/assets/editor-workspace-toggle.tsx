@@ -1,5 +1,23 @@
-import { clientEntry, on, type Handle } from "remix/component";
+import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorWorkspaceState } from "./editor-workspace.ts";
+import { EditorDocumentSummary, EditorIssues } from "./editor-issues-panel.tsx";
+import { EditorProjectResourcesPanel } from "./editor-project-context-panel.tsx";
+import { EditorLayers } from "./editor-layers-panel.tsx";
+import { EditorVisibility } from "./editor-visibility-panel.tsx";
+import { EditorReferences } from "./editor-references-panel.tsx";
+import { EditorEntityInspector } from "./editor-entity-inspector-panel.tsx";
+import { EditorGroups } from "./editor-groups-panel.tsx";
+import { EditorEntityCreation } from "./editor-entity-creation-panel.tsx";
+import { EditorGeometry, EditorCsg } from "./editor-geometry-panel.tsx";
+import { EditorShapePanel } from "./editor-shape-panel.tsx";
+import { EditorClipHull } from "./editor-clip-hull-panel.tsx";
+import { EditorSweepPanel } from "./editor-sweep-panel.tsx";
+import { EditorTopologyPanel } from "./editor-topology-panel.tsx";
+import { EditorTransformToolPanel } from "./editor-transform-tool-panel.tsx";
+import { EditorTransforms } from "./editor-transforms-panel.tsx";
+import { EditorFaceInspector } from "./editor-face-inspector-panel.tsx";
+import { EditorMaterialBrowser } from "./editor-material-browser-panel.tsx";
+import { EditorSourcePanel } from "./editor-source-panel.tsx";
 
 function subscribeWorkspace(
   handle: Handle,
@@ -87,18 +105,13 @@ export const EditorInspectorToggle = clientEntry(
 const inspectorTabs = ["map", "entity", "face", "source"] as const;
 type InspectorTab = (typeof inspectorTabs)[number];
 
-export const EditorInspectorTabs = clientEntry(
-  `${import.meta.url}#EditorInspectorTabs`,
-  function EditorInspectorTabsComponent(handle: Handle) {
+export const EditorInspector = clientEntry(
+  `${import.meta.url}#EditorInspector`,
+  function EditorInspectorComponent(handle: Handle) {
     let active: InspectorTab = "map";
 
     function select(tab: InspectorTab) {
       active = tab;
-      for (const panel of document.querySelectorAll<HTMLElement>(
-        "[data-inspector-panel]",
-      )) {
-        panel.hidden = panel.dataset.inspectorPanel !== tab;
-      }
       handle.update();
     }
 
@@ -123,43 +136,98 @@ export const EditorInspectorTabs = clientEntry(
     });
 
     return () => (
-      <div class="inspector-tabs" role="tablist" aria-label="Inspector views">
-        {inspectorTabs.map((tab) => (
-          <button
-            id={`inspector-tab-${tab}`}
-            type="button"
-            role="tab"
-            aria-controls={`inspector-panel-${tab}`}
-            aria-selected={active === tab}
-            tabIndex={active === tab ? 0 : -1}
-            mix={[
-              on("click", () => select(tab)),
-              on<HTMLButtonElement>("keydown", (event) => {
-                if (!("key" in event)) return;
-                const index = inspectorTabs.indexOf(tab);
-                const next =
-                  event.key === "ArrowRight"
-                    ? inspectorTabs[(index + 1) % inspectorTabs.length]
-                    : event.key === "ArrowLeft"
-                      ? inspectorTabs[
-                          (index - 1 + inspectorTabs.length) %
-                            inspectorTabs.length
-                        ]
-                      : event.key === "Home"
-                        ? inspectorTabs[0]
-                        : event.key === "End"
-                          ? inspectorTabs[inspectorTabs.length - 1]
-                          : null;
-                if (!next) return;
-                event.preventDefault();
-                select(next);
-                document.getElementById(`inspector-tab-${next}`)?.focus();
-              }),
-            ]}
-          >
-            {tab[0]!.toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+      <div mix={css({ display: "contents" })}>
+        <div class="inspector-tabs" role="tablist" aria-label="Inspector views">
+          {inspectorTabs.map((tab) => (
+            <button
+              id={`inspector-tab-${tab}`}
+              type="button"
+              role="tab"
+              aria-controls={`inspector-panel-${tab}`}
+              aria-selected={active === tab}
+              tabIndex={active === tab ? 0 : -1}
+              mix={[
+                on("click", () => select(tab)),
+                on<HTMLButtonElement>("keydown", (event) => {
+                  if (!("key" in event)) return;
+                  const index = inspectorTabs.indexOf(tab);
+                  const next =
+                    event.key === "ArrowRight"
+                      ? inspectorTabs[(index + 1) % inspectorTabs.length]
+                      : event.key === "ArrowLeft"
+                        ? inspectorTabs[
+                            (index - 1 + inspectorTabs.length) %
+                              inspectorTabs.length
+                          ]
+                        : event.key === "Home"
+                          ? inspectorTabs[0]
+                          : event.key === "End"
+                            ? inspectorTabs[inspectorTabs.length - 1]
+                            : null;
+                  if (!next) return;
+                  event.preventDefault();
+                  select(next);
+                  document.getElementById(`inspector-tab-${next}`)?.focus();
+                }),
+              ]}
+            >
+              {tab[0]!.toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+        <section
+          id="inspector-panel-map"
+          role="tabpanel"
+          aria-labelledby="inspector-tab-map"
+          data-inspector-panel="map"
+          hidden={active !== "map"}
+        >
+          <EditorDocumentSummary />
+          <EditorProjectResourcesPanel />
+          <EditorLayers />
+          <EditorIssues />
+          <EditorVisibility />
+          <EditorReferences />
+        </section>
+        <section
+          id="inspector-panel-entity"
+          role="tabpanel"
+          aria-labelledby="inspector-tab-entity"
+          data-inspector-panel="entity"
+          hidden={active !== "entity"}
+        >
+          <EditorEntityInspector />
+          <EditorGroups />
+          <EditorEntityCreation />
+          <EditorGeometry />
+          <EditorShapePanel />
+          <EditorClipHull />
+          <EditorSweepPanel />
+          <EditorTopologyPanel />
+          <EditorTransformToolPanel />
+          <EditorTransforms />
+          <EditorCsg />
+        </section>
+        <section
+          id="inspector-panel-face"
+          role="tabpanel"
+          aria-labelledby="inspector-tab-face"
+          data-inspector-panel="face"
+          hidden={active !== "face"}
+        >
+          <EditorFaceInspector />
+          <EditorMaterialBrowser />
+        </section>
+        <section
+          id="inspector-panel-source"
+          role="tabpanel"
+          aria-labelledby="inspector-tab-source"
+          data-inspector-panel="source"
+          hidden={active !== "source"}
+        >
+          <EditorSourcePanel />
+          <p>Apply source edits before using viewport tools.</p>
+        </section>
       </div>
     );
   },

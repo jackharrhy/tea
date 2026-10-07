@@ -10,36 +10,19 @@ import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
 import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
 import { EditorFov } from "./assets/editor-fov-panel.tsx";
 import {
-  EditorInspectorTabs,
+  EditorInspector,
   EditorInspectorToggle,
   EditorWorkspaceToggle,
 } from "./assets/editor-workspace-toggle.tsx";
-import { EditorReferences } from "./assets/editor-references-panel.tsx";
-import { EditorLayers } from "./assets/editor-layers-panel.tsx";
-import { EditorGroups } from "./assets/editor-groups-panel.tsx";
 import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
 import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
 import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
-import { EditorSourcePanel } from "./assets/editor-source-panel.tsx";
-import {
-  EditorProjectContextPanel,
-  EditorProjectResourcesPanel,
-} from "./assets/editor-project-context-panel.tsx";
+import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
 import { EditorSelectionCommands } from "./assets/editor-selection-commands-panel.tsx";
 import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
 import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
 import { EditorHistory } from "./assets/editor-history-panel.tsx";
-import { EditorEntityCreation } from "./assets/editor-entity-creation-panel.tsx";
-import { EditorTransforms } from "./assets/editor-transforms-panel.tsx";
-import { EditorGeometry, EditorCsg } from "./assets/editor-geometry-panel.tsx";
-import { EditorEntityInspector } from "./assets/editor-entity-inspector-panel.tsx";
-import { EditorFaceInspector } from "./assets/editor-face-inspector-panel.tsx";
 import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
-import { EditorClipHull } from "./assets/editor-clip-hull-panel.tsx";
-import { EditorSweepPanel } from "./assets/editor-sweep-panel.tsx";
-import { EditorTopologyPanel } from "./assets/editor-topology-panel.tsx";
-import { EditorShapePanel } from "./assets/editor-shape-panel.tsx";
-import { EditorTransformToolPanel } from "./assets/editor-transform-tool-panel.tsx";
 import { EditorContextMenu } from "./assets/editor-context-menu-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
@@ -54,13 +37,7 @@ import {
   EditorHostedSourceOpen,
 } from "./assets/editor-hosted-source-panel.tsx";
 import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
-import { EditorMaterialBrowser } from "./assets/editor-material-browser-panel.tsx";
-import {
-  EditorDocumentSummary,
-  EditorIssueStatus,
-  EditorIssues,
-} from "./assets/editor-issues-panel.tsx";
-import { EditorVisibility } from "./assets/editor-visibility-panel.tsx";
+import { EditorIssueStatus } from "./assets/editor-issues-panel.tsx";
 import { EditorPointerReadout } from "./assets/editor-pointer-readout.tsx";
 import {
   EditorDocumentName,
@@ -216,59 +193,7 @@ export function EditorPage() {
             />
             <aside id="editor-inspector" class="source-panel">
               <EditorSelectionInfo />
-              <EditorInspectorTabs />
-              <section
-                id="inspector-panel-map"
-                role="tabpanel"
-                aria-labelledby="inspector-tab-map"
-                data-inspector-panel="map"
-              >
-                <EditorDocumentSummary />
-                <EditorProjectResourcesPanel />
-                <EditorLayers />
-                <EditorIssues />
-                <EditorVisibility />
-                <EditorReferences />
-              </section>
-              <section
-                id="inspector-panel-entity"
-                role="tabpanel"
-                aria-labelledby="inspector-tab-entity"
-                data-inspector-panel="entity"
-                hidden
-              >
-                <EditorEntityInspector />
-                <EditorGroups />
-                <EditorEntityCreation />
-                <EditorGeometry />
-                <EditorShapePanel />
-                <EditorClipHull />
-                <EditorSweepPanel />
-                <EditorTopologyPanel />
-                <EditorTransformToolPanel />
-                <EditorTransforms />
-                <EditorCsg />
-              </section>
-              <section
-                id="inspector-panel-face"
-                role="tabpanel"
-                aria-labelledby="inspector-tab-face"
-                data-inspector-panel="face"
-                hidden
-              >
-                <EditorFaceInspector />
-                <EditorMaterialBrowser />
-              </section>
-              <section
-                id="inspector-panel-source"
-                role="tabpanel"
-                aria-labelledby="inspector-tab-source"
-                data-inspector-panel="source"
-                hidden
-              >
-                <EditorSourcePanel />
-                <p>Apply source edits before using viewport tools.</p>
-              </section>
+              <EditorInspector />
             </aside>
             <EditorProjectMapSelector />
           </div>
