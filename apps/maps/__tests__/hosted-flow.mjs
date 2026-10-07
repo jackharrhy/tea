@@ -364,6 +364,26 @@ try {
       .count(),
     4,
   );
+  await standalonePage.locator("#toggle-inspector").click();
+  assert.equal(
+    await standalonePage.locator("#editor-inspector").isVisible(),
+    false,
+  );
+  await standalonePage.reload();
+  await standalonePage.waitForFunction(
+    () =>
+      document.querySelector(".editor-workspace")?.dataset.inspectorOpen ===
+      "false",
+  );
+  assert.equal(
+    await standalonePage.locator("#editor-inspector").isVisible(),
+    false,
+  );
+  await standalonePage.locator("#toggle-inspector").click();
+  assert.equal(
+    await standalonePage.locator("#editor-inspector").isVisible(),
+    true,
+  );
   await standalonePage.locator("#document-summary summary").click();
   assert.equal(await standalonePage.locator("#brush-count").textContent(), "0");
   await standalonePage.locator("#example-map").click();
@@ -392,7 +412,7 @@ try {
   await standalonePage.getByText(/0 WADs · Resources cleared/).waitFor();
   await standalonePage.close();
   result.checks.push(
-    "standalone resources, document summary, pointer readout, and viewport overlays render in the Remix editor",
+    "standalone resources, document summary, pointer readout, inspector visibility, and viewport overlays render in the Remix editor",
   );
 
   const themePage = await browser.newPage();
@@ -761,7 +781,7 @@ try {
       { once: true },
     );
   });
-  await movementPage.goto(`${mapsOrigin}/?example=quake`);
+  await movementPage.goto(mapsOrigin);
   await movementPage.waitForFunction(() => window.teaMapsViewerElementReady);
   await movementPage.locator("#viewport world-view").waitFor();
   await movementPage.evaluate(() => {

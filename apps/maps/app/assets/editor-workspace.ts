@@ -28,18 +28,21 @@ const camera = z.strictObject({
 const record = z.strictObject({
   version: z.literal(1),
   documentKey: z.string().min(1).max(4_096),
-  cameras: z.strictObject({
-    perspective: camera,
-    xy: camera,
-    xz: camera,
-    yz: camera,
-  }),
+  cameras: z
+    .strictObject({
+      perspective: camera,
+      xy: camera,
+      xz: camera,
+      yz: camera,
+    })
+    .optional(),
   layout: z.strictObject({
     column: z.number().finite().min(0.3).max(0.76),
     row: z.number().finite().min(0.2).max(0.8),
     inspector: z.number().int().min(240).max(520),
   }),
   perspectiveOnly: z.boolean(),
+  inspectorOpen: z.boolean().default(true),
   updatedAt: z.number().int().nonnegative(),
 });
 type WorkspaceRecord = z.infer<typeof record>;
@@ -47,8 +50,10 @@ type Layout = WorkspaceRecord["layout"];
 
 export interface EditorWorkspaceState {
   readonly perspectiveOnly: boolean;
+  readonly inspectorOpen: boolean;
   readonly ready: boolean;
   readonly toggle: () => void;
+  readonly toggleInspector: () => void;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -69,6 +74,7 @@ export function initEditorWorkspace(options: {
   let documentKey: string | null = null;
   let layout: Layout = { ...DEFAULT_LAYOUT };
   let perspectiveOnly = false;
+  let inspectorOpen = true;
   let cameras: Partial<Record<EditorViewportKind, EditorViewportCameraState>> =
     {};
   let saved: WorkspaceRecord | null = null;
@@ -82,10 +88,16 @@ export function initEditorWorkspace(options: {
       new CustomEvent<EditorWorkspaceState>("tea-maps-workspace-state", {
         detail: {
           perspectiveOnly,
+          inspectorOpen,
           ready,
           toggle() {
             perspectiveOnly = !perspectiveOnly;
             applyPerspectiveOnly();
+            changed();
+          },
+          toggleInspector() {
+            inspectorOpen = !inspectorOpen;
+            applyInspector();
             changed();
           },
         },
@@ -106,16 +118,16 @@ export function initEditorWorkspace(options: {
     timer = null;
     if (!dirty || !documentKey) return;
     const complete = completeCameras();
-    if (!complete) return;
     try {
       localStorage.setItem(
         `${STORAGE_PREFIX}${encodeURIComponent(documentKey)}`,
         JSON.stringify({
           version: 1,
           documentKey,
-          cameras: complete,
+          cameras: complete ?? saved?.cameras,
           layout,
           perspectiveOnly,
+          inspectorOpen,
           updatedAt: Date.now(),
         }),
       );
@@ -175,6 +187,12 @@ export function initEditorWorkspace(options: {
     options.render();
   }
 
+  function applyInspector() {
+    workspace.dataset.inspectorOpen = String(inspectorOpen);
+    publishState();
+    options.render();
+  }
+
   function captureCameras(renderer: EditorSourceRenderer) {
     cameras = Object.fromEntries(
       KINDS.map((kind) => [kind, renderer.viewportCamera(kind)]),
@@ -198,13 +216,15 @@ export function initEditorWorkspace(options: {
     } catch {}
     layout = saved?.layout ?? { ...DEFAULT_LAYOUT };
     perspectiveOnly = saved?.perspectiveOnly ?? false;
+    inspectorOpen = saved?.inspectorOpen ?? true;
     applying = true;
     applyLayout();
     applyPerspectiveOnly();
+    applyInspector();
     if (ready) {
       const renderer = options.renderer();
       if (renderer) {
-        if (saved) renderer.restoreViewportCameras(saved.cameras);
+        if (saved?.cameras) renderer.restoreViewportCameras(saved.cameras);
         captureCameras(renderer);
       }
     }
@@ -292,6 +312,7 @@ export function initEditorWorkspace(options: {
   });
   applyLayout();
   applyPerspectiveOnly();
+  applyInspector();
 
   return {
     switchDocument,
@@ -305,13 +326,13 @@ export function initEditorWorkspace(options: {
       publishState();
       applying = true;
       try {
-        if (saved) renderer.restoreViewportCameras(saved.cameras);
+        if (saved?.cameras) renderer.restoreViewportCameras(saved.cameras);
         captureCameras(renderer);
         applyPerspectiveOnly();
       } finally {
         applying = false;
       }
-      if (!saved) changed();
+      if (!saved?.cameras) changed();
     },
     flush,
   };

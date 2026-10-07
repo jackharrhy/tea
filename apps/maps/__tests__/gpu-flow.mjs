@@ -118,6 +118,17 @@ try {
         .text === source,
     before.source,
   );
+  await page.locator("#toggle-inspector").click();
+  assert.equal(await page.locator("#editor-inspector").isVisible(), false);
+  await page.reload();
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".editor-workspace")?.dataset.inspectorOpen ===
+      "false",
+  );
+  assert.equal(await page.locator("#editor-inspector").isVisible(), false);
+  await page.locator("#toggle-inspector").click();
+  assert.equal(await page.locator("#editor-inspector").isVisible(), true);
   await page.goto(`${origin}/?example=quake`);
   await page
     .locator("#viewer-status")
@@ -263,6 +274,7 @@ try {
         "WebGPU editor initializes four viewports",
         "Top viewport selects and drags a brush",
         "Undo restores the pre-drag source",
+        "Inspector collapses and stays closed after reload",
         "WebGPU viewer switches from Quake to GoldSrc BSP",
         "Overview exports a PNG and walkability sidecar round-trips",
         "WebGPU viewer opens a generated BSP2 map",

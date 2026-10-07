@@ -1077,6 +1077,13 @@ export const editorStyles = css({
       "minmax(0, 1fr) 0 minmax(16rem, var(--inspector-width, 20rem))",
     "min-height": "0",
   },
+  "& .editor-workspace[data-inspector-open='false']": {
+    "grid-template-columns": "minmax(0, 1fr)",
+  },
+  "& .editor-workspace[data-inspector-open='false'] > #inspector-resizer, & .editor-workspace[data-inspector-open='false'] > .source-panel":
+    {
+      display: "none",
+    },
   "& .editor-workspace:has(#project-map-selector:not([hidden]))": {
     "min-height": "min(70vh, 42rem)",
   },
