@@ -8,17 +8,11 @@ import {
 } from "@tea/maps-protocol";
 import { readHostedApi } from "./hosted-api.ts";
 import { initHostedAccess } from "./editor-hosted-access.ts";
-import { initHostedArtbin } from "./editor-hosted-artbin.ts";
 import {
   createHostedMap,
   createHostedProject,
 } from "./editor-hosted-create.ts";
-import {
-  listHostedResources,
-  removeHostedResource,
-  resourceUploads,
-  uploadHostedResource,
-} from "./editor-hosted-resources.ts";
+import { initEditorHostedResources } from "./editor-hosted-resources-bridge.ts";
 import {
   IndexedDbCollaborationOutbox,
   type DetachedHostedMap,
@@ -69,31 +63,6 @@ export function initHostedEditor(options: {
   const mapFormat =
     document.querySelector<HTMLSelectElement>("#hosted-map-format")!;
   const mapFile = document.querySelector<HTMLInputElement>("#hosted-map-file")!;
-  const resources = document.querySelector<HTMLDetailsElement>(
-    "#hosted-project-resources",
-  )!;
-  const resourceStatus = document.querySelector<HTMLElement>(
-    "#hosted-resource-status",
-  )!;
-  const resourceList = document.querySelector<HTMLUListElement>(
-    "#hosted-resource-list",
-  )!;
-  const resourceUpload = document.querySelector<HTMLElement>(
-    "#hosted-resource-upload",
-  )!;
-  const resourceFiles = document.querySelector<HTMLInputElement>(
-    "#hosted-resource-files",
-  )!;
-  const resourceFolder = document.querySelector<HTMLInputElement>(
-    "#hosted-resource-folder",
-  )!;
-  const uploadFilesButton = document.querySelector<HTMLButtonElement>(
-    "#hosted-resource-upload-button",
-  )!;
-  const uploadFolderButton = document.querySelector<HTMLButtonElement>(
-    "#hosted-resource-folder-button",
-  )!;
-  resourceFolder.setAttribute("webkitdirectory", "");
   const openButton = document.querySelector<HTMLButtonElement>(
     "#hosted-editor-open",
   )!;
@@ -123,104 +92,9 @@ export function initHostedEditor(options: {
     compareButton.disabled = viewingHosted || maps.disabled || !maps.value;
   }
 
-  async function refreshResources(project: HostedProject, version: number) {
-    resourceStatus.textContent = "Loading project resources";
-    const mounts = await listHostedResources(project.id);
-    if (version !== requestVersion) return;
-    resourceList.replaceChildren();
-    const uniqueBytes = new Map(
-      mounts.map((mount) => [mount.expectedSha256, mount.size]),
-    );
-    const totalBytes = [...uniqueBytes.values()].reduce(
-      (sum, size) => sum + size,
-      0,
-    );
-    resourceStatus.textContent = `${mounts.length} resources · ${Math.ceil(totalBytes / (1024 * 1024))} / 1024 MiB`;
-    if (mounts.length === 0) {
-      const empty = document.createElement("li");
-      empty.textContent = "No project resources yet";
-      resourceList.append(empty);
-    }
-    for (const mount of mounts) {
-      const row = document.createElement("li");
-      const link = document.createElement("a");
-      link.href = `/api/projects/${encodeURIComponent(project.id)}/resources/${encodeURIComponent(mount.id)}/content`;
-      link.download = mount.displayName;
-      link.textContent = mount.displayName;
-      const detail = document.createElement("small");
-      detail.textContent = `${mount.kind} · ${Math.ceil(mount.size / 1024)} KiB`;
-      row.append(link, detail);
-      if (project.role === "owner") {
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.textContent = "Remove";
-        remove.setAttribute("aria-label", `Remove ${mount.displayName}`);
-        remove.addEventListener("click", () => {
-          remove.disabled = true;
-          void removeHostedResource(project.id, mount.id)
-            .then(async () => {
-              options.resourcesChanged(project.id);
-              if (currentProject?.id === project.id)
-                await refreshResources(project, requestVersion);
-            })
-            .catch((error: unknown) => {
-              resourceStatus.textContent =
-                error instanceof Error ? error.message : String(error);
-              remove.disabled = false;
-            });
-        });
-        row.append(remove);
-      }
-      resourceList.append(row);
-    }
-  }
-
-  const artbin = initHostedArtbin({
-    async mounted(projectId) {
-      options.resourcesChanged(projectId);
-      if (currentProject?.id === projectId)
-        await refreshResources(currentProject, requestVersion);
-    },
+  const resourcePanel = initEditorHostedResources({
+    resourcesChanged: options.resourcesChanged,
   });
-
-  function uploadResources(folder: boolean) {
-    const project = currentProject;
-    if (!project || project.role !== "owner" || project.id !== projects.value)
-      return;
-    const input = folder ? resourceFolder : resourceFiles;
-    const files = [...(input.files ?? [])];
-    if (files.length === 0) return;
-    let uploads: ReturnType<typeof resourceUploads>;
-    try {
-      uploads = resourceUploads(files, folder);
-    } catch (error) {
-      resourceStatus.textContent =
-        error instanceof Error ? error.message : String(error);
-      return;
-    }
-    uploadFilesButton.disabled = true;
-    uploadFolderButton.disabled = true;
-    void (async () => {
-      try {
-        for (const [index, upload] of uploads.entries()) {
-          resourceStatus.textContent = `Uploading ${index + 1} of ${uploads.length}: ${upload.name}`;
-          await uploadHostedResource(project.id, upload);
-        }
-        input.value = "";
-        options.resourcesChanged(project.id);
-        if (currentProject?.id === project.id) {
-          await refreshResources(project, requestVersion);
-          resourceStatus.textContent += ` · uploaded ${uploads.length}`;
-        }
-      } catch (error) {
-        resourceStatus.textContent =
-          error instanceof Error ? error.message : String(error);
-      } finally {
-        uploadFilesButton.disabled = false;
-        uploadFolderButton.disabled = false;
-      }
-    })();
-  }
 
   login.href = `/auth/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
   if (initialMap || initialProject) picker.open = true;
@@ -229,10 +103,8 @@ export function initHostedEditor(options: {
     const version = ++requestVersion;
     currentProject = null;
     access.setProject(null);
-    artbin.setProject(null);
+    resourcePanel.setProject(null);
     mapCreate.hidden = true;
-    resources.hidden = true;
-    resourceList.replaceChildren();
     maps.replaceChildren();
     maps.disabled = true;
     openButton.disabled = true;
@@ -245,14 +117,7 @@ export function initHostedEditor(options: {
     if (version !== requestVersion) return;
     currentProject = response.project;
     access.setProject(response.project);
-    artbin.setProject(response.project);
-    resources.hidden = false;
-    resourceUpload.hidden = response.project.role !== "owner";
-    void refreshResources(response.project, version).catch((error: unknown) => {
-      if (version === requestVersion)
-        resourceStatus.textContent =
-          error instanceof Error ? error.message : String(error);
-    });
+    resourcePanel.setProject(response.project);
     mapCreate.hidden =
       response.project.role !== "owner" && response.project.role !== "editor";
     mapFormat.querySelector<HTMLOptionElement>(
@@ -358,8 +223,6 @@ export function initHostedEditor(options: {
         error instanceof Error ? error.message : String(error);
     });
   });
-  uploadFilesButton.addEventListener("click", () => uploadResources(false));
-  uploadFolderButton.addEventListener("click", () => uploadResources(true));
   projectCreateForm.addEventListener("submit", (event) => {
     event.preventDefault();
     projectCreateButton.disabled = true;

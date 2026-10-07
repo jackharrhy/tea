@@ -2,6 +2,7 @@ import { browserAssets } from "./assets/build-manifest.ts";
 import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
 import { EditorHostedPresence } from "./assets/editor-hosted-presence-panel.tsx";
 import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
+import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
@@ -907,49 +908,7 @@ export function EditorPage() {
                   </button>
                 </form>
               </details>
-              <details id="hosted-project-resources" hidden>
-                <summary>Project resources</summary>
-                <p id="hosted-resource-status" role="status"></p>
-                <ul id="hosted-resource-list"></ul>
-                <div id="hosted-resource-upload" hidden>
-                  <label for="hosted-resource-files">
-                    Upload project files
-                  </label>
-                  <input
-                    id="hosted-resource-files"
-                    type="file"
-                    multiple
-                    accept=".wad,.lmp,.pcx,.fgd,.def,.ent,.spr"
-                  />
-                  <button id="hosted-resource-upload-button" type="button">
-                    Upload files
-                  </button>
-                  <label for="hosted-resource-folder">Game asset folder</label>
-                  <input id="hosted-resource-folder" type="file" multiple />
-                  <button id="hosted-resource-folder-button" type="button">
-                    Upload folder assets
-                  </button>
-                  <small>
-                    Up to 512 MiB per file. Files are copied into this project.
-                  </small>
-                </div>
-                <div id="hosted-artbin-import" hidden>
-                  <form id="hosted-artbin-search">
-                    <label for="hosted-artbin-query">Import from Artbin</label>
-                    <input
-                      id="hosted-artbin-query"
-                      type="search"
-                      placeholder="WAD, palette, texture…"
-                    />
-                    <button type="submit">Search Artbin</button>
-                  </form>
-                  <p id="hosted-artbin-status" role="status"></p>
-                  <ul id="hosted-artbin-results"></ul>
-                  <button id="hosted-artbin-next" type="button" hidden>
-                    More results
-                  </button>
-                </div>
-              </details>
+              <EditorHostedResources />
               <EditorHostedAccess />
               <button id="hosted-editor-open" type="button" disabled>
                 Open hosted map

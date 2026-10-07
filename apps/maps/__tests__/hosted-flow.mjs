@@ -676,6 +676,52 @@ try {
   result.checks.push(
     "Remix performance panel records and exports frame timings",
   );
+  await page.locator("#hosted-project-resources summary").click();
+  await page
+    .locator("#hosted-resource-list")
+    .getByText("No project resources yet")
+    .waitFor();
+  await page.locator("#hosted-resource-files").setInputFiles({
+    name: "editor.fgd",
+    mimeType: "text/plain",
+    buffer: Buffer.from('@PointClass = editor_smoke : "Editor smoke" []'),
+  });
+  await page.locator("#hosted-resource-upload-button").click();
+  await page
+    .locator("#hosted-resource-list")
+    .getByRole("link", { name: "editor.fgd" })
+    .waitFor();
+  await page
+    .locator("#hosted-resource-list")
+    .getByRole("button", { name: "Remove editor.fgd" })
+    .click();
+  await page
+    .locator("#hosted-resource-list")
+    .getByText("No project resources yet")
+    .waitFor();
+  await page.locator("#hosted-artbin-query").fill("catalog");
+  await page.locator('#hosted-artbin-search button[type="submit"]').click();
+  await page
+    .locator("#hosted-artbin-results")
+    .getByText("catalog.fgd")
+    .waitFor();
+  await page
+    .locator("#hosted-artbin-results")
+    .getByRole("button", { name: "Import copy" })
+    .click();
+  await page
+    .locator("#hosted-resource-list")
+    .getByRole("link", { name: "catalog.fgd" })
+    .waitFor();
+  await page
+    .locator("#hosted-resource-list")
+    .getByRole("button", { name: "Remove catalog.fgd" })
+    .click();
+  await page
+    .locator("#hosted-resource-list")
+    .getByText("No project resources yet")
+    .waitFor();
+  result.checks.push("Remix editor resources upload, import, and removal");
   try {
     await page.locator("#hosted-share").waitFor({ state: "visible" });
   } catch (error) {
