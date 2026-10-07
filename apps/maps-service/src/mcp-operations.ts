@@ -58,7 +58,7 @@ const Name = z.string().trim().min(1).max(120);
 
 export const mcpOperations = [
   operation(
-    "worldview_list_projects",
+    "tea_maps_list_projects",
     "List projects accessible to this 4orm administrator.",
     z.strictObject({}),
     true,
@@ -67,8 +67,8 @@ export const mcpOperations = [
     }),
   ),
   operation(
-    "worldview_create_project",
-    "Create a hosted Worldview project owned by this account.",
+    "tea_maps_create_project",
+    "Create a hosted Tea Maps project owned by this account.",
     z.strictObject({ name: Name, game: HostedGameSchema }),
     false,
     (options, user, input) => ({
@@ -76,7 +76,7 @@ export const mcpOperations = [
     }),
   ),
   operation(
-    "worldview_get_project",
+    "tea_maps_get_project",
     "Inspect one accessible project, its maps, and pinned assets.",
     z.strictObject({ projectId: ProjectId }),
     true,
@@ -94,7 +94,7 @@ export const mcpOperations = [
     },
   ),
   operation(
-    "worldview_create_map",
+    "tea_maps_create_map",
     "Create a map, optionally from caller-supplied .map source.",
     z.strictObject({
       projectId: ProjectId,
@@ -130,7 +130,7 @@ export const mcpOperations = [
     },
   ),
   operation(
-    "worldview_get_map",
+    "tea_maps_get_map",
     "Inspect map metadata and a bounded slice of canonical source.",
     z.strictObject({
       mapId: MapId,
@@ -159,7 +159,7 @@ export const mcpOperations = [
     },
   ),
   operation(
-    "worldview_list_builds",
+    "tea_maps_list_builds",
     "List recent builds and diagnostic results for a map.",
     z.strictObject({ mapId: MapId }),
     true,
@@ -173,7 +173,7 @@ export const mcpOperations = [
     },
   ),
   operation(
-    "worldview_start_build",
+    "tea_maps_start_build",
     "Queue a preview or final build of a saved map version.",
     z.strictObject({
       mapId: MapId,
@@ -193,7 +193,7 @@ export const mcpOperations = [
     }),
   ),
   operation(
-    "worldview_get_build",
+    "tea_maps_get_build",
     "Inspect one build, its logs, diagnostics, and artifact hashes.",
     z.strictObject({ mapId: MapId, buildId: z.string().min(1).max(256) }),
     true,
@@ -204,7 +204,7 @@ export const mcpOperations = [
     },
   ),
   operation(
-    "worldview_get_build_artifact",
+    "tea_maps_get_build_artifact",
     "Read a chunk of a completed build artifact as base64 for inspection or download.",
     z.strictObject({
       mapId: MapId,
@@ -242,7 +242,7 @@ export const mcpOperations = [
     },
   ),
   operation(
-    "worldview_create_browser_grant",
+    "tea_maps_create_browser_grant",
     "Create a one-time browser login code for one editable project. Redeem within 10 minutes; browser access lasts one hour.",
     z.strictObject({ projectId: ProjectId }),
     false,
@@ -257,14 +257,17 @@ export const mcpOperations = [
         code: grant.code,
         expiresAt: grant.expiresAt,
         redeemUrl: `${options.mcpAuth?.publicUrl}/api/automation/redeem`,
-        projectUrl: `${options.mcpAuth?.publicUrl}/project/${input.projectId}`,
+        projectUrl: `${options.mcpAuth?.publicUrl}/projects/${input.projectId}`,
       };
     },
   ),
 ] satisfies readonly McpOperation[];
 
 export const mcpOperationsByName = new Map(
-  mcpOperations.map((tool) => [tool.name, tool]),
+  mcpOperations.flatMap((tool) => [
+    [tool.name, tool] as const,
+    [tool.name.replace(/^tea_maps_/, "worldview_"), tool] as const,
+  ]),
 );
 
 export const mcpToolDescriptions = mcpOperations.map(

@@ -37,7 +37,7 @@ export async function requireMcpAdmin(
   fetcher: typeof fetch = fetch,
 ): Promise<WorldviewUser> {
   if (!config)
-    throw new ServiceHttpError(503, "Worldview MCP is not configured");
+    throw new ServiceHttpError(503, "Tea Maps MCP is not configured");
   const token = /^Bearer ([^\s]+)$/i.exec(authorization ?? "")?.[1];
   if (!token) throw new ServiceHttpError(401, "Bearer token required");
   const credentials = Buffer.from(
@@ -76,10 +76,7 @@ export async function requireMcpAdmin(
     !value.exp ||
     value.exp <= Math.floor(Date.now() / 1000)
   )
-    throw new ServiceHttpError(
-      401,
-      "Worldview MCP token is invalid or expired",
-    );
+    throw new ServiceHttpError(401, "Tea Maps MCP token is invalid or expired");
 
   let profileResponse: Response;
   try {
@@ -94,14 +91,14 @@ export async function requireMcpAdmin(
     throw new ServiceHttpError(503, "4orm account lookup is unavailable");
   }
   if (!profileResponse.ok)
-    throw new ServiceHttpError(401, "Worldview MCP account is unavailable");
+    throw new ServiceHttpError(401, "Tea Maps MCP account is unavailable");
   const profile = ProfileSchema.safeParse(
     await profileResponse.json().catch(() => null),
   );
   if (!profile.success || profile.data.sub !== value.sub) {
     throw new ServiceHttpError(
       401,
-      "Worldview MCP account identity does not match",
+      "Tea Maps MCP account identity does not match",
     );
   }
   if (!profile.data.is_admin)

@@ -52,7 +52,7 @@ async function call(
   });
 }
 
-describe("Worldview MCP", () => {
+describe("Tea Maps MCP", () => {
   test("advertises OAuth and limits tools to admins with project membership", async () => {
     const app = await fixture(fourmFetch(true), undefined, undefined, mcpAuth);
     mcpAuth.publicUrl = app.origin;
@@ -69,15 +69,24 @@ describe("Worldview MCP", () => {
     expect(unauthenticated.headers.get("www-authenticate")).toContain(
       "resource_metadata=",
     );
+    const initialized = await fetch(`${app.origin}/mcp`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer test-token",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 0, method: "initialize" }),
+    });
+    expect((await initialized.json()).result.serverInfo.name).toBe("tea-maps");
 
-    const created = await call(app.origin, "worldview_create_project", {
+    const created = await call(app.origin, "tea_maps_create_project", {
       name: "MCP map",
       game: "quake",
     });
     expect(created.status).toBe(200);
     const project = (await created.json()).result.structuredContent.project;
     expect(project.name).toBe("MCP map");
-    const mapResponse = await call(app.origin, "worldview_create_map", {
+    const mapResponse = await call(app.origin, "tea_maps_create_map", {
       projectId: project.id,
       name: "test.map",
       format: "quake",
@@ -85,6 +94,14 @@ describe("Worldview MCP", () => {
     expect((await mapResponse.json()).result.structuredContent.map.name).toBe(
       "test.map",
     );
+    const grantResponse = await call(
+      app.origin,
+      "tea_maps_create_browser_grant",
+      { projectId: project.id },
+    );
+    expect(
+      (await grantResponse.json()).result.structuredContent.projectUrl,
+    ).toBe(`${app.origin}/projects/${project.id}`);
     const outsider = app.database.upsertUser({
       fourmSub: "outsider",
       username: "outsider",
@@ -112,6 +129,9 @@ describe("Worldview MCP", () => {
     });
     const tools = (await listed.json()).result.tools;
     expect(tools.map((tool: { name: string }) => tool.name)).toContain(
+      "tea_maps_start_build",
+    );
+    expect(tools.map((tool: { name: string }) => tool.name)).not.toContain(
       "worldview_start_build",
     );
   });
@@ -119,7 +139,7 @@ describe("Worldview MCP", () => {
   test("rejects a current non-admin even with a valid scoped OAuth token", async () => {
     const app = await fixture(fourmFetch(false), undefined, undefined, mcpAuth);
     mcpAuth.publicUrl = app.origin;
-    expect((await call(app.origin, "worldview_list_projects", {})).status).toBe(
+    expect((await call(app.origin, "tea_maps_list_projects", {})).status).toBe(
       403,
     );
   });

@@ -206,6 +206,8 @@ The selected-face UV editor now previews offset, rotation, and scale drags again
 
 The Tea editor now exposes WebMCP site tools for live document inspection, bounded object, issue, and material lists, and source slices in browsers that support `document.modelContext`. Tools frame the view and choose a viewport tool. Authoring tools select objects and faces, create boxes and point entities, translate, rotate, scale, shear, duplicate, or delete selections, edit materials and entity properties, and use local or personalized hosted history with document revision guards. Document tools can open a map from an authorized local project folder or replace the current source as a detached copy, with explicit confirmation for discarded work or replacement.
 
+The hosted service's separate MCP endpoint advertises `tea_maps_*` tools and the `tea-maps` server identity. It accepts the old `worldview_*` names as call aliases during migration, and browser grants link to Tea's canonical project route. Fourm still requires the copied `worldview:admin` scope until that external authorization contract is changed.
+
 The hosted map picker can compare its selected hosted source with the current local editor source in a read-only dialog. This standalone comparison does not link maps or transfer source.
 
 The project sync dialog can pair a local folder project's maps with a Tea hosted project, inspect source and baseline status, and explicitly pull to disk or push to the hosted service. It validates game and face syntax, checks both copies again before a write, and keeps the baseline in browser storage. Opening an original Worldview project with a link to its old origin requires changing the link before syncing with Tea.

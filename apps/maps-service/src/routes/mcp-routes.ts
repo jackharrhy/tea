@@ -36,7 +36,7 @@ export function createMcpRoutes(options: WorldviewServiceOptions) {
       "/.well-known/oauth-protected-resource/mcp",
       () => {
         if (!options.mcpAuth) {
-          return webError(503, "Worldview MCP is not configured");
+          return webError(503, "Tea Maps MCP is not configured");
         }
         return new Response(
           JSON.stringify({
@@ -64,13 +64,13 @@ export function createMcpRoutes(options: WorldviewServiceOptions) {
     ),
     defineWebRoute("mcp-post", "POST", "/mcp", async (context) => {
       const config = options.mcpAuth;
-      if (!config) return webError(503, "Worldview MCP is not configured");
+      if (!config) return webError(503, "Tea Maps MCP is not configured");
       const origin = context.request.headers.get("origin");
       if (
         (origin && origin !== config.publicUrl) ||
         context.request.headers.get("host") !== new URL(config.publicUrl).host
       ) {
-        return webError(403, "Worldview MCP origin is not allowed");
+        return webError(403, "Tea Maps MCP origin is not allowed");
       }
       let user;
       try {
@@ -116,7 +116,7 @@ export function createMcpRoutes(options: WorldviewServiceOptions) {
           result: {
             protocolVersion: version,
             capabilities: { tools: { listChanged: false } },
-            serverInfo: { name: "worldview", version: "0.1.0" },
+            serverInfo: { name: "tea-maps", version: "0.1.0" },
           },
         });
       }
@@ -171,7 +171,7 @@ export function createMcpRoutes(options: WorldviewServiceOptions) {
           if (
             !(error instanceof ServiceHttpError || error instanceof z.ZodError)
           ) {
-            console.error("Worldview MCP tool failed", error);
+            console.error("Tea Maps MCP tool failed", error);
           }
           return rpcResponse({
             jsonrpc: "2.0",
