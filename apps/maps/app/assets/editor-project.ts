@@ -2,6 +2,7 @@ import {
   developmentTexturePack,
   EntityDefinitionCatalog,
   EditorMaterialCatalog,
+  mapSourceFingerprint,
   parseEntityDefinitionFile,
   parseWorldviewProject,
   worldviewGameProfile,
@@ -47,6 +48,7 @@ export interface ProjectMap {
 export interface MapProject {
   readonly handle: MapDirectoryHandle;
   readonly manifestFileName: string;
+  readonly manifestFingerprint: string;
   readonly manifest: WorldviewProjectManifest;
   readonly maps: readonly ProjectMap[];
   readonly definitions: EntityDefinitionCatalog;
@@ -437,7 +439,8 @@ export async function openMapProject(
   handle: MapDirectoryHandle,
 ): Promise<MapProject> {
   const { name: manifestFileName, file } = await projectManifestFile(handle);
-  const manifest = parseWorldviewProject(await file.text());
+  const manifestSource = await file.text();
+  const manifest = parseWorldviewProject(manifestSource);
   const maps = (
     await Promise.all(
       manifest.mapRoots.map(async (root) => {
@@ -458,6 +461,7 @@ export async function openMapProject(
   return {
     handle,
     manifestFileName,
+    manifestFingerprint: mapSourceFingerprint(manifestSource),
     manifest,
     maps: [...uniqueMaps.values()],
     definitions: entityResources.definitions,

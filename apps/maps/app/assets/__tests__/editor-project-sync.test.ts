@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { createHash } from "node:crypto";
 import {
   createStarterDocument,
+  mapSourceFingerprint,
   parseWorldviewProject,
   serializeMap,
 } from "@tea/maps-editor/core";
@@ -69,6 +70,7 @@ function fixture(
   const files = new Map([[manifestFileName, manifest]]);
   const project = {
     manifestFileName,
+    manifestFingerprint: mapSourceFingerprint(manifest.read()),
     manifest: parseWorldviewProject(manifest.read()),
     maps: [{ path: "maps/demo.map", handle: local.handle }],
     handle: {
@@ -157,6 +159,9 @@ it("creates a Tea manifest and preserves the legacy manifest when linking", asyn
     origin,
   );
   expect(linked.manifestFileName).toBe("tea.maps.project.json");
+  expect(linked.manifestFingerprint).toBe(
+    mapSourceFingerprint(files.get("tea.maps.project.json")!.read()),
+  );
   expect(manifest.read()).toBe(original);
   expect(
     JSON.parse(files.get("tea.maps.project.json")!.read()).hosted,
@@ -164,6 +169,34 @@ it("creates a Tea manifest and preserves the legacy manifest when linking", asyn
     origin,
     projectId,
   });
+});
+
+it("refuses to link a stale legacy manifest", async () => {
+  const { project, manifest, files } = fixture();
+  manifest.change(`${manifest.read()}\n`);
+  const remote = {
+    id: projectId,
+    game: "quake",
+    maps: [{ id: mapId, name: "Demo map", format: "valve-220" }],
+  } as Parameters<typeof linkHostedProject>[1];
+  await expect(
+    linkHostedProject(project, remote, { "maps/demo.map": mapId }, origin),
+  ).rejects.toThrow(/manifest changed on disk/);
+  expect(files.has("tea.maps.project.json")).toBe(false);
+});
+
+it("refuses to overwrite a Tea manifest changed since opening", async () => {
+  const { project, manifest } = fixture(baseSource, "tea.maps.project.json");
+  manifest.change(`${manifest.read()}\n`);
+  const remote = {
+    id: projectId,
+    game: "quake",
+    maps: [{ id: mapId, name: "Demo map", format: "valve-220" }],
+  } as Parameters<typeof linkHostedProject>[1];
+  await expect(
+    linkHostedProject(project, remote, { "maps/demo.map": mapId }, origin),
+  ).rejects.toThrow(/changed on disk/);
+  expect(JSON.parse(manifest.read())).not.toHaveProperty("hosted");
 });
 
 it("tracks the common baseline and refuses a stale pull", async () => {
