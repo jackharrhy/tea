@@ -14,4 +14,5 @@ export const routes = route({
   legacyProjectResources: get("/project/:projectRef/resources"),
   legacyProjectAccess: get("/project/:projectRef/access"),
   legacyHostedMap: get("/project/:projectRef/map/:mapRef"),
+  notFound: get("/*path"),
 });
