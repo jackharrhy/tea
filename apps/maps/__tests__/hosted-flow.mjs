@@ -335,9 +335,9 @@ try {
       TEA_MAPS_COLLABORATION_URL: collaborationOrigin,
       TEA_MAPS_REALTIME_TICKET_SECRET: secret,
       FOURM_URL: fourmOrigin,
-      ARTBIN_URL: fourmOrigin,
-      FOURM_SERVICE_CLIENT_ID: "maps-smoke",
-      FOURM_SERVICE_CLIENT_SECRET: "disposable-secret",
+      TEA_MAPS_ARTBIN_URL: fourmOrigin,
+      TEA_MAPS_ARTBIN_CLIENT_ID: "maps-smoke",
+      TEA_MAPS_ARTBIN_CLIENT_SECRET: "disposable-secret",
       TEA_MAPS_QUAKE_COMPILER_URL: compilerOrigin,
     },
   );
@@ -2088,7 +2088,11 @@ try {
         return {
           kind: "directory",
           name,
-          getFileHandle: async (child) => children[child],
+          getFileHandle: async (child, options) => {
+            if (!children[child] && options?.create)
+              children[child] = fixture.file(child, "");
+            return children[child];
+          },
           getDirectoryHandle: async (child) => children[child],
           async *entries() {
             yield* Object.entries(children);
@@ -2103,7 +2107,10 @@ try {
       ]),
     );
     const root = fixture.directory("smoke", {
-      "tea.maps.project.json": fixture.file("tea.maps.project.json", manifest),
+      "worldview.project.json": fixture.file(
+        "worldview.project.json",
+        manifest,
+      ),
       maps: fixture.directory("maps", mapFiles),
     });
     window.showDirectoryPicker = async () => root;
@@ -2231,6 +2238,14 @@ try {
     projectUrl.split("/").at(-1),
   );
   assert.equal(
+    await page.evaluate(async () => {
+      const root = await window.showDirectoryPicker();
+      const handle = await root.getFileHandle("worldview.project.json");
+      return JSON.parse(await (await handle.getFile()).text()).hosted;
+    }),
+    undefined,
+  );
+  assert.equal(
     await page.locator("#project-sync-map").inputValue(),
     "maps/alpha.map",
   );
@@ -2250,7 +2265,7 @@ try {
   );
   await page.locator("#project-sync-close").click();
   result.checks.push(
-    "Remix Tea local project chooser, link writing, source comparison, and Pull to disk",
+    "Remix legacy local project chooser, separate Tea link manifest, source comparison, and Pull to disk",
   );
   await page.locator("#hosted-editor-picker summary").first().click();
   await page.waitForFunction(
