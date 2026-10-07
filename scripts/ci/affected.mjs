@@ -141,7 +141,8 @@ if (
         ? paths.filter(
             (path) =>
               path !== ".github/workflows/check.yml" &&
-              path !== "scripts/ci/affected.mjs",
+              path !== "scripts/ci/affected.mjs" &&
+              path !== "compose.yml",
           )
         : paths,
       loadWorkspaces(),

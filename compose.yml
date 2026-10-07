@@ -114,6 +114,9 @@ services:
       TEA_MAPS_COLLABORATION_URL: http://maps-collaboration:44100
       TEA_MAPS_REALTIME_TICKET_SECRET: ${MAPS_REALTIME_TICKET_SECRET:-tea-maps-local-realtime-ticket-secret-change-me}
       FOURM_URL: ${FOURM_URL:-http://host.docker.internal:8000}
+      TEA_MAPS_ARTBIN_URL: ${TEA_MAPS_ARTBIN_URL:-}
+      TEA_MAPS_ARTBIN_CLIENT_ID: ${TEA_MAPS_ARTBIN_CLIENT_ID:-}
+      TEA_MAPS_ARTBIN_CLIENT_SECRET: ${TEA_MAPS_ARTBIN_CLIENT_SECRET:-}
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:
