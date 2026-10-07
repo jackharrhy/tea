@@ -118,6 +118,8 @@ CELLD_BIN=/absolute/path/to/celld npm run test:celld -- --upload-bytes 107374182
 CELLD_BIN=/absolute/path/to/celld npm run test:celld -- --backend azurite --azurite-url http://127.0.0.1:10000 --allow-azure-suffix-limitation --output /tmp/radio-azurite-smoke.json
 ```
 
+For a containerized 1 GiB check, put the disposable state on a disk-backed filesystem. Set `TMPDIR` to such a directory before running the smoke; a tmpfs-backed `/tmp` charges the SQLite object file as active shared memory inside the container and changes the memory test.
+
 Install Playwright's Chromium with `npx playwright install chromium` if needed. The test builds
 production assets, uses a temporary store and random authentication credentials, creates a room,
 uploads a deterministic WAV through the real streaming API, checks browser decoding/playback,
