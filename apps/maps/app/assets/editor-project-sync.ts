@@ -157,13 +157,24 @@ export async function linkHostedProject(
     },
   };
   const text = serializeWorldviewProject(manifest);
-  const file = await project.handle.getFileHandle(project.manifestFileName);
+  const manifestFileName = "tea.maps.project.json";
+  if (project.manifestFileName !== manifestFileName) {
+    for await (const [name] of project.handle.entries()) {
+      if (name === manifestFileName)
+        throw new Error(
+          "Tea project manifest already exists; reopen the folder before linking",
+        );
+    }
+  }
+  const file = await project.handle.getFileHandle(manifestFileName, {
+    create: project.manifestFileName !== manifestFileName,
+  });
   await writeMapFile(
     file,
     text,
     mapSourceFingerprint(await (await file.getFile()).text()),
   );
-  return { ...project, manifest };
+  return { ...project, manifestFileName, manifest };
 }
 
 export async function inspectLinkedMap(

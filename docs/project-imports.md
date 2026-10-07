@@ -58,7 +58,7 @@ Worldview is a monorepo, rather than one app. Tea's viewer opens generated examp
 
 The Maps viewer now opens Worldview camera and fixture links and can copy the current view URL. The editor now keeps bounded local source versions and protected checkpoints; recovery restores open as detached copies so the original disk file is never replaced by a version choice.
 
-Local Maps projects can use `tea.maps.project.json` with the existing project schema. Legacy `worldview.project.json` folders still open, and hosted sync writes to the manifest that was opened. A folder with both filenames is rejected until the owner chooses one, avoiding an ambiguous sync target. BSP viewer sidecars use `.tea-maps.json` and `.tea-maps-walkability.json`, while their Worldview names remain readable; Tea names take priority when both exist. Walkability downloads use the Tea filename.
+Local Maps projects can use `tea.maps.project.json` with the existing project schema. Legacy `worldview.project.json` folders still open; linking one to Tea hosted sync creates a separate Tea manifest and leaves the legacy file unchanged. Tea opens its own manifest when both exist. BSP viewer sidecars use `.tea-maps.json` and `.tea-maps-walkability.json`, while their Worldview names remain readable; Tea names take priority when both exist. Walkability downloads use the Tea filename.
 
 The editor's Recent projects menu now renders as a Remix client entry while retaining the editor's folder permission and unsaved-work handling. The viewer source controls and hosted project pages also use Remix client entries.
 
@@ -222,7 +222,7 @@ A separate local Artbin rehearsal ran the actual Fourm and Artbin applications a
 
 The hosted map picker can compare its selected hosted source with the current local editor source in a read-only dialog. This standalone comparison does not link maps or transfer source.
 
-The project sync dialog can pair a local folder project's maps with a Tea hosted project, inspect source and baseline status, and explicitly pull to disk or push to the hosted service. It validates game and face syntax, checks both copies again before a write, and keeps the baseline in browser storage. Opening an original Worldview project with a link to its old origin requires changing the link before syncing with Tea.
+The project sync dialog can pair a local folder project's maps with a Tea hosted project, inspect source and baseline status, and explicitly pull to disk or push to the hosted service. It validates game and face syntax, checks both copies again before a write, and keeps the baseline in browser storage. Linking an original Worldview project creates a separate `tea.maps.project.json`, preserving its legacy manifest and origin. When both manifests exist, Tea opens its own.
 
 Hosted Maps editing now exposes the room share link and participant presence details in Tea's editor, alongside its existing remote selection, pointer, and preview overlays. The presence panel can continue as an independent local copy through the same recovery-aware path as the hosted picker. Its browser flow checks that the room closes, local editing remains available, and the hosted source hash stays unchanged.
 

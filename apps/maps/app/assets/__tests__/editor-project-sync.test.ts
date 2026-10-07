@@ -66,18 +66,29 @@ function fixture(
       buildProfiles: [],
     }),
   );
+  const files = new Map([[manifestFileName, manifest]]);
   const project = {
     manifestFileName,
     manifest: parseWorldviewProject(manifest.read()),
     maps: [{ path: "maps/demo.map", handle: local.handle }],
     handle: {
-      getFileHandle: async (name: string) => {
-        if (name !== manifestFileName) throw new Error(`Missing ${name}`);
-        return manifest.handle;
+      getFileHandle: async (name: string, options?: { create?: boolean }) => {
+        let found = files.get(name);
+        if (!found && options?.create) {
+          found = fileHandle(name, "");
+          files.set(name, found);
+        }
+        if (!found) throw new Error(`Missing ${name}`);
+        return found.handle;
+      },
+      async *entries() {
+        for (const [name, found] of files) {
+          yield [name, { ...found.handle, kind: "file" }];
+        }
       },
     },
   } as unknown as MapProject;
-  return { project, local, manifest };
+  return { project, local, manifest, files };
 }
 
 function hostedMap(source: string, mapVersion = 1) {
@@ -129,6 +140,30 @@ it("writes a Tea project link to its opened manifest", async () => {
   } as Parameters<typeof linkHostedProject>[1];
   await linkHostedProject(project, remote, { "maps/demo.map": mapId }, origin);
   expect(JSON.parse(manifest.read()).hosted.projectId).toBe(projectId);
+});
+
+it("creates a Tea manifest and preserves the legacy manifest when linking", async () => {
+  const { project, manifest, files } = fixture();
+  const original = manifest.read();
+  const remote = {
+    id: projectId,
+    game: "quake",
+    maps: [{ id: mapId, name: "Demo map", format: "valve-220" }],
+  } as Parameters<typeof linkHostedProject>[1];
+  const linked = await linkHostedProject(
+    project,
+    remote,
+    { "maps/demo.map": mapId },
+    origin,
+  );
+  expect(linked.manifestFileName).toBe("tea.maps.project.json");
+  expect(manifest.read()).toBe(original);
+  expect(
+    JSON.parse(files.get("tea.maps.project.json")!.read()).hosted,
+  ).toMatchObject({
+    origin,
+    projectId,
+  });
 });
 
 it("tracks the common baseline and refuses a stale pull", async () => {

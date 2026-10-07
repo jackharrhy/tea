@@ -27,7 +27,10 @@ import type { ProjectDirectoryIdentity } from "./editor-project-build-bindings.t
 export interface MapDirectoryHandle extends ProjectDirectoryIdentity {
   readonly kind: "directory";
   readonly name: string;
-  getFileHandle(name: string): Promise<MapFileHandle>;
+  getFileHandle(
+    name: string,
+    options?: { readonly create?: boolean },
+  ): Promise<MapFileHandle>;
   getDirectoryHandle(name: string): Promise<MapDirectoryHandle>;
   queryPermission?(options: { readonly mode: "readwrite" }): Promise<string>;
   requestPermission?(options: { readonly mode: "readwrite" }): Promise<string>;
@@ -104,13 +107,11 @@ export async function projectManifestFile(
   root: MapDirectoryHandle,
 ): Promise<{ name: string; file: File }> {
   const names = ["tea.maps.project.json", "worldview.project.json"];
-  const found: string[] = [];
+  const found = new Set<string>();
   for await (const [name, handle] of root.entries()) {
-    if (handle.kind === "file" && names.includes(name)) found.push(name);
+    if (handle.kind === "file" && names.includes(name)) found.add(name);
   }
-  if (found.length > 1)
-    throw new Error(`Project folder contains both ${names.join(" and ")}`);
-  const name = found[0];
+  const name = names.find((candidate) => found.has(candidate));
   if (!name) throw new Error(`Project folder needs ${names.join(" or ")}`);
   return { name, file: await (await root.getFileHandle(name)).getFile() };
 }

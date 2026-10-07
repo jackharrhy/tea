@@ -122,7 +122,7 @@ const manifest = {
 };
 
 describe("local map projects", () => {
-  it("opens Tea project manifests and rejects ambiguous folders", async () => {
+  it("prefers a Tea manifest when a legacy manifest is also present", async () => {
     const teaFile = file(
       "tea.maps.project.json",
       JSON.stringify({ ...manifest, mapRoots: ["."] }),
@@ -139,8 +139,8 @@ describe("local map projects", () => {
         JSON.stringify(manifest),
       ),
     });
-    await expect(openMapProject(ambiguous)).rejects.toThrow(
-      "contains both tea.maps.project.json and worldview.project.json",
+    expect((await openMapProject(ambiguous)).manifestFileName).toBe(
+      "tea.maps.project.json",
     );
   });
 
