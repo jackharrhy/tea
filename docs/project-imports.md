@@ -32,6 +32,8 @@ Rotate, scale, and shear now have viewport manipulators and a shared movable piv
 
 The Maps editor can load or snapshot read-only reference maps, edit project-defined entity properties with typed controls, adjust its perspective FOV, switch to a perspective-only view, resize its panes, and restore per-map camera and layout state from browser storage.
 
+Opening a local folder project now shows a searchable map chooser before editing. It marks the last opened map when that history is available and asks about unsaved work before replacing the current map.
+
 Local Maps saving now uses Worldview's source-preserving save plan. A blocked patch cannot overwrite the opened file or silently become a normal download; Export normalized creates a separate copy. Recovery snapshots retain the semantic document and source anchors.
 
 The editor also has Worldview's opt-in performance sampling: bounded browser frame cadence and renderer CPU submission timing, with a 30-second JSON capture.
