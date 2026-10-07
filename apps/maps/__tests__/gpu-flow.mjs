@@ -199,6 +199,11 @@ try {
   if (testCorpus) {
     page.setDefaultTimeout(90_000);
     const catalog = await (await fetch(`${origin}/local-fixtures.json`)).json();
+    const localResponses = [];
+    page.on("response", (response) => {
+      if (new URL(response.url()).pathname.startsWith("/local/"))
+        localResponses.push({ url: response.url(), status: response.status() });
+    });
     const cases = [
       ["steam-corpus/thirty-flights-of-loving/bar1", "quake2-bsp38"],
       ["steam-corpus/ricochet/rc_arena", "goldsrc-bsp30"],
@@ -207,6 +212,7 @@ try {
       ["steam-corpus/quake-ii/mgu1m1", "quake2-bsp38"],
     ];
     for (const [id, format] of cases) {
+      localResponses.length = 0;
       assert.ok(
         catalog.some((fixture) => fixture.id === id),
         `${id} is absent from the local fixture catalog`,
@@ -226,6 +232,27 @@ try {
         /missing.*(texture|palette)/i,
         `${id} has missing assets`,
       );
+      const fetched = localResponses
+        .filter((response) => response.status === 200)
+        .map((response) => new URL(response.url).pathname);
+      assert.ok(
+        fetched.some((path) => path.endsWith(".bsp")),
+        `${id} did not fetch its BSP`,
+      );
+      assert.ok(
+        fetched.some((path) => /\.(?:lmp|pcx)$/u.test(path)),
+        `${id} did not fetch its palette`,
+      );
+      if (format === "quake2-bsp38")
+        assert.ok(
+          fetched.some((path) => path.endsWith(".wal")),
+          `${id} did not fetch a WAL texture`,
+        );
+      if (format === "quake-bsp2")
+        assert.ok(
+          fetched.some((path) => path.endsWith(".wad")),
+          `${id} did not fetch a WAD`,
+        );
     }
   }
   assert.deepEqual(pageErrors, []);
