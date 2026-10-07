@@ -5,6 +5,7 @@ import { createWriteStream } from "node:fs";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
+import { DatabaseSync } from "node:sqlite";
 import { join, resolve as resolvePath } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
@@ -29,10 +30,12 @@ const esbuild = createRequire(import.meta.url).resolve("esbuild/bin/esbuild");
 const state = await mkdtemp(join(tmpdir(), "tea-maps-cutover-"));
 const secret = randomBytes(32).toString("hex");
 const mapId = `cutover-${randomBytes(6).toString("hex")}`;
+const secondMapId = `cutover-${randomBytes(6).toString("hex")}`;
 const source = serializeMap(createStarterDocument());
 const sourceApp = resolvePath(values["source-app"]);
 const sourceBinary = values["source-binary"] ?? values.binary;
 let runtime;
+let comparisonSource;
 
 function binaryVersion(binary) {
   const result = spawnSync(binary, ["--version"], { encoding: "utf8" });
@@ -75,21 +78,20 @@ function environment(database, replicas, port, secretName) {
   };
 }
 
-async function start(cwd, env, label, binary = values.binary) {
+function spawnRuntime(cwd, env, label, binary) {
   const log = createWriteStream(join(state, `${label}.log`));
-  runtime = spawn(binary, ["--no-control-plane"], {
+  const child = spawn(binary, ["--no-control-plane"], {
     cwd,
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  runtime.stdout.pipe(log);
-  runtime.stderr.pipe(log);
+  child.stdout.pipe(log);
+  child.stderr.pipe(log);
+  return child;
 }
 
-async function stop(signal = "SIGTERM") {
-  if (!runtime) return;
-  const child = runtime;
-  runtime = undefined;
+async function stopChild(child, signal = "SIGTERM") {
+  if (!child) return;
   if (child.exitCode !== null || child.signalCode !== null) return;
   child.kill(signal);
   const timeout = setTimeout(() => child.kill("SIGKILL"), 30_000);
@@ -100,9 +102,19 @@ async function stop(signal = "SIGTERM") {
   }
 }
 
-async function ready(origin) {
+async function start(cwd, env, label, binary = values.binary) {
+  runtime = spawnRuntime(cwd, env, label, binary);
+}
+
+async function stop(signal = "SIGTERM") {
+  const child = runtime;
+  runtime = undefined;
+  await stopChild(child, signal);
+}
+
+async function ready(origin, child = runtime) {
   for (let attempt = 0; attempt < 90; attempt++) {
-    if (runtime.exitCode !== null || runtime.signalCode !== null)
+    if (child.exitCode !== null || child.signalCode !== null)
       throw new Error(`Celld exited; see ${state}`);
     try {
       const response = await fetch(`${origin}/health`, {
@@ -115,14 +127,39 @@ async function ready(origin) {
   throw new Error(`Celld did not become ready; see ${state}`);
 }
 
-function ticket() {
+function compareCells(hostedDatabase, sourceOrigin, targetOrigin) {
+  const result = spawnSync(
+    process.execPath,
+    [
+      join(app, "scripts/compare-cells.mjs"),
+      "--maps-db",
+      hostedDatabase,
+      "--source-origin",
+      sourceOrigin,
+      "--target-origin",
+      targetOrigin,
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        MAPS_SOURCE_TICKET_SECRET: secret,
+        MAPS_TARGET_TICKET_SECRET: secret,
+      },
+    },
+  );
+  if (result.error) throw result.error;
+  return { exitCode: result.status, report: JSON.parse(result.stdout) };
+}
+
+function ticket(targetMapId = mapId) {
   const header = Buffer.from(
     JSON.stringify({ algorithm: "HS256", type: "WVT" }),
   ).toString("base64url");
   const payload = Buffer.from(
     JSON.stringify({
       version: 2,
-      mapId,
+      mapId: targetMapId,
       principalId: "user-1",
       actorId: "user-1",
       role: "owner",
@@ -135,11 +172,17 @@ function ticket() {
   return `${header}.${payload}.${signature}`;
 }
 
-async function request(origin, path, method = "GET", body) {
-  const response = await fetch(`${origin}/sync/maps/${mapId}${path}`, {
+async function request(
+  origin,
+  path,
+  method = "GET",
+  body,
+  targetMapId = mapId,
+) {
+  const response = await fetch(`${origin}/sync/maps/${targetMapId}${path}`, {
     method,
     headers: {
-      Authorization: `Bearer ${ticket()}`,
+      Authorization: `Bearer ${ticket(targetMapId)}`,
       ...(body ? { "Content-Type": "application/json" } : {}),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
@@ -187,6 +230,15 @@ try {
   assert.ok(checkpoint.checkpoint?.id);
   const originalCheckpoints = await request(sourceOrigin, "/checkpoints");
   assert.equal(originalCheckpoints.checkpoints.length, 1);
+  await request(sourceOrigin, "/initialize", "PUT", { source }, secondMapId);
+  const secondBefore = await request(
+    sourceOrigin,
+    "/snapshot",
+    "GET",
+    undefined,
+    secondMapId,
+  );
+  assert.equal(secondBefore.source, source);
   await stop();
 
   const backup = spawnSync(
@@ -224,6 +276,10 @@ try {
   await ready(targetOrigin);
   assert.deepEqual(await request(targetOrigin, "/snapshot"), before);
   assert.deepEqual(
+    await request(targetOrigin, "/snapshot", "GET", undefined, secondMapId),
+    secondBefore,
+  );
+  assert.deepEqual(
     await request(targetOrigin, "/checkpoints"),
     originalCheckpoints,
   );
@@ -232,6 +288,23 @@ try {
       .source,
     source,
   );
+  const hostedDatabase = join(state, "hosted-maps.db");
+  const hosted = new DatabaseSync(hostedDatabase);
+  hosted.exec("CREATE TABLE maps(id TEXT PRIMARY KEY)");
+  hosted.prepare("INSERT INTO maps(id) VALUES (?)").run(mapId);
+  hosted.prepare("INSERT INTO maps(id) VALUES (?)").run(secondMapId);
+  hosted.close();
+  comparisonSource = spawnRuntime(
+    sourceApp,
+    sourceEnv,
+    "source-compare",
+    sourceBinary,
+  );
+  await ready(sourceOrigin, comparisonSource);
+  const matched = compareCells(hostedDatabase, sourceOrigin, targetOrigin);
+  assert.equal(matched.exitCode, 0, JSON.stringify(matched.report));
+  assert.equal(matched.report.status, "passed");
+  assert.equal(matched.report.maps.length, 2);
 
   const edited = source.replace("Worldview editor starter", "Tea copied map");
   assert.notEqual(edited, source);
@@ -255,6 +328,17 @@ try {
     (await request(targetOrigin, "/checkpoints")).checkpoints.length,
     2,
   );
+  const diverged = compareCells(hostedDatabase, sourceOrigin, targetOrigin);
+  assert.equal(diverged.exitCode, 1);
+  assert.equal(diverged.report.status, "mismatch");
+  assert.equal(
+    diverged.report.maps.find((map) => map.mapId === mapId)?.matched,
+    false,
+  );
+  assert.equal(
+    diverged.report.maps.find((map) => map.mapId === secondMapId)?.matched,
+    true,
+  );
   console.log(
     JSON.stringify({
       status: "passed",
@@ -265,6 +349,7 @@ try {
         "original map and checkpoint",
         "stopped SQLite backup",
         "Tea snapshot and checkpoint match",
+        "all-map comparator matches two copied cells and detects Tea-only edit",
         "Tea source edit survives SIGKILL and empty replica restore",
       ],
       state: values["keep-state"] ? state : undefined,
@@ -277,6 +362,7 @@ try {
   process.exitCode = 1;
 } finally {
   await stop();
+  await stopChild(comparisonSource);
   if (process.exitCode !== 1 && !values["keep-state"])
     await rm(state, { recursive: true, force: true });
 }
