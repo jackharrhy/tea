@@ -81,6 +81,8 @@ export function ProjectsPage(
                   <section aria-labelledby="local-projects-title">
                     <h2 id="local-projects-title">Recent local projects</h2>
                     <div id="local-projects-list" class="project-list" />
+                    <h3>Recovered maps</h3>
+                    <div id="detached-maps-list" class="project-list" />
                     <p class="projects-note">
                       Project folders stay on this device. Open a folder from
                       the editor, or <a href="/new-map">create a local map</a>.

@@ -2136,6 +2136,16 @@ function openDetachedCopy(copy: {
   status.textContent = `Local recovery copy ${copy.fileName} · save to a file when ready`;
 }
 
+async function openDetachedCopyAfterConfirmation(
+  copy: DetachedHostedMap,
+): Promise<boolean> {
+  if (!(await mayReplaceMap())) return false;
+  persistDraft();
+  openDetachedCopy(copy);
+  await saveQueue;
+  return true;
+}
+
 async function makeLocalCopy() {
   const map = hostedMap;
   if (!map) return;
@@ -4536,11 +4546,7 @@ hostedControls = initHostedEditor({
   },
   makeCopy: makeLocalCopy,
   async openDetached(copy: DetachedHostedMap) {
-    if (!(await mayReplaceMap())) return false;
-    persistDraft();
-    openDetachedCopy(copy);
-    await saveQueue;
-    return true;
+    return openDetachedCopyAfterConfirmation(copy);
   },
   resourcesChanged(projectId) {
     if (hostedMap?.projectId === projectId)
@@ -4564,6 +4570,22 @@ const launchRecentProject = new URL(location.href).searchParams.get(
 );
 if (launchRecentProject)
   void openRecentProject(launchRecentProject, false).catch((error: unknown) => {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  });
+
+const detachedMapUrl = new URL(location.href);
+const launchDetachedMap = detachedMapUrl.searchParams.get("detachedMap");
+if (launchDetachedMap)
+  void (async () => {
+    const copy = await new IndexedDbCollaborationOutbox().loadDetached(
+      launchDetachedMap,
+    );
+    if (!copy)
+      throw new Error("This recovery copy is unavailable on this device");
+    if (!(await openDetachedCopyAfterConfirmation(copy))) return;
+    detachedMapUrl.searchParams.delete("detachedMap");
+    history.replaceState(null, "", detachedMapUrl);
+  })().catch((error: unknown) => {
     status.textContent = error instanceof Error ? error.message : String(error);
   });
 

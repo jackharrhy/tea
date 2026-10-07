@@ -10,6 +10,7 @@ import {
 } from "./editor-hosted-create.ts";
 import { openLinkedLocalProject } from "./project-local.ts";
 import { listRecentProjects } from "./editor-recent-projects.ts";
+import { listDetachedMapSummaries } from "./editor-detached-catalog.ts";
 import { readHostedApi } from "./hosted-api.ts";
 import { showProjectAccess } from "./project-access.ts";
 import { showProjectResources } from "./project-resources.ts";
@@ -75,6 +76,23 @@ async function showRecentProjects() {
     });
     item.append(open);
     list.append(item);
+  }
+}
+
+async function showDetachedMaps() {
+  const list = document.querySelector<HTMLElement>("#detached-maps-list")!;
+  const copies = await listDetachedMapSummaries();
+  if (!copies.length) {
+    list.textContent = "No recovered maps on this device";
+    return;
+  }
+  for (const copy of copies) {
+    const link = row(copy.name, copy.reason);
+    const open = document.createElement("a");
+    open.href = `/editor?detachedMap=${encodeURIComponent(copy.id)}`;
+    open.textContent = `Open copy · ${new Date(copy.createdAt).toLocaleString()}`;
+    link.append(open);
+    list.append(link);
   }
 }
 
@@ -258,6 +276,10 @@ if (projectId) {
     status.textContent = message(error);
   });
 } else {
+  void showDetachedMaps().catch((error: unknown) => {
+    document.querySelector<HTMLElement>("#detached-maps-list")!.textContent =
+      `Recovered maps are unavailable: ${message(error)}`;
+  });
   void showRecentProjects().catch((error: unknown) => {
     document.querySelector<HTMLElement>("#local-projects-list")!.textContent =
       `Recent projects are unavailable: ${message(error)}`;

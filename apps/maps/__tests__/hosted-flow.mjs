@@ -909,6 +909,28 @@ try {
   assert.equal(detachedCopy.inspection.dirty, true);
   assert.equal(detachedCopy.source.text, detachedSource);
   result.checks.push("saved detached hosted edits reopen as a local copy");
+  await page.goto(`${mapsOrigin}/projects`);
+  const recoveredLink = page
+    .locator("#detached-maps-list a")
+    .filter({ hasText: "Open copy" });
+  await recoveredLink.waitFor();
+  assert.match(
+    await recoveredLink.getAttribute("href"),
+    /detachedMap=smoke-detached-map/,
+  );
+  await recoveredLink.click();
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#switch-map-dialog")?.open ||
+      document
+        .querySelector("#editor-status")
+        ?.textContent?.includes("Local recovery copy"),
+  );
+  if (await page.locator("#switch-map-dialog").isVisible())
+    await page.getByRole("button", { name: "Discard" }).click();
+  await page.getByText(/Local recovery copy recovered-hosted.map/).waitFor();
+  assert.equal(new URL(page.url()).searchParams.has("detachedMap"), false);
+  result.checks.push("Projects page links to locally stored recovery copies");
   assert.deepEqual(errors, []);
   result.status = "passed";
 } catch (error) {
