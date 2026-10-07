@@ -28,6 +28,7 @@ import {
   EditorTextureAlignment,
 } from "./assets/editor-face-texture-panel.tsx";
 import { EditorSurface } from "./assets/editor-surface-panel.tsx";
+import { EditorUvControls } from "./assets/editor-uv-controls-panel.tsx";
 import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
@@ -460,40 +461,7 @@ export function EditorPage() {
                       aria-label="Selected face UV editor"
                       tabIndex={0}
                     />
-                    <p id="uv-editor-status" role="status">
-                      Select a brush face
-                    </p>
-                    <div class="uv-editor-controls">
-                      <button id="uv-frame" type="button">
-                        Frame face
-                      </button>
-                      <button id="uv-reset-pivot" type="button">
-                        Reset UV origin
-                      </button>
-                      <label for="uv-grid-x">Grid X</label>
-                      <input
-                        id="uv-grid-x"
-                        type="number"
-                        min="1"
-                        max="16"
-                        step="1"
-                        value="1"
-                      />
-                      <label for="uv-grid-y">Grid Y</label>
-                      <input
-                        id="uv-grid-y"
-                        type="number"
-                        min="1"
-                        max="16"
-                        step="1"
-                        value="1"
-                      />
-                    </div>
-                    <p>
-                      Drag to offset. Drag the ring to rotate or the handles to
-                      scale. Middle or right drag pans; wheel zooms.
-                      Ctrl/Command bypasses snapping.
-                    </p>
+                    <EditorUvControls />
                   </div>
                 </div>
                 <EditorTextureAlignment />

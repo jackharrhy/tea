@@ -1635,6 +1635,24 @@ try {
     await facePage.locator("#selected-face").inputValue(),
     selectedFaceId,
   );
+  await facePage.locator("#uv-frame:not([disabled])").click();
+  await facePage
+    .locator("#uv-editor-status")
+    .getByText("Framed the selected face in the UV plane.")
+    .waitFor();
+  await facePage.locator("#uv-grid-x:not([disabled])").fill("4");
+  await facePage.locator("#uv-grid-x").press("Tab");
+  const uvGridState = await facePage.evaluate(() => ({
+    x: document.querySelector("#uv-grid-x")?.value,
+    status: document.querySelector("#uv-editor-status")?.textContent,
+  }));
+  assert.equal(uvGridState.x, "4");
+  assert.equal(uvGridState.status?.trim(), "UV grid 4 × 1.");
+  await facePage.locator("#uv-reset-pivot:not([disabled])").click();
+  await facePage
+    .locator("#uv-editor-status")
+    .getByText("UV origin reset to the face center.")
+    .waitFor();
   await facePage.locator("#selected-material").fill("BRICK");
   await facePage.locator("#apply-material:not([disabled])").click();
   await facePage.waitForFunction(() =>
@@ -1708,7 +1726,7 @@ try {
   );
   await facePage.close();
   result.checks.push(
-    "Remix face picker, material, projection, alignment, and geometry controls use editor transactions",
+    "Remix face picker, UV controls, material, projection, alignment, and geometry controls use editor transactions",
   );
   const surfacePage = await browser.newPage();
   await installSiteToolMock(surfacePage);

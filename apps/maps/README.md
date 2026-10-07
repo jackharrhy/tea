@@ -152,6 +152,8 @@ The selected face picker, numeric Extrude, Split, and Stamp controls, and materi
 
 Face projection fields and Align texture controls render through Remix client components. The editor still commits projection changes and alignment as undoable edits, using project material dimensions or a manually entered texture size.
 
+The UV editor's frame, pivot, grid, and status controls render through a Remix client component. The SVG gesture editor continues to own its view and texture transforms.
+
 The Quake II surface inspector renders its contents, surface flags, mixed selections, unknown bits, and light value through a Remix client component. The editor still commits these attributes through its undo history.
 
 When editing inside a linked group that has another copy, entity properties can be marked Independent in the inspector. A new protected property stays in the open copy, while edits to ordinary properties continue to synchronize. The checkbox beside an existing property can add or remove that protection.

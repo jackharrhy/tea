@@ -214,6 +214,7 @@ import {
   type ProjectionInputState,
 } from "./editor-face-texture-bridge.ts";
 import { initEditorSurface } from "./editor-surface-bridge.ts";
+import { initEditorUvControls } from "./editor-uv-controls-bridge.ts";
 
 const status = document.querySelector<HTMLElement>("#editor-status")!;
 const performanceDiagnostics = initEditorPerformance();
@@ -457,15 +458,20 @@ let uvPreviewCandidate: ReturnType<
   EditorSession["createTextureTransformDeltaCandidate"]
 > = null;
 const uvEditorAbort = new AbortController();
-const uvStatus = document.querySelector<HTMLElement>("#uv-editor-status")!;
-const uvFrame = document.querySelector<HTMLButtonElement>("#uv-frame")!;
-const uvResetPivot =
-  document.querySelector<HTMLButtonElement>("#uv-reset-pivot")!;
+const uvControls = initEditorUvControls({
+  frame: () => uvEditor.frameSelection(),
+  resetPivot: () => uvEditor.resetPivot(),
+  commitGrid: (axis, value) => {
+    uvEditor.setGridSubdivisions(axis, value);
+    const [gridX, gridY] = uvEditor.getGridSubdivisions();
+    uvControls.update({ gridX: String(gridX), gridY: String(gridY) });
+  },
+});
 const uvEditor = createTextureUvEditor({
   svg: document.querySelector<SVGSVGElement>("#uv-editor")!,
   signal: uvEditorAbort.signal,
   onStatus: (message) => {
-    uvStatus.textContent = message;
+    uvControls.update({ status: message });
   },
   onAnnounce: (message) => {
     status.textContent = message;
@@ -517,18 +523,6 @@ const uvEditor = createTextureUvEditor({
     }
   },
 });
-uvFrame.addEventListener("click", () => uvEditor.frameSelection());
-uvResetPivot.addEventListener("click", () => uvEditor.resetPivot());
-for (const [axis, id] of [
-  [0, "#uv-grid-x"],
-  [1, "#uv-grid-y"],
-] as const) {
-  const input = document.querySelector<HTMLInputElement>(id)!;
-  input.addEventListener("change", () => {
-    uvEditor.setGridSubdivisions(axis, input.valueAsNumber);
-    input.value = String(uvEditor.getGridSubdivisions()[axis]);
-  });
-}
 const standaloneMaterials = new Map<
   WorldviewGameProfile,
   readonly EditorMaterial[]
@@ -1259,8 +1253,7 @@ function refreshSelection() {
         }
       : null,
   );
-  uvFrame.disabled = !uvVertices || !editing;
-  uvResetPivot.disabled = uvFrame.disabled;
+  uvControls.update({ disabled: !uvVertices || !editing });
   faceInspector.hidden = brushIds.length === 0 && faces.length === 0;
   faceProjection.hidden = faces.length === 0;
   const faceBrush =

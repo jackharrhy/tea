@@ -46,7 +46,7 @@ The selected point entity and entity properties inspector now renders through a 
 
 The selected face picker, numeric face geometry actions, and material application now render through a Remix client entry. The editor retains the geometry and material transactions.
 
-Face projection fields and texture alignment now render through Remix client entries; the editor retains the projection transactions, project texture sizes, and manual fit options.
+Face projection fields, texture alignment, and UV editor controls now render through Remix client entries; the editor retains the projection transactions, SVG gestures, project texture sizes, and manual fit options.
 
 Quake II surface contents, flags, mixed selections, unknown bits, and light value now render through a Remix client entry while the editor retains the surface edit transactions.
 
