@@ -98,3 +98,5 @@ jobs:
         run: npm run test:hosted --workspace @tea/maps -- --output "$RUNNER_TEMP/maps-hosted-smoke.json"
       - if: steps.select.outputs.maps_hosted == 'true'
         run: npm run test:gpu --workspace @tea/maps
+      - if: steps.select.outputs.maps_hosted == 'true'
+        run: npm run test:embed --workspace @tea/maps

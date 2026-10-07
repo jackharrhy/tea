@@ -20,6 +20,8 @@ A route-registration audit of the Worldview service at that baseline found 29 ro
 
 Tea runs a focused WebGPU browser check for both Maps surfaces: brush creation, canvas selection and dragging, Undo, a Quake-to-GoldSrc BSP switch, overview PNG export, walkability sidecar round-trip, and a generated BSP2 load. This adds renderer evidence beyond the WebGPU-free hosted flow. Worldview's wider GPU interaction and owned-game corpus cases remain a separate parity gate before a replacement decision.
 
+A separate browser host loads the built `@tea/maps-renderer/standalone` element without the Maps UI. It verifies pointer lock and mouse look inside the element, audible sound from a generated BSP, audio resume without reloading, and interaction while the BSP request is pending. This checks the importable runtime boundary as well as the in-app viewer.
+
 ## Cloudflare configuration
 
 Cloudflare's new [`cf` CLI](https://developers.cloudflare.com/cf/) uses `cloudflare.config.ts` and is currently in beta. [Cloudflare's migration guide](https://developers.cloudflare.com/cf/wrangler/migrate/) says to convert Wrangler projects explicitly; its Durable Object lifecycle declaration differs from Wrangler migrations. [Celld currently reads only `wrangler.jsonc` or `wrangler.json`](https://celld.dev/docs/cloudflare-compat/#wrangler-configuration), so Ref, Radio, and the Maps collaboration Worker retain Wrangler-compatible configs for their shared runtime. Do not run `cf init`, `cf dev`, or `cf deploy` in those workspaces without an explicit dual-config migration that passes both Cloudflare and Celld checks. The Cloudflare-only CMS edge and Maps UI apps use `cf` and `cloudflare.config.ts` with the Cloudflare Vite plugin.
