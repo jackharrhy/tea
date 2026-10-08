@@ -1,6 +1,6 @@
 # Bringing projects into Tea
 
-Ref and Radio were copied into Tea as `@tea/ref` and `@tea/radio`. Ref and Radio now serve production from Tea on Newport and Mug, respectively. Maps is Worldview's Tea identity. Its renderer, editor primitives, protocol, collaboration Worker, local compiler helper, Remix viewer, editor, project maps, resources, and access pages, and a hosted-service bake copy live in Tea. The editor and hosted pages run through Remix 3; broader workflow and owned-game parity still need review before replacement.
+Ref and Radio were copied into Tea as `@tea/ref` and `@tea/radio`. Ref and Radio serve production from Tea on Newport and Mug, respectively. Maps is Worldview's Tea identity and serves production on Newport at `maps.jackharrhy.dev`. Its renderer, editor primitives, protocol, collaboration Worker, local compiler helper, Remix viewer and editor, project pages, and hosted service live in Tea. The former Worldview hostname has no router or redirect. Worldview project and sidecar filenames are unsupported. The editor and hosted pages run through Remix 3; broader owned-game parity still needs review.
 
 ## Shared runtime boundary
 

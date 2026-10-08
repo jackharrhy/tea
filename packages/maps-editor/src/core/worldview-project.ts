@@ -203,7 +203,7 @@ const ProjectManifestObjectSchema = z
     }
   });
 
-/** Strict canonical schema for a `worldview.project.json` manifest. */
+/** Strict canonical schema for a `tea.maps.project.json` manifest. */
 export const WorldviewProjectManifestSchema =
   ProjectManifestObjectSchema satisfies z.ZodType<WorldviewProjectManifest>;
 

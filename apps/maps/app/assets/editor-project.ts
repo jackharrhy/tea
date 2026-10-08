@@ -59,25 +59,6 @@ export interface MapProject {
   readonly spriteDiagnostics: readonly string[];
 }
 
-export async function legacyProjectExportScope(
-  project: MapProject,
-): Promise<string | null> {
-  let name = project.manifest.name;
-  if (project.manifestFileName !== "worldview.project.json") {
-    try {
-      const legacyFile = await project.handle.getFileHandle(
-        "worldview.project.json",
-      );
-      name = parseWorldviewProject(
-        await (await legacyFile.getFile()).text(),
-      ).name;
-    } catch {
-      return null;
-    }
-  }
-  return `${name.toLowerCase()}:${project.handle.name.toLowerCase()}`;
-}
-
 interface DirectoryPickerWindow extends Window {
   showDirectoryPicker?: (options: {
     readonly mode: "readwrite";
@@ -127,14 +108,12 @@ export async function projectFile(
 export async function projectManifestFile(
   root: MapDirectoryHandle,
 ): Promise<{ name: string; file: File }> {
-  const names = ["tea.maps.project.json", "worldview.project.json"];
-  const found = new Set<string>();
-  for await (const [name, handle] of root.entries()) {
-    if (handle.kind === "file" && names.includes(name)) found.add(name);
+  const name = "tea.maps.project.json";
+  for await (const [entryName, handle] of root.entries()) {
+    if (handle.kind === "file" && entryName === name)
+      return { name, file: await (await root.getFileHandle(name)).getFile() };
   }
-  const name = names.find((candidate) => found.has(candidate));
-  if (!name) throw new Error(`Project folder needs ${names.join(" or ")}`);
-  return { name, file: await (await root.getFileHandle(name)).getFile() };
+  throw new Error(`Project folder needs ${name}`);
 }
 
 async function mapsInDirectory(

@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { encodeGoldSrcWad3, encodeQuakeWad2 } from "@tea/maps-editor/core";
 import { createQuakePalette } from "@tea/maps-renderer/core";
-import {
-  legacyProjectExportScope,
-  openMapProject,
-  type MapDirectoryHandle,
-} from "../editor-project.ts";
+import { openMapProject, type MapDirectoryHandle } from "../editor-project.ts";
 import type { MapFileHandle } from "../editor-files.ts";
 
 type FileEntry = MapFileHandle & { readonly kind: "file" };
@@ -126,27 +122,28 @@ const manifest = {
 };
 
 describe("local map projects", () => {
-  it("prefers a Tea manifest when a legacy manifest is also present", async () => {
+  it("opens Tea manifests and rejects Worldview filenames", async () => {
     const teaFile = file(
       "tea.maps.project.json",
       JSON.stringify({ ...manifest, mapRoots: ["."] }),
     );
-    const root = directory("project", { "tea.maps.project.json": teaFile });
-    const project = await openMapProject(root);
+    const project = await openMapProject(
+      directory("project", {
+        "tea.maps.project.json": teaFile,
+      }),
+    );
     expect(project.manifestFileName).toBe("tea.maps.project.json");
     expect(project.manifest.name).toBe("Test project");
-    expect(await legacyProjectExportScope(project)).toBeNull();
 
-    const ambiguous = directory("project", {
-      "tea.maps.project.json": teaFile,
+    const oldOnly = directory("project", {
       "worldview.project.json": file(
         "worldview.project.json",
         JSON.stringify(manifest),
       ),
     });
-    const opened = await openMapProject(ambiguous);
-    expect(opened.manifestFileName).toBe("tea.maps.project.json");
-    expect(await legacyProjectExportScope(opened)).toBe("test project:project");
+    await expect(openMapProject(oldOnly)).rejects.toThrow(
+      "tea.maps.project.json",
+    );
   });
 
   it("discovers nested maps once across overlapping roots", async () => {
@@ -156,14 +153,14 @@ describe("local map projects", () => {
       "notes.txt": file("notes.txt"),
     });
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify(manifest),
       ),
       maps,
     });
     const project = await openMapProject(root);
-    expect(project.manifestFileName).toBe("worldview.project.json");
+    expect(project.manifestFileName).toBe("tea.maps.project.json");
     expect(project.manifest.name).toBe("Test project");
     expect(project.maps.map((map) => map.path)).toEqual([
       "maps/b.map",
@@ -173,8 +170,8 @@ describe("local map projects", () => {
 
   it("rejects a map root that escapes the chosen folder", async () => {
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({ ...manifest, mapRoots: ["../private"] }),
       ),
     });
@@ -185,8 +182,8 @@ describe("local map projects", () => {
 
   it("loads project FGD includes and resolves inherited entity properties", async () => {
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           mapRoots: ["maps"],
@@ -217,8 +214,8 @@ describe("local map projects", () => {
 
   it("reports an FGD include outside the selected folder", async () => {
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           mapRoots: ["maps"],
@@ -254,8 +251,8 @@ describe("local map projects", () => {
       alphaTest: false,
     };
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           mapRoots: ["maps"],
@@ -290,8 +287,8 @@ describe("local map projects", () => {
 
   it("loads Quake II WAL textures from ordered game roots", async () => {
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           game: "quake2",
@@ -332,8 +329,8 @@ describe("local map projects", () => {
 
   it("reports a missing palette for Quake II WAL textures", async () => {
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           game: "quake2",
@@ -358,8 +355,8 @@ describe("local map projects", () => {
     const palette = new Uint8Array(768);
     palette.set([90, 100, 110], 3);
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           game: "quake2",
@@ -393,8 +390,8 @@ describe("local map projects", () => {
 
   it("replaces WAL pixels with a later TGA while retaining WAL texture scale", async () => {
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           game: "quake2",
@@ -438,8 +435,8 @@ describe("local map projects", () => {
 
   it("loads nested project sprites while reporting damaged files and missing roots", async () => {
     const root = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
+      "tea.maps.project.json": file(
+        "tea.maps.project.json",
         JSON.stringify({
           ...manifest,
           mapRoots: ["maps"],

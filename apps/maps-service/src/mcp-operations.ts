@@ -264,10 +264,7 @@ export const mcpOperations = [
 ] satisfies readonly McpOperation[];
 
 export const mcpOperationsByName = new Map(
-  mcpOperations.flatMap((tool) => [
-    [tool.name, tool] as const,
-    [tool.name.replace(/^tea_maps_/, "worldview_"), tool] as const,
-  ]),
+  mcpOperations.map((tool) => [tool.name, tool] as const),
 );
 
 export const mcpToolDescriptions = mcpOperations.map(

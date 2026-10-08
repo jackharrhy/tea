@@ -36,8 +36,8 @@ export function safeReturnTo(value: string | null): string {
   if (!value?.startsWith("/") || value.startsWith("//") || value.includes("\\"))
     return "/";
   try {
-    const parsed = new URL(value, "https://worldview.invalid");
-    return parsed.origin === "https://worldview.invalid"
+    const parsed = new URL(value, "https://maps.invalid");
+    return parsed.origin === "https://maps.invalid"
       ? `${parsed.pathname}${parsed.search}${parsed.hash}`
       : "/";
   } catch {

@@ -113,11 +113,7 @@ export const ViewerSourcePanel = clientEntry(
         const input = document.querySelector<HTMLInputElement>(
           `#url-form [name="${field}"]`,
         );
-        if (input)
-          input.value =
-            initial.get(field) ??
-            (field === "gameBase" ? initial.get("root") : null) ??
-            "";
+        if (input) input.value = initial.get(field) ?? "";
       }
       const initialRemote = sourceFromUrlParameters(initial);
       if (initialRemote)

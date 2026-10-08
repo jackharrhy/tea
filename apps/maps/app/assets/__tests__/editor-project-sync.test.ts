@@ -53,7 +53,7 @@ function fileHandle(name: string, initial: string) {
 
 function fixture(
   localSource = baseSource,
-  manifestFileName = "worldview.project.json",
+  manifestFileName = "tea.maps.project.json",
 ) {
   const local = fileHandle("demo.map", localSource);
   const manifest = fileHandle(
@@ -142,47 +142,6 @@ it("writes a Tea project link to its opened manifest", async () => {
   } as Parameters<typeof linkHostedProject>[1];
   await linkHostedProject(project, remote, { "maps/demo.map": mapId }, origin);
   expect(JSON.parse(manifest.read()).hosted.projectId).toBe(projectId);
-});
-
-it("creates a Tea manifest and preserves the legacy manifest when linking", async () => {
-  const { project, manifest, files } = fixture();
-  const original = manifest.read();
-  const remote = {
-    id: projectId,
-    game: "quake",
-    maps: [{ id: mapId, name: "Demo map", format: "valve-220" }],
-  } as Parameters<typeof linkHostedProject>[1];
-  const linked = await linkHostedProject(
-    project,
-    remote,
-    { "maps/demo.map": mapId },
-    origin,
-  );
-  expect(linked.manifestFileName).toBe("tea.maps.project.json");
-  expect(linked.manifestFingerprint).toBe(
-    mapSourceFingerprint(files.get("tea.maps.project.json")!.read()),
-  );
-  expect(manifest.read()).toBe(original);
-  expect(
-    JSON.parse(files.get("tea.maps.project.json")!.read()).hosted,
-  ).toMatchObject({
-    origin,
-    projectId,
-  });
-});
-
-it("refuses to link a stale legacy manifest", async () => {
-  const { project, manifest, files } = fixture();
-  manifest.change(`${manifest.read()}\n`);
-  const remote = {
-    id: projectId,
-    game: "quake",
-    maps: [{ id: mapId, name: "Demo map", format: "valve-220" }],
-  } as Parameters<typeof linkHostedProject>[1];
-  await expect(
-    linkHostedProject(project, remote, { "maps/demo.map": mapId }, origin),
-  ).rejects.toThrow(/manifest changed on disk/);
-  expect(files.has("tea.maps.project.json")).toBe(false);
 });
 
 it("refuses to overwrite a Tea manifest changed since opening", async () => {

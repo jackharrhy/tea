@@ -2003,40 +2003,17 @@ try {
   assert.ok(hostedMapId);
   const hostedProjectId = projectUrl.split("/").at(-1);
   assert.ok(hostedProjectId);
-  const legacyProject = `/project/${hostedProjectId}-smoke-project`;
-  for (const [from, to] of [
-    ["/new-project", "/projects?create=1"],
-    [legacyProject, `/projects/${hostedProjectId}`],
-    [`${legacyProject}/new-map`, `/projects/${hostedProjectId}/new-map`],
-    [`${legacyProject}/resources`, `/projects/${hostedProjectId}/resources`],
-    [`${legacyProject}/access`, `/projects/${hostedProjectId}/access`],
-    [
-      `${legacyProject}/map/${hostedMapId}-smoke-map`,
-      `/editor?hostedProject=${hostedProjectId}&hostedMap=${hostedMapId}`,
-    ],
+  for (const pathname of [
+    "/new-project",
+    `/project/${hostedProjectId}-smoke-project`,
+    `/project/${hostedProjectId}-smoke-project/map/${hostedMapId}-smoke-map`,
   ]) {
-    const response = await page.request.get(`${mapsOrigin}${from}`, {
+    const response = await page.request.get(`${mapsOrigin}${pathname}`, {
       maxRedirects: 0,
     });
-    assert.equal(response.status(), 308, from);
-    assert.equal(
-      new URL(response.headers().location).pathname +
-        new URL(response.headers().location).search,
-      to,
-    );
+    assert.equal(response.status(), 404, pathname);
   }
-  await page.goto(`${mapsOrigin}${legacyProject}/map/${hostedMapId}-smoke-map`);
-  await page.getByText("Smoke Project / smoke.map opened").waitFor();
-  await page.goto(
-    `${mapsOrigin}/project/0123456789ab/map/${hostedMapId}-smoke-map`,
-  );
-  await page
-    .locator("#hosted-editor-status")
-    .getByText("Hosted map does not belong to this project")
-    .waitFor();
-  result.checks.push(
-    "Worldview new-project, hosted project, and map links reach Tea routes",
-  );
+  result.checks.push("Worldview routes return 404 without redirects");
   await page.goto(
     `${mapsOrigin}/?hostedProject=${projectUrl.split("/").at(-1)}&hostedMap=${hostedMapId}`,
   );
@@ -2118,10 +2095,7 @@ try {
       ]),
     );
     const root = fixture.directory("smoke", {
-      "worldview.project.json": fixture.file(
-        "worldview.project.json",
-        manifest,
-      ),
+      "tea.maps.project.json": fixture.file("tea.maps.project.json", manifest),
       maps: fixture.directory("maps", mapFiles),
     });
     window.showDirectoryPicker = async () => root;
@@ -2249,14 +2223,6 @@ try {
     projectUrl.split("/").at(-1),
   );
   assert.equal(
-    await page.evaluate(async () => {
-      const root = await window.showDirectoryPicker();
-      const handle = await root.getFileHandle("worldview.project.json");
-      return JSON.parse(await (await handle.getFile()).text()).hosted;
-    }),
-    undefined,
-  );
-  assert.equal(
     await page.locator("#project-sync-map").inputValue(),
     "maps/alpha.map",
   );
@@ -2276,7 +2242,7 @@ try {
   );
   await page.locator("#project-sync-close").click();
   result.checks.push(
-    "Remix legacy local project chooser, separate Tea link manifest, source comparison, and Pull to disk",
+    "Remix local project chooser, Tea link manifest, source comparison, and Pull to disk",
   );
   await page.locator("#hosted-editor-picker summary").first().click();
   await page.waitForFunction(

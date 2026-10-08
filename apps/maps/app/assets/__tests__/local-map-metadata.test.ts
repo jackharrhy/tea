@@ -32,10 +32,10 @@ describe("local map sidecars", () => {
     ).toEqual({ label: "Tea room", walkability: teaWalkability });
   });
 
-  it("uses the matching Worldview label, camera, and walkability graph", async () => {
+  it("uses the matching Tea label, camera, and walkability graph", async () => {
     const bsp = localFile("valve/maps/room.bsp");
     const metadata = localFile(
-      "valve/maps/room.worldview.json",
+      "valve/maps/room.tea-maps.json",
       JSON.stringify({
         label: "  Starting room  ",
         camera: {
@@ -46,7 +46,7 @@ describe("local map sidecars", () => {
         },
       }),
     );
-    const walkability = localFile("valve/maps/room.worldview-walkability.json");
+    const walkability = localFile("valve/maps/room.tea-maps-walkability.json");
 
     expect(await localMapMetadata([bsp, metadata, walkability], bsp)).toEqual({
       label: "Starting room",
@@ -63,7 +63,7 @@ describe("local map sidecars", () => {
   it("rejects malformed camera metadata for the selected map", async () => {
     const bsp = localFile("valve/maps/room.bsp");
     const metadata = localFile(
-      "valve/maps/room.worldview.json",
+      "valve/maps/room.tea-maps.json",
       JSON.stringify({ camera: { position: [0, "bad", 0] } }),
     );
 

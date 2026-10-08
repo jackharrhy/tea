@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { WorldviewDatabase, WorldviewUser } from "./database.js";
 import { ServiceHttpError } from "./service-http.js";
 
-const DEFAULT_MCP_SCOPE = "worldview:admin";
+const DEFAULT_MCP_SCOPE = "maps:admin";
 
 export interface WorldviewMcpAuthConfig {
   readonly fourmUrl: string;

@@ -22,7 +22,7 @@ afterEach(async () => {
 });
 
 describe("local development fixtures", () => {
-  it("prefers Tea sidecars when both names are present", async () => {
+  it("uses Tea sidecars when old filenames are present", async () => {
     const root = await fixtureRoot();
     const maps = path.join(root, "game", "maps");
     await mkdir(maps, { recursive: true });
@@ -52,14 +52,14 @@ describe("local development fixtures", () => {
     await mkdir(maps, { recursive: true });
     await writeFile(path.join(maps, "room.bsp"), "bsp");
     await writeFile(
-      path.join(maps, "room.worldview.json"),
+      path.join(maps, "room.tea-maps.json"),
       JSON.stringify({
         label: "Starting room",
         aliases: ["start"],
         camera: { position: [1, 2, 3], yawDegrees: 90 },
       }),
     );
-    await writeFile(path.join(maps, "room.worldview-walkability.json"), "{}");
+    await writeFile(path.join(maps, "room.tea-maps-walkability.json"), "{}");
 
     expect(await discoverLocalFixtures(root)).toEqual([
       {
@@ -76,7 +76,7 @@ describe("local development fixtures", () => {
           pitchDegrees: 0,
           fieldOfView: 75,
         },
-        walkability: "/local/my%20game/maps/room.worldview-walkability.json",
+        walkability: "/local/my%20game/maps/room.tea-maps-walkability.json",
       },
     ]);
     expect(
