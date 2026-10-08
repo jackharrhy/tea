@@ -1,5 +1,20 @@
 name: Publish CMS
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-cms.yml
+      - .dockerignore
+      - .nvmrc
+      - package.json
+      - package-lock.json
+      - apps/cms/**
+      - packages/json-schema/**
+      - packages/logger/**
+      - packages/mcp/**
+      - packages/request-body/**
+      - packages/result/**
+      - packages/rich-text/**
   workflow_dispatch:
 concurrency:
   group: publish-cms
@@ -35,7 +50,7 @@ jobs:
           file: apps/cms/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-cms:main
+            ghcr.io/jackharrhy/tea-cms:latest
             ghcr.io/jackharrhy/tea-cms:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/tea
