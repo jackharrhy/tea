@@ -1,0 +1,31 @@
+{
+  "name": "@artbin/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./uploads": "./src/uploads.ts",
+    "./detection/kind": "./src/detection/kind.ts",
+    "./detection/mime": "./src/detection/mime.ts",
+    "./detection/filenames": "./src/detection/filenames.ts",
+    "./parsers/archives": "./src/parsers/archives.ts",
+    "./scanning/settings": "./src/scanning/settings.ts",
+    "./scanning/filters": "./src/scanning/filters.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "file-type": "^22.0.2",
+    "mime-types": "^3.0.2",
+    "tus-js-client": "4.3.1"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^26.3.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

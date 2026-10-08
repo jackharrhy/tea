@@ -1,0 +1,12 @@
+{
+  "$schema": "https://remix.run/schemas/remix.json",
+  "test": {
+    "files": ["app/**/__tests__/*.remix.test.{ts,tsx}"],
+    "exclude": ["node_modules/**", "public/**", "tmp/**"],
+    "coverage": {
+      "dir": ".coverage",
+      "include": ["app/**/*.{ts,tsx}", "src/{db,lib}/**/*.ts"],
+      "exclude": ["app/**/__tests__/**"]
+    }
+  }
+}

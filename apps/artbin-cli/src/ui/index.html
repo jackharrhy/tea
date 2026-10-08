@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>artbin - browse scan</title>
+    <style>
+      html,
+      body {
+        font-family: "Times New Roman", Times, serif;
+        background: #f5f5f0;
+        color: #1a1a1a;
+      }
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+      }
+      .modal {
+        background: #f5f5f0;
+        border: 1px solid #d0d0c8;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        border-bottom: 1px solid #d0d0c8;
+      }
+      .modal-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #666;
+        font-family: inherit;
+      }
+      .modal-body {
+        padding: 16px;
+      }
+      input[type="checkbox"] {
+        accent-color: #1a1a1a;
+      }
+      select,
+      button {
+        font-family: "Times New Roman", Times, serif;
+      }
+      /* Match the web app's button styles */
+      .btn {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid #222;
+        background-color: #fff;
+        color: #111;
+        transition: background-color 0.15s;
+      }
+      .btn:hover {
+        background-color: #f5f5f5;
+      }
+      .btn-primary {
+        background-color: #111;
+        color: #fff;
+        border-color: #111;
+      }
+      .btn-primary:hover {
+        background-color: #333;
+        color: #fff;
+      }
+      .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+      }
+      .btn-danger {
+        border-color: #c00;
+        color: #c00;
+      }
+      .btn-danger:hover {
+        background-color: #c00;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

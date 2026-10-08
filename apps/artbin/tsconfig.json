@@ -1,0 +1,29 @@
+{
+  "include": [
+    "app/**/*",
+    "server.ts",
+    "hmr.ts",
+    "scripts/**/*",
+    "src/db/**/*",
+    "src/lib/**/*"
+  ],
+  "exclude": ["node_modules", "tmp", "build"],
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["node", "remix/assets/types/hmr"],
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+    "jsxImportSource": "remix/component",
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true
+  }
+}

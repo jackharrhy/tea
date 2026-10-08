@@ -36,10 +36,16 @@
     "result:check": "npm run tooling:check && npm run check --workspace @tea/result",
     "shell-mcp:check": "npm run tooling:check && npm run check --workspace @tea/shell-mcp",
     "shell-mcp:dev": "npm run dev --workspace @tea/shell-mcp",
-    "tooling:check": "vp check"
+    "tooling:check": "vp check",
+    "artbin:check": "npm run tooling:check && npm run check --workspace @artbin/core && npm run check --workspace @artbin/ui && npm run check --workspace @tea/artbin && npm run check --workspace artbin",
+    "artbin:dev": "npm run dev --workspace @tea/artbin",
+    "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace artbin"
   },
   "devDependencies": {
     "knip": "6.39.0",
     "vite-plus": "1.0.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true
   }
 }
