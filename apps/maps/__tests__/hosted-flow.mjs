@@ -346,9 +346,15 @@ try {
     "maps",
     join(teaRoot, "node_modules/.bin/wrangler"),
     [
-      "dev", "--config", "wrangler.dev.jsonc", "--port", "8790",
-      "--var", `MAPS_SERVICE_ORIGIN:${serviceOrigin}`,
-      "--var", `MAPS_COLLABORATION_ORIGIN:${collaborationOrigin}`,
+      "dev",
+      "--config",
+      "wrangler.dev.jsonc",
+      "--port",
+      "8790",
+      "--var",
+      `MAPS_SERVICE_ORIGIN:${serviceOrigin}`,
+      "--var",
+      `MAPS_COLLABORATION_ORIGIN:${collaborationOrigin}`,
     ],
     mapsRoot,
     {

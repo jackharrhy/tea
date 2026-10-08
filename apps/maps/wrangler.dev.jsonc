@@ -7,11 +7,11 @@
   "assets": {
     "directory": "./dist/client-dev",
     "binding": "ASSETS",
-    "run_worker_first": true
+    "run_worker_first": true,
   },
   "vars": {
     "MAPS_SERVICE_ORIGIN": "http://127.0.0.1:8792",
     "MAPS_COLLABORATION_ORIGIN": "http://127.0.0.1:8787",
-    "MAPS_LOCAL_FIXTURE_ORIGIN": "http://127.0.0.1:8793"
-  }
+    "MAPS_LOCAL_FIXTURE_ORIGIN": "http://127.0.0.1:8793",
+  },
 }
