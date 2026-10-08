@@ -31,3 +31,9 @@ apps/maps/local/*
 **/playwright-report/
 **/test-results/
 apps/cms/sites/*/site.local.json
+
+apps/artbin/data/
+apps/artbin/public/uploads/
+apps/artbin/tmp/
+apps/artbin/.coverage/
+apps/artbin-cli/dist-ui/

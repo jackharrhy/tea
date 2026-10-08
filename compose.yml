@@ -54,6 +54,27 @@ services:
     networks:
       - web
 
+  artbin:
+    build:
+      context: .
+      dockerfile: apps/artbin/Dockerfile
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: "3000"
+      ARTBIN_URL: http://artbin.localhost
+    volumes:
+      - artbin-data:/app/apps/artbin/data
+      - artbin-uploads:/app/apps/artbin/public/uploads
+      - artbin-tmp:/app/apps/artbin/tmp/uploads
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.artbin.rule: "Host(`artbin.localhost`)"
+      traefik.http.routers.artbin.entrypoints: web
+      traefik.http.services.artbin.loadbalancer.server.port: "3000"
+    networks:
+      - web
+
   marky:
     build:
       context: .
@@ -205,6 +226,9 @@ services:
       - web
 
 volumes:
+  artbin-data:
+  artbin-uploads:
+  artbin-tmp:
   cms-data:
   letters-to-steve-data:
   marky-data:

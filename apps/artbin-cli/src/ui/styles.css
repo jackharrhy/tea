@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@source "../../../../packages/ui/src";
+
+@theme {
+  --color-text: #1a1a1a;
+  --color-text-muted: #666;
+  --color-bg-hover: #eaeae5;
+  --color-bg-subtle: #e8e8e3;
+  --color-border-light: #d0d0c8;
+}

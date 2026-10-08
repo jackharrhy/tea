@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1777433921904,
+      "tag": "0000_sticky_killer_shrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777442094646,
+      "tag": "0001_famous_sir_ram",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777490092687,
+      "tag": "0002_brainy_umar",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1777491836450,
+      "tag": "0003_light_sauron",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1787370286181,
+      "tag": "0004_chubby_firedrake",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788015627984,
+      "tag": "0005_flowery_shadowcat",
+      "breakpoints": true
+    }
+  ]
+}
