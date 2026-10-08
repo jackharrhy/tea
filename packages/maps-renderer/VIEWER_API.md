@@ -151,8 +151,7 @@ components, and local ceiling heights. It is collision data for inspection and o
 not a gameplay navigation mesh.
 
 The Tea viewer can generate and inspect graphs in its Walkability panel. Save a local
-fixture graph as `<map>.tea-maps-walkability.json` beside its BSP to load it automatically. It also
-reads existing `<map>.worldview-walkability.json` files.
+fixture graph as `<map>.tea-maps-walkability.json` beside its BSP to load it automatically.
 
 ## Use the web component
 

@@ -157,34 +157,11 @@ export async function linkHostedProject(
     },
   };
   const text = serializeWorldviewProject(manifest);
-  const manifestFileName = "tea.maps.project.json";
-  if (project.manifestFileName !== manifestFileName) {
-    const legacy = await project.handle.getFileHandle(project.manifestFileName);
-    const current = await (await legacy.getFile()).text();
-    if (mapSourceFingerprint(current) !== project.manifestFingerprint)
-      throw new Error(
-        "Project manifest changed on disk; reopen the folder before linking",
-      );
-    for await (const [name] of project.handle.entries()) {
-      if (name === manifestFileName)
-        throw new Error(
-          "Tea project manifest already exists; reopen the folder before linking",
-        );
-    }
-  }
-  const file = await project.handle.getFileHandle(manifestFileName, {
-    create: project.manifestFileName !== manifestFileName,
-  });
-  await writeMapFile(
-    file,
-    text,
-    project.manifestFileName === manifestFileName
-      ? project.manifestFingerprint
-      : mapSourceFingerprint(""),
-  );
+  const file = await project.handle.getFileHandle("tea.maps.project.json");
+  await writeMapFile(file, text, project.manifestFingerprint);
   return {
     ...project,
-    manifestFileName,
+    manifestFileName: "tea.maps.project.json",
     manifestFingerprint: mapSourceFingerprint(text),
     manifest,
   };

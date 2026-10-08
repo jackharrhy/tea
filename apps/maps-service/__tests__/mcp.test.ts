@@ -4,11 +4,11 @@ import { fixture } from "./service-fixture.js";
 const mcpAuth = {
   fourmUrl: "https://4orm.example",
   publicUrl: "http://127.0.0.1",
-  clientId: "worldview-server",
+  clientId: "tea-maps-server",
   clientSecret: "test-secret",
 };
 
-function fourmFetch(admin: boolean, scope = "worldview:admin"): typeof fetch {
+function fourmFetch(admin: boolean, scope = "maps:admin"): typeof fetch {
   return async (input) => {
     const url = String(input);
     if (url.endsWith("/oauth/introspect"))
@@ -86,9 +86,9 @@ describe("Tea Maps MCP", () => {
     expect(created.status).toBe(200);
     const project = (await created.json()).result.structuredContent.project;
     expect(project.name).toBe("MCP map");
-    const legacyList = await call(app.origin, "worldview_list_projects", {});
+    const projectList = await call(app.origin, "tea_maps_list_projects", {});
     expect(
-      (await legacyList.json()).result.structuredContent.projects.map(
+      (await projectList.json()).result.structuredContent.projects.map(
         (item: { id: string }) => item.id,
       ),
     ).toContain(project.id);
@@ -115,7 +115,7 @@ describe("Tea Maps MCP", () => {
       isAdmin: false,
     });
     const other = app.database.createProject(outsider.id, "Private", "quake");
-    const denied = await call(app.origin, "worldview_get_project", {
+    const denied = await call(app.origin, "tea_maps_get_project", {
       projectId: other.id,
     });
     expect((await denied.json()).result.isError).toBe(true);
@@ -140,6 +140,8 @@ describe("Tea Maps MCP", () => {
     expect(tools.map((tool: { name: string }) => tool.name)).not.toContain(
       "worldview_start_build",
     );
+    const oldAlias = await call(app.origin, "worldview_list_projects", {});
+    expect((await oldAlias.json()).result.isError).toBe(true);
   });
 
   test("rejects a current non-admin even with a valid scoped OAuth token", async () => {

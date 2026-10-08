@@ -54,25 +54,16 @@ export async function localMapMetadata(
 ): Promise<LocalMapMetadata> {
   const list = [...files];
   const stem = localMapPath(bsp).replace(/\.bsp$/iu, "");
-  const sidecar = [".tea-maps.json", ".worldview.json"]
-    .map((suffix) =>
-      list.find(
-        (file) =>
-          localMapPath(file).toLowerCase() === `${stem}${suffix}`.toLowerCase(),
-      ),
-    )
-    .find(Boolean);
-  const walkability = [
-    ".tea-maps-walkability.json",
-    ".worldview-walkability.json",
-  ]
-    .map((suffix) =>
-      list.find(
-        (file) =>
-          localMapPath(file).toLowerCase() === `${stem}${suffix}`.toLowerCase(),
-      ),
-    )
-    .find(Boolean);
+  const sidecar = list.find(
+    (file) =>
+      localMapPath(file).toLowerCase() ===
+      `${stem}.tea-maps.json`.toLowerCase(),
+  );
+  const walkability = list.find(
+    (file) =>
+      localMapPath(file).toLowerCase() ===
+      `${stem}.tea-maps-walkability.json`.toLowerCase(),
+  );
   if (!sidecar) {
     return {
       label: localMapPath(bsp),

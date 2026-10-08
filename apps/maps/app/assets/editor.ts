@@ -77,8 +77,6 @@ import {
   type EditorDraft,
   type EditorVersion,
 } from "./editor-draft.ts";
-import { loadImportedLegacyRecovery } from "./editor-legacy-local.ts";
-import { installLegacyRecoveryResources } from "./editor-legacy-mounts.ts";
 import { initHostedEditor } from "./editor-hosted.ts";
 import { listHostedResources } from "./editor-hosted-resources.ts";
 import { loadHostedWorldSource } from "./hosted-world-source.ts";
@@ -141,7 +139,6 @@ import {
   type MapFileHandle,
 } from "./editor-files.ts";
 import {
-  legacyProjectExportScope,
   openMapProject,
   pickProjectDirectory,
   supportsProjectPicker,
@@ -188,7 +185,6 @@ import {
   type BuildExportInput,
 } from "./editor-build-export.ts";
 import {
-  adoptExportSettings,
   defaultExportSettings,
   loadExportSettings,
   pickExportDirectory,
@@ -4121,13 +4117,6 @@ async function openProjectDirectory(
   setMap(createEmptyDocument());
   projectBindings = bindings;
   projectRecoveryScope = bindings?.scopeId ?? crypto.randomUUID();
-  if (bindings) {
-    const legacyScopeId = await legacyProjectExportScope(opened);
-    if (legacyScopeId)
-      await adoptExportSettings(legacyScopeId, bindings.scopeId).catch(
-        () => false,
-      );
-  }
   loadCurrentExportSettings();
   activeProjectPath = null;
   projectContext.update({
@@ -4841,52 +4830,6 @@ if (launchDetachedMap)
     if (!(await openDetachedCopyAfterConfirmation(copy))) return;
     detachedMapUrl.searchParams.delete("detachedMap");
     history.replaceState(null, "", detachedMapUrl);
-  })().catch((error: unknown) => {
-    status.textContent = error instanceof Error ? error.message : String(error);
-  });
-
-const legacyRecoveryUrl = new URL(location.href);
-const launchLegacyRecovery =
-  legacyRecoveryUrl.searchParams.get("legacyRecovery");
-if (launchLegacyRecovery)
-  void (async () => {
-    const game = legacyRecoveryUrl.searchParams.get("game");
-    if (!isWorldviewGameProfile(game))
-      throw new Error("Choose a game for the Worldview recovery version");
-    const snapshot = await loadImportedLegacyRecovery(launchLegacyRecovery);
-    if (!snapshot)
-      throw new Error(
-        "This Worldview recovery version is unavailable on this device",
-      );
-    if (
-      !gameProfileSupportsFaceSyntax(
-        worldviewGameProfile(game),
-        snapshot.document.faceSyntax,
-      )
-    )
-      throw new Error(`${game} does not support this map's face format`);
-    if (!(await mayReplaceMap())) return;
-    const documentKey = `worldview-recovery:${snapshot.snapshotId}`;
-    await installLegacyRecoveryResources(
-      snapshot.documentKey,
-      documentKey,
-      game,
-    );
-    persistDraft();
-    openDetachedCopy(
-      {
-        documentKey,
-        document: snapshot.document,
-        source: snapshot.source,
-        fileName: snapshot.fileName,
-        profile: game,
-      },
-      null,
-    );
-    await saveQueue;
-    legacyRecoveryUrl.searchParams.delete("legacyRecovery");
-    legacyRecoveryUrl.searchParams.delete("game");
-    history.replaceState(null, "", legacyRecoveryUrl);
   })().catch((error: unknown) => {
     status.textContent = error instanceof Error ? error.message : String(error);
   });

@@ -1,6 +1,6 @@
 import type { GoldSrcMovementConfig, Vec3Tuple } from "../core/index.js";
 
-export const WALKABILITY_FORMAT = "worldview-walkability";
+export const WALKABILITY_FORMAT = "tea-maps-walkability";
 export const WALKABILITY_VERSION = 1;
 
 export type WalkabilityTraversal = "walk" | "jump" | "drop";

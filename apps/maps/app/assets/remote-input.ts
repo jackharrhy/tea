@@ -36,8 +36,7 @@ export function sourceFromUrlParameters(
 ): WorldSource | undefined {
   const bsp = parameters.get("bsp")?.trim();
   if (!bsp) return undefined;
-  const gameBaseUrl =
-    parameters.get("gameBase")?.trim() || parameters.get("root")?.trim();
+  const gameBaseUrl = parameters.get("gameBase")?.trim();
   const palette = parameters.get("palette")?.trim();
   const wadBaseUrl = parameters.get("wadBase")?.trim();
   const skyboxBaseUrl = parameters.get("skyboxBase")?.trim();

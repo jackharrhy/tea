@@ -296,7 +296,7 @@ try {
   const graphPath = await graph.path();
   assert.ok(graphPath, "Walkability download has no file");
   const sidecar = JSON.parse(await readFile(graphPath, "utf8"));
-  assert.equal(sidecar.format, "worldview-walkability");
+  assert.equal(sidecar.format, "tea-maps-walkability");
   assert.ok(sidecar.nodes.length > 0, "Walkability graph has no nodes");
   await page.locator("#clear-walkability").click();
   assert.equal(await page.locator("#download-walkability").isDisabled(), true);

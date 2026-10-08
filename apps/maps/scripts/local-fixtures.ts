@@ -132,14 +132,8 @@ export async function discoverLocalFixtures(localRoot: string) {
         );
       const steamLevel = steamLevels.get(filename);
       const relativeBsp = path.relative(fixtureRoot, filename);
-      const teaSidecar = filename.replace(/\.bsp$/iu, ".tea-maps.json");
-      const worldviewSidecar = filename.replace(/\.bsp$/iu, ".worldview.json");
-      const teaMetadata = await fixtureMetadata(teaSidecar, realFixtureRoot);
-      const sidecar = teaMetadata ? teaSidecar : worldviewSidecar;
-      const metadata =
-        teaMetadata ??
-        (await fixtureMetadata(worldviewSidecar, realFixtureRoot)) ??
-        {};
+      const sidecar = filename.replace(/\.bsp$/iu, ".tea-maps.json");
+      const metadata = (await fixtureMetadata(sidecar, realFixtureRoot)) ?? {};
       const id = steamLevel
         ? `steam-corpus/${steamLevel.game.slug}/${steamLevel.mapPath}`
         : files.length === 1
@@ -182,23 +176,19 @@ export async function discoverLocalFixtures(localRoot: string) {
             : undefined
           : cameraDefinition(metadata.camera, sidecar);
       let walkability: string | null = null;
-      for (const suffix of [
+      const candidate = filename.replace(
+        /\.bsp$/iu,
         ".tea-maps-walkability.json",
-        ".worldview-walkability.json",
-      ]) {
-        const candidate = filename.replace(/\.bsp$/iu, suffix);
-        try {
-          const resolved = await realpath(candidate);
-          if (
-            contained(realFixtureRoot, resolved) &&
-            (await stat(resolved)).isFile()
-          ) {
-            walkability = candidate;
-            break;
-          }
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-        }
+      );
+      try {
+        const resolved = await realpath(candidate);
+        if (
+          contained(realFixtureRoot, resolved) &&
+          (await stat(resolved)).isFile()
+        )
+          walkability = candidate;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
       }
       fixtures.push({
         id,
