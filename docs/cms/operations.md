@@ -28,13 +28,13 @@ References: [Traefik Docker routing](https://doc.traefik.io/traefik/reference/ro
 
 ## Mug preview deployment
 
-The manual [Publish CMS workflow](../../.github/workflows/publish-cms.yml) accepts only `main`, runs the CMS check, and publishes `ghcr.io/jackharrhy/tea-cms` with `main` and commit tags. It does not deploy anything. Run it from the Tea repo:
+The [Publish CMS workflow](../../.github/workflows/publish-cms.yml) runs when a push to `main` changes `apps/cms`, its shared packages, or the image build inputs. It checks the CMS and publishes `ghcr.io/jackharrhy/tea-cms:latest` and a commit tag. A manual run from `main` is also available:
 
 ```sh
 gh workflow run publish-cms.yml --ref main
 ```
 
-Copy the immutable image digest from the completed workflow's summary into the `teacms` service in `~/infra/hosts/mug/compose.yml`. Mug's existing `/app/data` mount holds the Andrew and Luke preview content and operator account. Update only that service with `infra refresh mug --service teacms`, or the equivalent scoped Compose pull and up commands in the infra guide. Check all three preview hosts after rollout. Keep the prior digest for rollback. Andrew's production website uses a different Compose service and is outside this rollout.
+Mug's `teacms` Compose service uses `:latest`, and Watchtower pulls new images from private GHCR using its mounted Docker registry credentials. The existing `/app/data` mount holds the Andrew and Luke preview content and operator account. Watchtower recreates only the CMS container when a new image is published; check all three preview hosts after a rollout. For rollback, set the service image to a known commit tag or digest in infra and run `infra refresh mug --service teacms`. Andrew's production website uses a different Compose service and is outside this rollout.
 
 ## Health and backups
 

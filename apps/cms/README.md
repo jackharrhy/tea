@@ -27,4 +27,4 @@ npm run test:browser --workspace @tea/cms
 
 Host tests and fixtures live in `__tests__/`; feature tests live near their code. Operational scripts live in `scripts/`. See [Compose](../../compose.yml) and [operations](../../docs/cms/operations.md) for deployment and data, [MCP](../../docs/cms/mcp.md) for the optional read-only endpoint, and [AGENTS.md](AGENTS.md) for CMS editing rules.
 
-The [manual CMS publish workflow](../../.github/workflows/publish-cms.yml) builds this app's Dockerfile and writes an immutable GHCR image digest for the Mug preview rollout. It does not deploy the other Tea apps.
+The [CMS publish workflow](../../.github/workflows/publish-cms.yml) runs on `main` changes to this app or its shared dependencies. It checks the CMS and publishes `ghcr.io/jackharrhy/tea-cms:latest` plus a commit tag. It can also be started manually. Mug follows `latest` with Watchtower; the commit tag supports rollback.
