@@ -39,8 +39,8 @@ export function NotInGuildPage() {
         <main mix={cardStyle}>
           <h1>You're not in the right Discord server.</h1>
           <p>
-            tea/marky is gated to members of a specific Discord server. Sign in with
-            a Discord account that's a member there to continue.
+            tea/marky is gated to members of a specific Discord server. Sign in
+            with a Discord account that's a member there to continue.
           </p>
           <p>
             <a mix={linkStyle} href={routes.auth.signIn.href()}>
