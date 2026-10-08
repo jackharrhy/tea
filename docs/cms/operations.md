@@ -26,6 +26,16 @@ The local stack does not enable the optional operator dashboard. If you set `TEA
 
 References: [Traefik Docker routing](https://doc.traefik.io/traefik/reference/routing-configuration/other-providers/docker/), [HTTP routers](https://doc.traefik.io/traefik/reference/routing-configuration/http/routing/router/).
 
+## Mug preview deployment
+
+The manual [Publish CMS workflow](../../.github/workflows/publish-cms.yml) accepts only `main`, runs the CMS check, and publishes `ghcr.io/jackharrhy/tea-cms` with `main` and commit tags. It does not deploy anything. Run it from the Tea repo:
+
+```sh
+gh workflow run publish-cms.yml --ref main
+```
+
+Copy the immutable image digest from the completed workflow's summary into the `teacms` service in `~/infra/hosts/mug/compose.yml`. Mug's existing `/app/data` mount holds the Andrew and Luke preview content and operator account. Update only that service with `infra refresh mug --service teacms`, or the equivalent scoped Compose pull and up commands in the infra guide. Check all three preview hosts after rollout. Keep the prior digest for rollback. Andrew's production website uses a different Compose service and is outside this rollout.
+
 ## Health and backups
 
 `GET /healthz` checks the selected site's database. Monitor each site:
