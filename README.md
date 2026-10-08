@@ -10,6 +10,7 @@ a Remix 3 monorepo for personal apps and packages.
 | [`@tea/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
 | [`@tea/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
 | [`@tea/maps`](apps/maps/) | Remix 3 BSP viewer and map editor | [README](apps/maps/README.md) |
+| [`@tea/marky`](apps/marky/) | Collaborative Markdown editor with Discord access | [README](apps/marky/README.md) |
 | [`@tea/maps-collaboration`](apps/maps-collaboration/) | Live map sessions and SQLite map cells | [README](apps/maps-collaboration/README.md) |
 | [`@tea/maps-compiler`](apps/maps-compiler/) | Local native map compiler helper | [README](apps/maps-compiler/README.md) |
 | [`@tea/maps-service`](apps/maps-service/) | Hosted map projects and API | [README](apps/maps-service/README.md) |
@@ -48,5 +49,5 @@ The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. 
 
 CI installs once and runs the `check` scripts for affected workspaces. Package changes also check their consumers; shared config or unknown paths check every workspace with a `check` script. README and `docs/` changes skip app checks. Draft PR updates compare only commits in that push; ready PRs and `main` check the full change set. Browser setup remains available for workspace checks that include browser tests. Separate integration browser and Celld smokes run for affected apps when a PR is ready for review or on `main`. See [`scripts/ci/affected.mjs`](scripts/ci/affected.mjs).
 
-The [project import guide](docs/project-imports.md) records the Ref, Radio, and Maps production transfers.
+The [project import guide](docs/project-imports.md) records the Ref, Radio, Maps, and Marky transfers.
 The [Worldview third-party notices](THIRD_PARTY_NOTICES.md) preserve attribution for the imported Maps code and test fixture.

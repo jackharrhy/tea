@@ -19,6 +19,9 @@ apps/cms/data/
 apps/cms/tmp/
 apps/cms/uploads/
 apps/cms/content/
+apps/marky/content/
+apps/marky/tmp/
+apps/marky/.coverage/
 apps/maps-service/data/
 apps/maps/local/*
 !apps/maps/local/.gitkeep
