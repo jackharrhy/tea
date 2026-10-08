@@ -1,6 +1,6 @@
 # @tea/ref
 
-A small, private board for images and links. The Tea copy presents itself as `tea/ref` while retaining Ref's board format and storage contract. This app is adapted from the separate Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. There are no user accounts or shared spaces. One password opens every board. The original Ref deployment remains independent while this copy is validated.
+A small, private board for images and links. It presents itself as `tea/ref` while retaining Ref's board format and storage contract. This app was adapted from the former standalone Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. There are no user accounts or shared spaces. One password opens every board. The Newport production deployment now runs this workspace's container image.
 
 ## Run locally
 
@@ -15,7 +15,7 @@ npm run ref:dev
 
 Open <http://localhost:8787>. Enter the password and create a board. Add images with the button, drag and drop, or paste. Add links with **Add link**, by pasting a URL, or by dropping one onto the board. Link cards show the complete preview image; select one for metadata and the original post. Drag a card to move it; select it to resize, rotate, or remove it. Scroll or drag the background to pan; pinch or use the buttons to zoom. On narrow screens, item details open below the board.
 
-`.dev.vars` is ignored by Git. Wrangler stores local board and image data under `apps/ref/.wrangler/`. The original Ref repository's local and production data is not copied into Tea. Changing the password invalidates existing sessions; **Lock** ends the current session.
+`.dev.vars` is ignored by Git. Wrangler stores local board and image data under `apps/ref/.wrangler/`. Newport's production data lives in a separate Celld store; local development does not share it. Changing the password invalidates existing sessions; **Lock** ends the current session.
 On Cloudflare, sign-in pauses after ten password attempts from the same client in ten minutes. The self-hosted deployment limits login requests by client IP at the public reverse proxy.
 
 ## How it works
@@ -63,9 +63,9 @@ REF_URL=https://new-ref.example.com npm run restore --workspace @tea/ref -- /saf
 
 The backup command creates a new directory containing `manifest.json`, uploaded images, and cached link preview images. It fails if that directory already exists or a board changes while it is being copied. Keep the directory private: it contains your board contents. Restore preserves board and item IDs, layout, link metadata, and image bytes. It verifies every file before changing the destination and reads the restored board and images back afterward. Run it against an empty instance; if a restore is interrupted, rerun the same command to resume. A destination with unrelated boards is rejected.
 
-Archives contain the current board state, not edit history or full copies of linked web pages. Link preview images that were never cached still depend on their external URLs.
+Archives contain the current board state, not edit history or full copies of linked web pages. Link preview images that were never cached still depend on their external URLs. Restore recreates item revision counters; clients should reload after a cutover.
 
-With the original Ref repository checked out beside Tea and Celld installed, run `npm run test:archive:source --workspace @tea/ref` to verify the transfer path. This check creates a board with an image and link in disposable local source storage, backs it up with the original Ref archive command, restores it into a separate Tea Ref store twice, and compares the resulting archive. Set `REF_SOURCE_ROOT` if the original checkout is elsewhere. It does not read a live deployment or production data.
+With the archived Ref checkout available and Celld installed, run `npm run test:archive:source --workspace @tea/ref` to verify the transfer path. This check creates a board with an image and link in disposable local source storage, backs it up with the original Ref archive command, restores it into a separate Tea Ref store twice, and compares the resulting archive. Set `REF_SOURCE_ROOT=/home/jack/repos/scratch/backup/ref` if using the Newport backup. It does not read a live deployment or production data.
 
 ## Hosting
 
@@ -73,8 +73,8 @@ For a separate Cloudflare deployment of this Tea copy, create the `tea-ref-media
 
 For a self-hosted runtime, [Celld](https://celld.dev/docs/) accepts this Wrangler configuration and can run it locally with `npm run dev:celld`. It reads `.dev.vars` for local development. A Celld fleet deployment needs `REF_PASSWORD` in the private deployment configuration; `celld deploy` does not read `.dev.vars`. See [Celld's deployment instructions](https://celld.dev/docs/) for storage and node setup. Use the archive commands before moving a production instance.
 
-### Local container and eventual cutover
+### Local container and production
 
-Tea's root `compose.yml` builds `apps/ref/Dockerfile` and serves `ref.localhost` with a separate `ref-data` volume. It uses `REF_PASSWORD` from the Compose environment, or a local development password if unset. Celld stores its authoritative SQLite object store under `/app/.celld/object-store/` and replicas under `/app/.celld/state/`; preserve the entire mount for backups. The original Newport deployment and `ghcr.io/jackharrhy/ref` image remain sourced from the original repository during the bake period. Moving production requires a verified backup, restore into the new store, and a separate infrastructure update.
+Tea's root `compose.yml` builds `apps/ref/Dockerfile` and serves `ref.localhost` with a separate `ref-data` volume. It uses `REF_PASSWORD` from the Compose environment, or a local development password if unset. Celld stores its authoritative SQLite object store under `/app/.celld/object-store/` and replicas under `/app/.celld/state/`; preserve the entire mount for backups. Tea's `publish-ref` workflow builds and checks the app when Ref or its build inputs change on `main`, then publishes `ghcr.io/jackharrhy/tea-ref:latest` and a commit tag. Newport runs a reviewed image digest in its infrastructure Compose file. See the infrastructure repository's `hosts/newport/ref/README.md` for its store, backup, and rollback paths.
 
 The Dockerfile pins the fork's Celld 0.6.2 image by digest. Its published binary matches the release binary used for Ref's browser and cold-restore smoke. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse another runtime on an isolated store.
