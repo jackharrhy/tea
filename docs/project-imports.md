@@ -285,6 +285,10 @@ On 2026-10-08, Tea published `tea-radio` from `main` with the Celld 0.6.2 fork. 
 
 The live source had one playing room and 52 tracks totaling 4,628,240,145 media bytes. Before source shutdown, and again against the private Tea stage and public Tea service, an authenticated audit captured the room directory, track order and metadata, volume, playback type and track ID, and each track's HEAD and suffix-range response. Those stable fields and every media probe matched. The public `radio.jackharrhy.dev` route and Mug container were healthy after cutover. A private cold backup of the original volume and image was retained on Newport. `compare:instances` requires paused rooms, so this audit used the cold byte comparison plus read-only probes while preserving playback.
 
+## Marky import
+
+Marky was copied into `apps/marky` as `tea/marky` for `md.jackharrhy.dev`. The app now uses Remix 3.0.0, the Node Fetch server adapter, stable Remix components and assets, and a `ws` upgrade for its existing Yjs room protocol. Its Discord guild gate and Git-backed Markdown persistence remain app-owned. The source repository and its hostname had no running Newport container or content volume at import time, so Tea starts with a separate empty volume. The public service uses the existing encrypted Discord credentials; its OAuth application also needs the new `https://md.jackharrhy.dev/auth/callback` redirect registered. Keep the original repository available while Tea is private.
+
 ## Replacement gates
 
 - Ref: completed on 2026-10-08. The frozen source archive matched the staged archive; the production archive has the same board content, layout, metadata, and asset digests. The source volume and image remain in Newport backups. Archive restore reset item revision counters.

@@ -1,0 +1,11 @@
+import { get, post, route } from "remix/routes";
+
+export const routes = route({
+  assets: get("/assets/*path"),
+  home: get("/"),
+  auth: route("/auth", {
+    signIn: get("sign-in"),
+    callback: get("callback"),
+    signOut: post("sign-out"),
+  }),
+});

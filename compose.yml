@@ -54,6 +54,23 @@ services:
     networks:
       - web
 
+  marky:
+    build:
+      context: .
+      dockerfile: apps/marky/Dockerfile
+    environment:
+      MARKY_AUTH: anonymous
+      MARKY_CONTENT_DIR: /app/data/content
+    volumes:
+      - marky-data:/app/data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.marky.rule: "Host(`md.localhost`)"
+      traefik.http.routers.marky.entrypoints: web
+      traefik.http.services.marky.loadbalancer.server.port: "44100"
+    networks:
+      - web
+
   ref:
     build:
       context: .
@@ -170,6 +187,7 @@ services:
 
 volumes:
   cms-data:
+  marky-data:
   ref-data:
   radio-data:
   maps-data:

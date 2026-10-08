@@ -21,6 +21,8 @@
     "knip": "knip",
     "lint": "vp lint",
     "logger:check": "npm run tooling:check && npm run check --workspace @tea/logger",
+    "marky:check": "npm run tooling:check && npm run check --workspace @tea/marky",
+    "marky:dev": "npm run dev --workspace @tea/marky",
     "maps:check": "npm run tooling:check && npm run check --workspace @tea/maps-renderer && npm run check --workspace @tea/maps-editor && npm run check --workspace @tea/maps-protocol && npm run check --workspace @tea/maps && npm run check --workspace @tea/maps-collaboration && npm run check --workspace @tea/maps-compiler && npm run check --workspace @tea/maps-service",
     "maps:dev": "npm run dev --workspace @tea/maps",
     "mcp:check": "npm run tooling:check && npm run check --workspace @tea/mcp",
