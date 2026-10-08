@@ -941,7 +941,7 @@ try {
       roomType: 0,
     };
     const graph = {
-      format: "worldview-walkability",
+      format: "tea-maps-walkability",
       version: 1,
       worldFingerprint: "smoke",
       parameters: {
