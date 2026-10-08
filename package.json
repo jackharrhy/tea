@@ -19,6 +19,8 @@
     "format:check": "vp fmt --check",
     "json-schema:check": "npm run tooling:check && npm run check --workspace @tea/json-schema",
     "knip": "knip",
+    "letters-to-steve:check": "npm run tooling:check && npm run check --workspace @tea/letters-to-steve",
+    "letters-to-steve:dev": "npm run dev --workspace @tea/letters-to-steve",
     "lint": "vp lint",
     "logger:check": "npm run tooling:check && npm run check --workspace @tea/logger",
     "marky:check": "npm run tooling:check && npm run check --workspace @tea/marky",

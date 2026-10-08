@@ -289,8 +289,13 @@ The live source had one playing room and 52 tracks totaling 4,628,240,145 media 
 
 Marky was copied into `apps/marky` as `tea/marky` for `md.jackharrhy.dev`. The app now uses Remix 3.0.0, the Node Fetch server adapter, stable Remix components and assets, and a `ws` upgrade for its existing Yjs room protocol. Its Discord guild gate and Git-backed Markdown persistence remain app-owned. The source repository and its hostname had no running Newport container or content volume at import time, so Tea starts with a separate empty volume. The public service uses the existing encrypted Discord credentials; its OAuth application also needs the new `https://md.jackharrhy.dev/auth/callback` redirect registered. Keep the original repository available while Tea is private.
 
+## Letters to Steve import
+
+Letters to Steve was copied into `apps/letters-to-steve` from the standalone checkout. Tea pins Remix 3.0.0 and uses its stable component and asset APIs; the correspondence routes, SQLite migrations, attachment store, and editorial workflow remain app-owned. Its local Compose service has a separate volume and hostname, and the source checkout remains intact. The app image can be published from `main`, but no production host, data, or DNS is switched by this copy. A later cutover needs a stopped copy of the source SQLite database and uploaded images, followed by a route and media comparison against Tea's isolated volume.
+
 ## Replacement gates
 
+- Letters to Steve: stop source writes, copy the SQLite database and uploaded images into Tea's separate volume, compare editorial records and media bytes, then verify protected inbox and public routes before routing traffic.
 - Ref: completed on 2026-10-08. The frozen source archive matched the staged archive; the production archive has the same board content, layout, metadata, and asset digests. The source volume and image remain in Newport backups. Archive restore reset item revision counters.
 - Radio: completed on 2026-10-08. The stopped Celld database and WAL were copied byte for byte into Tea's separate store. The private Tea stage and public service matched the source room, all 52 tracks, volume, playback type and track ID, plus HEAD and suffix responses for every media object. The playing room was preserved without pausing it. The original volume and image remain available for rollback.
 - Maps: compare the stopped hosted-service database and blobs with `compare:data`, then compare all collaboration map cells and checkpoint bodies on isolated copied Celld stores. Exercise real OAuth, Artbin, compiler, local project, and owned-game workflows against the Tea copy before moving traffic. The fixture and browser smokes in this guide do not establish that production parity.
