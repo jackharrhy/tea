@@ -6,11 +6,11 @@ import {
 } from "../remote-input.ts";
 
 describe("remote map links", () => {
-  it("accepts Worldview asset override links", () => {
+  it("accepts Tea asset override links", () => {
     const source = sourceFromUrlParameters(
       new URLSearchParams({
         bsp: "maps/sample.bsp",
-        root: "/games/valve/",
+        gameBase: "/games/valve/",
         palette: "gfx/palette.lmp",
         wadBase: "/wads/",
         skyboxBase: "/env/",
@@ -35,7 +35,7 @@ describe("remote map links", () => {
     ).toBeUndefined();
   });
 
-  it("reads Worldview camera links and writes a camera that can be reopened", () => {
+  it("reads camera links and writes a camera that can be reopened", () => {
     const camera = cameraFromUrlParameters(
       new URLSearchParams({ camera: "1,2.5,-3,90,-45" }),
     );
