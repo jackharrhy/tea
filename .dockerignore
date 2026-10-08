@@ -17,6 +17,8 @@ apps/cms/content
 apps/marky/content
 apps/marky/tmp
 apps/marky/.coverage
+apps/letters-to-steve/db/*.sqlite*
+apps/letters-to-steve/tmp
 apps/maps-service/data
 **/playwright-report
 **/test-results

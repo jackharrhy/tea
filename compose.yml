@@ -71,6 +71,25 @@ services:
     networks:
       - web
 
+  letters-to-steve:
+    build:
+      context: .
+      dockerfile: apps/letters-to-steve/Dockerfile
+    environment:
+      STEVE_ADMIN_PASSWORD: ${STEVE_ADMIN_PASSWORD:-tea-letters-local-password}
+      DATABASE_PATH: /app/data/letters.sqlite
+      UPLOAD_DIRECTORY: /app/data/uploads
+      TRUST_PROXY: "true"
+    volumes:
+      - letters-to-steve-data:/app/data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.letters-to-steve.rule: "Host(`letters.localhost`)"
+      traefik.http.routers.letters-to-steve.entrypoints: web
+      traefik.http.services.letters-to-steve.loadbalancer.server.port: "44110"
+    networks:
+      - web
+
   ref:
     build:
       context: .
@@ -187,6 +206,7 @@ services:
 
 volumes:
   cms-data:
+  letters-to-steve-data:
   marky-data:
   ref-data:
   radio-data:
