@@ -6,7 +6,7 @@ import {
 } from "./editor-hosted-builds.ts";
 
 export const EditorHostedBuilds = clientEntry(
-  `${import.meta.url}#EditorHostedBuilds`,
+  `file:///app/assets/editor-hosted-builds-panel.tsx#EditorHostedBuilds`,
   function EditorHostedBuildsComponent(handle: Handle) {
     let context: HostedBuildHistoryContext | null = null;
 

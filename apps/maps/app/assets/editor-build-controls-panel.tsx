@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorBuildControlsContext } from "./editor-build-controls-bridge.ts";
 
 export const EditorBuildControls = clientEntry(
-  `${import.meta.url}#EditorBuildControls`,
+  `file:///app/assets/editor-build-controls-panel.tsx#EditorBuildControls`,
   function EditorBuildControlsComponent(handle: Handle) {
     let context: EditorBuildControlsContext | null = null;
 

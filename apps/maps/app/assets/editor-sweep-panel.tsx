@@ -7,7 +7,7 @@ import type {
 } from "./editor-sweep-bridge.ts";
 
 export const EditorSweepPanel = clientEntry(
-  `${import.meta.url}#EditorSweepPanel`,
+  `file:///app/assets/editor-sweep-panel.tsx#EditorSweepPanel`,
   function EditorSweepPanelComponent(handle: Handle) {
     let context: EditorSweepPanelContext | null = null;
 

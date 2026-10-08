@@ -20,7 +20,7 @@ import { ProjectDetailHeader } from "./project-detail-header.tsx";
 const MAX_RESOURCE_BYTES = 512 * 1024 * 1024;
 
 export const ProjectResources = clientEntry(
-  `${import.meta.url}#ProjectResources`,
+  `file:///app/assets/project-resources-page.tsx#ProjectResources`,
   function ProjectResourcesComponent(handle: Handle<{ projectId: string }>) {
     let project: HostedProject | null = null;
     let mounts: readonly HostedResourceMount[] = [];

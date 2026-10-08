@@ -31,7 +31,7 @@ function subscribeIssueState(
 }
 
 export const EditorDocumentSummary = clientEntry(
-  `${import.meta.url}#EditorDocumentSummary`,
+  `file:///app/assets/editor-issues-panel.tsx#EditorDocumentSummary`,
   function EditorDocumentSummaryComponent(handle: Handle) {
     let options: IssueBrowserOptions | null = null;
     subscribeIssueState(handle, (state) => {
@@ -100,7 +100,7 @@ export const EditorDocumentSummary = clientEntry(
 );
 
 export const EditorIssueStatus = clientEntry(
-  `${import.meta.url}#EditorIssueStatus`,
+  `file:///app/assets/editor-issues-panel.tsx#EditorIssueStatus`,
   function EditorIssueStatusComponent(handle: Handle) {
     let options: IssueBrowserOptions | null = null;
     subscribeIssueState(handle, (state) => {
@@ -140,7 +140,7 @@ export const EditorIssueStatus = clientEntry(
 );
 
 export const EditorIssues = clientEntry(
-  `${import.meta.url}#EditorIssues`,
+  `file:///app/assets/editor-issues-panel.tsx#EditorIssues`,
   function EditorIssuesComponent(handle: Handle) {
     let options: IssueBrowserOptions | null = null;
     let resetRevision = -1;

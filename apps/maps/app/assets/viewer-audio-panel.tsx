@@ -5,7 +5,7 @@ import { clientEntry, on, type Handle } from "remix/component";
 type MusicTrack = NonNullable<WorldviewViewer["world"]>["musicTracks"][number];
 
 export const ViewerAudioPanel = clientEntry(
-  `${import.meta.url}#ViewerAudioPanel`,
+  `file:///app/assets/viewer-audio-panel.tsx#ViewerAudioPanel`,
   function ViewerAudioPanelComponent(handle: Handle) {
     let element: WorldViewElement | null = null;
     let ready = false;

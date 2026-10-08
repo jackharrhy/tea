@@ -13,7 +13,7 @@ interface Visibility {
 }
 
 export const EditorFaceInspector = clientEntry(
-  `${import.meta.url}#EditorFaceInspector`,
+  `file:///app/assets/editor-face-inspector-panel.tsx#EditorFaceInspector`,
   function EditorFaceInspectorComponent(handle: Handle) {
     let visible = false;
     let projectionVisible = false;

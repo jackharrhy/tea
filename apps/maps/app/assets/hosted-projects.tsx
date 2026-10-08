@@ -14,7 +14,7 @@ const gameNames = {
 };
 
 export const HostedProjects = clientEntry(
-  `${import.meta.url}#HostedProjects`,
+  `file:///app/assets/hosted-projects.tsx#HostedProjects`,
   function HostedProjectsComponent(
     handle: Handle<{ createRequested: boolean }>,
   ) {

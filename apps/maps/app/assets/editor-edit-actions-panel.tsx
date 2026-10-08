@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorEditActionsContext } from "./editor-edit-actions-bridge.ts";
 
 export const EditorEditActions = clientEntry(
-  `${import.meta.url}#EditorEditActions`,
+  `file:///app/assets/editor-edit-actions-panel.tsx#EditorEditActions`,
   function EditorEditActionsComponent(handle: Handle) {
     let context: EditorEditActionsContext | null = null;
 

@@ -2,7 +2,7 @@ import { clientEntry, on, ref, type Handle } from "remix/component";
 import type { SwitchMapChoice } from "./editor-switch-map-bridge.ts";
 
 export const EditorSwitchMapDialog = clientEntry(
-  `${import.meta.url}#EditorSwitchMapDialog`,
+  `file:///app/assets/editor-switch-map-panel.tsx#EditorSwitchMapDialog`,
   function EditorSwitchMapDialogComponent(handle: Handle) {
     let dialog: HTMLDialogElement | null = null;
 

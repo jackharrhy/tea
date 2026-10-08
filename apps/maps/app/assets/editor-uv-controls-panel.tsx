@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorUvControlsContext } from "./editor-uv-controls-bridge.ts";
 
 export const EditorUvControls = clientEntry(
-  `${import.meta.url}#EditorUvControls`,
+  `file:///app/assets/editor-uv-controls-panel.tsx#EditorUvControls`,
   function EditorUvControlsComponent(handle: Handle) {
     let context: EditorUvControlsContext | null = null;
 

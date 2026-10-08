@@ -4,7 +4,7 @@ import { clientEntry, on, type Handle } from "remix/component";
 import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
 
 export const ViewerWalkabilityPanel = clientEntry(
-  `${import.meta.url}#ViewerWalkabilityPanel`,
+  `file:///app/assets/viewer-walkability-panel.tsx#ViewerWalkabilityPanel`,
   function ViewerWalkabilityPanelComponent(handle: Handle) {
     let element: WorldViewElement | null = null;
     let ready = false;

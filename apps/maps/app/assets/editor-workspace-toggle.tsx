@@ -39,7 +39,7 @@ function subscribeWorkspace(
 }
 
 export const EditorWorkspaceToggle = clientEntry(
-  `${import.meta.url}#EditorWorkspaceToggle`,
+  `file:///app/assets/editor-workspace-toggle.tsx#EditorWorkspaceToggle`,
   function EditorWorkspaceToggleComponent(handle: Handle) {
     let state: EditorWorkspaceState | null = null;
 
@@ -68,7 +68,7 @@ export const EditorWorkspaceToggle = clientEntry(
 );
 
 export const EditorInspectorToggle = clientEntry(
-  `${import.meta.url}#EditorInspectorToggle`,
+  `file:///app/assets/editor-workspace-toggle.tsx#EditorInspectorToggle`,
   function EditorInspectorToggleComponent(handle: Handle) {
     let state: EditorWorkspaceState | null = null;
     subscribeWorkspace(handle, (next) => {
@@ -107,7 +107,7 @@ const inspectorTabs = ["map", "entity", "face", "source"] as const;
 type InspectorTab = (typeof inspectorTabs)[number];
 
 export const EditorInspector = clientEntry(
-  `${import.meta.url}#EditorInspector`,
+  `file:///app/assets/editor-workspace-toggle.tsx#EditorInspector`,
   function EditorInspectorComponent(handle: Handle) {
     let active: InspectorTab = "map";
     let hydrated = false;

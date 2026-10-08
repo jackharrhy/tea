@@ -2,7 +2,7 @@ import { clientEntry, on, ref, type Handle } from "remix/component";
 import type { EditorFovContext } from "./editor-fov.ts";
 
 export const EditorFov = clientEntry(
-  `${import.meta.url}#EditorFov`,
+  `file:///app/assets/editor-fov-panel.tsx#EditorFov`,
   function EditorFovComponent(handle: Handle) {
     let context: EditorFovContext | null = null;
     let details: HTMLDetailsElement | null = null;

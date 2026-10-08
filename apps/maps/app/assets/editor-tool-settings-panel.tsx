@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorToolSettingsContext } from "./editor-tool-settings-bridge.ts";
 
 export const EditorToolSettings = clientEntry(
-  `${import.meta.url}#EditorToolSettings`,
+  `file:///app/assets/editor-tool-settings-panel.tsx#EditorToolSettings`,
   function EditorToolSettingsComponent(handle: Handle) {
     let context: EditorToolSettingsContext | null = null;
 

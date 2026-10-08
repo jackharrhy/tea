@@ -5,7 +5,7 @@ import type { EditorTransformsContext } from "./editor-transforms-bridge.ts";
 const axes = ["X", "Y", "Z"] as const;
 
 export const EditorTransforms = clientEntry(
-  `${import.meta.url}#EditorTransforms`,
+  `file:///app/assets/editor-transforms-panel.tsx#EditorTransforms`,
   function EditorTransformsComponent(handle: Handle) {
     let context: EditorTransformsContext | null = null;
 

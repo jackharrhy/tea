@@ -5,7 +5,7 @@ import {
 } from "./editor-source-compare.ts";
 
 export const EditorSourceComparison = clientEntry(
-  `${import.meta.url}#EditorSourceComparison`,
+  `file:///app/assets/editor-source-compare-panel.tsx#EditorSourceComparison`,
   function EditorSourceComparisonComponent(handle: Handle) {
     let comparison: SourceComparisonRequest | null = null;
 

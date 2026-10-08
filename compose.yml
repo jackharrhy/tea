@@ -87,6 +87,28 @@ services:
     networks:
       - web
 
+  maps:
+    build:
+      context: .
+      dockerfile: apps/maps/Dockerfile
+    environment:
+      CELLD_VAR_MAPS_SERVICE_ORIGIN: http://maps-service:8792
+      CELLD_VAR_MAPS_COLLABORATION_ORIGIN: http://maps-collaboration:44100
+    ports:
+      - "127.0.0.1:8790:8790"
+    volumes:
+      - maps-data:/app/.celld
+    depends_on:
+      - maps-service
+      - maps-collaboration
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.maps.rule: "Host(`maps.localhost`)"
+      traefik.http.routers.maps.entrypoints: web
+      traefik.http.services.maps.loadbalancer.server.port: "8790"
+    networks:
+      - web
+
   maps-collaboration:
     build:
       context: .
@@ -128,10 +150,29 @@ services:
     networks:
       - web
 
+  maps-compiler:
+    profiles: [native-compiler]
+    build:
+      context: .
+      dockerfile: apps/maps-compiler/Dockerfile
+    environment:
+      TEA_MAPS_COMPILER_HOST: 0.0.0.0
+      ERICW_QBSP: /opt/ericw-tools/qbsp
+      ERICW_VIS: /opt/ericw-tools/vis
+      ERICW_LIGHT: /opt/ericw-tools/light
+    volumes:
+      - ${ERICW_TOOLS_DIR:-/tmp/tea-ericw-tools}:/opt/ericw-tools:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    networks:
+      - web
+
 volumes:
   cms-data:
   ref-data:
   radio-data:
+  maps-data:
   maps-collaboration-data:
   maps-service-data:
 

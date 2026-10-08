@@ -11,7 +11,7 @@ import {
 type AccessRole = "editor" | "viewer";
 
 export const EditorHostedAccess = clientEntry(
-  `${import.meta.url}#EditorHostedAccess`,
+  `file:///app/assets/editor-hosted-access-panel.tsx#EditorHostedAccess`,
   function EditorHostedAccessComponent(handle: Handle) {
     let projectId: string | null = null;
     let users: readonly HostedProjectAccessUser[] = [];

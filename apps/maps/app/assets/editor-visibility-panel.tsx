@@ -10,7 +10,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorVisibilityState } from "./editor-visibility.ts";
 
 export const EditorVisibility = clientEntry(
-  `${import.meta.url}#EditorVisibility`,
+  `file:///app/assets/editor-visibility-panel.tsx#EditorVisibility`,
   function EditorVisibilityComponent(handle: Handle) {
     let state: EditorVisibilityState | null = null;
     let search = "";

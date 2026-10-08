@@ -31,7 +31,7 @@ async function openLocalFiles(files: Iterable<File>) {
 }
 
 export const ViewerToolbar = clientEntry(
-  `${import.meta.url}#ViewerToolbar`,
+  `file:///app/assets/viewer-chrome.tsx#ViewerToolbar`,
   function ViewerToolbarComponent(handle: Handle) {
     let name = "No map open";
     let status = "Choose a map to begin";
@@ -74,7 +74,7 @@ export const ViewerToolbar = clientEntry(
 );
 
 export const ViewerDropTarget = clientEntry(
-  `${import.meta.url}#ViewerDropTarget`,
+  `file:///app/assets/viewer-chrome.tsx#ViewerDropTarget`,
   function ViewerDropTargetComponent(handle: Handle) {
     let dragDepth = 0;
     let active = false;

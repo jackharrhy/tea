@@ -4,7 +4,7 @@ import type { EditorTransformToolContext } from "./editor-transform-tool-bridge.
 const axes = ["x", "y", "z"] as const;
 
 export const EditorTransformToolPanel = clientEntry(
-  `${import.meta.url}#EditorTransformToolPanel`,
+  `file:///app/assets/editor-transform-tool-panel.tsx#EditorTransformToolPanel`,
   function EditorTransformToolPanelComponent(handle: Handle) {
     let context: EditorTransformToolContext | null = null;
 

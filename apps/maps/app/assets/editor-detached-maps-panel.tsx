@@ -6,7 +6,7 @@ import {
 import type { DetachedMapsContext } from "./editor-hosted.ts";
 
 export const EditorDetachedMaps = clientEntry(
-  `${import.meta.url}#EditorDetachedMaps`,
+  `file:///app/assets/editor-detached-maps-panel.tsx#EditorDetachedMaps`,
   function EditorDetachedMapsComponent(handle: Handle) {
     let context: DetachedMapsContext | null = null;
     let copies: readonly DetachedHostedMap[] = [];

@@ -5,7 +5,7 @@ import type {
 } from "./editor-surface-bridge.ts";
 
 export const EditorSurface = clientEntry(
-  `${import.meta.url}#EditorSurface`,
+  `file:///app/assets/editor-surface-panel.tsx#EditorSurface`,
   function EditorSurfaceComponent(handle: Handle) {
     let context: EditorSurfaceContext | null = null;
     const flagInputs = new Map<string, HTMLInputElement>();

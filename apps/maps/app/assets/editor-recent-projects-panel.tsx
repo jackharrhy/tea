@@ -11,7 +11,7 @@ export interface OpenRecentProjectRequest {
 }
 
 export const EditorRecentProjects = clientEntry(
-  `${import.meta.url}#EditorRecentProjects`,
+  `file:///app/assets/editor-recent-projects-panel.tsx#EditorRecentProjects`,
   function EditorRecentProjectsComponent(handle: Handle) {
     let projects: readonly RecentProject[] | null = null;
     let busyId: string | null = null;

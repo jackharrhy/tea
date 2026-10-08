@@ -21,7 +21,7 @@ function subscribeProjectContext(
 }
 
 export const EditorProjectContextPanel = clientEntry(
-  `${import.meta.url}#EditorProjectContextPanel`,
+  `file:///app/assets/editor-project-context-panel.tsx#EditorProjectContextPanel`,
   function EditorProjectContextPanelComponent(handle: Handle) {
     let context: EditorProjectContext | null = null;
 
@@ -60,7 +60,7 @@ export const EditorProjectContextPanel = clientEntry(
 );
 
 export const EditorProjectResourcesPanel = clientEntry(
-  `${import.meta.url}#EditorProjectResourcesPanel`,
+  `file:///app/assets/editor-project-context-panel.tsx#EditorProjectResourcesPanel`,
   function EditorProjectResourcesPanelComponent(handle: Handle) {
     let context: EditorProjectContext | null = null;
     subscribeProjectContext(handle, (next) => {

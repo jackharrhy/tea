@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build:client": "node scripts/build.mjs",
-    "build": "npm run build:client && cf build",
+    "build": "npm run build:client && wrangler deploy --dry-run",
     "dev": "node scripts/build.mjs --dev && node scripts/dev.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -17,7 +17,7 @@
     "test:hosted": "node __tests__/hosted-flow.mjs",
     "corpus:steam": "bash scripts/download-steam-bsp-corpus.sh",
     "corpus:check": "node scripts/check-bsp-corpus.mjs",
-    "check": "npm run build:client && cf workers types && npm run typecheck && npm test && cf build"
+    "check": "npm run build:client && npm run typecheck && npm test && wrangler deploy --dry-run"
   },
   "dependencies": {
     "@tea/maps-editor": "0.1.0",
@@ -28,13 +28,12 @@
     "remix": "3.0.0"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^2.0.0-beta.sha-52b0dc0e9",
     "@types/node": "^26.6.4",
-    "cf": "^1.0.0-beta.13",
     "esbuild": "^0.28.2",
     "fake-indexeddb": "^6.2.5",
     "playwright": "1.62.1",
     "typescript": "^7.0.2",
+    "wrangler": "^4.127.1",
     "vite": "^8.3.3",
     "vitest": "^4.1.11",
     "zod": "^4.6.5"

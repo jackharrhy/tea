@@ -5,7 +5,7 @@ import type {
 } from "./editor-selection-brushes-bridge.ts";
 
 export const EditorSelectionBrushes = clientEntry(
-  `${import.meta.url}#EditorSelectionBrushes`,
+  `file:///app/assets/editor-selection-brushes-panel.tsx#EditorSelectionBrushes`,
   function EditorSelectionBrushesComponent(handle: Handle) {
     let context: EditorSelectionBrushesContext | null = null;
     let projection: SelectionBrushProjection = "xy";

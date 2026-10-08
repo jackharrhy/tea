@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorGeometryContext } from "./editor-geometry-bridge.ts";
 
 export const EditorGeometry = clientEntry(
-  `${import.meta.url}#EditorGeometry`,
+  `file:///app/assets/editor-geometry-panel.tsx#EditorGeometry`,
   function EditorGeometryComponent(handle: Handle) {
     let context: EditorGeometryContext | null = null;
 
@@ -57,7 +57,7 @@ export const EditorGeometry = clientEntry(
 );
 
 export const EditorCsg = clientEntry(
-  `${import.meta.url}#EditorCsg`,
+  `file:///app/assets/editor-geometry-panel.tsx#EditorCsg`,
   function EditorCsgComponent(handle: Handle) {
     let context: EditorGeometryContext | null = null;
 
