@@ -2,7 +2,7 @@ import { clientEntry, on, type Handle } from "remix/component";
 import type { EditorTopologyPanelContext } from "./editor-topology-bridge.ts";
 
 export const EditorTopologyPanel = clientEntry(
-  `${import.meta.url}#EditorTopologyPanel`,
+  `file:///app/assets/editor-topology-panel.tsx#EditorTopologyPanel`,
   function EditorTopologyPanelComponent(handle: Handle) {
     let context: EditorTopologyPanelContext | null = null;
 

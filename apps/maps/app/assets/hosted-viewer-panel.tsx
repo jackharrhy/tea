@@ -14,7 +14,7 @@ import { loadHostedWorldSource } from "./hosted-world-source.ts";
 import { cameraFromUrlParameters } from "./remote-input.ts";
 
 export const HostedViewerPanel = clientEntry(
-  `${import.meta.url}#HostedViewerPanel`,
+  `file:///app/assets/hosted-viewer-panel.tsx#HostedViewerPanel`,
   function HostedViewerPanelComponent(handle: Handle) {
     let projects: readonly HostedProjectSummary[] = [];
     let maps: readonly HostedProjectMap[] = [];

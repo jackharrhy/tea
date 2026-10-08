@@ -5,7 +5,7 @@ import type {
 } from "./editor-groups-bridge.ts";
 
 export const EditorGroups = clientEntry(
-  `${import.meta.url}#EditorGroups`,
+  `file:///app/assets/editor-groups-panel.tsx#EditorGroups`,
   function EditorGroupsComponent(handle: Handle) {
     let state: EditorGroupsPanelState | null = null;
     let nameDraft = "Group";

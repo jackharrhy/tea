@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorEntityInspectorContext } from "./editor-entity-inspector-bridge.ts";
 
 export const EditorEntityInspector = clientEntry(
-  `${import.meta.url}#EditorEntityInspector`,
+  `file:///app/assets/editor-entity-inspector-panel.tsx#EditorEntityInspector`,
   function EditorEntityInspectorComponent(handle: Handle) {
     let context: EditorEntityInspectorContext | null = null;
     const propertyDrafts = new Map<string, string>();

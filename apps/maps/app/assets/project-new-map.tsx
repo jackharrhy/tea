@@ -9,7 +9,7 @@ import { readHostedApi } from "./hosted-api.ts";
 import { ProjectDetailHeader } from "./project-detail-header.tsx";
 
 export const ProjectNewMap = clientEntry(
-  `${import.meta.url}#ProjectNewMap`,
+  `file:///app/assets/project-new-map.tsx#ProjectNewMap`,
   function ProjectNewMapComponent(handle: Handle<{ projectId: string }>) {
     let project: HostedProject | null = null;
     let signInRequired = false;

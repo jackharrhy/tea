@@ -16,7 +16,7 @@ import { ProjectDetailHeader } from "./project-detail-header.tsx";
 type AccessRole = "editor" | "viewer";
 
 export const ProjectAccess = clientEntry(
-  `${import.meta.url}#ProjectAccess`,
+  `file:///app/assets/project-access-page.tsx#ProjectAccess`,
   function ProjectAccessComponent(handle: Handle<{ projectId: string }>) {
     let project: HostedProject | null = null;
     let users: readonly HostedProjectAccessUser[] = [];

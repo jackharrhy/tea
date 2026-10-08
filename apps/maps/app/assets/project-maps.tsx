@@ -9,7 +9,7 @@ import { openLinkedLocalProject } from "./project-local.ts";
 import { ProjectDetailHeader } from "./project-detail-header.tsx";
 
 export const ProjectMaps = clientEntry(
-  `${import.meta.url}#ProjectMaps`,
+  `file:///app/assets/project-maps.tsx#ProjectMaps`,
   function ProjectMapsComponent(handle: Handle<{ projectId: string }>) {
     let project: HostedProject | null = null;
     let signInRequired = false;

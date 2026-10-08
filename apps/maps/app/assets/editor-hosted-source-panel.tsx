@@ -27,7 +27,7 @@ function closeSourceDialog() {
 }
 
 export const EditorHostedSourceOpen = clientEntry(
-  `${import.meta.url}#EditorHostedSourceOpen`,
+  `file:///app/assets/editor-hosted-source-panel.tsx#EditorHostedSourceOpen`,
   function EditorHostedSourceOpenComponent(handle: Handle) {
     let context: HostedSourceContext | null = null;
 
@@ -65,7 +65,7 @@ export const EditorHostedSourceOpen = clientEntry(
 );
 
 export const EditorHostedSource = clientEntry(
-  `${import.meta.url}#EditorHostedSource`,
+  `file:///app/assets/editor-hosted-source-panel.tsx#EditorHostedSource`,
   function EditorHostedSourceComponent(handle: Handle) {
     let context: HostedSourceContext | null = null;
     let baseline: HostedSourceBaseline | null = null;

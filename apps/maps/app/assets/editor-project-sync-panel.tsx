@@ -21,7 +21,7 @@ const statusLabels = {
 } as const;
 
 export const EditorProjectSyncOpen = clientEntry(
-  `${import.meta.url}#EditorProjectSyncOpen`,
+  `file:///app/assets/editor-project-sync-panel.tsx#EditorProjectSyncOpen`,
   function EditorProjectSyncOpenComponent(handle: Handle) {
     let context: ProjectSyncContext | null = null;
 
@@ -57,7 +57,7 @@ export const EditorProjectSyncOpen = clientEntry(
 );
 
 export const EditorProjectSync = clientEntry(
-  `${import.meta.url}#EditorProjectSync`,
+  `file:///app/assets/editor-project-sync-panel.tsx#EditorProjectSync`,
   function EditorProjectSyncComponent(handle: Handle) {
     let context: ProjectSyncContext | null = null;
     let receivedContext = false;

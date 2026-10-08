@@ -61,7 +61,7 @@ function replaceQuery(parameters: Record<string, string>) {
 }
 
 export const ViewerSourcePanel = clientEntry(
-  `${import.meta.url}#ViewerSourcePanel`,
+  `file:///app/assets/viewer-source-panel.tsx#ViewerSourcePanel`,
   function ViewerSourcePanelComponent(handle: Handle) {
     let fixtures: readonly LocalFixture[] = [];
     let selectedExample = "goldsrc";

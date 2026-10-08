@@ -344,13 +344,15 @@ try {
   await ready(service, `${serviceOrigin}/health`);
   const maps = start(
     "maps",
-    join(teaRoot, "node_modules/.bin/cf"),
-    ["dev"],
+    join(teaRoot, "node_modules/.bin/wrangler"),
+    [
+      "dev", "--config", "wrangler.dev.jsonc", "--port", "8790",
+      "--var", `MAPS_SERVICE_ORIGIN:${serviceOrigin}`,
+      "--var", `MAPS_COLLABORATION_ORIGIN:${collaborationOrigin}`,
+    ],
     mapsRoot,
     {
       ...process.env,
-      TEA_MAPS_SERVICE_ORIGIN: serviceOrigin,
-      TEA_MAPS_COLLABORATION_ORIGIN: collaborationOrigin,
     },
   );
   await ready(maps, `${mapsOrigin}/new-map`);

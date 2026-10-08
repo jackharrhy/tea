@@ -3,7 +3,7 @@ import type { EditorSelectionCommandsContext } from "./editor-selection-commands
 import { EditorSelectionBrushes } from "./editor-selection-brushes-panel.tsx";
 
 export const EditorSelectionCommands = clientEntry(
-  `${import.meta.url}#EditorSelectionCommands`,
+  `file:///app/assets/editor-selection-commands-panel.tsx#EditorSelectionCommands`,
   function EditorSelectionCommandsComponent(handle: Handle) {
     let context: EditorSelectionCommandsContext | null = null;
 

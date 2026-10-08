@@ -21,7 +21,7 @@ function formatMapDetails(
 }
 
 export const ViewerDiagnosticsPanel = clientEntry(
-  `${import.meta.url}#ViewerDiagnosticsPanel`,
+  `file:///app/assets/viewer-diagnostics-panel.tsx#ViewerDiagnosticsPanel`,
   function ViewerDiagnosticsPanelComponent(handle: Handle) {
     let element: WorldViewElement | null = null;
     let details = "Load a map to inspect it";

@@ -5,7 +5,7 @@ import {
 import { clientEntry, on, ref, type Handle } from "remix/component";
 
 export const NewMapSetup = clientEntry(
-  `${import.meta.url}#NewMapSetup`,
+  `file:///app/assets/new-map-setup.tsx#NewMapSetup`,
   function NewMapSetupComponent(handle: Handle) {
     let game: WorldviewGameProfile = "quake";
     let format: "quake" | "valve-220" = "valve-220";

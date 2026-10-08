@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorFaceBasicsContext } from "./editor-face-basics-bridge.ts";
 
 export const EditorFaceBasics = clientEntry(
-  `${import.meta.url}#EditorFaceBasics`,
+  `file:///app/assets/editor-face-basics-panel.tsx#EditorFaceBasics`,
   function EditorFaceBasicsComponent(handle: Handle) {
     let context: EditorFaceBasicsContext | null = null;
 

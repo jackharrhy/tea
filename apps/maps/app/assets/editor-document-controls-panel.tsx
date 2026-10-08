@@ -3,7 +3,7 @@ import { supportsMapOpenPicker } from "./editor-files.ts";
 import type { EditorDocumentControlsContext } from "./editor-document-controls-bridge.ts";
 
 export const EditorDocumentControls = clientEntry(
-  `${import.meta.url}#EditorDocumentControls`,
+  `file:///app/assets/editor-document-controls-panel.tsx#EditorDocumentControls`,
   function EditorDocumentControlsComponent(handle: Handle) {
     let context: EditorDocumentControlsContext | null = null;
     let checkpointLabel = "";

@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorHistoryContext } from "./editor-history-bridge.ts";
 
 export const EditorHistory = clientEntry(
-  `${import.meta.url}#EditorHistory`,
+  `file:///app/assets/editor-history-panel.tsx#EditorHistory`,
   function EditorHistoryComponent(handle: Handle) {
     let context: EditorHistoryContext | null = null;
 

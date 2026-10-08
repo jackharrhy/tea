@@ -7,7 +7,7 @@ import {
 } from "./editor-project-map-selector.ts";
 
 export const EditorProjectMapSelector = clientEntry(
-  `${import.meta.url}#EditorProjectMapSelector`,
+  `file:///app/assets/editor-project-map-selector-panel.tsx#EditorProjectMapSelector`,
   function EditorProjectMapSelectorComponent(handle: Handle) {
     let state = null as ReturnType<typeof currentProjectMapSelector>;
     let filter = "";

@@ -8,7 +8,7 @@ const axes = [
 ] as const;
 
 export const EditorReferences = clientEntry(
-  `${import.meta.url}#EditorReferences`,
+  `file:///app/assets/editor-references-panel.tsx#EditorReferences`,
   function EditorReferencesComponent(handle: Handle) {
     let context: EditorReferencesContext | null = null;
     let fileInput: HTMLInputElement | null = null;

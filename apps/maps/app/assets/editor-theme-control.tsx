@@ -14,7 +14,7 @@ function storedPreference(): ThemePreference {
 }
 
 export const EditorThemeControl = clientEntry(
-  `${import.meta.url}#EditorThemeControl`,
+  `file:///app/assets/editor-theme-control.tsx#EditorThemeControl`,
   function EditorThemeControlComponent(handle: Handle) {
     let preference: ThemePreference = "system";
 

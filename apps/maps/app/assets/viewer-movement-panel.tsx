@@ -71,7 +71,7 @@ const fields = [
 type MovementKey = (typeof fields)[number]["key"];
 
 export const ViewerMovementPanel = clientEntry(
-  `${import.meta.url}#ViewerMovementPanel`,
+  `file:///app/assets/viewer-movement-panel.tsx#ViewerMovementPanel`,
   function ViewerMovementPanelComponent(handle: Handle) {
     let element: WorldViewElement | null = null;
     let settings: WorldviewMovementSettings | null = null;

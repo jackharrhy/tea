@@ -20,7 +20,7 @@ function message(cause: unknown) {
 }
 
 export const EditorHostedPicker = clientEntry(
-  `${import.meta.url}#EditorHostedPicker`,
+  `file:///app/assets/editor-hosted-picker-panel.tsx#EditorHostedPicker`,
   function EditorHostedPickerComponent(handle: Handle) {
     let context: HostedPickerContext | null = null;
     let signedIn: boolean | null = null;

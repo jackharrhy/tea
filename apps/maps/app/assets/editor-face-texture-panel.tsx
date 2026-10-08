@@ -44,7 +44,7 @@ const alignmentOperations = [
 ])[];
 
 export const EditorFaceProjectionFields = clientEntry(
-  `${import.meta.url}#EditorFaceProjectionFields`,
+  `file:///app/assets/editor-face-texture-panel.tsx#EditorFaceProjectionFields`,
   function EditorFaceProjectionFieldsComponent(handle: Handle) {
     let context: EditorFaceTextureContext | null = null;
 
@@ -97,7 +97,7 @@ export const EditorFaceProjectionFields = clientEntry(
 );
 
 export const EditorTextureAlignment = clientEntry(
-  `${import.meta.url}#EditorTextureAlignment`,
+  `file:///app/assets/editor-face-texture-panel.tsx#EditorTextureAlignment`,
   function EditorTextureAlignmentComponent(handle: Handle) {
     let context: EditorFaceTextureContext | null = null;
 

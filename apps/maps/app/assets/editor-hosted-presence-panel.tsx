@@ -8,7 +8,7 @@ import {
 } from "./editor-hosted-presence.ts";
 
 export const EditorHostedPresenceStrip = clientEntry(
-  `${import.meta.url}#EditorHostedPresenceStrip`,
+  `file:///app/assets/editor-hosted-presence-panel.tsx#EditorHostedPresenceStrip`,
   function EditorHostedPresenceStripComponent(handle: Handle) {
     let state = null as ReturnType<typeof currentHostedPresence>;
     let pickerOpen = false;
@@ -96,7 +96,7 @@ export const EditorHostedPresenceStrip = clientEntry(
 );
 
 export const EditorHostedPresence = clientEntry(
-  `${import.meta.url}#EditorHostedPresence`,
+  `file:///app/assets/editor-hosted-presence-panel.tsx#EditorHostedPresence`,
   function EditorHostedPresenceComponent(handle: Handle) {
     let state = null as ReturnType<typeof currentHostedPresence>;
 

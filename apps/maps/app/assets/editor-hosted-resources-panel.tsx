@@ -21,7 +21,7 @@ function message(cause: unknown) {
 }
 
 export const EditorHostedResources = clientEntry(
-  `${import.meta.url}#EditorHostedResources`,
+  `file:///app/assets/editor-hosted-resources-panel.tsx#EditorHostedResources`,
   function EditorHostedResourcesComponent(handle: Handle) {
     let context: EditorHostedResourcesContext | null = null;
     let project: HostedProject | null = null;

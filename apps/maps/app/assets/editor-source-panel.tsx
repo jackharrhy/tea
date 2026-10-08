@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorSourceContext } from "./editor-source-bridge.ts";
 
 export const EditorSourcePanel = clientEntry(
-  `${import.meta.url}#EditorSourcePanel`,
+  `file:///app/assets/editor-source-panel.tsx#EditorSourcePanel`,
   function EditorSourcePanelComponent(handle: Handle) {
     let context: EditorSourceContext | null = null;
 

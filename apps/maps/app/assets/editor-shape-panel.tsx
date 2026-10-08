@@ -6,7 +6,7 @@ import {
 } from "./editor-shape-bridge.ts";
 
 export const EditorShapePanel = clientEntry(
-  `${import.meta.url}#EditorShapePanel`,
+  `file:///app/assets/editor-shape-panel.tsx#EditorShapePanel`,
   function EditorShapePanelComponent(handle: Handle) {
     let context: EditorShapePanelContext | null = null;
 

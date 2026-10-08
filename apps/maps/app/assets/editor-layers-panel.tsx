@@ -5,7 +5,7 @@ import type {
 } from "./editor-layers-bridge.ts";
 
 export const EditorLayers = clientEntry(
-  `${import.meta.url}#EditorLayers`,
+  `file:///app/assets/editor-layers-panel.tsx#EditorLayers`,
   function EditorLayersComponent(handle: Handle) {
     let state: EditorLayersPanelState | null = null;
     let nameDraft = "";

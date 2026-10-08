@@ -32,7 +32,7 @@ type RestoreChoice =
     };
 
 export const EditorVersions = clientEntry(
-  `${import.meta.url}#EditorVersions`,
+  `file:///app/assets/editor-versions-panel.tsx#EditorVersions`,
   function EditorVersionsComponent(handle: Handle) {
     let mapId: string | null = null;
     let localVersions: readonly EditorVersion[] = [];

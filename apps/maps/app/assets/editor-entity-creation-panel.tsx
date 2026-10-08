@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorEntityCreationContext } from "./editor-entity-creation-bridge.ts";
 
 export const EditorEntityCreation = clientEntry(
-  `${import.meta.url}#EditorEntityCreation`,
+  `file:///app/assets/editor-entity-creation-panel.tsx#EditorEntityCreation`,
   function EditorEntityCreationComponent(handle: Handle) {
     let context: EditorEntityCreationContext | null = null;
 

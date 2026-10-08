@@ -37,7 +37,7 @@ function drawThumbnail(canvas: HTMLCanvasElement, material: EditorMaterial) {
 }
 
 export const EditorMaterialBrowser = clientEntry(
-  `${import.meta.url}#EditorMaterialBrowser`,
+  `file:///app/assets/editor-material-browser-panel.tsx#EditorMaterialBrowser`,
   function EditorMaterialBrowserComponent(handle: Handle) {
     let context: MaterialBrowserContext | null = null;
     let filter = "";

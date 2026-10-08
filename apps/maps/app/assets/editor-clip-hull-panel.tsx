@@ -9,7 +9,7 @@ const clipModes = [
 ] as const satisfies readonly (readonly [BrushClipMode, string])[];
 
 export const EditorClipHull = clientEntry(
-  `${import.meta.url}#EditorClipHull`,
+  `file:///app/assets/editor-clip-hull-panel.tsx#EditorClipHull`,
   function EditorClipHullComponent(handle: Handle) {
     let context: EditorClipHullContext | null = null;
 

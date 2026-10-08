@@ -5,7 +5,7 @@ import type { ExportSettingsPanelContext } from "./editor-export-settings-bridge
 const initialSettings = defaultExportSettings("default");
 
 export const EditorExportSettings = clientEntry(
-  `${import.meta.url}#EditorExportSettings`,
+  `file:///app/assets/editor-export-settings-panel.tsx#EditorExportSettings`,
   function EditorExportSettingsComponent(handle: Handle) {
     let context: ExportSettingsPanelContext | null = null;
 

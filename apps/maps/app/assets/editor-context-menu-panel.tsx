@@ -5,7 +5,7 @@ import type {
 } from "./editor-context-menu.ts";
 
 export const EditorContextMenu = clientEntry(
-  `${import.meta.url}#EditorContextMenu`,
+  `file:///app/assets/editor-context-menu-panel.tsx#EditorContextMenu`,
   function EditorContextMenuComponent(handle: Handle) {
     let context: EditorContextMenuContext | null = null;
     let root: HTMLDivElement | null = null;

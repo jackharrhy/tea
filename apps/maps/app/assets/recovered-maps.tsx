@@ -24,7 +24,7 @@ import {
 } from "./editor-legacy-export-settings.ts";
 
 export const OpenLocalProject = clientEntry(
-  `${import.meta.url}#OpenLocalProject`,
+  `file:///app/assets/recovered-maps.tsx#OpenLocalProject`,
   function OpenLocalProjectComponent(handle: Handle) {
     let opening = false;
     let error: string | null = null;
@@ -63,7 +63,7 @@ export const OpenLocalProject = clientEntry(
 );
 
 export const RecentProjects = clientEntry(
-  `${import.meta.url}#RecentProjects`,
+  `file:///app/assets/recovered-maps.tsx#RecentProjects`,
   function RecentProjectsComponent(handle: Handle) {
     let projects: readonly RecentProject[] | null = null;
     let error: string | null = null;
@@ -169,7 +169,7 @@ export const RecentProjects = clientEntry(
 );
 
 export const RecoveredMaps = clientEntry(
-  `${import.meta.url}#RecoveredMaps`,
+  `file:///app/assets/recovered-maps.tsx#RecoveredMaps`,
   function RecoveredMapsComponent(handle: Handle) {
     let copies: readonly DetachedMapSummary[] | null = null;
     let error: string | null = null;

@@ -115,6 +115,7 @@ export default {
       ASSETS: { fetch(request: Request): Promise<Response> };
       MAPS_SERVICE_ORIGIN: string;
       MAPS_COLLABORATION_ORIGIN: string;
+      MAPS_LOCAL_FIXTURE_ORIGIN?: string;
     },
   ): Promise<Response> {
     const pathname = new URL(request.url).pathname;
@@ -123,6 +124,15 @@ export default {
     }
     if (isCollaborationPath(pathname)) {
       return proxyCollaborationRequest(request, env.MAPS_COLLABORATION_ORIGIN);
+    }
+    if (
+      env.MAPS_LOCAL_FIXTURE_ORIGIN &&
+      (pathname === "/local-fixtures.json" || pathname.startsWith("/local/"))
+    ) {
+      const destination = new URL(request.url);
+      destination.host = new URL(env.MAPS_LOCAL_FIXTURE_ORIGIN).host;
+      destination.protocol = new URL(env.MAPS_LOCAL_FIXTURE_ORIGIN).protocol;
+      return fetch(new Request(destination, request));
     }
     if (pathname.startsWith("/assets/") || pathname === "/favicon.svg") {
       return env.ASSETS.fetch(request);

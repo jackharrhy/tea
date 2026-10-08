@@ -2,7 +2,7 @@ import type { EditorPointerPositionEvent } from "@tea/maps-editor/render";
 import { clientEntry, type Handle } from "remix/component";
 
 export const EditorPointerReadout = clientEntry(
-  `${import.meta.url}#EditorPointerReadout`,
+  `file:///app/assets/editor-pointer-readout.tsx#EditorPointerReadout`,
   function EditorPointerReadoutComponent(handle: Handle) {
     let pointer: EditorPointerPositionEvent | null = null;
     let pending: EditorPointerPositionEvent | null = null;

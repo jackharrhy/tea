@@ -1,7 +1,7 @@
 import { clientEntry, type Handle } from "remix/component";
 
 export const EditorDocumentName = clientEntry(
-  `${import.meta.url}#EditorDocumentName`,
+  `file:///app/assets/editor-readouts.tsx#EditorDocumentName`,
   function EditorDocumentNameComponent(handle: Handle) {
     let name = "tea-map.map";
 
@@ -27,7 +27,7 @@ export const EditorDocumentName = clientEntry(
 );
 
 export const EditorPerspectiveLabel = clientEntry(
-  `${import.meta.url}#EditorPerspectiveLabel`,
+  `file:///app/assets/editor-readouts.tsx#EditorPerspectiveLabel`,
   function EditorPerspectiveLabelComponent(handle: Handle) {
     let label = "Perspective";
 
@@ -49,7 +49,7 @@ export const EditorPerspectiveLabel = clientEntry(
 );
 
 export const EditorStatus = clientEntry(
-  `${import.meta.url}#EditorStatus`,
+  `file:///app/assets/editor-readouts.tsx#EditorStatus`,
   function EditorStatusComponent(handle: Handle) {
     let message = "Starting…";
 
@@ -75,7 +75,7 @@ export const EditorStatus = clientEntry(
 );
 
 export const EditorSelectionInfo = clientEntry(
-  `${import.meta.url}#EditorSelectionInfo`,
+  `file:///app/assets/editor-readouts.tsx#EditorSelectionInfo`,
   function EditorSelectionInfoComponent(handle: Handle) {
     let message = "No selection";
 

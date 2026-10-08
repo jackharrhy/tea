@@ -4,7 +4,7 @@ import { clientEntry, on, type Handle } from "remix/component";
 import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
 
 export const ViewerOverviewPanel = clientEntry(
-  `${import.meta.url}#ViewerOverviewPanel`,
+  `file:///app/assets/viewer-overview-panel.tsx#ViewerOverviewPanel`,
   function ViewerOverviewPanelComponent(handle: Handle) {
     let element: WorldViewElement | null = null;
     let ready = false;

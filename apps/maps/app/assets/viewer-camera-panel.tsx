@@ -4,7 +4,7 @@ import { clientEntry, on, type Handle } from "remix/component";
 import { cameraUrlValue } from "./remote-input.ts";
 
 export const ViewerCameraPanel = clientEntry(
-  `${import.meta.url}#ViewerCameraPanel`,
+  `file:///app/assets/viewer-camera-panel.tsx#ViewerCameraPanel`,
   function ViewerCameraPanelComponent(handle: Handle) {
     let element: WorldViewElement | null = null;
     let reticle: HTMLElement | null = null;

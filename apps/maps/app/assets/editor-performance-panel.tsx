@@ -16,7 +16,7 @@ function subscribe(handle: Handle, update: (state: PerformanceState) => void) {
 }
 
 export const EditorPerformanceToggle = clientEntry(
-  `${import.meta.url}#EditorPerformanceToggle`,
+  `file:///app/assets/editor-performance-panel.tsx#EditorPerformanceToggle`,
   function EditorPerformanceToggleComponent(handle: Handle) {
     let enabled = false;
     subscribe(handle, (state) => {
@@ -39,7 +39,7 @@ export const EditorPerformanceToggle = clientEntry(
 );
 
 export const EditorPerformancePanel = clientEntry(
-  `${import.meta.url}#EditorPerformancePanel`,
+  `file:///app/assets/editor-performance-panel.tsx#EditorPerformancePanel`,
   function EditorPerformancePanelComponent(handle: Handle) {
     let state: PerformanceState | null = null;
     let report = "";
