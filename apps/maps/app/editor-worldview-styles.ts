@@ -49,39 +49,41 @@ export const worldviewEditorStyles = css({
     paddingRight: "6px",
     borderRight: "1px solid var(--editor-soft-border)",
   },
-  "& .editor-tool-button, & .editor-toolbar > button, & .editor-toolbar > .editor-menu > summary": {
-    display: "grid",
-    flex: "none",
-    placeItems: "center",
-    width: "30px",
-    height: "30px",
-    minHeight: "30px",
-    padding: "0",
-    color: "var(--editor-muted)",
-    background: "transparent",
-    border: "1px solid transparent",
-    borderRadius: "3px",
-    "font-size": "11px",
-    "white-space": "nowrap",
-  },
+  "& .editor-tool-button, & .editor-toolbar > button, & .editor-toolbar > .editor-menu > summary":
+    {
+      display: "grid",
+      flex: "none",
+      placeItems: "center",
+      width: "30px",
+      height: "30px",
+      minHeight: "30px",
+      padding: "0",
+      color: "var(--editor-muted)",
+      background: "transparent",
+      border: "1px solid transparent",
+      borderRadius: "3px",
+      "font-size": "11px",
+      "white-space": "nowrap",
+    },
   "& .editor-tool-button .ph, & .editor-toolbar > button .ph, & .editor-toolbar > .editor-menu > summary .ph":
     {
       "font-size": "18px",
     },
-  "& .editor-toolbar #undo, & .editor-toolbar #redo, & .editor-toolbar #show-source": {
-    display: "grid",
-    flex: "none",
-    placeItems: "center",
-    width: "30px",
-    height: "30px",
-    minHeight: "30px",
-    padding: "0",
-    color: "var(--editor-muted)",
-    background: "transparent",
-    border: "1px solid transparent",
-    borderRadius: "3px",
-    fontSize: "16px",
-  },
+  "& .editor-toolbar #undo, & .editor-toolbar #redo, & .editor-toolbar #show-source":
+    {
+      display: "grid",
+      flex: "none",
+      placeItems: "center",
+      width: "30px",
+      height: "30px",
+      minHeight: "30px",
+      padding: "0",
+      color: "var(--editor-muted)",
+      background: "transparent",
+      border: "1px solid transparent",
+      borderRadius: "3px",
+      fontSize: "16px",
+    },
   "& .editor-toolbar #show-source": {
     marginLeft: "4px",
     borderLeft: "1px solid var(--editor-soft-border)",
@@ -103,7 +105,9 @@ export const worldviewEditorStyles = css({
     borderColor: "var(--editor-button-haze)",
     boxShadow: "inset 0 -2px var(--editor-accent)",
   },
-  "& .editor-tool-button[data-tool='select'] .ph": { color: "var(--editor-danger)" },
+  "& .editor-tool-button[data-tool='select'] .ph": {
+    color: "var(--editor-danger)",
+  },
   "& .editor-tool-button[data-tool='entity'] .ph, & .editor-tool-button[data-tool='hull'] .ph, & .editor-tool-button[data-tool='face'] .ph, & .editor-tool-button[data-tool='vertex'] .ph, & .editor-tool-button[data-tool='edge'] .ph":
     {
       color: "var(--editor-warning)",
@@ -112,9 +116,10 @@ export const worldviewEditorStyles = css({
     {
       color: "var(--editor-success)",
     },
-  "& .editor-tool-button[data-tool='rotate'] .ph, & .editor-tool-button[data-tool='shear'] .ph": {
-    color: "var(--editor-accent)",
-  },
+  "& .editor-tool-button[data-tool='rotate'] .ph, & .editor-tool-button[data-tool='shear'] .ph":
+    {
+      color: "var(--editor-accent)",
+    },
   "& .editor-tool-select-fallback, & .editor-visually-hidden": {
     position: "absolute",
     width: "1px",
@@ -151,26 +156,31 @@ export const worldviewEditorStyles = css({
   },
   "& .editor-texture-lock .ph": { "font-size": "16px" },
   "& .editor-texture-lock input": { position: "absolute", opacity: "0" },
-  "& .editor-texture-lock:has(input:not(:checked))": { color: "var(--editor-muted)" },
-  "& .editor-texture-lock:focus-within": { outline: "2px solid var(--editor-accent)" },
-  "& .editor-menu": { position: "relative", flex: "none" },
-  "& .editor-header > .editor-menu > summary, & #hosted-editor-picker > summary": {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "5px",
-    height: "47px",
-    padding: "0 10px",
+  "& .editor-texture-lock:has(input:not(:checked))": {
     color: "var(--editor-muted)",
-    background: "transparent",
-    border: "0",
-    borderLeft: "1px solid var(--editor-soft-border)",
-    borderRadius: "0",
-    cursor: "pointer",
-    "font-size": "11px",
-    "list-style": "none",
-    "white-space": "nowrap",
   },
+  "& .editor-texture-lock:focus-within": {
+    outline: "2px solid var(--editor-accent)",
+  },
+  "& .editor-menu": { position: "relative", flex: "none" },
+  "& .editor-header > .editor-menu > summary, & #hosted-editor-picker > summary":
+    {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "5px",
+      height: "47px",
+      padding: "0 10px",
+      color: "var(--editor-muted)",
+      background: "transparent",
+      border: "0",
+      borderLeft: "1px solid var(--editor-soft-border)",
+      borderRadius: "0",
+      cursor: "pointer",
+      "font-size": "11px",
+      "list-style": "none",
+      "white-space": "nowrap",
+    },
   "& .editor-header > .editor-menu > summary:hover, & .editor-header > .editor-menu[open] > summary, & #hosted-editor-picker > summary:hover, & #hosted-editor-picker[open] > summary":
     {
       color: "var(--editor-ink)",
@@ -211,43 +221,48 @@ export const worldviewEditorStyles = css({
     "font-size": "10px",
     "font-weight": "650",
   },
-  "& .editor-menu-content > button, & .editor-menu-content > a, & .editor-menu-content > label": {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    minHeight: "30px",
-    padding: "5px 8px",
-    color: "var(--editor-ink)",
-    background: "transparent",
-    border: "1px solid transparent",
-    borderRadius: "2px",
-    "font-size": "12px",
-    "font-weight": "400",
-    textAlign: "left",
-  },
-  "& .editor-menu-content > button:hover:not(:disabled), & .editor-menu-content > a:hover": {
-    background: "var(--editor-hover)",
-    borderColor: "var(--editor-soft-border)",
-  },
-  "& .editor-menu-content > input:not([type='checkbox']), & .editor-menu-content > select": {
-    width: "100%",
-    minHeight: "27px",
-    padding: "4px 6px",
-    color: "var(--editor-ink)",
-    background: "var(--editor-field)",
-    border: "1px solid var(--editor-border)",
-    borderRadius: "2px",
-  },
-  "& .editor-menu-content #game-profile, & .editor-menu-content #build-profile": {
-    width: "100%",
-    height: "28px",
-    padding: "3px 6px",
-    borderRadius: "2px",
-    fontSize: "11px",
-  },
-  "& .editor-menu-content #build-status, & .editor-menu-content #export-status": {
-    fontSize: "10px",
-  },
+  "& .editor-menu-content > button, & .editor-menu-content > a, & .editor-menu-content > label":
+    {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      minHeight: "30px",
+      padding: "5px 8px",
+      color: "var(--editor-ink)",
+      background: "transparent",
+      border: "1px solid transparent",
+      borderRadius: "2px",
+      "font-size": "12px",
+      "font-weight": "400",
+      textAlign: "left",
+    },
+  "& .editor-menu-content > button:hover:not(:disabled), & .editor-menu-content > a:hover":
+    {
+      background: "var(--editor-hover)",
+      borderColor: "var(--editor-soft-border)",
+    },
+  "& .editor-menu-content > input:not([type='checkbox']), & .editor-menu-content > select":
+    {
+      width: "100%",
+      minHeight: "27px",
+      padding: "4px 6px",
+      color: "var(--editor-ink)",
+      background: "var(--editor-field)",
+      border: "1px solid var(--editor-border)",
+      borderRadius: "2px",
+    },
+  "& .editor-menu-content #game-profile, & .editor-menu-content #build-profile":
+    {
+      width: "100%",
+      height: "28px",
+      padding: "3px 6px",
+      borderRadius: "2px",
+      fontSize: "11px",
+    },
+  "& .editor-menu-content #build-status, & .editor-menu-content #export-status":
+    {
+      fontSize: "10px",
+    },
   "& #hosted-editor-picker": {
     position: "relative",
     flex: "none",
@@ -287,10 +302,19 @@ export const worldviewEditorStyles = css({
     content: "'▣'",
     fontSize: "18px",
   },
-  "& #toggle-inspector:hover": { background: "var(--editor-hover)", color: "var(--editor-ink)" },
-  "& .editor-theme-choice, & #performance-toggle, & .hosted-presence-toggle": { flex: "none" },
+  "& #toggle-inspector:hover": {
+    background: "var(--editor-hover)",
+    color: "var(--editor-ink)",
+  },
+  "& .editor-theme-choice, & #performance-toggle, & .hosted-presence-toggle": {
+    flex: "none",
+  },
   "& .editor-theme-choice": { padding: "0 6px", fontSize: "10px" },
-  "& #editor-theme": { padding: "2px 4px", borderRadius: "2px", fontSize: "10px" },
+  "& #editor-theme": {
+    padding: "2px 4px",
+    borderRadius: "2px",
+    fontSize: "10px",
+  },
   "& #performance-toggle": {
     width: "38px",
     height: "47px",
@@ -307,7 +331,8 @@ export const worldviewEditorStyles = css({
     background: "var(--editor-button-wash)",
   },
   "& .editor-workspace": {
-    "grid-template-columns": "minmax(0, 1fr) 0 minmax(240px, var(--inspector-width, 320px))",
+    "grid-template-columns":
+      "minmax(0, 1fr) 0 minmax(240px, var(--inspector-width, 320px))",
   },
   "& .viewports": { gap: "1px", background: "var(--editor-border)" },
   "& .viewport-frame": { overflow: "hidden", border: "0" },
@@ -336,7 +361,12 @@ export const worldviewEditorStyles = css({
     fontSize: "9px",
     pointerEvents: "none",
   },
-  "& #editor-fov": { position: "relative", top: "auto", right: "auto", fontSize: "9px" },
+  "& #editor-fov": {
+    position: "relative",
+    top: "auto",
+    right: "auto",
+    fontSize: "9px",
+  },
   "& #editor-fov summary": {
     padding: "0 3px",
     border: "0",
@@ -416,7 +446,9 @@ export const worldviewEditorStyles = css({
     borderRadius: "2px",
     fontSize: "10px",
   },
-  "& #standalone-resource-fields > label:hover": { background: "var(--editor-hover)" },
+  "& #standalone-resource-fields > label:hover": {
+    background: "var(--editor-hover)",
+  },
   "& #standalone-resource-fields > input[type='file']": {
     position: "absolute",
     width: "1px",
@@ -467,7 +499,9 @@ export const worldviewEditorStyles = css({
   "@media (max-width: 850px)": {
     "& .editor-shell": { height: "100dvh", minHeight: "0" },
     "& .editor-header": { flexWrap: "nowrap" },
-    "& .editor-workspace": { gridTemplateColumns: "minmax(0, 1fr) 0 minmax(220px, 32vw)" },
+    "& .editor-workspace": {
+      gridTemplateColumns: "minmax(0, 1fr) 0 minmax(220px, 32vw)",
+    },
     "& .viewports": { height: "auto" },
     "& .source-panel": { minHeight: "0" },
   },

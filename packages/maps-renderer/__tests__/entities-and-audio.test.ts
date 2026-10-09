@@ -38,6 +38,10 @@ describe("entities", () => {
       declaredPath: "Ambience/Wind.wav",
       normalizedPath: "ambience/wind.wav",
     });
+    expect(soundReference("*lobby/duvet.wav")).toMatchObject({
+      declaredPath: "lobby/duvet.wav",
+      normalizedPath: "lobby/duvet.wav",
+    });
     expect(spriteReference("/Sprites\\Glow.spr")).toMatchObject({
       declaredPath: "Sprites/Glow.spr",
       normalizedPath: "sprites/glow.spr",

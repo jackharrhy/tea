@@ -7,7 +7,13 @@ const watcher = spawn(
     stdio: "inherit",
   },
 );
-const args = ["dev", "--config", "wrangler.dev.jsonc", "--port", "8790"];
+const args = [
+  "dev",
+  "--config",
+  "wrangler.dev.jsonc",
+  "--port",
+  process.env.TEA_MAPS_DEV_PORT ?? "8790",
+];
 if (process.env.TEA_MAPS_SERVICE_ORIGIN)
   args.push(
     "--var",

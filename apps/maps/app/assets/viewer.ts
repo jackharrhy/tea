@@ -1,10 +1,19 @@
-import { defineWorldViewElement, type WorldViewElement } from "@tea/maps-renderer/element";
-import type { BinarySource, CameraState, WorldSource } from "@tea/maps-renderer";
+import {
+  defineWorldViewElement,
+  type WorldViewElement,
+} from "@tea/maps-renderer/element";
+import type {
+  BinarySource,
+  CameraState,
+  WorldSource,
+} from "@tea/maps-renderer";
 import { sourceName } from "./world-input.ts";
 
 defineWorldViewElement();
 
-const viewer = document.querySelector<WorldViewElement>("#viewport world-view")!;
+const viewer = document.querySelector<WorldViewElement>(
+  "#viewport world-view",
+)!;
 let initialCamera: CameraState | undefined;
 window.dispatchEvent(new Event("tea-maps-viewer-element-ready"));
 
@@ -23,7 +32,9 @@ function updateChrome(changes: { name?: string; status?: string }) {
 
 viewer.addEventListener("progress", (event) => {
   updateChrome({
-    status: event.detail.label ? `Loading ${event.detail.label}` : "Loading map",
+    status: event.detail.label
+      ? `Loading ${event.detail.label}`
+      : "Loading map",
   });
 });
 viewer.addEventListener("ready", () => {
@@ -82,9 +93,12 @@ for (const tab of dockTabs) {
     }
     if (dockScroll) dockScroll.scrollTop = 0;
   });
-  document.getElementById(tab.dataset.dockTarget ?? "")?.addEventListener("toggle", (event) => {
-    if (!(event.currentTarget instanceof HTMLDetailsElement)) return;
-    if (!event.currentTarget.open) return;
-    for (const other of dockTabs) other.setAttribute("aria-pressed", String(other === tab));
-  });
+  document
+    .getElementById(tab.dataset.dockTarget ?? "")
+    ?.addEventListener("toggle", (event) => {
+      if (!(event.currentTarget instanceof HTMLDetailsElement)) return;
+      if (!event.currentTarget.open) return;
+      for (const other of dockTabs)
+        other.setAttribute("aria-pressed", String(other === tab));
+    });
 }

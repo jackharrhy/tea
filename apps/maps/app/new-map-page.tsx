@@ -27,7 +27,10 @@ export function NewMapPage() {
           </header>
           <section class="project-detail">
             <h1>New local map</h1>
-            <p>Choose a game and source format. Save the map to a file from the editor.</p>
+            <p>
+              Choose a game and source format. Save the map to a file from the
+              editor.
+            </p>
             <NewMapSetup />
           </section>
         </main>

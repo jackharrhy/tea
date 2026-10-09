@@ -17,7 +17,10 @@ export const projectsStyles = css({
     "border-radius": "2px",
     padding: "0.5rem 0.7rem",
   },
-  "& button:hover:not(:disabled)": { background: "#444449", "border-color": "#8bb8ed" },
+  "& button:hover:not(:disabled)": {
+    background: "#444449",
+    "border-color": "#8bb8ed",
+  },
   "& button:disabled": { opacity: "0.5", cursor: "default" },
   "& button:focus-visible, & a:focus-visible, & input:focus-visible, & select:focus-visible, & summary:focus-visible":
     { outline: "2px solid #8bb8ed", "outline-offset": "3px" },

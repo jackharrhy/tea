@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -18,7 +19,15 @@ if (testCorpus && !process.env.TEA_MAPS_LOCAL_FIXTURE_ROOT)
   throw new Error(
     "Set TEA_MAPS_LOCAL_FIXTURE_ROOT to the existing local fixture directory",
   );
-const origin = "http://localhost:8790";
+const port = await new Promise((resolve, reject) => {
+  const server = createServer();
+  server.once("error", reject);
+  server.listen(0, "127.0.0.1", () => {
+    const address = server.address();
+    server.close(() => resolve(address.port));
+  });
+});
+const origin = `http://localhost:${port}`;
 const flags = [
   "--enable-features=Vulkan",
   "--use-angle=swiftshader",
@@ -31,6 +40,7 @@ const server = spawn("npm", ["run", "dev", "--workspace", "@tea/maps"], {
   cwd: teaRoot,
   detached: true,
   stdio: ["ignore", "pipe", "pipe"],
+  env: { ...process.env, TEA_MAPS_DEV_PORT: String(port) },
 });
 let serverLogs = "";
 for (const stream of [server.stdout, server.stderr])
@@ -223,10 +233,11 @@ try {
   );
   assert.notEqual(cameraWhileCompiling.yaw, cameraAtBuild.yaw);
   await page.evaluate(() => window.teaMapsReleaseGpuCompile());
-  await page
-    .locator("#build-status")
-    .getByText("Compiled preview ready")
-    .waitFor();
+  await page.waitForFunction(() =>
+    document
+      .querySelector("#build-status")
+      ?.textContent?.includes("Compiled preview ready"),
+  );
   const compiled = page.locator(".perspective-header ~ world-view");
   const compiledDiagnostics = await compiled.evaluate(
     (element) => element.viewer?.diagnostics,
@@ -244,6 +255,9 @@ try {
   assert.equal(compiledCamera.pitch, cameraAtBuild.pitch);
   assert.equal(compiledCamera.fieldOfView, cameraAtBuild.fieldOfViewDegrees);
   assert.equal(await compiled.getAttribute("data-active"), "true");
+  await page
+    .locator('.editor-menu[data-menu="build"]')
+    .evaluate((menu) => (menu.open = true));
   await page.locator("#toggle-compiled").click();
   assert.equal(await compiled.getAttribute("data-active"), "false");
   await page.locator("#toggle-compiled").click();
@@ -257,6 +271,7 @@ try {
     .locator("#viewer-status")
     .getByText(/^Ready/)
     .waitFor();
+  await page.locator('[data-dock-target="dock-tools"]').click();
   await page
     .locator("#map-details")
     .getByText(/QUAKE-BSP29 29/)
@@ -267,8 +282,10 @@ try {
       .evaluate((element) => Boolean(element.viewer?.world)),
     true,
   );
+  await page.locator('[data-dock-target="dock-open"]').click();
   await page.locator("#example").selectOption("goldsrc");
   await page.getByRole("button", { name: "Open example" }).click();
+  await page.locator('[data-dock-target="dock-tools"]').click();
   await page
     .locator("#map-details")
     .getByText(/GOLDSRC-BSP30 30/)

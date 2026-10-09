@@ -8,7 +8,10 @@ export const homeStyles = css({
   "& *": { "box-sizing": "border-box" },
   "& body": { margin: "0" },
   "& a": { color: "inherit", "text-decoration": "none" },
-  "& a:focus-visible": { outline: "2px solid #8bb8ed", "outline-offset": "4px" },
+  "& a:focus-visible": {
+    outline: "2px solid #8bb8ed",
+    "outline-offset": "4px",
+  },
   "& .home-shell": {
     display: "grid",
     "grid-template-rows": "48px minmax(0, 1fr) 32px",
@@ -66,7 +69,11 @@ export const homeStyles = css({
     "letter-spacing": "-0.045em",
     "line-height": "1.08",
   },
-  "& .home-heading p": { margin: "0", color: "#aeb0b7", "font-size": "0.95rem" },
+  "& .home-heading p": {
+    margin: "0",
+    color: "#aeb0b7",
+    "font-size": "0.95rem",
+  },
   "& .home-choices": {
     display: "grid",
     "grid-template-columns": "repeat(2, minmax(0, 1fr))",
@@ -83,7 +90,9 @@ export const homeStyles = css({
     background: "#2b2b2e",
     transition: "background 160ms ease",
   },
-  "& .home-choice:hover, & .home-choice:focus-visible": { background: "#37373b" },
+  "& .home-choice:hover, & .home-choice:focus-visible": {
+    background: "#37373b",
+  },
   "& .home-choice-icon": {
     display: "grid",
     "place-items": "center",
@@ -94,7 +103,11 @@ export const homeStyles = css({
     "font-size": "1.7rem",
   },
   "& .home-choice-editor .home-choice-icon": { color: "#8bb8ed" },
-  "& .home-choice-body": { display: "grid", "align-content": "end", gap: "0.65rem" },
+  "& .home-choice-body": {
+    display: "grid",
+    "align-content": "end",
+    gap: "0.65rem",
+  },
   "& .home-choice-kicker": { color: "#999ba4" },
   "& .home-choice strong": {
     "font-size": "2rem",
@@ -126,12 +139,18 @@ export const homeStyles = css({
   },
   "& .home-footnote a": { color: "#c6dafa" },
   "& .home-footnote a:hover": { "text-decoration": "underline" },
-  "& .home-footer": { padding: "0 1.4rem", color: "#85868c", "border-bottom": "0" },
+  "& .home-footer": {
+    padding: "0 1.4rem",
+    color: "#85868c",
+    "border-bottom": "0",
+  },
   "@media (max-width: 650px)": {
     "& .home-choices": { "grid-template-columns": "1fr" },
     "& .home-choice": { "min-height": "14rem", padding: "1.2rem" },
     "& .home-choice-arrow": { top: "1.2rem", right: "1.2rem" },
     "& .home-topbar nav a": { padding: "0 0.7rem" },
   },
-  "@media (prefers-reduced-motion: reduce)": { "& .home-choice": { transition: "none" } },
+  "@media (prefers-reduced-motion: reduce)": {
+    "& .home-choice": { transition: "none" },
+  },
 });

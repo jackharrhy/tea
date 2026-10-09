@@ -37,10 +37,14 @@ export function HomePage() {
                   <span class="home-choice-kicker">01 / EXPLORE</span>
                   <strong>Viewer</strong>
                   <span class="home-choice-description">
-                    Walk through BSPs, open local files, and inspect hosted builds.
+                    Walk through BSPs, open local files, and inspect hosted
+                    builds.
                   </span>
                 </span>
-                <i class="ph ph-arrow-up-right home-choice-arrow" aria-hidden="true" />
+                <i
+                  class="ph ph-arrow-up-right home-choice-arrow"
+                  aria-hidden="true"
+                />
               </a>
               <a class="home-choice home-choice-editor" href="/editor">
                 <span class="home-choice-icon" aria-hidden="true">
@@ -53,7 +57,10 @@ export function HomePage() {
                     Shape geometry, work with projects, and build maps.
                   </span>
                 </span>
-                <i class="ph ph-arrow-up-right home-choice-arrow" aria-hidden="true" />
+                <i
+                  class="ph ph-arrow-up-right home-choice-arrow"
+                  aria-hidden="true"
+                />
               </a>
             </div>
             <div class="home-footnote">

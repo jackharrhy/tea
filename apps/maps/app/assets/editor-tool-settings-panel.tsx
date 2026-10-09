@@ -3,7 +3,12 @@ import type { EditorToolSettingsContext } from "./editor-tool-settings-bridge.ts
 
 const tools = [
   { value: "select", label: "Select and move", icon: "cursor", key: "Esc" },
-  { value: "entity", label: "Place point entity", icon: "user-square", key: "N" },
+  {
+    value: "entity",
+    label: "Place point entity",
+    icon: "user-square",
+    key: "N",
+  },
   { value: "hull", label: "Convex hull brush", icon: "polygon", key: "B" },
   { value: "face", label: "Face", icon: "square", key: "F" },
   { value: "sweep", label: "Sweep faces", icon: "flow-arrow", key: "W" },
@@ -42,7 +47,11 @@ export const EditorToolSettings = clientEntry(
       const state = context?.state;
       return (
         <div mix={css({ display: "contents" })}>
-          <div class="editor-tool-group" role="group" aria-label="Viewport tools">
+          <div
+            class="editor-tool-group"
+            role="group"
+            aria-label="Viewport tools"
+          >
             {tools.map((tool) => (
               <button
                 class="editor-tool-button"
@@ -95,7 +104,11 @@ export const EditorToolSettings = clientEntry(
               <option value={String(size)}>{size}</option>
             ))}
           </select>
-          <label class="editor-texture-lock" for="texture-lock" title="Texture lock">
+          <label
+            class="editor-texture-lock"
+            for="texture-lock"
+            title="Texture lock"
+          >
             <input
               id="texture-lock"
               type="checkbox"

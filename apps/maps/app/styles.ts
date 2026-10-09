@@ -121,13 +121,19 @@ export const mapsStyles = css({
     padding: "0.65rem 0.75rem",
     "border-bottom": "1px solid rgb(194 204 183 / 12%)",
   },
-  "& .dock-header strong": { "font-size": "0.7rem", "letter-spacing": "0.07em" },
+  "& .dock-header strong": {
+    "font-size": "0.7rem",
+    "letter-spacing": "0.07em",
+  },
   "& .dock-header span, & .dock-footer": {
     color: "#858c80",
     "font-size": "0.62rem",
     "letter-spacing": "0.04em",
   },
-  "& .dock-footer": { "border-top": "1px solid rgb(194 204 183 / 12%)", "border-bottom": "0" },
+  "& .dock-footer": {
+    "border-top": "1px solid rgb(194 204 183 / 12%)",
+    "border-bottom": "0",
+  },
   "& .dock-tabs": {
     display: "grid",
     "grid-template-columns": "repeat(3, 1fr)",
@@ -141,13 +147,20 @@ export const mapsStyles = css({
     "font-size": "0.67rem",
     "font-weight": "650",
   },
-  "& .dock-tabs button:hover": { color: "#f0f2ec", background: "rgb(194 204 183 / 10%)" },
+  "& .dock-tabs button:hover": {
+    color: "#f0f2ec",
+    background: "rgb(194 204 183 / 10%)",
+  },
   "& .dock-tabs button[aria-pressed='true']": {
     color: "#f0f2ec",
     background: "rgb(194 204 183 / 12%)",
     "box-shadow": "inset 0 -2px #a5bd78",
   },
-  "& .dock-scroll": { "min-height": "0", "overflow-y": "auto", "overscroll-behavior": "contain" },
+  "& .dock-scroll": {
+    "min-height": "0",
+    "overflow-y": "auto",
+    "overscroll-behavior": "contain",
+  },
   "& .dock-section": { "border-bottom": "1px solid rgb(194 204 183 / 12%)" },
   "& .dock-section > summary": {
     cursor: "pointer",
@@ -163,7 +176,11 @@ export const mapsStyles = css({
     "box-shadow": "inset 2px 0 #a5bd78",
     "border-bottom": "1px solid rgb(194 204 183 / 12%)",
   },
-  "& .dock-section-body": { display: "grid", gap: "0.65rem", padding: "0.8rem" },
+  "& .dock-section-body": {
+    display: "grid",
+    gap: "0.65rem",
+    padding: "0.8rem",
+  },
   "& .source-panel, & .hosted, & .inspector-body, & .inspector-body section": {
     display: "grid",
     gap: "0.7rem",
@@ -176,7 +193,10 @@ export const mapsStyles = css({
     background: "#242722",
   },
   "& .source-panel form:focus-within": { "border-color": "#7e9360" },
-  "& .source-panel form label, & .inspector-body label": { display: "grid", gap: "0.3rem" },
+  "& .source-panel form label, & .inspector-body label": {
+    display: "grid",
+    gap: "0.3rem",
+  },
   "& label": { color: "#d7dbcf", "font-size": "0.68rem", "font-weight": "650" },
   "& input, & select": {
     width: "100%",
@@ -189,14 +209,25 @@ export const mapsStyles = css({
   },
   "& input[type='checkbox'], & input[type='radio']": { width: "auto" },
   "& .toggle": { display: "flex", "align-items": "center", gap: "0.5rem" },
-  "& .hint": { margin: "0", color: "#9fa69a", "font-size": "0.65rem", "line-height": "1.45" },
+  "& .hint": {
+    margin: "0",
+    color: "#9fa69a",
+    "font-size": "0.65rem",
+    "line-height": "1.45",
+  },
   "& p": { margin: "0", "line-height": "1.45" },
   "& h2, & h3": { margin: "0", "font-size": "0.76rem" },
-  "& .inspector-body section": { padding: "0.65rem", border: "1px solid rgb(194 204 183 / 12%)" },
+  "& .inspector-body section": {
+    padding: "0.65rem",
+    border: "1px solid rgb(194 204 183 / 12%)",
+  },
   "& .inspector-body output": { "white-space": "pre-line" },
   "& .entity-support output": { display: "block" },
   "& .entity-support ul": { margin: "0.3rem 0", "padding-left": "1.2rem" },
-  "& .url-overrides summary, & .inspector summary": { cursor: "pointer", "font-weight": "650" },
+  "& .url-overrides summary, & .inspector summary": {
+    cursor: "pointer",
+    "font-weight": "650",
+  },
   "& .url-overrides-fields, & .movement-fields": {
     display: "grid",
     gap: "0.5rem",
@@ -242,7 +273,11 @@ export const mapsStyles = css({
   "@media (max-width: 720px)": {
     "& .viewer-nav": { left: "0.5rem", top: "0.5rem" },
     "& .viewer-nav a, & .viewer-nav > span": { padding: "0 0.45rem" },
-    "& .toolbar": { left: "0.5rem", top: "3.5rem", "max-width": "calc(100vw - 1rem)" },
+    "& .toolbar": {
+      left: "0.5rem",
+      top: "3.5rem",
+      "max-width": "calc(100vw - 1rem)",
+    },
     "& .viewer-dock": {
       top: "auto",
       right: "0.5rem",

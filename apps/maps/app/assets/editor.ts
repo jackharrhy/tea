@@ -383,7 +383,16 @@ const topbarMenus = document.querySelectorAll<HTMLDetailsElement>(
 );
 document.addEventListener("pointerdown", (event) => {
   for (const menu of topbarMenus) {
-    if (menu.open && event.target instanceof Node && !menu.contains(event.target))
+    if (
+      menu.open &&
+      event.target instanceof Node &&
+      !(
+        menu.id === "hosted-editor-picker" &&
+        event.target instanceof Element &&
+        event.target.closest("#hosted-presence-toggle")
+      ) &&
+      !menu.contains(event.target)
+    )
       menu.open = false;
   }
 });
