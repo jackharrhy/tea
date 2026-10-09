@@ -2,6 +2,9 @@ ARG CELLD_IMAGE=ghcr.io/jackharrhy/celld@sha256:e8faeb233cfe7d29f385a64dcac41dc4
 FROM ${CELLD_IMAGE} AS celld
 
 FROM node:26-bookworm-slim@sha256:cd565714d4da3e84bfd341e31448f81d47c6362198f152345297c9c1154e6341 AS build
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

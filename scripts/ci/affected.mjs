@@ -36,6 +36,10 @@ export function selectChecks(paths, workspaces) {
     if (
       path === "README.md" ||
       path === "AGENTS.md" ||
+      path === ".dockerignore" ||
+      path === "scripts/ci/affected.mjs" ||
+      path === "scripts/ci/__tests__/affected.test.mjs" ||
+      path.endsWith("/Dockerfile") ||
       path.startsWith("docs/")
     )
       continue;

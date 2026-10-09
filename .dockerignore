@@ -20,6 +20,7 @@ apps/marky/.coverage
 apps/letters-to-steve/db/*.sqlite*
 apps/letters-to-steve/tmp
 apps/maps-service/data
+apps/maps/local
 **/playwright-report
 **/test-results
 **/*.db

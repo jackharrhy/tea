@@ -87,6 +87,18 @@ test("edge and documentation changes do not start CMS checks", () => {
   );
   assert.deepEqual(selectChecks(["docs/architecture.md"], workspaces), []);
   assert.deepEqual(
+    selectChecks(
+      [
+        ".dockerignore",
+        "apps/cms/Dockerfile",
+        "scripts/ci/affected.mjs",
+        "scripts/ci/__tests__/affected.test.mjs",
+      ],
+      workspaces,
+    ),
+    [],
+  );
+  assert.deepEqual(
     selectChecks(["apps/shell-mcp/app/router.ts"], workspaces),
     checks("@tea/shell-mcp"),
   );
