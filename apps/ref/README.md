@@ -65,7 +65,7 @@ The backup command creates a new directory containing `manifest.json`, uploaded 
 
 Archives contain the current board state, not edit history or full copies of linked web pages. Link preview images that were never cached still depend on their external URLs. Restore recreates item revision counters; clients should reload after a cutover.
 
-With the archived Ref checkout available and Celld installed, run `npm run test:archive:source --workspace @tea/ref` to verify the transfer path. This check creates a board with an image and link in disposable local source storage, backs it up with the original Ref archive command, restores it into a separate Tea Ref store twice, and compares the resulting archive. Set `REF_SOURCE_ROOT=/home/jack/repos/scratch/backup/ref` if using the Newport backup. It does not read a live deployment or production data.
+With an original Ref checkout and Celld installed, run `npm run test:archive:source --workspace @tea/ref` to verify the transfer path. Set `REF_SOURCE_ROOT` to that checkout. This optional check creates a board with an image and link in disposable local source storage, backs it up with the original Ref archive command, restores it into a separate Tea Ref store twice, and compares the resulting archive. It does not read a live deployment or production data. The former local source checkout was removed after production cutover.
 
 ## Hosting
 
