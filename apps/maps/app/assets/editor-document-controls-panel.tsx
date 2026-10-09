@@ -12,13 +12,15 @@ export const EditorDocumentControls = clientEntry(
     handle.queueTask(() => {
       window.addEventListener(
         "tea-maps-document-controls-bridge-ready",
-        () => window.dispatchEvent(new Event("tea-maps-document-controls-ready")),
+        () =>
+          window.dispatchEvent(new Event("tea-maps-document-controls-ready")),
         { signal: handle.signal },
       );
       window.addEventListener(
         "tea-maps-document-controls-state",
         (event) => {
-          context = (event as CustomEvent<EditorDocumentControlsContext>).detail;
+          context = (event as CustomEvent<EditorDocumentControlsContext>)
+            .detail;
           handle.update();
         },
         { signal: handle.signal },
@@ -31,7 +33,8 @@ export const EditorDocumentControls = clientEntry(
       checkpointBusy = true;
       handle.update();
       try {
-        if (await context.actions.checkpoint(checkpointLabel)) checkpointLabel = "";
+        if (await context.actions.checkpoint(checkpointLabel))
+          checkpointLabel = "";
       } finally {
         checkpointBusy = false;
         handle.update();
@@ -115,7 +118,9 @@ export const EditorDocumentControls = clientEntry(
         <button
           id="create-checkpoint"
           type="button"
-          disabled={!context || context.state.checkpointDisabled || checkpointBusy}
+          disabled={
+            !context || context.state.checkpointDisabled || checkpointBusy
+          }
           mix={on("click", () => void createCheckpoint())}
         >
           Save checkpoint

@@ -170,13 +170,18 @@ const options = {
           const entryHref = (name) => {
             const sourceName = clientEntrySourceNames[name] ?? `${name}.ts`;
             const entry = Object.entries(result.metafile.outputs).find(
-              ([, metadata]) => metadata.entryPoint === `app/assets/${sourceName}`,
+              ([, metadata]) =>
+                metadata.entryPoint === `app/assets/${sourceName}`,
             );
-            if (!entry) throw new Error(`Maps browser build did not emit ${name}`);
+            if (!entry)
+              throw new Error(`Maps browser build did not emit ${name}`);
             return `/${path.relative(output, path.resolve(root, entry[0])).split(path.sep).join("/")}`;
           };
           const entries = Object.fromEntries(
-            Object.keys(options.entryPoints).map((name) => [name, entryHref(name)]),
+            Object.keys(options.entryPoints).map((name) => [
+              name,
+              entryHref(name),
+            ]),
           );
           const properties = Object.entries(entries)
             .map(([name, href]) => `  ${name}: ${JSON.stringify(href)},`)
@@ -206,7 +211,9 @@ async function checkClientEntries() {
     }
   }
   const missing = discovered.filter((filename) => !registered.has(filename));
-  const stale = sourceNames.filter((filename) => !discovered.includes(filename));
+  const stale = sourceNames.filter(
+    (filename) => !discovered.includes(filename),
+  );
   if (missing.length || stale.length)
     throw new Error(
       `Maps client entry registry is out of sync: missing ${missing.join(", ") || "none"}; stale ${stale.join(", ") || "none"}`,
@@ -222,26 +229,40 @@ async function checkClientEntries() {
     if (options.entryPoints[name] !== `app/assets/${filename}`)
       throw new Error(`Maps client entry ${name} has no browser build input`);
     if (workerMappings.get(filename) !== name)
-      throw new Error(`Maps client entry ${filename} has no Worker asset mapping`);
+      throw new Error(
+        `Maps client entry ${filename} has no Worker asset mapping`,
+      );
   }
   const extraInputs = Object.keys(options.entryPoints).filter(
     (name) =>
-      !["entry", "viewer", "editor"].includes(name) && !Object.hasOwn(clientEntrySourceNames, name),
+      !["entry", "viewer", "editor"].includes(name) &&
+      !Object.hasOwn(clientEntrySourceNames, name),
   );
   if (extraInputs.length)
-    throw new Error(`Maps browser build has stale client entries: ${extraInputs.join(", ")}`);
-  const unmapped = [...workerMappings.keys()].filter((filename) => !registered.has(filename));
+    throw new Error(
+      `Maps browser build has stale client entries: ${extraInputs.join(", ")}`,
+    );
+  const unmapped = [...workerMappings.keys()].filter(
+    (filename) => !registered.has(filename),
+  );
   if (unmapped.length)
-    throw new Error(`Maps Worker has stale client entries: ${unmapped.join(", ")}`);
+    throw new Error(
+      `Maps Worker has stale client entries: ${unmapped.join(", ")}`,
+    );
 }
 
 await checkClientEntries();
 if (!watch) {
   await fs.rm(output, { recursive: true, force: true });
   await fs.cp(path.join(root, "public"), output, { recursive: true });
-  const phosphor = path.dirname(fileURLToPath(import.meta.resolve("@phosphor-icons/web/regular")));
+  const phosphor = path.dirname(
+    fileURLToPath(import.meta.resolve("@phosphor-icons/web/regular")),
+  );
   await fs.mkdir(path.join(output, "icons"), { recursive: true });
-  await fs.copyFile(path.join(phosphor, "style.css"), path.join(output, "icons", "style.css"));
+  await fs.copyFile(
+    path.join(phosphor, "style.css"),
+    path.join(output, "icons", "style.css"),
+  );
   await fs.copyFile(
     path.join(phosphor, "Phosphor.woff2"),
     path.join(output, "icons", "Phosphor.woff2"),

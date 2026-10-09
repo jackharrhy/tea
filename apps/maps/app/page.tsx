@@ -45,18 +45,35 @@ export function MapsPage() {
               <span>TEA / MAPS</span>
             </header>
             <nav class="dock-tabs" aria-label="Control sections">
-              <button type="button" data-dock-target="dock-open" aria-pressed="true">
+              <button
+                type="button"
+                data-dock-target="dock-open"
+                aria-pressed="true"
+              >
                 Open
               </button>
-              <button type="button" data-dock-target="dock-tools" aria-pressed="false">
+              <button
+                type="button"
+                data-dock-target="dock-tools"
+                aria-pressed="false"
+              >
                 Tools
               </button>
-              <button type="button" data-dock-target="dock-hosted" aria-pressed="false">
+              <button
+                type="button"
+                data-dock-target="dock-hosted"
+                aria-pressed="false"
+              >
                 Hosted
               </button>
             </nav>
             <div class="dock-scroll">
-              <details id="dock-open" class="dock-section" name="viewer-dock" open>
+              <details
+                id="dock-open"
+                class="dock-section"
+                name="viewer-dock"
+                open
+              >
                 <summary>Open a map</summary>
                 <div class="dock-section-body">
                   <ViewerSourcePanel />

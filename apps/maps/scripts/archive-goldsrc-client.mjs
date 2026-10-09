@@ -69,14 +69,17 @@ const manifestSource = await locate(manifestPath);
 if (manifestSource) {
   await archive(manifestPath);
   const manifest = await readFile(manifestSource, "utf8");
-  for (const relative of new Set(resourcePaths(manifest))) await archive(relative);
+  for (const relative of new Set(resourcePaths(manifest)))
+    await archive(relative);
 }
 
 for (const root of roots) {
   const source = path.join(root, "sound/player");
   try {
     await access(source);
-    await cp(source, path.join(destination, "sound/player"), { recursive: true });
+    await cp(source, path.join(destination, "sound/player"), {
+      recursive: true,
+    });
     console.log(`Archived sound/player from ${path.relative(install, source)}`);
     break;
   } catch (error) {

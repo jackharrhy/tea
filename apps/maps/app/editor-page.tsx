@@ -28,7 +28,10 @@ import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
-import { EditorProjectSync, EditorProjectSyncOpen } from "./assets/editor-project-sync-panel.tsx";
+import {
+  EditorProjectSync,
+  EditorProjectSyncOpen,
+} from "./assets/editor-project-sync-panel.tsx";
 import {
   EditorHostedSource,
   EditorHostedSourceOpen,
@@ -63,7 +66,11 @@ export function EditorPage() {
       <body>
         <main class="editor-shell">
           <header class="editor-header">
-            <details class="editor-menu editor-document-menu" data-menu="file" name="editor-topbar">
+            <details
+              class="editor-menu editor-document-menu"
+              data-menu="file"
+              name="editor-topbar"
+            >
               <summary aria-label="Map document menu" title="Map document menu">
                 <i class="ph ph-cube" aria-hidden="true" />
               </summary>
@@ -94,7 +101,11 @@ export function EditorPage() {
                 <EditorEditActions />
               </div>
             </details>
-            <details class="editor-menu" data-menu="project" name="editor-topbar">
+            <details
+              class="editor-menu"
+              data-menu="project"
+              name="editor-topbar"
+            >
               <summary>
                 <i class="ph ph-folders" aria-hidden="true" /> Project
               </summary>
@@ -115,7 +126,11 @@ export function EditorPage() {
                 <EditorHostedBuilds />
               </div>
             </details>
-            <details id="hosted-editor-picker" class="hosted-editor-picker" name="editor-topbar">
+            <details
+              id="hosted-editor-picker"
+              class="hosted-editor-picker"
+              name="editor-topbar"
+            >
               <summary title="Hosted maps and collaboration">
                 <i class="ph ph-users-three" aria-hidden="true" /> Hosted
               </summary>
@@ -127,8 +142,9 @@ export function EditorPage() {
                 <EditorHostedPresence />
                 <EditorDetachedMaps />
                 <p>
-                  Hosted members can edit with live sync. Source changes replace the hosted map
-                  after a version check. Recovery copies and source drafts stay on this device.
+                  Hosted members can edit with live sync. Source changes replace
+                  the hosted map after a version check. Recovery copies and
+                  source drafts stay on this device.
                 </p>
               </div>
             </details>
@@ -145,27 +161,42 @@ export function EditorPage() {
                   <EditorFov />
                   <EditorWorkspaceToggle />
                 </div>
-                <canvas id="perspective" aria-label="Perspective map viewport" />
+                <canvas
+                  id="perspective"
+                  aria-label="Perspective map viewport"
+                />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div class="viewport-frame">
                 <span>Top (XY)</span>
                 <canvas id="xy" aria-label="Top map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div class="viewport-frame">
                 <span>Front (XZ)</span>
                 <canvas id="xz" aria-label="Front map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div class="viewport-frame">
                 <span>Side (YZ)</span>
                 <canvas id="yz" aria-label="Side map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
               </div>
               <div
                 class="viewport-resizer column-resizer"

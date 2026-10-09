@@ -7,7 +7,9 @@ const storageKey = "tea.maps.editor.theme";
 function storedPreference(): ThemePreference {
   try {
     const value = localStorage.getItem(storageKey);
-    return value === "dark" || value === "light" || value === "system" ? value : "dark";
+    return value === "dark" || value === "light" || value === "system"
+      ? value
+      : "dark";
   } catch {
     return "dark";
   }
@@ -26,7 +28,9 @@ export const EditorThemeControl = clientEntry(
       document
         .querySelector('meta[name="theme-color"]')
         ?.setAttribute("content", theme === "light" ? "#f5f5f5" : "#252527");
-      window.dispatchEvent(new CustomEvent(editorThemeEvent, { detail: theme }));
+      window.dispatchEvent(
+        new CustomEvent(editorThemeEvent, { detail: theme }),
+      );
     }
 
     handle.queueTask(() => {
@@ -56,7 +60,9 @@ export const EditorThemeControl = clientEntry(
             } catch {
               // Keep the choice for this page when storage is unavailable.
             }
-            applyTheme(window.matchMedia("(prefers-color-scheme: light)").matches);
+            applyTheme(
+              window.matchMedia("(prefers-color-scheme: light)").matches,
+            );
             handle.update();
           })}
         >

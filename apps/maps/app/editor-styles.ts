@@ -94,10 +94,11 @@ export const editorStyles = css({
     "border-color": "var(--editor-accent)",
   },
   "& button:disabled": { opacity: "0.45", cursor: "default" },
-  "& button:focus-visible, & a:focus-visible, & textarea:focus-visible, & select:focus-visible": {
-    outline: "2px solid var(--editor-accent)",
-    "outline-offset": "2px",
-  },
+  "& button:focus-visible, & a:focus-visible, & textarea:focus-visible, & select:focus-visible":
+    {
+      outline: "2px solid var(--editor-accent)",
+      "outline-offset": "2px",
+    },
   "& a": { color: "inherit", "text-decoration": "none" },
   "& .editor-shell": {
     display: "grid",
@@ -113,7 +114,11 @@ export const editorStyles = css({
     background: "var(--editor-panel)",
     "border-bottom": "1px solid var(--editor-soft-border)",
   },
-  "& .editor-brand": { "font-weight": "750", "letter-spacing": "0.06em", "font-size": "0.78rem" },
+  "& .editor-brand": {
+    "font-weight": "750",
+    "letter-spacing": "0.06em",
+    "font-size": "0.78rem",
+  },
   "& .editor-brand span": { color: "var(--editor-accent)" },
   "& .editor-projects-link": {
     display: "inline-flex",
@@ -203,9 +208,10 @@ export const editorStyles = css({
     "font-size": "0.65rem",
     "font-weight": "700",
   },
-  "& .hosted-presence-person[data-color='red'], & #hosted-participant-list li[data-color='red']": {
-    "--collaborator-color": "#f26b65",
-  },
+  "& .hosted-presence-person[data-color='red'], & #hosted-participant-list li[data-color='red']":
+    {
+      "--collaborator-color": "#f26b65",
+    },
   "& .hosted-presence-person[data-color='orange'], & #hosted-participant-list li[data-color='orange']":
     {
       "--collaborator-color": "#fca365",
@@ -299,7 +305,10 @@ export const editorStyles = css({
     background: "var(--editor-toolbar)",
     "border-bottom": "1px solid var(--editor-soft-border)",
   },
-  "& .editor-toolbar > label": { color: "var(--editor-muted)", "font-size": "0.7rem" },
+  "& .editor-toolbar > label": {
+    color: "var(--editor-muted)",
+    "font-size": "0.7rem",
+  },
   "& .editor-toolbar > select": { padding: "0.3rem", "font-size": "0.72rem" },
   "& .editor-menu": { position: "relative" },
   "& .editor-menu > summary": {
@@ -407,10 +416,11 @@ export const editorStyles = css({
     "text-align": "left",
     padding: "0.35rem 0.45rem",
   },
-  "& #viewport-context-menu button:hover, & #viewport-context-menu button:focus-visible": {
-    color: "var(--editor-button-ink)",
-    background: "var(--editor-button)",
-  },
+  "& #viewport-context-menu button:hover, & #viewport-context-menu button:focus-visible":
+    {
+      color: "var(--editor-button-ink)",
+      background: "var(--editor-button)",
+    },
   "& #build-profile, & #game-profile, & #viewport-tool": {
     color: "var(--editor-ink)",
     background: "var(--editor-field)",
@@ -534,12 +544,13 @@ export const editorStyles = css({
     padding: "0",
     "list-style": "none",
   },
-  "& #hosted-resource-list li, & #hosted-artbin-results li, & #hosted-access-list li": {
-    display: "flex",
-    "align-items": "center",
-    "flex-wrap": "wrap",
-    gap: "0.5rem",
-  },
+  "& #hosted-resource-list li, & #hosted-artbin-results li, & #hosted-access-list li":
+    {
+      display: "flex",
+      "align-items": "center",
+      "flex-wrap": "wrap",
+      gap: "0.5rem",
+    },
   "& #hosted-resource-upload": {
     display: "flex",
     "align-items": "center",
@@ -713,10 +724,11 @@ export const editorStyles = css({
   "& #group-tools, & #layer-tools, & #reference-tools": {
     "font-size": "0.85rem",
   },
-  "& #group-tools summary, & #layer-tools summary, & #reference-tools summary": {
-    cursor: "pointer",
-    "font-weight": "700",
-  },
+  "& #group-tools summary, & #layer-tools summary, & #reference-tools summary":
+    {
+      cursor: "pointer",
+      "font-weight": "700",
+    },
   "& .group-controls": {
     display: "flex",
     "align-items": "center",
@@ -856,14 +868,15 @@ export const editorStyles = css({
     "border-radius": "5px",
     padding: "0.5rem",
   },
-  "& .editor-toolbar input[type='number'], & #inspector-panel-entity input[type='number']": {
-    width: "4.5rem",
-    color: "var(--editor-ink)",
-    background: "var(--editor-field)",
-    border: "1px solid var(--editor-border)",
-    "border-radius": "5px",
-    padding: "0.5rem",
-  },
+  "& .editor-toolbar input[type='number'], & #inspector-panel-entity input[type='number']":
+    {
+      width: "4.5rem",
+      color: "var(--editor-ink)",
+      background: "var(--editor-field)",
+      border: "1px solid var(--editor-border)",
+      "border-radius": "5px",
+      padding: "0.5rem",
+    },
   "& #brush-entity-classname, & #point-entity-classname, & #group-name": {
     width: "9rem",
     color: "var(--editor-ink)",
@@ -889,10 +902,11 @@ export const editorStyles = css({
     {
       display: "none",
     },
-  "& #face-inspector h2, & #point-entity-inspector h2, & #entity-properties h2": {
-    margin: "0",
-    "font-size": "1rem",
-  },
+  "& #face-inspector h2, & #point-entity-inspector h2, & #entity-properties h2":
+    {
+      margin: "0",
+      "font-size": "1rem",
+    },
   "& #face-inspector h3": { margin: "0.6rem 0", "font-size": "0.9rem" },
   "& #face-geometry": { display: "grid", gap: "0.4rem" },
   "& .face-geometry-actions": {
@@ -1068,14 +1082,15 @@ export const editorStyles = css({
     gap: "0.4rem",
   },
   "& #entity-property-protection-option[hidden]": { display: "none" },
-  "& .entity-property-row input:not([type='checkbox']), & .entity-property-row select": {
-    color: "var(--editor-ink)",
-    background: "var(--editor-field)",
-    border: "1px solid var(--editor-border)",
-    "border-radius": "5px",
-    padding: "0.4rem",
-    "max-width": "18rem",
-  },
+  "& .entity-property-row input:not([type='checkbox']), & .entity-property-row select":
+    {
+      color: "var(--editor-ink)",
+      background: "var(--editor-field)",
+      border: "1px solid var(--editor-border)",
+      "border-radius": "5px",
+      padding: "0.4rem",
+      "max-width": "18rem",
+    },
   "& .entity-property-actions": {
     display: "flex",
     "flex-wrap": "wrap",
@@ -1086,21 +1101,23 @@ export const editorStyles = css({
     padding: "0.6rem 0",
   },
   "& #material-browser summary": { cursor: "pointer", "font-weight": "700" },
-  "& .material-browser-controls, & .material-browser-actions, & .material-replace-controls": {
-    display: "flex",
-    "align-items": "center",
-    "flex-wrap": "wrap",
-    gap: "0.4rem",
-    padding: "0.5rem 0",
-  },
-  "& #material-browser input:not([type='checkbox']), & #material-browser select": {
-    color: "var(--editor-ink)",
-    background: "var(--editor-field)",
-    border: "1px solid var(--editor-border)",
-    "border-radius": "5px",
-    padding: "0.4rem",
-    "max-width": "12rem",
-  },
+  "& .material-browser-controls, & .material-browser-actions, & .material-replace-controls":
+    {
+      display: "flex",
+      "align-items": "center",
+      "flex-wrap": "wrap",
+      gap: "0.4rem",
+      padding: "0.5rem 0",
+    },
+  "& #material-browser input:not([type='checkbox']), & #material-browser select":
+    {
+      color: "var(--editor-ink)",
+      background: "var(--editor-field)",
+      border: "1px solid var(--editor-border)",
+      "border-radius": "5px",
+      padding: "0.4rem",
+      "max-width": "12rem",
+    },
   "& .material-grid": {
     display: "grid",
     "grid-template-columns": "repeat(auto-fill, minmax(6rem, 1fr))",
@@ -1229,7 +1246,8 @@ export const editorStyles = css({
   "& .editor-workspace": {
     display: "grid",
     position: "relative",
-    "grid-template-columns": "minmax(0, 1fr) 0 minmax(16rem, var(--inspector-width, 20rem))",
+    "grid-template-columns":
+      "minmax(0, 1fr) 0 minmax(16rem, var(--inspector-width, 20rem))",
     "min-height": "0",
   },
   "& .editor-workspace[data-inspector-open='false']": {
@@ -1296,9 +1314,10 @@ export const editorStyles = css({
     "border-bottom": "1px solid var(--editor-dark-border)",
     "border-radius": "0",
   },
-  "& .project-map-selector-row:hover, & .project-map-selector-row:focus-visible": {
-    background: "var(--editor-hover)",
-  },
+  "& .project-map-selector-row:hover, & .project-map-selector-row:focus-visible":
+    {
+      background: "var(--editor-hover)",
+    },
   "& .project-map-selector-row span:first-child": {
     flex: "1",
     "min-width": "0",
@@ -1313,7 +1332,8 @@ export const editorStyles = css({
   "& .viewports": {
     display: "grid",
     position: "relative",
-    "grid-template-columns": "minmax(0, var(--viewport-column, 50%)) minmax(0, 1fr)",
+    "grid-template-columns":
+      "minmax(0, var(--viewport-column, 50%)) minmax(0, 1fr)",
     "grid-template-rows": "minmax(0, var(--viewport-top, 50%)) minmax(0, 1fr)",
     "min-height": "0",
   },
