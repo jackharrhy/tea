@@ -16,6 +16,7 @@
     "test:corpus:gpu:all": "node __tests__/gpu-flow.mjs --corpus-all",
     "test:hosted": "node __tests__/hosted-flow.mjs",
     "corpus:steam": "bash scripts/download-steam-bsp-corpus.sh",
+    "archive:goldsrc": "node scripts/archive-goldsrc-server.mjs",
     "corpus:check": "node scripts/check-bsp-corpus.mjs",
     "check": "npm run build:client && npm run typecheck && npm test && wrangler deploy --dry-run"
   },
