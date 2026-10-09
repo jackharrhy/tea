@@ -30,6 +30,16 @@ async function showEditorMenu(page, name) {
   }, name);
 }
 
+async function selectProjectMap(page, map) {
+  await showEditorMenu(page, "project");
+  await page.locator("#project-maps").selectOption(map);
+}
+
+async function clickSelectionAction(page, id) {
+  await showEditorMenu(page, "selection");
+  await page.locator(`#${id}`).click();
+}
+
 async function showViewerSection(page, name) {
   await page.locator(`[data-dock-target="${name}"]`).click();
 }
@@ -173,9 +183,15 @@ async function installSiteToolMock(page) {
 }
 
 try {
-  const [servicePort, collaborationPort, fourmPort, compilerPort] =
-    await Promise.all([freePort(), freePort(), freePort(), freePort()]);
-  const mapsOrigin = "http://localhost:8790";
+  const [servicePort, collaborationPort, fourmPort, compilerPort, mapsPort] =
+    await Promise.all([
+      freePort(),
+      freePort(),
+      freePort(),
+      freePort(),
+      freePort(),
+    ]);
+  const mapsOrigin = `http://localhost:${mapsPort}`;
   const serviceOrigin = `http://127.0.0.1:${servicePort}`;
   const collaborationOrigin = `http://127.0.0.1:${collaborationPort}`;
   const fourmOrigin = `http://127.0.0.1:${fourmPort}`;
@@ -360,7 +376,7 @@ try {
       "--config",
       "wrangler.dev.jsonc",
       "--port",
-      "8790",
+      String(mapsPort),
       "--var",
       `MAPS_SERVICE_ORIGIN:${serviceOrigin}`,
       "--var",
@@ -460,7 +476,9 @@ try {
     ),
   );
   await standalonePage.getByText("XY · 64, 128, 0").waitFor();
+  await showEditorMenu(standalonePage, "build");
   await standalonePage.locator("#game-profile").selectOption("quake");
+  await showEditorMenu(standalonePage, "project");
   await standalonePage.locator("#standalone-palette").setInputFiles({
     name: "custom.lmp",
     mimeType: "application/octet-stream",
@@ -783,6 +801,9 @@ try {
 
   const sourceEditorPage = await browser.newPage();
   await sourceEditorPage.goto(`${mapsOrigin}/editor`);
+  await sourceEditorPage
+    .locator("#inspector-tab-map:not([disabled])")
+    .waitFor();
   await showEditorMenu(sourceEditorPage, "file");
   await sourceEditorPage.locator("#show-source").click();
   await sourceEditorPage.locator("#map-source:not([disabled])").waitFor();
@@ -814,7 +835,15 @@ try {
     editedSource,
   );
   await sourceEditorPage.locator("#apply-source").click();
-  const appliedDownload = sourceEditorPage.waitForEvent("download");
+  await showEditorMenu(sourceEditorPage, "file");
+  const appliedDownload = sourceEditorPage
+    .waitForEvent("download", { timeout: 10_000 })
+    .catch(async (cause) => {
+      throw new Error(
+        `Applied source did not download: ${await sourceEditorPage.locator("#editor-status").textContent()}`,
+        { cause },
+      );
+    });
   await sourceEditorPage.locator("#download-map").click();
   assert.match(
     await readFile(await (await appliedDownload).path(), "utf8"),
@@ -1609,20 +1638,24 @@ try {
   }
   const hostedEditorUrl = page.url();
   await page.locator("#hosted-presence-toggle").getByText("Live · 1").waitFor();
+  const pickerWasOpen = await page
+    .locator("#hosted-editor-picker")
+    .evaluate((picker) => picker.open);
   await page.locator("#hosted-presence-toggle").click();
   assert.equal(
     await page
       .locator("#hosted-editor-picker")
       .evaluate((picker) => picker.open),
-    false,
+    !pickerWasOpen,
   );
   await page.locator("#hosted-presence-toggle").click();
   assert.equal(
     await page
       .locator("#hosted-editor-picker")
       .evaluate((picker) => picker.open),
-    true,
+    pickerWasOpen,
   );
+  if (!pickerWasOpen) await page.locator("#hosted-presence-toggle").click();
   await page.locator("#hosted-share-link").waitFor({ state: "visible" });
   await observer.goto(hostedEditorUrl);
   await observer.waitForFunction(() =>
@@ -1692,6 +1725,9 @@ try {
   result.checks.push(
     "Remix performance panel records and exports frame timings",
   );
+  await page.locator("#hosted-editor-picker").evaluate((picker) => {
+    picker.open = true;
+  });
   await page.locator("#hosted-project-resources summary").click();
   await page
     .locator("#hosted-resource-list")
@@ -1871,6 +1907,9 @@ try {
   const closeDraft = `${revisedHostedSource}// Close before debounce\n`;
   await page.locator("#hosted-source-draft").fill(closeDraft);
   await page.locator("#hosted-source-close").click();
+  await page.locator("#hosted-editor-picker").evaluate((picker) => {
+    picker.open = true;
+  });
   await page.locator("#hosted-source-open").click();
   try {
     await page
@@ -2044,6 +2083,7 @@ try {
   await page.getByText("smoke.map · preview").waitFor();
   result.checks.push("Remix hosted viewer picker opens a compiled map");
   await page.goto(hostedEditorUrl);
+  await page.getByText("Smoke Project / smoke.map opened").waitFor();
   await showEditorMenu(page, "build");
   await page.locator("#hosted-builds summary").click();
   await page.route(/\/api\/maps\/[^/]+\/builds$/, async (route) => {
@@ -2137,7 +2177,7 @@ try {
     /textures/,
   );
   await showEditorMenu(page, "project");
-  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await selectProjectMap(page, "maps/alpha.map");
   await page.waitForFunction(
     () =>
       window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
@@ -2148,7 +2188,7 @@ try {
   await page.locator("#download-map").click();
   assert.equal((await selectedMapDownload).suggestedFilename(), "alpha.map");
   await showEditorMenu(page, "project");
-  await page.locator("#project-maps").selectOption("maps/beta.map");
+  await selectProjectMap(page, "maps/beta.map");
   await page.waitForFunction(
     () =>
       window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
@@ -2157,13 +2197,13 @@ try {
   const beforeGuard = await page.locator("#map-source").inputValue();
   await page.locator("#show-source").click();
   await page.locator("#map-source").fill(`${beforeGuard}\n// pending\n`);
-  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await selectProjectMap(page, "maps/alpha.map");
   await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
   await page.locator('#switch-map-dialog button[value="cancel"]').click();
   await page.waitForFunction(
     () => document.querySelector("#project-maps")?.value === "maps/beta.map",
   );
-  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await selectProjectMap(page, "maps/alpha.map");
   await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
   await page.locator('#switch-map-dialog button[value="discard"]').click();
   await page.waitForFunction(
@@ -2171,7 +2211,7 @@ try {
       window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
         .name === "alpha.map",
   );
-  await page.locator("#project-maps").selectOption("maps/beta.map");
+  await selectProjectMap(page, "maps/beta.map");
   await page.waitForFunction(
     () =>
       window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
@@ -2181,13 +2221,13 @@ try {
   await page
     .locator("#map-source")
     .fill(`${beforeSaveGuard}\n// saved by guard\n`);
-  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await selectProjectMap(page, "maps/alpha.map");
   await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
   await page.locator("#switch-map-dialog").press("Escape");
   await page.waitForFunction(
     () => document.querySelector("#project-maps")?.value === "maps/beta.map",
   );
-  await page.locator("#project-maps").selectOption("maps/alpha.map");
+  await selectProjectMap(page, "maps/alpha.map");
   await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
   await page.locator('#switch-map-dialog button[value="save"]').click();
   await page.waitForFunction(
@@ -2195,7 +2235,7 @@ try {
       window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
         .name === "alpha.map",
   );
-  await page.locator("#project-maps").selectOption("maps/beta.map");
+  await selectProjectMap(page, "maps/beta.map");
   await page.waitForFunction(
     () =>
       window.teaMapsTestTools?.get("tea_maps_inspect_editor").execute({})
@@ -2972,6 +3012,7 @@ try {
   await surfacePage.waitForFunction(
     () => document.documentElement.dataset.teaMapsSiteTools === "ready",
   );
+  await showEditorMenu(surfacePage, "build");
   await surfacePage.locator("#game-profile").selectOption("quake2");
   const surfaceBrush = await surfacePage.evaluate(() => {
     const tools = window.teaMapsTestTools;
@@ -3326,12 +3367,17 @@ try {
     });
     return { brushes: afterCreate.counts.brushes };
   });
-  await selectionPage.locator("#selection-brush-tools summary").click();
   for (const label of [
     "Select enclosed",
     "Select touching",
     "Select enclosed in 2D",
   ]) {
+    await showEditorMenu(selectionPage, "selection");
+    await selectionPage
+      .locator("#selection-brush-tools")
+      .evaluate((details) => {
+        details.open = true;
+      });
     if (label === "Select enclosed in 2D")
       await selectionPage
         .locator("#selection-brush-projection")
@@ -3361,7 +3407,7 @@ try {
     );
   }
   await showEditorMenu(selectionPage, "selection");
-  await selectionPage.locator("#select-all").click();
+  await clickSelectionAction(selectionPage, "select-all");
   await selectionPage
     .getByText("Selected 2 visible, unlocked objects")
     .waitFor();
@@ -3369,7 +3415,7 @@ try {
     .locator("#selection-info")
     .getByText("2 brushes selected")
     .waitFor();
-  await selectionPage.locator("#duplicate-selection").click();
+  await clickSelectionAction(selectionPage, "duplicate-selection");
   await selectionPage.waitForFunction(
     () =>
       window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
@@ -3391,17 +3437,17 @@ try {
         .brushes === 4,
   );
   await selectionPage.locator("#undo").click();
-  await selectionPage.locator("#hide-selection").click();
+  await clickSelectionAction(selectionPage, "hide-selection");
   await selectionPage.locator("#show-all:not([disabled])").waitFor();
-  await selectionPage.locator("#show-all").click();
-  await selectionPage.locator("#select-all").click();
-  await selectionPage.locator("#lock-selection").click();
+  await clickSelectionAction(selectionPage, "show-all");
+  await clickSelectionAction(selectionPage, "select-all");
+  await clickSelectionAction(selectionPage, "lock-selection");
   await selectionPage.locator("#unlock-all:not([disabled])").waitFor();
-  await selectionPage.locator("#unlock-all").click();
-  await selectionPage.locator("#invert-selection").click();
+  await clickSelectionAction(selectionPage, "unlock-all");
+  await clickSelectionAction(selectionPage, "invert-selection");
   await selectionPage.getByText(/Selection (inverted|cleared)/).waitFor();
-  await selectionPage.locator("#select-all").click();
-  await selectionPage.locator("#delete-selection").click();
+  await clickSelectionAction(selectionPage, "select-all");
+  await clickSelectionAction(selectionPage, "delete-selection");
   await selectionPage.waitForFunction(
     () =>
       window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
@@ -3416,33 +3462,33 @@ try {
   result.checks.push(
     "Remix selection commands duplicate, hide, lock, invert, and delete with Undo and Redo",
   );
-  await selectionPage.locator("#select-all").click();
-  await selectionPage.locator("#copy-selection").click();
+  await clickSelectionAction(selectionPage, "select-all");
+  await clickSelectionAction(selectionPage, "copy-selection");
   await selectionPage
     .getByText(/Copied selected objects as map text|Copied inside Maps/)
     .waitFor();
-  await selectionPage.locator("#paste-original").click();
+  await clickSelectionAction(selectionPage, "paste-original");
   await selectionPage.waitForFunction(
     () =>
       window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
         .brushes === 4,
   );
   await selectionPage.locator("#undo").click();
-  await selectionPage.locator("#select-all").click();
-  await selectionPage.locator("#snap-to-grid").click();
+  await clickSelectionAction(selectionPage, "select-all");
+  await clickSelectionAction(selectionPage, "snap-to-grid");
   await selectionPage.getByText("Selection is already on the grid").waitFor();
   result.checks.push(
     "Remix clipboard and grid actions copy, paste, undo, and snap",
   );
-  await selectionPage.locator("#duplicate-selection").click();
+  await clickSelectionAction(selectionPage, "duplicate-selection");
   await selectionPage.locator("#repeat-commands:not([disabled])").waitFor();
-  await selectionPage.locator("#repeat-commands").click();
+  await clickSelectionAction(selectionPage, "repeat-commands");
   await selectionPage.waitForFunction(
     () =>
       window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({}).counts
         .brushes > 4,
   );
-  await selectionPage.locator("#clear-repeat-commands").click();
+  await clickSelectionAction(selectionPage, "clear-repeat-commands");
   await selectionPage.locator("#repeat-commands[disabled]").waitFor();
   await selectionPage.locator("#undo").click();
   await selectionPage.locator("#undo").click();
@@ -3474,6 +3520,7 @@ try {
   result.checks.push("Remix editor readouts follow status and selection");
   const issuesPage = await browser.newPage();
   await issuesPage.goto(`${mapsOrigin}/editor`);
+  await issuesPage.locator("#inspector-tab-map:not([disabled])").waitFor();
   await issuesPage.locator("#show-source").click();
   await issuesPage.locator("#map-source").waitFor({ state: "visible" });
   await issuesPage
@@ -4121,6 +4168,7 @@ try {
   await recentRow.getByRole("button", { name: "Open in editor" }).click();
   await page.waitForURL(/recentProject=smoke-recent-project/);
   result.checks.push("Projects page opens a hydrated recent project row");
+  await showEditorMenu(page, "file");
   await page.locator("#recent-projects summary").click();
   const editorRecentRow = page
     .locator("#recent-project-list button")
