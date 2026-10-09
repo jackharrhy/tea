@@ -100,7 +100,11 @@ function vectorValue(entity: BspEntity, key: string): Vec3Tuple {
 }
 
 export function soundReference(path: string): SoundReference | undefined {
-  const declaredPath = path.trim().replaceAll("\\", "/").replace(/^\/+/, "");
+  const declaredPath = path
+    .trim()
+    .replaceAll("\\", "/")
+    .replace(/^\/+/, "")
+    .replace(/(^|\/)\*(?=[^/])/, "$1");
   if (!declaredPath || declaredPath.startsWith("!")) return undefined;
   const parts = declaredPath
     .split("/")
