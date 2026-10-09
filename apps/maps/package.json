@@ -20,6 +20,7 @@
     "check": "npm run build:client && npm run typecheck && npm test && wrangler deploy --dry-run"
   },
   "dependencies": {
+    "@phosphor-icons/web": "^2.1.2",
     "@tea/maps-editor": "0.1.0",
     "@tea/maps-protocol": "0.1.0",
     "@tea/maps-renderer": "0.1.0",
@@ -33,9 +34,9 @@
     "fake-indexeddb": "^6.2.5",
     "playwright": "1.62.1",
     "typescript": "^7.0.2",
-    "wrangler": "^4.127.1",
     "vite": "^8.3.3",
     "vitest": "^4.1.11",
+    "wrangler": "^4.127.1",
     "zod": "^4.6.5"
   },
   "engines": {

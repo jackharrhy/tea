@@ -1,11 +1,7 @@
 import type { Handle } from "remix/component";
 import { browserAssets } from "./assets/build-manifest.ts";
 import { projectsStyles } from "./projects-styles.ts";
-import {
-  OpenLocalProject,
-  RecentProjects,
-  RecoveredMaps,
-} from "./assets/recovered-maps.tsx";
+import { OpenLocalProject, RecentProjects, RecoveredMaps } from "./assets/recovered-maps.tsx";
 import { HostedProjects } from "./assets/hosted-projects.tsx";
 import { ProjectMaps } from "./assets/project-maps.tsx";
 import { ProjectNewMap } from "./assets/project-new-map.tsx";
@@ -24,9 +20,10 @@ export function ProjectsPage(
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#10221c" />
+        <meta name="theme-color" content="#252527" />
         <title>Projects · Maps · Tea</title>
         <link rel="icon" href="/favicon.svg" />
+        <link rel="stylesheet" href="/icons/style.css" />
       </head>
       <body>
         <main id="projects-app">
@@ -35,7 +32,7 @@ export function ProjectsPage(
               tea/maps
             </a>
             <nav aria-label="Maps pages">
-              <a href="/" data-rmx-document>
+              <a href="/viewer" data-rmx-document>
                 Viewer
               </a>
               <a href="/editor" data-rmx-document>
@@ -55,15 +52,10 @@ export function ProjectsPage(
               <>
                 <section class="projects-intro">
                   <h1>Projects</h1>
-                  <p>
-                    Open hosted maps or return to a local project on this
-                    device.
-                  </p>
+                  <p>Open hosted maps or return to a local project on this device.</p>
                 </section>
                 <div class="projects-columns">
-                  <HostedProjects
-                    createRequested={handle.props.createRequested ?? false}
-                  />
+                  <HostedProjects createRequested={handle.props.createRequested ?? false} />
                   <section aria-labelledby="local-projects-title">
                     <h2 id="local-projects-title">Recent local projects</h2>
                     <OpenLocalProject />

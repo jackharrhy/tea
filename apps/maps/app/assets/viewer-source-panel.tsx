@@ -56,6 +56,7 @@ function viewerStatus(value: string) {
 
 function replaceQuery(parameters: Record<string, string>) {
   const url = new URL(location.href);
+  if (url.pathname === "/") url.pathname = "/viewer";
   url.search = new URLSearchParams(parameters).toString();
   history.replaceState(null, "", url);
 }

@@ -83,6 +83,13 @@ export const EditorInspectorToggle = clientEntry(
         },
         { signal: handle.signal },
       );
+      window.addEventListener(
+        "tea-maps-inspector-show-source",
+        () => {
+          if (state?.inspectorOpen === false) state.toggleInspector();
+        },
+        { signal: handle.signal },
+      );
     });
 
     return () => (
@@ -103,8 +110,8 @@ export const EditorInspectorToggle = clientEntry(
   },
 );
 
-const inspectorTabs = ["map", "entity", "face", "source"] as const;
-type InspectorTab = (typeof inspectorTabs)[number];
+const inspectorTabs = ["map", "entity", "face"] as const;
+type InspectorTab = (typeof inspectorTabs)[number] | "source";
 
 export const EditorInspector = clientEntry(
   `file:///app/assets/editor-workspace-toggle.tsx#EditorInspector`,
@@ -121,7 +128,16 @@ export const EditorInspector = clientEntry(
       window.addEventListener(
         "tea-maps-inspector-show-map",
         () => select("map"),
-        { signal: handle.signal },
+        {
+          signal: handle.signal,
+        },
+      );
+      window.addEventListener(
+        "tea-maps-inspector-show-source",
+        () => select("source"),
+        {
+          signal: handle.signal,
+        },
       );
       window.addEventListener(
         "tea-maps-inspector-selection",
@@ -233,7 +249,7 @@ export const EditorInspector = clientEntry(
         <section
           id="inspector-panel-source"
           role="tabpanel"
-          aria-labelledby="inspector-tab-source"
+          aria-label="Map source"
           data-inspector-panel="source"
           hidden={active !== "source"}
         >

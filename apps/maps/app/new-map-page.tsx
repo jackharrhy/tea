@@ -8,9 +8,10 @@ export function NewMapPage() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#10221c" />
+        <meta name="theme-color" content="#252527" />
         <title>New map · Maps · Tea</title>
         <link rel="icon" href="/favicon.svg" />
+        <link rel="stylesheet" href="/icons/style.css" />
       </head>
       <body>
         <main class="projects-content">
@@ -19,17 +20,14 @@ export function NewMapPage() {
               tea/maps
             </a>
             <nav aria-label="Maps pages">
-              <a href="/">Viewer</a>
+              <a href="/viewer">Viewer</a>
               <a href="/projects">Projects</a>
               <a href="/editor">Editor</a>
             </nav>
           </header>
           <section class="project-detail">
             <h1>New local map</h1>
-            <p>
-              Choose a game and source format. Save the map to a file from the
-              editor.
-            </p>
+            <p>Choose a game and source format. Save the map to a file from the editor.</p>
             <NewMapSetup />
           </section>
         </main>

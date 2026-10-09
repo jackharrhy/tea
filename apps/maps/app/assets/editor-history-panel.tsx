@@ -30,20 +30,34 @@ export const EditorHistory = clientEntry(
           <button
             id="undo"
             type="button"
+            aria-label="Undo"
             disabled={!state || state.undoDisabled}
             title={state?.undoTitle ?? "Undo"}
             mix={on("click", () => context?.undo())}
           >
-            Undo
+            <i class="ph ph-arrow-counter-clockwise" aria-hidden="true" />
           </button>
           <button
             id="redo"
             type="button"
+            aria-label="Redo"
             disabled={!state || state.redoDisabled}
             title={state?.redoTitle ?? "Redo"}
             mix={on("click", () => context?.redo())}
           >
-            Redo
+            <i class="ph ph-arrow-clockwise" aria-hidden="true" />
+          </button>
+          <button
+            id="show-source"
+            type="button"
+            aria-label="Edit map source"
+            title="Edit map source"
+            disabled={!state}
+            mix={on("click", () => {
+              window.dispatchEvent(new Event("tea-maps-inspector-show-source"));
+            })}
+          >
+            <i class="ph ph-code" aria-hidden="true" />
           </button>
         </div>
       );

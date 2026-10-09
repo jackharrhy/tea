@@ -201,6 +201,9 @@ try {
       window.teaMapsTestTools.get("tea_maps_inspect_editor").execute({})
         .perspectiveCamera,
   );
+  await page
+    .locator('.editor-menu[data-menu="build"]')
+    .evaluate((menu) => (menu.open = true));
   await page.locator("#build-map:enabled").click();
   await page.waitForFunction(
     () => window.teaMapsGpuCompilerRequests.length === 1,
@@ -286,6 +289,7 @@ try {
   const png = await readFile(overviewPath);
   assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.ok(png.byteLength > 1_000, "Overview image is unexpectedly small");
+  await page.locator('[data-dock-target="dock-tools"]').click();
   await page.locator("#walkability-spacing").fill("32");
   await page.locator("#generate-walkability:enabled").click();
   await page.locator("#download-walkability:enabled").waitFor();

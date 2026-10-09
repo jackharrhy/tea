@@ -12,15 +12,13 @@ export const EditorDocumentControls = clientEntry(
     handle.queueTask(() => {
       window.addEventListener(
         "tea-maps-document-controls-bridge-ready",
-        () =>
-          window.dispatchEvent(new Event("tea-maps-document-controls-ready")),
+        () => window.dispatchEvent(new Event("tea-maps-document-controls-ready")),
         { signal: handle.signal },
       );
       window.addEventListener(
         "tea-maps-document-controls-state",
         (event) => {
-          context = (event as CustomEvent<EditorDocumentControlsContext>)
-            .detail;
+          context = (event as CustomEvent<EditorDocumentControlsContext>).detail;
           handle.update();
         },
         { signal: handle.signal },
@@ -33,8 +31,7 @@ export const EditorDocumentControls = clientEntry(
       checkpointBusy = true;
       handle.update();
       try {
-        if (await context.actions.checkpoint(checkpointLabel))
-          checkpointLabel = "";
+        if (await context.actions.checkpoint(checkpointLabel)) checkpointLabel = "";
       } finally {
         checkpointBusy = false;
         handle.update();
@@ -49,7 +46,7 @@ export const EditorDocumentControls = clientEntry(
           disabled={!context}
           mix={on("click", () => void context?.actions.newMap())}
         >
-          New map
+          <i class="ph ph-file-plus" aria-hidden="true" /> New map
         </button>
         <button
           id="example-map"
@@ -68,7 +65,7 @@ export const EditorDocumentControls = clientEntry(
             else document.querySelector<HTMLInputElement>("#open-map")?.click();
           })}
         >
-          Open .map
+          <i class="ph ph-folder-open" aria-hidden="true" /> Open .map
         </button>
         <input
           id="open-map"
@@ -87,7 +84,7 @@ export const EditorDocumentControls = clientEntry(
           disabled={!context}
           mix={on("click", () => void context?.actions.openProject())}
         >
-          Open project
+          <i class="ph ph-folders" aria-hidden="true" /> Open project
         </button>
         <button
           id="save-map"
@@ -95,7 +92,7 @@ export const EditorDocumentControls = clientEntry(
           disabled={!context || context.state.saveDisabled}
           mix={on("click", () => void context?.actions.save())}
         >
-          Save .map
+          <i class="ph ph-floppy-disk" aria-hidden="true" /> Save .map
         </button>
         <button
           id="export-normalized"
@@ -118,9 +115,7 @@ export const EditorDocumentControls = clientEntry(
         <button
           id="create-checkpoint"
           type="button"
-          disabled={
-            !context || context.state.checkpointDisabled || checkpointBusy
-          }
+          disabled={!context || context.state.checkpointDisabled || checkpointBusy}
           mix={on("click", () => void createCheckpoint())}
         >
           Save checkpoint

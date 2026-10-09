@@ -378,6 +378,24 @@ function setFaceInspectorVisibility(
 const switchMapDialog = initEditorSwitchMapDialog();
 const versionsDialog =
   document.querySelector<HTMLDialogElement>("#versions-dialog")!;
+const topbarMenus = document.querySelectorAll<HTMLDetailsElement>(
+  ".editor-header > details[name='editor-topbar']",
+);
+document.addEventListener("pointerdown", (event) => {
+  for (const menu of topbarMenus) {
+    if (menu.open && event.target instanceof Node && !menu.contains(event.target))
+      menu.open = false;
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  const openMenu = [...topbarMenus].find((menu) => menu.open);
+  if (!openMenu) return;
+  openMenu.open = false;
+  openMenu.querySelector<HTMLElement>("summary")?.focus();
+  event.preventDefault();
+  event.stopImmediatePropagation();
+});
 const canvases = {
   perspective: document.querySelector<HTMLCanvasElement>("#perspective")!,
   xy: document.querySelector<HTMLCanvasElement>("#xy")!,

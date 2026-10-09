@@ -24,6 +24,16 @@ let browser;
 let fourm;
 let compiler;
 
+async function showEditorMenu(page, name) {
+  await page.locator(".editor-menu").evaluateAll((menus, selected) => {
+    for (const menu of menus) menu.open = menu.dataset.menu === selected;
+  }, name);
+}
+
+async function showViewerSection(page, name) {
+  await page.locator(`[data-dock-target="${name}"]`).click();
+}
+
 async function freePort() {
   return new Promise((resolve, reject) => {
     const server = createNetServer();
@@ -400,12 +410,11 @@ try {
     return {
       viewportHeight: viewports?.getBoundingClientRect().height ?? 0,
       toolbarHeight: toolbar?.getBoundingClientRect().height ?? 0,
-      toolbarContentHeight: toolbar?.scrollHeight ?? 0,
       windowHeight: window.innerHeight,
     };
   });
   assert.ok(editorLayout.viewportHeight >= editorLayout.windowHeight * 0.55);
-  assert.ok(editorLayout.toolbarHeight < editorLayout.toolbarContentHeight);
+  assert.ok(editorLayout.toolbarHeight < 100);
   assert.equal(
     await standalonePage.locator('[data-viewport-overlay="lasso"]').count(),
     4,
@@ -438,6 +447,7 @@ try {
   );
   await standalonePage.locator("#document-summary summary").click();
   assert.equal(await standalonePage.locator("#brush-count").textContent(), "0");
+  await showEditorMenu(standalonePage, "file");
   await standalonePage.locator("#example-map").click();
   await standalonePage.waitForFunction(
     () => document.querySelector("#brush-count")?.textContent === "3",
@@ -470,14 +480,12 @@ try {
   await themePage.emulateMedia({ colorScheme: "light" });
   await themePage.goto(`${mapsOrigin}/editor`);
   await themePage.waitForFunction(
-    () => document.documentElement.dataset.theme === "light",
+    () => document.documentElement.dataset.theme === "dark",
   );
-  assert.equal(await themePage.locator("#editor-theme").inputValue(), "system");
-  assert.equal(
-    await themePage.evaluate(
-      () => getComputedStyle(document.documentElement).backgroundColor,
-    ),
-    "rgb(238, 245, 238)",
+  assert.equal(await themePage.locator("#editor-theme").inputValue(), "dark");
+  await themePage.locator("#editor-theme").selectOption("system");
+  await themePage.waitForFunction(
+    () => document.documentElement.dataset.theme === "light",
   );
   await themePage.locator("#editor-theme").selectOption("dark");
   await themePage.waitForFunction(
@@ -602,9 +610,11 @@ try {
     () =>
       document.querySelector("#reference-count")?.textContent === "0 loaded",
   );
+  await showEditorMenu(themePage, "build");
   await themePage.locator("#include-build-source").check();
   await themePage.locator("#export-after-build").check();
   await themePage.reload();
+  await showEditorMenu(themePage, "build");
   await themePage.waitForFunction(
     () =>
       document.querySelector("#include-build-source")?.checked &&
@@ -672,6 +682,7 @@ try {
     };
   }, bsp.toString("base64"));
   await localBuildPage.goto(`${mapsOrigin}/editor`);
+  await showEditorMenu(localBuildPage, "build");
   await localBuildPage.waitForFunction(
     () => !document.querySelector("#build-export-once")?.disabled,
   );
@@ -722,6 +733,7 @@ try {
 
   const documentPage = await browser.newPage();
   await documentPage.goto(`${mapsOrigin}/editor`);
+  await showEditorMenu(documentPage, "file");
   await documentPage.waitForFunction(
     () => !document.querySelector("#open-map-button")?.disabled,
   );
@@ -771,7 +783,8 @@ try {
 
   const sourceEditorPage = await browser.newPage();
   await sourceEditorPage.goto(`${mapsOrigin}/editor`);
-  await sourceEditorPage.locator("#inspector-tab-source").click();
+  await showEditorMenu(sourceEditorPage, "file");
+  await sourceEditorPage.locator("#show-source").click();
   await sourceEditorPage.locator("#map-source:not([disabled])").waitFor();
   const sourceDraftInitial =
     '{\n"classname" "worldspawn"\n"message" "tea_source_draft"\n}\n';
@@ -793,7 +806,8 @@ try {
   );
   await delay(600);
   await sourceEditorPage.reload();
-  await sourceEditorPage.locator("#inspector-tab-source").click();
+  await showEditorMenu(sourceEditorPage, "file");
+  await sourceEditorPage.locator("#show-source").click();
   await sourceEditorPage.locator("#map-source:not([disabled])").waitFor();
   assert.equal(
     await sourceEditorPage.locator("#map-source").inputValue(),
@@ -825,7 +839,8 @@ try {
   );
   const movementPage = await browser.newPage();
   await installViewerLoadProbe(movementPage);
-  await movementPage.goto(mapsOrigin);
+  await movementPage.goto(`${mapsOrigin}/viewer`);
+  await showViewerSection(movementPage, "dock-tools");
   await movementPage.waitForFunction(
     () => window.teaMapsViewerElementReady && window.teaMapsViewerLoadSettled,
   );
@@ -898,7 +913,8 @@ try {
     ),
   );
   await installViewerLoadProbe(cameraPage);
-  await cameraPage.goto(mapsOrigin);
+  await cameraPage.goto(`${mapsOrigin}/viewer`);
+  await showViewerSection(cameraPage, "dock-tools");
   await cameraPage.waitForFunction(
     () => window.teaMapsViewerElementReady && window.teaMapsViewerLoadSettled,
   );
@@ -1906,6 +1922,7 @@ try {
     );
   }
   result.checks.push("Remix hosted source draft recovery, discard, and save");
+  await showEditorMenu(page, "file");
   assert.equal(await page.locator("#save-map").isDisabled(), true);
   assert.equal(
     await page.locator("#download-map").textContent(),
@@ -1929,6 +1946,7 @@ try {
     .waitFor();
   await page.locator("#close-versions").click();
   result.checks.push("Remix recovery versions list hosted checkpoints");
+  await showEditorMenu(page, "build");
   await page.locator("#hosted-builds summary").click();
   await page.getByText("0 builds · hosted compiler available").waitFor();
   assert.equal(await page.locator("#build-export-once").isDisabled(), true);
@@ -2017,6 +2035,7 @@ try {
   await page.goto(
     `${mapsOrigin}/?hostedProject=${projectUrl.split("/").at(-1)}&hostedMap=${hostedMapId}`,
   );
+  await showViewerSection(page, "dock-hosted");
   await page.getByText("Choose a compiled build to view").waitFor();
   await page.getByRole("button", { name: "Open compiled map" }).click();
   await page.waitForURL(/hostedBuild=[a-f0-9-]{36}/);
@@ -2025,6 +2044,7 @@ try {
   await page.getByText("smoke.map · preview").waitFor();
   result.checks.push("Remix hosted viewer picker opens a compiled map");
   await page.goto(hostedEditorUrl);
+  await showEditorMenu(page, "build");
   await page.locator("#hosted-builds summary").click();
   await page.route(/\/api\/maps\/[^/]+\/builds$/, async (route) => {
     if (route.request().method() !== "GET") return route.continue();
@@ -2100,6 +2120,7 @@ try {
     });
     window.showDirectoryPicker = async () => root;
   }, hostedMapSource);
+  await showEditorMenu(page, "file");
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   assert.equal(await page.locator(".project-map-selector-row").count(), 6);
@@ -2115,6 +2136,7 @@ try {
     (await page.locator("#project-resource-info").textContent()) ?? "",
     /textures/,
   );
+  await showEditorMenu(page, "project");
   await page.locator("#project-maps").selectOption("maps/alpha.map");
   await page.waitForFunction(
     () =>
@@ -2122,8 +2144,10 @@ try {
         .name === "alpha.map",
   );
   const selectedMapDownload = page.waitForEvent("download");
+  await showEditorMenu(page, "file");
   await page.locator("#download-map").click();
   assert.equal((await selectedMapDownload).suggestedFilename(), "alpha.map");
+  await showEditorMenu(page, "project");
   await page.locator("#project-maps").selectOption("maps/beta.map");
   await page.waitForFunction(
     () =>
@@ -2131,7 +2155,7 @@ try {
         .name === "beta.map",
   );
   const beforeGuard = await page.locator("#map-source").inputValue();
-  await page.locator("#inspector-tab-source").click();
+  await page.locator("#show-source").click();
   await page.locator("#map-source").fill(`${beforeGuard}\n// pending\n`);
   await page.locator("#project-maps").selectOption("maps/alpha.map");
   await page.locator("#switch-map-dialog").waitFor({ state: "visible" });
@@ -2184,12 +2208,14 @@ try {
   result.checks.push(
     "Remix project map toolbar switches files and honors cancel, Escape, discard, and save",
   );
+  await showEditorMenu(page, "project");
   await page.locator("#project-sync-open:not([disabled])").click();
   await page.locator("#project-sync-dialog").waitFor({ state: "visible" });
   await page
     .locator("#project-sync-dialog")
     .getByRole("button", { name: "Close" })
     .click();
+  await showEditorMenu(page, "file");
   await page.locator("#open-project").click();
   await page.locator("#project-map-selector").waitFor({ state: "visible" });
   await page.locator("#project-map-selector-sync").click();
@@ -2273,6 +2299,7 @@ try {
     await writer.write(`${source}\n// tea project sync push\n`);
     await writer.close();
   });
+  await showEditorMenu(page, "project");
   await page.locator("#project-sync-open:not([disabled])").click();
   await page
     .locator("#project-sync-summary")
@@ -2313,6 +2340,7 @@ try {
     await writer.write(`${source}\n// concurrent local edit\n`);
     await writer.close();
   });
+  await showEditorMenu(page, "project");
   await page.locator("#project-sync-open:not([disabled])").click();
   await page
     .locator("#project-sync-summary")
@@ -2506,6 +2534,7 @@ try {
     .waitFor({ state: "hidden" });
   await toolSettingsPage.locator("#grid-size").selectOption("32");
   await toolSettingsPage.locator("#texture-lock").uncheck();
+  await showEditorMenu(toolSettingsPage, "selection");
   await toolSettingsPage.locator("#snap-to-grid").click();
   const snappedBounds = await toolSettingsPage.evaluate(
     () =>
@@ -3331,6 +3360,7 @@ try {
       selectionSetup.brushes,
     );
   }
+  await showEditorMenu(selectionPage, "selection");
   await selectionPage.locator("#select-all").click();
   await selectionPage
     .getByText("Selected 2 visible, unlocked objects")
@@ -3444,7 +3474,7 @@ try {
   result.checks.push("Remix editor readouts follow status and selection");
   const issuesPage = await browser.newPage();
   await issuesPage.goto(`${mapsOrigin}/editor`);
-  await issuesPage.locator("#inspector-tab-source").click();
+  await issuesPage.locator("#show-source").click();
   await issuesPage.locator("#map-source").waitFor({ state: "visible" });
   await issuesPage
     .locator("#map-source")
@@ -3949,6 +3979,7 @@ try {
       material: "STONE",
     });
   });
+  await showEditorMenu(page, "file");
   await page.locator("#show-versions").click();
   await page.locator("#versions-dialog").waitFor({ state: "visible" });
   const recoveryRow = page

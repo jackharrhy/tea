@@ -27,12 +27,14 @@ export const EditorPerformanceToggle = clientEntry(
       <button
         id="performance-toggle"
         type="button"
+        aria-label="Performance diagnostics"
+        title="Performance diagnostics"
         aria-pressed={enabled}
         mix={on("click", () => {
           window.dispatchEvent(new Event("tea-maps-performance-toggle"));
         })}
       >
-        Performance
+        <i class="ph ph-chart-line" aria-hidden="true" />
       </button>
     );
   },

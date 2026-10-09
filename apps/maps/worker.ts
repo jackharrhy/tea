@@ -134,7 +134,11 @@ export default {
       destination.protocol = new URL(env.MAPS_LOCAL_FIXTURE_ORIGIN).protocol;
       return fetch(new Request(destination, request));
     }
-    if (pathname.startsWith("/assets/") || pathname === "/favicon.svg") {
+    if (
+      pathname.startsWith("/assets/") ||
+      pathname.startsWith("/icons/") ||
+      pathname === "/favicon.svg"
+    ) {
       return env.ASSETS.fetch(request);
     }
     return router.fetch(request);

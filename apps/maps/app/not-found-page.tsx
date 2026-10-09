@@ -6,9 +6,10 @@ export function NotFoundPage() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#10221c" />
+        <meta name="theme-color" content="#252527" />
         <title>Page not found · Maps · Tea</title>
         <link rel="icon" href="/favicon.svg" />
+        <link rel="stylesheet" href="/icons/style.css" />
       </head>
       <body>
         <main class="projects-content">
@@ -23,7 +24,7 @@ export function NotFoundPage() {
               <a href="/projects" data-rmx-document>
                 Back to projects
               </a>
-              <a href="/" data-rmx-document>
+              <a href="/viewer" data-rmx-document>
                 Open viewer
               </a>
             </nav>

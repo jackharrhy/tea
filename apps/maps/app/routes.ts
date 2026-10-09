@@ -2,6 +2,7 @@ import { get, route } from "remix/routes";
 
 export const routes = route({
   home: get("/"),
+  viewer: get("/viewer"),
   editor: get("/editor"),
   newMap: get("/new-map"),
   projects: get("/projects"),

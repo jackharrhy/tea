@@ -1,19 +1,10 @@
-import {
-  defineWorldViewElement,
-  type WorldViewElement,
-} from "@tea/maps-renderer/element";
-import type {
-  BinarySource,
-  CameraState,
-  WorldSource,
-} from "@tea/maps-renderer";
+import { defineWorldViewElement, type WorldViewElement } from "@tea/maps-renderer/element";
+import type { BinarySource, CameraState, WorldSource } from "@tea/maps-renderer";
 import { sourceName } from "./world-input.ts";
 
 defineWorldViewElement();
 
-const viewer = document.querySelector<WorldViewElement>(
-  "#viewport world-view",
-)!;
+const viewer = document.querySelector<WorldViewElement>("#viewport world-view")!;
 let initialCamera: CameraState | undefined;
 window.dispatchEvent(new Event("tea-maps-viewer-element-ready"));
 
@@ -32,9 +23,7 @@ function updateChrome(changes: { name?: string; status?: string }) {
 
 viewer.addEventListener("progress", (event) => {
   updateChrome({
-    status: event.detail.label
-      ? `Loading ${event.detail.label}`
-      : "Loading map",
+    status: event.detail.label ? `Loading ${event.detail.label}` : "Loading map",
   });
 });
 viewer.addEventListener("ready", () => {
@@ -77,3 +66,25 @@ window.addEventListener("tea-maps-open-source", (event) => {
 window.addEventListener("tea-maps-viewer-status", (event) => {
   updateChrome({ status: (event as CustomEvent<string>).detail });
 });
+
+const dockScroll = document.querySelector<HTMLElement>(".dock-scroll");
+const dockTabs = document.querySelectorAll<HTMLButtonElement>(
+  ".dock-tabs button[data-dock-target]",
+);
+for (const tab of dockTabs) {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.dockTarget;
+    for (const other of dockTabs) {
+      const active = other.dataset.dockTarget === target;
+      other.setAttribute("aria-pressed", String(active));
+      const section = document.getElementById(other.dataset.dockTarget ?? "");
+      if (section instanceof HTMLDetailsElement) section.open = active;
+    }
+    if (dockScroll) dockScroll.scrollTop = 0;
+  });
+  document.getElementById(tab.dataset.dockTarget ?? "")?.addEventListener("toggle", (event) => {
+    if (!(event.currentTarget instanceof HTMLDetailsElement)) return;
+    if (!event.currentTarget.open) return;
+    for (const other of dockTabs) other.setAttribute("aria-pressed", String(other === tab));
+  });
+}

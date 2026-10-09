@@ -28,10 +28,7 @@ import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
 import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
 import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
 import { EditorVersions } from "./assets/editor-versions-panel.tsx";
-import {
-  EditorProjectSync,
-  EditorProjectSyncOpen,
-} from "./assets/editor-project-sync-panel.tsx";
+import { EditorProjectSync, EditorProjectSyncOpen } from "./assets/editor-project-sync-panel.tsx";
 import {
   EditorHostedSource,
   EditorHostedSourceOpen,
@@ -50,60 +47,96 @@ import {
   EditorPerformanceToggle,
 } from "./assets/editor-performance-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
+import { worldviewEditorStyles } from "./editor-worldview-styles.ts";
 
 export function EditorPage() {
   return () => (
-    <html lang="en" mix={editorStyles}>
+    <html lang="en" mix={[editorStyles, worldviewEditorStyles]}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#162923" />
+        <meta name="theme-color" content="#252527" />
         <title>Editor · Maps · Tea</title>
         <link rel="icon" href="/favicon.svg" />
+        <link rel="stylesheet" href="/icons/style.css" />
       </head>
       <body>
         <main class="editor-shell">
           <header class="editor-header">
-            <a class="editor-brand" href="/">
-              tea/maps
-            </a>
-            <a href="/projects">Projects</a>
+            <details class="editor-menu editor-document-menu" data-menu="file" name="editor-topbar">
+              <summary aria-label="Map document menu" title="Map document menu">
+                <i class="ph ph-cube" aria-hidden="true" />
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">File and recovery</div>
+                <a href="/">Maps home</a>
+                <a href="/projects">Projects</a>
+                <EditorDocumentControls />
+                <EditorRecentProjects />
+              </div>
+            </details>
             <EditorDocumentName />
+            <nav class="editor-toolbar" aria-label="Map editing toolbar">
+              <EditorToolSettings />
+              <EditorHistory />
+            </nav>
+            <details
+              class="editor-menu editor-selection-menu"
+              data-menu="selection"
+              name="editor-topbar"
+            >
+              <summary aria-label="More edit actions" title="More edit actions">
+                <i class="ph ph-dots-three" aria-hidden="true" />
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">Selection and visibility</div>
+                <EditorSelectionCommands />
+                <EditorEditActions />
+              </div>
+            </details>
+            <details class="editor-menu" data-menu="project" name="editor-topbar">
+              <summary>
+                <i class="ph ph-folders" aria-hidden="true" /> Project
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">Project</div>
+                <EditorProjectContextPanel />
+                <EditorProjectSyncOpen />
+              </div>
+            </details>
+            <details class="editor-menu" data-menu="build" name="editor-topbar">
+              <summary>
+                <i class="ph ph-hammer" aria-hidden="true" /> Build
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">Build and export</div>
+                <EditorBuildControls />
+                <EditorExportSettings />
+                <EditorHostedBuilds />
+              </div>
+            </details>
+            <details id="hosted-editor-picker" class="hosted-editor-picker" name="editor-topbar">
+              <summary title="Hosted maps and collaboration">
+                <i class="ph ph-users-three" aria-hidden="true" /> Hosted
+              </summary>
+              <div class="hosted-editor-fields">
+                <EditorHostedPicker />
+                <EditorHostedResources />
+                <EditorHostedAccess />
+                <EditorHostedSourceOpen />
+                <EditorHostedPresence />
+                <EditorDetachedMaps />
+                <p>
+                  Hosted members can edit with live sync. Source changes replace the hosted map
+                  after a version check. Recovery copies and source drafts stay on this device.
+                </p>
+              </div>
+            </details>
             <EditorHostedPresenceStrip />
             <EditorThemeControl />
             <EditorPerformanceToggle />
             <EditorInspectorToggle />
           </header>
-          <nav class="editor-toolbar" aria-label="Editor actions">
-            <EditorToolSettings />
-            <EditorHistory />
-            <span class="toolbar-scroll-hint">More actions below ↓</span>
-            <EditorDocumentControls />
-            <EditorRecentProjects />
-            <EditorProjectContextPanel />
-            <EditorProjectSyncOpen />
-            <EditorBuildControls />
-            <EditorExportSettings />
-            <EditorHostedBuilds />
-            <EditorSelectionCommands />
-            <EditorEditActions />
-          </nav>
-          <details id="hosted-editor-picker" class="hosted-editor-picker">
-            <summary>Hosted maps</summary>
-            <div class="hosted-editor-fields">
-              <EditorHostedPicker />
-              <EditorHostedResources />
-              <EditorHostedAccess />
-              <EditorHostedSourceOpen />
-              <EditorHostedPresence />
-              <EditorDetachedMaps />
-              <p>
-                Hosted members can edit with live sync. Source changes replace
-                the hosted map after a version check. Recovery copies and source
-                drafts stay on this device.
-              </p>
-            </div>
-          </details>
           <div class="editor-workspace">
             <section class="viewports" aria-label="Map viewports">
               <div class="viewport-frame">
@@ -112,42 +145,27 @@ export function EditorPage() {
                   <EditorFov />
                   <EditorWorkspaceToggle />
                 </div>
-                <canvas
-                  id="perspective"
-                  aria-label="Perspective map viewport"
-                />
+                <canvas id="perspective" aria-label="Perspective map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div
-                  data-viewport-overlay="transform-readout"
-                  aria-hidden="true"
-                />
+                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
               </div>
               <div class="viewport-frame">
                 <span>Top (XY)</span>
                 <canvas id="xy" aria-label="Top map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div
-                  data-viewport-overlay="transform-readout"
-                  aria-hidden="true"
-                />
+                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
               </div>
               <div class="viewport-frame">
                 <span>Front (XZ)</span>
                 <canvas id="xz" aria-label="Front map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div
-                  data-viewport-overlay="transform-readout"
-                  aria-hidden="true"
-                />
+                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
               </div>
               <div class="viewport-frame">
                 <span>Side (YZ)</span>
                 <canvas id="yz" aria-label="Side map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
-                <div
-                  data-viewport-overlay="transform-readout"
-                  aria-hidden="true"
-                />
+                <div data-viewport-overlay="transform-readout" aria-hidden="true" />
               </div>
               <div
                 class="viewport-resizer column-resizer"

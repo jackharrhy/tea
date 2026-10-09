@@ -19,6 +19,7 @@ async function openLocalFiles(files: Iterable<File>) {
       new CustomEvent("tea-maps-open-source", { detail: { source } }),
     );
     const url = new URL(location.href);
+    if (url.pathname === "/") url.pathname = "/viewer";
     url.search = "";
     history.replaceState(null, "", url);
   } catch (error) {
