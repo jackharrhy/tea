@@ -187,9 +187,7 @@ export function CliPage(
                 Upload a directory, import game assets, or download a folder
                 from your terminal.
               </p>
-              <p mix={requirementStyle}>
-                Requires Node.js 20 or newer. Current version: 0.4.0.
-              </p>
+              <p mix={requirementStyle}>Requires Node.js 20 or newer.</p>
             </div>
             <div mix={quickStartStyle}>
               <h2 mix={quickStartTitleStyle}>Install and sign in</h2>

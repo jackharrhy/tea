@@ -4,7 +4,7 @@ Use the CLI to upload a directory to Artbin, import game assets, or download a f
 
 ## Install and sign in
 
-Requires Node.js 20 or newer. The current CLI version is 0.4.0.
+Requires Node.js 20 or newer.
 
 ```bash
 npm install --global artbin
