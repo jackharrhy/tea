@@ -14,6 +14,7 @@ import { MyUploadsPage } from "./my-uploads-page.tsx";
 import { Alert, ButtonLink } from "../ui/primitives.tsx";
 import { mutedTextStyle, theme } from "../ui/styles.ts";
 import { serveFolderPreview, serveMediaFile } from "./media.ts";
+import { CliPage } from "./cli-page.tsx";
 
 const loginPageStyle = css({
   backgroundColor: theme.color.background,
@@ -63,6 +64,9 @@ export default createController(routes, {
         302,
       );
     },
+    cli(context) {
+      return context.render(<CliPage user={context.user} />);
+    },
     async login(context) {
       const user = context.user;
       if (user) return redirect(routes.folders.href(), 302);
@@ -90,6 +94,10 @@ export default createController(routes, {
             </ButtonLink>
             <p mix={[loginNoteStyle, mutedTextStyle]}>
               You need a 4orm account to use artbin.
+            </p>
+            <p mix={loginNoteStyle}>
+              Uploading with the CLI?{" "}
+              <a href={routes.cli.href()}>Read the guide</a>.
             </p>
           </main>
         </Document>,

@@ -65,6 +65,9 @@ export function Header(handle: Handle<HeaderProps>) {
           artbin
         </a>
         <nav mix={navStyle} aria-label="Main navigation">
+          <a href={routes.cli.href()} mix={navLinkStyle}>
+            cli
+          </a>
           {user ? (
             <>
               <a href={routes.folders.href()} mix={navLinkStyle}>
