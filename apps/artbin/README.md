@@ -4,7 +4,7 @@ Artbin is the game asset archive at [artbin.jackharrhy.dev](https://artbin.jackh
 
 ## Entry points
 
-`server.ts` starts the Node HTTP server. `app/router.ts` defines Remix routes and middleware, `app/assets.ts` serves browser modules, and `app/ui/` owns the visual system. `/dev/kitchen-sink` is the live component reference. `src/db/` and `drizzle/` own the SQLite schema and migrations. `src/lib/` owns storage and processing. The CLI lives in `apps/artbin-cli`; shared scan and upload code lives in `packages/artbin-core`.
+`server.ts` starts the Node HTTP server. `app/router.ts` defines Remix routes and middleware, `app/assets.ts` serves browser modules, and `app/ui/` owns the visual system. `/cli` documents the Artbin CLI for visitors; its public guidance matches `apps/artbin-cli/README.md`. `/dev/kitchen-sink` is the live component reference. `src/db/` and `drizzle/` own the SQLite schema and migrations. `src/lib/` owns storage and processing. The CLI lives in `apps/artbin-cli`; shared scan and upload code lives in `packages/artbin-core`.
 
 ## Local setup
 

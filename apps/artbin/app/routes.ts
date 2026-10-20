@@ -5,6 +5,7 @@ export const routes = route({
   mediaFile: get("/media/:fileId/*filename"),
   mediaFolderPreview: get("/media/folder/:folderId/*filename"),
   home: get("/"),
+  cli: get("/cli"),
   login: get("/login"),
   settings: form("/settings"),
   myUploads: get("/my-uploads"),
