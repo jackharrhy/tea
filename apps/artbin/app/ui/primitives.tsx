@@ -313,7 +313,7 @@ export function ButtonLink(
         target={target}
         rel={rel}
         title={title}
-        rmx-document={document ? "" : undefined}
+        data-rmx-document={document ? "" : undefined}
         mix={buttonMix(variant, size, block)}
       >
         {children}

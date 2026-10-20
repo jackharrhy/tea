@@ -116,7 +116,7 @@ describe("native Remix router", () => {
     const response = await router.fetch(request(routes.login.href()));
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, /href="\/auth\/4orm"[^>]*rmx-document=""/);
+    assert.match(html, /href="\/auth\/4orm"[^>]*data-rmx-document=""/);
   });
 
   it("completes OAuth through the router and creates a session", async () => {
