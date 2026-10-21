@@ -6,7 +6,6 @@ on:
       - .github/workflows/publish-artbin.yml
       - .dockerignore
       - .nvmrc
-      - scripts/security/**
       - package.json
       - package-lock.json
       - apps/artbin/**

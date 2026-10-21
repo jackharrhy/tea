@@ -6,7 +6,6 @@ on:
       - .github/workflows/publish-radio.yml
       - .dockerignore
       - .nvmrc
-      - scripts/security/**
       - package.json
       - package-lock.json
       - apps/radio/**

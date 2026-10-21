@@ -6,7 +6,6 @@ on:
       - .github/workflows/publish-letters-to-steve.yml
       - .dockerignore
       - .nvmrc
-      - scripts/security/**
       - package.json
       - package-lock.json
       - apps/letters-to-steve/**
