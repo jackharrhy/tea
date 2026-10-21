@@ -1,3 +1,4 @@
+import { createReadStream } from "node:fs";
 import { readFile } from "fs/promises";
 import { posix } from "node:path";
 import pLimit from "p-limit";
@@ -16,11 +17,13 @@ import {
   sanitizeFilename,
 } from "@artbin/core/detection/filenames";
 import { isImportableFile } from "@artbin/core/scanning/filters";
+import { MAX_UPLOAD_BYTES } from "@artbin/core/uploads";
 
 interface PreparedFile {
   relativePath: string;
-  buffer: Buffer;
+  size: number;
   sha256: string;
+  loadBuffer: () => Promise<Buffer>;
   sourceArchive?: string;
 }
 
@@ -29,7 +32,7 @@ const { basename, dirname } = posix;
 export interface ImportOptions {
   scanResult: ScanResult;
   archivePaths?: string[];
-  api: ApiClient;
+  api?: ApiClient;
   rootSlug: string;
   dryRun?: boolean;
   includeLooseFiles?: boolean;
@@ -53,11 +56,7 @@ function sha256(buffer: Buffer): string {
 }
 
 // Normalize once: folder creation, manifest checks, and uploads use the same path.
-function prepareFile(
-  path: string,
-  buffer: Buffer,
-  sourceArchive?: string,
-): PreparedFile {
+function canonicalPath(path: string): string {
   const parts = path.replaceAll("\\", "/").split("/");
   if (
     parts.some(
@@ -69,11 +68,47 @@ function prepareFile(
   const directories = parts.map(cleanFolderSlug);
   if (!filename || directories.some((part) => !part))
     throw new Error(`Invalid import path: ${path}`);
+  return [...directories, filename].join("/");
+}
+
+function checkSize(path: string, size: number): void {
+  if (size > MAX_UPLOAD_BYTES)
+    throw new Error(`${path} exceeds the 512 MiB per-file upload limit`);
+}
+
+function prepareFile(
+  path: string,
+  buffer: Buffer,
+  sourceArchive?: string,
+): PreparedFile {
+  const relativePath = canonicalPath(path);
+  checkSize(relativePath, buffer.length);
   return {
-    relativePath: [...directories, filename].join("/"),
-    buffer,
+    relativePath,
+    size: buffer.length,
     sha256: sha256(buffer),
+    loadBuffer: async () => buffer,
     sourceArchive,
+  };
+}
+
+async function prepareLooseFile(
+  path: string,
+  diskPath: string,
+): Promise<PreparedFile> {
+  const relativePath = canonicalPath(path);
+  const hash = createHash("sha256");
+  let size = 0;
+  for await (const chunk of createReadStream(diskPath)) {
+    size += chunk.length;
+    checkSize(relativePath, size);
+    hash.update(chunk);
+  }
+  return {
+    relativePath,
+    size,
+    sha256: hash.digest("hex"),
+    loadBuffer: () => readFile(diskPath),
   };
 }
 
@@ -125,7 +160,7 @@ async function extractArchiveFiles(
 }
 
 export async function runImport(options: ImportOptions): Promise<ImportResult> {
-  const { scanResult, archivePaths, api, dryRun, onProgress } = options;
+  const { scanResult, archivePaths, dryRun, onProgress } = options;
   if (
     options.rootSlug
       .replaceAll("\\", "/")
@@ -173,8 +208,8 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
       sourceCount,
       `Reading ${loose.name}...`,
     );
-    const buffer = await readFile(loose.path);
-    allFiles.push(prepareFile(loose.relativePath, buffer));
+    checkSize(loose.relativePath, loose.size);
+    allFiles.push(await prepareLooseFile(loose.relativePath, loose.path));
   }
   progress(
     "extracting",
@@ -201,6 +236,9 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
   if (dryRun) {
     return { uploaded: 0, failed: 0, skipped: total, total };
   }
+
+  const { api } = options;
+  if (!api) throw new Error("An Artbin connection is required to upload files");
 
   // Collect unique folder slugs
   const folderSlugs = new Set<string>();
@@ -242,7 +280,7 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
   const manifestFiles = allFiles.map((f) => ({
     path: f.relativePath,
     sha256: f.sha256,
-    size: f.buffer.length,
+    size: f.size,
   }));
 
   const manifestResult = await api.checkManifest(rootSlug, manifestFiles);
@@ -262,10 +300,7 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
   let uploaded = 0;
   let failed = 0;
   let transferredBytes = 0;
-  const totalBytes = filesToUpload.reduce(
-    (sum, file) => sum + file.buffer.length,
-    0,
-  );
+  const totalBytes = filesToUpload.reduce((sum, file) => sum + file.size, 0);
   const uploadProgress = (message: string) =>
     progress(
       "uploading",
@@ -281,29 +316,29 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
       limit(async () => {
         let fileTransferred = 0;
         const recordTransfer = (bytes: number) => {
-          const next = Math.max(
-            fileTransferred,
-            Math.min(file.buffer.length, bytes),
-          );
+          const next = Math.max(fileTransferred, Math.min(file.size, bytes));
           transferredBytes += next - fileTransferred;
           fileTransferred = next;
         };
         uploadProgress(`Uploading ${file.relativePath}…`);
         try {
+          const buffer = await file.loadBuffer();
+          if (buffer.length !== file.size || sha256(buffer) !== file.sha256)
+            throw new Error("File changed while importing; rerun the command");
           await api.uploadFile(
             rootSlug,
             {
               path: file.relativePath,
               sha256: file.sha256,
               sourceArchive: file.sourceArchive,
-              buffer: file.buffer,
+              buffer,
             },
             (info) => {
               if (info.phase === "transfer") recordTransfer(info.current);
               uploadProgress(`${file.relativePath}: ${info.message}`);
             },
           );
-          recordTransfer(file.buffer.length);
+          recordTransfer(file.size);
           uploaded++;
         } catch (error) {
           failed++;

@@ -1,15 +1,8 @@
 import * as p from "@clack/prompts";
 import { createServer } from "node:http";
-import { exec } from "node:child_process";
+import open from "open";
 import { loadConfig, saveConfig, getDefaultServerUrl } from "../lib/config.ts";
 import { ApiClient } from "../lib/api.ts";
-
-function openBrowser(url: string) {
-  const platform = process.platform;
-  if (platform === "darwin") exec(`open "${url}"`);
-  else if (platform === "win32") exec(`start "" "${url}"`);
-  else exec(`xdg-open "${url}"`);
-}
 
 export async function login(args: Record<string, unknown>) {
   p.intro("artbin login");
@@ -68,7 +61,11 @@ export async function login(args: Record<string, unknown>) {
 
       p.log.info(`Opening browser to authenticate...`);
       p.log.info(`If the browser doesn't open, visit: ${authorizeUrl}`);
-      openBrowser(authorizeUrl);
+      void open(authorizeUrl).catch(() => {
+        p.log.warning(
+          "Could not open the browser. Use the URL above to continue.",
+        );
+      });
     });
   });
 

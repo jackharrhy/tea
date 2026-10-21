@@ -4,7 +4,7 @@ Use the CLI to upload a directory to Artbin, import game assets, or download a f
 
 ## Install and sign in
 
-Requires Node.js 20 or newer. The current CLI version is 0.4.0.
+Requires Node.js 20 or newer.
 
 ```bash
 npm install --global artbin
@@ -22,7 +22,7 @@ artbin add ./my-files --dry-run
 artbin add ./my-files
 ```
 
-The directory name becomes the Artbin folder name. Use `--folder <slug>` to choose another. A dry run shows what would be uploaded without sending files.
+The directory name becomes the Artbin folder name. Use `--folder <slug>` to choose another. A dry run previews local files without a login or server connection; it does not check which files are already on Artbin.
 
 ## Import game assets
 
@@ -34,7 +34,7 @@ artbin import ./game --dry-run
 artbin import ./game
 ```
 
-`import` also accepts `--folder <slug>`.
+`import` also accepts `--folder <slug>`. Its dry run works offline and reports the source size; extracted files may have a different total size.
 
 ## Browse and download
 
@@ -59,8 +59,8 @@ Only administrators can create, rename, or move folders. Rename and move show a 
 
 ## Upload behavior
 
-Regular-user uploads go to the review inbox. The CLI retries interrupted uploads and skips files already indexed with the same size and checksum. It reports conflicts instead of overwriting files. Files may be up to 512 MiB each.
+Regular-user uploads go to the review inbox. The CLI retries transient transfer failures during a run. Rerunning a command skips files already indexed with the same size and checksum. It reports conflicts instead of overwriting files. Files may be up to 512 MiB each. Loose files are read into memory only when their upload starts; archive extraction still uses memory.
 
 ## Tea development
 
-This workspace publishes the npm package `artbin`. From the Tea root, run `npm ci`, then `npm run check --workspace artbin` or `npm run build --workspace artbin`. `src/index.ts` is the CLI entry point, `src/commands/` owns commands, and `src/ui/` builds the interactive scan view. The publish script is `scripts/publish.mjs`; it verifies the package before release. Shared asset logic lives in `packages/artbin-core` and CLI UI primitives in `packages/artbin-ui`. Server routes and storage stay in `apps/artbin`.
+This workspace publishes the npm package `artbin`. From the Tea root, run `npm ci`, then `npm run check --workspace artbin` or `npm run build --workspace artbin`. Run `npm run test:login-exit --workspace artbin` after building to check that browser login exits cleanly. `src/index.ts` is the CLI entry point, `src/commands/` owns commands, and `src/ui/` builds the interactive scan view. The publish script is `scripts/publish.mjs`; it verifies the package before release. Shared asset logic lives in `packages/artbin-core` and CLI UI primitives in `packages/artbin-ui`. Server routes and storage stay in `apps/artbin`.

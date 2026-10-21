@@ -32,6 +32,7 @@
     "build:ui": "vite build --config ui.vite.config.ts",
     "dev": "tsup --watch",
     "check": "npm run typecheck && npm test && npm run test:publish-policy",
+    "test:login-exit": "node __tests__/login-exit.smoke.mjs",
     "typecheck": "tsc --noEmit",
     "test:publish-policy": "vitest run scripts/__tests__/publish-policy.test.mjs",
     "test": "vitest run",

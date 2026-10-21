@@ -1,7 +1,8 @@
 import * as p from "@clack/prompts";
 import { createWriteStream } from "fs";
-import { access, mkdir, rename, rm, stat } from "fs/promises";
+import { access, link, mkdir, rename, rm, stat } from "fs/promises";
 import { basename, dirname, join, resolve, sep } from "path";
+import { randomUUID } from "node:crypto";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
 import { getAuthenticatedClient } from "../lib/auth.ts";
@@ -58,6 +59,12 @@ export async function pull(args: Record<string, unknown>) {
 
   const { api } = await getAuthenticatedClient();
   const { folder } = await api.getFolder(slug);
+  const expectedPath = await destinationPath(destination, `${folder.name}.zip`);
+  if ((await pathExists(expectedPath)) && !args.force) {
+    throw new Error(
+      `File already exists: ${expectedPath}. Use --force to replace it.`,
+    );
+  }
   const response = await api.downloadFolder(slug);
   if (!response.body) throw new Error("The server returned an empty download.");
 
@@ -67,13 +74,14 @@ export async function pull(args: Record<string, unknown>) {
     responseFilename(response, fallback),
   );
   if ((await pathExists(outputPath)) && !args.force) {
+    await response.body.cancel();
     throw new Error(
       `File already exists: ${outputPath}. Use --force to replace it.`,
     );
   }
 
   await mkdir(dirname(outputPath), { recursive: true });
-  const partialPath = `${outputPath}.part-${process.pid}`;
+  const partialPath = `${outputPath}.part-${randomUUID()}`;
   const spinner = p.spinner();
   if (!args.json) spinner.start(`Downloading ${folder.slug}`);
 
@@ -84,8 +92,12 @@ export async function pull(args: Record<string, unknown>) {
       ),
       createWriteStream(partialPath, { flags: "wx" }),
     );
-    if (args.force && (await pathExists(outputPath))) await rm(outputPath);
-    await rename(partialPath, outputPath);
+    if (args.force) {
+      await rename(partialPath, outputPath);
+    } else {
+      await link(partialPath, outputPath);
+      await rm(partialPath);
+    }
   } catch (error) {
     await rm(partialPath, { force: true });
     if (!args.json) spinner.stop("Download failed");
