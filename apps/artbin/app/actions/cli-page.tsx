@@ -173,7 +173,9 @@ const noteHeadingStyle = css({
   margin: 0,
 });
 
-export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"> | null }>) {
+export function CliPage(
+  handle: Handle<{ user: Pick<User, "username" | "isAdmin"> | null }>,
+) {
   return () => (
     <Page title="CLI guide - artbin" user={handle.props.user}>
       <main mix={pageStyle}>
@@ -182,7 +184,8 @@ export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"
             <div>
               <h1 mix={titleStyle}>artbin CLI</h1>
               <p mix={introStyle}>
-                Upload a directory, import game assets, or download a folder from your terminal.
+                Upload a directory, import game assets, or download a folder
+                from your terminal.
               </p>
               <p mix={requirementStyle}>Requires Node.js 20 or newer.</p>
             </div>
@@ -192,8 +195,9 @@ export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"
                 <code>{"npm install --global artbin\nartbin login"}</code>
               </pre>
               <p mix={quickStartNoteStyle}>
-                Login opens your browser. The default server is <code>artbin.jackharrhy.dev</code>.
-                For another server, run <code>artbin login &lt;server-url&gt;</code>.
+                Login opens your browser. The default server is{" "}
+                <code>artbin.jackharrhy.dev</code>. For another server, run{" "}
+                <code>artbin login &lt;server-url&gt;</code>.
               </p>
             </div>
           </section>
@@ -228,38 +232,45 @@ export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"
                 <section id="upload" mix={methodStyle}>
                   <h2 mix={headingStyle}>Upload files</h2>
                   <p mix={paragraphStyle}>
-                    Use <code mix={inlineCodeStyle}>add</code> for a directory of files. It keeps
-                    the directory structure and skips dotfiles and{" "}
-                    <code mix={inlineCodeStyle}>node_modules</code>.
+                    Use <code mix={inlineCodeStyle}>add</code> for a directory
+                    of files. It keeps the directory structure and skips
+                    dotfiles and <code mix={inlineCodeStyle}>node_modules</code>
+                    .
                   </p>
                   <pre mix={codeStyle}>
-                    <code>{"artbin add ./my-files --dry-run\nartbin add ./my-files"}</code>
+                    <code>
+                      {"artbin add ./my-files --dry-run\nartbin add ./my-files"}
+                    </code>
                   </pre>
                   <p mix={paragraphStyle}>
                     The directory name becomes the Artbin folder name. Use{" "}
-                    <code mix={inlineCodeStyle}>--folder &lt;slug&gt;</code> to choose another. A
-                    dry run previews local files without a login or server connection. It does not
-                    check which files are already on Artbin.
+                    <code mix={inlineCodeStyle}>--folder &lt;slug&gt;</code> to
+                    choose another. A dry run previews local files without a
+                    login or server connection. It does not check which files
+                    are already on Artbin.
                   </p>
                 </section>
 
                 <section id="import" mix={methodStyle}>
                   <h2 mix={headingStyle}>Import game assets</h2>
                   <p mix={paragraphStyle}>
-                    Use <code mix={inlineCodeStyle}>scan</code> to inspect a game directory, then{" "}
-                    <code mix={inlineCodeStyle}>import</code> to upload supported assets, including
-                    files found in archives.
+                    Use <code mix={inlineCodeStyle}>scan</code> to inspect a
+                    game directory, then{" "}
+                    <code mix={inlineCodeStyle}>import</code> to upload
+                    supported assets, including files found in archives.
                   </p>
                   <pre mix={codeStyle}>
                     <code>
-                      {"artbin scan ./game\nartbin import ./game --dry-run\nartbin import ./game"}
+                      {
+                        "artbin scan ./game\nartbin import ./game --dry-run\nartbin import ./game"
+                      }
                     </code>
                   </pre>
                   <p mix={paragraphStyle}>
                     <code mix={inlineCodeStyle}>import</code> also accepts{" "}
-                    <code mix={inlineCodeStyle}>--folder &lt;slug&gt;</code>. Its dry run works
-                    offline and reports the source size; extracted files may have a different total
-                    size.
+                    <code mix={inlineCodeStyle}>--folder &lt;slug&gt;</code>.
+                    Its dry run works offline and reports the source size;
+                    extracted files may have a different total size.
                   </p>
                 </section>
               </div>
@@ -267,8 +278,9 @@ export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"
               <section id="browse" mix={sectionStyle}>
                 <h2 mix={headingStyle}>Browse and download</h2>
                 <p mix={paragraphStyle}>
-                  You can inspect and download public folders with any Artbin account.{" "}
-                  <code mix={inlineCodeStyle}>pull</code> downloads a folder ZIP.
+                  You can inspect and download public folders with any Artbin
+                  account. <code mix={inlineCodeStyle}>pull</code> downloads a
+                  folder ZIP.
                 </p>
                 <pre mix={codeStyle}>
                   <code>
@@ -278,7 +290,8 @@ export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"
                   </code>
                 </pre>
                 <p mix={paragraphStyle}>
-                  Optional flags include <code mix={inlineCodeStyle}>--tree</code>,{" "}
+                  Optional flags include{" "}
+                  <code mix={inlineCodeStyle}>--tree</code>,{" "}
                   <code mix={inlineCodeStyle}>--all</code>,{" "}
                   <code mix={inlineCodeStyle}>--json</code>, and{" "}
                   <code mix={inlineCodeStyle}>--force</code>.
@@ -288,8 +301,8 @@ export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"
               <section id="organize" mix={sectionStyle}>
                 <h2 mix={headingStyle}>Organize folders</h2>
                 <p mix={paragraphStyle}>
-                  Only administrators can create, rename, or move folders. Rename and move show a
-                  preview before confirmation.
+                  Only administrators can create, rename, or move folders.
+                  Rename and move show a preview before confirmation.
                 </p>
                 <pre mix={codeStyle}>
                   <code>
@@ -299,19 +312,21 @@ export function CliPage(handle: Handle<{ user: Pick<User, "username" | "isAdmin"
                   </code>
                 </pre>
                 <p mix={paragraphStyle}>
-                  Use <code mix={inlineCodeStyle}>--dry-run</code> to preview without changing
-                  anything, <code mix={inlineCodeStyle}>--yes</code> to skip confirmation, or{" "}
-                  <code mix={inlineCodeStyle}>--json</code> for scripts.
+                  Use <code mix={inlineCodeStyle}>--dry-run</code> to preview
+                  without changing anything,{" "}
+                  <code mix={inlineCodeStyle}>--yes</code> to skip confirmation,
+                  or <code mix={inlineCodeStyle}>--json</code> for scripts.
                 </p>
               </section>
 
               <aside id="uploads" mix={noteStyle}>
                 <h2 mix={noteHeadingStyle}>Upload behavior</h2>
                 <p mix={paragraphStyle}>
-                  Regular-user uploads go to the review inbox. The CLI retries transient transfer
-                  failures during a run. Rerunning a command skips files already indexed with the
-                  same size and checksum. It reports conflicts instead of overwriting files. Files
-                  may be up to 512 MiB each.
+                  Regular-user uploads go to the review inbox. The CLI retries
+                  transient transfer failures during a run. Rerunning a command
+                  skips files already indexed with the same size and checksum.
+                  It reports conflicts instead of overwriting files. Files may
+                  be up to 512 MiB each.
                 </p>
               </aside>
             </article>

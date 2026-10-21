@@ -12,7 +12,10 @@ export async function getAuthenticatedClient() {
     const { user } = await api.whoami();
     return { api, user, config };
   } catch (error) {
-    if (error instanceof Error && /whoami failed \((401|403)\)/.test(error.message)) {
+    if (
+      error instanceof Error &&
+      /whoami failed \((401|403)\)/.test(error.message)
+    ) {
       throw new Error("Session expired. Run: artbin login", { cause: error });
     }
     throw new Error(

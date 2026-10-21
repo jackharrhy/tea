@@ -36,7 +36,12 @@ export interface ImportOptions {
   rootSlug: string;
   dryRun?: boolean;
   includeLooseFiles?: boolean;
-  onProgress?: (info: { phase: string; current: number; total: number; message: string }) => void;
+  onProgress?: (info: {
+    phase: string;
+    current: number;
+    total: number;
+    message: string;
+  }) => void;
 }
 
 export interface ImportResult {
@@ -53,7 +58,11 @@ function sha256(buffer: Buffer): string {
 // Normalize once: folder creation, manifest checks, and uploads use the same path.
 function canonicalPath(path: string): string {
   const parts = path.replaceAll("\\", "/").split("/");
-  if (parts.some((part) => !part || part === "." || part === ".." || part.includes(":")))
+  if (
+    parts.some(
+      (part) => !part || part === "." || part === ".." || part.includes(":"),
+    )
+  )
     throw new Error(`Invalid import path: ${path}`);
   const filename = sanitizeFilename(parts.pop()!);
   const directories = parts.map(cleanFolderSlug);
@@ -63,10 +72,15 @@ function canonicalPath(path: string): string {
 }
 
 function checkSize(path: string, size: number): void {
-  if (size > MAX_UPLOAD_BYTES) throw new Error(`${path} exceeds the 512 MiB per-file upload limit`);
+  if (size > MAX_UPLOAD_BYTES)
+    throw new Error(`${path} exceeds the 512 MiB per-file upload limit`);
 }
 
-function prepareFile(path: string, buffer: Buffer, sourceArchive?: string): PreparedFile {
+function prepareFile(
+  path: string,
+  buffer: Buffer,
+  sourceArchive?: string,
+): PreparedFile {
   const relativePath = canonicalPath(path);
   checkSize(relativePath, buffer.length);
   return {
@@ -78,7 +92,10 @@ function prepareFile(path: string, buffer: Buffer, sourceArchive?: string): Prep
   };
 }
 
-async function prepareLooseFile(path: string, diskPath: string): Promise<PreparedFile> {
+async function prepareLooseFile(
+  path: string,
+  diskPath: string,
+): Promise<PreparedFile> {
   const relativePath = canonicalPath(path);
   const hash = createHash("sha256");
   let size = 0;
@@ -95,7 +112,9 @@ async function prepareLooseFile(path: string, diskPath: string): Promise<Prepare
   };
 }
 
-async function extractArchiveFiles(archive: ScannedArchive): Promise<PreparedFile[]> {
+async function extractArchiveFiles(
+  archive: ScannedArchive,
+): Promise<PreparedFile[]> {
   const files: PreparedFile[] = [];
   const buffer = await readFile(archive.path);
 
@@ -107,11 +126,13 @@ async function extractArchiveFiles(archive: ScannedArchive): Promise<PreparedFil
 
   // For archives with entries, put extracted files under archiveDir/archiveSlug/
   // For BSPs (single files), put the BSP directly under its directory
-  const archivePrefix = archiveDir !== "." ? `${archiveDir}/${archiveSlug}` : archiveSlug;
+  const archivePrefix =
+    archiveDir !== "." ? `${archiveDir}/${archiveSlug}` : archiveSlug;
 
   if (archive.type === "bsp") {
     // BSPs are single files -- put them in the directory they came from
-    const bspRelPath = archiveDir !== "." ? `${archiveDir}/${archive.name}` : archive.name;
+    const bspRelPath =
+      archiveDir !== "." ? `${archiveDir}/${archive.name}` : archive.name;
     return [prepareFile(bspRelPath, buffer)];
   }
 
@@ -130,7 +151,9 @@ async function extractArchiveFiles(archive: ScannedArchive): Promise<PreparedFil
       throw new Error(`Unsupported archive format: ${archive.name}`);
     }
 
-    files.push(prepareFile(`${archivePrefix}/${entry.name}`, entryBuffer, archive.name));
+    files.push(
+      prepareFile(`${archivePrefix}/${entry.name}`, entryBuffer, archive.name),
+    );
   }
 
   return files;
@@ -142,13 +165,20 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
     options.rootSlug
       .replaceAll("\\", "/")
       .split("/")
-      .some((part) => !part || part === "." || part === ".." || part.includes(":"))
+      .some(
+        (part) => !part || part === "." || part === ".." || part.includes(":"),
+      )
   )
     throw new Error("Destination must be a relative folder path");
   const rootSlug = cleanFolderPath(options.rootSlug.replaceAll("\\", "/"));
   if (!rootSlug) throw new Error("Destination folder is required");
 
-  const progress = (phase: string, current: number, total: number, message: string) => {
+  const progress = (
+    phase: string,
+    current: number,
+    total: number,
+    message: string,
+  ) => {
     onProgress?.({ phase, current, total, message });
   };
 
@@ -156,7 +186,8 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
   const archives = archivePaths
     ? scanResult.archives.filter((a) => archivePaths.includes(a.path))
     : scanResult.archives;
-  const looseFiles = options.includeLooseFiles === false ? [] : scanResult.looseFiles;
+  const looseFiles =
+    options.includeLooseFiles === false ? [] : scanResult.looseFiles;
   const sourceCount = archives.length + looseFiles.length;
 
   // Extract files from archives
@@ -171,11 +202,21 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
   // Extract loose files
   for (let i = 0; i < looseFiles.length; i++) {
     const loose = looseFiles[i];
-    progress("extracting", archives.length + i, sourceCount, `Reading ${loose.name}...`);
+    progress(
+      "extracting",
+      archives.length + i,
+      sourceCount,
+      `Reading ${loose.name}...`,
+    );
     checkSize(loose.relativePath, loose.size);
     allFiles.push(await prepareLooseFile(loose.relativePath, loose.path));
   }
-  progress("extracting", sourceCount, sourceCount, `Prepared ${allFiles.length} files`);
+  progress(
+    "extracting",
+    sourceCount,
+    sourceCount,
+    `Prepared ${allFiles.length} files`,
+  );
 
   const seenPaths = new Set<string>();
   for (const file of allFiles) {
@@ -305,12 +346,19 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
             `${file.relativePath}: ${error instanceof Error ? error.message : String(error)}`,
           );
         }
-        uploadProgress("Transfer progress; waiting for remaining files to finish processing.");
+        uploadProgress(
+          "Transfer progress; waiting for remaining files to finish processing.",
+        );
       }),
     ),
   );
 
-  progress("finalizing", 0, 100, "Files are indexed. Waiting for folder preview job…");
+  progress(
+    "finalizing",
+    0,
+    100,
+    "Files are indexed. Waiting for folder preview job…",
+  );
   try {
     await api.finalize(rootSlug, (info) =>
       progress("finalizing", info.current, info.total, info.message),
@@ -322,7 +370,9 @@ export async function runImport(options: ImportOptions): Promise<ImportResult> {
     );
   }
   if (errors.length)
-    throw new Error(`${failed} upload(s) failed:\n${errors.slice(0, 10).join("\n")}`);
+    throw new Error(
+      `${failed} upload(s) failed:\n${errors.slice(0, 10).join("\n")}`,
+    );
 
   progress("done", uploaded, filesToUpload.length, "Upload complete");
 

@@ -7,7 +7,9 @@ const { downloadFolder } = vi.hoisted(() => ({ downloadFolder: vi.fn() }));
 vi.mock("../src/lib/auth.ts", () => ({
   getAuthenticatedClient: async () => ({
     api: {
-      getFolder: async () => ({ folder: { name: "My Folder", slug: "my-folder" } }),
+      getFolder: async () => ({
+        folder: { name: "My Folder", slug: "my-folder" },
+      }),
       downloadFolder,
     },
   }),
@@ -25,9 +27,9 @@ test("does not start a download when the destination already exists", async () =
   try {
     const destination = join(directory, "My Folder.zip");
     await writeFile(destination, "original");
-    await expect(pull({ _: ["pull", "my-folder", directory], json: true })).rejects.toThrow(
-      "Use --force",
-    );
+    await expect(
+      pull({ _: ["pull", "my-folder", directory], json: true }),
+    ).rejects.toThrow("Use --force");
     expect(downloadFolder).not.toHaveBeenCalled();
     expect(await readFile(destination, "utf8")).toBe("original");
   } finally {
@@ -67,7 +69,11 @@ test("a successful forced download replaces the file", async () => {
     await writeFile(destination, "original");
     downloadFolder.mockResolvedValue(new Response("replacement"));
     vi.spyOn(console, "log").mockImplementation(() => {});
-    await pull({ _: ["pull", "my-folder", destination], force: true, json: true });
+    await pull({
+      _: ["pull", "my-folder", destination],
+      force: true,
+      json: true,
+    });
     expect(await readFile(destination, "utf8")).toBe("replacement");
     expect(await readdir(directory)).toEqual(["archive.zip"]);
   } finally {

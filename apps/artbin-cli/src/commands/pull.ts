@@ -28,7 +28,10 @@ async function pathExists(path: string): Promise<boolean> {
   }
 }
 
-async function destinationPath(input: string | undefined, filename: string): Promise<string> {
+async function destinationPath(
+  input: string | undefined,
+  filename: string,
+): Promise<string> {
   if (!input) return resolve(filename);
 
   const target = resolve(input);
@@ -49,23 +52,32 @@ export async function pull(args: Record<string, unknown>) {
   const slug = values[1];
   const destination = values[2];
   if (!slug) {
-    throw new Error("Usage: artbin pull <slug> [destination] [--force] [--json]");
+    throw new Error(
+      "Usage: artbin pull <slug> [destination] [--force] [--json]",
+    );
   }
 
   const { api } = await getAuthenticatedClient();
   const { folder } = await api.getFolder(slug);
   const expectedPath = await destinationPath(destination, `${folder.name}.zip`);
   if ((await pathExists(expectedPath)) && !args.force) {
-    throw new Error(`File already exists: ${expectedPath}. Use --force to replace it.`);
+    throw new Error(
+      `File already exists: ${expectedPath}. Use --force to replace it.`,
+    );
   }
   const response = await api.downloadFolder(slug);
   if (!response.body) throw new Error("The server returned an empty download.");
 
   const fallback = `${folder.slug.split("/").pop() || "folder"}.zip`;
-  const outputPath = await destinationPath(destination, responseFilename(response, fallback));
+  const outputPath = await destinationPath(
+    destination,
+    responseFilename(response, fallback),
+  );
   if ((await pathExists(outputPath)) && !args.force) {
     await response.body.cancel();
-    throw new Error(`File already exists: ${outputPath}. Use --force to replace it.`);
+    throw new Error(
+      `File already exists: ${outputPath}. Use --force to replace it.`,
+    );
   }
 
   await mkdir(dirname(outputPath), { recursive: true });
@@ -75,7 +87,9 @@ export async function pull(args: Record<string, unknown>) {
 
   try {
     await pipeline(
-      Readable.fromWeb(response.body as import("stream/web").ReadableStream<Uint8Array>),
+      Readable.fromWeb(
+        response.body as import("stream/web").ReadableStream<Uint8Array>,
+      ),
       createWriteStream(partialPath, { flags: "wx" }),
     );
     if (args.force) {
@@ -93,7 +107,11 @@ export async function pull(args: Record<string, unknown>) {
   const downloaded = await stat(outputPath);
   if (args.json) {
     console.log(
-      JSON.stringify({ slug: folder.slug, path: outputPath, bytes: downloaded.size }, null, 2),
+      JSON.stringify(
+        { slug: folder.slug, path: outputPath, bytes: downloaded.size },
+        null,
+        2,
+      ),
     );
   } else {
     spinner.stop(`Downloaded ${folder.slug}`);

@@ -124,8 +124,12 @@ test("uses one canonical Windows path for folders, manifest, upload, and a plain
     const api = {
       createFolders: vi.fn(async () => ({})),
       checkManifest: vi.fn(async (_root, entries) => ({
-        newFiles: exists ? [] : entries.map((entry: { path: string }) => entry.path),
-        existingFiles: exists ? entries.map((entry: { path: string }) => entry.path) : [],
+        newFiles: exists
+          ? []
+          : entries.map((entry: { path: string }) => entry.path),
+        existingFiles: exists
+          ? entries.map((entry: { path: string }) => entry.path)
+          : [],
       })),
       uploadFile: vi.fn(async (_root, _file, progress) => {
         progress({
@@ -161,8 +165,12 @@ test("uses one canonical Windows path for folders, manifest, upload, and a plain
     };
     expect((await runImport(options)).uploaded).toBe(1);
     expect(api.uploadFile.mock.calls[0][0]).toBe("my-game");
-    expect(api.uploadFile.mock.calls[0][1].path).toBe("upper-textures/Wall_Texture.tga");
-    expect(api.checkManifest.mock.calls[0][1][0].path).toBe("upper-textures/Wall_Texture.tga");
+    expect(api.uploadFile.mock.calls[0][1].path).toBe(
+      "upper-textures/Wall_Texture.tga",
+    );
+    expect(api.checkManifest.mock.calls[0][1][0].path).toBe(
+      "upper-textures/Wall_Texture.tga",
+    );
     expect(progress).toHaveBeenCalledWith(
       expect.objectContaining({ phase: "uploading", current: 3, total: 7 }),
     );
@@ -177,7 +185,9 @@ test("uses one canonical Windows path for folders, manifest, upload, and a plain
       ...scanResult.looseFiles[0],
       relativePath: "upper-textures/Wall_Texture.tga",
     });
-    await expect(runImport(options)).rejects.toThrow("Multiple source files map to");
+    await expect(runImport(options)).rejects.toThrow(
+      "Multiple source files map to",
+    );
     expect(api.createFolders).toHaveBeenCalledTimes(2);
   } finally {
     await rm(directory, { recursive: true, force: true });
