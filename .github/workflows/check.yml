@@ -10,6 +10,29 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  runtime-trust:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - node:24.22.1-bookworm-slim@sha256:1681862882da07ee5476fee047bcf34138833f1df42633bb25bcb0f438d5bf3d
+          - node:26.12.1-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify bundled and OS certificate trust
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: |
+          docker run --rm -v "$PWD/scripts/security:/security:ro" "$IMAGE" sh -ec '
+            apt-get update
+            apt-get install -y --no-install-recommends ca-certificates
+            dpkg-query -W ca-certificates | { read package version; dpkg --compare-versions "$version" ge "20250419~deb12u2"; }
+            node /security/check-tls.mjs
+            node --use-openssl-ca /security/check-tls.mjs
+          '
   check:
     runs-on: ubuntu-latest
     env:
