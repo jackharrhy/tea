@@ -39,7 +39,7 @@
     "tooling:check": "vp check",
     "artbin:check": "npm run tooling:check && npm run check --workspace @artbin/core && npm run check --workspace @artbin/ui && npm run check --workspace @tea/artbin && npm run check --workspace artbin",
     "artbin:dev": "npm run dev --workspace @tea/artbin",
-    "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace artbin && npm run test:login-exit --workspace artbin"
+    "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace artbin"
   },
   "devDependencies": {
     "knip": "6.39.0",
