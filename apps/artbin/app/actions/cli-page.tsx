@@ -187,7 +187,9 @@ export function CliPage(
                 Upload a directory, import game assets, or download a folder
                 from your terminal.
               </p>
-              <p mix={requirementStyle}>Requires Node.js 20 or newer.</p>
+              <p mix={requirementStyle}>
+                Requires Node.js 20 or newer. Current version: 0.4.0.
+              </p>
             </div>
             <div mix={quickStartStyle}>
               <h2 mix={quickStartTitleStyle}>Install and sign in</h2>
@@ -245,9 +247,8 @@ export function CliPage(
                   <p mix={paragraphStyle}>
                     The directory name becomes the Artbin folder name. Use{" "}
                     <code mix={inlineCodeStyle}>--folder &lt;slug&gt;</code> to
-                    choose another. A dry run previews local files without a
-                    login or server connection. It does not check which files
-                    are already on Artbin.
+                    choose another. A dry run shows what would be uploaded
+                    without sending files.
                   </p>
                 </section>
 
@@ -269,8 +270,6 @@ export function CliPage(
                   <p mix={paragraphStyle}>
                     <code mix={inlineCodeStyle}>import</code> also accepts{" "}
                     <code mix={inlineCodeStyle}>--folder &lt;slug&gt;</code>.
-                    Its dry run works offline and reports the source size;
-                    extracted files may have a different total size.
                   </p>
                 </section>
               </div>
@@ -323,10 +322,9 @@ export function CliPage(
                 <h2 mix={noteHeadingStyle}>Upload behavior</h2>
                 <p mix={paragraphStyle}>
                   Regular-user uploads go to the review inbox. The CLI retries
-                  transient transfer failures during a run. Rerunning a command
-                  skips files already indexed with the same size and checksum.
-                  It reports conflicts instead of overwriting files. Files may
-                  be up to 512 MiB each.
+                  interrupted uploads and skips files already indexed with the
+                  same size and checksum. It reports conflicts instead of
+                  overwriting files. Files may be up to 512 MiB each.
                 </p>
               </aside>
             </article>
