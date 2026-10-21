@@ -40,7 +40,14 @@ for (const url of [
       certificateErrors.has(error.code),
       `Expected certificate trust failure for ${url}, got ${error.code}: ${error.message}`,
     );
-    console.log(JSON.stringify({ url, rejected: true, code: error.code, message: error.message }));
+    console.log(
+      JSON.stringify({
+        url,
+        rejected: true,
+        code: error.code,
+        message: error.message,
+      }),
+    );
     return true;
   });
 }
