@@ -6,6 +6,7 @@ on:
       - .github/workflows/publish-ref.yml
       - .dockerignore
       - .nvmrc
+      - scripts/security/**
       - package.json
       - package-lock.json
       - apps/ref/**
