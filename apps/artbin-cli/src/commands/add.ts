@@ -1,8 +1,7 @@
 import * as p from "@clack/prompts";
 import { resolve, basename, relative, join } from "path";
 import { readdir, stat } from "fs/promises";
-import { loadConfig } from "../lib/config.ts";
-import { ApiClient } from "../lib/api.ts";
+import { getAuthenticatedClient } from "../lib/auth.ts";
 import { runImport } from "../lib/importer.ts";
 import { cleanFolderSlug } from "@artbin/core/detection/filenames";
 import type { ScanResult, ScannedFile } from "../lib/scanner.ts";
@@ -72,23 +71,17 @@ export async function add(args: Record<string, unknown>) {
     p.log.info("Dry run mode -- no files will be uploaded");
   }
 
-  const config = await loadConfig();
-  if (!config) {
-    p.log.error("Not logged in. Run: artbin login");
-    process.exit(1);
-  }
-
-  const api = new ApiClient(config);
-
   const spinner = p.spinner();
-  spinner.start("Verifying authentication...");
-  try {
-    await api.whoami();
-    spinner.stop("Authenticated");
-  } catch {
-    spinner.stop("Authentication failed");
-    p.log.error("Session expired. Run: artbin login");
-    process.exit(1);
+  let api;
+  if (!dryRun) {
+    spinner.start("Verifying authentication...");
+    try {
+      ({ api } = await getAuthenticatedClient());
+      spinner.stop("Authenticated");
+    } catch (error) {
+      spinner.stop("Connection failed");
+      throw error;
+    }
   }
 
   spinner.start("Collecting files...");
@@ -116,7 +109,7 @@ export async function add(args: Record<string, unknown>) {
     totalSize,
   };
 
-  spinner.start("Uploading...");
+  spinner.start(dryRun ? "Preparing preview..." : "Uploading...");
 
   try {
     const result = await runImport({
@@ -134,12 +127,14 @@ export async function add(args: Record<string, unknown>) {
     });
 
     if (dryRun) {
+      spinner.stop("Preview ready");
       p.log.info(`Would upload ${result.total} files to folder: ${rootSlug}`);
       p.outro("Dry run complete");
       return;
     }
 
     if (result.total === 0) {
+      spinner.stop("No files to upload");
       p.log.warning("No files to upload");
       p.outro("Nothing to add");
       return;

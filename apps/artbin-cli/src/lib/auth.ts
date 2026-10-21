@@ -11,7 +11,13 @@ export async function getAuthenticatedClient() {
   try {
     const { user } = await api.whoami();
     return { api, user, config };
-  } catch {
-    throw new Error("Authentication failed. Run: artbin login");
+  } catch (error) {
+    if (error instanceof Error && /whoami failed \((401|403)\)/.test(error.message)) {
+      throw new Error("Session expired. Run: artbin login", { cause: error });
+    }
+    throw new Error(
+      `Could not connect to Artbin at ${config.serverUrl}: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
   }
 }

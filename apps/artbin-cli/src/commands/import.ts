@@ -1,8 +1,7 @@
 import * as p from "@clack/prompts";
 import { resolve, basename } from "path";
 import { scanDirectory } from "../lib/scanner.ts";
-import { loadConfig } from "../lib/config.ts";
-import { ApiClient } from "../lib/api.ts";
+import { getAuthenticatedClient } from "../lib/auth.ts";
 import { runImport } from "../lib/importer.ts";
 import { cleanFolderSlug } from "@artbin/core/detection/filenames";
 import { formatProgress } from "../lib/progress.ts";
@@ -30,23 +29,17 @@ export async function importCmd(args: Record<string, unknown>) {
     p.log.info("Dry run mode -- no files will be uploaded");
   }
 
-  const config = await loadConfig();
-  if (!config) {
-    p.log.error("Not logged in. Run: artbin login");
-    process.exit(1);
-  }
-
-  const api = new ApiClient(config);
-
   const spinner = p.spinner();
-  spinner.start("Verifying authentication...");
-  try {
-    await api.whoami();
-    spinner.stop("Authenticated");
-  } catch {
-    spinner.stop("Authentication failed");
-    p.log.error("Session expired. Run: artbin login");
-    process.exit(1);
+  let api;
+  if (!dryRun) {
+    spinner.start("Verifying authentication...");
+    try {
+      ({ api } = await getAuthenticatedClient());
+      spinner.stop("Authenticated");
+    } catch (error) {
+      spinner.stop("Connection failed");
+      throw error;
+    }
   }
 
   spinner.start("Scanning for game assets...");
@@ -65,7 +58,7 @@ export async function importCmd(args: Record<string, unknown>) {
 
   const rootSlug = folderSlug || cleanFolderSlug(basename(fullPath));
 
-  spinner.start("Processing...");
+  spinner.start(dryRun ? "Preparing preview..." : "Processing...");
 
   try {
     const result = await runImport({
@@ -83,14 +76,15 @@ export async function importCmd(args: Record<string, unknown>) {
     });
 
     if (dryRun) {
-      const totalSize = scanResult.archives.reduce((sum, a) => sum + a.size, 0);
+      spinner.stop("Preview ready");
       p.log.info(`Would upload ${result.total} files to folder: ${rootSlug}`);
-      p.log.info(`Total size: ${formatSize(totalSize)}`);
+      p.log.info(`Source size: ${formatSize(scanResult.totalSize)}`);
       p.outro("Dry run complete");
       return;
     }
 
     if (result.total === 0) {
+      spinner.stop("No importable files");
       p.log.warning("No importable files after extraction");
       p.outro("Nothing to import");
       return;

@@ -5,6 +5,33 @@ import { expect, test, vi } from "vitest";
 import { runImport } from "../src/lib/importer.ts";
 import type { ApiClient } from "../src/lib/api.ts";
 import type { ScanResult } from "../src/lib/scanner.ts";
+import { MAX_UPLOAD_BYTES } from "@artbin/core/uploads";
+
+test("rejects oversized loose files before reading them into memory", async () => {
+  const api = { createFolders: vi.fn() };
+  const scanResult: ScanResult = {
+    archives: [],
+    looseFiles: [
+      {
+        path: "/nonexistent/huge.bin",
+        relativePath: "huge.bin",
+        name: "huge.bin",
+        size: MAX_UPLOAD_BYTES + 1,
+        gameDir: null,
+      },
+    ],
+    totalFileCount: 1,
+    totalSize: MAX_UPLOAD_BYTES + 1,
+  };
+  await expect(
+    runImport({
+      scanResult,
+      api: api as unknown as ApiClient,
+      rootSlug: "game",
+    }),
+  ).rejects.toThrow("exceeds the 512 MiB per-file upload limit");
+  expect(api.createFolders).not.toHaveBeenCalled();
+});
 
 test.each(["Upper Textures\\Wall Texture.tga", "../wall.tga"])(
   "imports archive paths safely: %s",
@@ -97,12 +124,8 @@ test("uses one canonical Windows path for folders, manifest, upload, and a plain
     const api = {
       createFolders: vi.fn(async () => ({})),
       checkManifest: vi.fn(async (_root, entries) => ({
-        newFiles: exists
-          ? []
-          : entries.map((entry: { path: string }) => entry.path),
-        existingFiles: exists
-          ? entries.map((entry: { path: string }) => entry.path)
-          : [],
+        newFiles: exists ? [] : entries.map((entry: { path: string }) => entry.path),
+        existingFiles: exists ? entries.map((entry: { path: string }) => entry.path) : [],
       })),
       uploadFile: vi.fn(async (_root, _file, progress) => {
         progress({
@@ -138,12 +161,8 @@ test("uses one canonical Windows path for folders, manifest, upload, and a plain
     };
     expect((await runImport(options)).uploaded).toBe(1);
     expect(api.uploadFile.mock.calls[0][0]).toBe("my-game");
-    expect(api.uploadFile.mock.calls[0][1].path).toBe(
-      "upper-textures/Wall_Texture.tga",
-    );
-    expect(api.checkManifest.mock.calls[0][1][0].path).toBe(
-      "upper-textures/Wall_Texture.tga",
-    );
+    expect(api.uploadFile.mock.calls[0][1].path).toBe("upper-textures/Wall_Texture.tga");
+    expect(api.checkManifest.mock.calls[0][1][0].path).toBe("upper-textures/Wall_Texture.tga");
     expect(progress).toHaveBeenCalledWith(
       expect.objectContaining({ phase: "uploading", current: 3, total: 7 }),
     );
@@ -158,9 +177,7 @@ test("uses one canonical Windows path for folders, manifest, upload, and a plain
       ...scanResult.looseFiles[0],
       relativePath: "upper-textures/Wall_Texture.tga",
     });
-    await expect(runImport(options)).rejects.toThrow(
-      "Multiple source files map to",
-    );
+    await expect(runImport(options)).rejects.toThrow("Multiple source files map to");
     expect(api.createFolders).toHaveBeenCalledTimes(2);
   } finally {
     await rm(directory, { recursive: true, force: true });
