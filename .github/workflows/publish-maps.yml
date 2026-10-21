@@ -6,7 +6,6 @@ on:
       - .github/workflows/publish-maps.yml
       - .dockerignore
       - .nvmrc
-      - scripts/security/**
       - package.json
       - package-lock.json
       - apps/maps/**

@@ -1,10 +1,9 @@
 ARG CELLD_IMAGE=ghcr.io/jackharrhy/celld@sha256:e8faeb233cfe7d29f385a64dcac41dc4dd1d8a9de849f54f2ad4a2b4fbb884fa
 FROM ${CELLD_IMAGE} AS celld
 
-FROM node:26.12.1-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a AS build
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge '20250419~deb12u2' && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+FROM node:26-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a AS build
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 make g++ \
+  && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -14,8 +13,8 @@ RUN npm run build --workspace @tea/maps-renderer \
   && npm run build --workspace @tea/maps-editor \
   && npm run build --workspace @tea/maps-protocol
 
-FROM node:26.12.1-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a AS runtime
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge '20250419~deb12u2' && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+FROM node:26-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 ARG CELLD_IMAGE
 LABEL dev.jackharrhy.maps-collaboration.celld-image=${CELLD_IMAGE}
@@ -40,6 +39,3 @@ STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:44100/health').then((response) => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"]
 CMD ["/app/apps/maps-collaboration/scripts/start-celld.sh"]
-
-COPY scripts/security/check-tls.mjs /usr/local/lib/tea-check-tls.mjs
-RUN node /usr/local/lib/tea-check-tls.mjs && node --use-openssl-ca /usr/local/lib/tea-check-tls.mjs
