@@ -27,7 +27,7 @@ On Cloudflare, sign-in pauses after ten password attempts from the same client i
 - `MEDIA` stores uploaded images and cached link preview images. Reads and uploads require a valid session.
 - `app/assets/board.ts` is the browser editor. It uses DOM APIs, pan and zoom, uploads, optimistic edits, reconnect, and revision checks. No React, Express, or Socket.IO.
 
-Images may be PNG, JPEG, GIF, or WebP, up to 20 MB each. Link previews are best effort: blocked sites still save as URL cards, and Twitter, YouTube, or Instagram embeds depend on those services remaining available. Ref stores the title, description, and cached preview image, but not a full page archive. See [the Karakeep workflow notes](docs/karakeep-notes.md) for what this first version covers. The password grants access to all boards, so keep it private.
+Images may be PNG, JPEG, GIF, or WebP, up to 20 MB each. Link previews are best effort: blocked sites still save as URL cards, and Twitter, YouTube, or Instagram embeds depend on those services remaining available. Ref stores the title, description, and cached preview image, but not a full page archive. Select a link and use **Refresh preview** to retry a stale or generic card; the existing card stays in place if Ref cannot cache a usable replacement. See [the Karakeep workflow notes](docs/karakeep-notes.md) for what this first version covers. The password grants access to all boards, so keep it private.
 
 ## Checks
 

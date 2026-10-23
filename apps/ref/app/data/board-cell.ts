@@ -173,6 +173,16 @@ export class BoardCell extends DurableObject<Env> {
     return this.assets.existingLink(url);
   }
 
+  async refreshLink(boardId: string, assetId: string, preview: LinkPreview) {
+    this.assertBoard(boardId);
+    const result = this.assets.replaceLink(boardId, assetId, preview);
+    if (result?.changed) {
+      this.broadcast({ type: "ready", snapshot: this.snapshot(boardId) });
+      await this.assets.drainPendingDeletes();
+    }
+    return result;
+  }
+
   restoreLink(boardId: string, assetId: string, preview: LinkPreview): boolean {
     this.assertBoard(boardId);
     return this.assets.restoreLink(assetId, preview);

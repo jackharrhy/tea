@@ -280,10 +280,16 @@ function renderItems() {
 
 function renderItem(item: BoardItem) {
   let element = elements.get(item.id);
+  const previewKey = item.link ? JSON.stringify(item.link) : "";
+  if (element && element.dataset.preview !== previewKey) {
+    removeElement(item.id);
+    element = undefined;
+  }
   if (!element) {
     element = document.createElement("article");
     element.className = "board-item";
     element.dataset.itemId = item.id;
+    element.dataset.preview = previewKey;
     if (item.link) {
       element.classList.add("link-item");
       element.appendChild(linkCard(item.id, item.link));
@@ -388,8 +394,29 @@ function renderInspector() {
     selectedId ? (items.get(selectedId) ?? null) : null,
     boardId,
     removeSelected,
+    refreshSelectedLink,
   );
   if (changed && selectedId && !drag) revealSelected();
+}
+
+async function refreshSelectedLink(): Promise<void> {
+  const link = selectedId ? items.get(selectedId)?.link : null;
+  if (!link) return;
+  const form = new FormData();
+  form.set("url", link.url);
+  form.set("refresh", "1");
+  toast("Refreshing preview…");
+  try {
+    const response = await fetch(`/api/boards/${boardId}/links`, {
+      method: "POST",
+      body: form,
+    });
+    if (!response.ok) throw new Error(await response.text());
+    await refreshSnapshot();
+    toast("Preview refreshed");
+  } catch (error) {
+    toast(error instanceof Error ? error.message : "Could not refresh preview");
+  }
 }
 
 function select(id: string | null) {

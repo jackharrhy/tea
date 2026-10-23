@@ -7,6 +7,7 @@ import {
 import { tokenHash } from "../../data/crypto.ts";
 import {
   cachePreviewImage,
+  isGenericSocialPreview,
   normalizeLinkUrl,
   previewLink,
 } from "../../data/link-preview.ts";
@@ -90,19 +91,41 @@ export default createController(routes.resources, {
       const form = context.get(FormData)!;
       const url = normalizeLinkUrl(String(form.get("url") ?? ""));
       if (!url) return new Response("Enter a public web URL", { status: 400 });
+      const refresh = form.get("refresh") === "1";
       const runtime = context.get(AppRuntime)!;
-      const existing = await runtime
-        .board(context.params.boardId)
-        .existingLink(context.params.boardId, url);
-      if (existing) return Response.json(existing);
+      const board = runtime.board(context.params.boardId);
+      const existing = await board.existingLink(context.params.boardId, url);
+      if (existing && !refresh) return Response.json(existing);
+      if (refresh && !existing)
+        return new Response("Link is no longer on this board", { status: 404 });
+      const fetched = await previewLink(url);
+      if (refresh && (!fetched.imageUrl || isGenericSocialPreview(fetched)))
+        return new Response("The post did not provide a usable preview yet", {
+          status: 422,
+        });
       const preview = await cachePreviewImage(
-        await previewLink(url),
+        fetched,
         runtime.media,
         context.params.boardId,
       );
-      const saved = await runtime
-        .board(context.params.boardId)
-        .recordLink(context.params.boardId, preview);
+      if (
+        refresh &&
+        !preview.imageUrl?.startsWith(`/previews/${context.params.boardId}/`)
+      )
+        return new Response("Could not cache the new preview image", {
+          status: 502,
+        });
+      if (existing) {
+        const updated = await board.refreshLink(
+          context.params.boardId,
+          existing.assetId,
+          preview,
+        );
+        return updated
+          ? Response.json(updated)
+          : new Response("Link is no longer on this board", { status: 404 });
+      }
+      const saved = await board.recordLink(context.params.boardId, preview);
       return Response.json(saved, { status: 201 });
     },
     async preview(context) {

@@ -95,6 +95,49 @@ export class BoardAssets {
     };
   }
 
+  replaceLink(
+    boardId: string,
+    assetId: string,
+    preview: LinkPreview,
+  ): {
+    assetId: string;
+    preview: LinkPreview;
+    existingItemId: string | null;
+    changed: boolean;
+  } | null {
+    const existing = this.existingLink(preview.url);
+    if (!existing || existing.assetId !== assetId) return null;
+    const changed =
+      existing.preview.title !== preview.title ||
+      existing.preview.description !== preview.description ||
+      existing.preview.imageUrl !== preview.imageUrl ||
+      existing.preview.siteName !== preview.siteName;
+    if (!changed) return { ...existing, changed: false };
+    this.ctx.storage.transactionSync(() => {
+      this.ctx.storage.sql.exec(
+        "UPDATE links SET title = ?, description = ?, image_url = ?, site_name = ? WHERE asset_id = ?",
+        preview.title,
+        preview.description,
+        preview.imageUrl,
+        preview.siteName,
+        assetId,
+      );
+      this.ctx.storage.sql.exec(
+        "UPDATE assets SET filename = ? WHERE id = ?",
+        preview.title,
+        assetId,
+      );
+      this.ctx.storage.sql.exec(
+        "UPDATE items SET filename = ? WHERE asset_id = ?",
+        preview.title,
+        assetId,
+      );
+    });
+    if (existing.preview.imageUrl !== preview.imageUrl)
+      this.queueUnusedPreview(boardId, existing.preview.imageUrl);
+    return { ...existing, preview, changed: true };
+  }
+
   restoreLink(assetId: string, preview: LinkPreview): boolean {
     const existing = this.ctx.storage.sql
       .exec<LinkRow>(
@@ -165,7 +208,10 @@ export class BoardAssets {
     this.ctx.storage.sql.exec("DELETE FROM links WHERE asset_id = ?", assetId);
     this.ctx.storage.sql.exec("DELETE FROM assets WHERE id = ?", assetId);
     if (asset.object_key) this.queueDelete(asset.object_key);
-    const imageUrl = link?.image_url;
+    this.queueUnusedPreview(boardId, link?.image_url ?? null);
+  }
+
+  private queueUnusedPreview(boardId: string, imageUrl: string | null): void {
     const prefix = `/previews/${boardId}/`;
     if (!imageUrl?.startsWith(prefix)) return;
     const hash = imageUrl.slice(prefix.length);

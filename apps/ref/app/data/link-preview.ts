@@ -46,36 +46,73 @@ export async function previewLink(url: string): Promise<LinkPreview> {
   };
   const youtube = await youtubePreview(url);
   if (youtube) return youtube;
-  const signal = AbortSignal.timeout(12_000);
-  try {
-    const fetched = await fetchPublic(url, signal, {
-      Accept: "text/html,image/*;q=0.8",
-      "User-Agent": "Ref/1.0 (+link-preview)",
-    });
-    if (!fetched) return fallback;
-    const { response, url: finalUrl } = fetched;
-    if (!response.ok) {
-      await response.body?.cancel();
-      return fallback;
+  for (const candidate of previewCandidates(url)) {
+    try {
+      const fetched = await fetchPublic(
+        candidate,
+        AbortSignal.timeout(12_000),
+        {
+          Accept: "text/html,image/*;q=0.8",
+          "User-Agent": "Ref/1.0 (+link-preview)",
+        },
+      );
+      if (!fetched) continue;
+      const { response, url: finalUrl } = fetched;
+      if (!response.ok) {
+        await response.body?.cancel();
+        continue;
+      }
+      const type = response.headers
+        .get("Content-Type")
+        ?.split(";", 1)[0]
+        ?.toLowerCase();
+      if (type?.startsWith("image/")) {
+        await response.body?.cancel();
+        return { ...fallback, imageUrl: finalUrl };
+      }
+      if (type !== "text/html" && type !== "application/xhtml+xml") {
+        await response.body?.cancel();
+        continue;
+      }
+      const html = await readPrefix(response.body, MAX_HTML_BYTES);
+      const preview = {
+        ...fallback,
+        ...(await extractMetadata(html, finalUrl)),
+        url,
+      };
+      if (!isGenericSocialPreview(preview)) return preview;
+    } catch {
+      // A blocked preview should not prevent saving the link.
     }
-    const type = response.headers
-      .get("Content-Type")
-      ?.split(";", 1)[0]
-      ?.toLowerCase();
-    if (type?.startsWith("image/")) {
-      await response.body?.cancel();
-      return { ...fallback, imageUrl: finalUrl };
-    }
-    if (type !== "text/html" && type !== "application/xhtml+xml") {
-      await response.body?.cancel();
-      return fallback;
-    }
-    const html = await readPrefix(response.body, MAX_HTML_BYTES);
-    return { ...fallback, ...(await extractMetadata(html, finalUrl)), url };
-  } catch {
-    // A blocked preview should not prevent saving the link.
   }
   return fallback;
+}
+
+function previewCandidates(url: string): string[] {
+  const parsed = new URL(url);
+  const host = parsed.hostname.replace(/^www\./, "");
+  if (host === "instagram.com") {
+    const reel = /^\/reel\/([A-Za-z0-9_-]+)\/?$/.exec(parsed.pathname);
+    if (reel) return [url, `https://www.instagram.com/p/${reel[1]}/`];
+  }
+  if (host === "x.com" || host === "twitter.com") {
+    const post = /^\/([^/]+)\/status\/(\d+)/.exec(parsed.pathname);
+    if (post) {
+      const canonical = `https://x.com/${post[1]}/status/${post[2]}`;
+      if (canonical !== url) return [url, canonical];
+    }
+  }
+  return [url];
+}
+
+export function isGenericSocialPreview(preview: LinkPreview): boolean {
+  const host = new URL(preview.url).hostname.replace(/^www\./, "");
+  const title = preview.title.trim().toLowerCase();
+  if (host === "instagram.com")
+    return title === "instagram" || title === "login • instagram";
+  if (host === "x.com" || host === "twitter.com")
+    return title === "x on x" || title === "x" || title === "twitter";
+  return false;
 }
 
 async function youtubePreview(url: string): Promise<LinkPreview | null> {
