@@ -17,6 +17,7 @@ export function renderItemInspector(
   item: BoardItem | null,
   boardId: string,
   onRemove: () => void,
+  onRefresh: () => Promise<void>,
 ) {
   if (!item) {
     panel.hidden = true;
@@ -26,11 +27,18 @@ export function renderItemInspector(
   panel.hidden = false;
   const heading = panel.querySelector<HTMLElement>(".inspector-top span");
   if (heading) heading.textContent = item.link ? "Link" : "Image";
-  if (item.link && content.dataset.itemId === item.id) return;
+  const previewKey = item.link ? JSON.stringify(item.link) : "";
+  if (
+    item.link &&
+    content.dataset.itemId === item.id &&
+    content.dataset.preview === previewKey
+  )
+    return;
   if (content.dataset.itemId !== item.id) panel.scrollTop = 0;
   content.dataset.itemId = item.id;
+  content.dataset.preview = previewKey;
   content.replaceChildren();
-  if (item.link) renderLinkInspector(content, item.link);
+  if (item.link) renderLinkInspector(content, item.link, onRefresh);
   else renderImageInspector(content, item, boardId);
 
   const remove = document.createElement("button");
@@ -96,7 +104,11 @@ function originalLink(href: string): HTMLAnchorElement {
   return open;
 }
 
-function renderLinkInspector(content: HTMLElement, link: LinkPreview) {
+function renderLinkInspector(
+  content: HTMLElement,
+  link: LinkPreview,
+  onRefresh: () => Promise<void>,
+) {
   if (link.imageUrl) {
     const image = document.createElement("img");
     image.className = "link-inspector-image";
@@ -125,6 +137,17 @@ function renderLinkInspector(content: HTMLElement, link: LinkPreview) {
     metadata.appendChild(description);
   }
   content.appendChild(metadata);
+
+  const refresh = document.createElement("button");
+  refresh.className = "original-embed-button";
+  refresh.type = "button";
+  refresh.textContent = "Refresh preview";
+  refresh.addEventListener("click", async () => {
+    refresh.disabled = true;
+    await onRefresh();
+    refresh.disabled = false;
+  });
+  content.appendChild(refresh);
 
   const embed = embedFor(link.url);
   if (!embed) return;

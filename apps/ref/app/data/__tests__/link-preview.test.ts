@@ -1,5 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
-import { normalizeLinkUrl, previewLink } from "../link-preview.ts";
+import {
+  isGenericSocialPreview,
+  normalizeLinkUrl,
+  previewLink,
+} from "../link-preview.ts";
+
+it("recognizes social landing-page metadata without discarding post metadata", () => {
+  const preview = {
+    url: "https://www.instagram.com/reel/example/",
+    title: "Instagram",
+    description: "",
+    imageUrl: "https://instagram.example/logo.png",
+    siteName: "Instagram",
+  };
+  expect(isGenericSocialPreview(preview)).toBe(true);
+  expect(
+    isGenericSocialPreview({
+      ...preview,
+      title: "clouder on Instagram: a new reel",
+    }),
+  ).toBe(false);
+  expect(
+    isGenericSocialPreview({
+      ...preview,
+      url: "https://x.com/artist/status/123",
+      title: "X on X",
+    }),
+  ).toBe(true);
+});
 
 describe("link URL boundary", () => {
   it("keeps public web URLs and drops fragments", () => {
