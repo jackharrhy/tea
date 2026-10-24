@@ -291,7 +291,9 @@ Marky was copied into `apps/marky` as `tea/marky` for `md.jackharrhy.dev`. The a
 
 ## Letters to Steve import
 
-Letters to Steve was copied into `apps/letters-to-steve` from the standalone checkout. Tea pins Remix 3.0.0 and uses its stable component and asset APIs; the correspondence routes, SQLite migrations, attachment store, and editorial workflow remain app-owned. Its local Compose service has a separate volume and hostname, and the source checkout remains intact. The app image can be published from `main`, but no production host, data, or DNS is switched by this copy. A later cutover needs a stopped copy of the source SQLite database and uploaded images, followed by a route and media comparison against Tea's isolated volume.
+Letters to Steve was copied into `apps/letters-to-steve` from the standalone checkout. Tea pins Remix 3.0.0 and uses its stable component and asset APIs; the correspondence routes, SQLite migrations, attachment store, and editorial workflow remain app-owned. Its local Compose service has a separate volume and hostname.
+
+On 2026-10-24, the Newport source was stopped and its SQLite database and uploads were copied to `/mnt/terrabud/docker-data/newport/steve_tea_data`. The source had four applied migrations, no letters, issues, or attachments, an empty upload directory, and a closed public-site setting. Tea's identical migrations opened the copy without changing those records. An isolated Tea container and the public service both rendered the closed site and Steve's protected inbox without browser errors. Newport now serves `ghcr.io/jackharrhy/tea-letters-to-steve:latest` on the existing hostname. The stopped source volume and standalone checkout remain available for rollback.
 
 ## Artbin import and production transfer
 
