@@ -57,7 +57,7 @@ export async function downloadRemoteFile(
     response = await fetch(url, {
       redirect: "manual",
       headers: {
-        "user-agent": "artbin/0.1 (+https://github.com/jackharrhy/artbin)",
+        "user-agent": "artbin/0.1 (+https://github.com/jackharrhy/tea)",
       },
       signal: AbortSignal.timeout(10 * 60_000),
     });
@@ -138,7 +138,7 @@ async function requestPublicUrl(inputUrl: string): Promise<IncomingMessage> {
       url,
       {
         headers: {
-          "user-agent": "artbin/0.1 (+https://github.com/jackharrhy/artbin)",
+          "user-agent": "artbin/0.1 (+https://github.com/jackharrhy/tea)",
         },
         signal: AbortSignal.timeout(10 * 60_000),
         family: address.family,
