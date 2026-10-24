@@ -1,4 +1,4 @@
-import { cleanFolderPath } from "@artbin/core/detection/filenames";
+import { cleanFolderPath } from "@tea/artbin-core/detection/filenames";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 

@@ -15,7 +15,7 @@
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "@tea/maps-renderer": "0.1.0",
+    "@jackharrhy/tea-maps-renderer": "0.1.0",
     "@tea/maps-editor": "0.1.0",
     "@tea/maps-protocol": "0.1.0",
     "@tea/request-body": "0.1.0",

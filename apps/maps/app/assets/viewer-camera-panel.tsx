@@ -1,5 +1,5 @@
-import type { CameraState } from "@tea/maps-renderer";
-import type { WorldViewElement } from "@tea/maps-renderer/element";
+import type { CameraState } from "@jackharrhy/tea-maps-renderer";
+import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { clientEntry, on, type Handle } from "remix/component";
 import { cameraUrlValue } from "./remote-input.ts";
 

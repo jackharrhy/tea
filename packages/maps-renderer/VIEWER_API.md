@@ -1,10 +1,10 @@
 # Viewer API
 
-`@tea/maps-renderer` is the embeddable viewer package. It renders Quake BSP29, sanitized BSP2,
+`@jackharrhy/tea-maps-renderer` is the embeddable viewer package. It renders Quake BSP29, sanitized BSP2,
 GoldSrc BSP30, and Quake II IBSP/QBSP version 38 through WebGPU and TypeGPU.
 
 ```sh
-npm install @tea/maps-renderer
+npm install @jackharrhy/tea-maps-renderer
 ```
 
 ## Create a viewer
@@ -12,7 +12,7 @@ npm install @tea/maps-renderer
 Pass a canvas and a `WorldSource` to `createWorldview()`:
 
 ```ts
-import { createWorldview } from "@tea/maps-renderer";
+import { createWorldview } from "@jackharrhy/tea-maps-renderer";
 
 const viewer = await createWorldview({
   canvas: document.querySelector("canvas")!,
@@ -85,7 +85,7 @@ The resolver receives paths such as `pics/colormap.pcx`, `textures/e1u1/wall.wal
 not mount PAK or PK3 archives itself.
 
 Asset services can inspect formats and ask for the exact candidate paths the viewer will use
-through the renderer-free `@tea/maps-renderer/core` entrypoint. See the
+through the renderer-free `@jackharrhy/tea-maps-renderer/core` entrypoint. See the
 [format core guide](./format-core.md) for `identifyBsp()`, `parseBspTextures()`, strengthened WAD
 records, and `planWorldAssets()`.
 
@@ -126,7 +126,7 @@ import {
   generateWalkability,
   parseWalkability,
   serializeWalkability,
-} from "@tea/maps-renderer/walkability";
+} from "@jackharrhy/tea-maps-renderer/walkability";
 
 const graph = await generateWalkability(viewer.world!, {
   spacing: 32,
@@ -158,7 +158,7 @@ fixture graph as `<map>.tea-maps-walkability.json` beside its BSP to load it aut
 Register `<world-view>` when your application uses the npm package:
 
 ```ts
-import { defineWorldViewElement } from "@tea/maps-renderer/element";
+import { defineWorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
 
 defineWorldViewElement();
 ```
@@ -174,7 +174,7 @@ keeps authenticated resolvers and the rest of the map load in one operation:
 import {
   WorldViewElement,
   defineWorldViewElement,
-} from "@tea/maps-renderer/element";
+} from "@jackharrhy/tea-maps-renderer/element";
 
 defineWorldViewElement();
 
@@ -220,7 +220,7 @@ the BSP renderer:
 import {
   AnimationFrameScheduler,
   SnapshotStore,
-} from "@tea/maps-renderer/runtime";
+} from "@jackharrhy/tea-maps-renderer/runtime";
 ```
 
 ## Game data

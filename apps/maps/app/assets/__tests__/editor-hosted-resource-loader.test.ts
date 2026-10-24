@@ -1,5 +1,5 @@
 import { encodeQuakeWad2 } from "@tea/maps-editor/core";
-import { createQuakePalette } from "@tea/maps-renderer/core";
+import { createQuakePalette } from "@jackharrhy/tea-maps-renderer/core";
 import { expect, it, vi } from "vitest";
 import { loadHostedEditorResources } from "../editor-hosted-resource-loader.ts";
 

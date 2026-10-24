@@ -4,7 +4,7 @@ import { rmdir } from "node:fs/promises";
 import {
   cleanFolderPath,
   cleanFolderSlug,
-} from "@artbin/core/detection/filenames";
+} from "@tea/artbin-core/detection/filenames";
 import { count, eq, sql } from "drizzle-orm";
 import { createRequestLogger } from "evlog";
 import { nanoid } from "nanoid";

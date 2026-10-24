@@ -5,7 +5,7 @@ import { requireSessionUser } from "#lib/session-auth.server";
 import { db } from "#db/connection.server";
 import { folders } from "#db";
 import { createJob } from "#lib/jobs.server";
-import { cleanFolderPath } from "@artbin/core/detection/filenames";
+import { cleanFolderPath } from "@tea/artbin-core/detection/filenames";
 
 export async function action({ request }: Route.ActionArgs) {
   const user = await requireSessionUser(request);

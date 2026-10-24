@@ -172,7 +172,7 @@ describe("HTTP integration tests", () => {
 
     test("replaces Node environment references in browser dependencies", async () => {
       const worldviewRequire = createRequire(
-        import.meta.resolve("@jackharrhy/worldview"),
+        import.meta.resolve("@jackharrhy/tea-maps-renderer"),
       );
       const envPath = join(
         dirname(worldviewRequire.resolve("typegpu")),

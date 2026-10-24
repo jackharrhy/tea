@@ -11,7 +11,7 @@ import {
   UploadClient,
   MAX_UPLOAD_BYTES,
   type ArchiveAnalysis,
-} from "@artbin/core/uploads";
+} from "@tea/artbin-core/uploads";
 
 import { routes } from "../../routes.ts";
 import { ModalFrame } from "../modal.tsx";

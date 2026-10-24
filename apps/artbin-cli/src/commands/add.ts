@@ -3,7 +3,7 @@ import { resolve, basename, relative, join } from "path";
 import { readdir, stat } from "fs/promises";
 import { getAuthenticatedClient } from "../lib/auth.ts";
 import { runImport } from "../lib/importer.ts";
-import { cleanFolderSlug } from "@artbin/core/detection/filenames";
+import { cleanFolderSlug } from "@tea/artbin-core/detection/filenames";
 import type { ScanResult, ScannedFile } from "../lib/scanner.ts";
 
 function formatSize(bytes: number): string {

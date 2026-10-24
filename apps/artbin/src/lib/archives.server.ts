@@ -1,7 +1,7 @@
 /**
  * Archive extraction utilities for artbin
  *
- * Thin adapter: reads files from disk and delegates to @artbin/core buffer-based parsers.
+ * Thin adapter: reads files from disk and delegates to @tea/artbin-core buffer-based parsers.
  */
 
 import { readFile } from "fs/promises";
@@ -17,7 +17,7 @@ import {
   type ArchiveEntry,
   type ParsedArchive,
   type ArchiveType,
-} from "@artbin/core/parsers/archives";
+} from "@tea/artbin-core/parsers/archives";
 
 // Re-export types and pure functions for backward compatibility
 export type { ArchiveEntry, ParsedArchive, ArchiveType };

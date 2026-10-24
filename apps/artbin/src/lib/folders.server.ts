@@ -2,7 +2,7 @@ import { join } from "path";
 import { nanoid } from "nanoid";
 import { Result } from "better-result";
 import { eq } from "drizzle-orm";
-import { cleanFolderSlug } from "@artbin/core/detection/filenames";
+import { cleanFolderSlug } from "@tea/artbin-core/detection/filenames";
 import { db as appDb, type AppDb } from "#db/connection.server";
 import { folders, type Folder } from "#db";
 import { ensureDir as ensureUploadsDir, UPLOADS_DIR } from "./files.server.ts";

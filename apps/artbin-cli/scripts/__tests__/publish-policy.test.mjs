@@ -61,7 +61,7 @@ test("the release requires a complete bundled CLI package", () => {
     () =>
       validatePack(packed, {
         ...manifest,
-        dependencies: { "@artbin/core": "workspace:*" },
+        dependencies: { "@tea/artbin-core": "workspace:*" },
       }),
     /bundle/,
   );

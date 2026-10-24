@@ -16,7 +16,7 @@ import {
   createQuakePalette,
   parseWad,
   decodeMipTexture,
-} from "@tea/maps-renderer/core";
+} from "@jackharrhy/tea-maps-renderer/core";
 
 const source = serializeMap(createStarterDocument());
 const palette = createDiagnosticQuakePalette();

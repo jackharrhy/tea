@@ -1,4 +1,4 @@
-import type { CameraState, WorldSource } from "@tea/maps-renderer";
+import type { CameraState, WorldSource } from "@jackharrhy/tea-maps-renderer";
 
 declare const LOCAL_FIXTURES_ENABLED: boolean;
 

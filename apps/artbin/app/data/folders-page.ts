@@ -3,7 +3,7 @@ import { and, count, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { db } from "#db/connection.server";
 import { folders, tags } from "#db";
 import { getFileCountsByKind, searchFiles } from "#lib/file-queries.server";
-import type { FileKind } from "@artbin/core/detection/kind";
+import type { FileKind } from "@tea/artbin-core/detection/kind";
 
 import type { ViewMode } from "../ui/browse-tabs.tsx";
 

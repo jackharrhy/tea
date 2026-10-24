@@ -8,7 +8,7 @@ a Remix 3 monorepo for personal apps and packages.
 | Workspace | What it runs | Guide |
 | --- | --- | --- |
 | [`@tea/artbin`](apps/artbin/) | Game asset archive, uploads, previews, and API | [README](apps/artbin/README.md) |
-| [`artbin`](apps/artbin-cli/) | Game asset command-line client | [README](apps/artbin-cli/README.md) |
+| [`@jackharrhy/tea-artbin`](apps/artbin-cli/) | Game asset command-line client | [README](apps/artbin-cli/README.md) |
 | [`@tea/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
 | [`@tea/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
 | [`@tea/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
@@ -26,13 +26,13 @@ a Remix 3 monorepo for personal apps and packages.
 <!-- prettier-ignore -->
 | Workspace | What it provides | Guide |
 | --- | --- | --- |
-| [`@artbin/core`](packages/artbin-core/) | Asset scanning, detection, and upload primitives | [README](packages/artbin-core/README.md) |
-| [`@artbin/ui`](packages/artbin-ui/) | CLI scan interface components | [README](packages/artbin-ui/README.md) |
+| [`@tea/artbin-core`](packages/artbin-core/) | Asset scanning, detection, and upload primitives | [README](packages/artbin-core/README.md) |
+| [`@tea/artbin-ui`](packages/artbin-ui/) | CLI scan interface components | [README](packages/artbin-ui/README.md) |
 | [`@tea/json-schema`](packages/json-schema/) | Remix data schemas with JSON Schema descriptions | [README](packages/json-schema/README.md) |
 | [`@tea/logger`](packages/logger/) | Request and job logging primitives | [README](packages/logger/README.md) |
 | [`@tea/maps-editor`](packages/maps-editor/) | Map document and source-rendering primitives | [README](packages/maps-editor/README.md) |
 | [`@tea/maps-protocol`](packages/maps-protocol/) | Hosted and collaborative map schemas | [README](packages/maps-protocol/README.md) |
-| [`@tea/maps-renderer`](packages/maps-renderer/) | Embeddable WebGPU map renderer and BSP core | [README](packages/maps-renderer/README.md) |
+| [`@jackharrhy/tea-maps-renderer`](packages/maps-renderer/) | Embeddable WebGPU map renderer and BSP core | [README](packages/maps-renderer/README.md) |
 | [`@tea/mcp`](packages/mcp/) | MCP tools, resources, and Streamable HTTP handler | [README](packages/mcp/README.md) |
 | [`@tea/request-body`](packages/request-body/) | Bounded Web request-body reading | [README](packages/request-body/README.md) |
 | [`@tea/result`](packages/result/) | Success and failure values and helpers | [README](packages/result/README.md) |

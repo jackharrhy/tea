@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { encodeGoldSrcWad3, encodeQuakeWad2 } from "@tea/maps-editor/core";
-import { createQuakePalette } from "@tea/maps-renderer/core";
+import { createQuakePalette } from "@jackharrhy/tea-maps-renderer/core";
 import { openMapProject, type MapDirectoryHandle } from "../editor-project.ts";
 import type { MapFileHandle } from "../editor-files.ts";
 

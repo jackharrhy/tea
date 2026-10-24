@@ -15,7 +15,7 @@ import {
   parseWad,
   readPcxPalette,
   readWalTextureHeader,
-} from "@tea/maps-renderer/core";
+} from "@jackharrhy/tea-maps-renderer/core";
 import type { MapFileHandle } from "./editor-files.ts";
 import type { EditorSpriteMaterial } from "@tea/maps-editor/render";
 import {

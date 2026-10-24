@@ -1,7 +1,7 @@
 import { db } from "#db/connection.server";
 import { files, folders, fileTags, tags } from "#db";
 import { eq, like, and, or, inArray, desc, lt, sql } from "drizzle-orm";
-import type { FileKind } from "@artbin/core/detection/kind";
+import type { FileKind } from "@tea/artbin-core/detection/kind";
 
 export interface SearchFilesOptions {
   kind?: FileKind | FileKind[]; // Filter by file kind(s)

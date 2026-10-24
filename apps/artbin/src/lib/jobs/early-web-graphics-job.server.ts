@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { basename, extname } from "node:path";
 import { setTimeout } from "node:timers/promises";
 import { load } from "cheerio/slim";
-import { sanitizeFilename } from "@artbin/core/detection/filenames";
+import { sanitizeFilename } from "@tea/artbin-core/detection/filenames";
 import type { Job } from "#db";
 
 import { registerJobHandler, updateJobProgress } from "../jobs.server.ts";

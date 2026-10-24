@@ -161,7 +161,7 @@ if (
     "@tea/maps-service",
     "@tea/maps-collaboration",
     "@tea/maps-editor",
-    "@tea/maps-renderer",
+    "@jackharrhy/tea-maps-renderer",
     "@tea/maps-protocol",
   ].some((name) => checks.includes(name));
   if (process.env.GITHUB_OUTPUT)

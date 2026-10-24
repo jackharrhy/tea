@@ -63,8 +63,8 @@ import { editorRenderTheme, editorThemeEvent } from "./editor-theme.ts";
 import {
   defineWorldViewElement,
   type WorldViewElement,
-} from "@tea/maps-renderer/element";
-import type { CameraUpdate, WorldSource } from "@tea/maps-renderer";
+} from "@jackharrhy/tea-maps-renderer/element";
+import type { CameraUpdate, WorldSource } from "@jackharrhy/tea-maps-renderer";
 import type {
   CollaborationPresence,
   HostedMapLaunch,

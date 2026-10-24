@@ -3,8 +3,8 @@ import {
   type EntityClassSupport,
   type MapDiagnostics,
   type WorldviewViewer,
-} from "@tea/maps-renderer";
-import type { WorldViewElement } from "@tea/maps-renderer/element";
+} from "@jackharrhy/tea-maps-renderer";
+import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { clientEntry, type Handle } from "remix/component";
 
 function formatMapDetails(

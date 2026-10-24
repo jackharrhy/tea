@@ -4,7 +4,7 @@ import { db } from "#db/connection.server";
 import { folders, jobs } from "#db";
 import { requireSessionAdmin } from "#lib/session-auth.server";
 import { getTusServer, tusUploadId } from "#lib/tus.server";
-import { cleanFolderSlug } from "@artbin/core/detection/filenames";
+import { cleanFolderSlug } from "@tea/artbin-core/detection/filenames";
 
 const destinationSchema = z
   .object({

@@ -4,7 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, normalize, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 
-import { parseBsp } from "@tea/maps-renderer/core";
+import { parseBsp } from "@jackharrhy/tea-maps-renderer/core";
 
 function increment(counts, key) {
   counts[key] = (counts[key] ?? 0) + 1;

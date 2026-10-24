@@ -17,7 +17,7 @@ import {
   type BspIdentification,
   type BspWarning,
   type WorldAssetPlan,
-} from "@jackharrhy/worldview/core";
+} from "@jackharrhy/tea-maps-renderer/core";
 import { existsSync } from "node:fs";
 import {
   open,

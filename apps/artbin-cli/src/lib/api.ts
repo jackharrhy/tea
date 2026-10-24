@@ -1,4 +1,4 @@
-import { UploadClient, type UploadProgress } from "@artbin/core/uploads";
+import { UploadClient, type UploadProgress } from "@tea/artbin-core/uploads";
 import type { Config } from "./config.ts";
 
 export interface FolderSummary {

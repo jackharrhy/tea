@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBsp } from "@tea/maps-renderer/core";
+import { parseBsp } from "@jackharrhy/tea-maps-renderer/core";
 import { examples, exampleSource } from "../examples.ts";
 
 describe("viewer examples", () => {

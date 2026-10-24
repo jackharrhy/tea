@@ -1,4 +1,4 @@
-import type { WorldAssetPlan } from "@jackharrhy/worldview/core";
+import type { WorldAssetPlan } from "@jackharrhy/tea-maps-renderer/core";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { files, folders } from "#db";

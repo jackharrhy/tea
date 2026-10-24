@@ -6,7 +6,7 @@ import {
   type EditorMaterial,
   type WorldviewGameProfile,
 } from "@tea/maps-editor/core";
-import { parseWad } from "@tea/maps-renderer/core";
+import { parseWad } from "@jackharrhy/tea-maps-renderer/core";
 
 export interface StandaloneWad {
   readonly name: string;

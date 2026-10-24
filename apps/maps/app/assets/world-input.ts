@@ -1,5 +1,8 @@
-import type { WorldSource } from "@tea/maps-renderer";
-import { parseBsp, readWalTextureHeader } from "@tea/maps-renderer/core";
+import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
+import {
+  parseBsp,
+  readWalTextureHeader,
+} from "@jackharrhy/tea-maps-renderer/core";
 
 export function sourceName(source: WorldSource): string {
   if (typeof source.bsp === "string")

@@ -25,7 +25,7 @@
     "logger:check": "npm run tooling:check && npm run check --workspace @tea/logger",
     "marky:check": "npm run tooling:check && npm run check --workspace @tea/marky",
     "marky:dev": "npm run dev --workspace @tea/marky",
-    "maps:check": "npm run tooling:check && npm run check --workspace @tea/maps-renderer && npm run check --workspace @tea/maps-editor && npm run check --workspace @tea/maps-protocol && npm run check --workspace @tea/maps && npm run check --workspace @tea/maps-collaboration && npm run check --workspace @tea/maps-compiler && npm run check --workspace @tea/maps-service",
+    "maps:check": "npm run tooling:check && npm run check --workspace @jackharrhy/tea-maps-renderer && npm run check --workspace @tea/maps-editor && npm run check --workspace @tea/maps-protocol && npm run check --workspace @tea/maps && npm run check --workspace @tea/maps-collaboration && npm run check --workspace @tea/maps-compiler && npm run check --workspace @tea/maps-service",
     "maps:dev": "npm run dev --workspace @tea/maps",
     "mcp:check": "npm run tooling:check && npm run check --workspace @tea/mcp",
     "radio:check": "npm run tooling:check && npm run check --workspace @tea/radio",
@@ -37,9 +37,9 @@
     "shell-mcp:check": "npm run tooling:check && npm run check --workspace @tea/shell-mcp",
     "shell-mcp:dev": "npm run dev --workspace @tea/shell-mcp",
     "tooling:check": "vp check",
-    "artbin:check": "npm run tooling:check && npm run check --workspace @artbin/core && npm run check --workspace @artbin/ui && npm run check --workspace @tea/artbin && npm run check --workspace artbin",
+    "artbin:check": "npm run tooling:check && npm run check --workspace @tea/artbin-core && npm run check --workspace @tea/artbin-ui && npm run check --workspace @tea/artbin && npm run check --workspace @jackharrhy/tea-artbin",
     "artbin:dev": "npm run dev --workspace @tea/artbin",
-    "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace artbin"
+    "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace @jackharrhy/tea-artbin"
   },
   "devDependencies": {
     "knip": "6.39.0",

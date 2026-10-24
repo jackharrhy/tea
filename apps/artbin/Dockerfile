@@ -4,9 +4,13 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/artbin/package.json apps/artbin/package.json
 COPY packages/artbin-core/package.json packages/artbin-core/package.json
-RUN npm ci --workspace @tea/artbin --include-workspace-root=false --allow-remote=all
+COPY packages/maps-renderer/package.json packages/maps-renderer/package.json
+RUN npm ci --workspace @tea/artbin --workspace @jackharrhy/tea-maps-renderer --include-workspace-root=false --allow-remote=all
+COPY tsconfig.base.json ./
 COPY apps/artbin apps/artbin
 COPY packages/artbin-core packages/artbin-core
+COPY packages/maps-renderer packages/maps-renderer
+RUN npm run build --workspace @jackharrhy/tea-maps-renderer
 RUN npm prune --omit=dev --workspace @tea/artbin
 
 FROM node:24-bookworm-slim
@@ -15,6 +19,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/artbin-core ./packages/artbin-core
+COPY --from=build /app/packages/maps-renderer ./packages/maps-renderer
 COPY --from=build /app/apps/artbin ./apps/artbin
 RUN npx --yes playwright install --with-deps --no-shell chromium \
     && mkdir -p apps/artbin/data apps/artbin/public/uploads apps/artbin/tmp/uploads \

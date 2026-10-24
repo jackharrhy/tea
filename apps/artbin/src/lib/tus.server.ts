@@ -5,7 +5,7 @@ import { FileStore } from "@tus/file-store";
 import { z } from "zod";
 import { TEMP_DIR } from "./files.server.ts";
 import { requireSessionUser } from "./session-auth.server.ts";
-import { cleanFolderPath } from "@artbin/core/detection/filenames";
+import { cleanFolderPath } from "@tea/artbin-core/detection/filenames";
 import { eq } from "drizzle-orm";
 import { db } from "#db/connection.server";
 import { jobs } from "#db";

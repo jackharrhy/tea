@@ -1,4 +1,4 @@
-import { classifyMaterial, parseWad } from "@tea/maps-renderer/core";
+import { classifyMaterial, parseWad } from "@jackharrhy/tea-maps-renderer/core";
 import { documentWithoutOmittedLayers } from "./layers.js";
 import { materialUsageInDocument } from "./material-usage.js";
 import { serializeMap } from "./map-serializer.js";

@@ -14,4 +14,4 @@ From the Tea root, run `npm ci`, then `npm run artbin:dev`. Node 24.3 or newer, 
 
 Run `npm run artbin:check` from the root or `npm run check --workspace @tea/artbin`. `Dockerfile` produces the Node image published by `.github/workflows/publish-artbin.yml`. Root `compose.yml` provides a local Artbin container. Production host configuration and data migration belong in the infrastructure repo; keep the database and uploads together when changing images. The container expects writable `data`, `public/uploads`, and `tmp/uploads` directories under `/app/apps/artbin`.
 
-Artbin keeps its own UI and storage behavior inside this app. The published `@jackharrhy/worldview` package remains its BSP preview renderer until a visually equivalent replacement is verified. Do not replace its visual assets or component styles as part of a package move.
+Artbin keeps its own UI and storage behavior inside this app. Artbin consumes the Tea map renderer through its public package entry points. Keep its preview behavior, visual assets, and component styles intact when updating the renderer.

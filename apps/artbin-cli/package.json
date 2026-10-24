@@ -1,6 +1,6 @@
 {
-  "name": "artbin",
-  "version": "0.4.0",
+  "name": "@jackharrhy/tea-artbin",
+  "version": "0.4.1",
   "description": "CLI for scanning, uploading, downloading, and organizing game assets in artbin",
   "keywords": [
     "cli",
@@ -15,9 +15,12 @@
     "url": "https://github.com/jackharrhy/tea/issues"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jackharrhy/tea",
+    "url": "git+https://github.com/jackharrhy/tea.git",
     "directory": "apps/artbin-cli"
   },
   "bin": {
@@ -39,8 +42,8 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@artbin/core": "0.0.1",
-    "@artbin/ui": "0.0.1",
+    "@tea/artbin-core": "0.0.1",
+    "@tea/artbin-ui": "0.0.1",
     "@bomb.sh/args": "^0.3.1",
     "@clack/prompts": "^1.7.0",
     "@tailwindcss/vite": "^4.3.3",
