@@ -49,7 +49,7 @@
     "knip": "6.39.0",
     "remix": "3.0.0",
     "tsrs": "0.18.0-ts7.1.0-dev.20260929",
-    "vite-plus": "1.0.0"
+    "vite-plus": "1.4.0"
   },
   "allowScripts": {
     "better-sqlite3@13.0.3": true
