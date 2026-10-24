@@ -59,7 +59,7 @@
   "dependencies": {
     "typegpu": "0.12.5",
     "wgpu-matrix": "^3.4.2",
-    "zod": "^4.5.4"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
