@@ -24,7 +24,9 @@ describe("bounds spatial index", () => {
 
   it("queries overlapping regions without scanning semantics leaking to callers", () => {
     expect(
-      index.queryBounds({ min: [30, -1, -1], max: [50, 9, 9] }).toSorted(),
+      index
+        .queryBounds({ min: [30, -1, -1], max: [50, 9, 9] })
+        .toSorted((a, b) => a - b),
     ).toEqual([2, 3]);
   });
 

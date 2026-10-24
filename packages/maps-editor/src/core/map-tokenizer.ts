@@ -1,7 +1,7 @@
 import { MapParseError } from "./map-parser-error.js";
 import type { MapFaceSyntax } from "./types.js";
 
-export type MapTokenKind = "string" | "word" | "symbol";
+type MapTokenKind = "string" | "word" | "symbol";
 
 export interface MapToken {
   readonly kind: MapTokenKind;

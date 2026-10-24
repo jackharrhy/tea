@@ -9,7 +9,7 @@
     "./coerce": "./src/coerce.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "node --import remix/node-tsx --test __tests__/*.test.ts",
     "check": "npm run typecheck && npm test"
   },
@@ -19,7 +19,6 @@
     "remix": "3.0.0"
   },
   "devDependencies": {
-    "@types/node": "26.6.4",
-    "typescript": "7.0.2"
+    "@types/node": "26.6.4"
   }
 }

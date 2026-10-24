@@ -34,7 +34,7 @@ export function hostedWorldSource(
     if (
       !/^(textures|env|gfx|pics|sprites|sound)\//.test(name) ||
       name.includes(":") ||
-      [...name].some((character) => character.charCodeAt(0) < 32)
+      Array.from(name).some((character) => character.charCodeAt(0) < 32)
     )
       continue;
     try {

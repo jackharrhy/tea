@@ -38,7 +38,7 @@ export function parseCompilerGameProfile(
   throw new Error("TEA_MAPS_GAME_PROFILE is not a supported game");
 }
 
-export type NativeCompilerToolchain =
+type NativeCompilerToolchain =
   | {
       readonly kind: "ericw";
       readonly target: "quake" | "goldsrc" | "quake2";
@@ -69,7 +69,7 @@ export interface NativeCompilerStage {
   readonly args: readonly string[];
 }
 
-export class NativeCompileError extends Error {
+class NativeCompileError extends Error {
   public constructor(
     public readonly stage: string,
     message: string,

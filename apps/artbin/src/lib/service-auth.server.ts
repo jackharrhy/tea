@@ -16,7 +16,7 @@ export interface ServicePrincipal {
   expiresAt: number;
 }
 
-export interface UserTokenPrincipal {
+interface UserTokenPrincipal {
   principalType: "user";
   subject: string;
   clientId: string;

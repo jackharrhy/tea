@@ -44,7 +44,7 @@ function assetUrl(value: string, pageUrl: string): string | null {
   return url.href;
 }
 
-export function museumGalleries(html: string, section: string) {
+function museumGalleries(html: string, section: string) {
   const $ = load(html);
   const galleries = new Map<
     string,
@@ -66,11 +66,7 @@ export function museumGalleries(html: string, section: string) {
   return [...galleries.values()];
 }
 
-export function museumImages(
-  html: string,
-  pageUrl: string,
-  bars = false,
-): string[] {
+function museumImages(html: string, pageUrl: string, bars = false): string[] {
   const $ = load(html, { xml: { xmlMode: false, withStartIndices: true } });
   const start = bars ? $('a[name="animated"]').get(0)?.startIndex : undefined;
   if (bars && start == null)

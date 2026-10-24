@@ -39,7 +39,7 @@ export const router = createRouter({
   ],
 });
 
-export type AppContext = RouterContext<typeof router>;
+type AppContext = RouterContext<typeof router>;
 
 declare module "remix/router" {
   interface RouterTypes {

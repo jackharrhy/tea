@@ -80,14 +80,14 @@ function isImportableFile(filename: string): boolean {
   return IMPORTABLE_EXTENSIONS.has(ext);
 }
 
-export interface FolderImportJobInput {
+interface FolderImportJobInput {
   sourcePath: string; // Absolute path to source folder
   targetFolderSlug: string; // Target folder slug (e.g., "skin-deep")
   targetFolderName: string; // Display name for folder
   userId?: string;
 }
 
-export interface FolderImportJobOutput {
+interface FolderImportJobOutput {
   folderId: string;
   folderSlug: string;
   totalFiles: number;
@@ -348,4 +348,3 @@ async function handleFolderImportJob(
 registerJobHandler("folder-import", handleFolderImportJob);
 
 // Export for type checking
-export { handleFolderImportJob };

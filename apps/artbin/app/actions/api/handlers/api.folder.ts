@@ -39,6 +39,6 @@ export async function action({ request }: Route.ActionArgs) {
     log.error(err instanceof Error ? err : String(err), {
       step: "create-folder",
     });
-    return Response.json({ error: `Failed to create folder: ${err}` });
+    return Response.json({ error: `Failed to create folder: ${String(err)}` });
   }
 }

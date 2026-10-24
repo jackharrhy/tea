@@ -20,10 +20,7 @@ import {
 } from "./player-sounds.js";
 import type { AudioState, CameraState } from "./types.js";
 
-export {
-  playerSurfaceMaterial,
-  type PlayerSurfaceMaterial,
-} from "./player-sounds.js";
+export { playerSurfaceMaterial } from "./player-sounds.js";
 
 export interface AmbientPlaybackState {
   readonly volume: number;

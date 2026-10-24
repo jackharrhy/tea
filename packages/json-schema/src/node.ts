@@ -24,7 +24,7 @@ import { createJSONSchemaConversionError, toPointer } from "./error.ts";
 import type { JSONSchemaConversionError } from "./error.ts";
 
 /** The meta-schema URI a standalone document declares. */
-export const DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
+const DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
 
 /**
  * Registered globally so schemas built by two copies of this package still describe each
@@ -77,7 +77,7 @@ export function nodeOf(schema: unknown): Node | undefined {
  * @param direction - The side of each `transform` to describe.
  * @param refs - Whether named schemas become `$ref`s into `$defs` or stay inline.
  */
-export function createContext(
+function createContext(
   direction: JSONSchemaDirection,
   refs: "defs" | "inline",
 ): DescribeContext {

@@ -56,7 +56,7 @@ interface SteamCorpusGame {
   readonly contentRoots?: readonly string[];
 }
 
-export interface SteamCorpusLevel {
+interface SteamCorpusLevel {
   readonly filename: string;
   readonly relativePath: string;
   readonly mapPath: string;
@@ -240,10 +240,7 @@ function sampledLevels(
   );
 }
 
-async function jsonFile(
-  filename: string,
-  optional = false,
-): Promise<unknown | null> {
+async function jsonFile(filename: string, optional = false): Promise<unknown> {
   try {
     return JSON.parse(await readFile(filename, "utf8"));
   } catch (error) {

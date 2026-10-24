@@ -79,7 +79,7 @@ async function decodeBrowserImage(
   }
 }
 
-export async function decodeQuake2Image(
+async function decodeQuake2Image(
   bytes: ArrayBuffer,
   extension: ReplacementExtension,
   context: LoadAssetContext,

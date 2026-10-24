@@ -1,6 +1,4 @@
-export function isAudioContextPaused(
-  state: AudioContextState | string | undefined | null,
-): boolean {
+function isAudioContextPaused(state: string | undefined | null): boolean {
   return state === "suspended" || state === "interrupted";
 }
 

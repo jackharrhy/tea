@@ -15,7 +15,7 @@ import { replaceHostedSource } from "./editor-hosted-source.ts";
 import { readHostedApi } from "./hosted-api.ts";
 import type { MapProject } from "./editor-project.ts";
 
-export type ProjectSyncStatus =
+type ProjectSyncStatus =
   | "in-sync"
   | "first-link"
   | "local-changed"

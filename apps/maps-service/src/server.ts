@@ -15,7 +15,7 @@ import { webError, webErrorFromUnknown } from "./service-web-http.js";
 import type { MapsServiceOptions } from "./service-options.js";
 import { serveStaticFile } from "./static-files.js";
 
-export type { HostedMapStore, MapsServiceOptions } from "./service-options.js";
+export type { MapsServiceOptions } from "./service-options.js";
 
 function configuredOrigin(value: string): string {
   const url = new URL(value);

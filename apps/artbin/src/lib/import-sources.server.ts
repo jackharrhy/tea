@@ -11,7 +11,7 @@ export interface ParsedRemoteImportUrl {
   canonicalUrl: string;
 }
 
-export interface RemoteImportFile {
+interface RemoteImportFile {
   name: string;
   url: string;
   size?: number;

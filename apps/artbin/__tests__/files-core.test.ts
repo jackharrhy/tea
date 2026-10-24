@@ -120,7 +120,7 @@ describe("BSP derivative lifecycle", () => {
     ]);
 
     try {
-      await moveFile(source, destination);
+      moveFile(source, destination);
       expect(await readFile(getBspDependencyPath(destination), "utf8")).toBe(
         "manifest",
       );

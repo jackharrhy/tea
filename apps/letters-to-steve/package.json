@@ -9,7 +9,7 @@
     "dev": "NODE_ENV=development node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts",
     "hmr": "NODE_ENV=development node --env-file-if-exists=.env hmr.ts",
     "start": "NODE_ENV=production node --env-file-if-exists=.env --import remix/node-tsx server.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "NODE_ENV=test remix test --type server",
     "check": "npm run typecheck && npm test",
     "db:migrate": "remix db migrate",
@@ -35,7 +35,6 @@
     "sharp": "^0.35.4"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "typescript": "^5.9.3"
+    "@types/node": "^24.0.0"
   }
 }

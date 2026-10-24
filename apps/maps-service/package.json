@@ -5,10 +5,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsrs -p tsconfig.build.json",
     "dev": "npm run build && node --enable-source-maps dist/server.js",
     "start": "node --enable-source-maps dist/server.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build"
   },
@@ -26,7 +26,6 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
-    "typescript": "^7.0.2",
     "vitest": "^4.1.11"
   },
   "engines": {

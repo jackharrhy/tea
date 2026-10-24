@@ -265,7 +265,7 @@ export async function deleteFolderOperation(
   return { applied: true as const, plan, deleted: plan.affected };
 }
 
-export async function deleteFolderTree(
+async function deleteFolderTree(
   folderId: string,
   folderSlug: string,
 ): Promise<void> {

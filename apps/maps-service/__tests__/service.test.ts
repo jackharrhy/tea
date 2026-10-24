@@ -510,7 +510,7 @@ describe("Tea Maps hosted project service", () => {
       name: "quota.map",
       format: "quake",
     });
-    const mapId = String(map.id);
+    const mapId = map.id;
     expect(app.database.buildAdmission(user.id)).toBe("allowed");
     const active = app.database.createBuild({
       mapId,
@@ -588,7 +588,7 @@ describe("Tea Maps hosted project service", () => {
         name: "showcase.map",
         format: "quake",
       });
-      const mapId = String(map.id);
+      const mapId = map.id;
       await app.maps.initialize(mapId, '{\n"classname" "worldspawn"\n}\n');
 
       const stale = await fetch(`${app.origin}/api/maps/${map.id}/builds`, {

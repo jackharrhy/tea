@@ -1,6 +1,5 @@
 import {
   GOLDSRC_PLAYER_SOUND_PATHS,
-  GOLDSRC_PLAYER_SOUND_REFERENCES,
   type GoldSrcPlayerSurfaceMaterial,
 } from "../core/goldsrc-player-assets.js";
 
@@ -21,8 +20,6 @@ export function playerSurfaceMaterial(
   if (/(tile|marble|glass|ceramic)/.test(name)) return "tile";
   return "concrete";
 }
-
-export { GOLDSRC_PLAYER_SOUND_REFERENCES };
 
 /** Selects alternating left/right variants with the occasional fifth tile sample. */
 export function goldSrcPlayerSoundPath(

@@ -8,7 +8,7 @@ import type {
   WebMcpTool,
 } from "./editor-webmcp-contract.ts";
 
-export function editorWebMcpTools(
+function editorWebMcpTools(
   state: () => EditorState,
   actions: EditorActions,
 ): readonly WebMcpTool[] {
@@ -36,7 +36,7 @@ export async function registerEditorWebMcpTools(
   window.addEventListener("pagehide", () => controller.abort(), { once: true });
   const tools = editorWebMcpTools(state, actions);
   const registrations = await Promise.allSettled(
-    tools.map((entry) =>
+    tools.map(async (entry) =>
       modelContext.registerTool(entry, { signal: controller.signal }),
     ),
   );

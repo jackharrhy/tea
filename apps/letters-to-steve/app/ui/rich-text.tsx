@@ -2,9 +2,9 @@ import type { Handle, RemixNode } from "remix/component";
 
 import { fontKeys, type FontKey } from "../data/schema.ts";
 
-export const MAX_LETTER_CHARACTERS = 5000;
+const MAX_LETTER_CHARACTERS = 5000;
 export const MAX_RICH_TEXT_BYTES = 100 * 1024;
-export const MAX_IMAGES_PER_LETTER = 10;
+const MAX_IMAGES_PER_LETTER = 10;
 
 const attachmentPathPattern =
   /^\/uploads\/([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
@@ -113,7 +113,7 @@ export function normalizeRichText(input: {
   };
 }
 
-export function safeRichTextDocument(
+function safeRichTextDocument(
   json: string | null | undefined,
   fallback: string,
 ): RichTextNode {
@@ -124,7 +124,7 @@ export function safeRichTextDocument(
   }
 }
 
-export function attachmentIdFromSrc(src: string): string | null {
+function attachmentIdFromSrc(src: string): string | null {
   return attachmentPathPattern.exec(src)?.[1]?.toLowerCase() ?? null;
 }
 

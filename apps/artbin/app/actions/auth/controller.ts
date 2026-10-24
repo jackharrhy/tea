@@ -201,7 +201,7 @@ export default createController(routes.auth, {
       if (!code)
         return jsonError("invalid_request", "A handoff code is required", 400);
 
-      const handoff = await db
+      const handoff = db
         .delete(cliLoginHandoffs)
         .where(
           and(

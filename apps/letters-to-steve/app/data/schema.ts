@@ -1,12 +1,6 @@
 import { column as c, table, type TableRow } from "remix/data-table";
 
-export const letterStates = [
-  "inbox",
-  "draft",
-  "published",
-  "archived",
-] as const;
-export type LetterState = (typeof letterStates)[number];
+const letterStates = ["inbox", "draft", "published", "archived"] as const;
 
 export const fontKeys = ["handwritten", "book", "plain"] as const;
 export type FontKey = (typeof fontKeys)[number];
@@ -29,8 +23,7 @@ export const letters = table({
 
 export type Letter = TableRow<typeof letters>;
 
-export const issueStates = ["draft", "published"] as const;
-export type IssueState = (typeof issueStates)[number];
+const issueStates = ["draft", "published"] as const;
 
 export const issues = table({
   name: "issues",
@@ -101,5 +94,3 @@ export const siteSettings = table({
     updated_at: c.integer().notNull(),
   },
 });
-
-export type SiteSettings = TableRow<typeof siteSettings>;

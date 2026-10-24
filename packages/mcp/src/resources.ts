@@ -169,7 +169,7 @@ export interface ResourceGroup {
 }
 
 /** Reports whether a node of a declaration tree is a resource. */
-export function isResource(value: Resource | ResourceGroup): value is Resource {
+function isResource(value: Resource | ResourceGroup): value is Resource {
   return RESOURCE in value;
 }
 

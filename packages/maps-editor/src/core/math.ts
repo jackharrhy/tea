@@ -26,7 +26,7 @@ export function cross(left: Vec3, right: Vec3): Vec3 {
   ];
 }
 
-export function length(value: Vec3): number {
+function length(value: Vec3): number {
   return Math.hypot(value[0], value[1], value[2]);
 }
 

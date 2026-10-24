@@ -158,7 +158,7 @@ export async function searchFiles(
 export async function getDescendantFolderIds(
   folderId: string,
 ): Promise<string[]> {
-  const result = await db.all<{ id: string }>(
+  const result = db.all<{ id: string }>(
     sql`WITH RECURSIVE tree AS (
       SELECT id FROM folders WHERE id = ${folderId}
       UNION ALL
@@ -198,7 +198,7 @@ export async function getAncestorFolderIds(
 ): Promise<string[]> {
   if (folderIds.length === 0) return [];
 
-  const result = await database.all<{ id: string }>(
+  const result = database.all<{ id: string }>(
     sql`WITH RECURSIVE ancestors AS (
       SELECT value AS id FROM json_each(${JSON.stringify(folderIds)})
       UNION

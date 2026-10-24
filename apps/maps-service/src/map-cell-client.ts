@@ -43,6 +43,13 @@ export class MapCellClient {
     init: RequestInit = {},
     actorId?: string,
   ): Promise<Response> {
+    const headers = new Headers({
+      Authorization: `Bearer ${this.ticket(mapId, actorId)}`,
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+    });
+    new Headers(init.headers).forEach((value, name) =>
+      headers.set(name, value),
+    );
     const response = await this.fetcher(
       new URL(
         `/sync/maps/${encodeURIComponent(mapId)}/${action}`,
@@ -50,11 +57,7 @@ export class MapCellClient {
       ),
       {
         ...init,
-        headers: {
-          Authorization: `Bearer ${this.ticket(mapId, actorId)}`,
-          ...(init.body ? { "Content-Type": "application/json" } : {}),
-          ...init.headers,
-        },
+        headers,
       },
     );
     if (!response.ok) {

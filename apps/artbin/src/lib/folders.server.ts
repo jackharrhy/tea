@@ -28,7 +28,7 @@ export interface CreateFolderDeps {
   ensureDir?: (path: string) => Promise<void>;
 }
 
-export interface CreatedFolder {
+interface CreatedFolder {
   id: string;
   name: string;
   slug: string;
@@ -36,7 +36,7 @@ export interface CreatedFolder {
 
 export type MoveFolderDeps = FolderRelocationDeps;
 
-export interface MoveFolderOutput {
+interface MoveFolderOutput {
   folder?: Folder;
   movedFolders: number;
   movedFiles: number;
@@ -45,8 +45,6 @@ export interface MoveFolderOutput {
 export interface CreateFolderAndMoveDeps extends MoveFolderDeps {
   createId?: () => string;
 }
-
-export { cleanFolderSlug };
 
 function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));

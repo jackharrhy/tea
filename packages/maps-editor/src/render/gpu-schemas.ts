@@ -1,11 +1,11 @@
 import tgpu, { d } from "typegpu";
 
-export const SolidVertex = d.unstruct({
+const SolidVertex = d.unstruct({
   position: d.float32x3,
   color: d.float32x3,
   uv: d.float32x2,
 });
-export const LineSegment = d.unstruct({
+const LineSegment = d.unstruct({
   start: d.float32x3,
   startColor: d.float32x3,
   end: d.float32x3,

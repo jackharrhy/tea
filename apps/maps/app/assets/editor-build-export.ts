@@ -29,7 +29,7 @@ function safePath(path: string): string {
   const normalized = normalizeGameAssetPath(path);
   if (
     normalized.includes(":") ||
-    [...normalized].some((character) => character.charCodeAt(0) < 32)
+    Array.from(normalized).some((character) => character.charCodeAt(0) < 32)
   ) {
     throw new Error(`Unsafe export path: ${path}`);
   }

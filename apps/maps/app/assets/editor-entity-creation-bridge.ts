@@ -1,4 +1,4 @@
-export interface EntityClassChoice {
+interface EntityClassChoice {
   readonly classname: string;
   readonly label: string;
 }

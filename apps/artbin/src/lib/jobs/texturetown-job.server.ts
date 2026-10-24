@@ -27,16 +27,9 @@ interface TextureTownManifest {
   }>;
 }
 
-export interface TextureTownImportInput {
+interface TextureTownImportInput {
   categories?: string[];
   userId?: string;
-}
-
-export interface TextureTownImportOutput {
-  totalFiles: number;
-  totalFolders: number;
-  categoriesImported: string[];
-  errors: string[];
 }
 
 const TEXTURETOWN_MANIFEST_URL = "https://textures.neocities.org/manifest.json";
@@ -115,5 +108,3 @@ async function handleTextureTownImport(
 }
 
 registerJobHandler("texturetown-import", handleTextureTownImport);
-
-export { handleTextureTownImport };

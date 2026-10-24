@@ -127,7 +127,7 @@ export async function uploadMedia(request: Request, store: ContentStore) {
     if (folder)
       store.sqlite
         .prepare("INSERT INTO media_details (media_id,folder_id) VALUES (?,?)")
-        .run(id, String(folder));
+        .run(id, folder);
     store.sqlite.exec("COMMIT");
   } catch (error) {
     store.sqlite.exec("ROLLBACK");

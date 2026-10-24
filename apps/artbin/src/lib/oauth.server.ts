@@ -5,8 +5,8 @@ const FOURM_CLIENT_ID = process.env.FOURM_CLIENT_ID ?? "artbin";
 const ARTBIN_BASE_URL = process.env.ARTBIN_URL ?? "http://localhost:5175";
 
 export const FOURM_AUTHORIZE_URL = `${FOURM_BASE_URL}/oauth/authorize`;
-export const FOURM_TOKEN_URL = `${FOURM_BASE_URL}/oauth/token`;
-export const FOURM_USERINFO_URL = `${FOURM_BASE_URL}/oauth/userinfo`;
+const FOURM_TOKEN_URL = `${FOURM_BASE_URL}/oauth/token`;
+const FOURM_USERINFO_URL = `${FOURM_BASE_URL}/oauth/userinfo`;
 export const FOURM_REDIRECT_URI = `${ARTBIN_BASE_URL}/auth/4orm/callback`;
 
 export { FOURM_CLIENT_ID };

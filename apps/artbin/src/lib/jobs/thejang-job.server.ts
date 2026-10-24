@@ -21,16 +21,9 @@ interface CategoryDef {
   slug: string;
 }
 
-export interface TextureStationImportInput {
+interface TextureStationImportInput {
   categories?: string[];
   userId?: string;
-}
-
-export interface TextureStationImportOutput {
-  totalFiles: number;
-  totalFolders: number;
-  categoriesImported: string[];
-  errors: string[];
 }
 
 const BASE_URL = "https://thejang.com/textures";
@@ -160,5 +153,3 @@ async function handleTextureStationImport(
 }
 
 registerJobHandler("texture-station-import", handleTextureStationImport);
-
-export { handleTextureStationImport };

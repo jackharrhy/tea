@@ -74,13 +74,12 @@ export abstract class ViewportPointerDown extends ViewportTools {
         }
         const tool = this.interaction.currentTool();
         const currentSelection = this.interaction.currentSelection();
-        const defaultCreating = Boolean(
+        const defaultCreating =
           event.button === 0 &&
           tool === "select" &&
           !currentSelection &&
           !event.ctrlKey &&
-          !event.metaKey,
-        );
+          !event.metaKey;
         const creating =
           (event.button === 0 && tool === "create") || defaultCreating;
         const placingEntity = event.button === 0 && tool === "entity";

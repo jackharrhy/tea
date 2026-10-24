@@ -12,7 +12,7 @@ import type { MapsDatabase } from "./database.js";
 import type { OAuthConfig } from "./oauth.js";
 import type { MapsMcpAuthConfig } from "./mcp-auth.js";
 
-export interface HostedMapStore {
+interface HostedMapStore {
   initialize(mapId: string, source: string): Promise<HostedMapSnapshot>;
   snapshot(mapId: string): Promise<HostedMapSnapshot>;
   createCheckpoint(

@@ -1,12 +1,4 @@
-import {
-  mkdir,
-  writeFile,
-  unlink,
-  stat,
-  readdir,
-  readFile,
-  rm,
-} from "fs/promises";
+import { mkdir, writeFile, unlink, readFile, rm } from "fs/promises";
 import { createReadStream, existsSync, mkdirSync, renameSync } from "fs";
 import {
   join,
@@ -26,7 +18,6 @@ import {
   detectKind,
   isImageKind,
   needsPreview,
-  isWebImage,
   type FileKind,
 } from "@tea/artbin-core/detection/kind";
 import { getMimeType } from "@tea/artbin-core/detection/mime";
@@ -50,19 +41,11 @@ function toError(error: unknown): Error {
 }
 
 // Re-export shared detection utilities for backward compatibility
-export {
-  detectKind,
-  isImageKind,
-  needsPreview,
-  isWebImage,
-  getMimeType,
-  sanitizeFilename,
-  type FileKind,
-};
+export { needsPreview, sanitizeFilename };
 
 // Base directories. The overrides let verification runs isolate every mutation
 // without touching a developer's real library.
-export const PUBLIC_DIR = resolve(
+const PUBLIC_DIR = resolve(
   process.env.ARTBIN_PUBLIC_DIR ?? join(process.cwd(), "public"),
 );
 export const UPLOADS_DIR = join(PUBLIC_DIR, "uploads");
@@ -99,7 +82,7 @@ function resolveWithin(root: string, untrustedPath: string): string {
 }
 
 /** Compute sha256 hex digest from a Buffer. */
-export function computeSha256(buffer: Buffer): string {
+function computeSha256(buffer: Buffer): string {
   return createHash("sha256").update(buffer).digest("hex");
 }
 
@@ -118,7 +101,7 @@ export async function ensureDir(dirPath: string): Promise<void> {
   await mkdir(dirPath, { recursive: true });
 }
 
-export async function getUniqueFilename(
+async function getUniqueFilename(
   dirPath: string,
   filename: string,
 ): Promise<string> {
@@ -141,7 +124,7 @@ export async function getUniqueFilename(
   return newFilename;
 }
 
-export async function saveFile(
+async function saveFile(
   buffer: Buffer,
   folderSlug: string,
   filename: string,
@@ -360,44 +343,6 @@ export async function generateModelPreview(
     return Result.ok(true);
   } catch (error) {
     return Result.err(toError(error));
-  }
-}
-
-export async function saveTempFile(
-  buffer: Buffer,
-  filename: string,
-): Promise<string> {
-  await ensureDir(TEMP_DIR);
-  const sanitized = sanitizeFilename(filename);
-  const tempPath = join(TEMP_DIR, `${Date.now()}_${sanitized}`);
-  await writeFile(tempPath, buffer);
-  return tempPath;
-}
-
-export async function cleanupTempFile(tempPath: string): Promise<void> {
-  try {
-    await unlink(tempPath);
-  } catch {
-    // Ignore errors
-  }
-}
-
-export async function cleanupOldTempFiles(): Promise<void> {
-  if (!existsSync(TEMP_DIR)) return;
-
-  const files = await readdir(TEMP_DIR);
-  const oneHourAgo = Date.now() - 60 * 60 * 1000;
-
-  for (const file of files) {
-    const filePath = join(TEMP_DIR, file);
-    try {
-      const stats = await stat(filePath);
-      if (stats.mtimeMs < oneHourAgo) {
-        await unlink(filePath);
-      }
-    } catch {
-      // Ignore errors
-    }
   }
 }
 
@@ -703,16 +648,6 @@ export async function deleteFileRecord(
   } catch (error) {
     return Result.err(toError(error));
   }
-}
-
-export async function incrementFolderFileCount(
-  folderId: string,
-  count: number = 1,
-): Promise<void> {
-  await db
-    .update(folders)
-    .set({ fileCount: sql`file_count + ${count}` })
-    .where(eq(folders.id, folderId));
 }
 
 export async function recalculateFolderCounts(

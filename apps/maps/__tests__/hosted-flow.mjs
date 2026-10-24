@@ -424,7 +424,7 @@ try {
       await stop(processState);
     } catch (error) {
       result.status = "failed";
-      result.error = `${result.error ?? ""}\nCleanup: ${error}`;
+      result.error = `${result.error ?? ""}\nCleanup: ${String(error)}`;
       process.exitCode = 1;
     }
   }

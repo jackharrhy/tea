@@ -57,31 +57,6 @@ export async function recentProject(id: string): Promise<RecentProject | null> {
   }
 }
 
-export async function importRecentProjects(
-  projects: readonly RecentProject[],
-): Promise<{ imported: number; existing: number }> {
-  if (!projects.length) return { imported: 0, existing: 0 };
-  const connection = await database();
-  try {
-    const transaction = connection.transaction("projects", "readwrite");
-    const store = transaction.objectStore("projects");
-    let imported = 0;
-    let existing = 0;
-    for (const project of projects) {
-      if (await store.get(project.id)) {
-        existing++;
-      } else {
-        await store.add(project);
-        imported++;
-      }
-    }
-    await transaction.done;
-    return { imported, existing };
-  } finally {
-    connection.close();
-  }
-}
-
 export async function rememberRecentProject(
   handle: MapDirectoryHandle,
   name: string,

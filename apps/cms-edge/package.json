@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "cf dev",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "cd ../.. && NODE_ENV=test remix test --type server 'apps/cms-edge/**/*.test.{ts,tsx}'",
     "check": "cf workers types && npm run typecheck && npm test && cf build",
     "deploy": "cf deploy"
@@ -19,7 +19,6 @@
     "@cloudflare/vite-plugin": "^2.0.0-beta.sha-52b0dc0e9",
     "@types/node": "^26.6.4",
     "cf": "^1.0.0-beta.13",
-    "typescript": "^5.9.3",
     "vite": "^8.3.3"
   }
 }

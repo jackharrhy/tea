@@ -7,13 +7,12 @@
     ".": "./read.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "node --import remix/node-tsx --test __tests__/*.test.ts",
     "check": "npm run typecheck && npm test"
   },
   "devDependencies": {
     "@types/node": "26.6.4",
-    "remix": "3.0.0",
-    "typescript": "7.0.2"
+    "remix": "3.0.0"
   }
 }

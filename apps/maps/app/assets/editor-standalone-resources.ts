@@ -46,7 +46,7 @@ export function emptyStandaloneResources(): StandaloneResources {
   return { wads: [], palette: null };
 }
 
-export function validateStandaloneWad(
+function validateStandaloneWad(
   name: string,
   data: ArrayBuffer,
   game: MapsGameProfile,
@@ -152,33 +152,6 @@ export async function saveStandaloneResources(
       },
       key(documentId, game),
     );
-  } finally {
-    connection.close();
-  }
-}
-
-export async function saveStandaloneResourcesIfAbsent(
-  documentId: string,
-  game: MapsGameProfile,
-  resources: StandaloneResources,
-): Promise<boolean> {
-  const connection = await database();
-  try {
-    const transaction = connection.transaction("resources", "readwrite");
-    const store = transaction.objectStore("resources");
-    if (await store.get(key(documentId, game))) {
-      await transaction.done;
-      return false;
-    }
-    await store.add(
-      {
-        wads: [...resources.wads],
-        palette: resources.palette?.slice().buffer ?? null,
-      },
-      key(documentId, game),
-    );
-    await transaction.done;
-    return true;
   } finally {
     connection.close();
   }

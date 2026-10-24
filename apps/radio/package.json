@@ -17,7 +17,7 @@
     "test:celld": "NODE_ENV=production npm run build && node scripts/test-celld.mjs",
     "test:source-cutover": "node __tests__/source-cutover-smoke.mjs",
     "compare:instances": "node scripts/compare-instances.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example"
   },
   "dependencies": {
@@ -31,7 +31,6 @@
     "@types/node": "^26.2.0",
     "esbuild": "^0.28.2",
     "playwright": "^1.62.1",
-    "typescript": "^7.0.2",
     "vitest": "^4.1.11",
     "wrangler": "^4.127.1"
   },

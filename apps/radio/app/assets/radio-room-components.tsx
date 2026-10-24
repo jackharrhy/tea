@@ -347,7 +347,7 @@ export function RadioPlayerView(
   };
 }
 
-export function FittedTitle(
+function FittedTitle(
   handle: Handle<{ text: string; title?: string; fallbackWidth: number }>,
 ) {
   let width = handle.props.fallbackWidth;
@@ -813,7 +813,7 @@ export function StatusPill(handle: Handle<{ state: RadioClientState }>) {
   };
 }
 
-export function formatTime(seconds: number): string {
+function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
   let totalSeconds = Math.floor(seconds);
   let minutes = Math.floor(totalSeconds / 60);

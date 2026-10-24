@@ -5,7 +5,7 @@ import { db } from "#db/connection.server";
 
 const pageSize = 60;
 const statuses = ["pending", "approved", "rejected"] as const;
-export type UploadStatus = (typeof statuses)[number];
+type UploadStatus = (typeof statuses)[number];
 
 export async function loadMyUploadsPage(url: URL, userId: string) {
   const rawStatus = url.searchParams.get("status") ?? "pending";

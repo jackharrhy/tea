@@ -1,6 +1,6 @@
 import tgpu, { d } from "typegpu";
 
-export const WalkabilityVertex = d.unstruct({
+const WalkabilityVertex = d.unstruct({
   position: d.float32x3,
   color: d.float32x4,
 });

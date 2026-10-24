@@ -63,10 +63,7 @@ export const narrowPageStyle = css({
 });
 
 export const mutedTextStyle = css({ color: theme.color.muted });
-export const faintTextStyle = css({ color: theme.color.faint });
 export const dangerTextStyle = css({ color: theme.color.danger });
-export const smallTextStyle = css({ fontSize: "0.875rem" });
-export const tinyTextStyle = css({ fontSize: "0.75rem" });
 export const monoTextStyle = css({ fontFamily: theme.font.mono });
 
 export const buttonStyle = css({

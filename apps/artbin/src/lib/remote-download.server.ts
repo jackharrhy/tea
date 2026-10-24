@@ -9,7 +9,7 @@ import {
 } from "./import-sources.server.ts";
 import { resolvePublicHttpsUrl } from "./public-remote-url.server.ts";
 
-export const MAX_REMOTE_DOWNLOAD_BYTES = 1024 * 1024 * 1024;
+const MAX_REMOTE_DOWNLOAD_BYTES = 1024 * 1024 * 1024;
 const MAX_REDIRECTS = 5;
 
 export interface RemoteDownloadResult {

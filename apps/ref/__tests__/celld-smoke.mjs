@@ -179,7 +179,7 @@ try {
     await stop("SIGKILL");
   } catch (error) {
     result.status = "failed";
-    result.error = `${result.error ?? ""}\nCleanup: ${error}`;
+    result.error = `${result.error ?? ""}\nCleanup: ${String(error)}`;
     process.exitCode = 1;
   }
   if (values.output) {

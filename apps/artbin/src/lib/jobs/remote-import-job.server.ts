@@ -31,13 +31,13 @@ import {
 } from "../import-sources.server.ts";
 import { downloadRemoteFile } from "../remote-download.server.ts";
 
-export interface RemoteImportJobInput {
+interface RemoteImportJobInput {
   sourceUrl: string;
   targetFolderId?: string | null;
   userId?: string;
 }
 
-export interface RemoteImportJobOutput {
+interface RemoteImportJobOutput {
   provider: RemoteImportProvider;
   externalId: string;
   sourceUrl: string;
@@ -96,7 +96,7 @@ const SAFE_REMOTE_ASSET_EXTENSIONS = new Set([
   ".lip",
 ]);
 
-export function isSafeRemoteAssetPath(path: string): boolean {
+function isSafeRemoteAssetPath(path: string): boolean {
   const parts = path.split("/");
   if (parts.some((part) => part.startsWith(".") || part === "__MACOSX"))
     return false;
@@ -500,5 +500,3 @@ async function handleRemoteImport(
 }
 
 registerJobHandler("remote-map-import", handleRemoteImport);
-
-export { handleRemoteImport };

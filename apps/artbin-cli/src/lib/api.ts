@@ -15,7 +15,7 @@ export interface FolderSummary {
   createdAt: string | null;
 }
 
-export interface FolderSource {
+interface FolderSource {
   provider: "gamebanana" | "scmapdb" | "direct";
   externalId: string;
   sourceUrl: string;

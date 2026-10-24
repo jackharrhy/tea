@@ -415,7 +415,6 @@ export {
   issueFixture,
   viewFilterFixture,
   materialUsageFixture,
-  makeTestPalette,
   makeTestWad,
   dotVectors,
   normalizeVector,

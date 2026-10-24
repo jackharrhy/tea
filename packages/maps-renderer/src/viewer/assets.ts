@@ -52,17 +52,8 @@ import type {
   WorldSource,
 } from "./types.js";
 
-export {
-  readBinarySource,
-  resolveWorldSource,
-  type LoadAssetContext,
-} from "./asset-source.js";
-export type {
-  LoadedSkybox,
-  LoadedSpriteEntity,
-  SkyboxSuffix,
-} from "../render/assets.js";
-export type { LoadedMusicAsset, LoadedSoundAsset } from "./sound-assets.js";
+export { resolveWorldSource, type LoadAssetContext } from "./asset-source.js";
+export type { LoadedSoundAsset } from "./sound-assets.js";
 
 export interface LoadedWorld extends RenderWorldAssets {
   /** Decoded palette retained for diagnostics and non-render consumers. */

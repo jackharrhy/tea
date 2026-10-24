@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "module": "ESNext",
     "moduleResolution": "bundler",
     "types": ["@cloudflare/vitest-plugin/types"]
   },

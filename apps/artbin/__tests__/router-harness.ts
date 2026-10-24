@@ -8,7 +8,7 @@ import {
   type TestDatabase,
 } from "./db.ts";
 
-export const origin = "http://artbin.test";
+const origin = "http://artbin.test";
 export const adminCookie = "artbin_session=admin-session";
 export const memberCookie = "artbin_session=member-session";
 

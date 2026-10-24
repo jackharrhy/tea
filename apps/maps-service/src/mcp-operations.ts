@@ -32,7 +32,7 @@ function operation<T extends z.ZodType>(
     options: MapsServiceOptions,
     user: MapsUser,
     input: z.output<T>,
-  ) => unknown | Promise<unknown>,
+  ) => unknown,
 ): McpOperation {
   return {
     name,
@@ -56,7 +56,7 @@ const ProjectId = z.string().min(1).max(256);
 const MapId = z.string().min(1).max(256);
 const Name = z.string().trim().min(1).max(120);
 
-export const mcpOperations = [
+const mcpOperations = [
   operation(
     "tea_maps_list_projects",
     "List projects accessible to this 4orm administrator.",

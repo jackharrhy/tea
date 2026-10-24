@@ -6,7 +6,7 @@ import { RichText } from "../ui/rich-text.tsx";
 import { CardComposer } from "./card-composer.tsx";
 import { Document } from "./document.tsx";
 
-export interface PublicIssueLetter {
+interface PublicIssueLetter {
   author: string;
   body: string;
   bodyJson: string | null;
@@ -191,7 +191,7 @@ function IssueList(handle: Handle<{ issues: PublicIssue[] }>) {
   };
 }
 
-export function IssueArticle(handle: Handle<{ issue: PublicIssue }>) {
+function IssueArticle(handle: Handle<{ issue: PublicIssue }>) {
   return () => {
     let { issue } = handle.props;
     let href = routes.issue.href({ issueId: String(issue.id) });
