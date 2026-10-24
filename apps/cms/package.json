@@ -38,6 +38,6 @@
     "marked": "18.0.3",
     "morphdom": "2.7.8",
     "remix": "3.0.0",
-    "sanitize-html": "2.17.7"
+    "sanitize-html": "2.18.1"
   }
 }
