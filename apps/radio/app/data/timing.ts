@@ -1,4 +1,4 @@
-export const MIN_SCHEDULE_TIME_MS = 400;
+const MIN_SCHEDULE_TIME_MS = 400;
 export const DEFAULT_CLIENT_RTT_MS = 0;
 const CAP_SCHEDULE_TIME_MS = 3000;
 

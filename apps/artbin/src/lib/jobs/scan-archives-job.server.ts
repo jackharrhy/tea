@@ -18,7 +18,7 @@ import { createRequestLogger } from "evlog";
 
 const execAsync = promisify(exec);
 
-export interface ScanArchivesInput {
+interface ScanArchivesInput {
   rootPath?: string; // Defaults to home directory
 }
 
@@ -29,13 +29,6 @@ export interface FoundArchive {
   type: string; // pak, pk3, wad, zip
   parentDir: string; // Immediate parent directory name
   gameDir: string | null; // Known game directory if found in path
-}
-
-export interface ScanArchivesOutput {
-  archives: FoundArchive[];
-  totalFound: number;
-  scanDuration: number;
-  rootPath: string;
 }
 
 /**
@@ -271,5 +264,3 @@ async function handleScanArchives(
 
 // Register the job handler
 registerJobHandler("scan-archives", handleScanArchives);
-
-export { handleScanArchives };

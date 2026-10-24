@@ -8,7 +8,7 @@
     "dev": "wrangler dev",
     "dev:celld": "celld dev --no-watch",
     "deploy:celld": "celld deploy .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "vitest run",
     "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example",
     "check": "npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run"
@@ -22,7 +22,6 @@
     "@cloudflare/vitest-plugin": "1.1.6",
     "@cloudflare/workers-types": "5.20260908.1",
     "@types/node": "^26.6.4",
-    "typescript": "^7.0.2",
     "vitest": "^4.1.11",
     "wrangler": "^4.127.1"
   }

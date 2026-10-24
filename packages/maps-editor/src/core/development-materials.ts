@@ -40,18 +40,18 @@ function text(
   scale: number,
   color: Rgb,
 ): void {
-  const widths = [...value].map(
-    (character) => GLYPHS[character]?.[0]?.length ?? 3,
-  );
+  const widths = value
+    .split("")
+    .map((character) => GLYPHS[character]?.[0]?.length ?? 3);
   const total =
     widths.reduce((sum, width) => sum + width * scale, 0) +
     (value.length - 1) * scale;
   let x = Math.round(centerX - total / 2);
-  for (const [characterIndex, character] of [...value].entries()) {
+  for (const [characterIndex, character] of Array.from(value).entries()) {
     const glyph = GLYPHS[character];
     if (glyph)
       for (const [row, bits] of glyph.entries())
-        for (const [column, bit] of [...bits].entries()) {
+        for (const [column, bit] of Array.from(bits).entries()) {
           if (bit === "1")
             rect(
               rgba,

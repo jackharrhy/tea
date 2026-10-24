@@ -102,7 +102,7 @@ export async function readBinarySource(
   }
 }
 
-export function assetDirectory(base: string | URL): URL {
+function assetDirectory(base: string | URL): URL {
   const value =
     base instanceof URL
       ? base
@@ -138,18 +138,6 @@ export function spriteUrl(base: string | URL, reference: SpriteReference): URL {
 
 export function soundUrl(base: string | URL, reference: SoundReference): URL {
   return safeAssetUrl(base, reference.declaredPath);
-}
-
-export function skyboxUrl(
-  base: string | URL,
-  name: string,
-  suffix: string,
-): URL {
-  const normalizedName = name.replace(/\.[^/.]+$/, "").replace(/_$/, "");
-  return new URL(
-    `${encodeURIComponent(normalizedName)}${suffix}.tga`,
-    assetDirectory(base),
-  );
 }
 
 /** Applies the usual Quake/GoldSrc game-directory layout. Explicit source options override it. */

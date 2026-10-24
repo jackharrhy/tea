@@ -12,7 +12,3 @@ export function normalizeRoomSlug(value: string): string | null {
 export function roomPath(roomSlug: string): string {
   return `/rooms/${encodeURIComponent(roomSlug)}`;
 }
-
-export function roomApiPath(roomSlug: string): string {
-  return `/api/rooms/${encodeURIComponent(roomSlug)}`;
-}

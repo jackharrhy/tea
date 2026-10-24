@@ -73,9 +73,13 @@ export class UploadClient {
   ): Promise<T> {
     for (let attempt = 0; ; attempt++) {
       try {
+        const headers = new Headers(this.options.headers);
+        new Headers(init.headers).forEach((value, name) =>
+          headers.set(name, value),
+        );
         const response = await fetch(`${this.options.serverUrl}${path}`, {
           ...init,
-          headers: { ...this.options.headers, ...init.headers },
+          headers,
           signal: this.options.signal,
         });
         if (response.ok) return (await response.json()) as T;

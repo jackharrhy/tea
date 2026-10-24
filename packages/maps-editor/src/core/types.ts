@@ -29,11 +29,11 @@ interface TextureProjectionBase {
   readonly scale: Vec2;
 }
 
-export interface AxialTextureProjection extends TextureProjectionBase {
+interface AxialTextureProjection extends TextureProjectionBase {
   readonly kind: "axial";
 }
 
-export interface Valve220TextureProjection extends TextureProjectionBase {
+interface Valve220TextureProjection extends TextureProjectionBase {
   readonly kind: "valve-220";
 }
 

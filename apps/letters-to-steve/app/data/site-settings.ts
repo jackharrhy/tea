@@ -8,7 +8,7 @@ export async function isSiteEnabled(
   database: SqliteDatabase,
 ): Promise<boolean> {
   let settings = await database.find(siteSettings, siteSettingsId);
-  return settings ? Boolean(settings.is_enabled) : true;
+  return settings ? settings.is_enabled : true;
 }
 
 export async function setSiteEnabled(

@@ -8,26 +8,25 @@
     "#api/*": "./app/actions/api/handlers/*.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsrs --noEmit",
     "dev": "NODE_ENV=development node hmr.ts",
     "dev:watch": "NODE_ENV=development node --watch --import remix/node-tsx server.ts",
     "start": "NODE_ENV=production node --import remix/node-tsx server.ts",
     "test": "npm run test:unit && npm run test:remix",
     "test:unit": "vitest run",
     "test:remix": "remix test --type server --concurrency 1",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "check": "npm run typecheck && npm test",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "7zip-bin-full": "^26.2.1",
-    "@tea/artbin-core": "0.0.1",
     "@jackharrhy/tea-maps-renderer": "0.2.0",
-    "@tscircuit/alphabet": "^0.0.26",
+    "@tea/artbin-core": "0.0.1",
     "@tus/file-store": "2.1.1",
     "@tus/server": "2.4.5",
+    "7zip-bin-full": "^26.2.1",
     "archiver": "^8.0.0",
     "better-result": "^3.0.1",
     "better-sqlite3": "^13.0.3",
@@ -49,7 +48,6 @@
     "@types/node": "^26.3.0",
     "@types/three": "^0.185.4",
     "drizzle-kit": "^0.31.10",
-    "typescript": "^5.9.3",
     "vitest": "^4.1.11"
   },
   "engines": {

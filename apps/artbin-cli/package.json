@@ -36,7 +36,7 @@
     "dev": "tsup --watch",
     "check": "npm run typecheck && npm test && npm run test:publish-policy",
     "test:login-exit": "node __tests__/login-exit.smoke.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test:publish-policy": "vitest run scripts/__tests__/publish-policy.test.mjs",
     "test": "vitest run",
     "prepublishOnly": "npm run build"
@@ -58,7 +58,6 @@
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
     "vite": "^8.2.2",
     "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^4.1.11"

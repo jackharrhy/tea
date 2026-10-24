@@ -19,9 +19,11 @@
     "format:check": "vp fmt --check",
     "json-schema:check": "npm run tooling:check && npm run check --workspace @tea/json-schema",
     "knip": "knip",
+    "knip:check": "knip",
+    "typecheck:tsrs": "node scripts/tooling/tsrs-check.mjs",
     "letters-to-steve:check": "npm run tooling:check && npm run check --workspace @tea/letters-to-steve",
     "letters-to-steve:dev": "npm run dev --workspace @tea/letters-to-steve",
-    "lint": "vp lint",
+    "lint": "node scripts/tooling/tsrslint.mjs lint",
     "logger:check": "npm run tooling:check && npm run check --workspace @tea/logger",
     "marky:check": "npm run tooling:check && npm run check --workspace @tea/marky",
     "marky:dev": "npm run dev --workspace @tea/marky",
@@ -36,13 +38,17 @@
     "result:check": "npm run tooling:check && npm run check --workspace @tea/result",
     "shell-mcp:check": "npm run tooling:check && npm run check --workspace @tea/shell-mcp",
     "shell-mcp:dev": "npm run dev --workspace @tea/shell-mcp",
-    "tooling:check": "vp check",
+    "tooling:build": "npm run build --workspace @jackharrhy/tea-maps-renderer && npm run build --workspace @tea/maps-editor && npm run build --workspace @tea/maps-protocol",
+    "tooling:check": "npm run tooling:build && node scripts/tooling/ensure-worker-types.mjs && node scripts/tooling/tsrslint.mjs check",
     "artbin:check": "npm run tooling:check && npm run check --workspace @tea/artbin-core && npm run check --workspace @tea/artbin-ui && npm run build --workspace @jackharrhy/tea-maps-renderer && npm run check --workspace @tea/artbin && npm run check --workspace @jackharrhy/tea-artbin",
     "artbin:dev": "npm run dev --workspace @tea/artbin",
     "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace @jackharrhy/tea-artbin"
   },
   "devDependencies": {
+    "@maschwenk/tsrslint": "0.1.5",
     "knip": "6.39.0",
+    "remix": "3.0.0",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
     "vite-plus": "1.0.0"
   },
   "allowScripts": {

@@ -22,17 +22,16 @@ const OAuthProfileSchema = z.looseObject({
   display_name: z.string().min(1).max(256),
   is_admin: z.boolean().default(false),
 });
-export type OAuthProfile = z.infer<typeof OAuthProfileSchema>;
 
-export function codeVerifier(): string {
+function codeVerifier(): string {
   return randomBytes(32).toString("base64url");
 }
 
-export function codeChallenge(verifier: string): string {
+function codeChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
 }
 
-export function safeReturnTo(value: string | null): string {
+function safeReturnTo(value: string | null): string {
   if (!value?.startsWith("/") || value.startsWith("//") || value.includes("\\"))
     return "/";
   try {

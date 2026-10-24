@@ -13,9 +13,9 @@ export interface DiscordAuthConfig {
   botToken?: string;
 }
 
-export type AuthConfig = { mode: "anonymous" } | DiscordAuthConfig;
+type AuthConfig = { mode: "anonymous" } | DiscordAuthConfig;
 
-export interface GitConfig {
+interface GitConfig {
   repoDir: string;
   authorName: string;
   authorEmail: string;

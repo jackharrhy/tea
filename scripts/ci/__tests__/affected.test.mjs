@@ -71,7 +71,7 @@ const workspaces = [
   },
 ];
 
-const checks = (...names) => names.toSorted();
+const checks = (...names) => names.toSorted((a, b) => a.localeCompare(b));
 
 test("a package change reaches its transitive app consumers", () => {
   assert.deepEqual(

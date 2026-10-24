@@ -1,6 +1,14 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  // Celld and uv are host/container tools; Wrangler is provided by app workspaces in CI.
+  "ignoreBinaries": ["celld", "uv", "wrangler"],
+  // cloudflare:workers is a runtime module, not an npm package.
+  "ignoreDependencies": ["cloudflare"],
   "workspaces": {
+    ".": {
+      // Root tsconfig.base.json uses Remix's HMR types.
+      "ignoreDependencies": ["remix"],
+    },
     "apps/cms": {
       "entry": [
         "__tests__/server.ts",
@@ -9,6 +17,84 @@
         "public/**/*.js",
         "operator/public/**/*.js",
       ],
+    },
+    "apps/cms-edge": {
+      "entry": ["cloudflare.config.ts", "worker.ts"],
+    },
+    "apps/maps": {
+      "entry": [
+        "app/assets/entry.ts",
+        "app/assets/editor.ts",
+        "app/assets/viewer.ts",
+        "scripts/extract-bsp-corpus.mjs",
+      ],
+      // The embed test serves this URL from its in-process HTTP server.
+      "ignoreUnresolved": ["^/standalone\\.js$"],
+    },
+    "apps/maps-compiler": {
+      "entry": ["src/server.ts"],
+    },
+    "apps/artbin": {
+      "entry": [
+        "app/actions/public/entry.ts",
+        "app/actions/public/bsp-overview-renderer.ts",
+        "app/__tests__/**/*.test.ts",
+        "app/actions/**/__tests__/**/*.test.ts",
+        "scripts/add-file-counts.ts",
+        "scripts/fix-mime-types.ts",
+        "scripts/fix-model-kinds.ts",
+      ],
+    },
+    "apps/artbin-cli": {
+      "entry": ["scripts/publish.mjs"],
+    },
+    "apps/letters-to-steve": {
+      "entry": ["app/actions/public/entry.ts"],
+      // Browser font URLs are served by remix/assets.
+      "ignoreDependencies": [
+        "@fontsource-variable/literata",
+        "@fontsource-variable/shantell-sans",
+      ],
+    },
+    "apps/marky": {
+      "entry": ["remix-test.config.ts", "app/assets/entry.ts"],
+      // Browser modules resolve this package through remix/assets.
+      "ignoreDependencies": ["prosemirror-schema-basic"],
+    },
+    "apps/radio": {
+      "entry": [
+        "app/assets/entry.ts",
+        "app/**/__tests__/**/*.test.ts",
+        "app/**/__tests__/**/*.test.browser.ts",
+        "scripts/prepare-celld.mjs",
+      ],
+      // The postinstall script copies this font into public assets.
+      "ignoreDependencies": ["@material-symbols/font-400"],
+    },
+    "apps/ref": {
+      "entry": [
+        "app/assets/board.ts",
+        "app/assets/inspector.ts",
+        "public/assets/thumb-worker.js",
+      ],
+    },
+    "packages/maps-renderer": {
+      "entry": [
+        "src/index.ts",
+        "src/core/index.ts",
+        "src/walkability/index.ts",
+        "src/standalone.ts",
+        "src/runtime/index.ts",
+        "src/element/index.ts",
+      ],
+      // GPU types are selected by tsconfig, not imported from source.
+      "ignoreDependencies": ["@webgpu/types"],
+    },
+    "packages/maps-editor": {
+      "entry": ["src/index.ts", "src/core/index.ts", "src/render/index.ts"],
+      "ignoreDependencies": ["@webgpu/types"],
+      // BrushId is a branded PrimitiveId and intentionally shares its parser.
+      "ignoreIssues": { "src/core/runtime-schemas.ts": ["duplicates"] },
     },
   },
 }

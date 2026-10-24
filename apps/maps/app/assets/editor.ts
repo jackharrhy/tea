@@ -4870,7 +4870,7 @@ if (newMapUrl.searchParams.get("newMap") === "1") {
     !name ||
     name.length > 120 ||
     /[\\/:*?"<>|]/.test(name) ||
-    [...name].some((character) => character.charCodeAt(0) < 32) ||
+    Array.from(name).some((character) => character.charCodeAt(0) < 32) ||
     !isMapsGameProfile(game) ||
     !gameProfileSupportsFaceSyntax(mapsGameProfile(game), format)
   ) {

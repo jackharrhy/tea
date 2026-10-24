@@ -67,22 +67,20 @@ async function seedNonAdminSession(db: ReturnType<typeof setupDatabase>) {
 }
 
 function adminRequest(url: string, init?: RequestInit): Request {
+  const headers = new Headers({ Cookie: "artbin_session=admin-session" });
+  new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
   return new Request(url, {
     ...init,
-    headers: {
-      Cookie: "artbin_session=admin-session",
-      ...init?.headers,
-    },
+    headers,
   });
 }
 
 function userRequest(url: string, init?: RequestInit): Request {
+  const headers = new Headers({ Cookie: "artbin_session=user-session" });
+  new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
   return new Request(url, {
     ...init,
-    headers: {
-      Cookie: "artbin_session=user-session",
-      ...init?.headers,
-    },
+    headers,
   });
 }
 

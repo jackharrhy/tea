@@ -3,7 +3,7 @@ import type { BspFormat } from "@jackharrhy/tea-maps-renderer/core";
 
 import { bspOverviewEntryHref } from "../../app/assets.ts";
 
-export interface BspOverviewSources {
+interface BspOverviewSources {
   format: BspFormat;
   bspPath: string;
   palettePath?: string;

@@ -1,4 +1,4 @@
-export interface EditorSourceState {
+interface EditorSourceState {
   readonly value: string;
   readonly disabled: boolean;
   readonly warning: string | null;

@@ -9,7 +9,7 @@ import sharp from "sharp";
 import { attachments, type Attachment } from "./schema.ts";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-export const MAX_STORED_UPLOAD_BYTES = 500 * 1024 * 1024;
+const MAX_STORED_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 const MAX_INPUT_PIXELS = 40_000_000;
 const MAX_OUTPUT_DIMENSION = 2400;

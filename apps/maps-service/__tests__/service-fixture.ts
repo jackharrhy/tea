@@ -16,7 +16,7 @@ import type { MapsMcpAuthConfig } from "../src/mcp-auth.js";
 export const TEST_REALTIME_TICKET_SECRET =
   "test-maps-realtime-ticket-secret-0001";
 
-export class FakeMapCells {
+class FakeMapCells {
   readonly snapshots = new Map<string, HostedMapSnapshot>();
   readonly checkpoints: { mapId: string; name: string }[] = [];
   readonly savedCheckpoints: {

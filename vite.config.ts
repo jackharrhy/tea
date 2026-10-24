@@ -20,9 +20,16 @@ export default defineConfig({
   lint: {
     plugins: ["typescript", "unicorn", "oxc"],
     categories: { correctness: "error", suspicious: "error" },
-    options: { denyWarnings: true },
+    options: { denyWarnings: true, typeAware: true },
     rules: {
       "eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "typescript/consistent-return": "off",
+      "typescript/no-base-to-string": "off",
+      "typescript/no-floating-promises": "off",
+      "typescript/no-unnecessary-type-parameters": "off",
+      "typescript/no-unnecessary-type-assertion": "off",
+      "typescript/no-unsafe-type-assertion": "off",
+      "typescript/unbound-method": "off",
       "eslint/no-underscore-dangle": [
         "error",
         { allow: ["_meta", "enum_", "null_"] },

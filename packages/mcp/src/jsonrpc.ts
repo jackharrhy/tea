@@ -7,7 +7,7 @@
  */
 
 /** The only `jsonrpc` value either side may send. */
-export const JSONRPC_VERSION = "2.0";
+const JSONRPC_VERSION = "2.0";
 
 /**
  * The JSON-RPC error codes this server produces. The `-32020` block is the sub-range MCP

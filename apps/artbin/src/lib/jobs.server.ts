@@ -1,6 +1,6 @@
 import { db } from "#db/connection.server";
 import { jobs, type Job } from "#db";
-import { eq, and, or, lt } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { unlink } from "fs/promises";
 import { Result } from "better-result";
@@ -32,14 +32,6 @@ export async function createJob(params: CreateJobInput): Promise<Job> {
 export async function getJob(id: string): Promise<Job | undefined> {
   return db.query.jobs.findFirst({
     where: eq(jobs.id, id),
-  });
-}
-
-export async function getUserJobs(userId: string, limit = 50): Promise<Job[]> {
-  return db.query.jobs.findMany({
-    where: eq(jobs.userId, userId),
-    orderBy: (table, { desc }) => [desc(table.createdAt)],
-    limit,
   });
 }
 
@@ -311,34 +303,4 @@ export function stopJobRunner(): void {
 
 export function isJobRunnerActive(): boolean {
   return isRunning;
-}
-
-export async function cleanupOldJobs(daysOld = 7): Promise<number> {
-  const cutoff = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000);
-
-  const result = await db
-    .delete(jobs)
-    .where(
-      and(
-        or(
-          eq(jobs.status, "completed"),
-          eq(jobs.status, "failed"),
-          eq(jobs.status, "cancelled"),
-        ),
-        lt(jobs.completedAt, cutoff),
-      ),
-    );
-
-  return result.changes;
-}
-
-export async function resetStuckJobs(minutesOld = 30): Promise<number> {
-  const cutoff = new Date(Date.now() - minutesOld * 60 * 1000);
-
-  const result = await db
-    .update(jobs)
-    .set({ status: "pending", startedAt: null })
-    .where(and(eq(jobs.status, "running"), lt(jobs.startedAt, cutoff)));
-
-  return result.changes;
 }

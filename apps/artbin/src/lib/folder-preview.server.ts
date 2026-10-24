@@ -314,15 +314,3 @@ export async function deleteFolderPreview(folderId: string): Promise<void> {
   if (!folder) return;
   await clearFolderPreview(folder);
 }
-
-export async function regenerateAllFolderPreviews(): Promise<number> {
-  const allFolders = await db.query.folders.findMany();
-  let generated = 0;
-
-  for (const folder of allFolders) {
-    const preview = await generateFolderPreview(folder.id);
-    if (preview) generated++;
-  }
-
-  return generated;
-}

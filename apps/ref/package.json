@@ -8,7 +8,7 @@
     "dev": "npm run build && wrangler dev --port 8787",
     "dev:celld": "npm run build && celld dev --no-watch",
     "deploy:celld": "npm run build && celld deploy .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "vitest run",
     "smoke": "node scripts/smoke.mjs",
     "test:celld": "npm run build && node __tests__/celld-smoke.mjs",
@@ -25,7 +25,6 @@
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.0.0",
     "esbuild": "^0.28.2",
-    "typescript": "^7.0.2",
     "vitest": "^4.1.11",
     "wrangler": "^4.127.1"
   },

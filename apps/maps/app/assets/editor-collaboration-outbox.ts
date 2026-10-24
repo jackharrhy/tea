@@ -16,9 +16,9 @@ import {
   openEditorDatabase,
 } from "./editor-collaboration-database.ts";
 
-export const HOSTED_RECONNECT_GRACE_MS = 15 * 60 * 1_000;
-export const HOSTED_RECONNECT_MAX_OPERATIONS = 200;
-export const HOSTED_RECONNECT_MAX_BYTES = 4 * 1_024 * 1_024;
+const HOSTED_RECONNECT_GRACE_MS = 15 * 60 * 1_000;
+const HOSTED_RECONNECT_MAX_OPERATIONS = 200;
+const HOSTED_RECONNECT_MAX_BYTES = 4 * 1_024 * 1_024;
 
 export interface HostedMapRecoverySnapshot {
   readonly version: 1;
@@ -83,7 +83,7 @@ const RecoverySnapshotSchema = z.strictObject({
   updatedAt: z.number().int().nonnegative(),
 }) satisfies z.ZodType<HostedMapRecoverySnapshot>;
 
-export const StoredOperationSchema = z.strictObject({
+const StoredOperationSchema = z.strictObject({
   version: z.literal(1),
   key: z.string().min(1).max(4_096),
   mapId: z.string().min(1).max(256),
@@ -93,7 +93,7 @@ export const StoredOperationSchema = z.strictObject({
   localSequence: z.number().int().nonnegative(),
 }) satisfies z.ZodType<StoredCollaborationOperation>;
 
-export const StoredSessionSchema = z.strictObject({
+const StoredSessionSchema = z.strictObject({
   version: z.literal(1),
   mapId: z.string().min(1).max(256),
   mapVersion: z.number().int().nonnegative(),
@@ -104,7 +104,7 @@ export const StoredSessionSchema = z.strictObject({
   updatedAt: z.number().int().nonnegative(),
 }) satisfies z.ZodType<StoredCollaborationSession>;
 
-export const DetachedHostedMapSchema = z.strictObject({
+const DetachedHostedMapSchema = z.strictObject({
   version: z.literal(1),
   id: z.string().min(1).max(256),
   originalMapId: z.string().min(1).max(256),
@@ -120,7 +120,7 @@ export const DetachedHostedMapSchema = z.strictObject({
   encodedBytes: z.number().int().positive(),
 }) satisfies z.ZodType<DetachedHostedMap>;
 
-export interface HostedReconnectSummary {
+interface HostedReconnectSummary {
   readonly mapId: string;
   readonly mapVersion: number;
   readonly dirtySince: number | null;
@@ -144,7 +144,7 @@ export interface HostedReconnectLimits {
   readonly maxEncodedBytes: number;
 }
 
-export const DEFAULT_HOSTED_RECONNECT_LIMITS: HostedReconnectLimits = {
+const DEFAULT_HOSTED_RECONNECT_LIMITS: HostedReconnectLimits = {
   graceMilliseconds: HOSTED_RECONNECT_GRACE_MS,
   maxOperations: HOSTED_RECONNECT_MAX_OPERATIONS,
   maxEncodedBytes: HOSTED_RECONNECT_MAX_BYTES,
@@ -303,7 +303,7 @@ function storedSessionSummary(
   };
 }
 
-export function decideHostedReconnect(
+function decideHostedReconnect(
   summary: HostedReconnectSummary,
   now: number,
   limits: HostedReconnectLimits = DEFAULT_HOSTED_RECONNECT_LIMITS,

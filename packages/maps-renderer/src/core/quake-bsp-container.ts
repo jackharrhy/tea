@@ -10,7 +10,7 @@ import {
 const LUMP_COUNT = 15;
 const HEADER_SIZE = 4 + LUMP_COUNT * 8;
 
-export interface QuakeBspLumps {
+interface QuakeBspLumps {
   readonly entities: BinaryView;
   readonly planes: BinaryView;
   readonly textures: BinaryView;

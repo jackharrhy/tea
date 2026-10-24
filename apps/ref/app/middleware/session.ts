@@ -1,4 +1,4 @@
-export const COOKIE_NAME = "ref_session";
+const COOKIE_NAME = "ref_session";
 
 export function readSessionCookie(request: Request): string | null {
   const header = request.headers.get("Cookie") ?? "";

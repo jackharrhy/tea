@@ -13,7 +13,7 @@ const sevenZipPath =
     ? sevenZipBinaries.path7zzs
     : sevenZipBinaries.path7z;
 
-export const REMOTE_ARCHIVE_LIMITS = {
+const REMOTE_ARCHIVE_LIMITS = {
   maxEntries: 20_000,
   maxEntryBytes: 256 * 1024 * 1024,
   maxExpandedBytes: 2 * 1024 * 1024 * 1024,

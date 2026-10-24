@@ -32,7 +32,7 @@ export interface LoadedSpriteEntity {
   readonly lightColor: readonly [number, number, number];
 }
 
-export type SkyboxSuffix = "rt" | "bk" | "lf" | "ft" | "up" | "dn";
+type SkyboxSuffix = "rt" | "bk" | "lf" | "ft" | "up" | "dn";
 
 export interface LoadedSkybox {
   readonly name: string;

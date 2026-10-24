@@ -27,7 +27,6 @@ export {
   IndexedDbCollaborationOutbox,
   type CollaborationOutbox,
   type DetachedHostedMap,
-  type HostedMapRecoverySnapshot,
   type HostedReconnectDecision,
 } from "./editor-collaboration-outbox.ts";
 
@@ -54,26 +53,6 @@ export interface CollaborationControllerOptions {
   readonly onDetached?: (copy: DetachedHostedMap) => void;
   readonly onPeerOperation?: (operation: CollaborationOperation) => void;
   readonly onAcknowledged?: (operationId: string, mapVersion: number) => void;
-}
-
-export interface JoinCollaborationOptions {
-  readonly endpoint: string;
-  readonly mapId: string;
-  readonly actorId: string;
-  readonly displayName?: string;
-  readonly color?: string;
-  /** Returns a fresh short-lived bearer token for protected hosted rooms. */
-  readonly authorize?: (signal?: AbortSignal) => Promise<string>;
-  readonly onPresence?: (presence: CollaborationPresence) => void;
-  readonly onLocalPresence?: (presence: CollaborationPresence) => void;
-  readonly onConflict?: (
-    operationId: string,
-    conflicts: readonly CollaborationFailure[],
-  ) => void;
-  readonly onConnectionChange?: (
-    state: "connecting" | "connected" | "disconnected",
-  ) => void;
-  readonly onDetached?: (copy: DetachedHostedMap) => void;
 }
 
 export interface CollaborationReconciliation {

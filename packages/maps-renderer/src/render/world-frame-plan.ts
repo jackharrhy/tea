@@ -40,7 +40,7 @@ export function goldSrcTextureScrollSpeed(
   return world.models[batch.modelIndex]?.textureScrollSpeed ?? 0;
 }
 
-export function isTranslucentWorldBatch(
+function isTranslucentWorldBatch(
   world: ParsedWorld,
   batch: DrawBatch,
 ): boolean {
@@ -55,10 +55,7 @@ export function isTranslucentWorldBatch(
   return mode === 1 || mode === 2 || mode === 3 || mode === 5;
 }
 
-export function translucentBatchRank(
-  world: ParsedWorld,
-  batch: DrawBatch,
-): number {
+function translucentBatchRank(world: ParsedWorld, batch: DrawBatch): number {
   const mode = world.models[batch.modelIndex]?.renderMode;
   if (mode === 2) return 1;
   if (mode === 5) return 2;

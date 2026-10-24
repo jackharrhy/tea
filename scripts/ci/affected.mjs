@@ -114,7 +114,8 @@ export function planChecks(selected, workspaces) {
     }
   }
 
-  for (const name of [...selectedNames].toSorted()) visit(name);
+  for (const name of [...selectedNames].toSorted((a, b) => a.localeCompare(b)))
+    visit(name);
   return plan;
 }
 

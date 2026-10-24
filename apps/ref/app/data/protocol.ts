@@ -1,4 +1,4 @@
-export interface ItemGeometry {
+interface ItemGeometry {
   x: number;
   y: number;
   width: number;

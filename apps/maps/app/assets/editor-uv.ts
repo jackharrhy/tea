@@ -29,7 +29,7 @@ export interface UvEditorFaceState {
   readonly material?: EditorMaterial | null;
 }
 
-export interface UvEditorTransformEvent {
+interface UvEditorTransformEvent {
   readonly phase: UvGesturePhase;
   readonly transform: FaceTextureTransformDelta;
   readonly selection: FaceSelection;

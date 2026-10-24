@@ -64,7 +64,7 @@ function css(values: Record<string, unknown>) {
   return escape(
     Object.entries(values)
       .filter(([, v]) => v !== "" && v != null)
-      .map(([k, v]) => `${k}:${v}`)
+      .map(([k, v]) => `${k}:${String(v)}`)
       .join(";"),
   );
 }

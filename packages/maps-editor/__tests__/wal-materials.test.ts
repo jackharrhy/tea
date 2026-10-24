@@ -9,7 +9,7 @@ function syntheticWal(): Uint8Array {
   );
   const view = new DataView(result.buffer);
   const writeAscii = (offset: number, value: string) => {
-    for (const [index, character] of [...value].entries()) {
+    for (const [index, character] of Array.from(value).entries()) {
       result[offset + index] = character.charCodeAt(0);
     }
   };

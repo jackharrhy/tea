@@ -5,7 +5,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import * as schema from "./schema.ts";
 
-export function createDb(sqlite: Database.Database) {
+function createDb(sqlite: Database.Database) {
   return drizzle(sqlite, { schema });
 }
 

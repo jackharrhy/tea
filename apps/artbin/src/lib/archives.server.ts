@@ -23,9 +23,7 @@ import {
 export type { ArchiveEntry, ParsedArchive, ArchiveType };
 export { getDirectoryPaths, getFileEntries };
 
-export async function detectArchiveType(
-  filePath: string,
-): Promise<ArchiveType> {
+async function detectArchiveType(filePath: string): Promise<ArchiveType> {
   const ext = extname(filePath).slice(1).toLowerCase();
 
   // Check extension first (matches original behavior)
@@ -37,12 +35,7 @@ export async function detectArchiveType(
   return detectArchiveTypeFromBuffer(buffer);
 }
 
-export async function parsePk3(filePath: string): Promise<ArchiveEntry[]> {
-  const buffer = await readFile(filePath);
-  return parsePk3FromBuffer(buffer);
-}
-
-export async function extractPk3Entry(
+async function extractPk3Entry(
   filePath: string,
   entry: ArchiveEntry,
 ): Promise<Buffer> {
@@ -50,12 +43,7 @@ export async function extractPk3Entry(
   return extractPk3EntryFromBuffer(buffer, entry);
 }
 
-export async function parsePak(filePath: string): Promise<ArchiveEntry[]> {
-  const buffer = await readFile(filePath);
-  return parsePakFromBuffer(buffer);
-}
-
-export async function extractPakEntry(
+async function extractPakEntry(
   filePath: string,
   entry: ArchiveEntry,
 ): Promise<Buffer> {

@@ -1,6 +1,6 @@
 import tgpu, { d } from "typegpu";
 
-export const WorldVertex = d.unstruct({
+const WorldVertex = d.unstruct({
   position: d.float32x3,
   diffuseUv: d.float32x2,
   lightmapUv: d.float32x2,

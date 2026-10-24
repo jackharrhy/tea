@@ -11,7 +11,6 @@ import {
 } from "./math.js";
 import { defaultTextureProjection } from "./document-structure.js";
 import type {
-  BrushId,
   FaceId,
   MapBrush,
   MapFace,
@@ -676,4 +675,4 @@ export function transferFaceAttributes(
   };
 }
 
-export type { BrushId, FaceId };
+export type { FaceId };

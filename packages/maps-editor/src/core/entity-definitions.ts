@@ -203,7 +203,7 @@ function matchingBracket(
 }
 
 function maskComments(source: string): string {
-  const masked = [...source];
+  const masked = Array.from(source);
   let quoted = false;
   for (let index = 0; index < source.length; index += 1) {
     const character = source[index]!;

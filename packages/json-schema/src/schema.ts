@@ -22,7 +22,7 @@ import type {
 import { describeChild, named, nodeOf, wrap } from "./node.ts";
 
 /** Any schema a combinator nests, whatever its types. */
-type AnySchema = DescribedSchema<any, any>;
+type AnySchema = DescribedSchema;
 
 /** Flattens an intersection so hovers and errors show one object type. */
 type Simplify<T> = { [Key in keyof T]: T[Key] } & {};

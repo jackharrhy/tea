@@ -26,7 +26,7 @@ test("real Remix router + published MCP tools/list contract", async () => {
     assert.equal(result.tools[0].annotations.destructiveHint, true);
     assert.equal(result.tools[1].annotations.readOnlyHint, true);
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });
 test("execute/read/cancel through HTTP never evaluates a shell command", async () => {
@@ -84,7 +84,7 @@ test("execute/read/cancel through HTTP never evaluates a shell command", async (
     assert.equal(read.status, "cancelled");
     assert.equal(read.stdout, "");
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });
 test("all MCP methods including discovery/list/non-POST require authentication", async () => {
@@ -111,7 +111,7 @@ test("all MCP methods including discovery/list/non-POST require authentication",
       405,
     );
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });
 test("rejects origin, body limits, unsupported revision, malformed metadata, header/body mismatch", async () => {
@@ -162,7 +162,7 @@ test("rejects origin, body limits, unsupported revision, malformed metadata, hea
       400,
     );
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });
 test("limits streamed MCP bodies without a content-length header", async () => {
@@ -187,7 +187,7 @@ test("limits streamed MCP bodies without a content-length header", async () => {
     );
     assert.equal(response.status, 413);
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });
 test("tool input validation rejects bad timeout and denies owner injection", async () => {
@@ -220,7 +220,7 @@ test("tool input validation rejects bad timeout and denies owner injection", asy
     );
     assert.throws(() => jobs.readJob("attacker", unknown.job.jobId));
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });
 test("default service refuses execution and does not advertise configured OAuth", async () => {
@@ -240,7 +240,7 @@ test("default service refuses execution and does not advertise configured OAuth"
       jobs.execute("owner", { command: "x", idempotencyKey: "fixture-locked" }),
     /disabled/i,
   );
-  await jobs.close();
+  jobs.close();
 });
 
 test("router-matched MCP aliases keep authentication and body limits", async () => {
@@ -291,6 +291,6 @@ test("router-matched MCP aliases keep authentication and body limits", async () 
       assert.equal(response.status, 404, path);
     }
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });

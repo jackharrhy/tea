@@ -14,15 +14,8 @@ import {
   type ScraperCategory,
 } from "./scraper-runner.server.ts";
 
-export interface SadgrlImportInput {
+interface SadgrlImportInput {
   userId?: string;
-}
-
-export interface SadgrlImportOutput {
-  totalFiles: number;
-  totalFolders: number;
-  categoriesImported: string[];
-  errors: string[];
 }
 
 const PAGE_URL =
@@ -144,5 +137,3 @@ async function handleSadgrlImport(
 }
 
 registerJobHandler("sadgrl-import", handleSadgrlImport);
-
-export { handleSadgrlImport };

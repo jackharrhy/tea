@@ -51,8 +51,8 @@
     }
   },
   "scripts": {
-    "build": "vite build && vite build --config vite.standalone.config.ts && tsc -p tsconfig.build.json --emitDeclarationOnly",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "vite build && vite build --config vite.standalone.config.ts && tsrs -p tsconfig.build.json --emitDeclarationOnly",
+    "typecheck": "tsrs -p tsconfig.json --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build"
   },
@@ -64,7 +64,6 @@
   "devDependencies": {
     "@types/node": "^26.6.4",
     "@webgpu/types": "^0.1.72",
-    "typescript": "^7.0.2",
     "unplugin-typegpu": "0.12.3",
     "vite": "^8.3.3",
     "vitest": "^4.1.11"

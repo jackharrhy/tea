@@ -38,6 +38,6 @@ test("shell discovery selects resource-specific registration, not Artbin default
     if (config.mode === "fourorm")
       assert.equal(config.issuer, "https://4orm.harrhy.xyz");
   } finally {
-    await jobs.close();
+    jobs.close();
   }
 });

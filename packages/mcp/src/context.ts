@@ -69,7 +69,7 @@ export const CurrentResource: { defaultValue?: ResourceDescriptor } =
   createContextKey<ResourceDescriptor>();
 
 /** True when the value is already a request context; false for a bare request. */
-export function isRequestContext(
+function isRequestContext(
   value: Request | AnyRequestContext,
 ): value is AnyRequestContext {
   return value instanceof RequestContext;

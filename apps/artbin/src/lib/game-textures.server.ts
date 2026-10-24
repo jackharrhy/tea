@@ -5,7 +5,6 @@ import {
   decodeWalTexture,
   readPcxPalette,
   identifyBsp,
-  identifyWad,
   isQuakePaletteFormat,
   parseBspTextures,
   parseWad,
@@ -45,10 +44,6 @@ export interface WadContents {
 
 export function isBspFile(buffer: ArrayBuffer | ArrayBufferView): boolean {
   return identifyBsp(buffer) !== null;
-}
-
-export function isWadFile(buffer: ArrayBuffer | ArrayBufferView): boolean {
-  return identifyWad(buffer) !== null;
 }
 
 export async function extractTexturesFromBsp(

@@ -9,7 +9,7 @@ export interface ContextSection {
   readonly actions: readonly ContextAction[];
 }
 
-export interface EditorContextMenuState {
+interface EditorContextMenuState {
   readonly visible: boolean;
   readonly x: number;
   readonly y: number;

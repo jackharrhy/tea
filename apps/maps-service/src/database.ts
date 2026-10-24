@@ -3,8 +3,6 @@ import { DatabaseSync } from "node:sqlite";
 import {
   HostedBuildResultSchema,
   type HostedBuild as HostedBuildRecord,
-  type HostedBuildArtifact,
-  type HostedBuildResult,
   type HostedProjectAccessUser as ProjectAccessUser,
   type HostedProjectMap as HostedMapSummary,
   type HostedProjectSummary as ProjectSummary,
@@ -22,9 +20,7 @@ import {
 
 export type ProjectRole = ProtocolProjectRole;
 export type {
-  HostedBuildArtifact,
   HostedBuildRecord,
-  HostedBuildResult,
   HostedMapSummary,
   ProjectAccessUser,
   ProjectSummary,

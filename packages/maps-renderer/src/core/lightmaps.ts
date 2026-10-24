@@ -9,7 +9,7 @@ import type { LightmapPage, ParsedLightmap } from "./types.js";
 export const LIGHTMAP_PAGE_SIZE = 2048;
 export const LIGHTSTYLE_FRAMERATE = 10;
 /** Face light-style indices are stored as bytes; 255 remains the on-disk terminator. */
-export const MAX_LIGHTSTYLES = 256;
+const MAX_LIGHTSTYLES = 256;
 
 const DEFAULT_PATTERNS = [
   "m",

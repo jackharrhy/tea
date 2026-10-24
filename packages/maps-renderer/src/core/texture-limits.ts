@@ -1,8 +1,8 @@
 import { invariant } from "./errors.js";
 
 // Bound decoded images to WebGPU's portable 8,192-texel limit per 2D dimension.
-export const MAX_TEXTURE_DIMENSION = 8_192;
-export const MAX_DECODED_TEXTURE_PIXELS = 16_777_216;
+const MAX_TEXTURE_DIMENSION = 8_192;
+const MAX_DECODED_TEXTURE_PIXELS = 16_777_216;
 
 export function validateTextureDimensions(
   width: number,

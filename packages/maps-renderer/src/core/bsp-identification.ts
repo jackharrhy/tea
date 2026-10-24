@@ -1,6 +1,6 @@
 import { BinaryView } from "./binary.js";
 import { BSP2_MAGIC } from "./quake-bsp-layout.js";
-export const IBSP_MAGIC = 0x50534249;
+const IBSP_MAGIC = 0x50534249;
 export const QBSP_MAGIC = 0x50534251;
 export const BSP38_VERSION = 38;
 

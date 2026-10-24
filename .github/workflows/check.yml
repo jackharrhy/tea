@@ -34,6 +34,8 @@ jobs:
         run: npm ci
       - if: steps.select.outputs.any == 'true'
         run: npm run tooling:check
+      - if: steps.select.outputs.any == 'true'
+        run: npm run knip:check
       - if: contains(fromJSON(steps.select.outputs.selected), '@tea/artbin')
         run: sudo apt-get update && sudo apt-get install -y imagemagick
       - if: steps.select.outputs.browser == 'true' && (env.RUN_INTEGRATION == 'true' || steps.select.outputs.radio == 'true')

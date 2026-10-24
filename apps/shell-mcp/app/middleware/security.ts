@@ -7,9 +7,12 @@ export function json(
   status = 200,
   headers: HeadersInit = {},
 ): Response {
+  const responseHeaders = new Headers(headers);
+  if (!responseHeaders.has("cache-control"))
+    responseHeaders.set("cache-control", "no-store");
   return Response.json(body, {
     status,
-    headers: { "cache-control": "no-store", ...headers },
+    headers: responseHeaders,
   });
 }
 export const privateResponses: Middleware = async (_ctx, next) => {
@@ -43,7 +46,7 @@ export function authenticate(
       const identity = await provider.verify(match[1]);
       if (
         !config.allowedUsernames.includes(identity.username) ||
-        identity.admin !== true ||
+        !identity.admin ||
         !identity.issuer ||
         !identity.subject ||
         identity.expiresAt <= Date.now()

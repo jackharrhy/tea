@@ -32,7 +32,7 @@ import {
   getDirectoryPaths,
 } from "../archives.server.ts";
 
-export async function handleUpload(job: Job, input: Record<string, unknown>) {
+async function handleUpload(job: Job, input: Record<string, unknown>) {
   const uploadId = z
     .string()
     .regex(/^[a-f0-9]{32}$/)
@@ -170,7 +170,7 @@ export async function handleUpload(job: Job, input: Record<string, unknown>) {
   };
 }
 
-export async function handleFinalize(job: Job, input: Record<string, unknown>) {
+async function handleFinalize(job: Job, input: Record<string, unknown>) {
   const slug = z.string().min(1).parse(input.parentFolder);
   const prefix = `${slug.replace(/[\\%_]/g, "\\$&")}/%`;
   const descendants = await db.query.folders.findMany({

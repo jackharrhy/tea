@@ -29,7 +29,7 @@ describe("settings", () => {
 
     expect(await getSetting("missing", ["fallback"])).toEqual(["fallback"]);
 
-    await currentDb!.sqlite
+    currentDb!.sqlite
       .prepare("INSERT INTO settings (key, value) VALUES (?, ?)")
       .run("bad", "not-json");
     expect(await getSetting("bad", ["fallback"])).toEqual(["fallback"]);
