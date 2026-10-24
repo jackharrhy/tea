@@ -5,7 +5,7 @@ import { expect, test, vi } from "vitest";
 import { runImport } from "../src/lib/importer.ts";
 import type { ApiClient } from "../src/lib/api.ts";
 import type { ScanResult } from "../src/lib/scanner.ts";
-import { MAX_UPLOAD_BYTES } from "@artbin/core/uploads";
+import { MAX_UPLOAD_BYTES } from "@tea/artbin-core/uploads";
 
 test("rejects oversized loose files before reading them into memory", async () => {
   const api = { createFolders: vi.fn() };

@@ -1,6 +1,6 @@
 import { ViewportToolOverlays } from "./viewport/tool-overlays.js";
 import { mat4 } from "wgpu-matrix";
-import { perspectiveForward as forwardFromAngles } from "@tea/maps-renderer/core";
+import { perspectiveForward as forwardFromAngles } from "@jackharrhy/tea-maps-renderer/core";
 
 import {
   isBrushSelected,

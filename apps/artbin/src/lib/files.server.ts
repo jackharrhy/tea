@@ -28,9 +28,9 @@ import {
   needsPreview,
   isWebImage,
   type FileKind,
-} from "@artbin/core/detection/kind";
-import { getMimeType } from "@artbin/core/detection/mime";
-import { sanitizeFilename } from "@artbin/core/detection/filenames";
+} from "@tea/artbin-core/detection/kind";
+import { getMimeType } from "@tea/artbin-core/detection/mime";
+import { sanitizeFilename } from "@tea/artbin-core/detection/filenames";
 import { nanoid } from "nanoid";
 import { generateFolderPreview } from "./folder-preview.server.ts";
 import { getAncestorFolderIds } from "./file-queries.server.ts";

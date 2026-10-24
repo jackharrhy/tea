@@ -15,7 +15,7 @@ import {
   parseWad,
   readPcxPalette,
   readWalTextureHeader,
-} from "@tea/maps-renderer/core";
+} from "@jackharrhy/tea-maps-renderer/core";
 import { listHostedResources } from "./editor-hosted-resources.ts";
 import {
   decodeProjectMaterialImage,

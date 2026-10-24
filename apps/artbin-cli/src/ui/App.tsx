@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ScanTreeView } from "@artbin/ui/ScanTreeView";
-import { ArchiveItem } from "@artbin/ui/ArchiveItem";
-import { BatchControls } from "@artbin/ui/BatchControls";
-import { buildTree, getAllArchivePaths } from "@artbin/ui/tree-utils";
-import type { FoundArchive, TreeNode } from "@artbin/ui/types";
+import { ScanTreeView } from "@tea/artbin-ui/ScanTreeView";
+import { ArchiveItem } from "@tea/artbin-ui/ArchiveItem";
+import { BatchControls } from "@tea/artbin-ui/BatchControls";
+import { buildTree, getAllArchivePaths } from "@tea/artbin-ui/tree-utils";
+import type { FoundArchive, TreeNode } from "@tea/artbin-ui/types";
 import { DestinationPicker } from "./DestinationPicker";
 import type { ImportProgress } from "../lib/browse-server";
 

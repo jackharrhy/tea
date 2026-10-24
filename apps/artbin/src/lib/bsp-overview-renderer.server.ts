@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import type { BspFormat } from "@jackharrhy/worldview/core";
+import type { BspFormat } from "@jackharrhy/tea-maps-renderer/core";
 
 import { bspOverviewEntryHref } from "../../app/assets.ts";
 

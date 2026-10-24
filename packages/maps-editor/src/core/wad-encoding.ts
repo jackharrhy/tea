@@ -1,4 +1,4 @@
-import { WAD2_MIPTEX, WAD3_MIPTEX } from "@tea/maps-renderer/core";
+import { WAD2_MIPTEX, WAD3_MIPTEX } from "@jackharrhy/tea-maps-renderer/core";
 import type { EditorMaterial } from "./materials.js";
 
 const MIP_LEVEL_COUNT = 4;

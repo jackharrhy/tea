@@ -1,4 +1,4 @@
-import type { Vec3Tuple } from "@tea/maps-renderer/core";
+import type { Vec3Tuple } from "@jackharrhy/tea-maps-renderer/core";
 
 export type Vec2 = readonly [number, number];
 export type Vec3 = Vec3Tuple;

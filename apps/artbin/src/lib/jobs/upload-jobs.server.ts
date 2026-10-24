@@ -8,7 +8,7 @@ import { files, folders, jobs, users, type Job } from "#db";
 import {
   cleanFolderPath,
   cleanFolderSlug,
-} from "@artbin/core/detection/filenames";
+} from "@tea/artbin-core/detection/filenames";
 import { registerJobHandler, updateJobProgress } from "../jobs.server.ts";
 import { getTusServer, uploadMetadataSchema } from "../tus.server.ts";
 import {
@@ -23,7 +23,7 @@ import { isBspFile } from "../game-textures.server.ts";
 import {
   parseBspTextures,
   isQuakePaletteFormat,
-} from "@jackharrhy/worldview/core";
+} from "@jackharrhy/tea-maps-renderer/core";
 import { resolveApprovedBspPalette } from "../bsp-assets.server.ts";
 import { refreshBspDependencyManifest } from "../bsp-derivatives.server.ts";
 import {

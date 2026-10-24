@@ -1,4 +1,4 @@
-import type { WorldSource } from "@tea/maps-renderer";
+import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
 import {
   syntheticGoldSrcAudioBsp,
   syntheticGoldSrcBsp,

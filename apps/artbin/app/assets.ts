@@ -16,6 +16,7 @@ export const assetServer = createAssetServer({
   mounts: {
     app: "apps/artbin/app",
     shared: "packages/artbin-core/src",
+    renderer: "packages/maps-renderer/dist",
     npm: "node_modules",
   },
   allowFiles: [
@@ -27,7 +28,12 @@ export const assetServer = createAssetServer({
     "apps/artbin/app/ui/media-card.tsx",
     "apps/artbin/app/**/public/**",
   ],
-  allowPackages: ["@artbin/core", "@jackharrhy/worldview", "remix", "three"],
+  allowPackages: [
+    "@tea/artbin-core",
+    "@jackharrhy/tea-maps-renderer",
+    "remix",
+    "three",
+  ],
   denyFiles: ["apps/artbin/app/**/__tests__/**"],
   files: {
     extensions: [

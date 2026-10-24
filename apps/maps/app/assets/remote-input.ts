@@ -1,4 +1,4 @@
-import type { CameraState, WorldSource } from "@tea/maps-renderer";
+import type { CameraState, WorldSource } from "@jackharrhy/tea-maps-renderer";
 
 export function cameraFromUrlParameters(
   parameters: URLSearchParams,

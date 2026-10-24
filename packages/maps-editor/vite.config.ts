@@ -16,7 +16,7 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        "@tea/maps-renderer",
+        "@jackharrhy/tea-maps-renderer",
         /^@tea\/maps-renderer\//,
         /^typegpu(?:\/.*)?$/,
         "wgpu-matrix",

@@ -1,4 +1,7 @@
-import { decodeTga, validateTextureDimensions } from "@tea/maps-renderer/core";
+import {
+  decodeTga,
+  validateTextureDimensions,
+} from "@jackharrhy/tea-maps-renderer/core";
 
 const imageExtension = /\.(png|jpe?g|tga)$/i;
 

@@ -1,6 +1,6 @@
 # Format core
 
-The `@tea/maps-renderer/core` entrypoint exposes the binary-format work without loading the
+The `@jackharrhy/tea-maps-renderer/core` entrypoint exposes the binary-format work without loading the
 browser viewer or renderer. It is intended for asset indexers, diagnostics, converters, and other
 tools that need the same interpretation as Worldview.
 
@@ -10,7 +10,7 @@ tools that need the same interpretation as Worldview.
 IBSP/QBSP version 38:
 
 ```ts
-import { identifyBsp, identifyWad } from "@tea/maps-renderer/core";
+import { identifyBsp, identifyWad } from "@jackharrhy/tea-maps-renderer/core";
 
 const bsp = identifyBsp(bytes); // { format: 'goldsrc-bsp30', version: 30 } or null
 const wad = identifyWad(bytes); // { version: 2 }, { version: 3 }, or null
@@ -25,7 +25,10 @@ prefix returns `null`. Use `parseBsp()` or `parseWad()` when malformed contents 
 geometry, collision, visibility, lightmaps, or render batches:
 
 ```ts
-import { decodeMipTexture, parseBspTextures } from "@tea/maps-renderer/core";
+import {
+  decodeMipTexture,
+  parseBspTextures,
+} from "@jackharrhy/tea-maps-renderer/core";
 
 const result = parseBspTextures(bytes);
 for (const texture of result.textures) {
@@ -60,7 +63,7 @@ transparent only for alpha-test texture names beginning with `{`; there is no co
 `planWorldAssets()` is the viewer's canonical, fetch-free asset manifest:
 
 ```ts
-import { parseBsp, planWorldAssets } from "@tea/maps-renderer/core";
+import { parseBsp, planWorldAssets } from "@jackharrhy/tea-maps-renderer/core";
 
 const world = parseBsp(bytes);
 const assets = planWorldAssets(world, { includeViewerDefaults: false });

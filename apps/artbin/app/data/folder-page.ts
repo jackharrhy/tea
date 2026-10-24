@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
-import type { FileKind } from "@artbin/core/detection/kind";
+import type { FileKind } from "@tea/artbin-core/detection/kind";
 import type { User } from "#db";
 import { files, folders, remoteImports, tags } from "#db";
 import { db } from "#db/connection.server";

@@ -10,7 +10,7 @@
     "dev": "node scripts/build.mjs --dev && node scripts/dev.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:embed": "npm run build --workspace @tea/maps-renderer && node __tests__/embed-flow.mjs",
+    "test:embed": "npm run build --workspace @jackharrhy/tea-maps-renderer && node __tests__/embed-flow.mjs",
     "test:gpu": "node __tests__/gpu-flow.mjs",
     "test:corpus:gpu": "node __tests__/gpu-flow.mjs --corpus",
     "test:corpus:gpu:all": "node __tests__/gpu-flow.mjs --corpus-all",
@@ -25,7 +25,7 @@
     "@phosphor-icons/web": "^2.1.2",
     "@tea/maps-editor": "0.1.0",
     "@tea/maps-protocol": "0.1.0",
-    "@tea/maps-renderer": "0.1.0",
+    "@jackharrhy/tea-maps-renderer": "0.1.0",
     "fflate": "^0.8.3",
     "idb": "^8.0.4",
     "remix": "3.0.0"

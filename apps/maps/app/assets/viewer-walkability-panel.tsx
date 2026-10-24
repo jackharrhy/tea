@@ -1,5 +1,5 @@
-import type { WorldViewElement } from "@tea/maps-renderer/element";
-import { serializeWalkability } from "@tea/maps-renderer/walkability";
+import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import { serializeWalkability } from "@jackharrhy/tea-maps-renderer/walkability";
 import { clientEntry, on, type Handle } from "remix/component";
 import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
 

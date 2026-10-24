@@ -8,7 +8,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY . .
 RUN npm ci \
-  && npm run build --workspace @tea/maps-renderer \
+  && npm run build --workspace @jackharrhy/tea-maps-renderer \
   && npm run build --workspace @tea/maps-editor \
   && npm run build --workspace @tea/maps-protocol \
   && npm run build:client --workspace @tea/maps

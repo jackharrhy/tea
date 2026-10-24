@@ -8,7 +8,7 @@ import {
   DEFAULT_EXCLUDE_PATH_PATTERNS,
   DEFAULT_KNOWN_GAME_DIRS,
   type ScanSettings,
-} from "@artbin/core/scanning/settings";
+} from "@tea/artbin-core/scanning/settings";
 
 export type { ScanSettings };
 

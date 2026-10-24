@@ -140,7 +140,14 @@ async function main() {
       ],
       { cwd: scratch },
     );
-    const bin = join(installDir, "node_modules", "artbin", "dist", "index.js");
+    const bin = join(
+      installDir,
+      "node_modules",
+      "@jackharrhy",
+      "tea-artbin",
+      "dist",
+      "index.js",
+    );
     if (
       output(process.execPath, [bin, "--version"], { cwd: scratch }) !==
       `artbin ${manifest.version}`

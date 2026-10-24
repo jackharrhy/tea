@@ -1,4 +1,4 @@
-import { parseGoldSrcSprite } from "@tea/maps-renderer/core";
+import { parseGoldSrcSprite } from "@jackharrhy/tea-maps-renderer/core";
 import type { EditorSpriteMaterial } from "@tea/maps-editor/render";
 import type { MapDirectoryHandle } from "./editor-project.ts";
 

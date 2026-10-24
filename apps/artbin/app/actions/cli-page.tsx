@@ -192,7 +192,9 @@ export function CliPage(
             <div mix={quickStartStyle}>
               <h2 mix={quickStartTitleStyle}>Install and sign in</h2>
               <pre mix={quickStartCodeStyle}>
-                <code>{"npm install --global artbin\nartbin login"}</code>
+                <code>
+                  {"npm install --global @jackharrhy/tea-artbin\nartbin login"}
+                </code>
               </pre>
               <p mix={quickStartNoteStyle}>
                 Login opens your browser. The default server is{" "}

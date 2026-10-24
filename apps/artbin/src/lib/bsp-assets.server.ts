@@ -4,7 +4,7 @@ import { and, eq, inArray, or, sql } from "drizzle-orm";
 import type {
   WorldAssetPlan,
   WorldSkyboxSuffix,
-} from "@jackharrhy/worldview/core";
+} from "@jackharrhy/tea-maps-renderer/core";
 
 import type { User } from "#db";
 import { files } from "#db";
