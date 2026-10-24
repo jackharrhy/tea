@@ -2,7 +2,7 @@
 
 The `@jackharrhy/tea-maps-renderer/core` entrypoint exposes the binary-format work without loading the
 browser viewer or renderer. It is intended for asset indexers, diagnostics, converters, and other
-tools that need the same interpretation as Worldview.
+tools that need the same interpretation as Maps.
 
 ## Identify a container
 
@@ -55,7 +55,7 @@ Compressed entries, inconsistent per-entry sizes, and unusable MIPTEX data produ
 ranges, and integer bounds remain fatal. `findMipTexture()` returns only a validated, decodable
 MIPTEX record.
 
-Worldview uses Quake's external palette for WAD2 and the embedded palette for WAD3. Index 255 is
+Maps uses Quake's external palette for WAD2 and the embedded palette for WAD3. Index 255 is
 transparent only for alpha-test texture names beginning with `{`; there is no color-key fallback.
 
 ## Plan external assets
@@ -79,7 +79,7 @@ texinfo chains and the rerelease `+` to `_` filename alternative.
 accept their own logical paths. Empty segments, absolute paths, and `.` or `..` traversal are
 rejected. `planWorldAssets()` applies it before returning any candidate.
 
-By default the plan also lists Worldview's GoldSrc player sounds with
+By default the plan also lists Maps's GoldSrc player sounds with
 `origin: 'viewer-default'`. Pass `includeViewerDefaults: false` when indexing only assets authored
 by the map. Missing-asset policy and storage remain the caller's responsibility; the plan does not
 label candidates as mandatory.

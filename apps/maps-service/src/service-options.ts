@@ -8,9 +8,9 @@ import type {
 import type { ArtbinClient } from "./artbin.js";
 import type { BlobStore } from "./blob-store.js";
 import type { RemoteBuildQueue } from "./build-queue.js";
-import type { WorldviewDatabase } from "./database.js";
+import type { MapsDatabase } from "./database.js";
 import type { OAuthConfig } from "./oauth.js";
-import type { WorldviewMcpAuthConfig } from "./mcp-auth.js";
+import type { MapsMcpAuthConfig } from "./mcp-auth.js";
 
 export interface HostedMapStore {
   initialize(mapId: string, source: string): Promise<HostedMapSnapshot>;
@@ -34,11 +34,11 @@ export interface HostedMapStore {
   ): Promise<ReplaceHostedMapSourceResult>;
 }
 
-export interface WorldviewServiceOptions {
-  readonly database: WorldviewDatabase;
+export interface MapsServiceOptions {
+  readonly database: MapsDatabase;
   readonly blobs: BlobStore;
   readonly oauth: OAuthConfig;
-  readonly mcpAuth?: WorldviewMcpAuthConfig;
+  readonly mcpAuth?: MapsMcpAuthConfig;
   readonly additionalPublicOrigins?: readonly string[];
   readonly staticRoot?: string;
   readonly fetch?: typeof globalThis.fetch;

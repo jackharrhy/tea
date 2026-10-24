@@ -14,7 +14,7 @@ import {
 } from "@tea/maps-protocol";
 import { z } from "zod";
 import { createHostedId, hostedSlug, isHostedId } from "./hosted-identity.js";
-import { initializeWorldviewDatabase } from "./database-schema.js";
+import { initializeMapsDatabase } from "./database-schema.js";
 import {
   MAX_PROJECT_ASSET_BYTES,
   MAX_RESOURCE_FILE_BYTES,
@@ -30,7 +30,7 @@ export type {
   ProjectSummary,
 };
 
-export interface WorldviewUser {
+export interface MapsUser {
   readonly id: string;
   readonly fourmSub: string;
   readonly username: string;
@@ -76,7 +76,7 @@ interface SqlUser {
 interface SqlResourceMount {
   readonly id: string;
   readonly ordinal: number;
-  readonly provider: "artbin" | "upload" | "worldview";
+  readonly provider: "artbin" | "upload" | "maps";
   readonly provider_asset_id: string;
   readonly expected_sha256: string;
   readonly kind: string;
@@ -95,7 +95,7 @@ function token(): string {
   return randomBytes(32).toString("base64url");
 }
 
-export class WorldviewDatabase {
+export class MapsDatabase {
   private readonly sql: DatabaseSync;
 
   public constructor(
@@ -104,7 +104,7 @@ export class WorldviewDatabase {
   ) {
     this.sql = new DatabaseSync(path);
     this.sql.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
-    initializeWorldviewDatabase(this.sql);
+    initializeMapsDatabase(this.sql);
   }
 
   public close(): void {
@@ -138,7 +138,7 @@ export class WorldviewDatabase {
     return row ? { verifier: row.verifier, returnTo: row.return_to } : null;
   }
 
-  public upsertUser(profile: Omit<WorldviewUser, "id">): WorldviewUser {
+  public upsertUser(profile: Omit<MapsUser, "id">): MapsUser {
     const now = Date.now();
     const existing = this.sql
       .prepare("SELECT id FROM users WHERE fourm_sub = ?")
@@ -174,7 +174,7 @@ export class WorldviewDatabase {
     return { token: value, expiresAt };
   }
 
-  public sessionUser(value: string | undefined): WorldviewUser | null {
+  public sessionUser(value: string | undefined): MapsUser | null {
     if (!value) return null;
     const row = this.sql
       .prepare(`
@@ -246,7 +246,7 @@ export class WorldviewDatabase {
 
   public automationSession(
     value: string | undefined,
-  ): { user: WorldviewUser; projectId: string } | null {
+  ): { user: MapsUser; projectId: string } | null {
     if (!value) return null;
     const row = this.sql
       .prepare(`SELECT u.id,u.fourm_sub,u.username,u.display_name,u.is_admin,s.project_id
@@ -264,7 +264,7 @@ export class WorldviewDatabase {
     return { user: this.user(row), projectId: row.project_id };
   }
 
-  private user(row: SqlUser): WorldviewUser {
+  private user(row: SqlUser): MapsUser {
     return {
       id: row.id,
       fourmSub: row.fourm_sub,
@@ -588,7 +588,7 @@ export class WorldviewDatabase {
   public createResourceMount(input: {
     projectId: string;
     userId: string;
-    provider: "artbin" | "upload" | "worldview";
+    provider: "artbin" | "upload" | "maps";
     providerAssetId: string;
     expectedSha256: string;
     kind: string;

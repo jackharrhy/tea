@@ -1,6 +1,6 @@
 import {
-  defineWorldViewElement,
-  type WorldViewElement,
+  defineMapsViewElement,
+  type MapsViewElement,
 } from "@jackharrhy/tea-maps-renderer/element";
 import type {
   BinarySource,
@@ -9,10 +9,10 @@ import type {
 } from "@jackharrhy/tea-maps-renderer";
 import { sourceName } from "./world-input.ts";
 
-defineWorldViewElement();
+defineMapsViewElement();
 
-const viewer = document.querySelector<WorldViewElement>(
-  "#viewport world-view",
+const viewer = document.querySelector<MapsViewElement>(
+  "#viewport tea-map-view",
 )!;
 let initialCamera: CameraState | undefined;
 window.dispatchEvent(new Event("tea-maps-viewer-element-ready"));

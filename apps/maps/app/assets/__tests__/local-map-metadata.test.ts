@@ -14,19 +14,19 @@ describe("local map sidecars", () => {
       "valve/maps/room.tea-maps.json",
       JSON.stringify({ label: "Tea room" }),
     );
-    const worldview = localFile(
-      "valve/maps/room.worldview.json",
-      JSON.stringify({ label: "Worldview room" }),
+    const maps = localFile(
+      "valve/maps/room.maps.json",
+      JSON.stringify({ label: "Maps room" }),
     );
     const teaWalkability = localFile(
       "valve/maps/room.tea-maps-walkability.json",
     );
-    const worldviewWalkability = localFile(
-      "valve/maps/room.worldview-walkability.json",
+    const mapsWalkability = localFile(
+      "valve/maps/room.tea-maps-walkability.json",
     );
     expect(
       await localMapMetadata(
-        [bsp, worldview, worldviewWalkability, tea, teaWalkability],
+        [bsp, maps, mapsWalkability, tea, teaWalkability],
         bsp,
       ),
     ).toEqual({ label: "Tea room", walkability: teaWalkability });

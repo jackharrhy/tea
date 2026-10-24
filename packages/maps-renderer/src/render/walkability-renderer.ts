@@ -119,7 +119,7 @@ export class TypeGpuWalkabilityRenderer {
       this.root.device,
       vertices,
       GPUBufferUsage.VERTEX,
-      "Worldview walkability vertices",
+      "Maps walkability vertices",
     );
     this.vertexCount = vertices.length / FLOATS_PER_VERTEX;
   }

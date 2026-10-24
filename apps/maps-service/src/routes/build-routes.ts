@@ -15,13 +15,10 @@ import {
   webJson,
   webRequestBody,
 } from "../service-web-http.js";
-import type { WorldviewServiceOptions } from "../service-options.js";
+import type { MapsServiceOptions } from "../service-options.js";
 
 export function createBuildRoutes(
-  options: Pick<
-    WorldviewServiceOptions,
-    "blobs" | "builds" | "database" | "maps"
-  >,
+  options: Pick<MapsServiceOptions, "blobs" | "builds" | "database" | "maps">,
 ) {
   return [
     defineWebRoute(

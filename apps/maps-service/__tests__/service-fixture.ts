@@ -5,16 +5,16 @@ import { afterEach } from "vitest";
 import { createStarterDocument, parseMapSource } from "@tea/maps-editor/core";
 import { FileBlobStore } from "../src/blob-store.js";
 import { RemoteBuildQueue } from "../src/build-queue.js";
-import { WorldviewDatabase, type WorldviewUser } from "../src/database.js";
+import { MapsDatabase, type MapsUser } from "../src/database.js";
 import type {
   HostedMapCheckpoint,
   HostedMapSnapshot,
 } from "../src/map-cell-client.js";
-import { createWorldviewService } from "../src/server.js";
-import type { WorldviewMcpAuthConfig } from "../src/mcp-auth.js";
+import { createMapsService } from "../src/server.js";
+import type { MapsMcpAuthConfig } from "../src/mcp-auth.js";
 
 export const TEST_REALTIME_TICKET_SECRET =
-  "test-worldview-realtime-ticket-secret-0001";
+  "test-maps-realtime-ticket-secret-0001";
 
 export class FakeMapCells {
   readonly snapshots = new Map<string, HostedMapSnapshot>();
@@ -131,10 +131,10 @@ export async function fixture(
   fetchImpl?: typeof fetch,
   compilerFetch?: typeof fetch,
   additionalPublicOrigins?: readonly string[],
-  mcpAuth?: WorldviewMcpAuthConfig,
+  mcpAuth?: MapsMcpAuthConfig,
 ) {
   const root = await mkdtemp(join(tmpdir(), "tea-maps-service-test-"));
-  const database = new WorldviewDatabase(join(root, "maps.db"));
+  const database = new MapsDatabase(join(root, "maps.db"));
   const maps = new FakeMapCells();
   const blobs = new FileBlobStore(join(root, "blobs"));
   const options = {
@@ -142,7 +142,7 @@ export async function fixture(
     blobs,
     oauth: {
       fourmUrl: "https://4orm.example",
-      clientId: "worldview",
+      clientId: "maps",
       publicUrl: "http://127.0.0.1",
     },
     ...(additionalPublicOrigins ? { additionalPublicOrigins } : {}),
@@ -161,7 +161,7 @@ export async function fixture(
         }
       : {}),
   };
-  const server = createWorldviewService(options);
+  const server = createMapsService(options);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   if (!address || typeof address === "string")
@@ -178,8 +178,8 @@ export async function fixture(
 }
 
 export function session(
-  database: WorldviewDatabase,
-  profile: Omit<WorldviewUser, "id"> = {
+  database: MapsDatabase,
+  profile: Omit<MapsUser, "id"> = {
     fourmSub: "fourm-1",
     username: "mapper",
     displayName: "Mapper",

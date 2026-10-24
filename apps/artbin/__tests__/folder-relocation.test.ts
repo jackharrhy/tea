@@ -64,7 +64,7 @@ async function setup() {
     filePath,
     `${filePath}.preview.png`,
     `${old}/${old}/${old}.artbin-bsp.json`,
-    `${old}/${old}/${old}.worldview-walkability.json`,
+    `${old}/${old}/${old}.tea-maps-walkability.json`,
   ];
   for (const path of paths) {
     await mkdir(dirname(join(directory!, path)), { recursive: true });

@@ -1,19 +1,16 @@
-import {
-  worldviewGameProfile,
-  type WorldviewGameProfile,
-} from "@tea/maps-editor/core";
+import { mapsGameProfile, type MapsGameProfile } from "@tea/maps-editor/core";
 import { clientEntry, on, ref, type Handle } from "remix/component";
 
 export const NewMapSetup = clientEntry(
   `file:///app/assets/new-map-setup.tsx#NewMapSetup`,
   function NewMapSetupComponent(handle: Handle) {
-    let game: WorldviewGameProfile = "quake";
+    let game: MapsGameProfile = "quake";
     let format: "quake" | "valve-220" = "valve-220";
 
     function selectGame(event: Event) {
       game = (event.currentTarget as HTMLSelectElement)
-        .value as WorldviewGameProfile;
-      const profile = worldviewGameProfile(game);
+        .value as MapsGameProfile;
+      const profile = mapsGameProfile(game);
       if (!profile.supportedFaceSyntaxes.includes(format))
         format = profile.defaultFaceSyntax;
       handle.update();
@@ -26,7 +23,7 @@ export const NewMapSetup = clientEntry(
     }
 
     return () => {
-      const profile = worldviewGameProfile(game);
+      const profile = mapsGameProfile(game);
       return (
         <form
           action="/editor"

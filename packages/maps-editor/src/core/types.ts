@@ -212,7 +212,7 @@ export interface IdFactory {
   face(): FaceId;
 }
 
-export function createSequentialIdFactory(prefix = "worldview"): IdFactory {
+export function createSequentialIdFactory(prefix = "maps"): IdFactory {
   let document = 0;
   let entity = 0;
   let brush = 0;

@@ -8,7 +8,7 @@ export default defineConfig({
       miniflare: {
         bindings: {
           TEA_MAPS_REALTIME_TICKET_SECRET:
-            "test-worldview-realtime-ticket-secret-0001",
+            "test-maps-realtime-ticket-secret-0001",
         },
       },
     }),

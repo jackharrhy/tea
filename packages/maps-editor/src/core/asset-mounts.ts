@@ -1,4 +1,4 @@
-import type { WorldviewGameProfile } from "./worldview-project.js";
+import type { MapsGameProfile } from "./maps-project.js";
 
 export type AssetMountKind =
   | "builtin"
@@ -11,7 +11,7 @@ interface AssetMountBase {
   readonly label: string;
   /** Lower priority mounts resolve first; later mounts replace conflicting material names. */
   readonly priority: number;
-  readonly profile: WorldviewGameProfile;
+  readonly profile: MapsGameProfile;
 }
 
 export interface BuiltinAssetMount extends AssetMountBase {

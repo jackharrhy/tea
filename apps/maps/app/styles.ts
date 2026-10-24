@@ -29,7 +29,7 @@ export const mapsStyles = css({
     overflow: "hidden",
     isolation: "isolate",
   },
-  "& .viewport-panel, & .viewport, & .viewport world-view": {
+  "& .viewport-panel, & .viewport, & .viewport tea-map-view": {
     position: "absolute",
     inset: "0",
     width: "100%",

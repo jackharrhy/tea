@@ -281,7 +281,7 @@ fs.writeFileSync(map.replace(/\\.map$/, '.bsp'), Buffer.from([38, 0, 0, 0]));
     .each(["succeeded", "failed"] as const)(
     "round-trips a native %s result through the browser protocol",
     async (status) => {
-      const directory = await mkdtemp(join(tmpdir(), "worldview-native-test-"));
+      const directory = await mkdtemp(join(tmpdir(), "maps-native-test-"));
       try {
         const executable = join(directory, "compiler.cjs");
         await writeFile(

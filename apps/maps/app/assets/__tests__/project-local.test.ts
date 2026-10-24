@@ -1,4 +1,4 @@
-import { parseWorldviewProject } from "@tea/maps-editor/core";
+import { parseMapsProject } from "@tea/maps-editor/core";
 import type { HostedProject } from "@tea/maps-protocol";
 import { describe, expect, it } from "vitest";
 import { validateLinkedLocalProject } from "../project-local.ts";
@@ -17,7 +17,7 @@ function manifest(
   game: string,
   hosted?: { origin: string; projectId: string },
 ) {
-  return parseWorldviewProject(
+  return parseMapsProject(
     JSON.stringify({
       schemaVersion: 1,
       name: "Local Project",

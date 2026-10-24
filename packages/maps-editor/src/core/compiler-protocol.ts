@@ -4,7 +4,7 @@ import {
   MapCompileLogSchema,
 } from "./runtime-schemas.js";
 import { z } from "zod";
-import { WorldviewGameProfileSchema } from "./game-profiles.js";
+import { MapsGameProfileSchema } from "./game-profiles.js";
 
 // Shared by the remote browser adapter, hosted build queue, and native helper.
 export const RemoteCompileRequestSchema = z.strictObject({
@@ -55,7 +55,7 @@ export const MapBuildCapabilitiesSchema = z.strictObject({
     z.strictObject({
       id: z.string().min(1).max(256),
       label: z.string().min(1).max(256),
-      game: WorldviewGameProfileSchema,
+      game: MapsGameProfileSchema,
       qualities: z.array(z.enum(["preview", "final"])).max(2),
       durationHint: z.string().min(1).max(256).optional(),
     }),
@@ -64,7 +64,7 @@ export const MapBuildCapabilitiesSchema = z.strictObject({
     z.strictObject({
       id: z.string().min(1).max(256),
       label: z.string().min(1).max(256),
-      game: WorldviewGameProfileSchema,
+      game: MapsGameProfileSchema,
     }),
   ),
 }) satisfies z.ZodType<MapBuildCapabilities>;

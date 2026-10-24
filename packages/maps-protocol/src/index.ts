@@ -10,10 +10,7 @@ export {
   type CollaborationPresence,
   type CollaborationServerFrame,
 } from "./collaboration.js";
-export {
-  WorldviewProtocolError,
-  type ProtocolErrorCode,
-} from "./protocol-error.js";
+export { MapsProtocolError, type ProtocolErrorCode } from "./protocol-error.js";
 export {
   parseActiveRealtimeTicketPayload,
   ProjectRoleSchema,
@@ -22,5 +19,5 @@ export {
   type RealtimeTicketPayload,
 } from "./realtime-ticket.js";
 export * from "./hosted.js";
-export { worldviewGameProfile } from "@tea/maps-editor/core";
+export { mapsGameProfile } from "@tea/maps-editor/core";
 export { gameTreeAssetPath, isGameTreeAssetPath } from "./game-tree-assets.js";

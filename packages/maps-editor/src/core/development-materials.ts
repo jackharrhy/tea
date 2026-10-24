@@ -85,7 +85,7 @@ export function createDeveloperMaterial(
   text(rgba, size, "64", 8, 4, 1, labelInk);
   return {
     name,
-    sourceName: "Built-in Worldview development material",
+    sourceName: "Built-in Maps development material",
     width: size,
     height: size,
     rgba,

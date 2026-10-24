@@ -7,22 +7,19 @@ import {
   createCompilerToolMaterials,
   createDevelopmentMaterials,
 } from "./development-materials.js";
-import {
-  worldviewGameProfile,
-  type WorldviewGameProfile,
-} from "./game-profiles.js";
+import { mapsGameProfile, type MapsGameProfile } from "./game-profiles.js";
 import type { EditorMaterial } from "./materials.js";
 import { encodeGoldSrcWad3, encodeQuakeWad2 } from "./wad-encoding.js";
 
 /** Preview pixels are decoded from the same WAD bytes sent to the compiler. */
 export function developmentTexturePack(
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
   palette?: Uint8Array,
 ): {
   readonly wad: ArrayBuffer;
   readonly materials: readonly EditorMaterial[];
 } | null {
-  if (worldviewGameProfile(game).materialFormat === "wal") return null;
+  if (mapsGameProfile(game).materialFormat === "wal") return null;
   const quakePalette =
     game === "quake" ? (palette ?? createQuakePalette()) : undefined;
   const originals = createDevelopmentMaterials();

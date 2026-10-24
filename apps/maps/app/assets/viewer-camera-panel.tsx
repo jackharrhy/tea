@@ -1,12 +1,12 @@
 import type { CameraState } from "@jackharrhy/tea-maps-renderer";
-import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { clientEntry, on, type Handle } from "remix/component";
 import { cameraUrlValue } from "./remote-input.ts";
 
 export const ViewerCameraPanel = clientEntry(
   `file:///app/assets/viewer-camera-panel.tsx#ViewerCameraPanel`,
   function ViewerCameraPanelComponent(handle: Handle) {
-    let element: WorldViewElement | null = null;
+    let element: MapsViewElement | null = null;
     let reticle: HTMLElement | null = null;
     let startCamera: CameraState | null = null;
     let ready = false;
@@ -66,8 +66,8 @@ export const ViewerCameraPanel = clientEntry(
       reticle = document.querySelector<HTMLElement>("#reticle");
       function attach() {
         if (element) return;
-        element = document.querySelector<WorldViewElement>(
-          "#viewport world-view",
+        element = document.querySelector<MapsViewElement>(
+          "#viewport tea-map-view",
         );
         if (!element) return;
         element.addEventListener("ready", mapReady, { signal: handle.signal });

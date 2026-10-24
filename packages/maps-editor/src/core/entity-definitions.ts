@@ -1,5 +1,5 @@
 import type { Bounds, Vec3 } from "./types.js";
-import type { EntityDefinitionFormat } from "./worldview-project.js";
+import type { EntityDefinitionFormat } from "./maps-project.js";
 
 export type EntityPropertyType =
   | "string"

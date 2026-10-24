@@ -1,6 +1,6 @@
 {
   "name": "@jackharrhy/tea-maps-renderer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Embeddable WebGPU renderer for Quake, BSP2, GoldSrc, and Quake II maps",
   "homepage": "https://github.com/jackharrhy/tea/tree/main/packages/maps-renderer#readme",
   "bugs": {

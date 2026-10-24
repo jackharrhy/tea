@@ -2,7 +2,7 @@ import {
   entityValue,
   parseGoldSrcSprite,
   spriteReference,
-  WorldviewError,
+  MapsError,
   type ParsedGoldSrcSprite,
   type ParsedWorld,
   type SpriteReference,
@@ -114,10 +114,7 @@ export async function loadSpriteAssets(
         if (!binary && source.spriteBaseUrl)
           binary = spriteUrl(source.spriteBaseUrl, reference);
         if (!binary)
-          throw new WorldviewError(
-            "asset-fetch",
-            "no sprite source was provided",
-          );
+          throw new MapsError("asset-fetch", "no sprite source was provided");
         const bytes = await readBinarySource(
           binary,
           "sprite",

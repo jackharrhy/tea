@@ -31,8 +31,6 @@ jobs:
       matrix:
         app: [maps, maps-service, maps-collaboration, maps-compiler]
     steps:
-      - name: Require main
-        run: test "$GITHUB_REF" = refs/heads/main
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
@@ -42,15 +40,21 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set image tags
+        id: tags
+        run: |
+          tags="ghcr.io/jackharrhy/tea-${{ matrix.app }}:sha-${GITHUB_SHA}"
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            tags="$tags,ghcr.io/jackharrhy/tea-${{ matrix.app }}:latest"
+          fi
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
       - id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/${{ matrix.app }}/Dockerfile
           push: true
-          tags: |
-            ghcr.io/jackharrhy/tea-${{ matrix.app }}:latest
-            ghcr.io/jackharrhy/tea-${{ matrix.app }}:sha-${{ github.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/tea
             org.opencontainers.image.revision=${{ github.sha }}

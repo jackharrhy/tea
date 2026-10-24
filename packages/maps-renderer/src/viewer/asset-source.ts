@@ -1,7 +1,7 @@
 import {
   asArrayBuffer,
   normalizeGameAssetPath,
-  WorldviewError,
+  MapsError,
   type SoundReference,
   type SpriteReference,
 } from "../core/index.js";
@@ -29,7 +29,7 @@ async function readResponse(
   context: LoadAssetContext,
 ): Promise<ArrayBuffer> {
   if (!response.ok)
-    throw new WorldviewError(
+    throw new MapsError(
       "asset-fetch",
       `${label} returned HTTP ${response.status}`,
     );
@@ -95,8 +95,8 @@ export async function readBinarySource(
     return await readResponse(response, phase, label, context);
   } catch (error) {
     if (context.signal.aborted) throw context.signal.reason;
-    if (error instanceof WorldviewError) throw error;
-    throw new WorldviewError("asset-fetch", `failed to fetch ${label}`, {
+    if (error instanceof MapsError) throw error;
+    throw new MapsError("asset-fetch", `failed to fetch ${label}`, {
       cause: error,
     });
   }

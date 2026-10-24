@@ -87,7 +87,7 @@ export function buildSelectionOverlayBuffers(
         );
       }
       const solid = solids.vertices(
-        `__worldview_selection__:${source.key}`,
+        `__maps_selection__:${source.key}`,
         derived.bounds,
         [0, 0, 0],
         `${source.key}:${brushSolidSignature(brush, [0, 0, 0])}`,

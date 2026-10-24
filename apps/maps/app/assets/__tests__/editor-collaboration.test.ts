@@ -781,7 +781,7 @@ describe("CollaborationController", () => {
       channel: channel(() => {}),
     });
     const client = new CollaborationSocketClient({
-      endpoint: "wss://worldview.example",
+      endpoint: "wss://maps.example",
       mapId: "hosted-map",
       actorId: "alice",
       authorize: async () => "signed-ticket",

@@ -46,7 +46,7 @@ export function getBspDependencyPath(filePath: string): string {
 }
 
 export function getBspWalkabilityPath(filePath: string): string {
-  return siblingPath(filePath, ".worldview-walkability.json");
+  return siblingPath(filePath, ".tea-maps-walkability.json");
 }
 
 export function getBspThumbnailPath(filePath: string): string {

@@ -28,14 +28,14 @@ describe("local development fixtures", () => {
     await mkdir(maps, { recursive: true });
     await writeFile(path.join(maps, "room.bsp"), "bsp");
     await writeFile(
-      path.join(maps, "room.worldview.json"),
-      JSON.stringify({ label: "Worldview room" }),
+      path.join(maps, "room.maps.json"),
+      JSON.stringify({ label: "Maps room" }),
     );
     await writeFile(
       path.join(maps, "room.tea-maps.json"),
       JSON.stringify({ label: "Tea room" }),
     );
-    await writeFile(path.join(maps, "room.worldview-walkability.json"), "{}");
+    await writeFile(path.join(maps, "room.tea-maps-walkability.json"), "{}");
     await writeFile(path.join(maps, "room.tea-maps-walkability.json"), "{}");
 
     expect(await discoverLocalFixtures(root)).toMatchObject([

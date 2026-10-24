@@ -1,4 +1,4 @@
-import { createWorldview } from "@jackharrhy/tea-maps-renderer";
+import { createMapsViewer } from "@jackharrhy/tea-maps-renderer";
 import { serializeWalkability } from "@jackharrhy/tea-maps-renderer/walkability";
 import type { BspFormat } from "@jackharrhy/tea-maps-renderer/core";
 
@@ -42,7 +42,7 @@ export async function generateBspDerivatives(
   canvas.width = input.width;
   canvas.height = input.height;
   const warnings: string[] = [];
-  const viewer = await createWorldview({
+  const viewer = await createMapsViewer({
     canvas,
     controls: "none",
     audio: false,

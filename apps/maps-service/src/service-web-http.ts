@@ -4,7 +4,7 @@ import {
   HostedOkResponseSchema,
 } from "@tea/maps-protocol";
 import type { z } from "zod";
-import type { WorldviewDatabase, WorldviewUser } from "./database.js";
+import type { MapsDatabase, MapsUser } from "./database.js";
 import { ServiceHttpError, sessionUser } from "./service-http.js";
 import type { WebServiceRequestContext } from "./service-routing.js";
 
@@ -68,8 +68,8 @@ export function rejectCrossOriginMutation(
 
 export function requireWebUser(
   context: WebServiceRequestContext,
-  database: WorldviewDatabase,
-): WorldviewUser {
+  database: MapsDatabase,
+): MapsUser {
   const user = sessionUser(context, database);
   if (!user) throw new ServiceHttpError(401, "Authentication required");
   return user;

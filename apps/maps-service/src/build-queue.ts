@@ -1,5 +1,5 @@
 import type { BlobStore } from "./blob-store.js";
-import type { WorldviewDatabase } from "./database.js";
+import type { MapsDatabase } from "./database.js";
 import { hostedBuildProfile } from "./hosted-game-profiles.js";
 import { createWorldPackage } from "./world-package.js";
 import {
@@ -32,7 +32,7 @@ export class RemoteBuildQueue {
   private readonly pending: QueuedBuild[] = [];
   private active = 0;
   public constructor(
-    private readonly database: WorldviewDatabase,
+    private readonly database: MapsDatabase,
     private readonly blobs: BlobStore,
     private readonly endpoints: Partial<Record<HostedGame, string>>,
     private readonly fetch: typeof globalThis.fetch = globalThis.fetch,

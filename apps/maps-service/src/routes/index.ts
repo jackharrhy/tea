@@ -1,5 +1,5 @@
 import type { ServiceRoute } from "../service-routing.js";
-import type { WorldviewServiceOptions } from "../service-options.js";
+import type { MapsServiceOptions } from "../service-options.js";
 import { createAuthRoutes } from "./auth-routes.js";
 import { createBuildRoutes } from "./build-routes.js";
 import { createMapRoutes } from "./map-routes.js";
@@ -8,7 +8,7 @@ import { createProjectRoutes } from "./project-routes.js";
 import { createResourceRoutes } from "./resource-routes.js";
 
 export function createServiceRoutes(
-  options: WorldviewServiceOptions,
+  options: MapsServiceOptions,
 ): readonly ServiceRoute[] {
   return [
     ...createAuthRoutes(options),

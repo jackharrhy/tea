@@ -171,11 +171,11 @@ describe("HTTP integration tests", () => {
     });
 
     test("replaces Node environment references in browser dependencies", async () => {
-      const worldviewRequire = createRequire(
+      const mapsRequire = createRequire(
         import.meta.resolve("@jackharrhy/tea-maps-renderer"),
       );
       const envPath = join(
-        dirname(worldviewRequire.resolve("typegpu")),
+        dirname(mapsRequire.resolve("typegpu")),
         "shared/env.js",
       );
       const assetPath = relative(resolve(process.cwd(), "../.."), envPath)

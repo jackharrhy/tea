@@ -1,5 +1,5 @@
-import type { WorldviewMovementSettings } from "@jackharrhy/tea-maps-renderer";
-import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsMovementSettings } from "@jackharrhy/tea-maps-renderer";
+import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { clientEntry, on, type Handle } from "remix/component";
 
 const fields = [
@@ -73,12 +73,12 @@ type MovementKey = (typeof fields)[number]["key"];
 export const ViewerMovementPanel = clientEntry(
   `file:///app/assets/viewer-movement-panel.tsx#ViewerMovementPanel`,
   function ViewerMovementPanelComponent(handle: Handle) {
-    let element: WorldViewElement | null = null;
-    let settings: WorldviewMovementSettings | null = null;
+    let element: MapsViewElement | null = null;
+    let settings: MapsMovementSettings | null = null;
     let drafts: Partial<Record<MovementKey, string>> = {};
     let status = "";
 
-    function updateSettings(next: WorldviewMovementSettings) {
+    function updateSettings(next: MapsMovementSettings) {
       settings = { ...next };
       handle.update();
     }
@@ -98,8 +98,8 @@ export const ViewerMovementPanel = clientEntry(
     handle.queueTask(() => {
       function attach() {
         if (element) return;
-        element = document.querySelector<WorldViewElement>(
-          "#viewport world-view",
+        element = document.querySelector<MapsViewElement>(
+          "#viewport tea-map-view",
         );
         if (!element) return;
         element.addEventListener("ready", mapReady, { signal: handle.signal });

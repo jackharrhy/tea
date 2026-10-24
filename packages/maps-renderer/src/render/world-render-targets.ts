@@ -40,7 +40,7 @@ function createWorldCaptureResources(
         .$overrideFlags(
           GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
         )
-        .$name("Worldview overview color"),
+        .$name("Maps overview color"),
     );
     const msaa = track(
       root
@@ -50,7 +50,7 @@ function createWorldCaptureResources(
           sampleCount: RENDER_SAMPLE_COUNT,
         })
         .$usage("render")
-        .$name("Worldview overview MSAA"),
+        .$name("Maps overview MSAA"),
     );
     const depth = track(
       root
@@ -60,10 +60,10 @@ function createWorldCaptureResources(
           sampleCount: RENDER_SAMPLE_COUNT,
         })
         .$usage("render")
-        .$name("Worldview overview depth"),
+        .$name("Maps overview depth"),
     );
     readback = root.device.createBuffer({
-      label: "Worldview overview readback",
+      label: "Maps overview readback",
       size: ((width * 4 + 255) & ~255) * height,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
@@ -75,7 +75,7 @@ function createWorldCaptureResources(
               format: "rgba8unorm",
             })
             .$usage("sampled")
-            .$name("Worldview overview cutaway"),
+            .$name("Maps overview cutaway"),
         )
       : null;
     if (cutawayTexture && cutaway) cutawayTexture.write(encodeCutaway(cutaway));
@@ -125,7 +125,7 @@ export class WorldCanvasTarget {
         sampleCount: RENDER_SAMPLE_COUNT,
       })
       .$usage("render")
-      .$name("Worldview canvas MSAA");
+      .$name("Maps canvas MSAA");
     let depthTexture: TgpuTexture | null = null;
     try {
       depthTexture = this.root
@@ -135,7 +135,7 @@ export class WorldCanvasTarget {
           sampleCount: RENDER_SAMPLE_COUNT,
         })
         .$usage("render")
-        .$name("Worldview canvas depth");
+        .$name("Maps canvas depth");
       const msaaView = this.root.unwrap(msaaTexture).createView();
       const depthView = this.root.unwrap(depthTexture).createView();
       this.msaaTexture?.destroy();

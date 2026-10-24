@@ -12,7 +12,7 @@ import {
 
 const generateBspDerivatives = vi.fn(async () => ({
   png: Buffer.from("overview-png"),
-  walkabilityJson: '{"format":"worldview-walkability"}',
+  walkabilityJson: '{"format":"tea-maps-walkability"}',
   usedWalkability: true,
   warnings: [],
 }));
@@ -254,7 +254,7 @@ describe("preview regeneration job", () => {
       expect.stringMatching(/example\.bsp\.thumbnail\.webp$/),
     );
     expect(unlink).toHaveBeenCalledWith(
-      expect.stringMatching(/example\.worldview-walkability\.json$/),
+      expect.stringMatching(/example\.tea-maps-walkability\.json$/),
     );
     expect(unlink).toHaveBeenCalledWith(
       expect.stringMatching(/example\.artbin-bsp\.json$/),
@@ -275,8 +275,8 @@ describe("preview regeneration job", () => {
       Buffer.from("overview-thumbnail"),
     );
     expect(writeFile).toHaveBeenCalledWith(
-      expect.stringMatching(/example\.worldview-walkability\.json\.tmp-.+$/),
-      '{"format":"worldview-walkability"}',
+      expect.stringMatching(/example\.tea-maps-walkability\.json\.tmp-.+$/),
+      '{"format":"tea-maps-walkability"}',
     );
     expect(result.mapPreviews).toBe(1);
     const updated = await db.query.files.findFirst({

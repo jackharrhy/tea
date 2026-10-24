@@ -32,7 +32,7 @@ export async function serveMediaFile(input: {
   const bsp = /\.bsp$/i.test(file.name);
   const walkabilityFilename = file.name.replace(
     /\.bsp$/i,
-    ".worldview-walkability.json",
+    ".tea-maps-walkability.json",
   );
   const walkability = bsp && input.filename === walkabilityFilename;
   const expectedFilename = walkability

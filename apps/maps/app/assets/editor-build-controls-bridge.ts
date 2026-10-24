@@ -1,7 +1,7 @@
-import type { WorldviewGameProfile } from "@tea/maps-editor/core";
+import type { MapsGameProfile } from "@tea/maps-editor/core";
 
 export interface EditorBuildControlState {
-  readonly game: WorldviewGameProfile;
+  readonly game: MapsGameProfile;
   readonly gameDisabled: boolean;
   readonly profiles: readonly { readonly id: string; readonly label: string }[];
   readonly profileId: string;

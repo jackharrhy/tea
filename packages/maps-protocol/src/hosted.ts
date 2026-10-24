@@ -2,7 +2,7 @@ import {
   MapCompileDiagnosticSchema,
   MapCompileLogSchema,
   MapDocumentSchema,
-  WorldviewGameProfileSchema,
+  MapsGameProfileSchema,
 } from "@tea/maps-editor/core";
 import { z } from "zod";
 
@@ -15,7 +15,7 @@ const name = z.string().min(1).max(256);
 const timestamp = z.number().int().nonnegative();
 const sha256 = z.string().regex(/^[a-f\d]{64}$/i);
 
-export const HostedGameSchema = WorldviewGameProfileSchema.extract([
+export const HostedGameSchema = MapsGameProfileSchema.extract([
   "quake",
   "goldsrc",
   "gower",
@@ -68,7 +68,7 @@ export type HostedProjectAccessUser = z.infer<
 export const HostedResourceMountSchema = z.strictObject({
   id,
   ordinal: z.number().int().nonnegative(),
-  provider: z.enum(["artbin", "upload", "worldview"]),
+  provider: z.enum(["artbin", "upload", "maps"]),
   providerAssetId: id,
   expectedSha256: sha256,
   kind: z.string().min(1).max(128),

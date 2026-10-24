@@ -18,22 +18,22 @@ import type {
   MapCompileQuality as CompileQuality,
   RemoteCompileRequest as NativeCompilerRequest,
   RemoteCompileResult as NativeCompilerResult,
-  WorldviewGameProfile as CompilerGameProfile,
+  MapsGameProfile as CompilerGameProfile,
 } from "@tea/maps-editor/core";
-import { WorldviewGameProfileSchema } from "@tea/maps-editor/core";
+import { MapsGameProfileSchema } from "@tea/maps-editor/core";
 
 export type {
   MapCompileQuality as CompileQuality,
   RemoteCompileRequest as NativeCompilerRequest,
   RemoteCompileResult as NativeCompilerResult,
-  WorldviewGameProfile as CompilerGameProfile,
+  MapsGameProfile as CompilerGameProfile,
 } from "@tea/maps-editor/core";
 
 export function parseCompilerGameProfile(
   value: string | undefined,
 ): CompilerGameProfile {
   if (value === undefined || value.trim() === "") return "quake";
-  const parsed = WorldviewGameProfileSchema.safeParse(value);
+  const parsed = MapsGameProfileSchema.safeParse(value);
   if (parsed.success) return parsed.data;
   throw new Error("TEA_MAPS_GAME_PROFILE is not a supported game");
 }

@@ -1,6 +1,6 @@
 import {
-  parseWorldviewProject,
-  type WorldviewProjectManifest,
+  parseMapsProject,
+  type MapsProjectManifest,
 } from "@tea/maps-editor/core";
 import type { HostedProject } from "@tea/maps-protocol";
 import {
@@ -12,7 +12,7 @@ import { rememberRecentProject } from "./editor-recent-projects.ts";
 
 async function pickLocalProject(): Promise<{
   handle: MapDirectoryHandle;
-  manifest: WorldviewProjectManifest;
+  manifest: MapsProjectManifest;
 } | null> {
   if (!("showDirectoryPicker" in window))
     throw new Error("Project folders require Chromium File System Access");
@@ -25,7 +25,7 @@ async function pickLocalProject(): Promise<{
     throw error;
   }
   if (!handle) return null;
-  const manifest = parseWorldviewProject(
+  const manifest = parseMapsProject(
     await (await projectManifestFile(handle)).file.text(),
   );
   return { handle, manifest };
@@ -38,7 +38,7 @@ export async function openLocalProject(): Promise<string | null> {
 }
 
 export function validateLinkedLocalProject(
-  manifest: WorldviewProjectManifest,
+  manifest: MapsProjectManifest,
   project: HostedProject,
   origin: string,
 ) {

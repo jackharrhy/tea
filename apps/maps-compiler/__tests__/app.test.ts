@@ -23,11 +23,11 @@ describe("compiler HTTP boundary", () => {
 
   it("does not inherit the original compiler or game launch settings", async () => {
     const app = createCompilerApp({
-      WORLDVIEW_GAME_PROFILE: "quake2",
-      WORLDVIEW_Q2TOOL: "/original/q2tool",
-      WORLDVIEW_LAUNCH_EXECUTABLE: "/original/quake",
-      WORLDVIEW_LAUNCH_WORKING_DIRECTORY: "/original",
-      WORLDVIEW_LAUNCH_MAP_DIRECTORY: "/original/maps",
+      MAPS_GAME_PROFILE: "quake2",
+      MAPS_Q2TOOL: "/original/q2tool",
+      MAPS_LAUNCH_EXECUTABLE: "/original/quake",
+      MAPS_LAUNCH_WORKING_DIRECTORY: "/original",
+      MAPS_LAUNCH_MAP_DIRECTORY: "/original/maps",
     });
     expect(app.configured()).toBe(false);
     const response = await app.fetch(

@@ -105,7 +105,7 @@ describe("Tea Maps hosted project service", () => {
     });
     expect(malformedCookie.status).toBe(200);
     await expect(malformedCookie.json()).resolves.toEqual({ user: null });
-    const oldCookie = cookie.replace("tea_maps_session=", "worldview_session=");
+    const oldCookie = cookie.replace("tea_maps_session=", "maps_session=");
     expect(
       await (
         await fetch(`${app.origin}/api/session`, {
@@ -413,7 +413,7 @@ describe("Tea Maps hosted project service", () => {
     expect(rejected.status).toBe(403);
   });
 
-  test("lets project owners manage access for known Worldview users", async () => {
+  test("lets project owners manage access for known Maps users", async () => {
     const app = await fixture();
     const owner = session(app.database);
     const collaborator = app.database.upsertUser({
@@ -663,7 +663,7 @@ describe("Tea Maps hosted project service", () => {
     },
   );
 
-  test("completes the existing 4orm PKCE flow into a Worldview session", async () => {
+  test("completes the existing 4orm PKCE flow into a Maps session", async () => {
     const calls: string[] = [];
     const mockFetch: typeof fetch = async (input) => {
       const url = String(input);

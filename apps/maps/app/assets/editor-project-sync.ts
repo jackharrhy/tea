@@ -1,7 +1,7 @@
 import {
   mapSourceFingerprint,
   parseMapSource,
-  serializeWorldviewProject,
+  serializeMapsProject,
 } from "@tea/maps-editor/core";
 import {
   HostedMapResponseSchema,
@@ -156,7 +156,7 @@ export async function linkHostedProject(
       maps: entries.map(([path, mapId]) => ({ path, mapId })),
     },
   };
-  const text = serializeWorldviewProject(manifest);
+  const text = serializeMapsProject(manifest);
   const file = await project.handle.getFileHandle("tea.maps.project.json");
   await writeMapFile(file, text, project.manifestFingerprint);
   return {

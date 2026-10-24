@@ -3,7 +3,7 @@ import { prepareWadBuildResources } from "./wad-build-resources.js";
 import { prepareGameTreeBuildResources } from "./game-tree-build-resources.js";
 import { hostedBuildProfile } from "./hosted-game-profiles.js";
 import { ServiceHttpError, MAX_HOSTED_MAP_BYTES } from "./service-http.js";
-import type { WorldviewServiceOptions } from "./service-options.js";
+import type { MapsServiceOptions } from "./service-options.js";
 
 function admissionError(
   admission: "user-active" | "user-hourly" | "global-capacity",
@@ -17,10 +17,7 @@ function admissionError(
 }
 
 export async function submitHostedBuild(
-  options: Pick<
-    WorldviewServiceOptions,
-    "blobs" | "builds" | "database" | "maps"
-  >,
+  options: Pick<MapsServiceOptions, "blobs" | "builds" | "database" | "maps">,
   input: {
     readonly mapId: string;
     readonly userId: string;

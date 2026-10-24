@@ -2,9 +2,9 @@ import { openDB, type DBSchema } from "idb";
 import {
   developmentTexturePack,
   EditorMaterialCatalog,
-  worldviewGameProfile,
+  mapsGameProfile,
   type EditorMaterial,
-  type WorldviewGameProfile,
+  type MapsGameProfile,
 } from "@tea/maps-editor/core";
 import { parseWad } from "@jackharrhy/tea-maps-renderer/core";
 
@@ -38,7 +38,7 @@ function database() {
   });
 }
 
-function key(documentId: string, game: WorldviewGameProfile) {
+function key(documentId: string, game: MapsGameProfile) {
   return `${documentId}:${game}`;
 }
 
@@ -49,13 +49,13 @@ export function emptyStandaloneResources(): StandaloneResources {
 export function validateStandaloneWad(
   name: string,
   data: ArrayBuffer,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
 ): void {
   if (!/\.wad$/i.test(name)) throw new Error(`${name} is not a WAD file`);
   if (data.byteLength > maxWadBytes)
     throw new Error(`${name} exceeds the 16 MiB WAD limit`);
   const wad = parseWad(data);
-  if (!worldviewGameProfile(game).wadVersions.includes(wad.version))
+  if (!mapsGameProfile(game).wadVersions.includes(wad.version))
     throw new Error(`${name} is WAD${wad.version}, which ${game} cannot use`);
   if (wad.warnings[0]) throw new Error(`${name}: ${wad.warnings[0].message}`);
 }
@@ -63,7 +63,7 @@ export function validateStandaloneWad(
 export function addStandaloneWad(
   resources: StandaloneResources,
   wad: StandaloneWad,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
 ): StandaloneResources {
   validateStandaloneWad(wad.name, wad.data, game);
   const wads = [
@@ -85,7 +85,7 @@ export function addStandaloneWad(
 export function setStandalonePalette(
   resources: StandaloneResources,
   palette: Uint8Array,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
 ): StandaloneResources {
   if (game !== "quake") throw new Error("Custom palettes require Quake");
   if (palette.byteLength !== 768)
@@ -99,7 +99,7 @@ export function setStandalonePalette(
 
 export function standaloneMaterials(
   resources: StandaloneResources,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
 ): readonly EditorMaterial[] {
   const catalog = new EditorMaterialCatalog();
   for (const material of developmentTexturePack(
@@ -122,7 +122,7 @@ export function standaloneMaterials(
 
 export async function loadStandaloneResources(
   documentId: string,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
 ): Promise<StandaloneResources> {
   const connection = await database();
   try {
@@ -139,7 +139,7 @@ export async function loadStandaloneResources(
 
 export async function saveStandaloneResources(
   documentId: string,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
   resources: StandaloneResources,
 ): Promise<void> {
   const connection = await database();
@@ -159,7 +159,7 @@ export async function saveStandaloneResources(
 
 export async function saveStandaloneResourcesIfAbsent(
   documentId: string,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
   resources: StandaloneResources,
 ): Promise<boolean> {
   const connection = await database();

@@ -9,7 +9,7 @@ import {
   parseCollaborationServerFrame,
 } from "../src/index.js";
 
-describe("Worldview wire protocols", () => {
+describe("Maps wire protocols", () => {
   it("accepts contained Quake II build assets and rejects escaped paths", () => {
     expect(isGameTreeAssetPath("textures/e1u1/metal.wal")).toBe(true);
     expect(isGameTreeAssetPath("textures/e1u1/metal.png")).toBe(true);

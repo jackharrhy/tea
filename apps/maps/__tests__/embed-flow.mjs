@@ -65,7 +65,7 @@ async function checkEmbeddedInput(timing) {
     await page.goto(origin);
     await page.evaluate(async (audioWave) => {
       await import("/standalone.js");
-      const element = document.createElement("world-view");
+      const element = document.createElement("tea-map-view");
       const probe = {
         element,
         context: null,
@@ -127,7 +127,7 @@ async function checkEmbeddedInput(timing) {
       null,
     );
 
-    const canvas = page.locator("world-view canvas");
+    const canvas = page.locator("tea-map-view canvas");
     await canvas.click();
     await waitFor(
       page,

@@ -4,7 +4,7 @@ import { mcpOperationsByName, mcpToolDescriptions } from "../mcp-operations.js";
 import { ServiceHttpError } from "../service-http.js";
 import { defineWebRoute } from "../service-routing.js";
 import { webError, webRequestBody } from "../service-web-http.js";
-import type { WorldviewServiceOptions } from "../service-options.js";
+import type { MapsServiceOptions } from "../service-options.js";
 
 const SUPPORTED_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26"] as const;
 const RpcRequestSchema = z.strictObject({
@@ -24,7 +24,7 @@ function rpcResponse(body: unknown): Response {
   });
 }
 
-export function createMcpRoutes(options: WorldviewServiceOptions) {
+export function createMcpRoutes(options: MapsServiceOptions) {
   const scope = mcpScope(options.mcpAuth);
   return [
     defineWebRoute(

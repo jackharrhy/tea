@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   decodeWalTexture,
   readWalTextureHeader,
-  WorldviewError,
+  MapsError,
 } from "../src/core/index.js";
 
 function syntheticWal(): Uint8Array {
@@ -66,7 +66,7 @@ describe("Quake II WAL textures", () => {
 
   it("rejects truncated pixel data and missing palettes", () => {
     expect(() => decodeWalTexture(syntheticWal(), new Uint8Array())).toThrow(
-      WorldviewError,
+      MapsError,
     );
     expect(() =>
       decodeWalTexture(syntheticWal().slice(0, 120), new Uint8Array(768)),

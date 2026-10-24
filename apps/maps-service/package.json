@@ -8,14 +8,12 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "npm run build && node --enable-source-maps dist/server.js",
     "start": "node --enable-source-maps dist/server.js",
-    "compare:data": "node scripts/compare-data.mjs",
-    "test:source-cutover": "npm run build && node __tests__/source-cutover.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "@jackharrhy/tea-maps-renderer": "0.1.0",
+    "@jackharrhy/tea-maps-renderer": "0.2.0",
     "@tea/maps-editor": "0.1.0",
     "@tea/maps-protocol": "0.1.0",
     "@tea/request-body": "0.1.0",

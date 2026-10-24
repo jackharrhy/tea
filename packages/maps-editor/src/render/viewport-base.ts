@@ -487,7 +487,7 @@ export abstract class ViewportBase {
     });
     const swapchainView = this.context.getCurrentTexture().createView();
     const pass = encoder.beginRenderPass({
-      label: `Worldview ${this.kind} viewport`,
+      label: `Maps ${this.kind} viewport`,
       colorAttachments: [
         {
           view: this.root.unwrap(this.color).createView(),
@@ -732,7 +732,7 @@ export abstract class ViewportBase {
       this.format,
       width,
       height,
-      `Worldview ${this.kind} viewport`,
+      `Maps ${this.kind} viewport`,
     );
     this.canvas.width = width;
     this.canvas.height = height;

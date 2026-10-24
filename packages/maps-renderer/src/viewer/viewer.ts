@@ -1,10 +1,6 @@
 import tgpu, { type TgpuRoot } from "typegpu";
 
-import {
-  planOverview,
-  WorldviewError,
-  type ParsedWorld,
-} from "../core/index.js";
+import { planOverview, MapsError, type ParsedWorld } from "../core/index.js";
 import { AnimationFrameScheduler } from "../runtime/frame-scheduler.js";
 import { TypeGpuWorldRenderer } from "../render/renderer.js";
 import {
@@ -17,7 +13,7 @@ import {
 import { loadWorldAssets } from "./assets.js";
 import { WorldAudio } from "./audio.js";
 import { WorldCamera } from "./camera.js";
-import { DEFAULT_WORLDVIEW_MOVEMENT, WorldControls } from "./controls.js";
+import { DEFAULT_MAPS_MOVEMENT, WorldControls } from "./controls.js";
 import {
   overviewBlob,
   overviewCamera,
@@ -29,16 +25,16 @@ import type {
   BinarySource,
   CameraState,
   CameraUpdate,
-  CreateWorldviewOptions,
+  CreateMapsOptions,
   LoadOptions,
   MapDiagnostics,
   OverviewCaptureOptions,
   OverviewCaptureResult,
-  WorldviewMovementMode,
-  WorldviewMovementUpdate,
+  MapsMovementMode,
+  MapsMovementUpdate,
   WorldSource,
-  WorldviewEventMap,
-  WorldviewViewer,
+  MapsEventMap,
+  MapsViewer,
 } from "./types.js";
 
 const DEFAULT_CLEAR = [0.025, 0.035, 0.03, 1] as const;
@@ -56,10 +52,7 @@ function combinedSignal(
   return defined.length === 1 ? defined[0]! : AbortSignal.any(defined);
 }
 
-class WorldviewViewerImplementation
-  extends EventTarget
-  implements WorldviewViewer
-{
+class MapsViewerImplementation extends EventTarget implements MapsViewer {
   public readonly canvas: HTMLCanvasElement;
   private readonly root: TgpuRoot;
   private readonly context: GPUCanvasContext;
@@ -94,7 +87,7 @@ class WorldviewViewerImplementation
     root: TgpuRoot,
     context: GPUCanvasContext,
     format: GPUTextureFormat,
-    options: CreateWorldviewOptions,
+    options: CreateMapsOptions,
   ) {
     super();
     this.root = root;
@@ -166,7 +159,7 @@ class WorldviewViewerImplementation
     this.frameScheduler.setTarget({ render: this.renderFrame });
     void root.device.lost.then((info) => {
       if (this.disposed) return;
-      const error = new WorldviewError(
+      const error = new MapsError(
         "device-lost",
         `WebGPU device lost: ${info.message || info.reason}`,
       );
@@ -195,12 +188,12 @@ class WorldviewViewerImplementation
     return this.audioRuntime.state;
   }
 
-  public get movementMode(): WorldviewMovementMode {
+  public get movementMode(): MapsMovementMode {
     return this.controls?.mode ?? "none";
   }
 
   public get movement() {
-    return this.controls?.settings ?? { ...DEFAULT_WORLDVIEW_MOVEMENT };
+    return this.controls?.settings ?? { ...DEFAULT_MAPS_MOVEMENT };
   }
 
   public get walkability(): WalkabilityMap | null {
@@ -259,9 +252,9 @@ class WorldviewViewerImplementation
         await renderer.initialize();
       } catch (error) {
         renderer?.dispose();
-        throw new WorldviewError(
+        throw new MapsError(
           "gpu-initialization",
-          "failed to compile Worldview GPU pipelines",
+          "failed to compile Maps GPU pipelines",
           {
             cause: error,
           },
@@ -386,7 +379,7 @@ class WorldviewViewerImplementation
   ): Promise<OverviewCaptureResult> {
     this.assertUsable();
     if (!this.renderer || !this.parsedWorld)
-      throw new Error("Worldview has no loaded map");
+      throw new Error("Maps has no loaded map");
     const layout = planOverview(this.parsedWorld, {
       ...(options.width === undefined ? {} : { width: options.width }),
       ...(options.height === undefined ? {} : { height: options.height }),
@@ -482,9 +475,9 @@ class WorldviewViewerImplementation
     this.requestFrame();
   }
 
-  public setMovementMode(mode: Exclude<WorldviewMovementMode, "none">): void {
+  public setMovementMode(mode: Exclude<MapsMovementMode, "none">): void {
     this.assertUsable();
-    if (!this.controls) throw new Error("Worldview controls are disabled");
+    if (!this.controls) throw new Error("Maps controls are disabled");
     if (!this.controls.setMode(mode, this.cameraController)) {
       throw new Error(
         "The loaded BSP does not contain a standing player collision hull",
@@ -492,9 +485,9 @@ class WorldviewViewerImplementation
     }
   }
 
-  public setMovement(update: WorldviewMovementUpdate): void {
+  public setMovement(update: MapsMovementUpdate): void {
     this.assertUsable();
-    if (!this.controls) throw new Error("Worldview controls are disabled");
+    if (!this.controls) throw new Error("Maps controls are disabled");
     this.controls.setSettings(update);
     this.emitMovementChange();
   }
@@ -504,7 +497,7 @@ class WorldviewViewerImplementation
   ): Promise<WalkabilityMap> {
     this.assertUsable();
     const world = this.parsedWorld;
-    if (!world) throw new Error("Worldview has no loaded map");
+    if (!world) throw new Error("Maps has no loaded map");
     this.walkabilityController?.abort(
       new DOMException(
         "Superseded by newer walkability generation",
@@ -542,7 +535,7 @@ class WorldviewViewerImplementation
   ): Promise<WalkabilityMap> {
     this.assertUsable();
     const world = this.parsedWorld;
-    if (!world) throw new Error("Worldview has no loaded map");
+    if (!world) throw new Error("Maps has no loaded map");
     this.walkabilityController?.abort(
       new DOMException("Superseded by newer walkability loading", "AbortError"),
     );
@@ -589,7 +582,7 @@ class WorldviewViewerImplementation
 
   private applyWalkability(walkability: WalkabilityMap | null): void {
     if (walkability) {
-      if (!this.parsedWorld) throw new Error("Worldview has no loaded map");
+      if (!this.parsedWorld) throw new Error("Maps has no loaded map");
       assertWalkabilityCompatible(this.parsedWorld, walkability);
     }
     this.walkabilityMap = walkability;
@@ -652,11 +645,11 @@ class WorldviewViewerImplementation
     this.frameScheduler.dispose();
     this.loadGeneration += 1;
     this.loadController?.abort(
-      new DOMException("Worldview viewer disposed", "AbortError"),
+      new DOMException("Maps viewer disposed", "AbortError"),
     );
     this.loadController = null;
     this.walkabilityController?.abort(
-      new DOMException("Worldview viewer disposed", "AbortError"),
+      new DOMException("Maps viewer disposed", "AbortError"),
     );
     this.walkabilityController = null;
     this.stop();
@@ -675,9 +668,9 @@ class WorldviewViewerImplementation
     this.root.destroy();
   }
 
-  public override addEventListener<K extends keyof WorldviewEventMap>(
+  public override addEventListener<K extends keyof MapsEventMap>(
     type: K,
-    listener: (this: WorldviewViewer, event: WorldviewEventMap[K]) => void,
+    listener: (this: MapsViewer, event: MapsEventMap[K]) => void,
     options?: boolean | AddEventListenerOptions,
   ): void;
   public override addEventListener(
@@ -693,9 +686,9 @@ class WorldviewViewerImplementation
     super.addEventListener(type, callback, options);
   }
 
-  public override removeEventListener<K extends keyof WorldviewEventMap>(
+  public override removeEventListener<K extends keyof MapsEventMap>(
     type: K,
-    listener: (this: WorldviewViewer, event: WorldviewEventMap[K]) => void,
+    listener: (this: MapsViewer, event: MapsEventMap[K]) => void,
     options?: boolean | EventListenerOptions,
   ): void;
   public override removeEventListener(
@@ -779,9 +772,9 @@ class WorldviewViewerImplementation
     return true;
   }
 
-  private emit<K extends keyof WorldviewEventMap>(
+  private emit<K extends keyof MapsEventMap>(
     type: K,
-    detail: WorldviewEventMap[K]["detail"],
+    detail: MapsEventMap[K]["detail"],
   ): void {
     this.dispatchEvent(new CustomEvent(type, { detail }));
   }
@@ -801,17 +794,17 @@ class WorldviewViewerImplementation
   }
 
   private assertUsable(): void {
-    if (this.disposed) throw new Error("Worldview viewer has been disposed");
+    if (this.disposed) throw new Error("Maps viewer has been disposed");
   }
 }
 
-export async function createWorldview(
-  options: CreateWorldviewOptions,
-): Promise<WorldviewViewer> {
+export async function createMapsViewer(
+  options: CreateMapsOptions,
+): Promise<MapsViewer> {
   if (!globalThis.navigator?.gpu) {
-    throw new WorldviewError(
+    throw new MapsError(
       "webgpu-unavailable",
-      "Worldview requires a browser with WebGPU support",
+      "Maps requires a browser with WebGPU support",
     );
   }
   options.signal?.throwIfAborted();
@@ -819,9 +812,9 @@ export async function createWorldview(
   try {
     root = await tgpu.init();
   } catch (error) {
-    throw new WorldviewError(
+    throw new MapsError(
       "gpu-initialization",
-      "Worldview could not initialize WebGPU",
+      "Maps could not initialize WebGPU",
       {
         cause: error,
       },
@@ -844,20 +837,15 @@ export async function createWorldview(
     });
   } catch (error) {
     root.destroy();
-    throw new WorldviewError(
+    throw new MapsError(
       "gpu-initialization",
-      "Worldview could not configure the canvas",
+      "Maps could not configure the canvas",
       {
         cause: error,
       },
     );
   }
-  const viewer = new WorldviewViewerImplementation(
-    root,
-    context,
-    format,
-    options,
-  );
+  const viewer = new MapsViewerImplementation(root, context, format, options);
   if (options.autoStart ?? true) viewer.start();
   if (options.source) {
     try {

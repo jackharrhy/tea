@@ -73,7 +73,7 @@ function upload(device: GPUDevice, data: Float32Array): GPUBuffer {
     device,
     data,
     GPUBufferUsage.VERTEX,
-    "Worldview solid batch",
+    "Maps solid batch",
   );
 }
 

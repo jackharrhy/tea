@@ -17,7 +17,7 @@ import {
   type BspTextureMapping,
 } from "./bsp-render-geometry.js";
 import { entityValue, parseEntities } from "./entities.js";
-import { invalidData, invariant, WorldviewError } from "./errors.js";
+import { invalidData, invariant, MapsError } from "./errors.js";
 import { LightmapPacker, LIGHTMAP_PAGE_SIZE } from "./lightmaps.js";
 import { classifyMaterial } from "./materials.js";
 import type {
@@ -290,9 +290,9 @@ export function parseBsp38(
   const layout = magic === QBSP_MAGIC ? extendedLayout : classicLayout;
   const version = source.u32(4);
   if (version !== BSP38_VERSION) {
-    throw new WorldviewError(
+    throw new MapsError(
       "unsupported-bsp",
-      `Worldview supports IBSP and QBSP version 38, received ${version}`,
+      `Maps supports IBSP and QBSP version 38, received ${version}`,
     );
   }
   const lumps = Array.from({ length: LUMP_COUNT }, (_, type): Bsp38Lump => {

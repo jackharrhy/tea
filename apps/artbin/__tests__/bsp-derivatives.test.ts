@@ -17,7 +17,7 @@ const manifestTestDirectory = join(
 afterEach(() => rm(manifestTestDirectory, { recursive: true, force: true }));
 
 describe("BSP derivative analysis", () => {
-  test("persists Worldview format, warnings, and canonical asset plan", async () => {
+  test("persists Maps format, warnings, and canonical asset plan", async () => {
     const fixture = await readFile(
       new URL("./fixtures/dm_barraco2.bsp", import.meta.url),
     );

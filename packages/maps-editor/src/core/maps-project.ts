@@ -1,42 +1,42 @@
 import { z } from "zod";
 
 import {
-  WorldviewGameProfileSchema,
-  worldviewGameProfile,
-  type WorldviewGameProfile,
+  MapsGameProfileSchema,
+  mapsGameProfile,
+  type MapsGameProfile,
 } from "./game-profiles.js";
 
-export type { WorldviewGameProfile } from "./game-profiles.js";
+export type { MapsGameProfile } from "./game-profiles.js";
 export type EntityDefinitionFormat = "fgd" | "def" | "ent";
 
-export interface WorldviewEntityDefinitionSource {
+export interface MapsEntityDefinitionSource {
   readonly path: string;
   readonly format: EntityDefinitionFormat;
 }
 
-export interface WorldviewProjectResources {
+export interface MapsProjectResources {
   /** Later entries override earlier WAD entries with the same logical texture name. */
   readonly wads: readonly string[];
   /** Ordered game-directory roots for profile-native assets; later roots override earlier ones. */
   readonly gameRoots?: readonly string[] | undefined;
   readonly palette?: string | undefined;
   readonly spriteRoots: readonly string[];
-  readonly entityDefinitions: readonly WorldviewEntityDefinitionSource[];
+  readonly entityDefinitions: readonly MapsEntityDefinitionSource[];
 }
 
-export interface WorldviewProjectBuildProfile {
+export interface MapsProjectBuildProfile {
   readonly id: string;
   readonly label: string;
   readonly quality: "preview" | "final";
 }
 
-export interface WorldviewProjectManifest {
+export interface MapsProjectManifest {
   readonly schemaVersion: 1;
   readonly name: string;
-  readonly game: WorldviewGameProfile;
+  readonly game: MapsGameProfile;
   readonly mapRoots: readonly string[];
-  readonly resources: WorldviewProjectResources;
-  readonly buildProfiles: readonly WorldviewProjectBuildProfile[];
+  readonly resources: MapsProjectResources;
+  readonly buildProfiles: readonly MapsProjectBuildProfile[];
   readonly defaultBuildProfile?: string | undefined;
   readonly hosted?:
     | {
@@ -50,13 +50,13 @@ export interface WorldviewProjectManifest {
     | undefined;
 }
 
-export class WorldviewProjectParseError extends Error {
+export class MapsProjectParseError extends Error {
   public constructor(
     message: string,
     public readonly field?: string,
   ) {
     super(field ? `${field}: ${message}` : message);
-    this.name = "WorldviewProjectParseError";
+    this.name = "MapsProjectParseError";
   }
 }
 
@@ -142,7 +142,7 @@ const ProjectManifestObjectSchema = z
   .strictObject({
     schemaVersion: z.literal(1, { error: "only schemaVersion 1 is supported" }),
     name: nonEmptyString,
-    game: WorldviewGameProfileSchema,
+    game: MapsGameProfileSchema,
     mapRoots: uniquePaths(true).min(1, {
       error: "must contain at least one map root",
     }),
@@ -174,7 +174,7 @@ const ProjectManifestObjectSchema = z
         message: "must reference an existing build profile",
       });
     }
-    const supportedFormats = worldviewGameProfile(
+    const supportedFormats = mapsGameProfile(
       project.game,
     ).entityDefinitionFormats;
     for (const [
@@ -204,8 +204,8 @@ const ProjectManifestObjectSchema = z
   });
 
 /** Strict canonical schema for a `tea.maps.project.json` manifest. */
-export const WorldviewProjectManifestSchema =
-  ProjectManifestObjectSchema satisfies z.ZodType<WorldviewProjectManifest>;
+export const MapsProjectManifestSchema =
+  ProjectManifestObjectSchema satisfies z.ZodType<MapsProjectManifest>;
 
 function fieldForIssue(issue: z.core.$ZodIssue): string {
   const path = [...issue.path];
@@ -231,21 +231,19 @@ function messageForIssue(issue: z.core.$ZodIssue): string {
   return issue.message;
 }
 
-export function parseWorldviewProject(
-  source: string,
-): WorldviewProjectManifest {
+export function parseMapsProject(source: string): MapsProjectManifest {
   let value: unknown;
   try {
     value = JSON.parse(source);
   } catch (error) {
-    throw new WorldviewProjectParseError(
+    throw new MapsProjectParseError(
       `contains invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-  const result = WorldviewProjectManifestSchema.safeParse(value);
+  const result = MapsProjectManifestSchema.safeParse(value);
   if (!result.success) {
     const issue = result.error.issues[0]!;
-    throw new WorldviewProjectParseError(
+    throw new MapsProjectParseError(
       messageForIssue(issue),
       fieldForIssue(issue),
     );
@@ -253,9 +251,7 @@ export function parseWorldviewProject(
   return result.data;
 }
 
-export function serializeWorldviewProject(
-  project: WorldviewProjectManifest,
-): string {
-  const validated = parseWorldviewProject(JSON.stringify(project));
+export function serializeMapsProject(project: MapsProjectManifest): string {
+  const validated = parseMapsProject(JSON.stringify(project));
   return `${JSON.stringify(validated, null, 2)}\n`;
 }

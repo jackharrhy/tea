@@ -683,7 +683,7 @@ describe("native Remix router", () => {
     const providedWad = makeWAD3Texture("SITEWALL");
     const palette = Buffer.alloc(768, 42);
     const walkability = JSON.stringify({
-      format: "worldview-walkability",
+      format: "tea-maps-walkability",
       version: 1,
     });
     const inspected = inspectBspDependencies(bsp);
@@ -709,7 +709,7 @@ describe("native Remix router", () => {
         JSON.stringify(manifest),
       ),
       writeFile(
-        join(uploadsRoot, "maps/example.worldview-walkability.json"),
+        join(uploadsRoot, "maps/example.tea-maps-walkability.json"),
         walkability,
       ),
       writeFile(join(uploadsRoot, "textures.wad"), wad),
@@ -777,7 +777,7 @@ describe("native Remix router", () => {
     assert.match(html, /palette\.lmp/);
     assert.doesNotMatch(html, /\/api\/bsp\/bsp-map\/palette/);
     assert.match(html, /textures\.wad/);
-    assert.match(html, /example\.worldview-walkability\.json/);
+    assert.match(html, /example\.tea-maps-walkability\.json/);
 
     const walkabilityResponse = await router.fetch(
       request(

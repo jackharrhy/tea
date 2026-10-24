@@ -1,10 +1,10 @@
 import { z } from "zod";
-import type { WorldviewDatabase, WorldviewUser } from "./database.js";
+import type { MapsDatabase, MapsUser } from "./database.js";
 import { ServiceHttpError } from "./service-http.js";
 
 const DEFAULT_MCP_SCOPE = "maps:admin";
 
-export interface WorldviewMcpAuthConfig {
+export interface MapsMcpAuthConfig {
   readonly fourmUrl: string;
   readonly publicUrl: string;
   readonly clientId: string;
@@ -12,7 +12,7 @@ export interface WorldviewMcpAuthConfig {
   readonly scope?: string;
 }
 
-export function mcpScope(config?: WorldviewMcpAuthConfig): string {
+export function mcpScope(config?: MapsMcpAuthConfig): string {
   const scope = config?.scope ?? DEFAULT_MCP_SCOPE;
   if (!/^[a-z][a-z0-9._-]*:[a-z][a-z0-9._-]*$/.test(scope))
     throw new Error("Invalid Tea Maps MCP scope");
@@ -34,16 +34,16 @@ const ProfileSchema = z.looseObject({
   is_admin: z.boolean(),
 });
 
-export function mcpResourceUrl(config: WorldviewMcpAuthConfig): string {
+export function mcpResourceUrl(config: MapsMcpAuthConfig): string {
   return `${config.publicUrl.replace(/\/$/, "")}/mcp`;
 }
 
 export async function requireMcpAdmin(
   authorization: string | undefined,
-  config: WorldviewMcpAuthConfig | undefined,
-  database: WorldviewDatabase,
+  config: MapsMcpAuthConfig | undefined,
+  database: MapsDatabase,
   fetcher: typeof fetch = fetch,
-): Promise<WorldviewUser> {
+): Promise<MapsUser> {
   if (!config)
     throw new ServiceHttpError(503, "Tea Maps MCP is not configured");
   const token = /^Bearer ([^\s]+)$/i.exec(authorization ?? "")?.[1];

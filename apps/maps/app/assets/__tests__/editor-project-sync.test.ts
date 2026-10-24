@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import {
   createStarterDocument,
   mapSourceFingerprint,
-  parseWorldviewProject,
+  parseMapsProject,
   serializeMap,
 } from "@tea/maps-editor/core";
 import { deleteDB } from "idb";
@@ -71,7 +71,7 @@ function fixture(
   const project = {
     manifestFileName,
     manifestFingerprint: mapSourceFingerprint(manifest.read()),
-    manifest: parseWorldviewProject(manifest.read()),
+    manifest: parseMapsProject(manifest.read()),
     maps: [{ path: "maps/demo.map", handle: local.handle }],
     handle: {
       getFileHandle: async (name: string, options?: { create?: boolean }) => {

@@ -1,4 +1,4 @@
-import { WorldviewError, type ParsedWorld } from "../core/index.js";
+import { MapsError, type ParsedWorld } from "../core/index.js";
 import {
   assertWalkabilityCompatible,
   parseWalkability,
@@ -28,7 +28,7 @@ export async function loadWalkabilitySource(
   } catch (error) {
     if (context.signal.aborted) throw context.signal.reason;
     const reason = error instanceof Error ? error.message : String(error);
-    throw new WorldviewError(
+    throw new MapsError(
       "invalid-data",
       `walkability sidecar is invalid or incompatible: ${reason}`,
       { cause: error },

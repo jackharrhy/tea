@@ -2,9 +2,9 @@ import {
   analyzeEntitySupport,
   type EntityClassSupport,
   type MapDiagnostics,
-  type WorldviewViewer,
+  type MapsViewer,
 } from "@jackharrhy/tea-maps-renderer";
-import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { clientEntry, type Handle } from "remix/component";
 
 function formatMapDetails(
@@ -23,7 +23,7 @@ function formatMapDetails(
 export const ViewerDiagnosticsPanel = clientEntry(
   `file:///app/assets/viewer-diagnostics-panel.tsx#ViewerDiagnosticsPanel`,
   function ViewerDiagnosticsPanelComponent(handle: Handle) {
-    let element: WorldViewElement | null = null;
+    let element: MapsViewElement | null = null;
     let details = "Load a map to inspect it";
     let warningMessages: string[] = [];
     let entityCounts = "Load a map to inspect entities";
@@ -33,7 +33,7 @@ export const ViewerDiagnosticsPanel = clientEntry(
 
     function showWorld(
       diagnostics: MapDiagnostics,
-      world: NonNullable<WorldviewViewer["world"]>,
+      world: NonNullable<MapsViewer["world"]>,
     ) {
       details = formatMapDetails(diagnostics, world.entities.length);
       const support = analyzeEntitySupport(world);
@@ -63,8 +63,8 @@ export const ViewerDiagnosticsPanel = clientEntry(
     handle.queueTask(() => {
       function attach() {
         if (element) return;
-        element = document.querySelector<WorldViewElement>(
-          "#viewport world-view",
+        element = document.querySelector<MapsViewElement>(
+          "#viewport tea-map-view",
         );
         if (!element) return;
         element.addEventListener(

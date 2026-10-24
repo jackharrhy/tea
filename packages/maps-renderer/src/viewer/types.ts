@@ -20,8 +20,8 @@ export type { CameraState, TextureFiltering } from "../render/types.js";
 
 export type BinarySource = string | URL | Blob | ArrayBuffer | ArrayBufferView;
 /** Initial navigation mode. Pressing V switches between walk and fly unless controls are disabled. */
-export type WorldviewControls = "walk" | "fly" | "none";
-export type WorldviewMovementMode = "walk" | "fly" | "none";
+export type MapsControls = "walk" | "fly" | "none";
+export type MapsMovementMode = "walk" | "fly" | "none";
 export type FetchLike = (
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -57,7 +57,7 @@ export interface OverviewCaptureResult {
 }
 
 /** Runtime movement and mouse settings, expressed in GoldSrc-compatible units. */
-export interface WorldviewMovementSettings {
+export interface MapsMovementSettings {
   /** Player speed cap in map units per second. */
   readonly maxSpeed: number;
   readonly accelerate: number;
@@ -73,7 +73,7 @@ export interface WorldviewMovementSettings {
   readonly viewBob: number;
 }
 
-export type WorldviewMovementUpdate = Partial<WorldviewMovementSettings>;
+export type MapsMovementUpdate = Partial<MapsMovementSettings>;
 
 export interface GoldSrcSkyboxSources {
   readonly rt: BinarySource;
@@ -152,10 +152,10 @@ export interface LoadOptions {
   readonly signal?: AbortSignal;
 }
 
-export interface CreateWorldviewOptions {
+export interface CreateMapsOptions {
   readonly canvas: HTMLCanvasElement;
   readonly source?: WorldSource;
-  readonly controls?: WorldviewControls;
+  readonly controls?: MapsControls;
   readonly autoStart?: boolean;
   readonly textureFiltering?: TextureFiltering;
   readonly clearColor?: readonly [number, number, number, number];
@@ -167,7 +167,7 @@ export interface CreateWorldviewOptions {
   readonly audioVolume?: number;
   readonly playerAudioVolume?: number;
   readonly musicVolume?: number;
-  readonly movement?: WorldviewMovementUpdate;
+  readonly movement?: MapsMovementUpdate;
 }
 
 export interface CameraUpdate {
@@ -260,8 +260,8 @@ export interface AudioChangeDetail {
 }
 
 export interface MovementChangeDetail {
-  readonly mode: WorldviewMovementMode;
-  readonly settings: WorldviewMovementSettings;
+  readonly mode: MapsMovementMode;
+  readonly settings: MapsMovementSettings;
 }
 
 export interface WalkabilityChangeDetail {
@@ -273,7 +273,7 @@ export interface ErrorDetail {
   readonly error: Error;
 }
 
-export interface WorldviewEventMap {
+export interface MapsEventMap {
   progress: CustomEvent<ProgressDetail>;
   ready: CustomEvent<ReadyDetail>;
   warning: CustomEvent<WarningDetail>;
@@ -283,15 +283,15 @@ export interface WorldviewEventMap {
   walkabilitychange: CustomEvent<WalkabilityChangeDetail>;
 }
 
-export interface WorldviewViewer extends EventTarget {
+export interface MapsViewer extends EventTarget {
   readonly canvas: HTMLCanvasElement;
   readonly camera: CameraState;
   readonly diagnostics: MapDiagnostics | null;
   readonly world: ParsedWorld | null;
   readonly running: boolean;
   readonly audio: AudioState;
-  readonly movementMode: WorldviewMovementMode;
-  readonly movement: WorldviewMovementSettings;
+  readonly movementMode: MapsMovementMode;
+  readonly movement: MapsMovementSettings;
   readonly walkability: WalkabilityMap | null;
   readonly walkabilityVisible: boolean;
   load(source: WorldSource, options?: LoadOptions): Promise<void>;
@@ -303,8 +303,8 @@ export interface WorldviewViewer extends EventTarget {
   ): Promise<OverviewCaptureResult>;
   resize(): void;
   setCamera(update: CameraUpdate): void;
-  setMovementMode(mode: Exclude<WorldviewMovementMode, "none">): void;
-  setMovement(update: WorldviewMovementUpdate): void;
+  setMovementMode(mode: Exclude<MapsMovementMode, "none">): void;
+  setMovement(update: MapsMovementUpdate): void;
   generateWalkability(
     options?: GenerateWalkabilityOptions,
   ): Promise<WalkabilityMap>;
@@ -322,9 +322,9 @@ export interface WorldviewViewer extends EventTarget {
   playMusic(entityIndex?: number): Promise<void>;
   stopMusic(): void;
   dispose(): void;
-  addEventListener<K extends keyof WorldviewEventMap>(
+  addEventListener<K extends keyof MapsEventMap>(
     type: K,
-    listener: (this: WorldviewViewer, event: WorldviewEventMap[K]) => void,
+    listener: (this: MapsViewer, event: MapsEventMap[K]) => void,
     options?: boolean | AddEventListenerOptions,
   ): void;
   addEventListener(
@@ -332,9 +332,9 @@ export interface WorldviewViewer extends EventTarget {
     callback: EventListenerOrEventListenerObject | null,
     options?: boolean | AddEventListenerOptions,
   ): void;
-  removeEventListener<K extends keyof WorldviewEventMap>(
+  removeEventListener<K extends keyof MapsEventMap>(
     type: K,
-    listener: (this: WorldviewViewer, event: WorldviewEventMap[K]) => void,
+    listener: (this: MapsViewer, event: MapsEventMap[K]) => void,
     options?: boolean | EventListenerOptions,
   ): void;
   removeEventListener(

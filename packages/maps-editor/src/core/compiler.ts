@@ -1,4 +1,4 @@
-import type { WorldviewGameProfile } from "./game-profiles.js";
+import type { MapsGameProfile } from "./game-profiles.js";
 
 export type MapCompilerBackend = "wasm" | "remote";
 export type MapCompileQuality = "preview" | "final";
@@ -62,7 +62,7 @@ export interface MapCompileResult {
 export interface MapBuildProfileCapability {
   readonly id: string;
   readonly label: string;
-  readonly game: WorldviewGameProfile;
+  readonly game: MapsGameProfile;
   readonly qualities: readonly MapCompileQuality[];
   readonly durationHint?: string | undefined;
 }
@@ -70,7 +70,7 @@ export interface MapBuildProfileCapability {
 export interface MapLaunchProfileCapability {
   readonly id: string;
   readonly label: string;
-  readonly game: WorldviewGameProfile;
+  readonly game: MapsGameProfile;
 }
 
 export interface MapBuildCapabilities {
@@ -80,7 +80,7 @@ export interface MapBuildCapabilities {
 }
 
 export interface MapBuildProfileSelection {
-  readonly game: WorldviewGameProfile;
+  readonly game: MapsGameProfile;
   readonly preferredId?: string;
   readonly quality?: MapCompileQuality;
 }
@@ -104,7 +104,7 @@ export function selectMapBuildProfile(
 
 export function selectMapLaunchProfile(
   capabilities: MapBuildCapabilities,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
 ): MapLaunchProfileCapability | undefined {
   return capabilities.launchProfiles.find((profile) => profile.game === game);
 }

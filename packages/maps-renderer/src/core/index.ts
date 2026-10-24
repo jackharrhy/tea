@@ -42,7 +42,7 @@ export {
   type EntitySupportKind,
   type EntitySupportReport,
 } from "./entity-support.js";
-export { type WorldviewErrorCode, WorldviewError } from "./errors.js";
+export { type MapsErrorCode, MapsError } from "./errors.js";
 export { isQuakePaletteFormat } from "./formats.js";
 export {
   buildLightmapPage,

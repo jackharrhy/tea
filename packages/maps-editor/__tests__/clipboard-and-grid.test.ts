@@ -66,7 +66,7 @@ describe("face attribute clipboard transactions", () => {
     expect("contents" in payload.surface).toBe(false);
     expect(parseFaceAttributeClipboard(serializeMap(document))).toBeNull();
     expect(() =>
-      parseFaceAttributeClipboard("// Worldview face attributes v1\n{"),
+      parseFaceAttributeClipboard("// Maps face attributes v1\n{"),
     ).toThrow("invalid JSON");
     const withUnknownField = JSON.parse(
       text.slice(FACE_ATTRIBUTE_CLIPBOARD_HEADER.length),

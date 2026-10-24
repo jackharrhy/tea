@@ -9,7 +9,7 @@ import {
 } from "../src/lib/files.server.ts";
 import { walToPng } from "../src/lib/game-textures.server.ts";
 
-test("Worldview decodes WAL pixels using the supplied PCX palette", async () => {
+test("Maps decodes WAL pixels using the supplied PCX palette", async () => {
   const wal = Buffer.alloc(185, 1);
   wal.fill(0, 0, 100);
   wal.write("wall");
