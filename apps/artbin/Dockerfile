@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends imagemagick ca-
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/tsconfig.base.json ./tsconfig.base.json
 COPY --from=build /app/packages/artbin-core ./packages/artbin-core
 COPY --from=build /app/packages/maps-renderer ./packages/maps-renderer
 COPY --from=build /app/apps/artbin ./apps/artbin
