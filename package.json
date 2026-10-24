@@ -37,7 +37,7 @@
     "shell-mcp:check": "npm run tooling:check && npm run check --workspace @tea/shell-mcp",
     "shell-mcp:dev": "npm run dev --workspace @tea/shell-mcp",
     "tooling:check": "vp check",
-    "artbin:check": "npm run tooling:check && npm run check --workspace @tea/artbin-core && npm run check --workspace @tea/artbin-ui && npm run check --workspace @tea/artbin && npm run check --workspace @jackharrhy/tea-artbin",
+    "artbin:check": "npm run tooling:check && npm run check --workspace @tea/artbin-core && npm run check --workspace @tea/artbin-ui && npm run build --workspace @jackharrhy/tea-maps-renderer && npm run check --workspace @tea/artbin && npm run check --workspace @jackharrhy/tea-artbin",
     "artbin:dev": "npm run dev --workspace @tea/artbin",
     "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace @jackharrhy/tea-artbin"
   },
