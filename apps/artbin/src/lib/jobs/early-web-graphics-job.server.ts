@@ -106,7 +106,7 @@ async function request(url: string) {
   await setTimeout(200);
   const response = await fetch(url, {
     headers: {
-      "user-agent": "Artbin (+https://github.com/jackharrhy/artbin)",
+      "user-agent": "Artbin (+https://github.com/jackharrhy/tea)",
     },
     signal: AbortSignal.timeout(120_000),
     redirect: "error",
