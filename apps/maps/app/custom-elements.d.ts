@@ -1,11 +1,11 @@
-export type WorldViewAttributes = {
+export type MapsViewAttributes = {
   controls?: "walk" | "fly";
 };
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      "world-view": WorldViewAttributes;
+      "tea-map-view": MapsViewAttributes;
     }
   }
 }

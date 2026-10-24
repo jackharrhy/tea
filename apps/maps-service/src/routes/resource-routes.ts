@@ -22,10 +22,10 @@ import {
   resourcePathMatchesKind,
 } from "../resource-input.js";
 import { MAX_RESOURCE_FILE_BYTES } from "../resource-limits.js";
-import type { WorldviewServiceOptions } from "../service-options.js";
+import type { MapsServiceOptions } from "../service-options.js";
 
 export function createResourceRoutes(
-  options: Pick<WorldviewServiceOptions, "artbin" | "blobs" | "database">,
+  options: Pick<MapsServiceOptions, "artbin" | "blobs" | "database">,
 ) {
   return [
     defineWebRoute(

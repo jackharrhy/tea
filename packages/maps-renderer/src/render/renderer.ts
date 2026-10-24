@@ -151,7 +151,7 @@ export class TypeGpuWorldRenderer {
     const target = this.canvasTarget.current();
     if (!target) return;
     const encoder = this.device.createCommandEncoder({
-      label: "Worldview frame",
+      label: "Maps frame",
     });
     this.encodeFrame(projectionView, camera, timeSeconds, encoder, target, {
       allFaces: false,
@@ -173,7 +173,7 @@ export class TypeGpuWorldRenderer {
     camera: CameraState,
     settings: OverviewRenderSettings,
   ): Promise<Uint8ClampedArray> {
-    if (this.disposed) throw new Error("Worldview renderer has been disposed");
+    if (this.disposed) throw new Error("Maps renderer has been disposed");
     const capture = new WorldCaptureTarget(
       this.root,
       this.format,
@@ -187,7 +187,7 @@ export class TypeGpuWorldRenderer {
         ? this.resources.createSceneGroup(cutawayView)
         : this.resources.sceneGroup;
       const encoder = this.device.createCommandEncoder({
-        label: "Worldview overview",
+        label: "Maps overview",
       });
       this.encodeFrame(
         projectionView,

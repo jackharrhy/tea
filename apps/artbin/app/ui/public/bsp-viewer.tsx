@@ -1,6 +1,6 @@
 import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
 import type { BspFormat } from "@jackharrhy/tea-maps-renderer/core";
-import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import {
   clientEntry,
   css,
@@ -49,18 +49,15 @@ export const BspViewer = clientEntry(
             mix={[
               mountStyle,
               ref((element, signal) => {
-                void mountWorldView(
-                  element,
-                  handle.props,
-                  height,
-                  signal,
-                ).catch((cause: unknown) => {
-                  if (signal.aborted) return;
-                  console.error("Worldview: failed to initialize", cause);
-                  element.textContent =
-                    "The interactive map could not be loaded.";
-                  element.setAttribute("role", "alert");
-                });
+                void mountMapsView(element, handle.props, height, signal).catch(
+                  (cause: unknown) => {
+                    if (signal.aborted) return;
+                    console.error("Maps: failed to initialize", cause);
+                    element.textContent =
+                      "The interactive map could not be loaded.";
+                    element.setAttribute("role", "alert");
+                  },
+                );
               }),
             ]}
           />
@@ -75,36 +72,36 @@ export const BspViewer = clientEntry(
   },
 );
 
-async function mountWorldView(
+async function mountMapsView(
   mount: Element,
   props: BspViewerProps,
   height: number,
   signal: AbortSignal,
 ): Promise<void> {
-  const { defineWorldViewElement } =
+  const { defineMapsViewElement } =
     await import("@jackharrhy/tea-maps-renderer/element");
   if (signal.aborted) return;
 
-  defineWorldViewElement();
-  const worldView = document.createElement("world-view") as WorldViewElement;
-  worldView.style.height = `${height}px`;
-  worldView.style.width = "100%";
-  worldView.setAttribute(
+  defineMapsViewElement();
+  const mapsView = document.createElement("tea-map-view") as MapsViewElement;
+  mapsView.style.height = `${height}px`;
+  mapsView.style.width = "100%";
+  mapsView.setAttribute(
     "controls",
     props.format === "quake2-bsp38" ? "fly" : "walk",
   );
-  worldView.source = worldSource(props);
-  worldView.walkabilitySource = props.walkabilityUrl ?? null;
-  worldView.addEventListener("warning", (event) => {
-    console.warn("Worldview:", event.detail.message);
+  mapsView.source = worldSource(props);
+  mapsView.walkabilitySource = props.walkabilityUrl ?? null;
+  mapsView.addEventListener("warning", (event) => {
+    console.warn("Maps:", event.detail.message);
   });
-  worldView.addEventListener("keydown", (event) => {
+  mapsView.addEventListener("keydown", (event) => {
     const keyboardEvent = event as KeyboardEvent;
     if (keyboardEvent.code !== "KeyG" || keyboardEvent.repeat) return;
-    worldView.walkabilityVisible = !worldView.walkabilityVisible;
+    mapsView.walkabilityVisible = !mapsView.walkabilityVisible;
   });
-  mount.append(worldView);
-  signal.addEventListener("abort", () => worldView.remove(), { once: true });
+  mount.append(mapsView);
+  signal.addEventListener("abort", () => mapsView.remove(), { once: true });
 }
 
 function worldSource(props: BspViewerProps): WorldSource {

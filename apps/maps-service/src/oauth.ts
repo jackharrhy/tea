@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
-import type { WorldviewDatabase, WorldviewUser } from "./database.js";
+import type { MapsDatabase, MapsUser } from "./database.js";
 
 export interface OAuthConfig {
   readonly fourmUrl: string;
@@ -46,7 +46,7 @@ export function safeReturnTo(value: string | null): string {
 }
 
 export function beginAuthorization(
-  database: WorldviewDatabase,
+  database: MapsDatabase,
   config: OAuthConfig,
   returnTo: string,
 ): { url: string; state: string } {
@@ -67,7 +67,7 @@ export function beginAuthorization(
 }
 
 export function consumeAuthorizationTransaction(input: {
-  readonly database: WorldviewDatabase;
+  readonly database: MapsDatabase;
   readonly state: string;
   readonly cookieState: string | undefined;
 }): { verifier: string; returnTo: string } {
@@ -82,13 +82,13 @@ export function consumeAuthorizationTransaction(input: {
 }
 
 export async function completeAuthorization(input: {
-  readonly database: WorldviewDatabase;
+  readonly database: MapsDatabase;
   readonly config: OAuthConfig;
   readonly state: string;
   readonly code: string;
   readonly cookieState: string | undefined;
   readonly fetch: typeof globalThis.fetch;
-}): Promise<{ user: WorldviewUser; returnTo: string }> {
+}): Promise<{ user: MapsUser; returnTo: string }> {
   const transaction = consumeAuthorizationTransaction(input);
   const tokenResponse = await input.fetch(
     new URL("/oauth/token", input.config.fourmUrl),

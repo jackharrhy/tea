@@ -194,9 +194,9 @@ export function buildWorldSolidBuffers(
           ? options.theme.edgeLocked
           : options.theme.material;
       const faceBatches = source.reference
-        ? [{ materialName: "__worldview_reference__", faces: derived.faces }]
+        ? [{ materialName: "__maps_reference__", faces: derived.faces }]
         : locked
-          ? [{ materialName: "__worldview_locked__", faces: derived.faces }]
+          ? [{ materialName: "__maps_locked__", faces: derived.faces }]
           : materialFaceBatches(brush, derived.faces);
       for (const { materialName, faces } of faceBatches) {
         const solid = solids.vertices(

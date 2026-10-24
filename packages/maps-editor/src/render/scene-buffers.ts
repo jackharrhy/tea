@@ -87,7 +87,7 @@ function lineBuffer(value: LineBuffer): readonly GPUBuffer[] {
 }
 
 function recordContributionMeasure(name: string, started: number): void {
-  performance.measure(`worldview.editor.scene-contribution.${name}`, {
+  performance.measure(`maps.editor.scene-contribution.${name}`, {
     start: started,
     end: performance.now(),
   });

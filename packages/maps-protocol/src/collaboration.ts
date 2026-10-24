@@ -8,7 +8,7 @@ import {
 } from "@tea/maps-editor/core";
 import { z } from "zod";
 
-import { WorldviewProtocolError, zodPath } from "./protocol-error.js";
+import { MapsProtocolError, zodPath } from "./protocol-error.js";
 import { HostedMapSnapshotSchema } from "./hosted.js";
 
 export const MAX_CLIENT_FRAME_BYTES = 512 * 1_024;
@@ -97,7 +97,7 @@ function parseFrame<T>(
   schema: z.ZodType<T>,
 ): T {
   if (new TextEncoder().encode(serialized).byteLength > maximumBytes) {
-    throw new WorldviewProtocolError(
+    throw new MapsProtocolError(
       "payload-too-large",
       "Collaboration frame is too large",
     );
@@ -106,7 +106,7 @@ function parseFrame<T>(
   try {
     value = JSON.parse(serialized);
   } catch {
-    throw new WorldviewProtocolError(
+    throw new MapsProtocolError(
       "invalid-json",
       "Collaboration frame contains invalid JSON",
     );
@@ -114,7 +114,7 @@ function parseFrame<T>(
   const result = schema.safeParse(value);
   if (!result.success) {
     const issue = result.error.issues[0]!;
-    throw new WorldviewProtocolError(
+    throw new MapsProtocolError(
       "invalid-payload",
       `Invalid collaboration frame: ${issue.message}`,
       zodPath(issue),
@@ -127,7 +127,7 @@ export function parseCollaborationClientFrame(
   value: string | ArrayBuffer,
 ): CollaborationClientFrame {
   if (typeof value !== "string") {
-    throw new WorldviewProtocolError(
+    throw new MapsProtocolError(
       "binary-frame",
       "Binary collaboration frames are not supported",
     );

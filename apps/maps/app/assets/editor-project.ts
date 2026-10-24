@@ -4,12 +4,12 @@ import {
   EditorMaterialCatalog,
   mapSourceFingerprint,
   parseEntityDefinitionFile,
-  parseWorldviewProject,
-  worldviewGameProfile,
+  parseMapsProject,
+  mapsGameProfile,
   type EntityDefinitionDiagnostic,
   type EditorMaterial,
   type ParsedEntityDefinitionFile,
-  type WorldviewProjectManifest,
+  type MapsProjectManifest,
 } from "@tea/maps-editor/core";
 import {
   parseWad,
@@ -49,7 +49,7 @@ export interface MapProject {
   readonly handle: MapDirectoryHandle;
   readonly manifestFileName: string;
   readonly manifestFingerprint: string;
-  readonly manifest: WorldviewProjectManifest;
+  readonly manifest: MapsProjectManifest;
   readonly maps: readonly ProjectMap[];
   readonly definitions: EntityDefinitionCatalog;
   readonly definitionDiagnostics: readonly EntityDefinitionDiagnostic[];
@@ -163,7 +163,7 @@ async function textureFilesInDirectory(
 
 async function gameRootResources(
   handle: MapDirectoryHandle,
-  manifest: WorldviewProjectManifest,
+  manifest: MapsProjectManifest,
   loadPalette: boolean,
 ): Promise<{
   palette?: Uint8Array;
@@ -229,7 +229,7 @@ async function gameRootResources(
 
 async function loadProjectDefinitions(
   handle: MapDirectoryHandle,
-  manifest: WorldviewProjectManifest,
+  manifest: MapsProjectManifest,
 ): Promise<{
   definitions: EntityDefinitionCatalog;
   diagnostics: readonly EntityDefinitionDiagnostic[];
@@ -272,7 +272,7 @@ async function loadProjectDefinitions(
 
 async function loadProjectMaterials(
   handle: MapDirectoryHandle,
-  manifest: WorldviewProjectManifest,
+  manifest: MapsProjectManifest,
 ): Promise<{
   materials: readonly EditorMaterial[];
   diagnostics: readonly string[];
@@ -306,7 +306,7 @@ async function loadProjectMaterials(
     ?.materials ?? []) {
     catalog.set(material);
   }
-  const profile = worldviewGameProfile(manifest.game);
+  const profile = mapsGameProfile(manifest.game);
   for (const path of manifest.resources.wads) {
     try {
       const bytes = await (await projectFile(handle, path)).arrayBuffer();
@@ -438,7 +438,7 @@ export async function openMapProject(
 ): Promise<MapProject> {
   const { name: manifestFileName, file } = await projectManifestFile(handle);
   const manifestSource = await file.text();
-  const manifest = parseWorldviewProject(manifestSource);
+  const manifest = parseMapsProject(manifestSource);
   const maps = (
     await Promise.all(
       manifest.mapRoots.map(async (root) => {

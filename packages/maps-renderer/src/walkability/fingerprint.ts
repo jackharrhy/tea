@@ -54,5 +54,5 @@ export function walkabilityWorldFingerprint(world: ParsedWorld): string {
         hash = mixString(hash, part);
     }
   }
-  return `wv1-${hash.toString(16).padStart(8, "0")}`;
+  return `tm1-${hash.toString(16).padStart(8, "0")}`;
 }

@@ -764,7 +764,7 @@ export class EditorSourceRenderer {
     this.scene = result.scene;
     if (result.rebuilt.size === 0) return;
     this.sceneVersion += 1;
-    performance.measure("worldview.editor.scene-rebuild", {
+    performance.measure("maps.editor.scene-rebuild", {
       start: started,
       end: performance.now(),
     });
@@ -1012,7 +1012,7 @@ export class EditorSourceRenderer {
     const materialBindGroup = (name: string) =>
       this.materialResources.bindGroup(name);
     const encoder = this.device.createCommandEncoder({
-      label: "Worldview editor frame",
+      label: "Maps editor frame",
     });
     let encoded = false;
     const renderedViewports = this.viewports.filter((viewport) =>

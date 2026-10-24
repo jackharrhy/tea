@@ -1,4 +1,4 @@
-import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { clientEntry, type Handle } from "remix/component";
 import { sourceFromFiles } from "./world-input.ts";
 
@@ -39,8 +39,8 @@ export const ViewerToolbar = clientEntry(
 
     handle.queueTask(() => {
       function syncFromViewer() {
-        const viewer = document.querySelector<WorldViewElement>(
-          "#viewport world-view",
+        const viewer = document.querySelector<MapsViewElement>(
+          "#viewport tea-map-view",
         );
         if (!viewer) return;
         name = viewer.dataset.mapName ?? name;

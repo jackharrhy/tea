@@ -1,11 +1,11 @@
 import { openDB, type DBSchema } from "idb";
 import {
-  isWorldviewGameProfile,
+  isMapsGameProfile,
   MapDocumentSchema,
   MapSourceStateSchema,
   type MapDocument,
   type MapSourceState,
-  type WorldviewGameProfile,
+  type MapsGameProfile,
 } from "@tea/maps-editor/core";
 
 export interface EditorDraft {
@@ -15,7 +15,7 @@ export interface EditorDraft {
   readonly workingSource: string;
   readonly savedSource?: string;
   readonly revision: number;
-  readonly game?: WorldviewGameProfile;
+  readonly game?: MapsGameProfile;
   readonly document?: MapDocument;
   readonly sourceState?: MapSourceState;
 }
@@ -66,7 +66,7 @@ function validDraft(value: unknown): value is EditorDraft {
       MapDocumentSchema.safeParse(draft.document).success) &&
     (draft.sourceState === undefined ||
       MapSourceStateSchema.safeParse(draft.sourceState).success) &&
-    (draft.game === undefined || isWorldviewGameProfile(draft.game))
+    (draft.game === undefined || isMapsGameProfile(draft.game))
   );
 }
 

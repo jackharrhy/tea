@@ -1,6 +1,6 @@
-import { defineWorldViewElement } from "./element/index.js";
+import { defineMapsViewElement } from "./element/index.js";
 
-defineWorldViewElement();
+defineMapsViewElement();
 
-export { createWorldview } from "./viewer/viewer.js";
-export { defineWorldViewElement, WorldViewElement } from "./element/index.js";
+export { createMapsViewer } from "./viewer/viewer.js";
+export { defineMapsViewElement, MapsViewElement } from "./element/index.js";

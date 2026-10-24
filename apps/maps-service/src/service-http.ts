@@ -1,5 +1,5 @@
 import type { HostedSessionUser } from "@tea/maps-protocol";
-import type { WorldviewDatabase, WorldviewUser } from "./database.js";
+import type { MapsDatabase, MapsUser } from "./database.js";
 
 export const SESSION_COOKIE = "tea_maps_session";
 export const AUTOMATION_COOKIE = "tea_maps_automation";
@@ -35,8 +35,8 @@ export function cookie(request: Request, name: string): string | undefined {
 
 export function sessionUser(
   context: SessionRequestContext,
-  database: WorldviewDatabase,
-): WorldviewUser | null {
+  database: MapsDatabase,
+): MapsUser | null {
   const regular = database.sessionUser(cookie(context.request, SESSION_COOKIE));
   if (regular) return regular;
   const grant = database.automationSession(
@@ -97,7 +97,7 @@ export function sessionUser(
 }
 
 export function publicSessionUser(
-  user: WorldviewUser | null,
+  user: MapsUser | null,
 ): HostedSessionUser | null {
   if (!user) return null;
   return {

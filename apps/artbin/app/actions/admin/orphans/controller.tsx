@@ -552,7 +552,7 @@ async function walkDirectory(
       !entry.name.endsWith(".preview.png") &&
       !entry.name.endsWith(".bsp.thumbnail.webp") &&
       !entry.name.endsWith(".artbin-bsp.json") &&
-      !entry.name.endsWith(".worldview-walkability.json") &&
+      !entry.name.endsWith(".tea-maps-walkability.json") &&
       entry.name !== "_folder-preview.png"
     ) {
       paths.push(relative(base, fullPath));

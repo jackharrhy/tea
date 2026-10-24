@@ -15,7 +15,7 @@ import {
   gameProfileSupportsFaceSyntax,
   isEditorGroupEntity,
   isEditorLayerEntity,
-  isWorldviewGameProfile,
+  isMapsGameProfile,
   mapSourceFingerprint,
   parseMapSource,
   planMapSave,
@@ -29,7 +29,7 @@ import {
   selectionForEditorGroup,
   serializeMap,
   rebaseMapSource,
-  worldviewGameProfile,
+  mapsGameProfile,
   type EntityId,
   type EditorMaterial,
   type Bounds,
@@ -45,7 +45,7 @@ import {
   type MapSourceState,
   type SurfaceFlagDefinition,
   type TransformAxis,
-  type WorldviewGameProfile,
+  type MapsGameProfile,
   type Vec3,
 } from "@tea/maps-editor/core";
 import {
@@ -61,8 +61,8 @@ import {
 } from "@tea/maps-editor/render";
 import { editorRenderTheme, editorThemeEvent } from "./editor-theme.ts";
 import {
-  defineWorldViewElement,
-  type WorldViewElement,
+  defineMapsViewElement,
+  type MapsViewElement,
 } from "@jackharrhy/tea-maps-renderer/element";
 import type { CameraUpdate, WorldSource } from "@jackharrhy/tea-maps-renderer";
 import type {
@@ -513,7 +513,7 @@ let project: MapProject | null = null;
 let hostedResources: HostedEditorResources | null = null;
 let hostedResourceGeneration = 0;
 let hostedResourceAbort: AbortController | null = null;
-let localGame: WorldviewGameProfile = "quake";
+let localGame: MapsGameProfile = "quake";
 let projectBindings: ProjectBuildBindings | null = null;
 let exportSettings = defaultExportSettings("default");
 let exportSettingsGeneration = 0;
@@ -534,7 +534,7 @@ const exportSettingsPanel = initEditorExportSettingsPanel({
   },
 });
 let exportBusy = false;
-let compiledPreview: WorldViewElement | null = null;
+let compiledPreview: MapsViewElement | null = null;
 let compiledDocument: MapDocument | null = null;
 let compiledSourceText: string | null = null;
 let compiledVisible = false;
@@ -549,7 +549,7 @@ let latestLaunch: {
   readonly sourceText: string;
   readonly project: MapProject | null;
   readonly name: string;
-  readonly game: WorldviewGameProfile;
+  readonly game: MapsGameProfile;
 } | null = null;
 let localBuildRecords: readonly LocalBuildRecord[] = [];
 let localHistoryGeneration = 0;
@@ -559,7 +559,7 @@ let latestBuildExport: {
   readonly sourceText: string;
   readonly project: MapProject | null;
   readonly name: string;
-  readonly game: WorldviewGameProfile;
+  readonly game: MapsGameProfile;
 } | null = null;
 let activeProjectPath: string | null = null;
 let activeRecentProjectId: string | null = null;
@@ -669,7 +669,7 @@ let standaloneResourceGeneration = 0;
 let standaloneResourcesLoading = false;
 let standaloneMaterialCache: {
   resources: StandaloneResources;
-  game: WorldviewGameProfile;
+  game: MapsGameProfile;
   materials: readonly EditorMaterial[];
 } | null = null;
 function standaloneContext() {
@@ -972,7 +972,7 @@ const transformTool = createEditorTransform({
   },
 });
 
-function activeGame(): WorldviewGameProfile {
+function activeGame(): MapsGameProfile {
   return project?.manifest.game ?? hostedMap?.game ?? localGame;
 }
 
@@ -1325,8 +1325,8 @@ function installCompiledPreview(
   camera: CameraUpdate | null,
 ) {
   clearCompiledPreview();
-  defineWorldViewElement();
-  const preview = document.createElement("world-view") as WorldViewElement;
+  defineMapsViewElement();
+  const preview = document.createElement("tea-map-view") as MapsViewElement;
   preview.setAttribute("controls", "fly");
   preview.setAttribute("autostart", "false");
   preview.setAttribute("audio", "false");
@@ -1488,7 +1488,7 @@ function refreshSource() {
 }
 
 function refreshSurfaceInspector(faces: readonly MapFace[], editing: boolean) {
-  const semantics = worldviewGameProfile(activeGame()).surfaceSemantics;
+  const semantics = mapsGameProfile(activeGame()).surfaceSemantics;
   if (!semantics || faces.length === 0) {
     surfacePanel.update({ visible: false, contents: [], flags: [] });
     return;
@@ -2401,7 +2401,7 @@ function openDetachedCopy(
     document: MapDocument;
     source: MapSourceState;
     fileName: string;
-    profile: WorldviewGameProfile;
+    profile: MapsGameProfile;
   },
   recovery?: EditorVersion | null,
 ) {
@@ -2987,7 +2987,7 @@ function refreshPointEntityPlacementBounds() {
 }
 
 function selectGameProfile(value: string) {
-  if (project || hostedMap || !isWorldviewGameProfile(value)) {
+  if (project || hostedMap || !isMapsGameProfile(value)) {
     buildControls.update({ game: activeGame() });
     return;
   }
@@ -4871,8 +4871,8 @@ if (newMapUrl.searchParams.get("newMap") === "1") {
     name.length > 120 ||
     /[\\/:*?"<>|]/.test(name) ||
     [...name].some((character) => character.charCodeAt(0) < 32) ||
-    !isWorldviewGameProfile(game) ||
-    !gameProfileSupportsFaceSyntax(worldviewGameProfile(game), format)
+    !isMapsGameProfile(game) ||
+    !gameProfileSupportsFaceSyntax(mapsGameProfile(game), format)
   ) {
     status.textContent = "Choose a valid map name, game, and format";
   } else {

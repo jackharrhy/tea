@@ -342,25 +342,25 @@ export type {
   ParsedMapSource,
 } from "./map-source-types.js";
 export {
-  WorldviewProjectManifestSchema,
-  parseWorldviewProject,
-  serializeWorldviewProject,
-  WorldviewProjectParseError,
+  MapsProjectManifestSchema,
+  parseMapsProject,
+  serializeMapsProject,
+  MapsProjectParseError,
   type EntityDefinitionFormat,
-  type WorldviewEntityDefinitionSource,
-  type WorldviewProjectBuildProfile,
-  type WorldviewProjectManifest,
-  type WorldviewProjectResources,
-} from "./worldview-project.js";
+  type MapsEntityDefinitionSource,
+  type MapsProjectBuildProfile,
+  type MapsProjectManifest,
+  type MapsProjectResources,
+} from "./maps-project.js";
 export {
-  WORLDVIEW_GAME_PROFILES,
-  WorldviewGameProfileSchema,
+  MAPS_GAME_PROFILES,
+  MapsGameProfileSchema,
   gameProfileSupportsFaceSyntax,
-  isWorldviewGameProfile,
-  worldviewGameProfile,
-  type WorldviewGameProfile,
-  type WorldviewGameProfileDefinition,
-  type WorldviewMaterialFormat,
+  isMapsGameProfile,
+  mapsGameProfile,
+  type MapsGameProfile,
+  type MapsGameProfileDefinition,
+  type MapsMaterialFormat,
 } from "./game-profiles.js";
 export {
   QUAKE2_SURFACE_SEMANTICS,

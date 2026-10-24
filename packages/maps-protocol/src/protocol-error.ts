@@ -6,14 +6,14 @@ export type ProtocolErrorCode =
   | "invalid-payload"
   | "payload-too-large";
 
-export class WorldviewProtocolError extends Error {
+export class MapsProtocolError extends Error {
   public constructor(
     public readonly code: ProtocolErrorCode,
     message: string,
     public readonly path?: string,
   ) {
     super(path ? `${message} at ${path}` : message);
-    this.name = "WorldviewProtocolError";
+    this.name = "MapsProtocolError";
   }
 }
 

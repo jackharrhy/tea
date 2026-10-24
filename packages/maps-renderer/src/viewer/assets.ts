@@ -14,7 +14,7 @@ import {
   parseWad,
   planWorldAssets,
   readPcxPalette,
-  WorldviewError,
+  MapsError,
   type ParsedWad,
   type ParsedWorld,
   type WorldAssetPlan,
@@ -111,7 +111,7 @@ function parsePalette(bytes: ArrayBuffer): Uint8Array {
     return readPcxPalette(palette);
   }
   if (palette.byteLength < 768) {
-    throw new WorldviewError(
+    throw new MapsError(
       "missing-palette",
       "Quake palette must contain at least 768 bytes",
     );
@@ -189,15 +189,12 @@ async function loadSkybox(
       plan.skybox.faces.map(async ({ suffix, candidates }) => {
         const candidate = candidates[0];
         if (!candidate)
-          throw new WorldviewError(
-            "invalid-data",
-            `skybox ${suffix} has no source`,
-          );
+          throw new MapsError("invalid-data", `skybox ${suffix} has no source`);
         const basename = candidate.slice(candidate.lastIndexOf("/") + 1);
         let binary = source.skybox?.[suffix];
         if (!binary) {
           if (!skyboxBaseUrl) {
-            throw new WorldviewError(
+            throw new MapsError(
               "invalid-data",
               `skybox ${suffix} has no source`,
             );
@@ -230,7 +227,7 @@ async function loadSkybox(
           sides[suffix].height === first.height,
       )
     ) {
-      throw new WorldviewError(
+      throw new MapsError(
         "invalid-data",
         "skybox faces must have matching dimensions",
       );

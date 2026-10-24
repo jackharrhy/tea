@@ -28,10 +28,10 @@ import {
   completeAuthorization,
   consumeAuthorizationTransaction,
 } from "../oauth.js";
-import type { WorldviewServiceOptions } from "../service-options.js";
+import type { MapsServiceOptions } from "../service-options.js";
 
 export function createAuthRoutes(
-  options: Pick<WorldviewServiceOptions, "database" | "fetch" | "oauth">,
+  options: Pick<MapsServiceOptions, "database" | "fetch" | "oauth">,
 ) {
   return [
     defineWebRoute("health", "GET", "/health", () =>

@@ -1,7 +1,7 @@
 export {
   analyzeEntitySupport,
   planOverview,
-  WorldviewError,
+  MapsError,
   type EntityClassSupport,
   type EntitySupportKind,
   type EntitySupportReport,
@@ -10,16 +10,16 @@ export {
   type PlanOverviewOptions,
   type SoundReference,
   type SpriteReference,
-  type WorldviewErrorCode,
+  type MapsErrorCode,
 } from "./core/index.js";
-export { createWorldview } from "./viewer/viewer.js";
+export { createMapsViewer } from "./viewer/viewer.js";
 export type {
   BinarySource,
   AudioChangeDetail,
   AudioState,
   CameraState,
   CameraUpdate,
-  CreateWorldviewOptions,
+  CreateMapsOptions,
   ErrorDetail,
   FetchLike,
   GameAssetKind,
@@ -42,10 +42,10 @@ export type {
   WarningDetail,
   WalkabilityChangeDetail,
   WorldSource,
-  WorldviewControls,
-  WorldviewEventMap,
-  WorldviewMovementMode,
-  WorldviewMovementSettings,
-  WorldviewMovementUpdate,
-  WorldviewViewer,
+  MapsControls,
+  MapsEventMap,
+  MapsMovementMode,
+  MapsMovementSettings,
+  MapsMovementUpdate,
+  MapsViewer,
 } from "./viewer/types.js";

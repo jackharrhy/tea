@@ -24,7 +24,7 @@
   "dependencies": {
     "7zip-bin-full": "^26.2.1",
     "@tea/artbin-core": "0.0.1",
-    "@jackharrhy/tea-maps-renderer": "0.1.0",
+    "@jackharrhy/tea-maps-renderer": "0.2.0",
     "@tscircuit/alphabet": "^0.0.26",
     "@tus/file-store": "2.1.1",
     "@tus/server": "2.4.5",

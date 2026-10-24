@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { readPcxPalette, WorldviewError } from "../src/core/index.js";
+import { readPcxPalette, MapsError } from "../src/core/index.js";
 
 function pcxPalette(): Uint8Array {
   const result = new Uint8Array(128 + 1 + 768);
@@ -22,7 +22,7 @@ describe("PCX palettes", () => {
   });
 
   it("rejects truncated files and missing palette markers", () => {
-    expect(() => readPcxPalette(new Uint8Array(128))).toThrow(WorldviewError);
+    expect(() => readPcxPalette(new Uint8Array(128))).toThrow(MapsError);
     const missingMarker = pcxPalette();
     missingMarker[128] = 0;
     expect(() => readPcxPalette(missingMarker)).toThrow(

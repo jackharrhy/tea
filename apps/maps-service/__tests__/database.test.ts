@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, test } from "vitest";
-import { WorldviewDatabase } from "../src/database.js";
+import { MapsDatabase } from "../src/database.js";
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -13,11 +13,11 @@ afterEach(async () => {
 });
 
 async function database(ids?: readonly string[]) {
-  const root = await mkdtemp(join(tmpdir(), "worldview-database-test-"));
+  const root = await mkdtemp(join(tmpdir(), "maps-database-test-"));
   roots.push(root);
   const path = join(root, "maps.db");
   const remaining = [...(ids ?? [])];
-  const store = new WorldviewDatabase(
+  const store = new MapsDatabase(
     path,
     ids
       ? () => {
@@ -30,7 +30,7 @@ async function database(ids?: readonly string[]) {
   return { path, store };
 }
 
-function user(store: WorldviewDatabase) {
+function user(store: MapsDatabase) {
   return store.upsertUser({
     fourmSub: "database-user",
     username: "database-user",
@@ -39,7 +39,7 @@ function user(store: WorldviewDatabase) {
   });
 }
 
-describe("Worldview hosted database", () => {
+describe("Maps hosted database", () => {
   test("regenerates a public ID when the primary-key candidate already exists", async () => {
     const firstId = "0123456789ab";
     const secondId = "cdefghjkmnpq";
@@ -118,7 +118,7 @@ describe("Worldview hosted database", () => {
     `);
     old.close();
 
-    const migrated = new WorldviewDatabase(path);
+    const migrated = new MapsDatabase(path);
     expect(migrated.project(project.id, owner.id)?.maps).toHaveLength(1);
     expect(migrated.createProject(owner.id, "Gower", "gower").game).toBe(
       "gower",

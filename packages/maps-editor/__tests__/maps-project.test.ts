@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  parseWorldviewProject,
-  serializeWorldviewProject,
-  WorldviewProjectParseError,
+  parseMapsProject,
+  serializeMapsProject,
+  MapsProjectParseError,
 } from "../src/core/index.js";
 
 const PROJECT = {
@@ -24,25 +24,24 @@ const PROJECT = {
   defaultBuildProfile: "preview",
 } as const;
 
-describe("Worldview project manifests", () => {
+describe("Maps project manifests", () => {
   it("round-trips portable folder-level project settings", () => {
-    const serialized = serializeWorldviewProject(PROJECT);
-    expect(parseWorldviewProject(serialized)).toEqual(PROJECT);
+    const serialized = serializeMapsProject(PROJECT);
+    expect(parseMapsProject(serialized)).toEqual(PROJECT);
     expect(serialized.endsWith("\n")).toBe(true);
   });
 
   it("round-trips hosted map links and rejects duplicate identities", () => {
     const hosted = {
-      origin: "https://worldview.example",
+      origin: "https://maps.example",
       projectId: "abcdefghijkl",
       maps: [{ path: "maps/one.map", mapId: "mnopqrstuvwx" }],
     };
     expect(
-      parseWorldviewProject(serializeWorldviewProject({ ...PROJECT, hosted }))
-        .hosted,
+      parseMapsProject(serializeMapsProject({ ...PROJECT, hosted })).hosted,
     ).toEqual(hosted);
     expect(() =>
-      parseWorldviewProject(
+      parseMapsProject(
         JSON.stringify({
           ...PROJECT,
           hosted: {
@@ -56,7 +55,7 @@ describe("Worldview project manifests", () => {
       ),
     ).toThrow(/unique path/);
     expect(() =>
-      parseWorldviewProject(
+      parseMapsProject(
         JSON.stringify({
           ...PROJECT,
           hosted: {
@@ -68,7 +67,7 @@ describe("Worldview project manifests", () => {
           },
         }),
       ),
-    ).toThrow(WorldviewProjectParseError);
+    ).toThrow(MapsProjectParseError);
   });
 
   it("accepts Quake FGD definitions for mods using WAD2 textures", () => {
@@ -80,9 +79,7 @@ describe("Worldview project manifests", () => {
       },
     } as const;
 
-    expect(parseWorldviewProject(serializeWorldviewProject(project))).toEqual(
-      project,
-    );
+    expect(parseMapsProject(serializeMapsProject(project))).toEqual(project);
   });
 
   it("accepts Quake II as a portable project profile without requiring WAD resources", () => {
@@ -98,9 +95,7 @@ describe("Worldview project manifests", () => {
       },
     } as const;
 
-    expect(parseWorldviewProject(serializeWorldviewProject(quake2))).toEqual(
-      quake2,
-    );
+    expect(parseMapsProject(serializeMapsProject(quake2))).toEqual(quake2);
   });
 
   it.each([
@@ -111,7 +106,7 @@ describe("Worldview project manifests", () => {
     "rejects %s projects configured with incompatible %s definitions",
     (game, format) => {
       expect(() =>
-        parseWorldviewProject(
+        parseMapsProject(
           JSON.stringify({
             ...PROJECT,
             game,
@@ -134,18 +129,18 @@ describe("Worldview project manifests", () => {
     "https://example.test/a.wad",
   ])("rejects non-contained resource path %s", (path) => {
     expect(() =>
-      parseWorldviewProject(
+      parseMapsProject(
         JSON.stringify({
           ...PROJECT,
           resources: { ...PROJECT.resources, wads: [path] },
         }),
       ),
-    ).toThrow(WorldviewProjectParseError);
+    ).toThrow(MapsProjectParseError);
   });
 
   it("rejects duplicate resources and missing default build profiles", () => {
     expect(() =>
-      parseWorldviewProject(
+      parseMapsProject(
         JSON.stringify({
           ...PROJECT,
           resources: { ...PROJECT.resources, wads: ["same.wad", "same.wad"] },
@@ -153,7 +148,7 @@ describe("Worldview project manifests", () => {
       ),
     ).toThrow(/duplicates/);
     expect(() =>
-      parseWorldviewProject(
+      parseMapsProject(
         JSON.stringify({ ...PROJECT, defaultBuildProfile: "missing" }),
       ),
     ).toThrow(/existing build profile/);

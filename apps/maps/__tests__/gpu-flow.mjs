@@ -238,7 +238,7 @@ try {
       .querySelector("#build-status")
       ?.textContent?.includes("Compiled preview ready"),
   );
-  const compiled = page.locator(".perspective-header ~ world-view");
+  const compiled = page.locator(".perspective-header ~ tea-map-view");
   const compiledDiagnostics = await compiled.evaluate(
     (element) => element.viewer?.diagnostics,
   );
@@ -278,7 +278,7 @@ try {
     .waitFor();
   assert.equal(
     await page
-      .locator("#viewport world-view")
+      .locator("#viewport tea-map-view")
       .evaluate((element) => Boolean(element.viewer?.world)),
     true,
   );
@@ -292,7 +292,7 @@ try {
     .waitFor();
   assert.equal(
     await page
-      .locator("#viewport world-view")
+      .locator("#viewport tea-map-view")
       .evaluate((element) => element.viewer?.diagnostics?.format),
     "goldsrc-bsp30",
   );
@@ -330,7 +330,7 @@ try {
     .waitFor();
   assert.equal(
     await page
-      .locator("#viewport world-view")
+      .locator("#viewport tea-map-view")
       .evaluate((element) => element.viewer?.diagnostics?.format),
     "quake-bsp2",
   );
@@ -340,7 +340,7 @@ try {
     .getByText(/^Ready/)
     .waitFor();
   const quake2 = await page
-    .locator("#viewport world-view")
+    .locator("#viewport tea-map-view")
     .evaluate((element) => element.viewer?.diagnostics);
   assert.equal(quake2?.format, "quake2-bsp38");
   assert.ok(quake2.triangles > 0, "Quake II example has no rendered faces");
@@ -396,7 +396,7 @@ try {
         );
       }
       const diagnostics = await page
-        .locator("#viewport world-view")
+        .locator("#viewport tea-map-view")
         .evaluate((element) => element.viewer?.diagnostics);
       if (format) assert.equal(diagnostics?.format, format, `${id} format`);
       else

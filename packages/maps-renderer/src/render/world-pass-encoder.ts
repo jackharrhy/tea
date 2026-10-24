@@ -29,7 +29,7 @@ export function encodeWorldPasses(input: WorldPassEncoding): void {
   const { encoder, target, plan, resources, sprites, walkability } = input;
   if (plan.needsSkyPass) {
     const pass = encoder.beginRenderPass({
-      label: "Worldview sky pass",
+      label: "Maps sky pass",
       colorAttachments: [
         {
           view: target.msaa,
@@ -61,7 +61,7 @@ export function encodeWorldPasses(input: WorldPassEncoding): void {
 
   if (plan.needsWorldPass) {
     const pass = encoder.beginRenderPass({
-      label: "Worldview world pass",
+      label: "Maps world pass",
       colorAttachments: [
         {
           view: target.msaa,
@@ -105,7 +105,7 @@ export function encodeWorldPasses(input: WorldPassEncoding): void {
 
   if (!plan.needsSkyPass && !plan.needsWorldPass) {
     const pass = encoder.beginRenderPass({
-      label: "Worldview clear pass",
+      label: "Maps clear pass",
       colorAttachments: [
         {
           view: target.msaa,

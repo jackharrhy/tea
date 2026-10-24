@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { HostedGameSchema } from "@tea/maps-protocol";
 import { canEditProject } from "./access-policy.js";
-import type { WorldviewUser } from "./database.js";
+import type { MapsUser } from "./database.js";
 import { submitHostedBuild } from "./hosted-build-operation.js";
 import { ServiceHttpError, MAX_HOSTED_MAP_BYTES } from "./service-http.js";
-import type { WorldviewServiceOptions } from "./service-options.js";
+import type { MapsServiceOptions } from "./service-options.js";
 
 interface McpOperation {
   readonly name: string;
@@ -17,8 +17,8 @@ interface McpOperation {
     readonly openWorldHint: boolean;
   };
   execute(
-    options: WorldviewServiceOptions,
-    user: WorldviewUser,
+    options: MapsServiceOptions,
+    user: MapsUser,
     input: unknown,
   ): Promise<unknown>;
 }
@@ -29,8 +29,8 @@ function operation<T extends z.ZodType>(
   schema: T,
   readOnly: boolean,
   run: (
-    options: WorldviewServiceOptions,
-    user: WorldviewUser,
+    options: MapsServiceOptions,
+    user: MapsUser,
     input: z.output<T>,
   ) => unknown | Promise<unknown>,
 ): McpOperation {

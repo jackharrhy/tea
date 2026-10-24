@@ -1,4 +1,4 @@
-import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { serializeWalkability } from "@jackharrhy/tea-maps-renderer/walkability";
 import { clientEntry, on, type Handle } from "remix/component";
 import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
@@ -6,7 +6,7 @@ import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
 export const ViewerWalkabilityPanel = clientEntry(
   `file:///app/assets/viewer-walkability-panel.tsx#ViewerWalkabilityPanel`,
   function ViewerWalkabilityPanelComponent(handle: Handle) {
-    let element: WorldViewElement | null = null;
+    let element: MapsViewElement | null = null;
     let ready = false;
     let busy = false;
     let generation = 0;
@@ -51,8 +51,8 @@ export const ViewerWalkabilityPanel = clientEntry(
     handle.queueTask(() => {
       function attach() {
         if (element) return;
-        element = document.querySelector<WorldViewElement>(
-          "#viewport world-view",
+        element = document.querySelector<MapsViewElement>(
+          "#viewport tea-map-view",
         );
         if (!element) return;
         element.addEventListener("ready", mapReady, { signal: handle.signal });

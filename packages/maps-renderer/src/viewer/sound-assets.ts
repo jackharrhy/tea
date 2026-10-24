@@ -1,6 +1,6 @@
 import {
   parseWave,
-  WorldviewError,
+  MapsError,
   type ParsedWave,
   type ParsedWorld,
   type SoundReference,
@@ -87,7 +87,7 @@ export async function loadSoundAssets(
       if (!binary && source.soundBaseUrl)
         binary = soundUrl(source.soundBaseUrl, reference);
       if (!binary)
-        throw new WorldviewError("asset-fetch", "no sound source was provided");
+        throw new MapsError("asset-fetch", "no sound source was provided");
       return readBinarySource(binary, "sound", reference.declaredPath, context);
     })();
     encoded.set(reference.normalizedPath, request);

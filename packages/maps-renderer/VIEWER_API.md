@@ -9,12 +9,12 @@ npm install @jackharrhy/tea-maps-renderer
 
 ## Create a viewer
 
-Pass a canvas and a `WorldSource` to `createWorldview()`:
+Pass a canvas and a `WorldSource` to `createMapsViewer()`:
 
 ```ts
-import { createWorldview } from "@jackharrhy/tea-maps-renderer";
+import { createMapsViewer } from "@jackharrhy/tea-maps-renderer";
 
-const viewer = await createWorldview({
+const viewer = await createMapsViewer({
   canvas: document.querySelector("canvas")!,
   source: {
     gameBaseUrl: "/games/valve/",
@@ -25,7 +25,7 @@ const viewer = await createWorldview({
 
 Walking is the default control mode. Press `V` to switch between walking and flying. Map audio
 starts only after a canvas interaction or an explicit `enableAudio()` call. Canvas interactions
-also resume suspended audio without reloading the map. The `<world-view>` element enables this
+also resume suspended audio without reloading the map. The `<tea-map-view>` element enables this
 behavior by default; `audio="false"` disables automatic activation on interaction. A click while
 map assets are loading enables the audio context, and sounds start when those assets arrive.
 
@@ -71,7 +71,7 @@ directory with `gameBaseUrl`, provide a `gameAssets` table, or resolve each asse
 storage layer:
 
 ```ts
-await createWorldview({
+await createMapsViewer({
   canvas,
   source: {
     bsp: "/api/maps/bar1.bsp",
@@ -155,16 +155,16 @@ fixture graph as `<map>.tea-maps-walkability.json` beside its BSP to load it aut
 
 ## Use the web component
 
-Register `<world-view>` when your application uses the npm package:
+Register `<tea-map-view>` when your application uses the npm package:
 
 ```ts
-import { defineWorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import { defineMapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 
-defineWorldViewElement();
+defineMapsViewElement();
 ```
 
 ```html
-<world-view game-base-url="/games/valve/" src="maps/c1a0.bsp"></world-view>
+<tea-map-view game-base-url="/games/valve/" src="maps/c1a0.bsp"></tea-map-view>
 ```
 
 For application-owned assets, assign one `WorldSource` before or after connecting the element. This
@@ -172,13 +172,13 @@ keeps authenticated resolvers and the rest of the map load in one operation:
 
 ```ts
 import {
-  WorldViewElement,
-  defineWorldViewElement,
+  MapsViewElement,
+  defineMapsViewElement,
 } from "@jackharrhy/tea-maps-renderer/element";
 
-defineWorldViewElement();
+defineMapsViewElement();
 
-const map = document.querySelector<WorldViewElement>("world-view")!;
+const map = document.querySelector<MapsViewElement>("tea-map-view")!;
 map.source = {
   bsp: "/api/maps/c1a0.bsp",
   palette: "/api/games/id1/gfx/palette.lmp",
@@ -203,7 +203,7 @@ The standalone module registers the element for pages without a build step:
 
 ```html
 <script type="module" src="/vendor/tea-maps/standalone.js"></script>
-<world-view game-base-url="/games/id1/" src="maps/start.bsp"></world-view>
+<tea-map-view game-base-url="/games/id1/" src="maps/start.bsp"></tea-map-view>
 ```
 
 Run `npm run test:embed --workspace @tea/maps` in this repository for browser checks, including the

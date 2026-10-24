@@ -45,9 +45,7 @@ export async function overviewBlob(
     const canvas = new OffscreenCanvas(width, height);
     const context = canvas.getContext("2d");
     if (!context)
-      throw new Error(
-        "Worldview could not initialize an overview image encoder",
-      );
+      throw new Error("Maps could not initialize an overview image encoder");
     context.putImageData(imageData, 0, 0);
     return canvas.convertToBlob({
       type,
@@ -59,14 +57,14 @@ export async function overviewBlob(
   canvas.height = height;
   const context = canvas.getContext("2d");
   if (!context)
-    throw new Error("Worldview could not initialize an overview image encoder");
+    throw new Error("Maps could not initialize an overview image encoder");
   context.putImageData(imageData, 0, 0);
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) =>
         blob
           ? resolve(blob)
-          : reject(new Error("Worldview could not encode overview")),
+          : reject(new Error("Maps could not encode overview")),
       type,
       quality,
     );

@@ -7,18 +7,15 @@ import { fileURLToPath } from "node:url";
 import { ArtbinClient } from "./artbin.js";
 import { FileBlobStore } from "./blob-store.js";
 import { RemoteBuildQueue } from "./build-queue.js";
-import { WorldviewDatabase } from "./database.js";
+import { MapsDatabase } from "./database.js";
 import { MapCellClient } from "./map-cell-client.js";
 import { createServiceRoutes } from "./routes/index.js";
 import { createServiceDispatcher } from "./service-routing.js";
 import { webError, webErrorFromUnknown } from "./service-web-http.js";
-import type { WorldviewServiceOptions } from "./service-options.js";
+import type { MapsServiceOptions } from "./service-options.js";
 import { serveStaticFile } from "./static-files.js";
 
-export type {
-  HostedMapStore,
-  WorldviewServiceOptions,
-} from "./service-options.js";
+export type { HostedMapStore, MapsServiceOptions } from "./service-options.js";
 
 function configuredOrigin(value: string): string {
   const url = new URL(value);
@@ -35,7 +32,7 @@ function configuredOrigin(value: string): string {
   return url.origin;
 }
 
-export function createWorldviewService(options: WorldviewServiceOptions) {
+export function createMapsService(options: MapsServiceOptions) {
   const primaryPublicOrigin = configuredOrigin(options.oauth.publicUrl);
   const publicOriginsByHost = new Map(
     [primaryPublicOrigin, ...(options.additionalPublicOrigins ?? [])].map(
@@ -111,10 +108,10 @@ export function configuredCompilerEndpoints(values: NodeJS.ProcessEnv) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const dataRoot = environment("TEA_MAPS_DATA_ROOT", "./data/maps");
   mkdirSync(dataRoot, { recursive: true });
-  const database = new WorldviewDatabase(join(dataRoot, "maps.db"));
+  const database = new MapsDatabase(join(dataRoot, "maps.db"));
   const blobs = new FileBlobStore(join(dataRoot, "blobs"));
   const buildEndpoints = configuredCompilerEndpoints(process.env);
-  const service = createWorldviewService({
+  const service = createMapsService({
     database,
     blobs,
     additionalPublicOrigins: (

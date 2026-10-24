@@ -1,6 +1,6 @@
 import { css } from "remix/component";
 
-export const worldviewEditorStyles = css({
+export const mapsEditorStyles = css({
   "& .editor-shell": {
     "grid-template-rows": "48px minmax(0, 1fr) 20px",
     "min-width": "0",

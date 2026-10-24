@@ -50,11 +50,11 @@ import {
   EditorPerformanceToggle,
 } from "./assets/editor-performance-panel.tsx";
 import { editorStyles } from "./editor-styles.ts";
-import { worldviewEditorStyles } from "./editor-worldview-styles.ts";
+import { mapsEditorStyles } from "./editor-maps-styles.ts";
 
 export function EditorPage() {
   return () => (
-    <html lang="en" mix={[editorStyles, worldviewEditorStyles]}>
+    <html lang="en" mix={[editorStyles, mapsEditorStyles]}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -2,21 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   decodeSurfaceAttributes,
   orderAssetMounts,
-  worldviewGameProfile,
+  mapsGameProfile,
 } from "../src/core/index.js";
 
 describe("game profiles and asset mounts", () => {
   it("constrains GoldSrc to Valve 220 while Quake retains classic syntax", () => {
-    expect(worldviewGameProfile("goldsrc").supportedFaceSyntaxes).toEqual([
+    expect(mapsGameProfile("goldsrc").supportedFaceSyntaxes).toEqual([
       "valve-220",
     ]);
-    expect(worldviewGameProfile("quake").supportedFaceSyntaxes).toContain(
-      "quake",
-    );
+    expect(mapsGameProfile("quake").supportedFaceSyntaxes).toContain("quake");
   });
 
   it("defines Quake II as classic syntax with WAL materials and named surface metadata", () => {
-    const profile = worldviewGameProfile("quake2");
+    const profile = mapsGameProfile("quake2");
 
     expect(profile).toMatchObject({
       defaultFaceSyntax: "quake",
@@ -47,7 +45,7 @@ describe("game profiles and asset mounts", () => {
   });
 
   it("retains unknown Quake II surface bits for mod compatibility", () => {
-    const semantics = worldviewGameProfile("quake2").surfaceSemantics!;
+    const semantics = mapsGameProfile("quake2").surfaceSemantics!;
     const decoded = decodeSurfaceAttributes(
       { contents: 0x40000001, flags: 0x101 },
       semantics,

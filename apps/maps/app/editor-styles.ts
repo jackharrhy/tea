@@ -1473,7 +1473,7 @@ export const editorStyles = css({
     "border-radius": "5px",
     padding: "0.4rem",
   },
-  "& .viewport-frame world-view": {
+  "& .viewport-frame tea-map-view": {
     position: "absolute",
     inset: "0",
     width: "100%",
@@ -1483,7 +1483,7 @@ export const editorStyles = css({
     visibility: "hidden",
     "pointer-events": "none",
   },
-  "& .viewport-frame world-view[data-active='true']": {
+  "& .viewport-frame tea-map-view[data-active='true']": {
     visibility: "visible",
     "pointer-events": "auto",
   },

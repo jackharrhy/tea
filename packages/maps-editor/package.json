@@ -26,7 +26,7 @@
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "@jackharrhy/tea-maps-renderer": "0.1.0",
+    "@jackharrhy/tea-maps-renderer": "0.2.0",
     "typegpu": "0.12.5",
     "wgpu-matrix": "^3.4.2",
     "zod": "^4.5.4"

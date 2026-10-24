@@ -93,7 +93,7 @@ export function mediaBspWalkabilityHref(file: {
 }): string {
   return routes.mediaFile.href({
     fileId: file.id,
-    filename: file.name.replace(/\.bsp$/i, ".worldview-walkability.json"),
+    filename: file.name.replace(/\.bsp$/i, ".tea-maps-walkability.json"),
   });
 }
 

@@ -122,7 +122,7 @@ const manifest = {
 };
 
 describe("local map projects", () => {
-  it("opens Tea manifests and rejects Worldview filenames", async () => {
+  it("opens Tea manifests and rejects Maps filenames", async () => {
     const teaFile = file(
       "tea.maps.project.json",
       JSON.stringify({ ...manifest, mapRoots: ["."] }),
@@ -136,10 +136,7 @@ describe("local map projects", () => {
     expect(project.manifest.name).toBe("Test project");
 
     const oldOnly = directory("project", {
-      "worldview.project.json": file(
-        "worldview.project.json",
-        JSON.stringify(manifest),
-      ),
+      "maps.project.json": file("maps.project.json", JSON.stringify(manifest)),
     });
     await expect(openMapProject(oldOnly)).rejects.toThrow(
       "tea.maps.project.json",

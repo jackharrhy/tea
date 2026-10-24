@@ -22,7 +22,7 @@ afterEach(async () => {
 
 describe("Steam BSP corpus extractor", () => {
   it("materializes bounded game-root asset classes with provenance", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "worldview-corpus-"));
+    const root = await mkdtemp(path.join(tmpdir(), "maps-corpus-"));
     temporaryDirectories.push(root);
     const source = path.join(root, "source");
     const output = path.join(root, "output");

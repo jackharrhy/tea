@@ -13,7 +13,7 @@ import {
   type MapCompileResult,
   type MapDocument,
   type MapBuildService,
-  type WorldviewGameProfile,
+  type MapsGameProfile,
 } from "@tea/maps-editor/core";
 import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
 import { classifyMaterial } from "@jackharrhy/tea-maps-renderer/core";
@@ -41,7 +41,7 @@ function wadName(path: string, index: number): string {
 async function compileAssets(
   project: MapProject | null,
   document: MapDocument,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
   standalone: StandaloneResources | null,
 ): Promise<MapCompileInputAsset[]> {
   const assets: MapCompileInputAsset[] = [];
@@ -133,7 +133,7 @@ export async function buildMap(
     readonly mapName: string;
     readonly project: MapProject | null;
     readonly quality: MapCompileQuality;
-    readonly game?: WorldviewGameProfile;
+    readonly game?: MapsGameProfile;
     readonly standalone?: StandaloneResources | null;
     readonly preferredProfileId?: string;
   },

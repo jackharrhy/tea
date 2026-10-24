@@ -11,9 +11,9 @@ import {
 } from "../core/index.js";
 import { WorldCamera } from "./camera.js";
 import type {
-  WorldviewMovementMode,
-  WorldviewMovementSettings,
-  WorldviewMovementUpdate,
+  MapsMovementMode,
+  MapsMovementSettings,
+  MapsMovementUpdate,
 } from "./types.js";
 
 const FIXED_COMMAND_SECONDS = 0.01;
@@ -21,7 +21,7 @@ const MAX_ACCUMULATED_SECONDS = 0.1;
 const GOLDSRC_MOUSE_YAW_DEGREES = 0.022;
 const COUNTER_STRIKE_MAX_SPEED = 250;
 
-export const DEFAULT_WORLDVIEW_MOVEMENT: WorldviewMovementSettings = {
+export const DEFAULT_MAPS_MOVEMENT: MapsMovementSettings = {
   maxSpeed: DEFAULT_GOLDSRC_MOVEMENT.maxSpeed,
   accelerate: DEFAULT_GOLDSRC_MOVEMENT.accelerate,
   airAccelerate: DEFAULT_GOLDSRC_MOVEMENT.airAccelerate,
@@ -39,7 +39,7 @@ export interface PlayerSoundEvent {
   readonly strength: number;
 }
 
-type ControllableMode = Exclude<WorldviewMovementMode, "none">;
+type ControllableMode = Exclude<MapsMovementMode, "none">;
 
 function samePosition(left: Vec3Tuple, right: Vec3Tuple): boolean {
   return left[0] === right[0] && left[1] === right[1] && left[2] === right[2];
@@ -57,9 +57,9 @@ function finiteInRange(
 }
 
 function normalizedSettings(
-  current: WorldviewMovementSettings,
-  update: WorldviewMovementUpdate,
-): WorldviewMovementSettings {
+  current: MapsMovementSettings,
+  update: MapsMovementUpdate,
+): MapsMovementSettings {
   return {
     maxSpeed: finiteInRange(
       update.maxSpeed ?? current.maxSpeed,
@@ -148,7 +148,7 @@ export class WorldControls {
   private pendingToggle = false;
   private desiredMode: ControllableMode;
   private currentMode: ControllableMode;
-  private settingsValue: WorldviewMovementSettings;
+  private settingsValue: MapsMovementSettings;
   private automaticMaxSpeed: boolean;
 
   public constructor(
@@ -157,13 +157,13 @@ export class WorldControls {
     private readonly changed: (look?: { yaw: number; pitch: number }) => void,
     private readonly modeChanged: (mode: ControllableMode) => void,
     private readonly playerSound: (event: PlayerSoundEvent) => void,
-    initialSettings: WorldviewMovementUpdate = {},
+    initialSettings: MapsMovementUpdate = {},
   ) {
     this.desiredMode = initialMode;
     this.currentMode = initialMode;
     this.automaticMaxSpeed = initialSettings.maxSpeed === undefined;
     this.settingsValue = normalizedSettings(
-      DEFAULT_WORLDVIEW_MOVEMENT,
+      DEFAULT_MAPS_MOVEMENT,
       initialSettings,
     );
     this.initialTabIndex = canvas.getAttribute("tabindex");
@@ -191,11 +191,11 @@ export class WorldControls {
     );
   }
 
-  public get settings(): WorldviewMovementSettings {
+  public get settings(): MapsMovementSettings {
     return { ...this.settingsValue };
   }
 
-  public setSettings(update: WorldviewMovementUpdate): void {
+  public setSettings(update: MapsMovementUpdate): void {
     if (update.maxSpeed !== undefined) this.automaticMaxSpeed = false;
     this.settingsValue = normalizedSettings(this.settingsValue, update);
     this.changed();
@@ -209,7 +209,7 @@ export class WorldControls {
         ...this.settingsValue,
         maxSpeed: isCounterStrikeWorld(world)
           ? COUNTER_STRIKE_MAX_SPEED
-          : DEFAULT_WORLDVIEW_MOVEMENT.maxSpeed,
+          : DEFAULT_MAPS_MOVEMENT.maxSpeed,
       };
     }
     this.eyeHeight = bspPlayerProfile(world.format).eyeHeight;

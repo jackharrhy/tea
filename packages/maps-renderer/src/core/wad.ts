@@ -4,7 +4,7 @@
  */
 
 import { BinaryView } from "./binary.js";
-import { invalidData, invariant, WorldviewError } from "./errors.js";
+import { invalidData, invariant, MapsError } from "./errors.js";
 import { parseMipTexturePayload } from "./miptex-payload.js";
 import { readMipTextureHeader } from "./miptex.js";
 import type { ParsedMipTexture } from "./types.js";
@@ -135,7 +135,7 @@ export function parseWad(input: ArrayBuffer | ArrayBufferView): ParsedWad {
         if (!mipTexture)
           invalidData(`MIPTEX ${header.name} has no embedded pixels`);
       } catch (error) {
-        if (!(error instanceof WorldviewError) || error.code !== "invalid-data")
+        if (!(error instanceof MapsError) || error.code !== "invalid-data")
           throw error;
         warnings.push({
           code: "unusable-wad-miptex",

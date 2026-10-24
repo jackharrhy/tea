@@ -138,9 +138,9 @@ describe("Tea Maps MCP", () => {
       "tea_maps_start_build",
     );
     expect(tools.map((tool: { name: string }) => tool.name)).not.toContain(
-      "worldview_start_build",
+      "maps_start_build",
     );
-    const oldAlias = await call(app.origin, "worldview_list_projects", {});
+    const oldAlias = await call(app.origin, "maps_list_projects", {});
     expect((await oldAlias.json()).result.isError).toBe(true);
   });
 

@@ -1,5 +1,5 @@
 import { BinaryView } from "./binary.js";
-import { invariant, WorldviewError } from "./errors.js";
+import { invariant, MapsError } from "./errors.js";
 import { classifyMaterial } from "./materials.js";
 import { parseMipTexturePayload } from "./miptex-payload.js";
 import { readMipTextureHeader } from "./miptex.js";
@@ -13,7 +13,7 @@ export interface ParsedQuakeTextures {
 }
 
 function invalidDataReason(error: unknown): string | null {
-  return error instanceof WorldviewError && error.code === "invalid-data"
+  return error instanceof MapsError && error.code === "invalid-data"
     ? error.message
     : null;
 }

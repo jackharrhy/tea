@@ -1,7 +1,7 @@
 import {
   gameProfileSupportsFaceSyntax,
   parseMapSource,
-  worldviewGameProfile,
+  mapsGameProfile,
 } from "@tea/maps-editor/core";
 import {
   CreateHostedMapRequestSchema,
@@ -67,11 +67,9 @@ export async function createHostedMap(
   fetcher: typeof fetch = fetch,
 ) {
   const selectedFormat = HostedMapFormatSchema.parse(format);
-  if (
-    !gameProfileSupportsFaceSyntax(worldviewGameProfile(game), selectedFormat)
-  ) {
+  if (!gameProfileSupportsFaceSyntax(mapsGameProfile(game), selectedFormat)) {
     throw new Error(
-      `${worldviewGameProfile(game).label} does not support that map format`,
+      `${mapsGameProfile(game).label} does not support that map format`,
     );
   }
   if (sourceFile && sourceFile.size > MAX_MAP_BYTES)

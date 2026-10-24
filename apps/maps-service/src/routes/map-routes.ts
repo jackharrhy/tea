@@ -21,11 +21,11 @@ import {
   webJson,
   webRequestBody,
 } from "../service-web-http.js";
-import type { WorldviewServiceOptions } from "../service-options.js";
+import type { MapsServiceOptions } from "../service-options.js";
 
 export function createMapRoutes(
   options: Pick<
-    WorldviewServiceOptions,
+    MapsServiceOptions,
     "database" | "maps" | "realtimeTicketSecret"
   >,
 ) {

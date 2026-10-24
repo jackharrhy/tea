@@ -102,7 +102,7 @@ for (const claims of [
   { aud: undefined },
   { aud: [resource, "https://other.example"] },
   { scope: "newport-shell:execute" },
-  { scope: "openid worldview:admin" },
+  { scope: "openid maps:admin" },
   { scope: "" },
   { exp: now / 1000 },
   { exp: "1900000000" },

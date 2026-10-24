@@ -1,6 +1,6 @@
 import { BinaryView } from "./binary.js";
 import { identifyBsp, type BspIdentification } from "./bsp-identification.js";
-import { invalidData, invariant, WorldviewError } from "./errors.js";
+import { invalidData, invariant, MapsError } from "./errors.js";
 import {
   BSP2_2PSB_MAGIC,
   quakeBspLayout,
@@ -66,14 +66,14 @@ export function parseQuakeBspContainer(
   const layout = quakeBspLayout(version);
   if (!layout) {
     if (version === BSP2_2PSB_MAGIC) {
-      throw new WorldviewError(
+      throw new MapsError(
         "unsupported-bsp",
-        "Worldview supports sanitized BSP2 but not the earlier 2PSB layout",
+        "Maps supports sanitized BSP2 but not the earlier 2PSB layout",
       );
     }
-    throw new WorldviewError(
+    throw new MapsError(
       "unsupported-bsp",
-      `Worldview supports BSP29, BSP30, sanitized BSP2, and Quake II BSP38; received ${version}`,
+      `Maps supports BSP29, BSP30, sanitized BSP2, and Quake II BSP38; received ${version}`,
     );
   }
 

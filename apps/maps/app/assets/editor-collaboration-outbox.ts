@@ -2,11 +2,11 @@ import {
   CollaborationOperationSchema,
   MapDocumentSchema,
   MapSourceStateSchema,
-  WorldviewGameProfileSchema,
+  MapsGameProfileSchema,
   type CollaborationOperation,
   type MapDocument,
   type MapSourceState,
-  type WorldviewGameProfile,
+  type MapsGameProfile,
 } from "@tea/maps-editor/core";
 import { z } from "zod";
 
@@ -25,7 +25,7 @@ export interface HostedMapRecoverySnapshot {
   readonly mapId: string;
   readonly documentKey: string;
   readonly fileName: string;
-  readonly profile: WorldviewGameProfile;
+  readonly profile: MapsGameProfile;
   readonly document: MapDocument;
   readonly source: MapSourceState;
   readonly savedDocumentRevision: number;
@@ -39,7 +39,7 @@ export interface DetachedHostedMap {
   readonly originalMapId: string;
   readonly documentKey: string;
   readonly fileName: string;
-  readonly profile: WorldviewGameProfile;
+  readonly profile: MapsGameProfile;
   readonly document: MapDocument;
   readonly source: MapSourceState;
   readonly originalMapVersion: number;
@@ -75,7 +75,7 @@ const RecoverySnapshotSchema = z.strictObject({
   mapId: z.string().min(1).max(256),
   documentKey: z.string().min(1).max(4_096),
   fileName: z.string().min(1).max(4_096),
-  profile: WorldviewGameProfileSchema,
+  profile: MapsGameProfileSchema,
   document: MapDocumentSchema,
   source: MapSourceStateSchema,
   savedDocumentRevision: z.number().int(),
@@ -110,7 +110,7 @@ export const DetachedHostedMapSchema = z.strictObject({
   originalMapId: z.string().min(1).max(256),
   documentKey: z.string().min(1).max(4_096),
   fileName: z.string().min(1).max(4_096),
-  profile: WorldviewGameProfileSchema,
+  profile: MapsGameProfileSchema,
   document: MapDocumentSchema,
   source: MapSourceStateSchema,
   originalMapVersion: z.number().int().nonnegative(),

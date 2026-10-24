@@ -1,4 +1,4 @@
-export type WorldviewErrorCode =
+export type MapsErrorCode =
   | "webgpu-unavailable"
   | "unsupported-bsp"
   | "invalid-data"
@@ -8,24 +8,24 @@ export type WorldviewErrorCode =
   | "audio-unavailable"
   | "device-lost";
 
-export class WorldviewError extends Error {
-  public readonly code: WorldviewErrorCode;
+export class MapsError extends Error {
+  public readonly code: MapsErrorCode;
   public override readonly cause?: unknown;
 
   public constructor(
-    code: WorldviewErrorCode,
+    code: MapsErrorCode,
     message: string,
     options?: { cause?: unknown },
   ) {
     super(message);
-    this.name = "WorldviewError";
+    this.name = "MapsError";
     this.code = code;
     if (options && "cause" in options) this.cause = options.cause;
   }
 }
 
 export function invalidData(message: string): never {
-  throw new WorldviewError("invalid-data", message);
+  throw new MapsError("invalid-data", message);
 }
 
 export function invariant(

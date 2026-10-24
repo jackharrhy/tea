@@ -302,7 +302,7 @@ export function createStarterDocument(): MapDocument {
     id: ids.entity(),
     properties: {
       classname: "worldspawn",
-      message: "Worldview editor starter",
+      message: "Maps editor starter",
       light: "96",
     },
     primitives: [

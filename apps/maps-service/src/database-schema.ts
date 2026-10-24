@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 
-export function initializeWorldviewDatabase(sql: DatabaseSync): void {
+export function initializeMapsDatabase(sql: DatabaseSync): void {
   sql.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY, fourm_sub TEXT NOT NULL UNIQUE, username TEXT NOT NULL,

@@ -18,12 +18,11 @@ import type {
   Vec3,
 } from "./types.js";
 
-export const FACE_ATTRIBUTE_CLIPBOARD_HEADER =
-  "// Worldview face attributes v1";
+export const FACE_ATTRIBUTE_CLIPBOARD_HEADER = "// Maps face attributes v1";
 
 /** A portable, ID-free snapshot of one authored face's material and mapping attributes. */
 export interface FaceAttributeClipboard {
-  readonly type: "worldview-face-attributes";
+  readonly type: "maps-face-attributes";
   readonly version: 1;
   readonly material: string;
   /** Retained so a future rotated-paste mode has the source plane available. */
@@ -38,7 +37,7 @@ function clonedVec3(value: Vec3): Vec3 {
 }
 
 const FaceAttributeClipboardSchema = z.strictObject({
-  type: z.literal("worldview-face-attributes"),
+  type: z.literal("maps-face-attributes"),
   version: z.literal(1),
   material: z.string().refine((material) => material.trim().length > 0, {
     message: "material must be a non-empty string",
@@ -75,7 +74,7 @@ function faceAttributeClipboardFromUnknown(
   }
   const payload = result.data;
   return {
-    type: "worldview-face-attributes",
+    type: "maps-face-attributes",
     version: 1,
     material: payload.material,
     planePoints: payload.planePoints,
@@ -110,7 +109,7 @@ export function serializeFaceAttributeClipboard(
   const surface = { ...face.surface };
   delete surface.contents;
   const payload: FaceAttributeClipboard = {
-    type: "worldview-face-attributes",
+    type: "maps-face-attributes",
     version: 1,
     material: face.material,
     planePoints: [
@@ -131,7 +130,7 @@ export function serializeFaceAttributeClipboard(
   return `${FACE_ATTRIBUTE_CLIPBOARD_HEADER}\n${JSON.stringify(payload, null, 2)}`;
 }
 
-/** Parses a Worldview face payload, or returns null when the text is ordinary map/object data. */
+/** Parses a Maps face payload, or returns null when the text is ordinary map/object data. */
 export function parseFaceAttributeClipboard(
   text: string,
 ): FaceAttributeClipboard | null {

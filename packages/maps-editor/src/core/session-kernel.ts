@@ -34,12 +34,10 @@ export class SessionKernel {
   public repeatableCommands: EditorRepeatableCommand[] = [];
   public repeatSequence = 0;
   public suppressRepeatRecording = false;
-  public readonly linkedSyncIds: IdFactory = createSequentialIdFactory(
-    "worldview-linked-sync",
-  );
-  public readonly issueFixIds: IdFactory = createSequentialIdFactory(
-    "worldview-issue-fix",
-  );
+  public readonly linkedSyncIds: IdFactory =
+    createSequentialIdFactory("maps-linked-sync");
+  public readonly issueFixIds: IdFactory =
+    createSequentialIdFactory("maps-issue-fix");
 
   private readonly listeners = new Set<ChangeListener>();
 

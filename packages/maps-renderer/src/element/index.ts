@@ -1,9 +1,9 @@
-import { createWorldview } from "../viewer/viewer.js";
+import { createMapsViewer } from "../viewer/viewer.js";
 import type {
   BinarySource,
   WorldSource,
-  WorldviewEventMap,
-  WorldviewViewer,
+  MapsEventMap,
+  MapsViewer,
 } from "../viewer/types.js";
 
 const template = document.createElement("template");
@@ -68,7 +68,7 @@ function booleanAttribute(
   return element.getAttribute(name)?.toLowerCase() !== "false";
 }
 
-export class WorldViewElement extends HTMLElement {
+export class MapsViewElement extends HTMLElement {
   public static readonly observedAttributes = [
     "src",
     "game-base-url",
@@ -89,7 +89,7 @@ export class WorldViewElement extends HTMLElement {
 
   private readonly canvasElement: HTMLCanvasElement;
   private readonly statusElement: HTMLDivElement;
-  private activeViewer: WorldviewViewer | null = null;
+  private activeViewer: MapsViewer | null = null;
   private controller: AbortController | null = null;
   private sidecarController: AbortController | null = null;
   private assignedSource: WorldSource | undefined;
@@ -105,13 +105,13 @@ export class WorldViewElement extends HTMLElement {
     this.statusElement = shadow.querySelector('[part="status"]')!;
   }
 
-  public get viewer(): WorldviewViewer | null {
+  public get viewer(): MapsViewer | null {
     return this.activeViewer;
   }
 
-  public override addEventListener<K extends keyof WorldviewEventMap>(
+  public override addEventListener<K extends keyof MapsEventMap>(
     type: K,
-    listener: (this: WorldViewElement, event: WorldviewEventMap[K]) => void,
+    listener: (this: MapsViewElement, event: MapsEventMap[K]) => void,
     options?: boolean | AddEventListenerOptions,
   ): void;
   public override addEventListener(
@@ -127,9 +127,9 @@ export class WorldViewElement extends HTMLElement {
     super.addEventListener(type, listener, options);
   }
 
-  public override removeEventListener<K extends keyof WorldviewEventMap>(
+  public override removeEventListener<K extends keyof MapsEventMap>(
     type: K,
-    listener: (this: WorldViewElement, event: WorldviewEventMap[K]) => void,
+    listener: (this: MapsViewElement, event: MapsEventMap[K]) => void,
     options?: boolean | EventListenerOptions,
   ): void;
   public override removeEventListener(
@@ -229,7 +229,7 @@ export class WorldViewElement extends HTMLElement {
       }
       return;
     }
-    if (this.assignedSource && WorldViewElement.sourceAttributes.has(name))
+    if (this.assignedSource && MapsViewElement.sourceAttributes.has(name))
       return;
     void this.initialize();
   }
@@ -285,7 +285,7 @@ export class WorldViewElement extends HTMLElement {
       const maxDprValue = Number(this.getAttribute("max-dpr") ?? 2);
       const audioVolumeValue = Number(this.getAttribute("audio-volume") ?? 0.8);
       const musicVolumeValue = Number(this.getAttribute("music-volume") ?? 1);
-      const viewer = await createWorldview({
+      const viewer = await createMapsViewer({
         canvas: this.canvasElement,
         controls:
           this.getAttribute("controls") === "none"
@@ -327,7 +327,7 @@ export class WorldViewElement extends HTMLElement {
     }
   }
 
-  private mirrorEvents(viewer: WorldviewViewer): void {
+  private mirrorEvents(viewer: MapsViewer): void {
     viewer.addEventListener("progress", (event) => {
       if (event.detail.phase !== "walkability" || !viewer.world) {
         this.show(`${event.detail.phase}: ${event.detail.label ?? "loading"}`);
@@ -393,9 +393,9 @@ export class WorldViewElement extends HTMLElement {
       });
   }
 
-  private redispatch<K extends keyof WorldviewEventMap>(
+  private redispatch<K extends keyof MapsEventMap>(
     type: K,
-    detail: WorldviewEventMap[K]["detail"],
+    detail: MapsEventMap[K]["detail"],
   ): void {
     this.dispatchEvent(
       new CustomEvent(type, { detail, bubbles: true, composed: true }),
@@ -408,7 +408,7 @@ export class WorldViewElement extends HTMLElement {
   }
 }
 
-export function defineWorldViewElement(tagName = "world-view"): void {
+export function defineMapsViewElement(tagName = "tea-map-view"): void {
   if (!customElements.get(tagName))
-    customElements.define(tagName, WorldViewElement);
+    customElements.define(tagName, MapsViewElement);
 }

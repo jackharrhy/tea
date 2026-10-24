@@ -20,12 +20,12 @@ import {
   webOk,
   webRequestBody,
 } from "../service-web-http.js";
-import type { WorldviewServiceOptions } from "../service-options.js";
+import type { MapsServiceOptions } from "../service-options.js";
 
 const EMPTY_MAP = '{\n"classname" "worldspawn"\n}\n';
 
 export function createProjectRoutes(
-  options: Pick<WorldviewServiceOptions, "database" | "maps">,
+  options: Pick<MapsServiceOptions, "database" | "maps">,
 ) {
   return [
     defineWebRoute("list-projects", "GET", "/api/projects", (context) => {

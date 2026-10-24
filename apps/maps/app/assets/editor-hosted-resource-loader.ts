@@ -3,11 +3,11 @@ import {
   EditorMaterialCatalog,
   EntityDefinitionCatalog,
   parseEntityDefinitionFile,
-  worldviewGameProfile,
+  mapsGameProfile,
   type EditorMaterial,
   type EntityDefinitionDiagnostic,
   type ParsedEntityDefinitionFile,
-  type WorldviewGameProfile,
+  type MapsGameProfile,
 } from "@tea/maps-editor/core";
 import type { EditorSpriteMaterial } from "@tea/maps-editor/render";
 import {
@@ -59,7 +59,7 @@ const replacementPriority = new Map([
 
 export async function loadHostedEditorResources(
   projectId: string,
-  game: WorldviewGameProfile,
+  game: MapsGameProfile,
   fetcher: typeof fetch = fetch,
   signal?: AbortSignal,
 ): Promise<HostedEditorResources> {
@@ -115,7 +115,7 @@ export async function loadHostedEditorResources(
   const catalog = new EditorMaterialCatalog();
   for (const material of developmentTexturePack(game, palette)?.materials ?? [])
     catalog.set(material);
-  const profile = worldviewGameProfile(game);
+  const profile = mapsGameProfile(game);
   for (const resource of resources.filter(({ kind }) => kind === "wad")) {
     try {
       const wad = parseWad(resource.bytes);

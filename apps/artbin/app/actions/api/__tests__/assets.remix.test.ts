@@ -392,8 +392,8 @@ async function introspectionFetch(
   if (token === "expired-token") {
     return Response.json({
       active: true,
-      client_id: "worldview-service",
-      sub: "worldview-service",
+      client_id: "maps-service",
+      sub: "maps-service",
       principal_type: "service",
       scope: "artbin:assets:read",
       token_type: "Bearer",
@@ -404,7 +404,7 @@ async function introspectionFetch(
   if (token === "human-token") {
     return Response.json({
       active: true,
-      client_id: "worldview",
+      client_id: "maps",
       sub: "human-user",
       principal_type: "user",
       scope: "artbin:assets:read",
@@ -422,8 +422,8 @@ async function introspectionFetch(
         : "artbin:assets:read artbin:assets:content";
   return Response.json({
     active: true,
-    client_id: "worldview-service",
-    sub: "worldview-service",
+    client_id: "maps-service",
+    sub: "maps-service",
     principal_type: "service",
     scope: scopes,
     token_type: "Bearer",

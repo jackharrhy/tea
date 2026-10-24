@@ -1,16 +1,13 @@
-import type {
-  AudioState,
-  WorldviewViewer,
-} from "@jackharrhy/tea-maps-renderer";
-import type { WorldViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { AudioState, MapsViewer } from "@jackharrhy/tea-maps-renderer";
+import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
 import { clientEntry, on, type Handle } from "remix/component";
 
-type MusicTrack = NonNullable<WorldviewViewer["world"]>["musicTracks"][number];
+type MusicTrack = NonNullable<MapsViewer["world"]>["musicTracks"][number];
 
 export const ViewerAudioPanel = clientEntry(
   `file:///app/assets/viewer-audio-panel.tsx#ViewerAudioPanel`,
   function ViewerAudioPanelComponent(handle: Handle) {
-    let element: WorldViewElement | null = null;
+    let element: MapsViewElement | null = null;
     let ready = false;
     let generation = 0;
     let audio: AudioState | null = null;
@@ -52,8 +49,8 @@ export const ViewerAudioPanel = clientEntry(
     handle.queueTask(() => {
       function attach() {
         if (element) return;
-        element = document.querySelector<WorldViewElement>(
-          "#viewport world-view",
+        element = document.querySelector<MapsViewElement>(
+          "#viewport tea-map-view",
         );
         if (!element) return;
         element.addEventListener("ready", mapReady, { signal: handle.signal });

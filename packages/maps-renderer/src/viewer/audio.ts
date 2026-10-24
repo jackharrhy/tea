@@ -3,7 +3,7 @@ import {
   copyWaveChannel,
   perspectiveForward,
   traceWorldSegment,
-  WorldviewError,
+  MapsError,
   type AmbientSoundModulation,
   type ParsedAmbientSound,
   type ParsedEnvSound,
@@ -301,7 +301,7 @@ export class WorldAudio {
   }
 
   public async enable(): Promise<void> {
-    if (this.disposed) throw new Error("Worldview audio has been disposed");
+    if (this.disposed) throw new Error("Maps audio has been disposed");
     this.ensureContext();
     this.enabled = true;
     await this.context!.resume();
@@ -345,7 +345,7 @@ export class WorldAudio {
   }
 
   public async playMusic(entityIndex?: number): Promise<void> {
-    if (this.disposed) throw new Error("Worldview audio has been disposed");
+    if (this.disposed) throw new Error("Maps audio has been disposed");
     const loaded = this.loaded;
     if (!loaded) throw new Error("No world is loaded");
     const track =
@@ -439,9 +439,9 @@ export class WorldAudio {
   private ensureContext(): void {
     if (this.context) return;
     if (typeof AudioContext === "undefined") {
-      throw new WorldviewError(
+      throw new MapsError(
         "audio-unavailable",
-        "Worldview requires the Web Audio API for sound",
+        "Maps requires the Web Audio API for sound",
       );
     }
     const context = new AudioContext({ latencyHint: "interactive" });
@@ -575,7 +575,7 @@ export class WorldAudio {
     if (!context || !loaded || !musicGain) return;
     const asset = loaded.music.get(track.reference.normalizedPath);
     if (!asset) {
-      throw new WorldviewError(
+      throw new MapsError(
         "asset-fetch",
         `music ${track.reference.declaredPath} is not available`,
       );
@@ -587,7 +587,7 @@ export class WorldAudio {
       try {
         buffer = await context.decodeAudioData(asset.data.slice(0));
       } catch (error) {
-        throw new WorldviewError(
+        throw new MapsError(
           "audio-unavailable",
           `the browser could not decode music ${track.reference.declaredPath}`,
           { cause: error },

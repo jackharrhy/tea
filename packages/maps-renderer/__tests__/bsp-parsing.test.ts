@@ -7,7 +7,7 @@ import {
   parseBsp,
   traceWorldSegment,
   tracePlayerHull,
-  WorldviewError,
+  MapsError,
 } from "../src/core/index.js";
 import { selectEnvSoundRoom } from "../src/viewer/audio.js";
 
@@ -173,8 +173,8 @@ describe("BSP", () => {
       parseBsp(bytes);
       expect.fail("parseBsp should reject BSP31");
     } catch (error) {
-      expect(error).toBeInstanceOf(WorldviewError);
-      expect((error as WorldviewError).code).toBe("unsupported-bsp");
+      expect(error).toBeInstanceOf(MapsError);
+      expect((error as MapsError).code).toBe("unsupported-bsp");
     }
   });
 
