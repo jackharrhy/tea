@@ -8,5 +8,5 @@ updates:
       default-days: 7
     groups:
       actions:
-        patterns: ['*']
+        patterns: ["*"]
         update-types: [minor, patch]
