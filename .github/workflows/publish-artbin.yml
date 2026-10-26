@@ -32,7 +32,15 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm ci --allow-remote=all
-      - run: sudo apt-get update && sudo apt-get install -y imagemagick
+      - name: Ensure ImageMagick for Artbin checks
+        timeout-minutes: 3
+        run: |
+          if ! command -v convert > /dev/null || ! command -v identify > /dev/null; then
+            sudo apt-get update
+            sudo apt-get install --yes --no-install-recommends imagemagick
+          fi
+          convert -version
+          identify -version
       - run: npm run artbin:check
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:

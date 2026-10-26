@@ -156,6 +156,19 @@ test("an independently checked workspace is picked up automatically", () => {
   );
 });
 
+test("workflow lint and dependency-update metadata do not run app checks", () => {
+  const metadata = [
+    ".github/workflows/lint-actions.yml",
+    ".github/dependabot.yml",
+    ".github/dependabot.yaml",
+  ];
+  assert.deepEqual(selectChecks(metadata, workspaces), []);
+  assert.deepEqual(
+    selectChecks([...metadata, "apps/cms/app/router.ts"], workspaces),
+    checks("@tea/cms"),
+  );
+});
+
 test("shared configuration and unrecognized files run all checks", () => {
   const all = checks(
     ...workspaces
@@ -164,6 +177,7 @@ test("shared configuration and unrecognized files run all checks", () => {
   );
   for (const path of [
     "package-lock.json",
+    ".github/workflows/check.yml",
     "compose.yml",
     "unexpected/config.ts",
   ])
