@@ -38,6 +38,7 @@
       "entry": [
         "app/actions/public/entry.ts",
         "app/actions/public/bsp-overview-renderer.ts",
+        "__tests__/http-identity.ts",
         "app/__tests__/**/*.test.ts",
         "app/actions/**/__tests__/**/*.test.ts",
         "scripts/add-file-counts.ts",

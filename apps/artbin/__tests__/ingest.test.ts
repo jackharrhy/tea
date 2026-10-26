@@ -253,7 +253,7 @@ describe("ingestFile", () => {
     await db.insert(users).values({
       id: "user-42",
       username: "testuser",
-      fourmId: "fourm-42",
+      authSubject: "fourm-42",
     });
     await db.insert(folders).values({
       id: "folder-1",

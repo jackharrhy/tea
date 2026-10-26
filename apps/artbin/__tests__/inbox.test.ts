@@ -51,7 +51,7 @@ async function seedUser(db: ReturnType<typeof setupDatabase>, id = "user-1") {
     id,
 
     username: id,
-    fourmId: `fourm-${id}`,
+    authSubject: `fourm-${id}`,
   });
 }
 

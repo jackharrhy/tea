@@ -41,7 +41,7 @@ async function seedAdminSession(db: ReturnType<typeof setupDatabase>) {
     id: "admin-1",
 
     username: "admin",
-    fourmId: "fourm-admin-1",
+    authSubject: "central-admin-1",
     isAdmin: true,
   });
   await db.insert(sessions).values({
@@ -56,7 +56,7 @@ async function seedNonAdminSession(db: ReturnType<typeof setupDatabase>) {
     id: "user-1",
 
     username: "user",
-    fourmId: "fourm-user-1",
+    authSubject: "fourm-user-1",
     isAdmin: false,
   });
   await db.insert(sessions).values({

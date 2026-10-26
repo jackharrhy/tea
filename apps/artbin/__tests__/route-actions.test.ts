@@ -25,7 +25,7 @@ async function seedSession() {
     id: "user-1",
 
     username: "user",
-    fourmId: "fourm-user-1",
+    authSubject: "fourm-user-1",
     isAdmin: true,
   });
   await db.insert(sessions).values({
@@ -41,7 +41,7 @@ async function seedNonAdminSession() {
   await db.insert(users).values({
     id: "regular-user",
     username: "regular",
-    fourmId: "fourm-regular",
+    authSubject: "fourm-regular",
     isAdmin: false,
   });
   await db.insert(sessions).values({

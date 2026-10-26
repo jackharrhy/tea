@@ -1,3 +1,4 @@
+import { identityConfig } from "#lib/oauth.server";
 import { createController } from "remix/router";
 import { createRequestLogger } from "evlog";
 import { z, ZodError } from "zod";
@@ -5,7 +6,7 @@ import { z, ZodError } from "zod";
 import {
   mcpResourceUrl,
   requireMcpAdmin,
-  MCP_ADMIN_SCOPE,
+  mcpAuthorizationScopes,
 } from "#lib/mcp-auth.server";
 
 import { mcpOperations, mcpTools } from "../../operations/catalog.ts";
@@ -155,11 +156,9 @@ export default createController(routes.mcp, {
       return Response.json(
         {
           resource: mcpResourceUrl(),
-          authorization_servers: [
-            process.env.FOURM_URL ?? "http://localhost:8000",
-          ],
+          authorization_servers: [identityConfig().issuer],
           bearer_methods_supported: ["header"],
-          scopes_supported: [MCP_ADMIN_SCOPE],
+          scopes_supported: mcpAuthorizationScopes(),
         },
         { headers: { "Cache-Control": "public, max-age=300" } },
       );

@@ -1,3 +1,11 @@
+import {
+  IdentityError,
+  projectAudienceScope,
+  PROJECT_ROLES_SCOPE,
+  requireTokenRole,
+  roleScope,
+} from "@tea/identity";
+import { identityConfig } from "./oauth.server.ts";
 import { eq } from "drizzle-orm";
 
 import { users, type User } from "#db";
@@ -5,7 +13,16 @@ import { db } from "#db/connection.server";
 
 import { introspectBearerToken } from "./service-auth.server.ts";
 
-export const MCP_ADMIN_SCOPE = "artbin:admin";
+const MCP_ADMIN_SCOPE = roleScope("admin");
+export function mcpAuthorizationScopes(): string[] {
+  return [
+    "openid",
+    "profile",
+    projectAudienceScope(identityConfig().projectId),
+    PROJECT_ROLES_SCOPE,
+    MCP_ADMIN_SCOPE,
+  ];
+}
 
 export function mcpResourceUrl(): string {
   return `${process.env.ARTBIN_URL ?? "http://localhost:5175"}/mcp`;
@@ -16,14 +33,13 @@ export async function requireMcpAdmin(
 ): Promise<User | Response> {
   const principal = await introspectBearerToken(request);
   if (principal instanceof Response) return mcpAuthResponse(principal);
-  if (!principal.scopes.has(MCP_ADMIN_SCOPE)) {
+  try {
+    requireTokenRole(principal, identityConfig().projectId, "admin");
+  } catch (error) {
     return mcpError(
-      403,
+      error instanceof IdentityError ? error.status : 503,
       "insufficient_scope",
-      `Required scope: ${MCP_ADMIN_SCOPE}`,
-      {
-        "WWW-Authenticate": `Bearer error="insufficient_scope", scope="${MCP_ADMIN_SCOPE}"`,
-      },
+      "Artbin administrator authorization is required",
     );
   }
 
@@ -34,16 +50,9 @@ export async function requireMcpAdmin(
       "An Artbin administrator OAuth token is required",
     );
   }
-  if (!principal.audiences.has(mcpResourceUrl())) {
-    return mcpError(
-      401,
-      "invalid_token",
-      "Bearer token was not issued for this MCP resource",
-    );
-  }
 
   const user = await db.query.users.findFirst({
-    where: eq(users.fourmId, principal.subject),
+    where: eq(users.authSubject, principal.subject),
   });
   if (!user || !user.isAdmin) {
     return mcpError(
@@ -60,7 +69,7 @@ function mcpAuthResponse(response: Response): Response {
   const challenge = headers.get("WWW-Authenticate") ?? "Bearer";
   headers.set(
     "WWW-Authenticate",
-    `${challenge}, resource_metadata="${mcpResourceMetadataUrl()}", scope="${MCP_ADMIN_SCOPE}"`,
+    `${challenge === "Bearer" ? "Bearer " : challenge + ", "}resource_metadata="${mcpResourceMetadataUrl()}", scope="${mcpAuthorizationScopes().join(" ")}"`,
   );
   return new Response(response.body, { status: response.status, headers });
 }
@@ -83,7 +92,7 @@ function mcpError(
   ) {
     responseHeaders.set(
       "WWW-Authenticate",
-      `Bearer error="${status === 401 ? "invalid_token" : code}", resource_metadata="${mcpResourceMetadataUrl()}", scope="${MCP_ADMIN_SCOPE}"`,
+      `Bearer error="${status === 401 ? "invalid_token" : code}", resource_metadata="${mcpResourceMetadataUrl()}", scope="${mcpAuthorizationScopes().join(" ")}"`,
     );
   } else if (responseHeaders.has("WWW-Authenticate")) {
     responseHeaders.set(

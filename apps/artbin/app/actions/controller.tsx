@@ -85,15 +85,15 @@ export default createController(routes, {
             <h1 mix={loginTitleStyle}>Login</h1>
             {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
             <ButtonLink
-              href={routes.auth.fourm.href()}
+              href={routes.auth.login.href()}
               variant="primary"
               block
               document
             >
-              Login with 4orm
+              Sign in with Jack Auth
             </ButtonLink>
             <p mix={[loginNoteStyle, mutedTextStyle]}>
-              You need a 4orm account to use artbin.
+              Use your Jack Auth account.
             </p>
             <p mix={loginNoteStyle}>
               Uploading with the CLI?{" "}

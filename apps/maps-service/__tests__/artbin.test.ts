@@ -4,7 +4,8 @@ import { ArtbinClient } from "../src/artbin.js";
 
 const config = {
   url: "https://artbin.example",
-  fourmUrl: "https://4orm.example",
+  issuer: "https://auth.example",
+  projectId: "artbin-project",
   clientId: "tea-maps-service",
   clientSecret: "server-secret",
 };
@@ -21,7 +22,7 @@ describe("Artbin machine client", () => {
     const mockFetch: typeof fetch = async (input, init) => {
       const request = { url: url(input), ...(init ? { init } : {}) };
       requests.push(request);
-      if (request.url.pathname === "/oauth/token")
+      if (request.url.pathname === "/oauth/v2/token")
         return Response.json({
           access_token: "machine-token",
           token_type: "Bearer",
@@ -58,16 +59,23 @@ describe("Artbin machine client", () => {
     ]);
 
     expect(
-      requests.filter((request) => request.url.pathname === "/oauth/token"),
+      requests.filter((request) => request.url.pathname === "/oauth/v2/token"),
     ).toHaveLength(1);
     const tokenRequest = requests[0]!;
     expect(new Headers(tokenRequest.init?.headers).get("authorization")).toBe(
       "Basic " +
         Buffer.from("tea-maps-service:server-secret").toString("base64"),
     );
-    expect(String(tokenRequest.init?.body)).toBe(
-      "grant_type=client_credentials&scope=artbin%3Aassets%3Aread+artbin%3Aassets%3Acontent",
-    );
+    const tokenBody = new URLSearchParams(String(tokenRequest.init?.body));
+    expect(tokenBody.get("grant_type")).toBe("client_credentials");
+    expect(tokenBody.get("scope")?.split(" ")).toEqual([
+      "openid",
+      "urn:zitadel:iam:org:project:id:artbin-project:aud",
+      "urn:zitadel:iam:org:projects:roles",
+      "urn:zitadel:iam:org:project:role:assets-read",
+      "urn:zitadel:iam:org:project:role:assets-content",
+    ]);
+    expect(tokenRequest.init?.redirect).toBe("error");
     expect(requests[1]!.url.searchParams.get("cursor")).toBe("opaque cursor");
     expect(requests[1]!.url.searchParams.get("tag")).toBe("classic");
   });
@@ -78,7 +86,7 @@ describe("Artbin machine client", () => {
     let assetRequests = 0;
     const mockFetch: typeof fetch = async (input) => {
       const requestUrl = url(input);
-      if (requestUrl.pathname === "/oauth/token") {
+      if (requestUrl.pathname === "/oauth/v2/token") {
         tokenRequests += 1;
         return Response.json({
           access_token: "token-" + tokenRequests,
@@ -110,7 +118,7 @@ describe("Artbin machine client", () => {
     const mockFetch: typeof fetch = async (input) => {
       const requestUrl = url(input);
       requested.push(requestUrl);
-      if (requestUrl.pathname === "/oauth/token")
+      if (requestUrl.pathname === "/oauth/v2/token")
         return Response.json({
           access_token: "machine-token",
           token_type: "Bearer",
@@ -135,7 +143,7 @@ describe("Artbin machine client", () => {
     let responseKind: "conflict" | "wad" = "conflict";
     const mockFetch: typeof fetch = async (input) => {
       const requestUrl = url(input);
-      if (requestUrl.pathname === "/oauth/token")
+      if (requestUrl.pathname === "/oauth/v2/token")
         return Response.json({
           access_token: "machine-token",
           token_type: "Bearer",

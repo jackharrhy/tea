@@ -3,14 +3,14 @@ import { users, sessions } from "#db";
 import { eq } from "drizzle-orm";
 
 const SESSION_COOKIE = "artbin_session";
-const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const SESSION_MAX_AGE = 60 * 60;
 const isProduction = process.env.NODE_ENV === "production";
 const secureSuffix = isProduction ? "; Secure" : "";
 
 const DEVELOPMENT_USER = {
   id: "local-development-user",
   username: "local",
-  fourmId: "local-development",
+  authSubject: "local-development",
   isAdmin: true,
 } as const;
 

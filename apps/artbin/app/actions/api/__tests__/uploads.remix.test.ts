@@ -52,8 +52,8 @@ it("resumes chunks, enforces ownership, commits once, and ingests in a durable j
       });
   try {
     await database.db.insert(users).values([
-      { id: "owner", username: "owner", fourmId: "owner", isAdmin: true },
-      { id: "other", username: "other", fourmId: "other" },
+      { id: "owner", username: "owner", authSubject: "owner", isAdmin: true },
+      { id: "other", username: "other", authSubject: "other" },
     ]);
     await database.db.insert(sessions).values([
       {

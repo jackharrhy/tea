@@ -63,6 +63,12 @@ services:
       HOST: 0.0.0.0
       PORT: "3000"
       ARTBIN_URL: http://artbin.localhost
+      AUTH_ISSUER: ${AUTH_ISSUER:-https://auth.jackharrhy.dev}
+      AUTH_CLIENT_ID: ${ARTBIN_AUTH_CLIENT_ID:-}
+      AUTH_PROJECT_ID: ${AUTH_ARTBIN_PROJECT_ID:-}
+      AUTH_ORGANIZATION_ID: ${AUTH_ORGANIZATION_ID:-}
+      AUTH_INTROSPECTION_CLIENT_ID: ${ARTBIN_AUTH_INTROSPECTION_CLIENT_ID:-}
+      AUTH_INTROSPECTION_SECRET: ${ARTBIN_AUTH_INTROSPECTION_SECRET:-}
     volumes:
       - artbin-data:/app/apps/artbin/data
       - artbin-uploads:/app/apps/artbin/public/uploads
@@ -194,8 +200,10 @@ services:
       TEA_MAPS_REALTIME_TICKET_SECRET: ${MAPS_REALTIME_TICKET_SECRET:-tea-maps-local-realtime-ticket-secret-change-me}
       FOURM_URL: ${FOURM_URL:-http://host.docker.internal:8000}
       TEA_MAPS_ARTBIN_URL: ${TEA_MAPS_ARTBIN_URL:-}
-      TEA_MAPS_ARTBIN_CLIENT_ID: ${TEA_MAPS_ARTBIN_CLIENT_ID:-}
-      TEA_MAPS_ARTBIN_CLIENT_SECRET: ${TEA_MAPS_ARTBIN_CLIENT_SECRET:-}
+      AUTH_ISSUER: ${AUTH_ISSUER:-https://auth.jackharrhy.dev}
+      AUTH_ARTBIN_PROJECT_ID: ${AUTH_ARTBIN_PROJECT_ID:-}
+      AUTH_ARTBIN_CLIENT_ID: ${AUTH_ARTBIN_CLIENT_ID:-}
+      AUTH_ARTBIN_CLIENT_SECRET: ${AUTH_ARTBIN_CLIENT_SECRET:-}
     extra_hosts:
       - host.docker.internal:host-gateway
     ports:

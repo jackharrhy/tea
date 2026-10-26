@@ -1,9 +1,15 @@
+import {
+  projectAudienceScope,
+  PROJECT_ROLES_SCOPE,
+  roleScope,
+} from "@tea/identity";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export interface ArtbinConfig {
   readonly url: string;
-  readonly fourmUrl: string;
+  readonly issuer: string;
+  readonly projectId: string;
   readonly clientId: string;
   readonly clientSecret: string;
 }
@@ -79,7 +85,6 @@ const MachineTokenSchema = z.looseObject({
   expires_in: z.number().finite().positive(),
 });
 
-const MACHINE_SCOPES = "artbin:assets:read artbin:assets:content";
 const RENEWAL_SKEW_MS = 30_000;
 
 const integrationErrorMessages = new Map([
@@ -136,21 +141,42 @@ export class ArtbinClient {
     private readonly config: ArtbinConfig,
     private readonly fetch: typeof globalThis.fetch = globalThis.fetch,
     private readonly now: () => number = Date.now,
-  ) {}
+  ) {
+    const issuer = new URL(config.issuer);
+    if (
+      issuer.protocol !== "https:" ||
+      issuer.username ||
+      issuer.password ||
+      issuer.search ||
+      issuer.hash ||
+      !config.projectId
+    )
+      throw new Error(
+        "Artbin machine authentication requires a trusted HTTPS issuer and project ID",
+      );
+  }
 
   private async acquireToken(): Promise<CachedToken> {
     const body = new URLSearchParams({
       grant_type: "client_credentials",
-      scope: MACHINE_SCOPES,
+      scope: [
+        "openid",
+        projectAudienceScope(this.config.projectId),
+        PROJECT_ROLES_SCOPE,
+        roleScope("assets-read"),
+        roleScope("assets-content"),
+      ].join(" "),
     });
     const credentials = Buffer.from(
-      `${this.config.clientId}:${this.config.clientSecret}`,
+      `${encodeURIComponent(this.config.clientId)}:${encodeURIComponent(this.config.clientSecret)}`,
       "utf8",
     ).toString("base64");
     const response = await this.fetch(
-      new URL("/oauth/token", this.config.fourmUrl),
+      new URL("/oauth/v2/token", this.config.issuer),
       {
         method: "POST",
+        redirect: "error",
+        signal: AbortSignal.timeout(5000),
         headers: {
           Authorization: `Basic ${credentials}`,
           "Content-Type": "application/x-www-form-urlencoded",
@@ -159,13 +185,13 @@ export class ArtbinClient {
       },
     ).catch(() => {
       throw Object.assign(
-        new Error("4orm machine authentication is unavailable"),
+        new Error("Central machine authentication is unavailable"),
         { status: 503 },
       );
     });
     if (!response.ok) {
       throw Object.assign(
-        new Error("4orm machine authentication is unavailable"),
+        new Error("Central machine authentication is unavailable"),
         {
           status: response.status === 503 ? 503 : 502,
         },
@@ -175,9 +201,12 @@ export class ArtbinClient {
       await response.json().catch(() => null),
     );
     if (!result.success) {
-      throw Object.assign(new Error("4orm returned an invalid machine token"), {
-        status: 502,
-      });
+      throw Object.assign(
+        new Error("Identity service returned an invalid machine token"),
+        {
+          status: 502,
+        },
+      );
     }
     return {
       value: result.data.access_token,

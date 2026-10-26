@@ -29,7 +29,7 @@ async function seedUser(db: ReturnType<typeof setupDatabase>) {
     id: "user-1",
 
     username: "user",
-    fourmId: "fourm-user-1",
+    authSubject: "fourm-user-1",
   });
 }
 

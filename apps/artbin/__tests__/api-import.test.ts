@@ -24,7 +24,7 @@ async function seedSession(isAdmin: boolean) {
   await db.insert(users).values({
     id,
     username: isAdmin ? "admin" : "user",
-    fourmId: `fourm-${id}`,
+    authSubject: `fourm-${id}`,
     isAdmin,
   });
   await db.insert(sessions).values({

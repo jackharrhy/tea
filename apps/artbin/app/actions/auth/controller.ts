@@ -7,76 +7,74 @@ import { db } from "#db/connection.server";
 import { cliLoginHandoffs, sessions, users, type User } from "#db";
 import { getSessionCookie } from "#lib/auth.server";
 import {
-  exchangeCode,
-  fetchUserinfo,
-  FOURM_AUTHORIZE_URL,
-  FOURM_CLIENT_ID,
-  FOURM_REDIRECT_URI,
-  generateCodeChallenge,
-  generateCodeVerifier,
+  identityClient,
+  createLoginTransaction,
+  validLoginTransaction,
+  browserRedirectUri,
   getCliRedirectUri,
+  type LoginTransaction,
 } from "#lib/oauth.server";
 
 import { routes } from "../../routes.ts";
 
-const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+const SESSION_MAX_AGE = 60 * 60;
 const CLI_HANDOFF_MAX_AGE_MS = 2 * 60 * 1_000;
 
 export default createController(routes.auth, {
   actions: {
-    fourm() {
-      const verifier = generateCodeVerifier();
-      const challenge = generateCodeChallenge(verifier);
-      const state = crypto.randomUUID();
-      const params = new URLSearchParams({
-        response_type: "code",
-        client_id: FOURM_CLIENT_ID,
-        redirect_uri: FOURM_REDIRECT_URI,
-        scope: "openid profile",
-        state,
-        code_challenge: challenge,
-        code_challenge_method: "S256",
-      });
-
-      const cookie = oauthCookie(
-        "artbin_oauth",
-        JSON.stringify({ verifier, state }),
-        SESSION_MAX_AGE > 600 ? 600 : SESSION_MAX_AGE,
+    async login() {
+      const transaction = createLoginTransaction();
+      return redirectWithHeaders(
+        await identityClient().authorizationUrl(
+          transaction,
+          browserRedirectUri(),
+        ),
+        {
+          "Set-Cookie": oauthCookie(
+            "artbin_oauth",
+            JSON.stringify(transaction),
+            600,
+          ),
+        },
       );
-      return redirectWithHeaders(`${FOURM_AUTHORIZE_URL}?${params}`, {
-        "Set-Cookie": cookie,
-      });
     },
 
-    async fourmCallback(context) {
+    async callback(context) {
       const log = createRequestLogger();
       const code = context.url.searchParams.get("code");
       const state = context.url.searchParams.get("state");
       const oauthError = context.url.searchParams.get("error");
 
-      const oauthData = readOauthCookie<{ verifier: string; state: string }>(
+      const oauthData = readOauthCookie<LoginTransaction>(
         context.request,
         "artbin_oauth",
       );
       if (!oauthData)
         return terminalLoginError("missing_oauth_state", "artbin_oauth");
-      if (!state || oauthData.state !== state) {
+      if (!validLoginTransaction(oauthData, state)) {
         return terminalLoginError("state_mismatch", "artbin_oauth");
       }
       if (oauthError) return terminalLoginError(oauthError, "artbin_oauth");
       if (!code) return terminalLoginError("missing_code", "artbin_oauth");
 
       try {
-        const tokenData = await exchangeCode(code, oauthData.verifier);
-        const userinfo = await fetchUserinfo(tokenData.access_token);
-        const user = await upsertUser(userinfo);
-        const sessionId = await createSession(user.id);
+        const identity = await identityClient().exchange(
+          code,
+          oauthData,
+          browserRedirectUri(),
+        );
+        const user = await upsertUser({
+          sub: identity.subject,
+          username: identity.username,
+          is_admin: identity.roles.has("admin"),
+        });
+        const sessionId = await createSession(user.id, identity.expiresAt);
 
         log.set({
           auth: {
             userId: user.id,
             username: user.username,
-            fourmId: userinfo.sub,
+            authSubject: identity.subject,
           },
         });
         log.emit();
@@ -94,34 +92,27 @@ export default createController(routes.auth, {
       }
     },
 
-    cliAuthorize(context) {
+    async cliAuthorize(context) {
       const cliPort = parseCliPort(context.url.searchParams.get("port"));
       if (!cliPort)
         return new Response("Invalid or missing port parameter", {
           status: 400,
         });
 
-      const verifier = generateCodeVerifier();
-      const challenge = generateCodeChallenge(verifier);
-      const state = crypto.randomUUID();
-      const params = new URLSearchParams({
-        response_type: "code",
-        client_id: FOURM_CLIENT_ID,
-        redirect_uri: getCliRedirectUri(),
-        scope: "openid profile",
-        state,
-        code_challenge: challenge,
-        code_challenge_method: "S256",
-      });
-
-      const cookie = oauthCookie(
-        "artbin_cli_oauth",
-        JSON.stringify({ verifier, state, cliPort }),
-        600,
+      const transaction = createLoginTransaction();
+      return redirectWithHeaders(
+        await identityClient().authorizationUrl(
+          transaction,
+          getCliRedirectUri(),
+        ),
+        {
+          "Set-Cookie": oauthCookie(
+            "artbin_cli_oauth",
+            JSON.stringify({ ...transaction, cliPort }),
+            600,
+          ),
+        },
       );
-      return redirectWithHeaders(`${FOURM_AUTHORIZE_URL}?${params}`, {
-        "Set-Cookie": cookie,
-      });
     },
 
     async cliCallback(context) {
@@ -129,31 +120,34 @@ export default createController(routes.auth, {
       const code = context.url.searchParams.get("code");
       const state = context.url.searchParams.get("state");
       const oauthError = context.url.searchParams.get("error");
-      const oauthData = readOauthCookie<{
-        verifier: string;
-        state: string;
-        cliPort: number;
-      }>(context.request, "artbin_cli_oauth");
+      const oauthData = readOauthCookie<LoginTransaction & { cliPort: number }>(
+        context.request,
+        "artbin_cli_oauth",
+      );
       if (!oauthData || !parseCliPort(String(oauthData.cliPort))) {
         return terminalCliError("Missing or invalid OAuth state");
       }
-      if (!state || oauthData.state !== state)
+      if (!validLoginTransaction(oauthData, state))
         return terminalCliError("State mismatch");
       if (oauthError) return terminalCliError(`OAuth error: ${oauthError}`);
       if (!code) return terminalCliError("Missing code or state");
 
       try {
-        const tokenData = await exchangeCode(
+        const identity = await identityClient().exchange(
           code,
-          oauthData.verifier,
+          oauthData,
           getCliRedirectUri(),
         );
-        const userinfo = await fetchUserinfo(tokenData.access_token);
-        const user = await upsertUser(userinfo);
+        const user = await upsertUser({
+          sub: identity.subject,
+          username: identity.username,
+          is_admin: identity.roles.has("admin"),
+        });
         const handoffCode = nanoid(48);
         await db.insert(cliLoginHandoffs).values({
           code: handoffCode,
           userId: user.id,
+          sessionExpiresAt: new Date(identity.expiresAt * 1000),
           expiresAt: new Date(Date.now() + CLI_HANDOFF_MAX_AGE_MS),
         });
 
@@ -162,7 +156,7 @@ export default createController(routes.auth, {
             channel: "cli",
             userId: user.id,
             username: user.username,
-            fourmId: userinfo.sub,
+            authSubject: identity.subject,
           },
         });
         log.emit();
@@ -207,9 +201,13 @@ export default createController(routes.auth, {
           and(
             eq(cliLoginHandoffs.code, code),
             gt(cliLoginHandoffs.expiresAt, new Date()),
+            gt(cliLoginHandoffs.sessionExpiresAt, new Date()),
           ),
         )
-        .returning({ userId: cliLoginHandoffs.userId })
+        .returning({
+          userId: cliLoginHandoffs.userId,
+          sessionExpiresAt: cliLoginHandoffs.sessionExpiresAt,
+        })
         .get();
       if (!handoff) {
         return jsonError(
@@ -219,7 +217,10 @@ export default createController(routes.auth, {
         );
       }
 
-      const sessionId = await createSession(handoff.userId);
+      const sessionId = await createSession(
+        handoff.userId,
+        Math.floor(handoff.sessionExpiresAt.getTime() / 1000),
+      );
       return Response.json(
         { session: sessionId },
         { headers: { "Cache-Control": "no-store", Pragma: "no-cache" } },
@@ -234,7 +235,7 @@ async function upsertUser(userinfo: {
   is_admin: boolean;
 }): Promise<User> {
   let user = await db.query.users.findFirst({
-    where: eq(users.fourmId, userinfo.sub),
+    where: eq(users.authSubject, userinfo.sub),
   });
 
   if (!user) {
@@ -243,7 +244,7 @@ async function upsertUser(userinfo: {
       .values({
         id: nanoid(),
         username: userinfo.username,
-        fourmId: userinfo.sub,
+        authSubject: userinfo.sub,
         isAdmin: userinfo.is_admin,
       })
       .returning();
@@ -266,12 +267,19 @@ async function upsertUser(userinfo: {
   return user;
 }
 
-async function createSession(userId: string): Promise<string> {
+async function createSession(
+  userId: string,
+  identityExpiresAt: number,
+): Promise<string> {
+  if (identityExpiresAt <= Date.now() / 1000)
+    throw new Error("Sign-in expired; try again");
   const sessionId = nanoid(32);
   await db.insert(sessions).values({
     id: sessionId,
     userId,
-    expiresAt: new Date(Date.now() + SESSION_MAX_AGE * 1_000),
+    expiresAt: new Date(
+      Math.min(identityExpiresAt * 1000, Date.now() + SESSION_MAX_AGE * 1_000),
+    ),
   });
   return sessionId;
 }

@@ -1,3 +1,9 @@
+import {
+  activeToken,
+  configureIdentityEnvironment,
+  identityDiscovery,
+  permissionScopes,
+} from "../../../../__tests__/identity-fixture.ts";
 import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -26,31 +32,33 @@ const uploadDirectory = join(
   "_api-assets-test",
 );
 const originalFetch = globalThis.fetch;
-const originalSecret = process.env.ARTBIN_4ORM_INTROSPECTION_SECRET;
-const originalUrl = process.env.ARTBIN_4ORM_INTROSPECTION_URL;
+const originalSecret = process.env.AUTH_INTROSPECTION_SECRET;
+const originalUrl = process.env.AUTH_ISSUER;
 const secret = "introspection-secret-that-must-not-leak";
 const now = Math.floor(Date.now() / 1_000);
 
 let database: TestDatabase;
+let restoreIdentity: () => void;
 let introspectionCalls: Array<{ token: string; authorization: string | null }>;
 
 beforeEach(async () => {
+  restoreIdentity = configureIdentityEnvironment();
   database = createTestDatabase();
   applyMigrations(database.sqlite);
   setDbForTesting(database.db);
   clearServiceAuthCacheForTesting();
-  process.env.ARTBIN_4ORM_INTROSPECTION_SECRET = secret;
-  process.env.ARTBIN_4ORM_INTROSPECTION_URL =
-    "http://fourm.test/oauth/introspect";
+  process.env.AUTH_INTROSPECTION_SECRET = secret;
+  process.env.AUTH_ISSUER = "https://auth.test";
   introspectionCalls = [];
   globalThis.fetch = introspectionFetch;
   await seedAssets();
 });
 
 afterEach(async () => {
+  restoreIdentity();
   globalThis.fetch = originalFetch;
-  restoreEnvironment("ARTBIN_4ORM_INTROSPECTION_SECRET", originalSecret);
-  restoreEnvironment("ARTBIN_4ORM_INTROSPECTION_URL", originalUrl);
+  restoreEnvironment("AUTH_INTROSPECTION_SECRET", originalSecret);
+  restoreEnvironment("AUTH_ISSUER", originalUrl);
   clearServiceAuthCacheForTesting();
   database.close();
   await rm(uploadDirectory, { recursive: true, force: true });
@@ -86,7 +94,7 @@ describe("service asset API", () => {
     assert.equal(insufficient.status, 403);
     assert.match(
       insufficient.headers.get("www-authenticate") ?? "",
-      /artbin:assets:read/,
+      /urn:zitadel:iam:org:project:role:assets-read/,
     );
 
     const body = await insufficient.text();
@@ -112,12 +120,12 @@ describe("service asset API", () => {
     }
 
     clearServiceAuthCacheForTesting();
-    delete process.env.ARTBIN_4ORM_INTROSPECTION_SECRET;
+    delete process.env.AUTH_INTROSPECTION_SECRET;
     const unconfigured = await router.fetch(
       request(routes.api.assets.href(), { Authorization: "Bearer read-token" }),
     );
     assert.equal(unconfigured.status, 503);
-    process.env.ARTBIN_4ORM_INTROSPECTION_SECRET = secret;
+    process.env.AUTH_INTROSPECTION_SECRET = secret;
   });
 
   it("lists only approved hashed assets with stable pagination and native filters", async () => {
@@ -371,7 +379,9 @@ async function introspectionFetch(
   input: string | URL | Request,
   init?: RequestInit,
 ) {
-  assert.equal(String(input), "http://fourm.test/oauth/introspect");
+  if (String(input).endsWith("openid-configuration"))
+    return Response.json(identityDiscovery);
+  assert.equal(String(input), "https://auth.test/oauth/v2/introspect");
   const authorization = new Headers(init?.headers).get("authorization");
   assert.equal(
     authorization,
@@ -381,55 +391,28 @@ async function introspectionFetch(
   const token = body.get("token") ?? "";
   introspectionCalls.push({ token, authorization });
   assert.equal(body.get("token_type_hint"), "access_token");
-
-  if (token === "network-error") throw new Error("4orm unavailable");
+  if (token === "network-error")
+    throw new Error("Identity service unavailable");
   if (token === "introspection-error")
     return new Response(null, { status: 401 });
   if (token === "malformed-introspection") return new Response("not json");
   if (["unknown-token", "revoked-token"].includes(token))
     return Response.json({ active: false });
-
-  if (token === "expired-token") {
-    return Response.json({
-      active: true,
-      client_id: "maps-service",
-      sub: "maps-service",
-      principal_type: "service",
-      scope: "artbin:assets:read",
-      token_type: "Bearer",
-      exp: now - 1,
-      iat: now - 601,
-    });
-  }
-  if (token === "human-token") {
-    return Response.json({
-      active: true,
-      client_id: "maps",
-      sub: "human-user",
-      principal_type: "user",
-      scope: "artbin:assets:read",
-      token_type: "Bearer",
-      exp: now + 600,
-      iat: now,
-    });
-  }
-
-  const scopes =
-    token === "read-token"
-      ? "artbin:assets:read"
-      : token === "content-token"
-        ? "artbin:assets:content"
-        : "artbin:assets:read artbin:assets:content";
-  return Response.json({
-    active: true,
-    client_id: "maps-service",
-    sub: "maps-service",
-    principal_type: "service",
-    scope: scopes,
-    token_type: "Bearer",
-    exp: now + 600,
-    iat: now,
+  const roles = ["assets-read", "assets-content"];
+  const principal = activeToken({
+    subject: "maps-service",
+    principalType: token === "human-token" ? "user" : "service",
+    roles,
+    scope:
+      token === "read-token"
+        ? permissionScopes("assets-read")
+        : token === "content-token"
+          ? permissionScopes("assets-content")
+          : permissionScopes(...roles),
   });
+  return Response.json(
+    token === "expired-token" ? { ...principal, exp: now - 1 } : principal,
+  );
 }
 
 function request(path: string, headers?: HeadersInit): Request {

@@ -1,3 +1,4 @@
+import { configureIdentityEnvironment } from "./identity-fixture.ts";
 import { sessions, users } from "#db";
 import { setDbForTesting } from "#db/connection.server";
 
@@ -19,6 +20,7 @@ export type RouterHarness = {
 };
 
 export async function createRouterHarness(): Promise<RouterHarness> {
+  const restoreIdentity = configureIdentityEnvironment();
   process.env.NODE_ENV = "test";
   process.env.ARTBIN_REQUIRE_AUTH = "1";
 
@@ -26,11 +28,16 @@ export async function createRouterHarness(): Promise<RouterHarness> {
   applyMigrations(database.sqlite);
   setDbForTesting(database.db);
   await database.db.insert(users).values([
-    { id: "admin", username: "admin", fourmId: "fourm-admin", isAdmin: true },
+    {
+      id: "admin",
+      username: "admin",
+      authSubject: "central-admin",
+      isAdmin: true,
+    },
     {
       id: "member",
       username: "member",
-      fourmId: "fourm-member",
+      authSubject: "central-member",
       isAdmin: false,
     },
   ]);
@@ -55,6 +62,7 @@ export async function createRouterHarness(): Promise<RouterHarness> {
       return new Request(new URL(path, origin), { ...init, headers });
     },
     close() {
+      restoreIdentity();
       database.close();
     },
   };
