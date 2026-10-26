@@ -6,7 +6,7 @@ COPY apps/artbin/package.json apps/artbin/package.json
 COPY packages/artbin-core/package.json packages/artbin-core/package.json
 COPY packages/identity/package.json packages/identity/package.json
 COPY packages/maps-renderer/package.json packages/maps-renderer/package.json
-RUN npm ci --workspace @tea/artbin --workspace @jackharrhy/tea-maps-renderer --include-workspace-root=false --allow-remote=all
+RUN npm ci --workspace @tea/artbin --workspace @jackharrhy/tea-maps-renderer --include-workspace-root --allow-remote=all
 COPY tsconfig.base.json ./
 COPY apps/artbin apps/artbin
 COPY packages/artbin-core packages/artbin-core
