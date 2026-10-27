@@ -47,15 +47,22 @@ const configs = {
     ],
   },
 };
-assert.ok(configs[app] && image, "Usage: node scripts/ci/node-image-smoke.mjs APP IMAGE");
+assert.ok(
+  configs[app] && image,
+  "Usage: node scripts/ci/node-image-smoke.mjs APP IMAGE",
+);
 const config = configs[app];
 if (process.argv[4] === "gower") {
   assert.equal(app, "maps-compiler");
   config.env = ["TEA_MAPS_GAME_PROFILE=gower"];
 }
 const docker = (...args) => {
-  const output = execFileSync("docker", args, { encoding: "utf8", timeout: 120_000 });
-  if (args[0] === "exec" || args.includes(runtimeCheck)) process.stdout.write(output);
+  const output = execFileSync("docker", args, {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  if (args[0] === "exec" || args.includes(runtimeCheck))
+    process.stdout.write(output);
   return output;
 };
 const runtimeCheck = `
