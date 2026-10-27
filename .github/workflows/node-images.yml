@@ -1,0 +1,48 @@
+name: Node images
+on:
+  pull_request:
+    paths:
+      - .github/workflows/node-images.yml
+      - scripts/ci/node-image-smoke.mjs
+      - .dockerignore
+      - package.json
+      - package-lock.json
+      - apps/cms/Dockerfile
+      - apps/artbin/Dockerfile
+      - apps/letters-to-steve/Dockerfile
+      - apps/marky/Dockerfile
+      - apps/maps-service/Dockerfile
+      - apps/maps-compiler/Dockerfile
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: node-images-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        app: [cms, artbin, letters-to-steve, marky, maps-service, maps-compiler]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Build production image
+        env:
+          APP: ${{ matrix.app }}
+        run: docker build --tag tea-smoke --file "apps/$APP/Dockerfile" .
+      - name: Check runtime, native modules, migrations and requests
+        env:
+          APP: ${{ matrix.app }}
+        run: node scripts/ci/node-image-smoke.mjs "$APP" tea-smoke
+      - name: Check Gower compiler configuration
+        if: matrix.app == 'maps-compiler'
+        run: node scripts/ci/node-image-smoke.mjs maps-compiler tea-smoke gower

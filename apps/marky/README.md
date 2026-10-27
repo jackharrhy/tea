@@ -12,7 +12,7 @@ Run `npm run check --workspace @tea/marky` for typecheck and server tests. `npm 
 
 ## Runtime and deployment
 
-The Docker image runs Node 24 on Debian Bookworm, with Git installed for optional commit and push. `MARKY_CONTENT_DIR=/app/data/content` and `MARKY_SESSION_DIR=/app/data/sessions` should use a persistent, writable volume. The image listens on port 44100. Tea publishes `ghcr.io/jackharrhy/tea-marky` from `main`; production routing and secrets live in the infra repo.
+The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git installed for optional commit and push. `MARKY_CONTENT_DIR=/app/data/content` and `MARKY_SESSION_DIR=/app/data/sessions` should use a persistent, writable volume. The image listens on port 44100. Tea publishes `ghcr.io/jackharrhy/tea-marky` from `main`; production routing and secrets live in the infra repo.
 
 Production at <https://md.jackharrhy.dev> uses `MARKY_AUTH=discord`. It requires `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, `SESSION_SECRET`, and `MARKY_BASE_URL=https://md.jackharrhy.dev`; `DISCORD_BOT_TOKEN` enables Discord role colors. The Discord application's OAuth callback must include `https://md.jackharrhy.dev/auth/callback`. Anonymous mode is for local development; it allows anyone with access to edit all files.
 
