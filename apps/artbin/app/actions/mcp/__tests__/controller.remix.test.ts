@@ -1,3 +1,9 @@
+import {
+  activeToken,
+  identityDiscovery,
+  permissionScopes,
+} from "../../../../__tests__/identity-fixture.ts";
+import { mcpAuthorizationScopes } from "#lib/mcp-auth.server";
 import * as assert from "remix/assert";
 import { afterEach, beforeEach, describe, it } from "remix/test";
 
@@ -16,72 +22,40 @@ import {
 
 let harness: RouterHarness;
 const originalFetch = globalThis.fetch;
-const originalIntrospectionSecret =
-  process.env.ARTBIN_4ORM_INTROSPECTION_SECRET;
+const originalIntrospectionSecret = process.env.AUTH_INTROSPECTION_SECRET;
 const originalArtbinUrl = process.env.ARTBIN_URL;
 
 beforeEach(async () => {
   harness = await createRouterHarness();
-  process.env.ARTBIN_4ORM_INTROSPECTION_SECRET = "test-secret";
+  process.env.AUTH_INTROSPECTION_SECRET = "test-secret";
   process.env.ARTBIN_URL = "http://localhost:5175";
   clearServiceAuthCacheForTesting();
-  globalThis.fetch = async (_input, init) => {
+  globalThis.fetch = async (input, init) => {
+    if (String(input).endsWith("openid-configuration"))
+      return Response.json(identityDiscovery);
     const token = new URLSearchParams(String(init?.body)).get("token");
-    if (token === "admin-token") {
-      return Response.json({
-        active: true,
-        client_id: "artbin-mcp",
-        sub: "fourm-admin",
-        principal_type: "user",
-        scope: "artbin:admin",
-        aud: "http://localhost:5175/mcp",
-        token_type: "Bearer",
-        exp: Math.floor(Date.now() / 1_000) + 300,
-        iat: Math.floor(Date.now() / 1_000),
-      });
-    }
-    if (token === "member-token") {
-      return Response.json({
-        active: true,
-        client_id: "artbin-mcp",
-        sub: "fourm-member",
-        principal_type: "user",
-        scope: "artbin:admin",
-        aud: "http://localhost:5175/mcp",
-        token_type: "Bearer",
-        exp: Math.floor(Date.now() / 1_000) + 300,
-        iat: Math.floor(Date.now() / 1_000),
-      });
-    }
-    if (
-      token === "wrong-client-token" ||
-      token === "wrong-scope-token" ||
-      token === "wrong-audience-token"
-    ) {
-      return Response.json({
-        active: true,
-        client_id:
-          token === "wrong-client-token" ? "other-client" : "artbin-mcp",
-        sub: "fourm-admin",
-        principal_type: "user",
-        scope:
-          token === "wrong-scope-token" ? "openid profile" : "artbin:admin",
-        aud:
-          token === "wrong-audience-token"
-            ? "https://another-resource.example/mcp"
-            : "http://localhost:5175/mcp",
-        token_type: "Bearer",
-        exp: Math.floor(Date.now() / 1_000) + 300,
-        iat: Math.floor(Date.now() / 1_000),
-      });
-    }
+    if (token === "admin-token") return Response.json(activeToken());
+    if (token === "member-token")
+      return Response.json(
+        activeToken({
+          subject: "central-member",
+          roles: ["member"],
+          scope: permissionScopes("admin"),
+        }),
+      );
+    if (token === "wrong-client-token")
+      return Response.json(activeToken({ clientId: "other-client" }));
+    if (token === "wrong-scope-token")
+      return Response.json(activeToken({ scope: "openid profile" }));
+    if (token === "wrong-audience-token")
+      return Response.json(activeToken({ aud: "other-project" }));
     return Response.json({ active: false });
   };
 });
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
-  restoreEnv("ARTBIN_4ORM_INTROSPECTION_SECRET", originalIntrospectionSecret);
+  restoreEnv("AUTH_INTROSPECTION_SECRET", originalIntrospectionSecret);
   restoreEnv("ARTBIN_URL", originalArtbinUrl);
   clearServiceAuthCacheForTesting();
   harness.close();
@@ -95,9 +69,9 @@ describe("administrator MCP", () => {
     assert.equal(metadata.status, 200);
     assert.deepEqual(await metadata.json(), {
       resource: "http://localhost:5175/mcp",
-      authorization_servers: ["http://localhost:8000"],
+      authorization_servers: ["https://auth.test"],
       bearer_methods_supported: ["header"],
-      scopes_supported: ["artbin:admin"],
+      scopes_supported: mcpAuthorizationScopes(),
     });
 
     const unauthorized = await mcpCall("invalid-token", "tools/list");

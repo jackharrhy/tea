@@ -28,6 +28,7 @@ a Remix 3 monorepo for personal apps and packages.
 | --- | --- | --- |
 | [`@tea/artbin-core`](packages/artbin-core/) | Asset scanning, detection, and upload primitives | [README](packages/artbin-core/README.md) |
 | [`@tea/artbin-ui`](packages/artbin-ui/) | CLI scan interface components | [README](packages/artbin-ui/README.md) |
+| [`@tea/identity`](packages/identity/) | Jack Auth OIDC and API identity verification | [README](packages/identity/README.md) |
 | [`@tea/json-schema`](packages/json-schema/) | Remix data schemas with JSON Schema descriptions | [README](packages/json-schema/README.md) |
 | [`@tea/logger`](packages/logger/) | Request and job logging primitives | [README](packages/logger/README.md) |
 | [`@tea/maps-editor`](packages/maps-editor/) | Map document and source-rendering primitives | [README](packages/maps-editor/README.md) |

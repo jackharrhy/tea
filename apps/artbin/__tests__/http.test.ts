@@ -1,3 +1,4 @@
+import { identityEnvironment } from "./identity-fixture.ts";
 /**
  * HTTP integration tests
  *
@@ -46,11 +47,18 @@ describe("HTTP integration tests", () => {
 
     server = spawn(
       process.execPath,
-      ["--import", "remix/node-tsx", "server.ts"],
+      [
+        "--import",
+        "remix/node-tsx",
+        "--import",
+        "./__tests__/http-identity.ts",
+        "server.ts",
+      ],
       {
         cwd: process.cwd(),
         env: {
           ...process.env,
+          ...identityEnvironment,
           PORT: String(PORT),
           NODE_ENV: "production",
           ARTBIN_DB_PATH: ":memory:",
@@ -111,19 +119,19 @@ describe("HTTP integration tests", () => {
   });
 
   describe("oauth flow", () => {
-    test("/auth/4orm redirects to the 4orm authorize URL", async () => {
-      const res = await fetch(`${BASE}/auth/4orm`, { redirect: "manual" });
+    test("/auth/login redirects to the central authorize URL", async () => {
+      const res = await fetch(`${BASE}/auth/login`, { redirect: "manual" });
       expect(res.status).toBe(302);
       const location = res.headers.get("location") ?? "";
-      expect(location).toContain("/oauth/authorize");
+      expect(location).toContain("/oauth/v2/authorize");
       expect(location).toContain("response_type=code");
       expect(location).toContain("code_challenge_method=S256");
       const cookies = res.headers.get("set-cookie") ?? "";
       expect(cookies).toContain("artbin_oauth=");
     });
 
-    test("/auth/4orm/callback without code redirects to /login with error", async () => {
-      const res = await fetch(`${BASE}/auth/4orm/callback`, {
+    test("/auth/callback without code redirects to /login with error", async () => {
+      const res = await fetch(`${BASE}/auth/callback`, {
         redirect: "manual",
       });
       expect(res.status).toBe(302);
@@ -134,11 +142,11 @@ describe("HTTP integration tests", () => {
   });
 
   describe("public pages", () => {
-    test("/login returns 200 and shows 4orm login button", async () => {
+    test("/login returns 200 and shows central login button", async () => {
       const res = await fetch(`${BASE}/login`);
       expect(res.status).toBe(200);
       const body = await res.text();
-      expect(body).toContain("Login with 4orm");
+      expect(body).toContain("Sign in with Jack Auth");
     });
 
     test("/ returns 200", async () => {
@@ -220,7 +228,7 @@ describe("HTTP integration tests", () => {
 
   describe("session cookies", () => {
     test("oauth cookie includes Secure flag in production", async () => {
-      const res = await fetch(`${BASE}/auth/4orm`, { redirect: "manual" });
+      const res = await fetch(`${BASE}/auth/login`, { redirect: "manual" });
       const cookies = res.headers.get("set-cookie") ?? "";
       expect(cookies).toContain("Secure");
     });

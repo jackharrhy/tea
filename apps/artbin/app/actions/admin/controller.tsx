@@ -1,3 +1,5 @@
+import { mcpAuthorizationScopes } from "#lib/mcp-auth.server";
+import { identityConfig } from "#lib/oauth.server";
 import { count, desc, eq } from "drizzle-orm";
 import { createController } from "remix/router";
 import { redirect } from "remix/response/redirect";
@@ -72,11 +74,11 @@ export default createController(routes.admin, {
               </dd>
               <dt>Authorization server</dt>
               <dd>
-                <code>{process.env.FOURM_URL ?? "http://localhost:8000"}</code>
+                <code>{identityConfig().issuer}</code>
               </dd>
               <dt>Required scope</dt>
               <dd>
-                <code>artbin:admin</code>
+                <code>{mcpAuthorizationScopes().join(" ")}</code>
               </dd>
               <dt>Protected resource</dt>
               <dd>

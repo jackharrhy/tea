@@ -43,6 +43,13 @@
       "when": 1788015627984,
       "tag": "0005_flowery_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792982531880,
+      "tag": "0006_central_identity",
+      "breakpoints": true
     }
   ]
 }

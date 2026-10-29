@@ -46,7 +46,7 @@ async function seedUser(
       id: "user-1",
 
       username: "testuser",
-      fourmId: "fourm-abc123",
+      authSubject: "fourm-abc123",
       ...overrides,
     })
     .returning();
@@ -141,7 +141,7 @@ describe("getUserFromSession", () => {
     expect(user).not.toBeNull();
     expect(user!.id).toBe("user-1");
     expect(user!.username).toBe("testuser");
-    expect(user!.fourmId).toBe("fourm-abc123");
+    expect(user!.authSubject).toBe("fourm-abc123");
   });
 
   test("returns null for expired session", async () => {
@@ -230,13 +230,13 @@ describe("logout", () => {
 });
 
 describe("session cookies", () => {
-  test("getSessionCookie sets HttpOnly, SameSite, and 30-day max age", () => {
+  test("getSessionCookie sets HttpOnly, SameSite, and one-hour max age", () => {
     const cookie = getSessionCookie("my-session-id");
 
     expect(cookie).toContain("artbin_session=my-session-id");
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
-    expect(cookie).toContain("Max-Age=2592000");
+    expect(cookie).toContain("Max-Age=3600");
     expect(cookie).toContain("Path=/");
   });
 

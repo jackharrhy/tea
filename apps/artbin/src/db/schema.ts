@@ -21,7 +21,7 @@ export type FileKind = (typeof fileKinds)[number];
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
-  fourmId: text("fourm_id").notNull().unique(),
+  authSubject: text("auth_subject").notNull().unique(),
   isAdmin: integer("is_admin", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
     (): Date => new Date(),
@@ -44,6 +44,9 @@ export const cliLoginHandoffs = sqliteTable("cli_login_handoffs", {
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  sessionExpiresAt: integer("session_expires_at", { mode: "timestamp" })
+    .notNull()
+    .default(new Date(0)),
   expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
     () => new Date(),

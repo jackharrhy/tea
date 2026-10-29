@@ -28,7 +28,7 @@ async function seedSession(db: ReturnType<typeof setupDatabase>) {
   await db.insert(users).values({
     id: "user-1",
     username: "user",
-    fourmId: "fourm-user-1",
+    authSubject: "fourm-user-1",
   });
   await db.insert(sessions).values({
     id: "session-1",

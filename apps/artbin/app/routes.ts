@@ -16,8 +16,8 @@ export const routes = route({
     kitchenSink: get("/kitchen-sink"),
   }),
   auth: route("/auth", {
-    fourm: get("/4orm"),
-    fourmCallback: get("/4orm/callback"),
+    login: get("/login"),
+    callback: get("/callback"),
     cliAuthorize: get("/cli/authorize"),
     cliCallback: get("/cli/callback"),
     cliRedeem: post("/cli/redeem"),

@@ -1,3 +1,7 @@
+import {
+  configureIdentityEnvironment,
+  identityFetch,
+} from "../../__tests__/identity-fixture.ts";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -67,9 +71,12 @@ const memberCookie = "artbin_session=member-session";
 const originalCacheDirectory = process.env.ARTBIN_CACHE_DIR;
 
 let database: TestDatabase;
+let restoreIdentity: () => void;
 const originalFetch = globalThis.fetch;
 
 beforeEach(async () => {
+  restoreIdentity = configureIdentityEnvironment();
+  globalThis.fetch = identityFetch();
   process.env.NODE_ENV = "test";
   process.env.ARTBIN_REQUIRE_AUTH = "1";
   process.env.ARTBIN_CACHE_DIR = join(uploadsRoot, "cache");
@@ -77,11 +84,16 @@ beforeEach(async () => {
   applyMigrations(database.sqlite);
   setDbForTesting(database.db);
   await database.db.insert(users).values([
-    { id: "admin", username: "admin", fourmId: "fourm-admin", isAdmin: true },
+    {
+      id: "admin",
+      username: "admin",
+      authSubject: "central-admin",
+      isAdmin: true,
+    },
     {
       id: "member",
       username: "member",
-      fourmId: "fourm-member",
+      authSubject: "central-member",
       isAdmin: false,
     },
   ]);
@@ -101,6 +113,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  restoreIdentity();
   globalThis.fetch = originalFetch;
   database.close();
   await rm(uploadsRoot, { recursive: true, force: true });
@@ -116,16 +129,16 @@ describe("native Remix router", () => {
     const response = await router.fetch(request(routes.login.href()));
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, /href="\/auth\/4orm"[^>]*data-rmx-document=""/);
+    assert.match(html, /href="\/auth\/login"[^>]*data-rmx-document=""/);
   });
 
   it("completes OAuth through the router and creates a session", async () => {
-    const start = await router.fetch(request(routes.auth.fourm.href()));
+    const start = await router.fetch(request(routes.auth.login.href()));
     assert.equal(start.status, 302);
 
     const authorizeUrl = new URL(start.headers.get("location")!);
-    assert.equal(authorizeUrl.pathname, "/oauth/authorize");
-    assert.equal(authorizeUrl.searchParams.get("client_id"), "artbin");
+    assert.equal(authorizeUrl.pathname, "/oauth/v2/authorize");
+    assert.equal(authorizeUrl.searchParams.get("client_id"), "artbin-browser");
     assert.equal(
       authorizeUrl.searchParams.get("code_challenge_method"),
       "S256",
@@ -138,32 +151,12 @@ describe("native Remix router", () => {
     assert.match(oauthCookie, /SameSite=Lax/);
 
     const tokenRequests: URLSearchParams[] = [];
-    globalThis.fetch = async (input, init) => {
-      const url = String(input);
-      if (url.endsWith("/oauth/token")) {
-        tokenRequests.push(new URLSearchParams(String(init?.body)));
-        return Response.json({
-          access_token: "access-token",
-          token_type: "bearer",
-          expires_in: 3600,
-        });
-      }
-      if (url.endsWith("/oauth/userinfo")) {
-        assert.equal(
-          new Headers(init?.headers).get("authorization"),
-          "Bearer access-token",
-        );
-        return Response.json({
-          sub: "fourm-member",
-          username: "member",
-          display_name: "Member",
-          is_admin: false,
-        });
-      }
-      throw new Error(`Unexpected OAuth request: ${url}`);
-    };
+    globalThis.fetch = identityFetch(
+      authorizeUrl.searchParams.get("nonce")!,
+      (body) => tokenRequests.push(body),
+    );
 
-    const callbackUrl = new URL(routes.auth.fourmCallback.href(), origin);
+    const callbackUrl = new URL(routes.auth.callback.href(), origin);
     callbackUrl.searchParams.set("code", "authorization-code");
     callbackUrl.searchParams.set(
       "state",
@@ -194,17 +187,17 @@ describe("native Remix router", () => {
 
     assert.equal(tokenRequests.length, 1);
     assert.equal(tokenRequests[0]!.get("code"), "authorization-code");
-    assert.equal(tokenRequests[0]!.get("client_id"), "artbin");
+    assert.equal(tokenRequests[0]!.get("client_id"), "artbin-browser");
     assert.ok(tokenRequests[0]!.get("code_verifier"));
     assert.equal((await database.db.select().from(sessions)).length, 3);
   });
 
   it("validates state and clears the transaction cookie on OAuth errors", async () => {
-    const start = await router.fetch(request(routes.auth.fourm.href()));
+    const start = await router.fetch(request(routes.auth.login.href()));
     const authorizeUrl = new URL(start.headers.get("location")!);
     const oauthCookie = start.headers.get("set-cookie")!;
 
-    const mismatchedUrl = new URL(routes.auth.fourmCallback.href(), origin);
+    const mismatchedUrl = new URL(routes.auth.callback.href(), origin);
     mismatchedUrl.searchParams.set("error", "access_denied");
     mismatchedUrl.searchParams.set("state", "wrong-state");
     const mismatched = await router.fetch(
@@ -222,7 +215,7 @@ describe("native Remix router", () => {
       /artbin_oauth=.*Max-Age=0/,
     );
 
-    const deniedUrl = new URL(routes.auth.fourmCallback.href(), origin);
+    const deniedUrl = new URL(routes.auth.callback.href(), origin);
     deniedUrl.searchParams.set("error", "access_denied");
     deniedUrl.searchParams.set(
       "state",
@@ -249,29 +242,7 @@ describe("native Remix router", () => {
     const authorizeUrl = new URL(start.headers.get("location")!);
     const oauthCookie = start.headers.get("set-cookie")!;
 
-    globalThis.fetch = async (input, init) => {
-      const url = String(input);
-      if (url.endsWith("/oauth/token")) {
-        return Response.json({
-          access_token: "cli-access-token",
-          token_type: "Bearer",
-          expires_in: 3600,
-        });
-      }
-      if (url.endsWith("/oauth/userinfo")) {
-        assert.equal(
-          new Headers(init?.headers).get("authorization"),
-          "Bearer cli-access-token",
-        );
-        return Response.json({
-          sub: "fourm-member",
-          username: "member",
-          display_name: "Member",
-          is_admin: false,
-        });
-      }
-      throw new Error(`Unexpected OAuth request: ${url}`);
-    };
+    globalThis.fetch = identityFetch(authorizeUrl.searchParams.get("nonce")!);
 
     const callbackUrl = new URL(routes.auth.cliCallback.href(), origin);
     callbackUrl.searchParams.set("code", "cli-authorization-code");
@@ -326,6 +297,52 @@ describe("native Remix router", () => {
       "invalid_grant",
     );
     assert.equal((await database.db.select().from(sessions)).length, 3);
+  });
+
+  it("never links an unmapped central identity by its matching username", async () => {
+    const start = await router.fetch(request(routes.auth.login.href()));
+    const authorization = new URL(start.headers.get("location")!);
+    globalThis.fetch = identityFetch(
+      authorization.searchParams.get("nonce")!,
+      undefined,
+      { subject: "central-other", username: "member" },
+    );
+    const callback = new URL(routes.auth.callback.href(), origin);
+    callback.searchParams.set(
+      "state",
+      authorization.searchParams.get("state")!,
+    );
+    callback.searchParams.set("code", "code");
+    const response = await router.fetch(
+      new Request(callback, {
+        headers: { Cookie: start.headers.get("set-cookie")!.split(";", 1)[0]! },
+      }),
+    );
+    assert.equal(response.headers.get("location"), "/login?error=oauth_failed");
+    assert.equal((await database.db.select().from(users)).length, 2);
+    assert.equal((await database.db.select().from(sessions)).length, 2);
+    const member = await database.db.query.users.findFirst({
+      where: eq(users.id, "member"),
+    });
+    assert.equal(member?.authSubject, "central-member");
+  });
+
+  it("cannot extend an expired central sign-in by redeeming a live CLI handoff", async () => {
+    await database.db.insert(cliLoginHandoffs).values({
+      code: "expired-proof",
+      userId: "member",
+      expiresAt: new Date(Date.now() + 60000),
+      sessionExpiresAt: new Date(Date.now() - 1000),
+    });
+    const response = await router.fetch(
+      request(routes.auth.cliRedeem.href(), undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: "expired-proof" }),
+      }),
+    );
+    assert.equal(response.status, 400);
+    assert.equal((await database.db.select().from(sessions)).length, 2);
   });
 
   it("rejects an expired CLI handoff without creating a session", async () => {
@@ -1014,7 +1031,7 @@ describe("native Remix router", () => {
     await database.db.insert(users).values({
       id: "uploader",
       username: "uploader",
-      fourmId: "fourm-uploader",
+      authSubject: "fourm-uploader",
     });
     await database.db.insert(folders).values([
       { id: "inbox", name: "Inbox", slug: "_inbox" },

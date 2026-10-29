@@ -156,14 +156,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       ),
     ),
     ...(process.env.TEA_MAPS_ARTBIN_URL &&
-    process.env.TEA_MAPS_ARTBIN_CLIENT_ID &&
-    process.env.TEA_MAPS_ARTBIN_CLIENT_SECRET
+    process.env.AUTH_ARTBIN_CLIENT_ID &&
+    process.env.AUTH_ARTBIN_CLIENT_SECRET
       ? {
           artbin: new ArtbinClient({
             url: process.env.TEA_MAPS_ARTBIN_URL,
-            fourmUrl: environment("FOURM_URL", "http://127.0.0.1:8000"),
-            clientId: process.env.TEA_MAPS_ARTBIN_CLIENT_ID,
-            clientSecret: process.env.TEA_MAPS_ARTBIN_CLIENT_SECRET,
+            issuer: environment("AUTH_ISSUER", "https://auth.jackharrhy.dev"),
+            projectId: environment("AUTH_ARTBIN_PROJECT_ID", ""),
+            clientId: process.env.AUTH_ARTBIN_CLIENT_ID,
+            clientSecret: process.env.AUTH_ARTBIN_CLIENT_SECRET,
           }),
         }
       : {}),
