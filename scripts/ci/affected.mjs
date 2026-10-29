@@ -37,6 +37,9 @@ export function selectChecks(paths, workspaces) {
       path === "README.md" ||
       path === "AGENTS.md" ||
       path === ".dockerignore" ||
+      path === ".github/workflows/lint-actions.yml" ||
+      path === ".github/dependabot.yml" ||
+      path === ".github/dependabot.yaml" ||
       path === "scripts/ci/affected.mjs" ||
       path === "scripts/ci/__tests__/affected.test.mjs" ||
       path.endsWith("/Dockerfile") ||

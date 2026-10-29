@@ -1,11 +1,12 @@
-FROM node:24-bookworm-slim AS build
+FROM platformatic/node-caged:26-slim AS build
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/marky/package.json apps/marky/package.json
 RUN npm ci --workspace @tea/marky --include-workspace-root=false && npm prune --omit=dev --workspace @tea/marky
 
-FROM node:24-bookworm-slim
+FROM platformatic/node-caged:26-slim
+RUN groupadd --gid 1000 node && useradd --uid 1000 --gid node --create-home node
 ENV NODE_ENV=production PORT=44100 MARKY_CONTENT_DIR=/app/data/content MARKY_SESSION_DIR=/app/data/sessions
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*

@@ -1,17 +1,20 @@
-FROM node:26-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a AS build
+FROM platformatic/node-caged:26-slim AS build
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY . .
-RUN npm ci \
+# Drop preferred prebuilds and rebuild against this compression-enabled runtime (two jobs).
+RUN npm ci && rm -rf node_modules/better-sqlite3/prebuilds \
+  && node /usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --directory node_modules/better-sqlite3 --nodedir=/usr/local --jobs=2 \
   && npm run build --workspace @jackharrhy/tea-maps-renderer \
   && npm run build --workspace @tea/maps-editor \
   && npm run build --workspace @tea/maps-protocol \
   && npm run build --workspace @tea/maps-compiler \
   && npm prune --omit=dev
 
-FROM node:26-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a
+FROM platformatic/node-caged:26-slim
+RUN groupadd --gid 1000 node && useradd --uid 1000 --gid node --create-home node
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 ENV TEA_MAPS_COMPILER_HOST=0.0.0.0

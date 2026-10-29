@@ -12,14 +12,15 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       RUN_INTEGRATION: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -36,8 +37,16 @@ jobs:
         run: npm run tooling:check
       - if: steps.select.outputs.any == 'true'
         run: npm run knip:check
-      - if: contains(fromJSON(steps.select.outputs.selected), '@tea/artbin')
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
+      - name: Ensure ImageMagick for Artbin checks
+        if: contains(fromJSON(steps.select.outputs.selected), '@tea/artbin')
+        timeout-minutes: 3
+        run: |
+          if ! command -v convert > /dev/null || ! command -v identify > /dev/null; then
+            sudo apt-get update
+            sudo apt-get install --yes --no-install-recommends imagemagick
+          fi
+          convert -version
+          identify -version
       - if: steps.select.outputs.browser == 'true' && (env.RUN_INTEGRATION == 'true' || steps.select.outputs.radio == 'true')
         run: npx playwright install --only-shell chromium
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
