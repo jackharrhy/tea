@@ -11,7 +11,6 @@ The deployed Node apps use prebuilt `platformatic/node-caged:26-slim` in both st
 | `marky` | `npm start` → Node + `remix/node-tsx`, filesystem/Git/WebSocket | `tea-marky`, Newport |
 | `maps-service` | Node, built-in SQLite | `tea-maps-service`, Newport |
 | `maps-compiler` | Node; external native executables are not bundled | `tea-maps-compiler`, Newport (including Gower instance) |
-| `shell-mcp` | Node, locked shell runner | Not a deployed fleet image; unchanged |
 | `maps` | Celld Worker; Node builds/deploys it | `tea-maps`; unchanged |
 | `maps-collaboration` | Celld Worker; Node builds/deploys it | `tea-maps-collaboration`; unchanged |
 | `ref` | Celld Worker; Node builds/deploys it | `tea-ref`; unchanged |
