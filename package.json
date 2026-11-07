@@ -36,8 +36,6 @@
     "ref:check": "npm run tooling:check && npm run check --workspace @tea/ref",
     "ref:dev": "npm run dev --workspace @tea/ref",
     "result:check": "npm run tooling:check && npm run check --workspace @tea/result",
-    "shell-mcp:check": "npm run tooling:check && npm run check --workspace @tea/shell-mcp",
-    "shell-mcp:dev": "npm run dev --workspace @tea/shell-mcp",
     "tooling:build": "npm run build --workspace @jackharrhy/tea-maps-renderer && npm run build --workspace @tea/maps-editor && npm run build --workspace @tea/maps-protocol",
     "tooling:check": "npm run tooling:build && node scripts/tooling/ensure-worker-types.mjs && node scripts/tooling/tsrslint.mjs check",
     "artbin:check": "npm run tooling:check && npm run check --workspace @tea/artbin-core && npm run check --workspace @tea/artbin-ui && npm run build --workspace @jackharrhy/tea-maps-renderer && npm run check --workspace @tea/artbin && npm run check --workspace @jackharrhy/tea-artbin",

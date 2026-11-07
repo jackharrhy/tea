@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  // Celld and uv are host/container tools; Wrangler is provided by app workspaces in CI.
-  "ignoreBinaries": ["celld", "uv", "wrangler"],
+  // Celld is a host/container tool; Wrangler is provided by app workspaces in CI.
+  "ignoreBinaries": ["celld", "wrangler"],
   // cloudflare:workers is a runtime module, not an npm package.
   "ignoreDependencies": ["cloudflare"],
   "workspaces": {
