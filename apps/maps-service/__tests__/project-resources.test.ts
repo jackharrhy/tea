@@ -45,7 +45,7 @@ describe("hosted project assets", () => {
     const app = await fixture();
     const owner = session(app.database);
     const outsider = session(app.database, {
-      fourmSub: "other",
+      authSubject: "other",
       username: "other",
       displayName: "Other",
       isAdmin: true,

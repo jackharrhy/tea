@@ -1,4 +1,5 @@
 import { mkdtemp, rm } from "node:fs/promises";
+import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach } from "vitest";
@@ -12,9 +13,26 @@ import type {
 } from "../src/map-cell-client.js";
 import { createMapsService } from "../src/server.js";
 import type { MapsMcpAuthConfig } from "../src/mcp-auth.js";
+import { identityConfig, identityFixture } from "./identity-fixture.js";
 
 export const TEST_REALTIME_TICKET_SECRET =
   "test-maps-realtime-ticket-secret-0001";
+
+async function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createNetServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        server.close();
+        reject(new Error("No test port"));
+        return;
+      }
+      server.close(() => resolve(address.port));
+    });
+  });
+}
 
 class FakeMapCells {
   readonly snapshots = new Map<string, HostedMapSnapshot>();
@@ -135,21 +153,22 @@ export async function fixture(
 ) {
   const root = await mkdtemp(join(tmpdir(), "tea-maps-service-test-"));
   const database = new MapsDatabase(join(root, "maps.db"));
+  const port = await freePort();
+  const origin = `http://127.0.0.1:${port}`;
   const maps = new FakeMapCells();
   const blobs = new FileBlobStore(join(root, "blobs"));
   const options = {
     database,
     blobs,
     oauth: {
-      fourmUrl: "https://4orm.example",
-      clientId: "maps",
-      publicUrl: "http://127.0.0.1",
+      ...identityConfig,
+      publicUrl: origin,
     },
     ...(additionalPublicOrigins ? { additionalPublicOrigins } : {}),
-    ...(mcpAuth ? { mcpAuth } : {}),
+    ...(mcpAuth ? { mcpAuth: { ...mcpAuth, publicUrl: origin } } : {}),
     realtimeTicketSecret: TEST_REALTIME_TICKET_SECRET,
     maps,
-    ...(fetchImpl ? { fetch: fetchImpl } : {}),
+    fetch: fetchImpl ?? identityFixture().fetch,
     ...(compilerFetch
       ? {
           builds: new RemoteBuildQueue(
@@ -162,11 +181,13 @@ export async function fixture(
       : {}),
   };
   const server = createMapsService(options);
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  await new Promise<void>((resolve) =>
+    server.listen(port, "127.0.0.1", resolve),
+  );
   const address = server.address();
   if (!address || typeof address === "string")
     throw new Error("Server has no address");
-  const origin = `http://127.0.0.1:${address.port}`;
+  if (address.port !== port) throw new Error("Unexpected test port");
   cleanups.push(async () => {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
@@ -180,7 +201,7 @@ export async function fixture(
 export function session(
   database: MapsDatabase,
   profile: Omit<MapsUser, "id"> = {
-    fourmSub: "fourm-1",
+    authSubject: "central-1",
     username: "mapper",
     displayName: "Mapper",
     isAdmin: false,
@@ -189,6 +210,6 @@ export function session(
   const user = database.upsertUser(profile);
   return {
     user,
-    cookie: `tea_maps_session=${database.createSession(user.id).token}`,
+    cookie: `tea_maps_session=${database.createSession(user.id, Math.floor(Date.now() / 1000) + 3600).token}`,
   };
 }

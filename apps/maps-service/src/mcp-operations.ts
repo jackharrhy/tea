@@ -59,7 +59,7 @@ const Name = z.string().trim().min(1).max(120);
 const mcpOperations = [
   operation(
     "tea_maps_list_projects",
-    "List projects accessible to this 4orm administrator.",
+    "List projects accessible to this Maps administrator.",
     z.strictObject({}),
     true,
     (options, user) => ({

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -10,6 +10,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { chromium } from "playwright";
+import { createIdentityServer, identitySettings } from "./identity-server.mjs";
 
 const { values } = parseArgs({ options: { output: { type: "string" } } });
 const mapsRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -21,7 +22,7 @@ const secret = randomBytes(32).toString("hex");
 const processes = [];
 const result = { status: "running", checks: [], state };
 let browser;
-let fourm;
+let identity;
 let compiler;
 
 async function showEditorMenu(page, name) {
@@ -124,7 +125,7 @@ async function stop(processState) {
 }
 
 try {
-  const [servicePort, collaborationPort, fourmPort, compilerPort, mapsPort] =
+  const [servicePort, collaborationPort, identityPort, compilerPort, mapsPort] =
     await Promise.all([
       freePort(),
       freePort(),
@@ -135,63 +136,43 @@ try {
   const mapsOrigin = `http://localhost:${mapsPort}`;
   const serviceOrigin = `http://127.0.0.1:${servicePort}`;
   const collaborationOrigin = `http://127.0.0.1:${collaborationPort}`;
-  const fourmOrigin = `http://127.0.0.1:${fourmPort}`;
+  const identityOrigin = `https://127.0.0.1:${identityPort}`;
   const compilerOrigin = `http://127.0.0.1:${compilerPort}`;
   const bsp = Buffer.alloc(124);
   bsp.writeInt32LE(29, 0);
   const compileRequests = [];
-  let authorizationCount = 0;
-  fourm = createHttpServer((request, response) => {
-    const url = new URL(request.url, fourmOrigin);
-    if (url.pathname === "/oauth/authorize") {
-      const callback = new URL(url.searchParams.get("redirect_uri"));
-      assert.equal(callback.origin, mapsOrigin);
-      callback.searchParams.set("state", url.searchParams.get("state"));
-      callback.searchParams.set(
-        "code",
-        `disposable-code-${++authorizationCount}`,
-      );
-      response.writeHead(302, { Location: callback.toString() }).end();
-    } else if (url.pathname === "/oauth/token") {
-      let body = "";
-      request.on("data", (chunk) => (body += chunk));
-      request.on("end", () => {
-        const parameters = new URLSearchParams(body);
-        if (parameters.get("grant_type") === "client_credentials") {
-          response.writeHead(200, { "Content-Type": "application/json" });
-          response.end(
-            JSON.stringify({
-              access_token: "disposable-machine-token",
-              token_type: "Bearer",
-              expires_in: 3600,
-            }),
-          );
-          return;
-        }
-        const code = parameters.get("code");
-        response.writeHead(200, { "Content-Type": "application/json" });
-        response.end(
-          JSON.stringify({
-            access_token: `disposable-token-${code?.split("-").at(-1)}`,
-            token_type: "Bearer",
-          }),
-        );
-      });
-    } else if (url.pathname === "/oauth/userinfo") {
-      const second =
-        request.headers.authorization === "Bearer disposable-token-2";
-      response.writeHead(200, { "Content-Type": "application/json" });
-      response.end(
-        JSON.stringify({
-          sub: second ? "tea-smoke-viewer" : "tea-smoke",
-          username: second ? "observer" : "mapper",
-          display_name: second ? "Test Observer" : "Test Mapper",
-          is_admin: false,
-        }),
-      );
-    } else response.writeHead(404).end();
+  const keyPath = join(state, "identity-key.pem");
+  const certPath = join(state, "identity-cert.pem");
+  await command(
+    "openssl",
+    [
+      "req",
+      "-x509",
+      "-newkey",
+      "rsa:2048",
+      "-nodes",
+      "-keyout",
+      keyPath,
+      "-out",
+      certPath,
+      "-days",
+      "1",
+      "-subj",
+      "/CN=127.0.0.1",
+      "-addext",
+      "subjectAltName=IP:127.0.0.1",
+    ],
+    state,
+  );
+  identity = createIdentityServer({
+    origin: identityOrigin,
+    mapsOrigin,
+    key: await readFile(keyPath),
+    cert: await readFile(certPath),
   });
-  await new Promise((resolve) => fourm.listen(fourmPort, "127.0.0.1", resolve));
+  await new Promise((resolve) =>
+    identity.listen(identityPort, "127.0.0.1", resolve),
+  );
   compiler = createHttpServer((request, response) => {
     if (request.method !== "POST" || request.url !== "/compile") {
       response.writeHead(404).end();
@@ -268,10 +249,13 @@ try {
       TEA_MAPS_URL: mapsOrigin,
       TEA_MAPS_COLLABORATION_URL: collaborationOrigin,
       TEA_MAPS_REALTIME_TICKET_SECRET: secret,
-      FOURM_URL: fourmOrigin,
-      TEA_MAPS_ARTBIN_URL: fourmOrigin,
-      TEA_MAPS_ARTBIN_CLIENT_ID: "maps-smoke",
-      TEA_MAPS_ARTBIN_CLIENT_SECRET: "disposable-secret",
+      NODE_EXTRA_CA_CERTS: certPath,
+      AUTH_ISSUER: identityOrigin,
+      AUTH_CLIENT_ID: identitySettings.clientId,
+      AUTH_PROJECT_ID: identitySettings.projectId,
+      AUTH_ORGANIZATION_ID: identitySettings.organizationId,
+      AUTH_INTROSPECTION_CLIENT_ID: "maps-smoke-server",
+      AUTH_INTROSPECTION_SECRET: "maps-smoke-secret",
       TEA_MAPS_QUAKE_COMPILER_URL: compilerOrigin,
     },
   );
@@ -296,9 +280,21 @@ try {
     },
   );
   await ready(maps, `${mapsOrigin}/new-map`);
+  const resourceMetadata = await fetch(
+    `${mapsOrigin}/.well-known/oauth-protected-resource/mcp`,
+  );
+  assert.equal(resourceMetadata.status, 200);
+  assert.deepEqual((await resourceMetadata.json()).authorization_servers, [
+    identityOrigin,
+  ]);
+  const anonymousMcp = await fetch(`${mapsOrigin}/mcp`, { method: "POST" });
+  assert.equal(anonymousMcp.status, 401);
+  result.checks.push(
+    "MCP discovery advertises central issuer and anonymous calls fail",
+  );
 
   browser = await chromium.launch({ headless: true });
-  const owner = await browser.newPage();
+  const owner = await browser.newPage({ ignoreHTTPSErrors: true });
   const ownerErrors = [];
   owner.on("pageerror", (error) => ownerErrors.push(error.message));
   await owner.goto(`${mapsOrigin}/projects`);
@@ -319,7 +315,7 @@ try {
   const projectUrl = owner.url();
   result.checks.push("OAuth login creates a hosted project");
 
-  const observer = await browser.newPage();
+  const observer = await browser.newPage({ ignoreHTTPSErrors: true });
   await observer.goto(`${mapsOrigin}/projects`);
   await observer.locator("#projects-login").click();
   await observer.getByText("Signed in as Test Observer").waitFor();
@@ -428,7 +424,10 @@ try {
       process.exitCode = 1;
     }
   }
-  if (fourm) await new Promise((resolve) => fourm.close(resolve));
+  if (identity) {
+    identity.closeAllConnections();
+    await new Promise((resolve) => identity.close(resolve));
+  }
   if (compiler) {
     compiler.closeAllConnections();
     await new Promise((resolve) => compiler.close(resolve));

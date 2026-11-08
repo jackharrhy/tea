@@ -37,21 +37,26 @@ export function createAuthRoutes(
     defineWebRoute("health", "GET", "/health", () =>
       webJson(200, HostedHealthResponseSchema, { status: "ok" }),
     ),
-    defineWebRoute("oauth-login", "GET", "/auth/login", (context) => {
-      const auth = beginAuthorization(
-        options.database,
-        { ...options.oauth, publicUrl: context.publicOrigin },
-        context.url.searchParams.get("returnTo") ?? "/",
-      );
-      const headers = new Headers();
-      appendWebCookie(
-        headers,
-        OAUTH_COOKIE,
-        auth.state,
-        600,
-        context.secureCookies,
-      );
-      return webRedirect(auth.url, headers);
+    defineWebRoute("oauth-login", "GET", "/auth/login", async (context) => {
+      try {
+        const auth = await beginAuthorization(
+          options.database,
+          { ...options.oauth, publicUrl: context.publicOrigin },
+          context.url.searchParams.get("returnTo") ?? "/",
+          options.fetch ?? globalThis.fetch,
+        );
+        const headers = new Headers();
+        appendWebCookie(
+          headers,
+          OAUTH_COOKIE,
+          auth.state,
+          600,
+          context.secureCookies,
+        );
+        return webRedirect(auth.url, headers);
+      } catch (error) {
+        return webErrorFromUnknown(error);
+      }
     }),
     defineWebRoute(
       "oauth-callback",
@@ -89,7 +94,10 @@ export function createAuthRoutes(
             cookieState,
             fetch: options.fetch ?? globalThis.fetch,
           });
-          const session = options.database.createSession(completed.user.id);
+          const session = options.database.createSession(
+            completed.user.id,
+            completed.proofExpiresAt,
+          );
           appendWebCookie(
             headers,
             SESSION_COOKIE,

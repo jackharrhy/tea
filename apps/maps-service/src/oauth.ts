@@ -1,34 +1,13 @@
-import { createHash, randomBytes } from "node:crypto";
-import { z } from "zod";
+import {
+  createIdentityClient,
+  createLoginTransaction,
+  type IdentityConfig,
+  type LoginTransaction,
+} from "@tea/identity";
 import type { MapsDatabase, MapsUser } from "./database.js";
 
-export interface OAuthConfig {
-  readonly fourmUrl: string;
-  readonly clientId: string;
+export interface OAuthConfig extends IdentityConfig {
   readonly publicUrl: string;
-}
-
-const OAuthTokenResponseSchema = z.looseObject({
-  access_token: z.string().min(1).max(16_384),
-  token_type: z
-    .string()
-    .refine((value) => value.toLowerCase() === "bearer")
-    .optional(),
-  expires_in: z.number().finite().positive().optional(),
-});
-const OAuthProfileSchema = z.looseObject({
-  sub: z.string().min(1).max(512),
-  username: z.string().min(1).max(256),
-  display_name: z.string().min(1).max(256),
-  is_admin: z.boolean().default(false),
-});
-
-function codeVerifier(): string {
-  return randomBytes(32).toString("base64url");
-}
-
-function codeChallenge(verifier: string): string {
-  return createHash("sha256").update(verifier).digest("base64url");
 }
 
 function safeReturnTo(value: string | null): string {
@@ -44,32 +23,26 @@ function safeReturnTo(value: string | null): string {
   }
 }
 
-export function beginAuthorization(
+export async function beginAuthorization(
   database: MapsDatabase,
   config: OAuthConfig,
   returnTo: string,
-): { url: string; state: string } {
-  const verifier = codeVerifier();
-  const transaction = database.beginOauth(safeReturnTo(returnTo), verifier);
-  const redirectUri = `${config.publicUrl}/auth/callback`;
-  const url = new URL("/oauth/authorize", config.fourmUrl);
-  url.search = new URLSearchParams({
-    response_type: "code",
-    client_id: config.clientId,
-    redirect_uri: redirectUri,
-    scope: "openid profile",
-    state: transaction.state,
-    code_challenge: codeChallenge(verifier),
-    code_challenge_method: "S256",
-  }).toString();
-  return { url: url.toString(), state: transaction.state };
+  fetcher: typeof fetch = fetch,
+): Promise<{ url: string; state: string }> {
+  const transaction = createLoginTransaction();
+  database.beginOauth(safeReturnTo(returnTo), transaction);
+  const url = await createIdentityClient(config, fetcher).authorizationUrl(
+    transaction,
+    `${config.publicUrl}/auth/callback`,
+  );
+  return { url, state: transaction.state };
 }
 
 export function consumeAuthorizationTransaction(input: {
   readonly database: MapsDatabase;
   readonly state: string;
   readonly cookieState: string | undefined;
-}): { verifier: string; returnTo: string } {
+}): { transaction: LoginTransaction; returnTo: string } {
   if (!input.cookieState || input.cookieState !== input.state)
     throw Object.assign(new Error("OAuth state mismatch"), { status: 400 });
   const transaction = input.database.consumeOauth(input.state);
@@ -86,47 +59,25 @@ export async function completeAuthorization(input: {
   readonly state: string;
   readonly code: string;
   readonly cookieState: string | undefined;
-  readonly fetch: typeof globalThis.fetch;
-}): Promise<{ user: MapsUser; returnTo: string }> {
-  const transaction = consumeAuthorizationTransaction(input);
-  const tokenResponse = await input.fetch(
-    new URL("/oauth/token", input.config.fourmUrl),
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code: input.code,
-        redirect_uri: `${input.config.publicUrl}/auth/callback`,
-        client_id: input.config.clientId,
-        code_verifier: transaction.verifier,
-      }),
-    },
+  readonly fetch: typeof fetch;
+}): Promise<{ user: MapsUser; returnTo: string; proofExpiresAt: number }> {
+  const { transaction, returnTo } = consumeAuthorizationTransaction(input);
+  const profile = await createIdentityClient(
+    input.config,
+    input.fetch,
+  ).exchange(
+    input.code,
+    transaction,
+    `${input.config.publicUrl}/auth/callback`,
   );
-  if (!tokenResponse.ok)
-    throw new Error(`4orm token exchange failed (${tokenResponse.status})`);
-  const tokenPayload = OAuthTokenResponseSchema.safeParse(
-    await tokenResponse.json(),
-  );
-  if (!tokenPayload.success)
-    throw new Error("4orm returned an invalid access token response");
-  const profileResponse = await input.fetch(
-    new URL("/oauth/userinfo", input.config.fourmUrl),
-    {
-      headers: { Authorization: `Bearer ${tokenPayload.data.access_token}` },
-    },
-  );
-  if (!profileResponse.ok)
-    throw new Error(`4orm userinfo failed (${profileResponse.status})`);
-  const profile = OAuthProfileSchema.safeParse(await profileResponse.json());
-  if (!profile.success) throw new Error("4orm returned invalid userinfo");
   return {
     user: input.database.upsertUser({
-      fourmSub: profile.data.sub,
-      username: profile.data.username,
-      displayName: profile.data.display_name,
-      isAdmin: profile.data.is_admin,
+      authSubject: profile.subject,
+      username: profile.username,
+      displayName: profile.displayName,
+      isAdmin: profile.roles.has("admin"),
     }),
-    returnTo: transaction.returnTo,
+    returnTo,
+    proofExpiresAt: profile.expiresAt,
   };
 }

@@ -1,5 +1,10 @@
 export function isServicePath(pathname: string): boolean {
-  return pathname.startsWith("/api/") || pathname.startsWith("/auth/");
+  return (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/auth/") ||
+    pathname === "/mcp" ||
+    pathname === "/.well-known/oauth-protected-resource/mcp"
+  );
 }
 
 export function isCollaborationPath(pathname: string): boolean {
