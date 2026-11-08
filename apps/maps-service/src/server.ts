@@ -111,6 +111,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const database = new MapsDatabase(join(dataRoot, "maps.db"));
   const blobs = new FileBlobStore(join(dataRoot, "blobs"));
   const buildEndpoints = configuredCompilerEndpoints(process.env);
+  const identity = {
+    issuer: environment("AUTH_ISSUER", "https://auth.jackharrhy.dev"),
+    clientId: environment("AUTH_CLIENT_ID"),
+    projectId: environment("AUTH_PROJECT_ID"),
+    organizationId: environment("AUTH_ORGANIZATION_ID"),
+  };
   const service = createMapsService({
     database,
     blobs,
@@ -121,23 +127,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       .map((value) => value.trim())
       .filter(Boolean),
     oauth: {
-      fourmUrl: environment("FOURM_URL", "http://127.0.0.1:8000"),
-      clientId: environment("FOURM_CLIENT_ID", "tea-maps"),
+      ...identity,
       publicUrl: environment("TEA_MAPS_URL", "http://localhost:8790"),
     },
-    ...(process.env.TEA_MAPS_FOURM_INTROSPECTION_SECRET
+    ...(process.env.AUTH_INTROSPECTION_SECRET
       ? {
           mcpAuth: {
-            fourmUrl: environment("FOURM_URL", "http://127.0.0.1:8000"),
+            ...identity,
             publicUrl: environment("TEA_MAPS_URL", "http://localhost:8790"),
-            clientId: environment(
-              "TEA_MAPS_FOURM_INTROSPECTION_CLIENT_ID",
-              "tea-maps-service",
-            ),
-            clientSecret: process.env.TEA_MAPS_FOURM_INTROSPECTION_SECRET,
-            ...(process.env.TEA_MAPS_MCP_SCOPE
-              ? { scope: process.env.TEA_MAPS_MCP_SCOPE }
-              : {}),
+            introspectionClientId: environment("AUTH_INTROSPECTION_CLIENT_ID"),
+            introspectionSecret: process.env.AUTH_INTROSPECTION_SECRET,
           },
         }
       : {}),

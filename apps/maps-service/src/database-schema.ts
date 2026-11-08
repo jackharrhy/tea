@@ -1,9 +1,21 @@
 import { DatabaseSync } from "node:sqlite";
 
 export function initializeMapsDatabase(sql: DatabaseSync): void {
+  const existingUsers = sql
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
+    )
+    .get();
+  if (existingUsers) {
+    const columns = sql.prepare("PRAGMA table_info(users)").all();
+    if (!columns.some((column) => column.name === "auth_subject"))
+      throw new Error(
+        "Run the reviewed Maps identity migration before starting the central-auth service",
+      );
+  }
   sql.exec(`
       CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY, fourm_sub TEXT NOT NULL UNIQUE, username TEXT NOT NULL,
+        id TEXT PRIMARY KEY, auth_subject TEXT NOT NULL UNIQUE, username TEXT NOT NULL,
         display_name TEXT NOT NULL, is_admin INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
       );
@@ -22,7 +34,7 @@ export function initializeMapsDatabase(sql: DatabaseSync): void {
         expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL
       );
       CREATE TABLE IF NOT EXISTS oauth_transactions (
-        state_hash TEXT PRIMARY KEY, verifier TEXT NOT NULL, return_to TEXT NOT NULL,
+        state_hash TEXT PRIMARY KEY, transaction_json TEXT NOT NULL, return_to TEXT NOT NULL,
         expires_at INTEGER NOT NULL
       );
       CREATE TABLE IF NOT EXISTS projects (

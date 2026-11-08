@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { mcpResourceUrl, mcpScope, requireMcpAdmin } from "../mcp-auth.js";
+import {
+  mcpAuthorizationScopes,
+  mcpResourceUrl,
+  requireMcpAdmin,
+} from "../mcp-auth.js";
 import { mcpOperationsByName, mcpToolDescriptions } from "../mcp-operations.js";
 import { ServiceHttpError } from "../service-http.js";
 import { defineWebRoute } from "../service-routing.js";
@@ -25,7 +29,6 @@ function rpcResponse(body: unknown): Response {
 }
 
 export function createMcpRoutes(options: MapsServiceOptions) {
-  const scope = mcpScope(options.mcpAuth);
   return [
     defineWebRoute(
       "mcp-protected-resource",
@@ -38,9 +41,9 @@ export function createMcpRoutes(options: MapsServiceOptions) {
         return new Response(
           JSON.stringify({
             resource: mcpResourceUrl(options.mcpAuth),
-            authorization_servers: [options.mcpAuth.fourmUrl],
+            authorization_servers: [options.mcpAuth.issuer],
             bearer_methods_supported: ["header"],
-            scopes_supported: ["openid", scope],
+            scopes_supported: mcpAuthorizationScopes(options.mcpAuth),
           }),
           {
             status: 200,
@@ -64,8 +67,8 @@ export function createMcpRoutes(options: MapsServiceOptions) {
       if (!config) return webError(503, "Tea Maps MCP is not configured");
       const origin = context.request.headers.get("origin");
       if (
-        (origin && origin !== config.publicUrl) ||
-        context.request.headers.get("host") !== new URL(config.publicUrl).host
+        (origin && origin !== context.publicOrigin) ||
+        context.publicOrigin !== config.publicUrl
       ) {
         return webError(403, "Tea Maps MCP origin is not allowed");
       }
@@ -83,7 +86,7 @@ export function createMcpRoutes(options: MapsServiceOptions) {
         if (error.status === 401) {
           headers.set(
             "WWW-Authenticate",
-            `Bearer resource_metadata="${config.publicUrl}/.well-known/oauth-protected-resource/mcp", scope="openid ${scope}"`,
+            `Bearer resource_metadata="${config.publicUrl}/.well-known/oauth-protected-resource/mcp", scope="${mcpAuthorizationScopes(config).join(" ")}"`,
           );
         }
         return webError(error.status, error.message, headers);

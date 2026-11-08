@@ -11,19 +11,8 @@ import {
   type RemoteCompileResult,
 } from "@tea/maps-editor/core";
 import { describe, expect, test } from "vitest";
+import { identityFixture } from "./identity-fixture.js";
 import { fixture, session } from "./service-fixture.js";
-
-const malformedHumanTokenFetch: typeof fetch = async (input) => {
-  if (String(input).endsWith("/oauth/token"))
-    return Response.json({
-      access_token: "access-token",
-      token_type: "Basic",
-      expires_in: "forever",
-    });
-  throw new Error(
-    "Userinfo must not be requested for an invalid token response",
-  );
-};
 
 async function requestWithHost(
   origin: string,
@@ -127,7 +116,7 @@ describe("Tea Maps hosted project service", () => {
     });
   });
 
-  test("creates private projects and keeps remote maps behind a 4orm session", async () => {
+  test("creates private projects and keeps remote maps behind a Maps session", async () => {
     const app = await fixture();
     const { cookie } = session(app.database);
     const projectResponse = await fetch(`${app.origin}/api/projects`, {
@@ -386,12 +375,12 @@ describe("Tea Maps hosted project service", () => {
     const app = await fixture();
     const owner = session(app.database);
     const outsider = app.database.upsertUser({
-      fourmSub: "fourm-2",
+      authSubject: "central-2",
       username: "outsider",
       displayName: "Outsider",
       isAdmin: false,
     });
-    const outsiderCookie = `tea_maps_session=${app.database.createSession(outsider.id).token}`;
+    const outsiderCookie = `tea_maps_session=${app.database.createSession(outsider.id, Math.floor(Date.now() / 1000) + 3600).token}`;
     await fetch(`${app.origin}/api/projects`, {
       method: "POST",
       headers: { Cookie: owner.cookie, "Content-Type": "application/json" },
@@ -417,12 +406,12 @@ describe("Tea Maps hosted project service", () => {
     const app = await fixture();
     const owner = session(app.database);
     const collaborator = app.database.upsertUser({
-      fourmSub: "fourm-collaborator",
+      authSubject: "central-collaborator",
       username: "carson",
       displayName: "Carson",
       isAdmin: false,
     });
-    const collaboratorCookie = `tea_maps_session=${app.database.createSession(collaborator.id).token}`;
+    const collaboratorCookie = `tea_maps_session=${app.database.createSession(collaborator.id, Math.floor(Date.now() / 1000) + 3600).token}`;
     const project = app.database.createProject(
       owner.user.id,
       "Shared project",
@@ -557,13 +546,13 @@ describe("Tea Maps hosted project service", () => {
       });
       const { user, cookie } = session(app.database);
       const viewer = session(app.database, {
-        fourmSub: "build-viewer",
+        authSubject: "build-viewer",
         username: "build-viewer",
         displayName: "Build Viewer",
         isAdmin: false,
       });
       const outsider = session(app.database, {
-        fourmSub: "build-outsider",
+        authSubject: "build-outsider",
         username: "build-outsider",
         displayName: "Build Outsider",
         isAdmin: false,
@@ -663,27 +652,9 @@ describe("Tea Maps hosted project service", () => {
     },
   );
 
-  test("completes the existing 4orm PKCE flow into a Maps session", async () => {
-    const calls: string[] = [];
-    const mockFetch: typeof fetch = async (input) => {
-      const url = String(input);
-      calls.push(url);
-      if (url.endsWith("/oauth/token"))
-        return Response.json({
-          access_token: "access-token",
-          token_type: "Bearer",
-          expires_in: 300,
-        });
-      if (url.endsWith("/oauth/userinfo"))
-        return Response.json({
-          sub: "42",
-          username: "gordon",
-          display_name: "Gordon",
-          is_admin: false,
-        });
-      return new Response("not found", { status: 404 });
-    };
-    const app = await fixture(mockFetch);
+  test("completes central OIDC PKCE into a Maps session", async () => {
+    const identity = identityFixture({ roles: ["member"] });
+    const app = await fixture(identity.fetch);
     const login = await fetch(
       `${app.origin}/auth/login?returnTo=${encodeURIComponent("/project/0123456789ab-example")}`,
       { redirect: "manual" },
@@ -691,6 +662,8 @@ describe("Tea Maps hosted project service", () => {
     expect(login.status).toBe(303);
     const authorize = new URL(login.headers.get("location")!);
     expect(authorize.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(authorize.origin).toBe("https://auth.test");
+    identity.setNonce(authorize.searchParams.get("nonce")!);
     const state = authorize.searchParams.get("state")!;
     const oauthCookie = login.headers.get("set-cookie")!.split(";", 1)[0]!;
     const callback = await fetch(
@@ -709,10 +682,12 @@ describe("Tea Maps hosted project service", () => {
         expect.stringContaining("tea_maps_session="),
       ]),
     );
-    expect(calls).toEqual([
-      "https://4orm.example/oauth/token",
-      "https://4orm.example/oauth/userinfo",
-    ]);
+    expect(identity.tokenBody()?.get("code_verifier")).toMatch(
+      /^[A-Za-z0-9_-]{43,128}$/,
+    );
+    expect(identity.tokenBody()?.get("redirect_uri")).toBe(
+      authorize.searchParams.get("redirect_uri"),
+    );
   });
 
   test("validates, consumes, and clears OAuth state when authorization is denied", async () => {
@@ -749,31 +724,18 @@ describe("Tea Maps hosted project service", () => {
 
   test("keeps tailnet login, callback, and mutations on the initiating origin", async () => {
     const tailnetOrigin = "https://newport.hedgehog-python.ts.net:8457";
-    let tokenRedirectUri: string | null = null;
-    const oauthFetch: typeof fetch = async (input, init) => {
-      if (String(input).endsWith("/oauth/token")) {
-        tokenRedirectUri = new URLSearchParams(String(init?.body)).get(
-          "redirect_uri",
-        );
-        return Response.json({
-          access_token: "access-token",
-          token_type: "Bearer",
-        });
-      }
-      return Response.json({
-        sub: "tailnet-user",
-        username: "mapper",
-        display_name: "Mapper",
-        is_admin: false,
-      });
-    };
-    const app = await fixture(oauthFetch, undefined, [tailnetOrigin]);
+    const identity = identityFixture({
+      roles: ["member"],
+      subject: "tailnet-user",
+    });
+    const app = await fixture(identity.fetch, undefined, [tailnetOrigin]);
     const host = "newport.hedgehog-python.ts.net:8457";
     const login = await requestWithHost(app.origin, "/auth/login", host);
     const authorize = new URL(login.headers.location!);
     expect(authorize.searchParams.get("redirect_uri")).toBe(
       `${tailnetOrigin}/auth/callback`,
     );
+    identity.setNonce(authorize.searchParams.get("nonce")!);
     const oauthCookie = login.headers["set-cookie"]![0]!.split(";", 1)[0]!;
     expect(login.headers["set-cookie"]![0]).toContain("Secure");
 
@@ -784,7 +746,9 @@ describe("Tea Maps hosted project service", () => {
       { cookie: oauthCookie },
     );
     expect(callback.status).toBe(303);
-    expect(tokenRedirectUri).toBe(`${tailnetOrigin}/auth/callback`);
+    expect(identity.tokenBody()?.get("redirect_uri")).toBe(
+      `${tailnetOrigin}/auth/callback`,
+    );
     const sessionCookie = callback.headers["set-cookie"]!.find((value) =>
       value.startsWith("tea_maps_session="),
     )!.split(";", 1)[0]!;
@@ -798,7 +762,17 @@ describe("Tea Maps hosted project service", () => {
   });
 
   test("rejects malformed human token metadata and clears the OAuth cookie", async () => {
-    const app = await fixture(malformedHumanTokenFetch);
+    const identity = identityFixture();
+    const malformedFetch: typeof fetch = (input, init) =>
+      String(input).endsWith("/oauth/v2/token")
+        ? Promise.resolve(
+            Response.json({
+              access_token: "access-token",
+              token_type: "Basic",
+            }),
+          )
+        : identity.fetch(input, init);
+    const app = await fixture(malformedFetch);
     const login = await fetch(`${app.origin}/auth/login`, {
       redirect: "manual",
     });
@@ -810,10 +784,12 @@ describe("Tea Maps hosted project service", () => {
       { headers: { Cookie: oauthCookie }, redirect: "manual" },
     );
 
-    expect(callback.status).toBe(500);
+    expect(callback.status).toBe(401);
     expect(callback.headers.getSetCookie()).toEqual([
       expect.stringContaining("tea_maps_oauth=;"),
     ]);
-    expect(await callback.json()).toEqual({ error: "Internal server error" });
+    expect(await callback.json()).toEqual({
+      error: "Invalid or expired identity",
+    });
   });
 });

@@ -10,6 +10,10 @@ describe("Maps service pass through", () => {
   it("only accepts service paths", async () => {
     expect(isServicePath("/api/session")).toBe(true);
     expect(isServicePath("/auth/callback")).toBe(true);
+    expect(isServicePath("/mcp")).toBe(true);
+    expect(isServicePath("/.well-known/oauth-protected-resource/mcp")).toBe(
+      true,
+    );
     expect(isServicePath("/apiary/session")).toBe(false);
     const fetcher = vi.fn();
     const response = await proxyServiceRequest(

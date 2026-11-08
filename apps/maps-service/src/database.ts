@@ -11,6 +11,7 @@ import {
   type ProjectRole as ProtocolProjectRole,
 } from "@tea/maps-protocol";
 import { z } from "zod";
+import { validLoginTransaction, type LoginTransaction } from "@tea/identity";
 import { createHostedId, hostedSlug, isHostedId } from "./hosted-identity.js";
 import { initializeMapsDatabase } from "./database-schema.js";
 import {
@@ -28,7 +29,7 @@ export type {
 
 export interface MapsUser {
   readonly id: string;
-  readonly fourmSub: string;
+  readonly authSubject: string;
   readonly username: string;
   readonly displayName: string;
   readonly isAdmin: boolean;
@@ -63,7 +64,7 @@ function hostedBuild(row: SqlBuild): HostedBuildRecord {
 
 interface SqlUser {
   id: string;
-  fourm_sub: string;
+  auth_subject: string;
   username: string;
   display_name: string;
   is_admin: number;
@@ -100,7 +101,12 @@ export class MapsDatabase {
   ) {
     this.sql = new DatabaseSync(path);
     this.sql.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
-    initializeMapsDatabase(this.sql);
+    try {
+      initializeMapsDatabase(this.sql);
+    } catch (error) {
+      this.sql.close();
+      throw error;
+    }
   }
 
   public close(): void {
@@ -109,47 +115,54 @@ export class MapsDatabase {
 
   public beginOauth(
     returnTo: string,
-    verifier: string,
+    transaction: LoginTransaction,
   ): { state: string; expiresAt: number } {
-    const state = token();
     const expiresAt = Date.now() + 10 * 60_000;
     this.sql
       .prepare(
-        "INSERT INTO oauth_transactions(state_hash,verifier,return_to,expires_at) VALUES (?,?,?,?)",
+        "INSERT INTO oauth_transactions(state_hash,transaction_json,return_to,expires_at) VALUES (?,?,?,?)",
       )
-      .run(digest(state), verifier, returnTo, expiresAt);
-    return { state, expiresAt };
+      .run(
+        digest(transaction.state),
+        JSON.stringify(transaction),
+        returnTo,
+        expiresAt,
+      );
+    return { state: transaction.state, expiresAt };
   }
 
   public consumeOauth(
     state: string,
-  ): { verifier: string; returnTo: string } | null {
+  ): { transaction: LoginTransaction; returnTo: string } | null {
     const row = this.sql
       .prepare(
-        "DELETE FROM oauth_transactions WHERE state_hash = ? AND expires_at > ? RETURNING verifier, return_to",
+        "DELETE FROM oauth_transactions WHERE state_hash = ? AND expires_at > ? RETURNING transaction_json, return_to",
       )
       .get(digest(state), Date.now()) as
-      | { verifier: string; return_to: string }
+      | { transaction_json: string; return_to: string }
       | undefined;
-    return row ? { verifier: row.verifier, returnTo: row.return_to } : null;
+    if (!row) return null;
+    const transaction: unknown = JSON.parse(row.transaction_json);
+    if (!validLoginTransaction(transaction, state)) return null;
+    return { transaction, returnTo: row.return_to };
   }
 
   public upsertUser(profile: Omit<MapsUser, "id">): MapsUser {
     const now = Date.now();
     const existing = this.sql
-      .prepare("SELECT id FROM users WHERE fourm_sub = ?")
-      .get(profile.fourmSub) as { id: string } | undefined;
+      .prepare("SELECT id FROM users WHERE auth_subject = ?")
+      .get(profile.authSubject) as { id: string } | undefined;
     const id = existing?.id ?? randomUUID();
     this.sql
       .prepare(`
-      INSERT INTO users(id, fourm_sub, username, display_name, is_admin, created_at, updated_at)
+      INSERT INTO users(id, auth_subject, username, display_name, is_admin, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(fourm_sub) DO UPDATE SET username=excluded.username,
+      ON CONFLICT(auth_subject) DO UPDATE SET username=excluded.username,
       display_name=excluded.display_name, is_admin=excluded.is_admin, updated_at=excluded.updated_at
     `)
       .run(
         id,
-        profile.fourmSub,
+        profile.authSubject,
         profile.username,
         profile.displayName,
         profile.isAdmin ? 1 : 0,
@@ -159,9 +172,22 @@ export class MapsDatabase {
     return { id, ...profile };
   }
 
-  public createSession(userId: string): { token: string; expiresAt: number } {
+  public userByAuthSubject(subject: string): MapsUser | null {
+    const row = this.sql
+      .prepare(
+        "SELECT id, auth_subject, username, display_name, is_admin FROM users WHERE auth_subject = ?",
+      )
+      .get(subject) as SqlUser | undefined;
+    return row ? this.user(row) : null;
+  }
+
+  public createSession(
+    userId: string,
+    proofExpiresAt: number,
+  ): { token: string; expiresAt: number } {
     const value = token();
-    const expiresAt = Date.now() + 30 * 24 * 60 * 60_000;
+    const expiresAt = Math.min(Date.now() + 60 * 60_000, proofExpiresAt * 1000);
+    if (expiresAt <= Date.now()) throw new Error("Identity proof has expired");
     this.sql
       .prepare(
         "INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES (?,?,?,?)",
@@ -174,7 +200,7 @@ export class MapsDatabase {
     if (!value) return null;
     const row = this.sql
       .prepare(`
-      SELECT u.id, u.fourm_sub, u.username, u.display_name, u.is_admin
+      SELECT u.id, u.auth_subject, u.username, u.display_name, u.is_admin
       FROM sessions s JOIN users u ON u.id=s.user_id
       WHERE s.token_hash=? AND s.expires_at>?
     `)
@@ -245,7 +271,7 @@ export class MapsDatabase {
   ): { user: MapsUser; projectId: string } | null {
     if (!value) return null;
     const row = this.sql
-      .prepare(`SELECT u.id,u.fourm_sub,u.username,u.display_name,u.is_admin,s.project_id
+      .prepare(`SELECT u.id,u.auth_subject,u.username,u.display_name,u.is_admin,s.project_id
       FROM automation_sessions s JOIN users u ON u.id=s.user_id
       WHERE s.token_hash=? AND s.expires_at>?`)
       .get(digest(value), Date.now()) as
@@ -263,7 +289,7 @@ export class MapsDatabase {
   private user(row: SqlUser): MapsUser {
     return {
       id: row.id,
-      fourmSub: row.fourm_sub,
+      authSubject: row.auth_subject,
       username: row.username,
       displayName: row.display_name,
       isAdmin: row.is_admin === 1,

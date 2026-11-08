@@ -32,25 +32,25 @@ async function createAccessFixture() {
   const app = await fixture(undefined, compilerFetch);
   const owner = session(app.database);
   const editor = session(app.database, {
-    fourmSub: "fourm-editor",
+    authSubject: "central-editor",
     username: "editor",
     displayName: "Editor",
     isAdmin: false,
   });
   const viewer = session(app.database, {
-    fourmSub: "fourm-viewer",
+    authSubject: "central-viewer",
     username: "viewer",
     displayName: "Viewer",
     isAdmin: false,
   });
   const outsider = session(app.database, {
-    fourmSub: "fourm-outsider",
+    authSubject: "central-outsider",
     username: "outsider",
     displayName: "Outsider",
     isAdmin: false,
   });
   const adminOutsider = session(app.database, {
-    fourmSub: "fourm-admin",
+    authSubject: "central-admin",
     username: "admin",
     displayName: "Admin outsider",
     isAdmin: true,

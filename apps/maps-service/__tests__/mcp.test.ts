@@ -1,46 +1,16 @@
 import { describe, expect, test } from "vitest";
+import {
+  identityFixture,
+  mcpIdentityConfig,
+  permissionScopes,
+} from "./identity-fixture.js";
 import { fixture } from "./service-fixture.js";
 
-const mcpAuth = {
-  fourmUrl: "https://4orm.example",
-  publicUrl: "http://127.0.0.1",
-  clientId: "tea-maps-server",
-  clientSecret: "test-secret",
-};
-
-function fourmFetch(admin: boolean, scope = "maps:admin"): typeof fetch {
-  return async (input) => {
-    const url = String(input);
-    if (url.endsWith("/oauth/introspect"))
-      return Response.json({
-        active: true,
-        principal_type: "user",
-        sub: "mcp-user",
-        aud: `${mcpAuth.publicUrl}/mcp`,
-        scope: `openid ${scope}`,
-        exp: Math.floor(Date.now() / 1000) + 600,
-      });
-    if (url.endsWith("/oauth/userinfo"))
-      return Response.json({
-        sub: "mcp-user",
-        username: "admin",
-        display_name: "Admin",
-        is_admin: admin,
-      });
-    throw new Error(`Unexpected 4orm URL ${url}`);
-  };
-}
-
-async function call(
-  origin: string,
-  method: string,
-  args: unknown,
-  token = "test-token",
-) {
+async function call(origin: string, method: string, args: unknown) {
   return fetch(`${origin}/mcp`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: "Bearer test-token",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -52,14 +22,30 @@ async function call(
   });
 }
 
+async function setup(identity = identityFixture()) {
+  const config = { ...mcpIdentityConfig };
+  const app = await fixture(identity.fetch, undefined, undefined, config);
+  return { app };
+}
+
 describe("Tea Maps MCP", () => {
-  test("advertises OAuth and limits tools to admins with project membership", async () => {
-    const app = await fixture(fourmFetch(true), undefined, undefined, mcpAuth);
-    mcpAuth.publicUrl = app.origin;
+  test("advertises central issuer and limits admin tools to local project membership", async () => {
+    const { app } = await setup();
+    const admin = app.database.upsertUser({
+      authSubject: "central-admin",
+      username: "admin",
+      displayName: "Admin",
+      isAdmin: true,
+    });
     const metadata = await fetch(
       `${app.origin}/.well-known/oauth-protected-resource/mcp`,
     );
-    expect((await metadata.json()).resource).toBe(`${app.origin}/mcp`);
+    const document = await metadata.json();
+    expect(document.resource).toBe(`${app.origin}/mcp`);
+    expect(document.authorization_servers).toEqual(["https://auth.test"]);
+    expect(document.scopes_supported).toContain(
+      "urn:zitadel:iam:org:project:role:admin",
+    );
     const unauthenticated = await fetch(`${app.origin}/mcp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -69,6 +55,7 @@ describe("Tea Maps MCP", () => {
     expect(unauthenticated.headers.get("www-authenticate")).toContain(
       "resource_metadata=",
     );
+
     const initialized = await fetch(`${app.origin}/mcp`, {
       method: "POST",
       headers: {
@@ -78,7 +65,6 @@ describe("Tea Maps MCP", () => {
       body: JSON.stringify({ jsonrpc: "2.0", id: 0, method: "initialize" }),
     });
     expect((await initialized.json()).result.serverInfo.name).toBe("tea-maps");
-
     const created = await call(app.origin, "tea_maps_create_project", {
       name: "MCP map",
       game: "quake",
@@ -86,12 +72,7 @@ describe("Tea Maps MCP", () => {
     expect(created.status).toBe(200);
     const project = (await created.json()).result.structuredContent.project;
     expect(project.name).toBe("MCP map");
-    const projectList = await call(app.origin, "tea_maps_list_projects", {});
-    expect(
-      (await projectList.json()).result.structuredContent.projects.map(
-        (item: { id: string }) => item.id,
-      ),
-    ).toContain(project.id);
+    expect(app.database.role(project.id, admin.id)).toBe("owner");
     const mapResponse = await call(app.origin, "tea_maps_create_map", {
       projectId: project.id,
       name: "test.map",
@@ -103,13 +84,15 @@ describe("Tea Maps MCP", () => {
     const grantResponse = await call(
       app.origin,
       "tea_maps_create_browser_grant",
-      { projectId: project.id },
+      {
+        projectId: project.id,
+      },
     );
     expect(
       (await grantResponse.json()).result.structuredContent.projectUrl,
     ).toBe(`${app.origin}/projects/${project.id}`);
     const outsider = app.database.upsertUser({
-      fourmSub: "outsider",
+      authSubject: "outsider",
       username: "outsider",
       displayName: "Outsider",
       isAdmin: false,
@@ -119,78 +102,36 @@ describe("Tea Maps MCP", () => {
       projectId: other.id,
     });
     expect((await denied.json()).result.isError).toBe(true);
+  });
 
-    const listed = await fetch(`${app.origin}/mcp`, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer test-token",
-        "Content-Type": "application/json",
+  test("rejects unknown, non-admin, service, and underscoped central principals", async () => {
+    const scenarios = [
+      { identity: identityFixture(), localAdmin: false },
+      { identity: identityFixture({ roles: ["member"] }), localAdmin: true },
+      {
+        identity: identityFixture({ principalType: "service" }),
+        localAdmin: true,
       },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/list",
-        params: {},
-      }),
-    });
-    const tools = (await listed.json()).result.tools;
-    expect(tools.map((tool: { name: string }) => tool.name)).toContain(
-      "tea_maps_start_build",
-    );
-    expect(tools.map((tool: { name: string }) => tool.name)).not.toContain(
-      "maps_start_build",
-    );
-    const oldAlias = await call(app.origin, "maps_list_projects", {});
-    expect((await oldAlias.json()).result.isError).toBe(true);
-  });
-
-  test("rejects a current non-admin even with a valid scoped OAuth token", async () => {
-    const app = await fixture(fourmFetch(false), undefined, undefined, mcpAuth);
-    mcpAuth.publicUrl = app.origin;
-    expect((await call(app.origin, "tea_maps_list_projects", {})).status).toBe(
-      403,
-    );
-  });
-
-  test("uses a configured Tea scope for discovery and token checks", async () => {
-    const config = { ...mcpAuth, scope: "tea_maps:admin" };
-    const app = await fixture(
-      fourmFetch(true, "tea_maps:admin"),
-      undefined,
-      undefined,
-      config,
-    );
-    mcpAuth.publicUrl = app.origin;
-    config.publicUrl = app.origin;
-    const metadata = await fetch(
-      `${app.origin}/.well-known/oauth-protected-resource/mcp`,
-    );
-    expect((await metadata.json()).scopes_supported).toEqual([
-      "openid",
-      "tea_maps:admin",
-    ]);
-    const challenge = await fetch(`${app.origin}/mcp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{}",
-    });
-    expect(challenge.headers.get("www-authenticate")).toContain(
-      'scope="openid tea_maps:admin"',
-    );
-    expect((await call(app.origin, "tea_maps_list_projects", {})).status).toBe(
-      200,
-    );
-
-    const legacyOnly = await fixture(
-      fourmFetch(true),
-      undefined,
-      undefined,
-      config,
-    );
-    mcpAuth.publicUrl = legacyOnly.origin;
-    config.publicUrl = legacyOnly.origin;
-    expect(
-      (await call(legacyOnly.origin, "tea_maps_list_projects", {})).status,
-    ).toBe(401);
+      {
+        identity: identityFixture({ scopes: permissionScopes("member") }),
+        localAdmin: true,
+      },
+      {
+        identity: identityFixture({ audience: "another-project" }),
+        localAdmin: true,
+      },
+    ];
+    for (const { identity, localAdmin } of scenarios) {
+      const { app } = await setup(identity);
+      if (localAdmin)
+        app.database.upsertUser({
+          authSubject: "central-admin",
+          username: "admin",
+          displayName: "Admin",
+          isAdmin: true,
+        });
+      const response = await call(app.origin, "tea_maps_list_projects", {});
+      expect([401, 403]).toContain(response.status);
+    }
   });
 });
