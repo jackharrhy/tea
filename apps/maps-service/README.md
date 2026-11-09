@@ -14,10 +14,10 @@ Compose passes the optional Artbin endpoint and central machine settings from th
 
 `GET /api/maps/:mapId/checkpoints` lists authoritative map-cell checkpoints for project members; editors can create one with `POST` on the same path. `GET /api/maps/:mapId/checkpoints/:checkpointId` reads its original source for members.
 
-The MCP endpoint advertises `tea_maps_*` tools and returns Tea `/projects/:id` links from browser grants. It advertises the central issuer and requires a human Maps administrator with the project audience, `admin` role, and explicit role scopes. The central subject must already match a local Maps administrator. Dynamic MCP clients holding 4orm credentials must authorize again against Jack Auth.
+The MCP endpoint advertises `tea_maps_*` tools and returns Tea `/projects/:id` links from browser grants. It advertises the central issuer and requires a human Maps administrator with the project audience, `admin` role, and explicit role scopes. The central subject must already match a local Maps administrator.
 
-## Existing identity migration
+## Database format
 
-Stop Maps Service and take a recoverable, consistent backup of its SQLite database and blob store. Use the reviewed private mapping of each existing 4orm subject to its Jack Auth subject; never link by username. Run `npm run migrate:identity --workspace @tea/maps-service -- DATABASE_PATH MANIFEST_PATH` before starting the central-auth image. The manifest uses the same `issuer`, `legacyUserId`, and `subject` entries as Jack Auth's consumer mapping. The command rejects missing or duplicate mappings, preserves local user and project IDs, renames the identity column, and clears old browser sessions, automation grants/sessions, and pending OAuth transactions. It does not copy old tokens. The new server refuses to start on an unmigrated database. Users sign in again, and MCP clients must complete a fresh central authorization. New Maps browser sessions expire within an hour and never outlive their central identity proof.
+The user table stores the Jack Auth subject in `auth_subject`. Startup rejects databases without that column. Back up the database and blobs together using a consistent SQLite snapshot. Browser sessions expire within an hour and never outlive their central identity proof.
 
 Tea issues `tea_maps_session`, `tea_maps_automation`, and `tea_maps_oauth` cookies.

@@ -10,7 +10,7 @@ export function initializeMapsDatabase(sql: DatabaseSync): void {
     const columns = sql.prepare("PRAGMA table_info(users)").all();
     if (!columns.some((column) => column.name === "auth_subject"))
       throw new Error(
-        "Run the reviewed Maps identity migration before starting the central-auth service",
+        "Unsupported Maps database schema: users.auth_subject is required",
       );
   }
   sql.exec(`
