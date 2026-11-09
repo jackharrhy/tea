@@ -22,7 +22,50 @@ concurrency:
   cancel-in-progress: false
 permissions: {}
 jobs:
+  select:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      apps: ${{ steps.apps.outputs.apps }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: apps
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import subprocess
+
+          apps = ["maps", "maps-service", "maps-collaboration", "maps-compiler"]
+          before = os.environ.get("BEFORE", "")
+          if os.environ["EVENT"] == "workflow_dispatch" or not before or set(before) == {"0"}:
+              selected = apps
+          else:
+              paths = subprocess.check_output(
+                  ["git", "diff", "--name-only", before, os.environ["GITHUB_SHA"]],
+                  text=True,
+              ).splitlines()
+              shared = any(
+                  path in {".dockerignore", ".nvmrc", "package.json", "package-lock.json"}
+                  or path.startswith(("packages/maps-editor/", "packages/maps-protocol/", "packages/maps-renderer/", "packages/request-body/"))
+                  for path in paths
+              )
+              selected = apps if shared else [
+                  app for app in apps if any(path.startswith(f"apps/{app}/") for path in paths)
+              ]
+              if not selected:
+                  selected = apps
+          print("apps=" + json.dumps(selected))
+          PY
   publish:
+    needs: select
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -31,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [maps, maps-service, maps-collaboration, maps-compiler]
+        app: ${{ fromJSON(needs.select.outputs.apps) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
