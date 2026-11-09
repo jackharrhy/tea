@@ -58,7 +58,7 @@ export default createController(routes.archive, {
       });
       if (!saved) return new Response("Asset conflict", { status: 409 });
       if (!(await runtime.media.head(objectKey)))
-        await runtime.media.put(objectKey, file.stream(), {
+        await runtime.media.put(objectKey, await file.arrayBuffer(), {
           httpMetadata: { contentType: type },
         });
       return new Response(null, { status: 204 });
@@ -77,7 +77,7 @@ export default createController(routes.archive, {
       const media = context.get(AppRuntime)!.media;
       const objectKey = `boards/${boardId}/previews/${imageId}`;
       if (!(await media.head(objectKey)))
-        await media.put(objectKey, file.stream(), {
+        await media.put(objectKey, await file.arrayBuffer(), {
           httpMetadata: { contentType: type },
         });
       return new Response(null, { status: 204 });
