@@ -17,17 +17,17 @@
     "@tea/maps-editor": "0.1.0",
     "@tea/maps-protocol": "0.1.0",
     "@tea/request-body": "0.1.0",
-    "@sindresorhus/slugify": "^3.0.1",
+    "@sindresorhus/slugify": "^4.0.1",
     "fflate": "^0.8.3",
     "nanoid": "^6.0.1",
-    "remix": "3.0.0",
-    "undici": "^7.29.0",
-    "zod": "^4.5.4",
+    "remix": "3.2.0",
+    "undici": "^8.12.4",
+    "zod": "^4.6.7",
     "@tea/identity": "0.1.0"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
-    "vitest": "^4.1.11"
+    "@types/node": "^26.6.6",
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": ">=24.3.0"

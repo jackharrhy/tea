@@ -57,16 +57,16 @@
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "typegpu": "0.12.5",
+    "typegpu": "0.12.10",
     "wgpu-matrix": "^3.4.2",
-    "zod": "^4.5.4"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.6",
     "@webgpu/types": "^0.1.72",
-    "unplugin-typegpu": "0.12.3",
-    "vite": "^8.3.3",
-    "vitest": "^4.1.11"
+    "unplugin-typegpu": "0.12.8",
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": ">=24.3.0"

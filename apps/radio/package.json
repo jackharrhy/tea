@@ -21,18 +21,18 @@
     "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example"
   },
   "dependencies": {
-    "@chenglou/pretext": "^0.0.8",
-    "@material-symbols/font-400": "^0.46.0",
-    "remix": "3.0.0"
+    "@chenglou/pretext": "^1.0.0",
+    "@material-symbols/font-400": "^0.48.3",
+    "remix": "3.2.0"
   },
   "devDependencies": {
     "@azure/storage-blob": "^12.33.0",
-    "@cloudflare/vitest-plugin": "^1.1.2",
-    "@types/node": "^26.2.0",
+    "@cloudflare/vitest-plugin": "^1.6.1",
+    "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",
-    "playwright": "^1.62.1",
-    "vitest": "^4.1.11",
-    "wrangler": "^4.127.1"
+    "playwright": "^1.65.0",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.159.0"
   },
   "engines": {
     "node": ">=24.3.0"

@@ -110,3 +110,41 @@ test("shutdown aborts active compilation and fails queued builds", async () => {
     "0".repeat(64),
   );
 });
+
+test("the default compiler fetch works with its Undici dispatcher", async () => {
+  let received = 0;
+  const compiler = createServer((_request, response) => {
+    received += 1;
+    response.writeHead(503, { "Content-Type": "application/json" });
+    response.end("{}");
+  });
+  servers.push(compiler);
+  await new Promise<void>((resolve) =>
+    compiler.listen(0, "127.0.0.1", resolve),
+  );
+  const address = compiler.address();
+  if (!address || typeof address === "string") throw new Error("No port");
+
+  let finish!: () => void;
+  const finished = new Promise<void>((resolve) => (finish = resolve));
+  const updateBuild = vi.fn((_id: string, status: string) => {
+    if (status === "failed") finish();
+  });
+  const queue = new RemoteBuildQueue(
+    { updateBuild } as unknown as MapsDatabase,
+    {} as BlobStore,
+    { quake: `http://127.0.0.1:${address.port}` },
+  );
+
+  expect(queue.enqueue(build("network"))).toBe(true);
+  await finished;
+  await queue.shutdown();
+
+  expect(received).toBe(1);
+  expect(updateBuild).toHaveBeenCalledWith(
+    "network",
+    "failed",
+    { error: "Build worker failed (503)" },
+    "0".repeat(64),
+  );
+});
