@@ -1,0 +1,14 @@
+walnut.webp
+Source: Poly Haven, Wood Table 001
+https://polyhaven.com/a/wood_table_001
+Original: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_table_001/wood_table_001_diff_1k.jpg
+Photography: Dimitrios Savva. Processing: Rico Cilliers.
+License: CC0 1.0 Universal https://creativecommons.org/publicdomain/zero/1.0/
+License statement: https://polyhaven.com/license
+Downloaded 2026-11-06. Original photographed diffuse map, 1024px.
+Adaptation: ImageMagick -modulate 72,62,100; WebP quality 85.
+
+aged-brass.webp
+Original procedural asset created for 8ballworld, 256px.
+ImageMagick: xc:'#916f3d' -seed 8 -attenuate 0.12 +noise Gaussian -motion-blur 0x2+0
+WebP quality 82.

@@ -81,6 +81,22 @@ services:
     networks:
       - web
 
+  pool:
+    build:
+      context: .
+      dockerfile: apps/pool/Dockerfile
+    environment:
+      PUBLIC_ORIGIN: http://pool.localhost
+    volumes:
+      - pool-data:/app/data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.pool.rule: "Host(`pool.localhost`)"
+      traefik.http.routers.pool.entrypoints: web
+      traefik.http.services.pool.loadbalancer.server.port: "3188"
+    networks:
+      - web
+
   letters-to-steve:
     build:
       context: .
@@ -227,6 +243,7 @@ volumes:
   cms-data:
   letters-to-steve-data:
   marky-data:
+  pool-data:
   ref-data:
   radio-data:
   maps-data:

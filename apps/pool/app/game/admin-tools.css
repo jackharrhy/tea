@@ -1,0 +1,129 @@
+#owner-tools {
+  position: fixed;
+  z-index: 20;
+  inset: 12px 12px 12px auto;
+  width: min(420px, calc(100vw - 24px));
+  padding: 20px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  color: #f4efdf;
+  background: #211a14;
+  box-shadow: 0 8px 28px #0008;
+  scrollbar-color: #977444 #211a14;
+  font-size: 15px;
+  line-height: 1.45;
+}
+#owner-tools header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#owner-tools h2 {
+  margin: 0;
+  font-size: 22px;
+}
+#owner-tools h3 {
+  margin: 24px 0 8px;
+  font-size: 17px;
+}
+#owner-tools p {
+  margin: 8px 0 12px;
+}
+#owner-tools fieldset {
+  border: 0;
+  padding: 0;
+  margin: 24px 0;
+  min-width: 0;
+}
+#owner-tools legend {
+  padding: 0;
+  margin-bottom: 12px;
+  font-size: 19px;
+  font-weight: 700;
+}
+#owner-tools label {
+  display: block;
+  margin: 12px 0;
+}
+#owner-tools input:not([type="checkbox"]),
+#owner-tools select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+#owner-tools input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0 0 0 12px;
+  vertical-align: middle;
+  accent-color: #e0bd78;
+}
+#owner-tools select {
+  color: inherit;
+  background: #15100c;
+  border: 1px solid #8d714c;
+  min-height: 44px;
+  padding: 8px;
+  font: inherit;
+}
+#owner-tools button {
+  background: #3a2c20;
+  box-shadow: none;
+  text-shadow: none;
+  border: 0;
+  margin: 4px 8px 4px 0;
+}
+#owner-tools button:hover:not(:disabled) {
+  background: #55402d;
+}
+#owner-tools button[type="submit"] {
+  color: #21160d;
+  background: #e0bd78;
+}
+#owner-tools :focus-visible {
+  outline: 2px solid #e0bd78;
+  outline-offset: 3px;
+}
+#owner-tools .owner-gravity {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+#owner-tools dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 16px;
+}
+#owner-tools dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+#owner-tools figure {
+  margin: 24px 0;
+}
+#owner-tools figcaption {
+  font-weight: 700;
+}
+#owner-tools svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: #e0bd78;
+}
+#owner-tools .owner-chart-baseline {
+  stroke: #977444;
+  fill: none;
+}
+#owner-tools figure p {
+  font-size: 13px;
+}
+#owner-tools ul {
+  margin: 8px 0;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+#owner-tools li {
+  margin: 8px 0;
+}

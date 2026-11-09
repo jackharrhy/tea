@@ -127,7 +127,10 @@ function changedPaths(base, head) {
   const result = spawnSync(
     "git",
     ["diff", "--name-only", "--no-renames", "-z", base, head],
-    { cwd: root, encoding: "utf8" },
+    {
+      cwd: root,
+      encoding: "utf8",
+    },
   );
   if (result.status !== 0)
     throw new Error(result.stderr.trim() || "Could not compare commits");
@@ -171,6 +174,6 @@ if (
   if (process.env.GITHUB_OUTPUT)
     appendFileSync(
       process.env.GITHUB_OUTPUT,
-      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@tea/cms", "@tea/ref", "@tea/radio"].some((name) => checks.includes(name))}\ncms=${checks.includes("@tea/cms")}\nref=${checks.includes("@tea/ref")}\nradio=${checks.includes("@tea/radio")}\nmaps_hosted=${mapsHosted}\n`,
+      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@tea/cms", "@tea/ref", "@tea/radio"].some((name) => checks.includes(name))}\ncms=${checks.includes("@tea/cms")}\nref=${checks.includes("@tea/ref")}\nradio=${checks.includes("@tea/radio")}\npool=${checks.includes("@tea/pool-app")}\nmaps_hosted=${mapsHosted}\n`,
     );
 }
