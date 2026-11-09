@@ -12,6 +12,8 @@ For a local container run, provide `MAPS_AUTH_CLIENT_ID`, `AUTH_MAPS_PROJECT_ID`
 
 Compose passes the optional Artbin endpoint and central machine settings from the local environment. When Artbin runs on the host, use `http://host.docker.internal:5175` for its URL rather than the browser's `localhost` address. Supply the central machine ID, secret and project ID described above. Token requests use the project audience and explicit asset-role scopes; credentials are never sent over HTTP or through redirects.
 
+On SIGTERM or SIGINT, the service stops accepting HTTP requests, cancels running remote compiler requests, marks queued builds as failed, and closes SQLite after requests and builds finish. Give the container enough stop time for an in-flight upload or response to finish. If work cannot drain, SQLite stays open until the container stop deadline.
+
 `GET /api/maps/:mapId/checkpoints` lists authoritative map-cell checkpoints for project members; editors can create one with `POST` on the same path. `GET /api/maps/:mapId/checkpoints/:checkpointId` reads its original source for members.
 
 The MCP endpoint advertises `tea_maps_*` tools and returns Tea `/projects/:id` links from browser grants. It advertises the central issuer and requires a human Maps administrator with the project audience, `admin` role, and explicit role scopes. The central subject must already match a local Maps administrator.

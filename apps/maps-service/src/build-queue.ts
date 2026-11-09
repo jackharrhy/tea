@@ -31,6 +31,8 @@ interface QueuedBuild {
 export class RemoteBuildQueue {
   private readonly pending: QueuedBuild[] = [];
   private active = 0;
+  private readonly running = new Set<Promise<void>>();
+  private readonly stopping = new AbortController();
   public constructor(
     private readonly database: MapsDatabase,
     private readonly blobs: BlobStore,
@@ -45,10 +47,28 @@ export class RemoteBuildQueue {
   }
 
   public enqueue(input: QueuedBuild): boolean {
+    if (this.stopping.signal.aborted) return false;
     if (this.pending.length >= this.maxPending) return false;
     this.pending.push(input);
     this.drain();
     return true;
+  }
+
+  public async shutdown(): Promise<void> {
+    if (!this.stopping.signal.aborted) {
+      this.stopping.abort();
+      for (const input of this.pending.splice(0)) {
+        this.database.updateBuild(
+          input.id,
+          "failed",
+          {
+            error: "Service stopped before the build started",
+          },
+          input.sourceSha256,
+        );
+      }
+    }
+    await Promise.all(this.running);
   }
 
   private async run(input: QueuedBuild): Promise<void> {
@@ -73,7 +93,10 @@ export class RemoteBuildQueue {
             base64: Buffer.from(asset.bytes).toString("base64"),
           })),
         } satisfies RemoteCompileRequest),
-        signal: AbortSignal.timeout(profile.buildTimeoutMilliseconds),
+        signal: AbortSignal.any([
+          AbortSignal.timeout(profile.buildTimeoutMilliseconds),
+          this.stopping.signal,
+        ]),
         dispatcher: compileDispatcher,
       };
       const response = await this.fetch(
@@ -166,13 +189,19 @@ export class RemoteBuildQueue {
   }
 
   private drain(): void {
-    while (this.active < this.concurrency && this.pending.length) {
+    while (
+      !this.stopping.signal.aborted &&
+      this.active < this.concurrency &&
+      this.pending.length
+    ) {
       const input = this.pending.shift()!;
       this.active += 1;
-      void this.run(input).finally(() => {
+      const running = this.run(input).finally(() => {
         this.active -= 1;
+        this.running.delete(running);
         this.drain();
       });
+      this.running.add(running);
     }
   }
 }

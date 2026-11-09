@@ -1,5 +1,5 @@
 import { mkdirSync } from "node:fs";
-import { createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import { createRequest, sendResponse } from "remix/node-fetch-server";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -85,6 +85,17 @@ export function createMapsService(options: MapsServiceOptions) {
   return server;
 }
 
+export async function stopMapsService(
+  server: Server,
+  options: Pick<MapsServiceOptions, "database" | "builds">,
+): Promise<void> {
+  const closed = new Promise<void>((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+  await Promise.all([closed, options.builds?.shutdown()]);
+  options.database.close();
+}
+
 function environment(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
   if (!value) throw new Error(`${name} is required`);
@@ -117,7 +128,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     projectId: environment("AUTH_PROJECT_ID"),
     organizationId: environment("AUTH_ORGANIZATION_ID"),
   };
-  const service = createMapsService({
+  const options: MapsServiceOptions = {
     database,
     blobs,
     additionalPublicOrigins: (
@@ -170,9 +181,21 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ...(Object.keys(buildEndpoints).length
       ? { builds: new RemoteBuildQueue(database, blobs, buildEndpoints) }
       : {}),
-  });
+  };
+  const service = createMapsService(options);
   const port = Number(process.env.PORT ?? 8792);
   service.listen(port, process.env.HOST ?? "127.0.0.1", () =>
     console.log(`Tea Maps service listening on ${port}`),
   );
+  let stopping = false;
+  const stop = () => {
+    if (stopping) return;
+    stopping = true;
+    void stopMapsService(service, options).catch((error: unknown) => {
+      console.error("Tea Maps service shutdown failed", error);
+      process.exitCode = 1;
+    });
+  };
+  process.once("SIGTERM", stop);
+  process.once("SIGINT", stop);
 }
