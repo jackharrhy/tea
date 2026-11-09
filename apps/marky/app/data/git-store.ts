@@ -2,9 +2,8 @@ import { simpleGit, type SimpleGit } from "simple-git";
 
 // `GitStore` is a thin wrapper around simple-git that keeps marky's git
 // operations small, explicit, and free of side effects on the repo's
-// existing config. Per-commit identity flags are passed via the
-// per-call `-c user.name`/`-c user.email` arguments rather than mutating
-// `.git/config` so a human contributor's local config stays untouched.
+// existing config. Per-commit identity is passed through Git's author and
+// committer environment variables so a contributor's local config stays untouched.
 
 export interface GitStoreOptions {
   repoDir: string;
@@ -29,7 +28,15 @@ export class GitStore {
     this.authorName = options.authorName;
     this.authorEmail = options.authorEmail;
     this.pushPat = options.push?.pat;
-    this.git = simpleGit({ baseDir: this.repoDir });
+    this.git = simpleGit({
+      baseDir: this.repoDir,
+      allowEnvironment: [
+        "GIT_AUTHOR_NAME",
+        "GIT_AUTHOR_EMAIL",
+        "GIT_COMMITTER_NAME",
+        "GIT_COMMITTER_EMAIL",
+      ],
+    });
   }
 
   async assertRepo(): Promise<void> {
@@ -76,7 +83,7 @@ export class GitStore {
     // the author field but git also needs user.name / user.email for the
     // committer, otherwise it fails with "Please tell me who you are."
     // when no global git config exists (e.g. inside the production
-    // container). Use per-call `-c` flags so we don't mutate .git/config.
+    // container). Keep the identity on this commit rather than in .git/config.
     const result = await this.git
       .env({
         GIT_AUTHOR_NAME: this.authorName,

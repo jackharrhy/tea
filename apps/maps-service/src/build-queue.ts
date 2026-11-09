@@ -8,9 +8,20 @@ import {
   type RemoteCompileRequest,
 } from "@tea/maps-editor/core";
 import { HostedErrorResponseSchema, type HostedGame } from "@tea/maps-protocol";
-import { Agent } from "undici";
+import { Agent, fetch as undiciFetch } from "undici";
 
 const compileDispatcher = new Agent({ headersTimeout: 0, bodyTimeout: 0 });
+
+type CompilerFetch = (
+  url: URL,
+  options: {
+    method: "POST";
+    headers: { "Content-Type": string };
+    body: string;
+    signal: AbortSignal;
+    dispatcher: Agent;
+  },
+) => Promise<Pick<Response, "ok" | "status" | "json">>;
 
 interface QueuedBuild {
   readonly id: string;
@@ -37,7 +48,7 @@ export class RemoteBuildQueue {
     private readonly database: MapsDatabase,
     private readonly blobs: BlobStore,
     private readonly endpoints: Partial<Record<HostedGame, string>>,
-    private readonly fetch: typeof globalThis.fetch = globalThis.fetch,
+    private readonly fetch: CompilerFetch = undiciFetch,
     private readonly concurrency = 1,
     private readonly maxPending = 3,
   ) {}
@@ -79,7 +90,7 @@ export class RemoteBuildQueue {
         throw new Error(`No ${input.game} build worker is configured`);
       const profile = hostedBuildProfile(input.game);
       const requestOptions = {
-        method: "POST",
+        method: "POST" as const,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mapName: input.mapName.replace(/\.map$/i, ""),

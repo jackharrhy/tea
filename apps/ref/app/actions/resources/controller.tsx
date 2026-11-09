@@ -64,7 +64,7 @@ export default createController(routes.resources, {
       const boardId = context.params.boardId;
       const objectKey = `boards/${boardId}/${assetId}`;
       const runtime = context.get(AppRuntime)!;
-      await runtime.media.put(objectKey, file.stream(), {
+      await runtime.media.put(objectKey, await file.arrayBuffer(), {
         httpMetadata: { contentType: type },
       });
       const filename = file.name.slice(0, 160) || "Image";

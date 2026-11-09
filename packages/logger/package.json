@@ -13,8 +13,8 @@
     "check": "npm run typecheck && npm test"
   },
   "devDependencies": {
-    "@types/node": "26.6.4",
-    "remix": "3.0.0"
+    "@types/node": "26.6.6",
+    "remix": "3.2.0"
   },
   "peerDependencies": {
     "remix": "3.0.0"

@@ -31,7 +31,11 @@ const configs = {
   marky: { port: 44100, env: ["MARKY_AUTH=anonymous"], paths: [["/", 200]] },
   "maps-service": {
     port: 8792,
-    env: [],
+    env: [
+      "AUTH_CLIENT_ID=container-smoke-client",
+      "AUTH_PROJECT_ID=container-smoke-project",
+      "AUTH_ORGANIZATION_ID=container-smoke-organization",
+    ],
     paths: [
       ["/health", 200],
       ["/api/projects", 401],

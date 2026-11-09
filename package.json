@@ -43,11 +43,11 @@
     "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace @jackharrhy/tea-artbin"
   },
   "devDependencies": {
-    "@maschwenk/tsrslint": "0.1.5",
-    "knip": "6.39.0",
-    "remix": "3.0.0",
-    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
-    "vite-plus": "1.0.0"
+    "@maschwenk/tsrslint": "0.1.6",
+    "knip": "6.44.2",
+    "remix": "3.2.0",
+    "tsrs": "0.23.0-ts7.1.0-beta",
+    "vite-plus": "1.5.1"
   },
   "allowScripts": {
     "better-sqlite3@13.0.3": true
