@@ -7,7 +7,6 @@
   "scripts": {
     "build": "tsrs -p tsconfig.build.json",
     "dev": "npm run build && node --enable-source-maps dist/server.js",
-    "migrate:identity": "node --import remix/node-tsx scripts/migrate-identity.ts",
     "start": "node --enable-source-maps dist/server.js",
     "typecheck": "tsrs --noEmit",
     "test": "vitest run",
