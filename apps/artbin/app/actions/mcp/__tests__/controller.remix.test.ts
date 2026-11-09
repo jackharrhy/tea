@@ -30,27 +30,33 @@ beforeEach(async () => {
   process.env.AUTH_INTROSPECTION_SECRET = "test-secret";
   process.env.ARTBIN_URL = "http://localhost:5175";
   clearServiceAuthCacheForTesting();
-  globalThis.fetch = async (input, init) => {
-    if (String(input).endsWith("openid-configuration"))
-      return Response.json(identityDiscovery);
-    const token = new URLSearchParams(String(init?.body)).get("token");
-    if (token === "admin-token") return Response.json(activeToken());
-    if (token === "member-token")
-      return Response.json(
-        activeToken({
-          subject: "central-member",
-          roles: ["member"],
-          scope: permissionScopes("admin"),
-        }),
-      );
-    if (token === "wrong-client-token")
-      return Response.json(activeToken({ clientId: "other-client" }));
-    if (token === "wrong-scope-token")
-      return Response.json(activeToken({ scope: "openid profile" }));
-    if (token === "wrong-audience-token")
-      return Response.json(activeToken({ aud: "other-project" }));
-    return Response.json({ active: false });
-  };
+  globalThis.fetch = Object.assign(
+    async (
+      input: Parameters<typeof fetch>[0],
+      init?: Parameters<typeof fetch>[1],
+    ) => {
+      if (String(input).endsWith("openid-configuration"))
+        return Response.json(identityDiscovery);
+      const token = new URLSearchParams(String(init?.body)).get("token");
+      if (token === "admin-token") return Response.json(activeToken());
+      if (token === "member-token")
+        return Response.json(
+          activeToken({
+            subject: "central-member",
+            roles: ["member"],
+            scope: permissionScopes("admin"),
+          }),
+        );
+      if (token === "wrong-client-token")
+        return Response.json(activeToken({ clientId: "other-client" }));
+      if (token === "wrong-scope-token")
+        return Response.json(activeToken({ scope: "openid profile" }));
+      if (token === "wrong-audience-token")
+        return Response.json(activeToken({ aud: "other-project" }));
+      return Response.json({ active: false });
+    },
+    { preconnect: originalFetch.preconnect },
+  );
 });
 
 afterEach(() => {
