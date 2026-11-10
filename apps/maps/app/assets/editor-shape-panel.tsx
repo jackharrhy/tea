@@ -64,7 +64,9 @@ export const EditorShapePanel = clientEntry(
         <div id="shape-tools" class="shape-tools">
           <strong>Simple shape</strong>
           <span id="shape-result">
-            {state?.visible ? state.result : "Choose a shape, then draw"}
+            {state?.result === "Drag to draw"
+              ? "Ready to draw"
+              : (state?.result ?? "Ready to draw")}
           </span>
           <label for="shape-kind">Shape</label>
           <select
@@ -201,7 +203,8 @@ export const EditorShapePanel = clientEntry(
             </select>
           </div>
           <p>
-            Choose Draw shape, then drag in a viewport. Shift makes the visible
+            Drag in an empty part of a viewport to create a shape. Start drawing
+            also works while another object is selected. Shift makes the visible
             axes equal; Shift+Alt makes a cube in perspective.
           </p>
         </div>
