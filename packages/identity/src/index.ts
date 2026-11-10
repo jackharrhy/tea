@@ -29,6 +29,9 @@ export interface TokenPrincipal {
   readonly audiences: ReadonlySet<string>;
   readonly expiresAt: number;
 }
+export type IdentityFetch = (
+  ...args: Parameters<typeof fetch>
+) => ReturnType<typeof fetch>;
 export class IdentityError extends Error {
   public readonly status: number;
   constructor(message: string, status: number) {
@@ -99,7 +102,7 @@ async function json(response: Response): Promise<Record<string, unknown>> {
 }
 export function createIdentityClient(
   config: IdentityConfig,
-  fetcher: typeof fetch = fetch,
+  fetcher: IdentityFetch = fetch,
 ) {
   const issuer = new URL(config.issuer);
   if (

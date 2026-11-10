@@ -50,7 +50,9 @@ beforeEach(async () => {
   process.env.AUTH_INTROSPECTION_SECRET = secret;
   process.env.AUTH_ISSUER = "https://auth.test";
   introspectionCalls = [];
-  globalThis.fetch = introspectionFetch;
+  globalThis.fetch = Object.assign(introspectionFetch, {
+    preconnect: originalFetch.preconnect,
+  });
   await seedAssets();
 });
 

@@ -31,6 +31,10 @@ jobs:
           HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft && github.event.action == 'synchronize' && github.event.pull_request.head.sha || github.sha }}
           DRAFT_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft }}
         run: node scripts/ci/affected.mjs
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        if: steps.select.outputs.pool == 'true'
+        with:
+          bun-version: 1.4.4
       - if: steps.select.outputs.any == 'true'
         run: npm ci
       - if: steps.select.outputs.any == 'true'
@@ -49,6 +53,8 @@ jobs:
           identify -version
       - if: steps.select.outputs.browser == 'true' && (env.RUN_INTEGRATION == 'true' || steps.select.outputs.radio == 'true')
         run: npx playwright install --only-shell chromium
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.pool == 'true'
+        run: npm exec --workspace @tea/pool-app -- playwright install --only-shell chromium
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
         run: npm exec --workspace @tea/maps -- playwright install --only-shell chromium
       - if: steps.select.outputs.any == 'true'
@@ -57,6 +63,8 @@ jobs:
         run: node scripts/ci/run-checks.mjs
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.cms == 'true'
         run: npm run test:browser --workspace @tea/cms
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.pool == 'true'
+        run: npm run test:browser --workspace @tea/pool-app
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.ref == 'true'
         run: |
           set -eu

@@ -82,56 +82,62 @@ export function identityFetch(
   onToken?: (body: URLSearchParams) => void,
   person = { subject: "central-member", username: "member" },
 ): typeof fetch {
-  return async (input, options) => {
-    const url = String(input);
-    if (url.endsWith("openid-configuration"))
-      return Response.json(identityDiscovery);
-    if (url.endsWith("/keys"))
-      return Response.json({
-        keys: [
-          {
-            ...keys.publicKey.export({ format: "jwk" }),
-            kid: "test-key",
-            alg: "RS256",
-          },
-        ],
-      });
-    if (url.endsWith("/token")) {
-      onToken?.(new URLSearchParams(String(options?.body)));
-      const now = Math.floor(Date.now() / 1000);
-      const unsigned =
-        encode({ alg: "RS256", kid: "test-key" }) +
-        "." +
-        encode({
-          iss: "https://auth.test",
-          sub: person.subject,
-          aud: "artbin-browser",
-          azp: "artbin-browser",
-          iat: now,
-          exp: now + 3600,
-          nonce,
+  return Object.assign(
+    async (
+      input: Parameters<typeof fetch>[0],
+      options?: Parameters<typeof fetch>[1],
+    ) => {
+      const url = String(input);
+      if (url.endsWith("openid-configuration"))
+        return Response.json(identityDiscovery);
+      if (url.endsWith("/keys"))
+        return Response.json({
+          keys: [
+            {
+              ...keys.publicKey.export({ format: "jwk" }),
+              kid: "test-key",
+              alg: "RS256",
+            },
+          ],
         });
-      const id_token =
-        unsigned +
-        "." +
-        sign("RSA-SHA256", Buffer.from(unsigned), keys.privateKey).toString(
-          "base64url",
-        );
-      return Response.json({
-        access_token: "access-token",
-        id_token,
-        token_type: "Bearer",
-        expires_in: 3600,
-      });
-    }
-    if (url.endsWith("/userinfo"))
-      return Response.json({
-        sub: person.subject,
-        jack_auth_username: person.username,
-        jack_auth_principal_type: "user",
-        name: "Member",
-        ...roleClaims("member"),
-      });
-    throw new Error("Unexpected identity endpoint");
-  };
+      if (url.endsWith("/token")) {
+        onToken?.(new URLSearchParams(String(options?.body)));
+        const now = Math.floor(Date.now() / 1000);
+        const unsigned =
+          encode({ alg: "RS256", kid: "test-key" }) +
+          "." +
+          encode({
+            iss: "https://auth.test",
+            sub: person.subject,
+            aud: "artbin-browser",
+            azp: "artbin-browser",
+            iat: now,
+            exp: now + 3600,
+            nonce,
+          });
+        const id_token =
+          unsigned +
+          "." +
+          sign("RSA-SHA256", Buffer.from(unsigned), keys.privateKey).toString(
+            "base64url",
+          );
+        return Response.json({
+          access_token: "access-token",
+          id_token,
+          token_type: "Bearer",
+          expires_in: 3600,
+        });
+      }
+      if (url.endsWith("/userinfo"))
+        return Response.json({
+          sub: person.subject,
+          jack_auth_username: person.username,
+          jack_auth_principal_type: "user",
+          name: "Member",
+          ...roleClaims("member"),
+        });
+      throw new Error("Unexpected identity endpoint");
+    },
+    { preconnect: fetch.preconnect },
+  );
 }

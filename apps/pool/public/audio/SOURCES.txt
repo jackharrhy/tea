@@ -1,0 +1,159 @@
+8ballworld recorded audio sources
+Verified against the primary source pages on 2026-11-08.
+Original source bank: Creative Commons CC0 1.0 Universal.
+EXCEPTIONS: cloth-roll.mp3 / felt-roll.wav / cue-cloth.wav (Bunyi),
+ball-dry.mp3 / impact-dry.wav (juskiddink), and wood-roll.mp3 / rolling-loop.wav
+(Nagwense) are CC BY 4.0, see below.
+License: https://creativecommons.org/publicdomain/zero/1.0/
+Legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+clack.mp3
+  Title: billiard ball clack
+  Creator: Za-Games
+  Source: https://freesound.org/people/Za-Games/sounds/539854/
+  Public HQ preview: https://cdn.freesound.org/previews/539/539854_12029332-hq.mp3
+  License on source page: Creative Commons 0.
+  Included MP3 is the public preview, not the account-gated original WAV.
+  impact.wav: mono PCM16 decode of the complete preview, no trim.
+  One of two alternating ball impact takes. Runtime variation is ±2.5% playback
+  rate and ±5% gain; impact speed also controls brightness. Rail contacts use
+  the padded felt.wav proxy at a separate mix, rather than this clack.
+
+pool-shots.mp3
+  Title: BILLIARD pool shots- CsG.wav
+  Creator: csaszi
+  Source: https://freesound.org/people/csaszi/sounds/350918/
+  Public HQ preview: https://cdn.freesound.org/previews/350/350918_1147184-hq.mp3
+  License on source page: Creative Commons 0.
+  Included MP3 is the public preview, not the account-gated original WAV.
+  Kept unedited for comparison in the development auditioner only.
+  No specific events within this 15.166-second recording have been identified.
+
+cue-strike.mp3
+  Title: Pool Cue Strike
+  Creator: Synchedin SFX
+  Source: https://licensing.routenote.com/sound-effect/pool-cue-strike
+  Public media (og:audio on source page):
+  https://storage.googleapis.com/routenote-licensing-storage/public/sound_effects/6284/Pool%20Cue%20Strike.mp3
+  License on source page: CC0.
+  cue.wav: 0.090–0.180 seconds, mono PCM16, 2ms fade-in, final 20ms fade-out.
+  This proposed cue excerpt isolates the first transient and excludes the later
+  prominent impacts. It has not been human-auditioned as an isolated cue strike.
+
+return-roll.mp3
+  Title: Pool Ball Rolling in Pool Table
+  Creator: Synchedin SFX
+  Source: https://licensing.routenote.com/sound-effect/pool-ball-rolling-in-pool-table
+  Public media (og:audio on source page):
+  https://storage.googleapis.com/routenote-licensing-storage/public/sound_effects/6284/Pool%20Ball%20Rolling%20in%20Pool%20Table.mp3
+  License on source page: CC0.
+  return.wav: 0.125–0.250 seconds, mono PCM16, 2ms fade-in, final 20ms fade-out.
+  Used only for quiet physics-driven return impacts (runtime gain reduced ~8x).
+  pocket.wav: 0.125–0.600 seconds, mono PCM16, 1ms fade-in, final 50ms fade-out.
+  Keeps the onset, second knock and natural decay at original level; no boost.
+  Pocket use is an artistic reuse of a cabinet recording, not a verified pocket
+  drop. Runtime pitch reduction and low-pass filtering give it a deeper body.
+  felt.wav: 1.650–1.900 seconds from return-roll.mp3, mono PCM16;
+  high-pass 35Hz, low-pass 900Hz, 3ms fade-in and final 60ms fade-out.
+  This separate low cabinet transient is an artistic proxy for a padded landing,
+  not a verified cloth landing. It is NOT derived from clack.mp3/impact.wav or
+  from the pocket/return onset excerpt. No normalization, gain boost, synthesis
+  or oscillators. Runtime low gain and 700Hz low-pass keep it subordinate to
+  ball collisions; playback rate follows impact speed.
+  The excerpts and new mix still require human listening review.
+
+  Runtime gain, playback rate and low-pass filtering follow contact speed/kind.
+  The broad lower receiving-floor contact reuses pocket.wav with a deeper pitch
+  and stronger body than lane contacts. Ball-ball speed uses a steeper curve.
+  Rolling gain/rate follows actual speed and stage.
+  Position uses 75% center / 25% HRTF with identical distance loss on both paths.
+  Cabinet filtering is an artistic effect, not measured room acoustics.
+
+Reproduce derivatives with ffmpeg (relative to this directory):
+  ffmpeg -i clack.mp3 -ac 1 -c:a pcm_s16le impact.wav
+  ffmpeg -i cue-strike.mp3 -af 'atrim=start=0.09:end=0.18,asetpts=PTS-STARTPTS,afade=t=in:d=0.002,afade=t=out:st=0.07:d=0.02' -ac 1 -c:a pcm_s16le cue.wav
+  ffmpeg -i return-roll.mp3 -af 'atrim=start=0.125:end=0.25,asetpts=PTS-STARTPTS,afade=t=in:d=0.002,afade=t=out:st=0.105:d=0.02' -ac 1 -c:a pcm_s16le return.wav
+  ffmpeg -i return-roll.mp3 -af 'atrim=start=0.125:end=0.6,asetpts=PTS-STARTPTS,afade=t=in:d=0.001,afade=t=out:st=0.425:d=0.05' -ac 1 -c:a pcm_s16le pocket.wav
+  ffmpeg -i return-roll.mp3 -af 'atrim=start=1.65:end=1.9,asetpts=PTS-STARTPTS,highpass=f=35,lowpass=f=900,afade=t=in:d=0.003,afade=t=out:st=0.19:d=0.06' -ac 1 -c:a pcm_s16le felt.wav
+
+cloth-roll.mp3 / felt-roll.wav
+  Title: ae.Billiard Ball Rolling.aif
+  Creator: Bunyi
+  Source: https://freesound.org/people/Bunyi/sounds/45804/
+  Public HQ preview: https://cdn.freesound.org/previews/45/45804_510910-hq.mp3
+  License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+  https://creativecommons.org/licenses/by/4.0/
+  Source page checked 2026-11-08: describes cue strike, rolling on table,
+  potting another ball and touching a third; 1.959 seconds, stereo.
+  Included MP3 is the public preview, not the account-gated original AIFF.
+  Attribution: "ae.Billiard Ball Rolling.aif" by Bunyi, via Freesound,
+  licensed CC BY 4.0. Edited for 8ballworld; no endorsement implied.
+  felt-roll.wav: 0.250–0.620 seconds (between opening strike decay and the
+  next prominent impact around 0.65s), mono 44100Hz PCM16, high-pass 60Hz,
+  low-pass 1600Hz; 80ms raised-cosine equal-power tail/head overlap gives a 0.290s loop.
+  No gain boost, normalization, synthesized noise or oscillators.
+  Interval selection uses level/transient analysis; human audition is pending.
+
+Reproduce the felt rolling loop with Python 3 and ffmpeg (in this directory):
+  import subprocess, array, math, wave
+  for src, out, start, end, overlap, cutoff in [
+      ('cloth-roll.mp3', 'felt-roll.wav', .25, .62, .08, 1600),
+  ]:
+      data = array.array('f', subprocess.check_output([
+          'ffmpeg', '-v', 'error', '-i', src, '-af',
+          f'atrim=start={start}:end={end},asetpts=PTS-STARTPTS,highpass=f=60,lowpass=f={cutoff}',
+          '-ac', '1', '-ar', '44100', '-f', 'f32le', '-']))
+      n = round(overlap * 44100)
+      result = list(data[n:-n])
+      for i in range(n):
+          w = (1 - math.cos(math.pi * i / (n - 1))) / 2
+          angle = w * math.pi / 2
+          result.append(data[-n+i] * math.cos(angle) + data[i] * math.sin(angle))
+      pcm = array.array('h', (round(max(-1, min(1, x)) * 32767) for x in result))
+      with wave.open(out, 'wb') as f:
+          f.setnchannels(1)
+          f.setsampwidth(2)
+          f.setframerate(44100)
+          f.writeframes(pcm.tobytes())
+  The output is the source middle followed by blended tail/head, so its end
+  joins the next middle naturally. The seam is never independently faded out.
+
+ball-dry.mp3 / impact-dry.wav
+  Title: Billiard balls single hit-dry.wav
+  Creator: juskiddink
+  Source: https://freesound.org/people/juskiddink/sounds/108615/
+  Public HQ preview: https://cdn.freesound.org/previews/108/108615_649468-hq.mp3
+  License on source page (checked 2026-11-08): CC BY 4.0.
+  https://creativecommons.org/licenses/by/4.0/
+  Attribution: “Billiard balls single hit-dry.wav” by juskiddink, via Freesound,
+  licensed CC BY 4.0. Edited for 8ballworld; no endorsement implied.
+  Source describes two billiard balls colliding mid-air. Included MP3 is the
+  public preview. impact-dry.wav: full 84ms take, mono 44100Hz PCM16, final
+  19ms fade. No normalization or gain boost. Alternates with impact.wav.
+  ffmpeg -i ball-dry.mp3 -ac 1 -ar 44100 -af 'afade=t=out:st=0.065:d=0.019' -c:a pcm_s16le impact-dry.wav
+
+cue-cloth.wav
+  From Bunyi's cloth-roll.mp3 recording credited above. The source describes
+  an opening cue strike; this excerpt uses 0.000–0.170 seconds, before later
+  ball contacts. Mono 44100Hz PCM16, -6dB gain to balance cue.wav, 1ms fade-in
+  and final 50ms fade-out. Alternates with cue.wav, with ±4% playback-rate and
+  ±5% level variation. Strike speed controls brightness and volume.
+  ffmpeg -i cloth-roll.mp3 -af 'atrim=start=0:end=0.17,asetpts=PTS-STARTPTS,volume=0.5,afade=t=in:d=0.001,afade=t=out:st=0.12:d=0.05' -ac 1 -ar 44100 -c:a pcm_s16le cue-cloth.wav
+
+wood-roll.mp3 / rolling-loop.wav
+  Title: Glass ball rolling on wood.wav
+  Creator: Nagwense
+  Source: https://freesound.org/people/Nagwense/sounds/535369/
+  Public HQ preview: https://cdn.freesound.org/previews/535/535369_7117774-hq.mp3
+  License on source page (checked 2026-11-08): CC BY 4.0.
+  https://creativecommons.org/licenses/by/4.0/
+  Attribution: “Glass ball rolling on wood.wav” by Nagwense, via Freesound,
+  licensed CC BY 4.0. Edited for 8ballworld; no endorsement implied.
+  Recording describes a glass door weight rolling over a wooden plank.
+  Cabinet use is a muffled material proxy, not an actual pool-return recording.
+  rolling-loop.wav: 14.050–17.250 seconds, high-pass 60Hz, low-pass 1400Hz,
+  mono 44100Hz PCM16, 400ms raised-cosine equal-power tail/head overlap
+  (same Python recipe as felt-roll.wav above, with this source/interval).
+  Result: 2.800 seconds at original level. Plays continuously with smoothed
+  physical speed/gain; no fragment switching or randomly timed playback.
+  Physical cabinet impacts still use the separate return-roll.mp3 derivatives.

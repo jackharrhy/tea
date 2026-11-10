@@ -1,0 +1,36 @@
+{
+  "name": "@tea/pool-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:client": "vite build",
+    "build:server": "NODE_ENV=production bun build server/index.ts server/pre-update.ts --target=bun --outdir dist/server",
+    "build": "npm run build:client && npm run build:server",
+    "start": "NODE_ENV=production bun dist/server/index.js",
+    "dev": "npm run build && npm run start",
+    "typecheck": "tsrs -p tsconfig.json --noEmit",
+    "test": "bun test __tests__/game __tests__/server",
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@geckos.io/snapshot-interpolation": "1.1.1",
+    "@tea/pool": "0.1.0",
+    "@tea/pool-protocol": "0.1.0",
+    "@tea/pool-simulation": "0.1.0",
+    "drizzle-orm": "0.45.4",
+    "jose": "6.2.13",
+    "math": "0.1.0",
+    "remix": "3.2.0",
+    "three": "0.187.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@types/bun": "1.4.4",
+    "@types/node": "^26.6.6",
+    "@types/three": "0.187.0",
+    "vite": "^8.3.7"
+  }
+}

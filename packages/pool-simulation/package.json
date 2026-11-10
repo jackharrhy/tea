@@ -1,0 +1,24 @@
+{
+  "name": "@tea/pool-simulation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./geometry": "./src/geometry.ts"
+  },
+  "scripts": {
+    "typecheck": "tsrs -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@tea/pool": "0.1.0",
+    "bitecs": "0.4.0",
+    "navcat": "0.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "vitest": "^5.1.0"
+  }
+}
