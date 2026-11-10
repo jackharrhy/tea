@@ -4,7 +4,7 @@ A small, private board for images and links. It presents itself as `tea/ref` whi
 
 ## Run locally
 
-Requires Node.js 24.3+ and npm. From the Tea root:
+Requires Node.js 26 LTS (26.13.0+) and npm. From the Tea root:
 
 ```sh
 npm ci

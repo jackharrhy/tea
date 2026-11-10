@@ -1,6 +1,6 @@
 # Node container checks
 
-The deployed Node apps use prebuilt `platformatic/node-caged:26-slim` in both stages (Debian Trixie). Local development remains on the root `.nvmrc`. The runtime creates `node` explicitly at UID/GID 1000 because this base does not provide that account.
+The deployed Node apps use prebuilt `platformatic/node-caged:26-slim` in both stages (Debian Trixie). Local development and CI use Node 26 LTS through the root `.nvmrc`. The runtime creates `node` explicitly at UID/GID 1000 because this base does not provide that account.
 
 <!-- prettier-ignore -->
 | Dockerfile under `apps/` | Runtime | Image / scope |
@@ -16,7 +16,7 @@ The deployed Node apps use prebuilt `platformatic/node-caged:26-slim` in both st
 | `ref` | Celld Worker; Node builds/deploys it | `tea-ref`; unchanged |
 | `radio` | Celld Worker; Node builds/deploys it | `tea-radio`; unchanged |
 
-These are all repository Dockerfiles. There are no standalone static, Bun or other non-Node Dockerfiles; the Worker runtimes above are not Node application processes. All published image names in the table use `ghcr.io/jackharrhy/` and retain their existing tags and publishing workflows.
+The table covers Node-hosted apps and the Celld Workers built with Node 26. Burger, Gurgur, and Pool also use Node 26 in their build stages and Bun in their runtime stages. The published Artbin CLI remains compatible with Node 20+ for consumers; Tea builds and checks it on Node 26. All published image names in the table use `ghcr.io/jackharrhy/` and retain their existing tags and publishing workflows.
 
 ## Native modules
 

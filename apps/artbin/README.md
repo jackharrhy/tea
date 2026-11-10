@@ -8,7 +8,7 @@ Artbin is the game asset archive at [artbin.jackharrhy.dev](https://artbin.jackh
 
 ## Local setup
 
-From the Tea root, run `npm ci`, then `npm run artbin:dev`. Node 24.3 or newer, ImageMagick, and Playwright Chromium are needed for all preview paths. Local development uses an administrator account unless `ARTBIN_REQUIRE_AUTH=1`. Set `ARTBIN_DB_PATH`, `ARTBIN_PUBLIC_DIR`, and `ARTBIN_TEMP_DIR` to use separate local data paths; defaults are `data/artbin.db`, `public`, and `tmp/uploads`. See `.env.example` for Jack Auth settings. Set `AUTH_ISSUER`, `AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID` and the resource server's `AUTH_INTROSPECTION_CLIENT_ID` / `AUTH_INTROSPECTION_SECRET`. Production uses `ARTBIN_URL=https://artbin.jackharrhy.dev`. Browser and CLI callbacks are `/auth/callback` and `/auth/cli/callback`.
+From the Tea root, run `npm ci`, then `npm run artbin:dev`. Node 26 LTS (26.13.0 or newer), ImageMagick, and Playwright Chromium are needed for all preview paths. Local development uses an administrator account unless `ARTBIN_REQUIRE_AUTH=1`. Set `ARTBIN_DB_PATH`, `ARTBIN_PUBLIC_DIR`, and `ARTBIN_TEMP_DIR` to use separate local data paths; defaults are `data/artbin.db`, `public`, and `tmp/uploads`. See `.env.example` for Jack Auth settings. Set `AUTH_ISSUER`, `AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID` and the resource server's `AUTH_INTROSPECTION_CLIENT_ID` / `AUTH_INTROSPECTION_SECRET`. Production uses `ARTBIN_URL=https://artbin.jackharrhy.dev`. Browser and CLI callbacks are `/auth/callback` and `/auth/cli/callback`.
 
 ## Checks and deployment
 
