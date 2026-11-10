@@ -8,6 +8,7 @@ export const routes = route({
   admin: route("admin", {
     dashboard: get("/"),
     users: get("/users"),
+    tokens: get("/tokens"),
   }),
   subscribe: route("subscribe", {
     show: get("/"),

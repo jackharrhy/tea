@@ -4,7 +4,7 @@ Lists is a mailing-list application for subscriptions, campaign editing and deli
 
 ## Entry points and local setup
 
-`src/index.ts` starts the HTTP server and durable background workers. `src/http-app.ts` mounts the Remix subscription, admin dashboard, and central-mode user inventory routes from `app/` alongside the API, MCP, webhook, and remaining admin routes. The process drains or requeues mail work on SIGTERM before closing SQLite. `src/services/` owns mail and delivery behavior, `src/operations/` owns shared API and MCP operations, and `src/db/` plus `drizzle/` own the SQLite schema and ordered migrations. `emails/` contains the outbound templates.
+`src/index.ts` starts the HTTP server and durable background workers. `src/http-app.ts` mounts the Remix subscription, admin dashboard, and central-mode user and API access routes from `app/` alongside the API, MCP, webhook, and remaining admin routes. The process drains or requeues mail work on SIGTERM before closing SQLite. `src/services/` owns mail and delivery behavior, `src/operations/` owns shared API and MCP operations, and `src/db/` plus `drizzle/` own the SQLite schema and ordered migrations. `emails/` contains the outbound templates.
 
 Install from the Tea root with `npm ci` and use Bun 1.4.4 for execution. For local development, provide the environment described in `LOCAL_DEVELOPMENT.md`; run `npm run dev --workspace @tea/lists`. The app listens on port 8080. The local stack uses mocked AWS services and Mailpit. Do not use production AWS credentials for local tests.
 

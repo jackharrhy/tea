@@ -5,7 +5,12 @@ import { createController, createRouter } from "remix/router";
 import type { Db } from "../src/db/index.ts";
 import { schema } from "../src/db/index.ts";
 import { getAccessibleListIds } from "../src/auth.ts";
-import { AdminDashboard, AdminUsers, type DashboardData } from "./admin.tsx";
+import {
+  AdminApiAccess,
+  AdminDashboard,
+  AdminUsers,
+  type DashboardData,
+} from "./admin.tsx";
 import type { AppContext } from "./router.tsx";
 import { routes } from "./routes.ts";
 
@@ -153,6 +158,9 @@ export function createAdminRouter(db: Db, user: User) {
               }))}
             />,
           );
+        },
+        tokens(context) {
+          return context.render(<AdminApiAccess />);
         },
       },
     }),

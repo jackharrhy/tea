@@ -47,11 +47,12 @@ export function adminRoutes(
   mountImportRoutes(app, db, config);
   if (config.identity && dashboard) {
     app.get("/users", (context) => dashboard(context.request, context.user!));
+    app.get("/tokens", (context) => dashboard(context.request, context.user!));
   } else {
     mountUserRoutes(app, db, config);
+    mountTokenRoutes(app, db, config);
   }
   mountDmarcRoutes(app, db, config);
-  mountTokenRoutes(app, db, config);
   mountTemplateRoutes(app, db);
 
   return app;

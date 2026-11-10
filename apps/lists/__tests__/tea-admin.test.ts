@@ -142,4 +142,19 @@ test("central admin users view is read only and role restricted", async () => {
       })
     ).status,
   ).toBe(404);
+  const apiPage = await app.request("/admin/tokens", {
+    headers: { Cookie: ownerCookie },
+  });
+  expect(apiPage.status).toBe(200);
+  expect(await apiPage.text()).toContain(
+    "Local Lists tokens and standalone OAuth clients are no longer issued.",
+  );
+  expect(
+    (
+      await app.request("/admin/tokens", {
+        method: "POST",
+        headers: { Cookie: ownerCookie },
+      })
+    ).status,
+  ).toBe(404);
 });

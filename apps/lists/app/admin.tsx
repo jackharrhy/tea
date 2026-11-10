@@ -158,6 +158,42 @@ export function AdminUsers(handle: Handle<{ users: AdminUserRow[] }>) {
   );
 }
 
+export function AdminApiAccess(_handle: Handle) {
+  return () => (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>API access | Lists admin</title>
+      </head>
+      <body mix={body}>
+        <nav mix={nav} aria-label="Admin navigation">
+          <div mix={navInner}>
+            <a mix={brand} href="/admin/">
+              Lists
+            </a>
+            <a mix={navLink} href="/admin/">
+              Dashboard
+            </a>
+            <span mix={label}>API access</span>
+          </div>
+        </nav>
+        <main mix={main}>
+          <h1 mix={title}>API access</h1>
+          <p>
+            API and MCP access use central Auth. Request an approved client with
+            the Lists resource and the operations it needs.
+          </p>
+          <p>
+            Local Lists tokens and standalone OAuth clients are no longer
+            issued.
+          </p>
+        </main>
+      </body>
+    </html>
+  );
+}
+
 export function AdminDashboard(handle: Handle<{ data: DashboardData }>) {
   return () => {
     const data = handle.props.data;
