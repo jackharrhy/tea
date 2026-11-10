@@ -51,7 +51,9 @@ export function adminRoutes(
     }
   } else mountListRoutes(app, db, config);
   mountMessageRoutes(app, db, config);
-  mountActivityRoutes(app, db, config);
+  if (remix)
+    app.get("/activity", (context) => remix(context.request, context.user!));
+  else mountActivityRoutes(app, db, config);
   if (remix) {
     for (const path of ["/tags", "/tags/new", "/tags/:id", "/tags/:id/delete"])
       app.all(path, (context) => remix(context.request, context.user!));

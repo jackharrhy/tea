@@ -15,6 +15,7 @@ import {
 import { createAdminListsController } from "./admin-lists.tsx";
 import { createAdminTagsController } from "./admin-tags.tsx";
 import { createAdminDmarcController } from "./admin-dmarc.tsx";
+import { createAdminActivityController } from "./admin-activity.tsx";
 import type { AppContext } from "./router.tsx";
 import { routes } from "./routes.ts";
 
@@ -183,5 +184,6 @@ export function createAdminRouter(db: Db, config: Config, user: User) {
   router.map(routes.admin.lists, createAdminListsController(db, config, user));
   router.map(routes.admin.tags, createAdminTagsController(db, user));
   router.map(routes.admin.dmarc, createAdminDmarcController(db, config, user));
+  router.map(routes.admin.activity, createAdminActivityController(db, user));
   return router;
 }

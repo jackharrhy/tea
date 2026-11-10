@@ -384,3 +384,61 @@ test("DMARC remains owner-only and renders through Remix", async () => {
     ).status,
   ).toBe(403);
 });
+
+test("Activity filters events within a member's list", async () => {
+  const db = createTestDb();
+  const member = db
+    .insert(schema.users)
+    .values({
+      email: "member@example.test",
+      passwordHash: "disabled",
+      role: "member",
+    })
+    .returning()
+    .get();
+  const allowed = seedList(db, { slug: "allowed" });
+  const other = seedList(db, { slug: "other" });
+  db.insert(schema.userLists)
+    .values({ userId: member.id, listId: allowed.id })
+    .run();
+  const visible = seedSubscriber(db, { email: "visible@example.test" });
+  const hidden = seedSubscriber(db, { email: "hidden@example.test" });
+  db.insert(schema.subscriberLists)
+    .values([
+      {
+        subscriberId: visible.id,
+        listId: allowed.id,
+        subscriptionStatus: "confirmed",
+      },
+      {
+        subscriberId: hidden.id,
+        listId: other.id,
+        subscriptionStatus: "confirmed",
+      },
+    ])
+    .run();
+  db.insert(schema.events)
+    .values([
+      {
+        type: "subscriber.confirmed",
+        detail: "Visible event",
+        subscriberId: visible.id,
+      },
+      {
+        type: "subscriber.confirmed",
+        detail: "Hidden event",
+        subscriberId: hidden.id,
+      },
+    ])
+    .run();
+  const app = createApplication(db, config);
+  const cookie = `session=${createSession(db, member.id)}`;
+  const response = await app.request("/admin/activity?group=subscriber", {
+    headers: { Cookie: cookie },
+  });
+  expect(response.status).toBe(200);
+  const html = await response.text();
+  expect(html).toContain("Activity | Lists admin");
+  expect(html).toContain("Visible event");
+  expect(html).not.toContain("Hidden event");
+});

@@ -29,6 +29,7 @@ export const routes = route({
       show: get("/:id"),
       raw: get("/:id/raw"),
     }),
+    activity: route("/activity", { index: get("/") }),
   }),
   subscribe: route("subscribe", {
     show: get("/"),

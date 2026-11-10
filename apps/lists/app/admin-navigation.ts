@@ -12,10 +12,11 @@ export function adminNavigation(isAdmin: boolean) {
     { href: "/admin/campaigns", label: "Campaigns" },
     { href: "/admin/inbound", label: "Inbound" },
   ];
-  if (isAdmin) primary.push({ href: "/admin/dmarc", label: "DMARC", fullPage: true });
+  if (isAdmin)
+    primary.push({ href: "/admin/dmarc", label: "DMARC", fullPage: true });
 
   const secondary: AdminNavigationLink[] = [
-    { href: "/admin/activity", label: "Activity" },
+    { href: "/admin/activity", label: "Activity", fullPage: true },
     { href: "/admin/tags", label: "Tags", fullPage: true },
     { href: "/admin/import", label: "Import" },
   ];

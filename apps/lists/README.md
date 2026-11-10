@@ -1,6 +1,6 @@
 # tea/lists
 
-Lists is a mailing-list application for subscriptions, campaign editing and delivery, inbound replies, and DMARC reports. The application uses one Bun process, SQLite, AWS SES/SNS/SQS/S3, and Remix 3 public and admin routes. The Tea deployment is authoritative. The admin dashboard, Users, API access, Lists, Tags, and DMARC pages use Remix. Subscriber, campaign, inbound, activity, import, and template screens still use the imported Elysia views. Admin links use full document requests while both renderers coexist.
+Lists is a mailing-list application for subscriptions, campaign editing and delivery, inbound replies, and DMARC reports. The application uses one Bun process, SQLite, AWS SES/SNS/SQS/S3, and Remix 3 public and admin routes. The Tea deployment is authoritative. The admin dashboard, Users, API access, Lists, Tags, DMARC, and Activity pages use Remix. Subscriber, campaign, inbound, import, and template screens still use the imported Elysia views. Admin links use full document requests while both renderers coexist.
 
 ## Entry points and local setup
 
