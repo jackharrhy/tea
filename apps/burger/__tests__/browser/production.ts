@@ -77,6 +77,7 @@ for (const stream of [server.stdout, server.stderr])
 
 let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
 const contexts: BrowserContext[] = [];
+let stopError: Error | undefined;
 try {
   await waitFor(async () => {
     if (server.exitCode !== null)
@@ -281,12 +282,39 @@ try {
     "Burger browser smoke passed: Remix/Pixi mount, assets, two sessions, atlas admin edit/member denial, movement, navigation and disconnect.",
   );
 } finally {
-  for (const context of contexts) await context.close().catch(() => {});
-  await browser?.close();
   if (server.exitCode === null) {
     server.kill("SIGTERM");
-    await new Promise<void>((done) => server.once("exit", () => done()));
+    const exited = new Promise<void>((done) =>
+      server.once("exit", () => done()),
+    );
+    let timer: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<void>((_, reject) => {
+      timer = setTimeout(() => {
+        const phases = serverOutput
+          .split("\n")
+          .filter((line) => line.includes("Burger shutdown"));
+        reject(
+          new Error(
+            `Burger did not stop within 3 seconds of SIGTERM: ${phases.join(" | ")}`,
+          ),
+        );
+      }, 3000);
+    });
+    try {
+      await Promise.race([exited, timeout]);
+      assert.equal(server.exitCode, 0, `Burger shutdown: ${serverOutput}`);
+    } catch (error) {
+      stopError = error as Error;
+      if (server.exitCode === null) {
+        server.kill("SIGKILL");
+        await exited;
+      }
+    } finally {
+      clearTimeout(timer!);
+    }
   }
+  for (const context of contexts) await context.close().catch(() => {});
+  await browser?.close();
   const afterDb = new Database(databasePath);
   assert.deepEqual(
     Object.fromEntries(
@@ -312,3 +340,4 @@ try {
   afterDb.close();
   rmSync(work, { recursive: true, force: true });
 }
+if (stopError) throw stopError;

@@ -26,8 +26,15 @@ const world = initWorld(db);
 export type { World } from "./world";
 
 let isIdle = false;
+let stopping = false;
+let tickTimer: ReturnType<typeof setTimeout> | undefined;
+
+const scheduleTick = (tick: () => void, delay: number) => {
+  if (!stopping) tickTimer = setTimeout(tick, delay);
+};
 
 const activeTick = () => {
+  if (stopping) return;
   const { Position, Velocity } = world.components;
 
   resetPaintCounters();
@@ -110,26 +117,27 @@ const activeTick = () => {
 
   broadcastGameState({ playerStates });
 
-  setTimeout(
+  scheduleTick(
     isIdle ? idleTick : activeTick,
     isIdle ? 1000 : SERVER_TICK_RATE_MS,
   );
 };
 
 const idleTick = () => {
+  if (stopping) return;
   const hasPlayers = getPlayerConnections().size > 0;
   if (hasPlayers) {
     console.log("Switching to active mode");
     isIdle = false;
-    setTimeout(activeTick, SERVER_TICK_RATE_MS);
+    scheduleTick(activeTick, SERVER_TICK_RATE_MS);
   } else {
-    setTimeout(idleTick, 1000);
+    scheduleTick(idleTick, 1000);
   }
 };
 
 const SERVER_PORT = Number(process.env.PORT ?? 5000);
 
-createServer({
+const server = createServer({
   port: SERVER_PORT,
   world,
   db,
@@ -141,3 +149,30 @@ createServer({
 spawnAiPlayers(world);
 
 activeTick();
+
+async function shutdown() {
+  if (stopping) return;
+  stopping = true;
+  clearTimeout(tickTimer);
+  console.info("Burger shutdown: draining connections");
+  try {
+    for (const ws of getPlayerConnections().keys())
+      ws.close(1012, "Server restarting");
+    const deadline = Date.now() + 1000;
+    while (getPlayerConnections().size && Date.now() < deadline)
+      await Bun.sleep(25);
+    for (const ws of getPlayerConnections().keys()) ws.terminate();
+    console.info("Burger shutdown: stopping listener");
+    await server.stop(true);
+    db.close();
+    console.info("Burger shutdown: complete");
+    // Bun can retain closed WebSocket handles after the listener and DB close.
+    process.exit(0);
+  } catch (error) {
+    console.error("Burger shutdown failed", error);
+    process.exitCode = 1;
+  }
+}
+
+process.on("SIGTERM", () => void shutdown());
+process.on("SIGINT", () => void shutdown());

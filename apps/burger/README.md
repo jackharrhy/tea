@@ -11,3 +11,5 @@ The live server requires `AUTH_CLIENT_ID` and `AUTH_PROJECT_ID` for the register
 ## Boundaries
 
 `@tea/burger-core` owns shared ECS/physics and protocol constants. This app owns the Pixi client, Remix UI, auth, transport, simulation authority, persisted local IDs and content, and Docker runtime. Do not identify a Burger user by display name or email: `users.auth_subject` maps a verified central subject to the stable local `users.id`. The WebSocket requires a valid session and the server enforces movement, paint and admin policy. Production DNS, provider registration, secrets, backups and cutover live outside Tea.
+
+The Bun server handles SIGTERM/SIGINT by stopping the simulation timer, closing player sockets, stopping the listener, and closing SQLite before exit. The production browser smoke sends SIGTERM with a player still connected, checks bounded exit, then verifies the fixture database contents and integrity.
