@@ -76,6 +76,25 @@ function finiteSearchNumber(
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function waitForCapture(
+  milliseconds: number,
+  signal: AbortSignal,
+): Promise<void> {
+  if (signal.aborted)
+    return Promise.reject(new DOMException("Capture cancelled", "AbortError"));
+  return new Promise<void>((resolve, reject) => {
+    const cancel = () => {
+      window.clearTimeout(timer);
+      reject(new DOMException("Capture cancelled", "AbortError"));
+    };
+    const timer = window.setTimeout(() => {
+      signal.removeEventListener("abort", cancel);
+      resolve();
+    }, milliseconds);
+    signal.addEventListener("abort", cancel, { once: true });
+  });
+}
+
 export async function mountGurgur(
   root: HTMLElement,
   signal: AbortSignal,
@@ -822,6 +841,7 @@ export async function mountGurgur(
       const startedAtIso = new Date().toISOString();
       const clientStartedAtMs = performance.now();
       debugCaptureRequest = new AbortController();
+      const captureSignal = debugCaptureRequest.signal;
       let countdown: number | null = null;
       try {
         const response = await fetch(
@@ -829,7 +849,7 @@ export async function mountGurgur(
           {
             method: "POST",
             cache: "no-store",
-            signal: debugCaptureRequest.signal,
+            signal: captureSignal,
           },
         );
         if (!response.ok)
@@ -860,9 +880,7 @@ export async function mountGurgur(
           DEBUG_PHYSICS_CAPTURE_SECONDS * 1_000 -
             (performance.now() - clientStartedAtMs),
         );
-        await new Promise<void>((resolve) =>
-          window.setTimeout(resolve, remainingMs),
-        );
+        await waitForCapture(remainingMs, captureSignal);
         if (countdown !== null) clearInterval(countdown);
         countdown = null;
         captureStatus.textContent =
@@ -874,12 +892,10 @@ export async function mountGurgur(
         while (performance.now() < collectionDeadline) {
           const captureResponse = await fetch(
             `/debug/network-trace?test=1&id=${encodeURIComponent(serverStart.id)}`,
-            { cache: "no-store", signal: debugCaptureRequest.signal },
+            { cache: "no-store", signal: captureSignal },
           );
           if (captureResponse.status === 202) {
-            await new Promise<void>((resolve) =>
-              window.setTimeout(resolve, 100),
-            );
+            await waitForCapture(100, captureSignal);
             continue;
           }
           if (!captureResponse.ok)
