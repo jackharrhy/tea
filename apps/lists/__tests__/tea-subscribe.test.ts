@@ -6,7 +6,10 @@ import { eq } from "drizzle-orm";
 import { createApplication } from "../src/http-app.ts";
 import { schema } from "../src/db/index.ts";
 import type { Config } from "../src/config.ts";
-import { confirmSubscriber, createSubscriber } from "../src/services/subscriber.ts";
+import {
+  confirmSubscriber,
+  createSubscriber,
+} from "../src/services/subscriber.ts";
 import { createTestDb, seedList } from "./helpers.ts";
 
 const ses = mockClient(SESv2Client);
@@ -103,15 +106,24 @@ describe("Tea subscription route", () => {
     confirmSubscriber(db, subscriber.unsubscribeToken);
     const app = createApplication(db, config);
 
-    const response = await app.request(`/unsubscribe/${subscriber.unsubscribeToken}/${first.id}`, {
-      method: "POST",
-      body: "List-Unsubscribe=One-Click",
-    });
+    const response = await app.request(
+      `/unsubscribe/${subscriber.unsubscribeToken}/${first.id}`,
+      {
+        method: "POST",
+        body: "List-Unsubscribe=One-Click",
+      },
+    );
 
     expect(response.status).toBe(200);
     const memberships = db.select().from(schema.subscriberLists).all();
-    expect(memberships.find((entry) => entry.listId === first.id)?.status).toBe("unsubscribed");
-    expect(memberships.find((entry) => entry.listId === second.id)?.status).toBe("confirmed");
-    expect(db.select().from(schema.subscribers).all()[0]?.status).toBe("active");
+    expect(memberships.find((entry) => entry.listId === first.id)?.status).toBe(
+      "unsubscribed",
+    );
+    expect(
+      memberships.find((entry) => entry.listId === second.id)?.status,
+    ).toBe("confirmed");
+    expect(db.select().from(schema.subscribers).all()[0]?.status).toBe(
+      "active",
+    );
   });
 });
