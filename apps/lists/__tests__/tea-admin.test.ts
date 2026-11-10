@@ -71,6 +71,9 @@ test("Remix dashboard keeps a member inside assigned lists", async () => {
   const html = await response.text();
   expect(html).toContain("Dashboard | Lists admin");
   expect(html).toContain("Lists you can access");
+  expect(html).toContain('id="app-shell"');
+  expect(html).toContain('href="/admin/lists"');
+  expect(html).toContain('href="/admin/tokens"');
   expect(html).not.toContain("Private campaign");
   expect(html).not.toContain('href="/admin/users"');
 });
@@ -118,10 +121,20 @@ test("central admin users view is read only and role restricted", async () => {
   expect(response.status).toBe(200);
   const html = await response.text();
   expect(html).toContain("Users | Lists admin");
+  expect(html).toContain('id="app-shell"');
+  expect(html).toContain('href="/admin/lists"');
+  expect(html).toContain('href="/admin/"');
   expect(html).toContain("member@example.test");
   expect(html).toContain("Unlinked");
   expect(html).not.toContain("central-owner");
   expect(html).not.toContain("New user");
+  const listsPage = await app.request("/admin/lists", {
+    headers: { Cookie: ownerCookie },
+  });
+  expect(listsPage.status).toBe(200);
+  const listsHtml = await listsPage.text();
+  expect(listsHtml).toMatch(/href="\/admin\/" hx-boost="false"/);
+  expect(listsHtml).toMatch(/href="\/admin\/users" hx-boost="false"/);
   const memberCookie = `session=${createSession(db, member.id)}`;
   expect(
     (await app.request("/admin/users", { headers: { Cookie: memberCookie } }))

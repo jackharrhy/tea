@@ -151,6 +151,10 @@ export function createAdminRouter(db: Db, user: User) {
           );
           return context.render(
             <AdminUsers
+              viewer={{
+                name: user.name ?? user.email,
+                isAdmin: true,
+              }}
               users={users.map(({ authSubject, ...entry }) => ({
                 ...entry,
                 linked: Boolean(authSubject),
@@ -160,7 +164,14 @@ export function createAdminRouter(db: Db, user: User) {
           );
         },
         tokens(context) {
-          return context.render(<AdminApiAccess />);
+          return context.render(
+            <AdminApiAccess
+              viewer={{
+                name: user.name ?? user.email,
+                isAdmin: user.role === "owner" || user.role === "admin",
+              }}
+            />,
+          );
         },
       },
     }),

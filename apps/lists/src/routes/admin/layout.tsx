@@ -6,6 +6,7 @@ import { Html } from "@elysia/html";
 import { schema } from "../../db";
 import { assetUrl } from "../../assets";
 import { testSubscriberIds } from "../../services/campaign-audience";
+import { adminNavigation } from "../../../app/admin-navigation";
 
 // ---------------------------------------------------------------------------
 // Flash helpers
@@ -70,6 +71,7 @@ export function AdminLayout({
   user?: User;
 }) {
   const isAdmin = user?.role === "owner" || user?.role === "admin";
+  const navigation = adminNavigation(isAdmin);
   return (
     <html lang="en">
       <head>
@@ -102,44 +104,26 @@ export function AdminLayout({
             <div class="max-w-5xl min-w-max mx-auto px-4 sm:px-6 flex items-center gap-4">
               <a
                 href="/admin/"
+                hx-boost="false"
                 class="nav-link text-white font-bold text-base no-underline"
               >
                 Lists
               </a>
 
               <div class="flex items-center gap-3 ml-4">
-                <NavLink href="/admin/">Dashboard</NavLink>
-                <NavLink href="/admin/subscribers">Subscribers</NavLink>
-                <NavLink href="/admin/lists">Lists</NavLink>
-                <NavLink href="/admin/campaigns">Campaigns</NavLink>
-                <NavLink href="/admin/inbound">Inbound</NavLink>
-                {isAdmin && <NavLink href="/admin/dmarc">DMARC</NavLink>}
+                {navigation.primary.map((item) => (
+                  <NavLink href={item.href} boost={!item.fullPage}>
+                    {item.label}
+                  </NavLink>
+                ))}
               </div>
 
               <div class="flex items-center gap-3 border-l border-gray-700 pl-4">
-                <NavLink href="/admin/activity" secondary>
-                  Activity
-                </NavLink>
-                <NavLink href="/admin/tags" secondary>
-                  Tags
-                </NavLink>
-                <NavLink href="/admin/import" secondary>
-                  Import
-                </NavLink>
-                {isAdmin && (
-                  <NavLink href="/admin/users" secondary>
-                    Users
+                {navigation.secondary.map((item) => (
+                  <NavLink href={item.href} secondary boost={!item.fullPage}>
+                    {item.label}
                   </NavLink>
-                )}
-                <NavLink href="/admin/tokens" secondary>
-                  API
-                </NavLink>
-                <NavLink href="/admin/templates" secondary>
-                  Templates
-                </NavLink>
-                <NavLink href="/design" secondary boost={false}>
-                  Design
-                </NavLink>
+                ))}
               </div>
 
               <div class="flex items-center gap-3 ml-auto">
