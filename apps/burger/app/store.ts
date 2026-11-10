@@ -20,7 +20,7 @@ type EditorPublicState = {
 // all session-state (no localStorage). Keeps the manager dumb — windows
 // register themselves via WindowManager via `register*` actions; chrome
 // reads `windows` map to render.
-type WindowState = {
+export type WindowState = {
   id: string;
   title: string;
   open: boolean;

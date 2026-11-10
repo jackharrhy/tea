@@ -1,63 +1,73 @@
 import { clientEntry, css, on, ref, type Handle } from "remix/component";
-import { useGameStore, type SpawnZone, type ZoneEntry } from "../store";
+import { AtlasEditor } from "../atlas/editor";
+import {
+  useGameStore,
+  type SpawnZone,
+  type WindowState,
+  type ZoneEntry,
+} from "../store";
 import type { Me } from "../types";
+import { BurgerWindow } from "./window";
 
-type Panel = "palette" | "zones" | "bots" | "spawn";
+type Panel = "atlas" | "palette" | "zones" | "bots" | "spawn";
 type Tile = { id: number; label: string; src_x: number; src_y: number };
 type UserOption = { id: string; display_name: string | null };
 
-const toolbar = css({
+const taskbar = css({
   position: "fixed",
   top: "8px",
-  left: "8px",
-  zIndex: 20,
+  right: "8px",
+  zIndex: 1000,
   display: "flex",
   flexWrap: "wrap",
   gap: "4px",
-  padding: "6px",
-  background: "#2c211d",
-  border: "2px solid #f9d54e",
-  color: "#fff4bc",
-  boxShadow: "3px 3px 0 #111",
   maxWidth: "calc(100vw - 16px)",
-  "& button": { cursor: "pointer", minHeight: "32px" },
+  font: "12px/1.4 monospace",
+  "& button": {
+    padding: "4px 10px",
+    border: "1px solid #444",
+    borderRadius: "4px",
+    background: "#1a1a1ae6",
+    color: "#ddd",
+    cursor: "pointer",
+  },
+  "& button:hover, & button[aria-pressed='true']": {
+    background: "#2a2a2ae6",
+    borderColor: "#888",
+    color: "#fff",
+  },
 });
-const panelStyle = css({
-  position: "fixed",
-  top: "56px",
-  left: "8px",
-  zIndex: 20,
-  width: "min(420px, calc(100vw - 16px))",
-  maxHeight: "calc(100vh - 72px)",
-  overflow: "auto",
-  padding: "12px",
-  background: "#231c1b",
-  color: "#fff4bc",
-  border: "2px solid #f9d54e",
-  boxShadow: "4px 4px 0 #111",
-  "& h2": { margin: "0 0 8px", fontSize: "1rem" },
-  "& button": { cursor: "pointer" },
+const playerTaskbar = css({ right: "auto", left: "8px" });
+const panelContent = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+  height: "100%",
+  padding: "8px",
+  "& p": { margin: "0" },
   "& input": { maxWidth: "100%" },
 });
 const tilesStyle = css({
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))",
-  gap: "6px",
-  maxHeight: "50vh",
+  gridTemplateColumns: "repeat(auto-fill, 64px)",
+  alignContent: "start",
+  gap: "8px",
+  flex: "1",
   overflowY: "auto",
 });
 const tileStyle = css({
   display: "grid",
   justifyItems: "center",
   gap: "2px",
-  minHeight: "68px",
-  padding: "4px",
-  border: "2px solid #5b4c41",
-  background: "#3c312b",
-  color: "#fff4bc",
-  fontSize: "11px",
+  width: "64px",
+  height: "54px",
+  padding: "2px",
+  border: "2px solid #333",
+  background: "#242a2c",
+  color: "#ccc",
+  fontSize: "10px",
   overflow: "hidden",
-  "&[aria-pressed='true']": { borderColor: "#f9d54e" },
+  "&[aria-pressed='true']": { borderColor: "#ffd966" },
 });
 const row = css({
   display: "flex",
@@ -80,21 +90,15 @@ async function json<T>(
   if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
   return response.json() as Promise<T>;
 }
-function sendKey(key: string) {
-  window.dispatchEvent(
-    new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
-  );
-}
-
 export const BurgerTools = clientEntry(
   "file:///app/game/burger-tools.tsx#BurgerTools",
   function BurgerTools(handle: Handle) {
     let user: Me | null = null;
-    let editorActive = false;
     let palette: number[] = [];
     let zones: ZoneEntry[] = [];
     let myZoneCount = 0;
-    let panel: Panel | null = null;
+    let windows: Record<string, WindowState> = {};
+    let registered = false;
     let tiles: Tile[] = [];
     let atlasUrl = "/assets/atlas.png";
     let users: UserOption[] = [];
@@ -114,14 +118,16 @@ export const BurgerTools = clientEntry(
       error = reason instanceof Error ? reason.message : String(reason);
       update();
     };
-    async function loadPanel(next: Panel) {
+    async function togglePanel(next: Panel) {
       const signal = activeSignal;
       if (!signal) return;
       error = "";
-      panel = panel === next ? null : next;
-      if (panel !== "spawn") useGameStore.getState().setSpawnDraft(null);
-      update();
-      if (!panel) return;
+      useGameStore.getState().toggleWindow(next);
+      if (!useGameStore.getState().windows[next]?.open) {
+        if (next === "spawn") useGameStore.getState().setSpawnDraft(null);
+        return;
+      }
+      if (next === "atlas") return;
       try {
         if (next === "palette") {
           const [catalog, atlas] = await Promise.all([
@@ -283,7 +289,155 @@ export const BurgerTools = clientEntry(
 
     return () => {
       const selected = zones.find((zone) => zone.id === selectedZone);
-      const canPaint = user?.isAdmin || myZoneCount > 0;
+      const panel = (id: Panel) =>
+        windows[id]?.open ? (
+          <BurgerWindow state={windows[id]}>
+            {id === "atlas" ? (
+              <AtlasEditor embedded />
+            ) : (
+              <div mix={panelContent}>
+                {error && <p role="alert">{error}</p>}
+                {id === "palette" && (
+                  <>
+                    <p>
+                      Right-click a tile to add or remove it from your palette (
+                      {palette.length}/9).
+                    </p>
+                    <div mix={tilesStyle}>
+                      {tiles.map((tile) => (
+                        <button
+                          type="button"
+                          title={tile.label}
+                          aria-label={tile.label}
+                          aria-pressed={palette.includes(tile.id)}
+                          disabled={busy}
+                          mix={[
+                            tileStyle,
+                            on("click", () => void toggleTile(tile.id)),
+                            on("contextmenu", (event) => {
+                              event.preventDefault();
+                              void toggleTile(tile.id);
+                            }),
+                          ]}
+                        >
+                          <span
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              imageRendering: "pixelated",
+                              backgroundImage: `url(${atlasUrl})`,
+                              backgroundPosition: `-${tile.src_x}px -${tile.src_y}px`,
+                            }}
+                          />
+                          <span>{tile.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {id === "zones" && user?.isAdmin && (
+                  <>
+                    <form
+                      mix={on("submit", (event) => {
+                        event.preventDefault();
+                        void createZone();
+                      })}
+                    >
+                      <input
+                        aria-label="New zone name"
+                        placeholder="New zone name"
+                        mix={ref((node) => {
+                          newZoneInput = node;
+                        })}
+                      />
+                      <button type="submit" disabled={busy}>
+                        Create zone
+                      </button>
+                    </form>
+                    <div mix={row}>
+                      {zones.map((zone) => (
+                        <button
+                          type="button"
+                          aria-pressed={zone.id === selectedZone}
+                          mix={on("click", () =>
+                            useGameStore.getState().setSelectedZone(zone.id),
+                          )}
+                        >
+                          {zone.name} ({zone.cell_count})
+                        </button>
+                      ))}
+                    </div>
+                    {selected && (
+                      <>
+                        <p>
+                          Use the zone brush [Z] on the canvas, then assign
+                          members.
+                        </p>
+                        {users.map((person) => (
+                          <label mix={row}>
+                            <input
+                              type="checkbox"
+                              checked={selected.member_user_ids.includes(
+                                person.id,
+                              )}
+                              disabled={busy}
+                              mix={on(
+                                "change",
+                                () => void toggleMember(selected, person.id),
+                              )}
+                            />
+                            {person.display_name ?? person.id}
+                          </label>
+                        ))}
+                      </>
+                    )}
+                  </>
+                )}
+                {id === "bots" && user?.isAdmin && (
+                  <>
+                    <p>Active bots: {bots ?? "…"}</p>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      mix={on("click", () => void resetBots())}
+                    >
+                      Reset to spawn
+                    </button>
+                  </>
+                )}
+                {id === "spawn" && user?.isAdmin && spawn && (
+                  <>
+                    {(["x", "y", "w", "h"] as const).map((key) => (
+                      <label mix={row}>
+                        {key.toUpperCase()}
+                        <input
+                          type="number"
+                          value={spawn![key]}
+                          mix={on("change", (event) => {
+                            const value = Number(
+                              (event.target as HTMLInputElement).value,
+                            );
+                            if (!Number.isFinite(value) || !spawn) return;
+                            spawn = { ...spawn, [key]: Math.round(value) };
+                            useGameStore.getState().setSpawnDraft(spawn);
+                            update();
+                          })}
+                        />
+                      </label>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      mix={on("click", () => void saveSpawn())}
+                    >
+                      Save spawn
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </BurgerWindow>
+        ) : null;
       return (
         <div
           mix={ref((_node, signal) => {
@@ -291,11 +445,52 @@ export const BurgerTools = clientEntry(
             const sync = () => {
               const state = useGameStore.getState();
               user = state.user;
-              editorActive = state.editor?.active ?? false;
+              if (user && !registered) {
+                registered = true;
+                const register = state.registerWindow;
+                if (user.isAdmin) {
+                  register("atlas", {
+                    title: "Atlas",
+                    x: 80,
+                    y: 80,
+                    w: Math.max(320, Math.min(960, innerWidth - 160)),
+                    h: Math.max(240, Math.min(640, innerHeight - 160)),
+                  });
+                  register("spawn", {
+                    title: "Spawn",
+                    x: 80,
+                    y: 80,
+                    w: 280,
+                    h: 260,
+                  });
+                  register("bots", {
+                    title: "Bots",
+                    x: 80,
+                    y: 80,
+                    w: 240,
+                    h: 200,
+                  });
+                  register("zones", {
+                    title: "Zones",
+                    x: 20,
+                    y: 60,
+                    w: 320,
+                    h: 480,
+                  });
+                }
+                register("palette", {
+                  title: "Palette",
+                  x: 60,
+                  y: 100,
+                  w: 380,
+                  h: 480,
+                });
+              }
               palette = state.palette;
               zones = state.zones.list;
               myZoneCount = state.zones.myZoneCells.size;
               selectedZone = state.zones.selectedId;
+              windows = useGameStore.getState().windows;
               if (!signal.aborted) update();
             };
             const unsubscribe = useGameStore.subscribe(sync);
@@ -313,215 +508,34 @@ export const BurgerTools = clientEntry(
         >
           {user && (
             <>
-              <div mix={toolbar} role="toolbar" aria-label="Burger tools">
-                <button
-                  type="button"
-                  disabled={!canPaint}
-                  aria-pressed={editorActive}
-                  mix={on("click", () => sendKey("e"))}
-                >
-                  Paint [E]
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={panel === "palette"}
-                  mix={on("click", () => {
-                    void loadPanel("palette");
-                  })}
-                >
-                  Palette
-                </button>
-                {user.isAdmin && (
-                  <>
-                    <a href="/atlas">Atlas</a>
-                    <button
-                      type="button"
-                      aria-pressed={panel === "zones"}
-                      mix={on("click", () => {
-                        void loadPanel("zones");
-                      })}
-                    >
-                      Zones
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={panel === "bots"}
-                      mix={on("click", () => {
-                        void loadPanel("bots");
-                      })}
-                    >
-                      Bots
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={panel === "spawn"}
-                      mix={on("click", () => {
-                        void loadPanel("spawn");
-                      })}
-                    >
-                      Spawn
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!selectedZone}
-                      mix={on("click", () => sendKey("z"))}
-                    >
-                      Zone brush [Z]
-                    </button>
-                  </>
-                )}
+              <div
+                mix={[taskbar, !user.isAdmin && playerTaskbar]}
+                role="toolbar"
+                aria-label="Burger tools"
+              >
+                {(user.isAdmin
+                  ? ["atlas", "spawn", "bots", "zones", "palette"]
+                  : myZoneCount > 0
+                    ? ["palette"]
+                    : []
+                ).map((id) => (
+                  <button
+                    type="button"
+                    aria-pressed={windows[id]?.open ?? false}
+                    mix={on("click", () => void togglePanel(id as Panel))}
+                  >
+                    {windows[id]?.title ?? id[0].toUpperCase() + id.slice(1)}
+                  </button>
+                ))}
+                <form method="post" action="/auth/logout">
+                  <button type="submit">Sign out</button>
+                </form>
               </div>
-              {panel && (
-                <section mix={panelStyle} aria-label={`${panel} tools`}>
-                  <h2>
-                    {panel === "palette"
-                      ? "Tile palette"
-                      : panel === "zones"
-                        ? "Zones"
-                        : panel === "bots"
-                          ? "Bots"
-                          : "Player spawn"}
-                  </h2>
-                  {error && <p role="alert">{error}</p>}
-                  {panel === "palette" && (
-                    <>
-                      <p>
-                        Choose up to nine tiles. Use E to paint, right-click the
-                        canvas to erase.
-                      </p>
-                      <div mix={tilesStyle}>
-                        {tiles.map((tile) => (
-                          <button
-                            type="button"
-                            title={tile.label}
-                            aria-pressed={palette.includes(tile.id)}
-                            disabled={busy}
-                            mix={[
-                              tileStyle,
-                              on("click", () => {
-                                void toggleTile(tile.id);
-                              }),
-                            ]}
-                          >
-                            <span
-                              style={{
-                                width: "32px",
-                                height: "32px",
-                                imageRendering: "pixelated",
-                                backgroundImage: `url(${atlasUrl})`,
-                                backgroundPosition: `-${tile.src_x}px -${tile.src_y}px`,
-                              }}
-                            />
-                            <span>{tile.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  {panel === "zones" && user.isAdmin && (
-                    <>
-                      <form
-                        mix={on("submit", (event) => {
-                          event.preventDefault();
-                          void createZone();
-                        })}
-                      >
-                        <input
-                          aria-label="New zone name"
-                          placeholder="New zone name"
-                          mix={ref((node) => {
-                            newZoneInput = node;
-                          })}
-                        />
-                        <button type="submit" disabled={busy}>
-                          Create zone
-                        </button>
-                      </form>
-                      <div mix={row}>
-                        {zones.map((zone) => (
-                          <button
-                            type="button"
-                            aria-pressed={zone.id === selectedZone}
-                            mix={on("click", () => {
-                              useGameStore.getState().setSelectedZone(zone.id);
-                            })}
-                          >
-                            {zone.name} ({zone.cell_count})
-                          </button>
-                        ))}
-                      </div>
-                      {selected && (
-                        <>
-                          <p>
-                            Use the zone brush [Z] on the canvas, then assign
-                            members.
-                          </p>
-                          {users.map((person) => (
-                            <label mix={row}>
-                              <input
-                                type="checkbox"
-                                checked={selected.member_user_ids.includes(
-                                  person.id,
-                                )}
-                                disabled={busy}
-                                mix={on("change", () => {
-                                  void toggleMember(selected, person.id);
-                                })}
-                              />
-                              {person.display_name ?? person.id}
-                            </label>
-                          ))}
-                        </>
-                      )}
-                    </>
-                  )}
-                  {panel === "bots" && user.isAdmin && (
-                    <>
-                      <p>Active bots: {bots ?? "…"}</p>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        mix={on("click", () => {
-                          void resetBots();
-                        })}
-                      >
-                        Reset to spawn
-                      </button>
-                    </>
-                  )}
-                  {panel === "spawn" && user.isAdmin && spawn && (
-                    <>
-                      {(["x", "y", "w", "h"] as const).map((key) => (
-                        <label mix={row}>
-                          {key.toUpperCase()}{" "}
-                          <input
-                            type="number"
-                            value={spawn![key]}
-                            mix={on("change", (event) => {
-                              const value = Number(
-                                (event.target as HTMLInputElement).value,
-                              );
-                              if (!Number.isFinite(value) || !spawn) return;
-                              spawn = { ...spawn, [key]: Math.round(value) };
-                              useGameStore.getState().setSpawnDraft(spawn);
-                              update();
-                            })}
-                          />
-                        </label>
-                      ))}
-                      <button
-                        type="button"
-                        disabled={busy}
-                        mix={on("click", () => {
-                          void saveSpawn();
-                        })}
-                      >
-                        Save spawn
-                      </button>
-                    </>
-                  )}
-                </section>
-              )}
+              {user.isAdmin && panel("atlas")}
+              {user.isAdmin && panel("spawn")}
+              {user.isAdmin && panel("bots")}
+              {user.isAdmin && panel("zones")}
+              {panel("palette")}
             </>
           )}
         </div>
