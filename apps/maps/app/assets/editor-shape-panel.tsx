@@ -92,7 +92,7 @@ export const EditorShapePanel = clientEntry(
             disabled={!context}
             mix={on("click", () => context?.activate())}
           >
-            Draw shape
+            Start drawing
           </button>
           <div id="shape-circle-fields" class="shape-fields" hidden={!circular}>
             <label for="shape-axis">Axis</label>
