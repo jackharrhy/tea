@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* HTMX behavior only; visuals remain Tailwind's original defaults. */
+#global-progress {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--color-blue-600);
+}
+
+#global-progress.htmx-request {
+  opacity: 1;
+}
+.htmx-request button[type="submit"] {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-blue-500);
+  outline-offset: 2px;
+}
+
+nav .nav-link[aria-current="page"] {
+  color: white;
+}
+.admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.template-source {
+  max-height: 600px;
+  overflow: auto;
+  border-top: 1px solid var(--color-gray-200);
+  background: var(--color-gray-50);
+}
+
+.template-source .shiki {
+  min-width: max-content;
+  margin: 0;
+  padding: 1.25rem;
+  background: transparent !important;
+  font-size: 0.75rem;
+  line-height: 1.65;
+  tab-size: 2;
+}

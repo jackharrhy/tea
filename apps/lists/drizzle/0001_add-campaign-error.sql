@@ -1,0 +1,1 @@
+ALTER TABLE `campaigns` ADD `last_error` text;

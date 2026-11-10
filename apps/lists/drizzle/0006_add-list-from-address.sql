@@ -1,0 +1,1 @@
+ALTER TABLE `lists` ADD `from_address` text DEFAULT '' NOT NULL;

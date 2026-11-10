@@ -1,0 +1,1 @@
+ALTER TABLE `inbound_messages` ADD `rfc822_message_id` text;

@@ -138,6 +138,105 @@ services:
     networks:
       - web
 
+  lists-moto:
+    profiles: [lists]
+    image: ghcr.io/getmoto/motoserver:5.1.22
+    environment:
+      MOTO_PORT: "5000"
+    ports:
+      - "127.0.0.1:${LISTS_MOTO_PORT:-15000}:5000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/moto-api/')",
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks:
+      - web
+
+  lists-aws-init:
+    profiles: [lists]
+    image: public.ecr.aws/aws-cli/aws-cli:2.27.49
+    depends_on:
+      lists-moto:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        aws --endpoint-url http://lists-moto:5000 s3api head-bucket --bucket lists-inbound 2>/dev/null || aws --endpoint-url http://lists-moto:5000 s3api create-bucket --bucket lists-inbound
+        aws --endpoint-url http://lists-moto:5000 s3api head-bucket --bucket lists-media 2>/dev/null || aws --endpoint-url http://lists-moto:5000 s3api create-bucket --bucket lists-media
+        aws --endpoint-url http://lists-moto:5000 sqs create-queue --queue-name lists-inbound
+        aws --endpoint-url http://lists-moto:5000 sesv2 create-email-identity --email-identity lists.local
+    networks:
+      - web
+
+  lists-mailpit:
+    profiles: [lists]
+    image: axllent/mailpit:v1.30.4
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: "5000"
+    volumes:
+      - lists-mailpit-data:/data
+    ports:
+      - "127.0.0.1:${LISTS_MAILPIT_PORT:-18025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks:
+      - web
+
+  lists:
+    profiles: [lists]
+    stop_grace_period: 40s
+    build:
+      context: .
+      dockerfile: apps/lists/Dockerfile
+    depends_on:
+      lists-aws-init:
+        condition: service_completed_successfully
+      lists-mailpit:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://lists-moto:5000
+      SQS_QUEUE_URL: http://lists-moto:5000/123456789012/lists-inbound
+      S3_BUCKET: lists-inbound
+      S3_MEDIA_BUCKET: lists-media
+      S3_MEDIA_BASE_URL: ${LISTS_S3_MEDIA_BASE_URL:-http://localhost:15000/lists-media}
+      SMTP_URL: smtp://lists-mailpit:1025
+      BASE_URL: ${LISTS_BASE_URL:-http://localhost:18080}
+      FROM_DOMAIN: lists.local
+      DB_PATH: /data/lists.db
+      OWNER_EMAIL: owner@lists.local
+      OWNER_PASSWORD: local-password
+      PUBLIC_SUBSCRIPTIONS_ENABLED: "true"
+    volumes:
+      - lists-data:/data
+    ports:
+      - "127.0.0.1:${LISTS_APP_PORT:-18080}:8080"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.lists.rule: "Host(`lists.localhost`)"
+      traefik.http.routers.lists.entrypoints: web
+      traefik.http.services.lists.loadbalancer.server.port: "8080"
+    networks:
+      - web
+
   ref:
     build:
       context: .
@@ -283,6 +382,8 @@ volumes:
   burger-data:
   cms-data:
   letters-to-steve-data:
+  lists-data:
+  lists-mailpit-data:
   marky-data:
   pool-data:
   ref-data:

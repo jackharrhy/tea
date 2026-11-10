@@ -1,0 +1,1 @@
+ALTER TABLE `lists` ADD `from_domain` text DEFAULT 'jackharrhy.dev' NOT NULL;
