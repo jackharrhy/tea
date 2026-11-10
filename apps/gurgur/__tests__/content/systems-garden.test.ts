@@ -44,6 +44,19 @@ const dot = (a: Tuple3, b: Tuple3): number =>
   a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 describe("Systems Garden map", () => {
+  test("rebuilds the saved-map bundle byte for byte", async () => {
+    const bundle = compileWorld(source, "content/maps/systems-garden.map");
+    const encoded = encodeWorldBundle(bundle);
+    const committed = new Uint8Array(
+      await Bun.file(
+        new URL("../../content/generated/systems-garden.bin", import.meta.url),
+      ).arrayBuffer(),
+    );
+    expect(bundle.mapRevision).toBe(
+      "a1a3377851fe6a80a64d0147d62b59c858742d414cf0c493b020b079ca743039",
+    );
+    expect(encoded).toEqual(committed);
+  });
   test("uses the same default material scale as TrenchBroom", () => {
     expect(MATERIAL_TEXTURE_SIZE).toBe(64);
     expect(gameConfig.faceattribs.defaults.scale).toEqual([0.5, 0.5]);

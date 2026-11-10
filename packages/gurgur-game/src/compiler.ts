@@ -121,7 +121,8 @@ const cross = (a: Vec3, b: Vec3): Vec3 => ({
   y: a.z * b.x - a.x * b.z,
   z: a.x * b.y - a.y * b.x,
 });
-const length = (v: Vec3): number => Math.hypot(v.x, v.y, v.z);
+const length = (v: Vec3): number =>
+  Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 const normalize = (v: Vec3): Vec3 => scale(v, 1 / length(v));
 
 export function mapToWorld({ x, y, z }: Vec3): Vec3 {

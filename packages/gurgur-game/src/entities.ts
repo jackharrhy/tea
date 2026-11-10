@@ -414,7 +414,9 @@ function mapDirectionProperty(
         y: map.z * METRES_PER_MAP_UNIT,
         z: -map.y * METRES_PER_MAP_UNIT,
       };
-      const length = Math.hypot(world.x, world.y, world.z);
+      const length = Math.sqrt(
+        world.x * world.x + world.y * world.y + world.z * world.z,
+      );
       if (length === 0)
         throw new Error(`${sourceLabel(source)} must not be zero`);
       return {
