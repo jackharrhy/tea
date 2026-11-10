@@ -61,7 +61,9 @@ for (const sound of [
   await asset(`/audio/${sound}.wav`, /audio\/(?:x-)?wav/);
 
 const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH ?? chromium.executablePath(),
+  ...(process.env.CHROMIUM_PATH
+    ? { executablePath: process.env.CHROMIUM_PATH }
+    : {}),
   headless: true,
   args: [
     "--no-sandbox",
