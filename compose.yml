@@ -258,6 +258,24 @@ services:
     networks:
       - web
 
+  gurgur:
+    profiles: [gurgur]
+    build:
+      context: .
+      dockerfile: apps/gurgur/Dockerfile
+    network_mode: host
+    environment:
+      PORT: "8814"
+      HOST: 127.0.0.1
+      DATABASE_PATH: /app/data/world.sqlite
+      PUBLIC_ORIGIN: http://127.0.0.1:8814
+      ADMIN_TOKEN: ${GURGUR_ADMIN_TOKEN:-}
+      RTC_PORT_MIN: "41160"
+      RTC_PORT_MAX: "41210"
+      GURGUR_DEV_MCP: "0"
+    volumes:
+      - gurgur-data:/app/data
+
 volumes:
   artbin-data:
   artbin-uploads:
@@ -272,6 +290,7 @@ volumes:
   maps-data:
   maps-collaboration-data:
   maps-service-data:
+  gurgur-data:
 
 configs:
   andrew-local-site:

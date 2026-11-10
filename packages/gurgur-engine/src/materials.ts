@@ -1,0 +1,1 @@
+export const MATERIAL_TEXTURE_SIZE = 64;

@@ -22,7 +22,10 @@ export default defineConfig({
     categories: { correctness: "error", suspicious: "error" },
     options: { denyWarnings: true, typeAware: true },
     rules: {
-      "eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
       "typescript/consistent-return": "off",
       "typescript/no-base-to-string": "off",
       "typescript/no-floating-promises": "off",
@@ -32,7 +35,23 @@ export default defineConfig({
       "typescript/unbound-method": "off",
       "eslint/no-underscore-dangle": [
         "error",
-        { allow: ["_meta", "enum_", "null_"] },
+        {
+          allow: [
+            "_meta",
+            "enum_",
+            "null_",
+            "__gurgurDiagnostics",
+            "__gurgurSmokePad",
+            "__gurgurLastPhysicsCapture",
+            "_malloc",
+            "_free",
+            "_wt_init",
+            "_wt_set_voice",
+            "_wt_speak",
+            "_wt_get_buffer",
+            "_wt_get_buffer_len",
+          ],
+        },
       ],
     },
     ignorePatterns: [
@@ -44,6 +63,7 @@ export default defineConfig({
       "apps/maps/dist/**",
       "apps/maps-compiler/dist/**",
       "apps/maps-service/dist/**",
+      "apps/gurgur/third_party/lintalker/wintalker.js",
       "packages/maps-renderer/dist/**",
       "packages/maps-editor/dist/**",
       "packages/maps-protocol/dist/**",

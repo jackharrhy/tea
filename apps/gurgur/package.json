@@ -1,0 +1,33 @@
+{
+  "name": "@tea/gurgur",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:server": "bun scripts/build.ts",
+    "build:client": "vite build",
+    "build": "npm run build:server && npm run build:client",
+    "start": "NODE_ENV=production bun dist/server/src/index.js",
+    "dev": "npm run build && bun dist/server/src/index.js",
+    "typecheck": "tsrs -p tsconfig.json --noEmit",
+    "test": "bun test __tests__ --path-ignore-patterns='**/performance/**' && bun test __tests__/performance",
+    "test:built": "bun __tests__/built/smoke.ts",
+    "check": "npm run typecheck && npm test && npm run build && npm run test:built"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@tea/gurgur-engine": "0.1.0",
+    "@tea/gurgur-game": "0.1.0",
+    "box3d.js": "0.0.2",
+    "remix": "3.2.0",
+    "three": "0.185.1",
+    "werift": "0.23.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "@types/three": "0.185.1",
+    "playwright-core": "1.61.1",
+    "vite": "^8.3.7"
+  }
+}
