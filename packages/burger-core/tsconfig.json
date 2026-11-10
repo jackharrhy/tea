@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "types": ["bun"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
+  "include": ["src", "__tests__"]
+}

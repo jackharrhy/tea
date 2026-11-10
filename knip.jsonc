@@ -21,6 +21,9 @@
     "apps/cms-edge": {
       "entry": ["cloudflare.config.ts", "worker.ts"],
     },
+    "apps/burger": {
+      "entry": ["server/server.ts"],
+    },
     "apps/maps": {
       "entry": [
         "app/assets/entry.ts",

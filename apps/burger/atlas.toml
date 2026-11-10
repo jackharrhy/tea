@@ -1,0 +1,30 @@
+# Tile catalog. Source of truth for what can be painted.
+# id is stable forever — never reuse an id, even if you delete a tile.
+# type is one of: floor, wall, counter.
+
+[meta]
+# Atlas image dimensions in pixels. Must match packages/burger-client/public/assets/atlas.png.
+# Update this when you swap in a larger atlas. Width and height should both be multiples of 32.
+width = 448
+height = 448
+
+[[tiles]]
+id = 1
+type = "wall"
+src_x = 0
+src_y = 0
+label = "wall"
+
+[[tiles]]
+id = 2
+type = "counter"
+src_x = 0
+src_y = 32
+label = "counter"
+
+[[tiles]]
+id = 3
+type = "floor"
+src_x = 32
+src_y = 0
+label = "floor"
