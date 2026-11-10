@@ -210,6 +210,7 @@ test("central bearer auth preserves local list access and rejects wrong audience
   let role = "member";
   let includeListGrant = true;
   let includeMembershipScope = true;
+  let includeExtraGrant = false;
   let subject = "member-subject";
   let clientId = "delegated";
   let principalType: "user" | "service" = "user";
@@ -238,12 +239,16 @@ test("central bearer auth preserves local list access and rejects wrong audience
           PROJECT_ROLES_SCOPE,
           ...(includeMembershipScope ? [roleScope(role)] : []),
           roleScope("lists-read"),
+          ...(includeExtraGrant ? [roleScope("templates-write")] : []),
         ].join(" "),
         jack_auth_principal_type: principalType,
         "urn:zitadel:iam:org:project:lists-project:roles": {
           [role]: { "our-org": "auth.example.test" },
           ...(includeListGrant
             ? { "lists-read": { "our-org": "auth.example.test" } }
+            : {}),
+          ...(includeExtraGrant
+            ? { "templates-write": { "our-org": "auth.example.test" } }
             : {}),
         },
       });
@@ -290,6 +295,11 @@ test("central bearer auth preserves local list access and rejects wrong audience
   expect((await authenticate(apiRequest)).listIds).toEqual(
     new Set([allowed.id]),
   );
+  includeExtraGrant = true;
+  expect((await authenticate(apiRequest)).scopes).toEqual(
+    new Set(["lists:read"]),
+  );
+  includeExtraGrant = false;
   includeMembershipScope = false;
   expect(authenticate(apiRequest)).rejects.toMatchObject({ status: 403 });
   includeMembershipScope = true;
