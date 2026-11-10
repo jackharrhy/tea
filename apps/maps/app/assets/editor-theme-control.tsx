@@ -9,16 +9,16 @@ function storedPreference(): ThemePreference {
     const value = localStorage.getItem(storageKey);
     return value === "dark" || value === "light" || value === "system"
       ? value
-      : "dark";
+      : "system";
   } catch {
-    return "dark";
+    return "system";
   }
 }
 
 export const EditorThemeControl = clientEntry(
   `file:///app/assets/editor-theme-control.tsx#EditorThemeControl`,
   function EditorThemeControlComponent(handle: Handle) {
-    let preference: ThemePreference = "dark";
+    let preference: ThemePreference = "system";
 
     function applyTheme(systemLight: boolean) {
       const theme: EditorTheme =

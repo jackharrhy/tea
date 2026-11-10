@@ -116,7 +116,7 @@ type InspectorTab = (typeof inspectorTabs)[number] | "source";
 export const EditorInspector = clientEntry(
   `file:///app/assets/editor-workspace-toggle.tsx#EditorInspector`,
   function EditorInspectorComponent(handle: Handle) {
-    let active: InspectorTab = "map";
+    let active: InspectorTab = "entity";
     let hydrated = false;
 
     function select(tab: InspectorTab) {
@@ -225,16 +225,19 @@ export const EditorInspector = clientEntry(
           hidden={active !== "entity"}
         >
           <EditorEntityInspector />
-          <EditorGroups />
-          <EditorEntityCreation />
-          <EditorGeometry />
           <EditorShapePanel />
           <EditorClipHull />
           <EditorSweepPanel />
           <EditorTopologyPanel />
           <EditorTransformToolPanel />
-          <EditorTransforms />
-          <EditorCsg />
+          <details class="editor-more-tools">
+            <summary>Objects and transforms</summary>
+            <EditorGroups />
+            <EditorEntityCreation />
+            <EditorGeometry />
+            <EditorTransforms />
+            <EditorCsg />
+          </details>
         </section>
         <section
           id="inspector-panel-face"

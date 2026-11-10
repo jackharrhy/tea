@@ -61,9 +61,11 @@ export const EditorShapePanel = clientEntry(
         fields.kind,
       );
       return (
-        <div id="shape-tools" class="shape-tools" hidden={!state?.visible}>
+        <div id="shape-tools" class="shape-tools">
           <strong>Simple shape</strong>
-          <span id="shape-result">{state?.result ?? "Drag to draw"}</span>
+          <span id="shape-result">
+            {state?.visible ? state.result : "Choose a shape, then draw"}
+          </span>
           <label for="shape-kind">Shape</label>
           <select
             id="shape-kind"
@@ -84,6 +86,14 @@ export const EditorShapePanel = clientEntry(
             <option value="uv-sphere">UV spheroid</option>
             <option value="ico-sphere">Icosphere</option>
           </select>
+          <button
+            type="button"
+            aria-pressed={state?.visible ?? false}
+            disabled={!context}
+            mix={on("click", () => context?.activate())}
+          >
+            Draw shape
+          </button>
           <div id="shape-circle-fields" class="shape-fields" hidden={!circular}>
             <label for="shape-axis">Axis</label>
             <select
@@ -191,8 +201,8 @@ export const EditorShapePanel = clientEntry(
             </select>
           </div>
           <p>
-            Drag in a viewport to size the shape. Shift makes the visible axes
-            equal; Shift+Alt makes a cube in perspective.
+            Choose Draw shape, then drag in a viewport. Shift makes the visible
+            axes equal; Shift+Alt makes a cube in perspective.
           </p>
         </div>
       );

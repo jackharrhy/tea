@@ -943,6 +943,7 @@ const shapeTool = createEditorShapes({
   renderer: () => renderer,
   viewState: () => rendererViewState,
   tool: () => toolSettings.state.tool,
+  selectTool: activateViewportTool,
   material: () => geometry.state.material.trim() || "DEV/GRID",
   openGroupEntityId: () =>
     deriveEditorGroups(session.document).find(

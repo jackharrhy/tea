@@ -47,6 +47,7 @@ export function createEditorShapes(options: {
   renderer(): EditorSourceRenderer | null;
   viewState(): EditorObjectViewState;
   tool(): string;
+  selectTool(tool: string): void;
   material(): string;
   openGroupEntityId(): EntityId | undefined;
   canEdit(): boolean;
@@ -55,7 +56,9 @@ export function createEditorShapes(options: {
   let shapeOptions = DEFAULT_SIMPLE_SHAPE_OPTIONS;
   let candidate: BrushBatchCreationCandidate | null = null;
   let prefix: string | null = null;
-  const panel = initEditorShapePanel(handleInput);
+  const panel = initEditorShapePanel(handleInput, () =>
+    options.selectTool("create"),
+  );
 
   function sync() {
     panel.update({

@@ -1,24 +1,24 @@
 import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorToolSettingsContext } from "./editor-tool-settings-bridge.ts";
+import { editorGeometryIcon } from "./editor-geometry-icon.tsx";
 
 const tools = [
-  { value: "select", label: "Select and move", icon: "cursor", key: "Esc" },
+  { value: "select", label: "Select and move", key: "Esc" },
   {
     value: "entity",
     label: "Place point entity",
-    icon: "user-square",
     key: "N",
   },
-  { value: "hull", label: "Convex hull brush", icon: "polygon", key: "B" },
-  { value: "face", label: "Face", icon: "square", key: "F" },
-  { value: "sweep", label: "Sweep faces", icon: "flow-arrow", key: "W" },
-  { value: "clip", label: "Clip brush", icon: "scissors", key: "C" },
-  { value: "vertex", label: "Vertex edit", icon: "vector-three", key: "V" },
-  { value: "edge", label: "Edge edit", icon: "line-segment", key: "E" },
-  { value: "rotate", label: "Rotate", icon: "arrow-clockwise", key: "R" },
-  { value: "scale", label: "Scale", icon: "arrows-out", key: "S" },
-  { value: "shear", label: "Shear", icon: "perspective", key: "H" },
-  { value: "create", label: "Draw shape", icon: "shapes", key: "G" },
+  { value: "hull", label: "Convex hull brush", key: "B" },
+  { value: "face", label: "Face", key: "F" },
+  { value: "sweep", label: "Sweep faces", key: "W" },
+  { value: "clip", label: "Clip brush", key: "C" },
+  { value: "vertex", label: "Vertex edit", key: "V" },
+  { value: "edge", label: "Edge edit", key: "E" },
+  { value: "rotate", label: "Rotate", key: "R" },
+  { value: "scale", label: "Scale", key: "S" },
+  { value: "shear", label: "Shear", key: "H" },
+  { value: "create", label: "Draw shape", key: "G" },
 ] as const;
 
 export const EditorToolSettings = clientEntry(
@@ -63,7 +63,7 @@ export const EditorToolSettings = clientEntry(
                 disabled={!state || state.toolDisabled}
                 mix={on("click", () => context?.selectTool(tool.value))}
               >
-                <i class={`ph ph-${tool.icon}`} aria-hidden="true" />
+                {editorGeometryIcon(tool.value)}
               </button>
             ))}
           </div>

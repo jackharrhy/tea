@@ -80,6 +80,8 @@ export function EditorPage() {
                 <a href="/projects">Projects</a>
                 <EditorDocumentControls />
                 <EditorRecentProjects />
+                <div class="editor-menu-heading">Appearance</div>
+                <EditorThemeControl />
               </div>
             </details>
             <EditorDocumentName />
@@ -106,8 +108,8 @@ export function EditorPage() {
               data-menu="project"
               name="editor-topbar"
             >
-              <summary>
-                <i class="ph ph-folders" aria-hidden="true" /> Project
+              <summary aria-label="Project menu" title="Project">
+                <i class="ph ph-folders" aria-hidden="true" />
               </summary>
               <div class="editor-menu-content">
                 <div class="editor-menu-heading">Project</div>
@@ -131,8 +133,11 @@ export function EditorPage() {
               class="hosted-editor-picker"
               name="editor-topbar"
             >
-              <summary title="Hosted maps and collaboration">
-                <i class="ph ph-users-three" aria-hidden="true" /> Hosted
+              <summary
+                aria-label="Hosted maps and collaboration"
+                title="Hosted maps and collaboration"
+              >
+                <i class="ph ph-users-three" aria-hidden="true" />
               </summary>
               <div class="hosted-editor-fields">
                 <EditorHostedPicker />
@@ -149,7 +154,6 @@ export function EditorPage() {
               </div>
             </details>
             <EditorHostedPresenceStrip />
-            <EditorThemeControl />
             <EditorPerformanceToggle />
             <EditorInspectorToggle />
           </header>
