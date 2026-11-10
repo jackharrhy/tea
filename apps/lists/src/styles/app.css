@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@media (min-width: 641px) {
+  .admin-shell {
+    scrollbar-gutter: stable;
+  }
+}
+
 /* HTMX behavior only; visuals remain Tailwind's original defaults. */
 #global-progress {
   position: fixed;

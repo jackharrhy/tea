@@ -2,12 +2,17 @@ import { css, type Handle, type RemixNode } from "remix/component";
 
 import { adminNavigation } from "./admin-navigation.ts";
 
+const document = css({
+  "@media (min-width: 641px)": { scrollbarGutter: "stable" },
+});
 const body = css({
   margin: 0,
   minHeight: "100vh",
   color: "#1f2937",
   backgroundColor: "#f9fafb",
-  fontFamily: "system-ui, sans-serif",
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+  lineHeight: 1.5,
 });
 const nav = css({
   backgroundColor: "#111827",
@@ -19,11 +24,14 @@ const nav = css({
 const navInner = css({
   maxWidth: "1024px",
   minWidth: "max-content",
+  minHeight: "26px",
+  boxSizing: "border-box",
   margin: "0 auto",
   padding: "0 24px",
   display: "flex",
   alignItems: "center",
   gap: "16px",
+  "@media (max-width: 640px)": { padding: "0 16px" },
 });
 const navGroup = css({
   display: "flex",
@@ -73,10 +81,17 @@ const brand = css({
 });
 const main = css({
   maxWidth: "1024px",
+  boxSizing: "border-box",
   margin: "0 auto",
   padding: "16px 24px",
+  "@media (max-width: 640px)": { padding: "16px" },
 });
-const title = css({ fontSize: "24px", margin: "0 0 24px", fontWeight: 650 });
+const title = css({
+  fontSize: "24px",
+  lineHeight: "32px",
+  margin: "2px 0 24px",
+  fontWeight: 700,
+});
 const summary = css({
   display: "flex",
   flexWrap: "wrap",
@@ -135,7 +150,7 @@ export function AdminDocument(
     const { title: pageTitle, activeHref, viewer, children } = handle.props;
     const navigation = adminNavigation(viewer.isAdmin);
     return (
-      <html lang="en">
+      <html lang="en" mix={document}>
         <head>
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />

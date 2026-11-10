@@ -73,7 +73,7 @@ export function AdminLayout({
   const isAdmin = user?.role === "owner" || user?.role === "admin";
   const navigation = adminNavigation(isAdmin);
   return (
-    <html lang="en">
+    <html lang="en" class="admin-shell">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
