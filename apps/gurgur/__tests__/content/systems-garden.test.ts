@@ -53,10 +53,10 @@ describe("Systems Garden map", () => {
       ).arrayBuffer(),
     );
     expect(bundle.mapRevision).toBe(
-      "a1a3377851fe6a80a64d0147d62b59c858742d414cf0c493b020b079ca743039",
+      "d8afb6583ccbde8f2dbeb74b1ea26b191fc7afadb661d7a2458957b3f81d02ce",
     );
     expect(new Bun.CryptoHasher("sha256").update(encoded).digest("hex")).toBe(
-      "4006aa669800b3185481ac1be74baf283afc522b0c16834bdc9882e958840904",
+      "3d6c7e18afe0184d6aad40638e09618a12b5bafbd9ab2fc7c43e00ea04bd920e",
     );
     expect(encoded).toEqual(committed);
   });

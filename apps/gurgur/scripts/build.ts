@@ -13,7 +13,7 @@ const compiledMapHash = new Bun.CryptoHasher("sha256")
   .digest("hex");
 if (
   compiledMapHash !==
-  "4006aa669800b3185481ac1be74baf283afc522b0c16834bdc9882e958840904"
+  "3d6c7e18afe0184d6aad40638e09618a12b5bafbd9ab2fc7c43e00ea04bd920e"
 )
   throw new Error(
     "compiled map changed; saved Gurgur worlds require the committed map revision",
@@ -168,9 +168,7 @@ for await (const path of new Bun.Glob("**/*.mp3").scan({
 }
 await Bun.write(
   "dist/server/src/box3d.wasm",
-  Bun.file(
-    new URL("../../../node_modules/box3d.js/dist/box3d.wasm", import.meta.url),
-  ),
+  Bun.file(new URL("./box3d.wasm", import.meta.resolve("box3d.js"))),
 );
 await Bun.write(
   "dist/content/generated/systems-garden.bin",
