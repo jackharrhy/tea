@@ -1198,9 +1198,9 @@ export class WorldRenderer {
       const bodies = this.#interactionPresentation(
         this.#presentation.sample(now),
         now,
-      );
+      ).map((body) => this.#correctPrediction(body, now));
       if (bodies.length > 0) {
-        this.#apply(bodies, now);
+        this.#apply(bodies);
         const localPresentation = this.#localPlayer
           ? (bodies.find(
               (body) => idKey(body.id) === idKey(this.#localPlayer!),
@@ -1657,7 +1657,7 @@ export class WorldRenderer {
     return texture;
   }
 
-  #apply(bodies: BodySnapshot[], nowMs: number): void {
+  #apply(bodies: BodySnapshot[]): void {
     for (const body of bodies) {
       const mesh = this.#meshes.get(idKey(body.id));
       const cameraCollision = this.#cameraCollisionBodies.get(idKey(body.id));
@@ -1675,30 +1675,25 @@ export class WorldRenderer {
         );
       }
       if (!mesh) continue;
-      const presented = this.#correctPrediction(body, nowMs);
-      mesh.position.set(
-        presented.position.x,
-        presented.position.y,
-        presented.position.z,
-      );
+      mesh.position.set(body.position.x, body.position.y, body.position.z);
       if (!mesh.userData.billboard)
         mesh.quaternion.set(
-          presented.rotation.x,
-          presented.rotation.y,
-          presented.rotation.z,
-          presented.rotation.w,
+          body.rotation.x,
+          body.rotation.y,
+          body.rotation.z,
+          body.rotation.w,
         );
       const texture = mesh.userData.ownedTexture;
       if (mesh.userData.playerBillboard && texture instanceof THREE.Texture) {
-        const yaw = 2 * Math.atan2(presented.rotation.y, presented.rotation.w);
+        const yaw = 2 * Math.atan2(body.rotation.y, body.rotation.w);
         const direction = playerBillboardView(
           yaw,
           this.#camera.position.x,
           this.#camera.position.y,
           this.#camera.position.z,
-          presented.position.x,
-          presented.position.y,
-          presented.position.z,
+          body.position.x,
+          body.position.y,
+          body.position.z,
           playerBillboardLayout.views,
         );
         if (mesh.userData.playerDirection !== direction) {
@@ -1710,7 +1705,7 @@ export class WorldRenderer {
           mesh.userData.playerDirection = direction;
         }
       }
-      this.#onBodyPresentation(presented);
+      this.#onBodyPresentation(body);
     }
     this.#updateInteractionOutline();
   }
