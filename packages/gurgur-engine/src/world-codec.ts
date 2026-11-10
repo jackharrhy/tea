@@ -34,7 +34,9 @@ export function encodeWorldBundle<TEntity extends CompiledEntityCapabilities>(
   bundle: WorldBundle<TEntity>,
 ): Uint8Array {
   if (bundle.bundleVersion !== FORMAT_VERSION)
-    throw new Error(`unsupported world bundle version ${bundle.bundleVersion}`);
+    throw new Error(
+      `unsupported world bundle version ${String((bundle as { bundleVersion: number }).bundleVersion)}`,
+    );
   const encoder = new TextEncoder();
   const sections: Section[] = [
     {

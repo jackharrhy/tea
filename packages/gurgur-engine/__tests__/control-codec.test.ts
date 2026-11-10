@@ -63,9 +63,9 @@ describe("bounded client control union", () => {
       },
     ];
     for (const message of messages) {
-      expect<unknown>(decodeClientControl(JSON.stringify(message))).toEqual(
-        message,
-      );
+      expect(
+        decodeClientControl(JSON.stringify(message)) as typeof message,
+      ).toEqual(message);
     }
   });
 
@@ -255,9 +255,9 @@ describe("bounded server control union", () => {
       },
     ];
     for (const message of messages) {
-      expect<unknown>(decodeServerControl(JSON.stringify(message))).toEqual(
-        message,
-      );
+      expect(
+        decodeServerControl(JSON.stringify(message)) as typeof message,
+      ).toEqual(message);
     }
   });
 

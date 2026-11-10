@@ -15,6 +15,14 @@ const cube = `{
 ( 16 16 16 ) ( 0 16 16 ) ( 0 0 16 ) TEST [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
 }`;
 
+const pointEntity = (classname: string, id: string, extra: string) => `{
+"classname" "${classname}"
+"authoredId" "${id}"
+"origin" "8 8 8"
+"angles" "0 0 0"
+${extra.replaceAll("\\n", "\n")}
+}`;
+
 describe("authored ID repair", () => {
   test("inserts missing persistent IDs after classname and produces compilable source", () => {
     const source = `// Game: Gurgur
@@ -435,24 +443,17 @@ ${cube}
 "gravityScale" "0.75"
 ${cube}
 }`;
-    const point = (classname: string, id: string, extra: string) => `{
-"classname" "${classname}"
-"authoredId" "${id}"
-"origin" "8 8 8"
-"angles" "0 0 0"
-${extra.replaceAll("\\n", "\n")}
-}`;
     const bundle = compileWorld(
       baseMap(`
 ${body("body.a", "body_a")}
 ${body("body.b", "body_b")}
-${point("phys_hinge", "joint.hinge", '"attach1" "body_a"\\n"attach2" "body_b"\\n"motorMode" "target-velocity"')}
-${point("phys_motor", "joint.motor", '"attach1" "body_a"')}
-${point("phys_slideconstraint", "joint.slide", '"attach1" "body_a"\\n"attach2" "body_b"')}
-${point("phys_ballsocket", "joint.ball", '"attach1" "body_a"\\n"attach2" "body_b"')}
-${point("phys_lengthconstraint", "joint.rope", '"attach1" "body_a"\\n"attach2" "body_b"\\n"length" "64"')}
-${point("phys_spring", "joint.spring", '"attach1" "body_a"\\n"attach2" "body_b"\\n"length" "96"')}
-${point("phys_constraint", "joint.weld", '"attach1" "body_a"\\n"attach2" "body_b"\\n"renderable" "0"')}
+${pointEntity("phys_hinge", "joint.hinge", '"attach1" "body_a"\\n"attach2" "body_b"\\n"motorMode" "target-velocity"')}
+${pointEntity("phys_motor", "joint.motor", '"attach1" "body_a"')}
+${pointEntity("phys_slideconstraint", "joint.slide", '"attach1" "body_a"\\n"attach2" "body_b"')}
+${pointEntity("phys_ballsocket", "joint.ball", '"attach1" "body_a"\\n"attach2" "body_b"')}
+${pointEntity("phys_lengthconstraint", "joint.rope", '"attach1" "body_a"\\n"attach2" "body_b"\\n"length" "64"')}
+${pointEntity("phys_spring", "joint.spring", '"attach1" "body_a"\\n"attach2" "body_b"\\n"length" "96"')}
+${pointEntity("phys_constraint", "joint.weld", '"attach1" "body_a"\\n"attach2" "body_b"\\n"renderable" "0"')}
 {
 "classname" "func_conveyor"
 "authoredId" "conveyor.main"

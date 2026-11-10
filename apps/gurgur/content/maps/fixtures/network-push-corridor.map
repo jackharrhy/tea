@@ -1,0 +1,48 @@
+// Game: Gurgur
+// Format: Valve
+// Light and heavy props in a narrow lane for player/prop push convergence.
+{
+"classname" "worldspawn"
+"mapversion" "220"
+{
+( -256 -64 -16 ) ( -256 -64 0 ) ( -256 64 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 256 64 0 ) ( 256 -64 0 ) ( 256 -64 -16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -256 -64 -16 ) ( 256 -64 -16 ) ( 256 -64 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 256 64 0 ) ( 256 64 -16 ) ( -256 64 -16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -256 -64 -16 ) ( -256 64 -16 ) ( 256 64 -16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 256 64 0 ) ( -256 64 0 ) ( -256 -64 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "info_player_start"
+"origin" "-176 0 0"
+"angle" "270"
+}
+{
+"classname" "func_physics"
+"authoredId" "corridor.light"
+"density" "0.25"
+"friction" "0.5"
+{
+( -80 -16 0 ) ( -80 -16 48 ) ( -80 16 48 ) GURGUR/WOOD [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -48 16 48 ) ( -48 -16 48 ) ( -48 -16 0 ) GURGUR/WOOD [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -80 -16 0 ) ( -48 -16 0 ) ( -48 -16 48 ) GURGUR/WOOD [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -48 16 48 ) ( -48 16 0 ) ( -80 16 0 ) GURGUR/WOOD [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -80 -16 0 ) ( -80 16 0 ) ( -48 16 0 ) GURGUR/WOOD [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -48 16 48 ) ( -80 16 48 ) ( -80 -16 48 ) GURGUR/WOOD [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "func_physics"
+"authoredId" "corridor.heavy"
+"density" "8"
+"friction" "0.8"
+{
+( 32 -20 0 ) ( 32 -20 40 ) ( 32 20 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 72 20 40 ) ( 72 -20 40 ) ( 72 -20 0 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 32 -20 0 ) ( 72 -20 0 ) ( 72 -20 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 72 20 40 ) ( 72 20 0 ) ( 32 20 0 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 32 -20 0 ) ( 32 20 0 ) ( 72 20 0 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 72 20 40 ) ( 32 20 40 ) ( 32 -20 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}

@@ -24,6 +24,25 @@
     "apps/burger": {
       "entry": ["server/server.ts"],
     },
+    "apps/gurgur": {
+      "entry": [
+        "server/src/index.ts",
+        "scripts/cli.ts",
+        "scripts/smoke-browser.ts",
+        "scripts/setup-trenchbroom.ts",
+        "tools/compile-map/src/index.ts",
+        "tools/connection-soak.ts",
+        "tools/generate-fgd/src/index.ts",
+        "tools/network-harness/src/run.ts",
+        "tools/network-harness/src/matrix.ts",
+        "tools/persistence-soak.ts",
+        "tools/physics-soak.ts",
+        "tools/render-player-billboard/src/index.ts",
+        "web/src/debug-capture-worker.ts",
+        "web/src/physics-worker.ts",
+        "web/src/speech-worker.ts",
+      ],
+    },
     "apps/maps": {
       "entry": [
         "app/assets/entry.ts",

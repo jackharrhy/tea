@@ -1,0 +1,315 @@
+// Game: Gurgur
+// Format: Valve
+// Executable catalogue for Source-style physics contraptions.
+{
+"classname" "worldspawn"
+"mapversion" "220"
+"message" "Physics Contraptions"
+"gravity" "10"
+{
+( -512 -320 0 ) ( -512 -320 16 ) ( -512 320 16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 512 320 16 ) ( 512 -320 16 ) ( 512 -320 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -512 -320 0 ) ( 512 -320 0 ) ( 512 -320 16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 512 320 16 ) ( 512 320 0 ) ( -512 320 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -512 -320 0 ) ( -512 320 0 ) ( 512 320 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 512 320 16 ) ( -512 320 16 ) ( -512 -320 16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "info_player_start"
+"origin" "0 0 64"
+}
+// Compound lever.
+{
+"classname" "func_physics"
+"authoredId" "fixture.lever.body"
+"targetname" "lever_body"
+"grabbable" "0"
+{
+( -440 -250 48 ) ( -440 -250 64 ) ( -440 -218 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -280 -218 64 ) ( -280 -250 64 ) ( -280 -250 48 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -440 -250 48 ) ( -280 -250 48 ) ( -280 -250 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -280 -218 64 ) ( -280 -218 48 ) ( -440 -218 48 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -440 -250 48 ) ( -440 -218 48 ) ( -280 -218 48 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -280 -218 64 ) ( -440 -218 64 ) ( -440 -250 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+{
+( -296 -260 40 ) ( -296 -260 88 ) ( -296 -208 88 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -264 -208 88 ) ( -264 -260 88 ) ( -264 -260 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -296 -260 40 ) ( -264 -260 40 ) ( -264 -260 88 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -264 -208 88 ) ( -264 -208 40 ) ( -296 -208 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -296 -260 40 ) ( -296 -208 40 ) ( -264 -208 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -264 -208 88 ) ( -296 -208 88 ) ( -296 -260 88 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_hinge"
+"authoredId" "fixture.lever.hinge"
+"origin" "-360 -234 56"
+"angles" "0 0 -90"
+"attach1" "lever_body"
+"limitEnabled" "1"
+"lowerAngle" "-35"
+"upperAngle" "35"
+"motorMode" "friction"
+"frictionTorque" "8"
+}
+// Motorized spinner.
+{
+"classname" "func_physics"
+"authoredId" "fixture.spinner.body"
+"targetname" "spinner_body"
+"grabbable" "0"
+{
+( -200 -250 40 ) ( -200 -250 72 ) ( -200 -218 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -218 72 ) ( -64 -250 72 ) ( -64 -250 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -200 -250 40 ) ( -64 -250 40 ) ( -64 -250 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -218 72 ) ( -64 -218 40 ) ( -200 -218 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -200 -250 40 ) ( -200 -218 40 ) ( -64 -218 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -218 72 ) ( -200 -218 72 ) ( -200 -250 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_motor"
+"authoredId" "fixture.spinner.motor"
+"origin" "-132 -234 56"
+"angles" "0 0 0"
+"attach1" "spinner_body"
+"speed" "120"
+"maxTorque" "250"
+}
+// Slider.
+{
+"classname" "func_physics"
+"authoredId" "fixture.slider.body"
+"targetname" "slider_body"
+"grabbable" "0"
+{
+( 16 -250 32 ) ( 16 -250 64 ) ( 16 -186 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -186 64 ) ( 80 -250 64 ) ( 80 -250 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 16 -250 32 ) ( 80 -250 32 ) ( 80 -250 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -186 64 ) ( 80 -186 32 ) ( 16 -186 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 16 -250 32 ) ( 16 -186 32 ) ( 80 -186 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -186 64 ) ( 16 -186 64 ) ( 16 -250 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_slideconstraint"
+"authoredId" "fixture.slider.joint"
+"origin" "48 -218 48"
+"angles" "0 0 0"
+"attach1" "slider_body"
+"limitEnabled" "1"
+"lowerLimit" "-64"
+"upperLimit" "64"
+"motorMode" "target-position"
+"targetPosition" "32"
+"maxForce" "150"
+}
+// Ball socket.
+{
+"classname" "func_physics"
+"authoredId" "fixture.ball.body"
+"targetname" "ball_body"
+"grabbable" "0"
+{
+( 128 -250 32 ) ( 128 -250 96 ) ( 128 -186 96 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 192 -186 96 ) ( 192 -250 96 ) ( 192 -250 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 128 -250 32 ) ( 192 -250 32 ) ( 192 -250 96 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 192 -186 96 ) ( 192 -186 32 ) ( 128 -186 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 128 -250 32 ) ( 128 -186 32 ) ( 192 -186 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 192 -186 96 ) ( 128 -186 96 ) ( 128 -250 96 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_ballsocket"
+"authoredId" "fixture.ball.joint"
+"origin" "160 -218 96"
+"angles" "0 0 0"
+"attach1" "ball_body"
+}
+// Rope and spring examples.
+{
+"classname" "func_physics"
+"authoredId" "fixture.rope.body"
+"targetname" "rope_body"
+"grabbable" "0"
+{
+( 240 -250 32 ) ( 240 -250 80 ) ( 240 -202 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 288 -202 80 ) ( 288 -250 80 ) ( 288 -250 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 240 -250 32 ) ( 288 -250 32 ) ( 288 -250 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 288 -202 80 ) ( 288 -202 32 ) ( 240 -202 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 240 -250 32 ) ( 240 -202 32 ) ( 288 -202 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 288 -202 80 ) ( 240 -202 80 ) ( 240 -250 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_lengthconstraint"
+"authoredId" "fixture.rope.joint"
+"origin" "264 -226 80"
+"angles" "0 0 0"
+"attach1" "rope_body"
+"length" "96"
+"constraintMode" "rope"
+}
+{
+"classname" "func_physics"
+"authoredId" "fixture.spring.body"
+"targetname" "spring_body"
+"grabbable" "0"
+{
+( 368 -250 32 ) ( 368 -250 80 ) ( 368 -202 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 416 -202 80 ) ( 416 -250 80 ) ( 416 -250 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 368 -250 32 ) ( 416 -250 32 ) ( 416 -250 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 416 -202 80 ) ( 416 -202 32 ) ( 368 -202 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 368 -250 32 ) ( 368 -202 32 ) ( 416 -202 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 416 -202 80 ) ( 368 -202 80 ) ( 368 -250 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_spring"
+"authoredId" "fixture.spring.joint"
+"origin" "392 -226 80"
+"angles" "0 0 0"
+"attach1" "spring_body"
+"length" "96"
+"frequency" "3"
+"damping" "0.6"
+}
+// Welded two-body assembly.
+{
+"classname" "func_physics"
+"authoredId" "fixture.weld.a"
+"targetname" "weld_a"
+"grabbable" "0"
+{
+( -440 -80 32 ) ( -440 -80 80 ) ( -440 -32 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -392 -32 80 ) ( -392 -80 80 ) ( -392 -80 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -440 -80 32 ) ( -392 -80 32 ) ( -392 -80 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -392 -32 80 ) ( -392 -32 32 ) ( -440 -32 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -440 -80 32 ) ( -440 -32 32 ) ( -392 -32 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -392 -32 80 ) ( -440 -32 80 ) ( -440 -80 80 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "func_physics"
+"authoredId" "fixture.weld.b"
+"targetname" "weld_b"
+"grabbable" "0"
+{
+( -392 -80 40 ) ( -392 -80 72 ) ( -392 -32 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -328 -32 72 ) ( -328 -80 72 ) ( -328 -80 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -392 -80 40 ) ( -328 -80 40 ) ( -328 -80 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -328 -32 72 ) ( -328 -32 40 ) ( -392 -32 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -392 -80 40 ) ( -392 -32 40 ) ( -328 -32 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -328 -32 72 ) ( -392 -32 72 ) ( -392 -80 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_constraint"
+"authoredId" "fixture.weld.joint"
+"origin" "-392 -56 56"
+"angles" "0 0 0"
+"attach1" "weld_a"
+"attach2" "weld_b"
+}
+// Compound conveyor.
+{
+"classname" "func_conveyor"
+"authoredId" "fixture.conveyor"
+"targetname" "fixture_belt"
+"direction" "1 0 0"
+"speed" "96"
+"friction" "1"
+{
+( -200 -96 16 ) ( -200 -96 32 ) ( -200 -32 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -32 32 ) ( -64 -96 32 ) ( -64 -96 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -200 -96 16 ) ( -64 -96 16 ) ( -64 -96 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -32 32 ) ( -64 -32 16 ) ( -200 -32 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -200 -96 16 ) ( -200 -32 16 ) ( -64 -32 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -32 32 ) ( -200 -32 32 ) ( -200 -96 32 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+{
+( -64 -96 16 ) ( -64 -96 40 ) ( -64 -32 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 72 -32 40 ) ( 72 -96 40 ) ( 72 -96 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -96 16 ) ( 72 -96 16 ) ( 72 -96 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 72 -32 40 ) ( 72 -32 16 ) ( -64 -32 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( -64 -96 16 ) ( -64 -32 16 ) ( 72 -32 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 72 -32 40 ) ( -64 -32 40 ) ( -64 -96 40 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+// Compound gravity volume above the conveyor exit.
+{
+"classname" "trigger_gravity"
+"gravityFactor" "0.2"
+"priority" "10"
+{
+( 16 -112 16 ) ( 16 -112 128 ) ( 16 -72 128 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -72 128 ) ( 80 -112 128 ) ( 80 -112 16 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 16 -112 16 ) ( 80 -112 16 ) ( 80 -112 128 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -72 128 ) ( 80 -72 16 ) ( 16 -72 16 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 16 -112 16 ) ( 16 -72 16 ) ( 80 -72 16 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -72 128 ) ( 16 -72 128 ) ( 16 -112 128 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+{
+( 80 -112 16 ) ( 80 -112 128 ) ( 80 -32 128 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 160 -32 128 ) ( 160 -112 128 ) ( 160 -112 16 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -112 16 ) ( 160 -112 16 ) ( 160 -112 128 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 160 -32 128 ) ( 160 -32 16 ) ( 80 -32 16 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 80 -112 16 ) ( 80 -32 16 ) ( 160 -32 16 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 160 -32 128 ) ( 80 -32 128 ) ( 80 -112 128 ) GURGUR/SKIP [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+// Hinged compound-arm trebuchet and loose projectile.
+{
+"classname" "func_physics"
+"authoredId" "fixture.trebuchet.arm"
+"targetname" "trebuchet_arm"
+"grabbable" "0"
+"density" "2"
+{
+( 224 48 48 ) ( 224 48 64 ) ( 224 80 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 416 80 64 ) ( 416 48 64 ) ( 416 48 48 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 224 48 48 ) ( 416 48 48 ) ( 416 48 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 416 80 64 ) ( 416 80 48 ) ( 224 80 48 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 224 48 48 ) ( 224 80 48 ) ( 416 80 48 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 416 80 64 ) ( 224 80 64 ) ( 224 48 64 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+{
+( 224 40 16 ) ( 224 40 112 ) ( 224 88 112 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 264 88 112 ) ( 264 40 112 ) ( 264 40 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 224 40 16 ) ( 264 40 16 ) ( 264 40 112 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 264 88 112 ) ( 264 88 16 ) ( 224 88 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 224 40 16 ) ( 224 88 16 ) ( 264 88 16 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 264 88 112 ) ( 224 88 112 ) ( 224 40 112 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}
+{
+"classname" "phys_hinge"
+"authoredId" "fixture.trebuchet.hinge"
+"origin" "320 64 56"
+"angles" "0 0 -90"
+"attach1" "trebuchet_arm"
+"limitEnabled" "1"
+"lowerAngle" "-70"
+"upperAngle" "35"
+"motorMode" "target-angle"
+"targetAngle" "-55"
+"frequency" "2"
+"damping" "0.7"
+"maxTorque" "600"
+}
+{
+"classname" "func_physics"
+"authoredId" "fixture.trebuchet.projectile"
+"grabbable" "1"
+"restitution" "0.2"
+{
+( 400 48 72 ) ( 400 48 104 ) ( 400 80 104 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 432 80 104 ) ( 432 48 104 ) ( 432 48 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 400 48 72 ) ( 432 48 72 ) ( 432 48 104 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 432 80 104 ) ( 432 80 72 ) ( 400 80 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 400 48 72 ) ( 400 80 72 ) ( 432 80 72 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+( 432 80 104 ) ( 400 80 104 ) ( 400 48 104 ) GURGUR/METAL [ 1 0 0 0 ] [ 0 1 0 0 ] 0 0.5 0.5
+}
+}

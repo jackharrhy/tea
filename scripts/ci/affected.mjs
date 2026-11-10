@@ -174,6 +174,6 @@ if (
   if (process.env.GITHUB_OUTPUT)
     appendFileSync(
       process.env.GITHUB_OUTPUT,
-      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@tea/cms", "@tea/ref", "@tea/radio", "@tea/burger"].some((name) => checks.includes(name))}\ncms=${checks.includes("@tea/cms")}\nref=${checks.includes("@tea/ref")}\nradio=${checks.includes("@tea/radio")}\npool=${checks.includes("@tea/pool-app")}\nburger=${checks.includes("@tea/burger")}\nmaps_hosted=${mapsHosted}\n`,
+      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@tea/cms", "@tea/ref", "@tea/radio", "@tea/burger"].some((name) => checks.includes(name))}\ncms=${checks.includes("@tea/cms")}\nref=${checks.includes("@tea/ref")}\nradio=${checks.includes("@tea/radio")}\npool=${checks.includes("@tea/pool-app")}\nburger=${checks.includes("@tea/burger")}\ngurgur=${checks.includes("@tea/gurgur")}\nmaps_hosted=${mapsHosted}\n`,
     );
 }

@@ -1,0 +1,45 @@
+// Game: Gurgur
+// Format: Valve
+{
+"classname" "worldspawn"
+"mapversion" "220"
+"message" "Audio Zone Fixture"
+{
+( -128 -128 -16 ) ( -128 -128 0 ) ( -128 128 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( 128 128 0 ) ( 128 -128 0 ) ( 128 -128 -16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( -128 -128 -16 ) ( 128 -128 -16 ) ( 128 -128 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( 128 128 0 ) ( 128 128 -16 ) ( -128 128 -16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( -128 -128 -16 ) ( -128 128 -16 ) ( 128 128 -16 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( 128 128 0 ) ( -128 128 0 ) ( -128 -128 0 ) GURGUR/CONCRETE [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "info_player_start"
+"origin" "0 0 64"
+}
+{
+"classname" "ambient_audio"
+"targetname" "fixture_song"
+"audio" "dylan"
+"volume" "0.8"
+"fadeIn" "0.25"
+"fadeOut" "0.5"
+"loop" "1"
+"priority" "1"
+}
+{
+"classname" "trigger_multiple"
+"authoredId" "trigger.audio.fixture"
+"onEnterTarget" "fixture_song"
+"onEnterInput" "play"
+"onExitTarget" "fixture_song"
+"onExitInput" "stop"
+{
+( -64 -64 0 ) ( -64 -64 128 ) ( -64 64 128 ) GURGUR/TRIGGER [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( 64 64 128 ) ( 64 -64 128 ) ( 64 -64 0 ) GURGUR/TRIGGER [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( -64 -64 0 ) ( 64 -64 0 ) ( 64 -64 128 ) GURGUR/TRIGGER [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( 64 64 128 ) ( 64 64 0 ) ( -64 64 0 ) GURGUR/TRIGGER [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( -64 -64 0 ) ( -64 64 0 ) ( 64 64 0 ) GURGUR/TRIGGER [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+( 64 64 128 ) ( -64 64 128 ) ( -64 -64 128 ) GURGUR/TRIGGER [ 1 0 0 0 ] [ 0 1 0 0 ] 0 1 1
+}
+}

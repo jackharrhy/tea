@@ -29,7 +29,7 @@ import {
   type WorldBundle,
 } from "./world";
 
-export const METRES_PER_MAP_UNIT = 0.0254;
+const METRES_PER_MAP_UNIT = 0.0254;
 const EPSILON = 1e-5;
 
 export type AddedAuthoredId = {

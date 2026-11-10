@@ -37,6 +37,10 @@ jobs:
           bun-version: 1.4.4
       - if: steps.select.outputs.any == 'true'
         run: npm ci
+      - if: steps.select.outputs.gurgur == 'true'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
       - if: steps.select.outputs.any == 'true'
         run: npm run tooling:check
       - if: steps.select.outputs.any == 'true'

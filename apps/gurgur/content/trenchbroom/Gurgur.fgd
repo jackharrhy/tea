@@ -1,0 +1,291 @@
+// Generated from @gurgur/game. Do not edit by hand.
+
+@SolidClass color(92 112 101) = worldspawn : "Static world geometry and environment settings"
+[
+  classname(string) : "Entity class" : "worldspawn"
+  mapversion(float) : "Valve map format version" : "220"
+  message(string) : "World display name" : "Gurgur World"
+  gravity(float) : "Downward gravity in metres per second squared" : "10"
+  skyColor(vector) : "Linear RGB sky color" : "0.08 0.11 0.09"
+]
+
+@PointClass color(80 180 255) size(-16 -16 0, 16 16 72) = info_player_start : "Player spawn transform"
+[
+  classname(string) : "Entity class" : "info_player_start"
+  name(string) : "Spawn identifier" : "default"
+  angle(float) : "Yaw in map-space degrees" : "0"
+]
+
+@SolidClass color(235 174 73) = func_physics : "Dynamic convex physics body"
+[
+  classname(string) : "Entity class" : "func_physics"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional name for constraint attachment"
+  grabbable(choices) : "Allow loose centre-of-mass pickup" : 1 = [ 0 : "No" 1 : "Yes" ]
+  manipulable(choices) : "Allow a fixed-authority body to be pulled through a host control joint" : 1 = [ 0 : "No" 1 : "Yes" ]
+  gravityScale(float) : "Baseline gravity multiplier" : "1"
+  density(float) : "Mass density" : "1"
+  friction(float) : "Surface friction" : "0.6"
+  restitution(float) : "Bounciness" : "0"
+]
+
+@PointClass color(111 184 237) size(-12 -12 -12, 12 12 12) = phys_hinge : "Revolute constraint around authored local Z"
+[
+  classname(string) : "Entity class" : "phys_hinge"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  attach1(target_destination) : "Required first body"
+  attach2(target_destination) : "Optional second body; omitted attaches to world"
+  angles(angle) : "Source-style pitch yaw roll" : "0 0 0"
+  renderable(choices) : "Render an in-world hinge marker" : 1 = [ 0 : "No" 1 : "Yes" ]
+  limitEnabled(choices) : "Enable authored-pose-relative angular limits" : 0 = [ 0 : "No" 1 : "Yes" ]
+  lowerAngle(float) : "Lower angular limit in degrees" : "-90"
+  upperAngle(float) : "Upper angular limit in degrees" : "90"
+  motorMode(choices) : "Motor behavior" : "none" = [ "none" : "None" "friction" : "Friction brake" "target-angle" : "Target angle" "target-velocity" : "Target velocity" ]
+  frictionTorque(float) : "Maximum friction torque" : "0"
+  targetAngle(float) : "Target angle around the authored pose" : "0"
+  targetVelocity(float) : "Target angular velocity in degrees per second" : "90"
+  maxTorque(float) : "Maximum motor torque" : "100"
+  frequency(float) : "Target-angle spring frequency" : "4"
+  damping(float) : "Target-angle damping ratio" : "0.8"
+  startOn(choices) : "Begin with the configured motor enabled" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(88 168 235) size(-12 -12 -12, 12 12 12) = phys_motor : "World-anchored Source-style velocity hinge"
+[
+  classname(string) : "Entity class" : "phys_motor"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  attach1(target_destination) : "Body driven by the motor"
+  angles(angle) : "Source-style pitch yaw roll" : "0 0 0"
+  renderable(choices) : "Render an in-world motor marker" : 1 = [ 0 : "No" 1 : "Yes" ]
+  speed(float) : "Angular speed in degrees per second" : "90"
+  maxTorque(float) : "Maximum motor torque" : "200"
+  startOn(choices) : "Begin enabled" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(115 217 191) size(-12 -12 -12, 12 12 12) = phys_slideconstraint : "Prismatic constraint along authored local X"
+[
+  classname(string) : "Entity class" : "phys_slideconstraint"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  attach1(target_destination) : "Required first body"
+  attach2(target_destination) : "Optional second body; omitted attaches to world"
+  angles(angle) : "Source-style pitch yaw roll" : "0 0 0"
+  renderable(choices) : "Render an in-world slider rail" : 1 = [ 0 : "No" 1 : "Yes" ]
+  limitEnabled(choices) : "Enable authored-pose-relative travel limits" : 0 = [ 0 : "No" 1 : "Yes" ]
+  lowerLimit(float) : "Lower travel limit in map units" : "-64"
+  upperLimit(float) : "Upper travel limit in map units" : "64"
+  motorMode(choices) : "Motor behavior" : "none" = [ "none" : "None" "target-position" : "Target position" "target-velocity" : "Target velocity" ]
+  targetPosition(float) : "Target offset in map units" : "0"
+  targetVelocity(float) : "Target speed in map units per second" : "64"
+  maxForce(float) : "Maximum motor force" : "200"
+  frequency(float) : "Target-position spring frequency" : "4"
+  damping(float) : "Target-position damping ratio" : "0.8"
+  startOn(choices) : "Begin with the configured motor enabled" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(150 195 239) size(-12 -12 -12, 12 12 12) = phys_ballsocket : "Ball-and-socket constraint"
+[
+  classname(string) : "Entity class" : "phys_ballsocket"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  attach1(target_destination) : "Required first body"
+  attach2(target_destination) : "Optional second body; omitted attaches to world"
+  angles(angle) : "Source-style pitch yaw roll" : "0 0 0"
+  renderable(choices) : "Render this constraint in the world" : 1 = [ 0 : "No" 1 : "Yes" ]
+  startOn(choices) : "Create this constraint on reset" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(214 196 110) size(-12 -12 -12, 12 12 12) = phys_lengthconstraint : "Rope or rigid length constraint along local X"
+[
+  classname(string) : "Entity class" : "phys_lengthconstraint"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  attach1(target_destination) : "Required first body"
+  attach2(target_destination) : "Optional second body; omitted attaches to world"
+  angles(angle) : "Source-style pitch yaw roll" : "0 0 0"
+  renderable(choices) : "Render the rope or rod between its anchors" : 1 = [ 0 : "No" 1 : "Yes" ]
+  length(float) : "Authored endpoint distance in map units" : "128"
+  constraintMode(choices) : "Length behavior" : "rope" = [ "rope" : "Rope (maximum length)" "rod" : "Rigid rod" ]
+  startOn(choices) : "Create this constraint on reset" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(237 147 193) size(-12 -12 -12, 12 12 12) = phys_spring : "Spring-configured distance constraint along local X"
+[
+  classname(string) : "Entity class" : "phys_spring"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  attach1(target_destination) : "Required first body"
+  attach2(target_destination) : "Optional second body; omitted attaches to world"
+  angles(angle) : "Source-style pitch yaw roll" : "0 0 0"
+  renderable(choices) : "Render a coiled spring between its anchors" : 1 = [ 0 : "No" 1 : "Yes" ]
+  length(float) : "Authored endpoint distance in map units" : "128"
+  frequency(float) : "Spring frequency" : "4"
+  damping(float) : "Spring damping ratio" : "0.7"
+  maxForce(float) : "Maximum spring force" : "1000"
+  startOn(choices) : "Create this constraint on reset" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(173 173 230) size(-12 -12 -12, 12 12 12) = phys_constraint : "Rigid weld constraint"
+[
+  classname(string) : "Entity class" : "phys_constraint"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  attach1(target_destination) : "Required first body"
+  attach2(target_destination) : "Optional second body; omitted attaches to world"
+  angles(angle) : "Source-style pitch yaw roll" : "0 0 0"
+  renderable(choices) : "Render this constraint in the world" : 1 = [ 0 : "No" 1 : "Yes" ]
+  startOn(choices) : "Create this constraint on reset" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@SolidClass color(235 151 75) = func_conveyor : "Static compound surface motor"
+[
+  classname(string) : "Entity class" : "func_conveyor"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Optional signal target name"
+  direction(vector) : "Map-space travel direction" : "1 0 0"
+  speed(float) : "Surface speed in map units per second" : "128"
+  friction(float) : "Surface friction" : "0.8"
+  startOn(choices) : "Begin enabled" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@SolidClass color(157 111 224) = trigger_gravity : "Compound gravity-factor trigger volume"
+[
+  classname(string) : "Entity class" : "trigger_gravity"
+  gravityFactor(float) : "Multiplier applied to baseline gravity" : "0.5"
+  priority(float) : "Highest overlapping priority wins" : "0"
+]
+
+@SolidClass color(105 190 155) = func_door : "Signal-driven kinematic sliding door"
+[
+  classname(string) : "Entity class" : "func_door"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Name other entities can target"
+  moveDirection(vector) : "Map-space movement direction" : "0 0 1"
+  distance(float) : "Travel distance in map units" : "128"
+  speed(float) : "Travel speed in map units per second" : "96"
+  wait(float) : "Seconds before returning; -1 stays open" : "2"
+  startOpen(choices) : "Begin at the travelled endpoint" : 0 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@SolidClass color(88 166 196) = func_platform : "Signal-driven kinematic moving platform"
+[
+  classname(string) : "Entity class" : "func_platform"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Name other entities can target"
+  moveDirection(vector) : "Map-space movement direction" : "0 0 1"
+  distance(float) : "Travel distance in map units" : "128"
+  speed(float) : "Travel speed in map units per second" : "64"
+  wait(float) : "Seconds before returning; -1 stays open" : "1"
+  startOpen(choices) : "Begin at the travelled endpoint" : 0 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@SolidClass color(196 105 184) = trigger_once : "Sensor that emits its enter output once per world epoch"
+[
+  classname(string) : "Entity class" : "trigger_once"
+  authoredId(string) : "Stable unique persistence identity"
+  onEnterTarget(target_destination) : "Entity targetname to receive the enter input"
+  onEnterInput(choices) : "Typed input sent when a player enters" : "trigger" = [ "trigger" : "trigger" "open" : "open" "close" : "close" "play" : "play" "stop" : "stop" "enable" : "enable" "disable" : "disable" "toggle" : "toggle" "reverse" : "reverse" ]
+  onExitTarget(target_destination) : "Entity targetname to receive the exit input"
+  onExitInput(choices) : "Typed input sent when a player exits" : "trigger" = [ "trigger" : "trigger" "open" : "open" "close" : "close" "play" : "play" "stop" : "stop" "enable" : "enable" "disable" : "disable" "toggle" : "toggle" "reverse" : "reverse" ]
+  wait(float) : "Minimum seconds between signals" : "0"
+]
+
+@SolidClass color(179 112 211) = trigger_multiple : "Repeatable sensor output source"
+[
+  classname(string) : "Entity class" : "trigger_multiple"
+  authoredId(string) : "Stable unique persistence identity"
+  onEnterTarget(target_destination) : "Entity targetname to receive the enter input"
+  onEnterInput(choices) : "Typed input sent when a player enters" : "trigger" = [ "trigger" : "trigger" "open" : "open" "close" : "close" "play" : "play" "stop" : "stop" "enable" : "enable" "disable" : "disable" "toggle" : "toggle" "reverse" : "reverse" ]
+  onExitTarget(target_destination) : "Entity targetname to receive the exit input"
+  onExitInput(choices) : "Typed input sent when a player exits" : "trigger" = [ "trigger" : "trigger" "open" : "open" "close" : "close" "play" : "play" "stop" : "stop" "enable" : "enable" "disable" : "disable" "toggle" : "toggle" "reverse" : "reverse" ]
+  wait(float) : "Minimum seconds between signals" : "0.5"
+]
+
+@PointClass color(234 116 116) size(-16 -16 -16, 16 16 16) = logic_relay : "Typed mechanism signal relay"
+[
+  classname(string) : "Entity class" : "logic_relay"
+  authoredId(string) : "Stable unique persistence identity"
+  targetname(target_source) : "Name other entities can target"
+  target(target_destination) : "Entity targetname to signal"
+  delay(float) : "Seconds before forwarding" : "0"
+  once(choices) : "Forward only once per epoch" : 0 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@SolidClass color(232 112 79) = func_button : "Use-activated physical signal source"
+[
+  classname(string) : "Entity class" : "func_button"
+  authoredId(string) : "Stable unique persistence identity"
+  target(target_destination) : "Entity targetname to signal"
+  wait(float) : "Minimum seconds between uses" : "1"
+]
+
+@PointClass color(255 72 72) size(-24 -24 -24, 24 24 24) = info_world_reset : "Administrative reset marker and safe observer spawn"
+[
+  classname(string) : "Entity class" : "info_world_reset"
+  label(string) : "Administrative display label" : "Reset world"
+]
+
+@PointClass color(119 218 172) size(-16 -16 0, 16 16 64) = env_sprite : "Camera-facing decorative sprite"
+[
+  classname(string) : "Entity class" : "env_sprite"
+  sprite(string) : "Logical sprite asset ID" : "fern"
+  scale(float) : "Sprite height in map units" : "64"
+  glow(choices) : "Render without scene lighting" : 0 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(164 190 176) size(-12 -12 -12, 12 12 12) = light_ambient : "Scene-wide ambient light and volumetric medium"
+[
+  classname(string) : "Entity class" : "light_ambient"
+  color(vector) : "Linear RGB light color" : "0.45 0.5 0.48"
+  intensity(float) : "Ambient light intensity" : "0.65"
+  volumeDensity(float) : "World volumetric medium density" : "0.06"
+]
+
+@PointClass color(255 224 154) size(-16 -16 -16, 16 16 16) = light_directional : "Infinite directional scene light centered for shadow coverage"
+[
+  classname(string) : "Entity class" : "light_directional"
+  color(vector) : "Linear RGB light color" : "1 0.88 0.65"
+  intensity(float) : "Directional light intensity" : "1"
+  direction(vector) : "Map-space direction the light travels" : "0.35 -0.45 -1"
+  castShadow(choices) : "Cast a shadow map" : 1 = [ 0 : "No" 1 : "Yes" ]
+  shadowDistance(float) : "Shadow coverage radius in map units" : "1024"
+]
+
+@PointClass color(255 189 96) size(-10 -10 -10, 10 10 10) = light_point : "Finite point light with optional volumetric scattering"
+[
+  classname(string) : "Entity class" : "light_point"
+  color(vector) : "Linear RGB light color" : "1 0.72 0.42"
+  intensity(float) : "Point light intensity" : "60"
+  range(float) : "Maximum light distance in map units" : "512"
+  decay(float) : "Distance decay exponent" : "2"
+  castShadow(choices) : "Cast a cube shadow map" : 1 = [ 0 : "No" 1 : "Yes" ]
+  volumetric(choices) : "Scatter through the ambient volumetric medium" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(255 154 72) size(-12 -12 -12, 12 12 12) = light_spot : "Finite cone light with optional volumetric scattering"
+[
+  classname(string) : "Entity class" : "light_spot"
+  color(vector) : "Linear RGB light color" : "1 0.62 0.3"
+  intensity(float) : "Spot light intensity" : "100"
+  direction(vector) : "Map-space direction the light travels" : "0 0 -1"
+  range(float) : "Maximum light distance in map units" : "640"
+  decay(float) : "Distance decay exponent" : "2"
+  angle(float) : "Outer cone angle in degrees" : "32"
+  penumbra(float) : "Soft cone fraction" : "0.45"
+  castShadow(choices) : "Cast a cone shadow map" : 1 = [ 0 : "No" 1 : "Yes" ]
+  volumetric(choices) : "Scatter through the ambient volumetric medium" : 1 = [ 0 : "No" 1 : "Yes" ]
+]
+
+@PointClass color(104 205 245) size(-16 -16 -16, 16 16 16) = ambient_audio : "Per-listener audio controlled by typed trigger outputs"
+[
+  classname(string) : "Entity class" : "ambient_audio"
+  targetname(target_source) : "Name other entities can target"
+  audio(string) : "Logical audio asset ID" : "dylan"
+  volume(float) : "Playback volume" : "1"
+  fadeIn(float) : "Fade-in duration in seconds" : "0.75"
+  fadeOut(float) : "Fade-out duration in seconds" : "1"
+  loop(choices) : "Loop while the listener remains in a targeting volume" : 1 = [ 0 : "No" 1 : "Yes" ]
+  priority(float) : "Winner when different audio volumes overlap" : "0"
+]

@@ -311,8 +311,9 @@ export function choiceProperty<const T extends string>(
 }
 
 export const METRES_PER_MAP_UNIT = 0.0254;
+const canonicalZero = (value: number): number => (value === 0 ? 0 : value);
 
-export function mapDistanceProperty(
+function mapDistanceProperty(
   description: string,
   options: PropertyOptions<number> & { min?: number; max?: number } = {},
 ): EntityProperty<number> {
@@ -323,7 +324,7 @@ export function mapDistanceProperty(
   };
 }
 
-export const mapSpeedProperty = mapDistanceProperty;
+const mapSpeedProperty = mapDistanceProperty;
 
 export function yawAngleProperty(
   description: string,
@@ -416,11 +417,10 @@ function mapDirectionProperty(
       const length = Math.hypot(world.x, world.y, world.z);
       if (length === 0)
         throw new Error(`${sourceLabel(source)} must not be zero`);
-      const canonical = (value: number): number => (value === 0 ? 0 : value);
       return {
-        x: canonical(world.x / length),
-        y: canonical(world.y / length),
-        z: canonical(world.z / length),
+        x: canonicalZero(world.x / length),
+        y: canonicalZero(world.y / length),
+        z: canonicalZero(world.z / length),
       };
     },
   };
