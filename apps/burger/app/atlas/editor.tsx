@@ -46,6 +46,15 @@ const layout = css({
   "& label": { display: "flex", gap: "8px", alignItems: "center" },
   "& input[type=text]": { minWidth: "0" },
 });
+const embeddedLayout = css({
+  height: "100%",
+  minHeight: "0",
+  padding: "8px 10px",
+  gap: "6px",
+  background: "transparent",
+  color: "#ddd",
+  "& button, & select, & input": { background: "#222", borderColor: "#444" },
+});
 const toolbar = css({
   display: "flex",
   flexWrap: "wrap",
@@ -54,6 +63,12 @@ const toolbar = css({
   padding: "10px",
   background: "#18221b",
 });
+const embeddedToolbar = css({
+  background: "transparent",
+  padding: "2px 0",
+  "& button, & select": { minHeight: "0", padding: "2px 6px" },
+});
+const embeddedPane = css({ background: "transparent", padding: "0" });
 const panes = css({
   display: "grid",
   gridTemplateColumns: "minmax(0, 1fr) minmax(250px, 320px)",
@@ -99,7 +114,7 @@ async function request<T>(
 
 export const AtlasEditor = clientEntry(
   "file:///app/atlas/editor.tsx#AtlasEditor",
-  function AtlasEditor(handle: Handle) {
+  function AtlasEditor(handle: Handle<{ embedded?: boolean }>) {
     let signal: AbortSignal | null = null;
     let user: Me | null = null;
     let loading = true;
@@ -238,6 +253,7 @@ export const AtlasEditor = clientEntry(
       <main
         mix={[
           layout,
+          handle.props.embedded && embeddedLayout,
           ref((_node, mountedSignal) => {
             signal = mountedSignal;
             void (async () => {
@@ -269,17 +285,23 @@ export const AtlasEditor = clientEntry(
           }),
         ]}
       >
-        <header mix={toolbar}>
-          <a href="/">← World</a>
-          <h1>Burger atlas</h1>
-          {user?.isAdmin && <span>{user.displayName ?? user.username}</span>}
-        </header>
+        {!handle.props.embedded && (
+          <header mix={toolbar}>
+            <a href="/">← World</a>
+            <h1>Burger atlas</h1>
+            {user?.isAdmin && <span>{user.displayName ?? user.username}</span>}
+          </header>
+        )}
         {error && <p role="alert">{error}</p>}
         {loading ? (
           <p>Loading atlas…</p>
         ) : !user?.isAdmin || !atlas ? null : (
           <>
-            <div mix={toolbar} role="toolbar" aria-label="Atlas controls">
+            <div
+              mix={[toolbar, handle.props.embedded && embeddedToolbar]}
+              role="toolbar"
+              aria-label="Atlas controls"
+            >
               <label>
                 Fill empty cells
                 <select
@@ -324,7 +346,10 @@ export const AtlasEditor = clientEntry(
               </span>
             </div>
             <div mix={panes}>
-              <section mix={gridPane} aria-label="Atlas grid">
+              <section
+                mix={[gridPane, handle.props.embedded && embeddedPane]}
+                aria-label="Atlas grid"
+              >
                 <div
                   style={{
                     position: "relative",
@@ -395,7 +420,10 @@ export const AtlasEditor = clientEntry(
                   )}
                 </div>
               </section>
-              <section mix={formPane} aria-label="Selected tile">
+              <section
+                mix={[formPane, handle.props.embedded && embeddedPane]}
+                aria-label="Selected tile"
+              >
                 <h2>Tile details</h2>
                 {!selected ? (
                   <p>Select a cell to edit.</p>

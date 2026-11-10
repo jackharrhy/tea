@@ -18,7 +18,7 @@ export const BurgerGame = clientEntry(
           });
           const status = document.getElementById("burger-status");
           const login = document.getElementById("burger-login");
-          const logout = document.getElementById("burger-logout");
+          const entry = document.getElementById("burger-entry");
           void fetch("/auth/me", {
             signal: lifetime.signal,
             credentials: "same-origin",
@@ -46,12 +46,11 @@ export const BurgerGame = clientEntry(
               ]);
               if (lifetime.signal.aborted) return;
               useGameStore.getState().setPalette(palette.ids);
-              if (status)
-                status.textContent = `Playing as ${user.displayName ?? user.username}`;
-              if (login) login.hidden = true;
-              if (logout) logout.hidden = false;
               const stop = startGame(parent, user);
               lifetime.signal.addEventListener("abort", stop, { once: true });
+              if (status) status.textContent = "";
+              if (login) login.hidden = true;
+              if (entry) entry.hidden = true;
             })
             .catch((error) => {
               if (lifetime.signal.aborted) return;

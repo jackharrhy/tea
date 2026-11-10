@@ -199,16 +199,43 @@ try {
   await adminAtlas.close();
   await admin.page.getByRole("toolbar", { name: "Burger tools" }).waitFor();
   await admin.page.getByRole("button", { name: "Palette" }).click();
-  await admin.page.getByRole("region", { name: "palette tools" }).waitFor();
+  await admin.page.getByRole("dialog", { name: "Palette" }).waitFor();
   assert(
     (await admin.page
-      .locator('[aria-label="palette tools"] button[aria-pressed]')
+      .locator('[data-burger-window="palette"] button[aria-pressed]')
       .count()) >= 3,
+  );
+  const paletteWindow = admin.page.locator('[data-burger-window="palette"]');
+  const paletteBefore = await paletteWindow.boundingBox();
+  assert(paletteBefore);
+  await admin.page.mouse.move(paletteBefore.x + 50, paletteBefore.y + 14);
+  await admin.page.mouse.down();
+  await admin.page.mouse.move(paletteBefore.x + 110, paletteBefore.y + 54);
+  await admin.page.mouse.up();
+  const paletteMoved = await paletteWindow.boundingBox();
+  assert(paletteMoved && paletteMoved.x > paletteBefore.x + 40);
+  const grip = paletteWindow.locator("[data-window-resize]");
+  const gripBefore = await grip.boundingBox();
+  assert(gripBefore);
+  await admin.page.mouse.move(gripBefore.x + 8, gripBefore.y + 8);
+  await admin.page.mouse.down();
+  await admin.page.mouse.move(gripBefore.x + 48, gripBefore.y + 38);
+  await admin.page.mouse.up();
+  const paletteResized = await paletteWindow.boundingBox();
+  assert(paletteResized && paletteResized.width > paletteMoved.width + 20);
+  await admin.page.getByRole("button", { name: "Atlas", exact: true }).click();
+  await admin.page.getByRole("dialog", { name: "Atlas" }).waitFor();
+  await admin.page.getByRole("region", { name: "Atlas grid" }).waitFor();
+  assert.equal(await admin.page.getByRole("dialog").count(), 2);
+  await admin.page.getByRole("button", { name: "Close Atlas" }).click();
+  assert.equal(
+    await admin.page.getByRole("dialog", { name: "Atlas" }).count(),
+    0,
   );
   await admin.page.getByRole("button", { name: "Zones" }).click();
   await admin.page.getByRole("button", { name: /Fixture Counter/ }).waitFor();
   await admin.page.getByRole("button", { name: /Fixture Counter/ }).click();
-  await admin.page.getByRole("button", { name: "Zone brush [Z]" }).click();
+  await admin.page.keyboard.press("z");
   assert.equal(
     await admin.page.evaluate(() => window.context.zones.active),
     true,
@@ -217,21 +244,17 @@ try {
   await admin.page.getByText("Active bots:").waitFor();
   await admin.page.getByRole("button", { name: "Spawn", exact: true }).click();
   await admin.page.getByRole("button", { name: "Save spawn" }).waitFor();
-  await member.page.getByRole("button", { name: "Paint [E]" }).waitFor();
+  await member.page.getByRole("button", { name: "Palette" }).waitFor();
   assert.equal(
     await member.page.getByRole("button", { name: "Zones" }).count(),
     0,
   );
-  assert.equal(
-    await member.page.getByRole("button", { name: "Paint [E]" }).isEnabled(),
-    true,
-  );
-  await member.page.getByRole("button", { name: "Paint [E]" }).click();
+  await member.page.keyboard.press("e");
   assert.equal(
     await member.page.evaluate(() => window.context.editor?.active),
     true,
   );
-  await member.page.getByRole("button", { name: "Paint [E]" }).click();
+  await member.page.keyboard.press("e");
   assert.equal(
     await member.page.evaluate(() => window.context.editor?.active),
     false,
