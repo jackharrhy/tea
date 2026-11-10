@@ -91,6 +91,10 @@ try {
   const document = await fetch(origin);
   assert.equal(document.status, 200);
   assert.match(await document.text(), /Burger · Tea/);
+  await waitFor(
+    async () => (await fetch(`${origin}/assets/game.js`)).ok,
+    "Burger static assets",
+  );
   for (const path of [
     "/assets/game.js",
     "/assets/burger.css",
