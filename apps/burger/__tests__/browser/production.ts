@@ -34,6 +34,7 @@ const businessRows = () =>
     ]),
   );
 const before = businessRows();
+let expectedCatalog: unknown = null;
 database.close();
 
 async function freePort(): Promise<number> {
@@ -154,6 +155,43 @@ try {
   }
   const admin = await player("fixture-admin-session");
   const member = await player("fixture-member-session");
+  const memberAtlas = await member.context.newPage();
+  await memberAtlas.goto(`${origin}/atlas`);
+  await memberAtlas
+    .getByRole("alert")
+    .getByText("An administrator account is required.")
+    .waitFor();
+  assert.equal(
+    await memberAtlas.getByRole("region", { name: "Atlas grid" }).count(),
+    0,
+  );
+  await memberAtlas.close();
+
+  const adminAtlas = await admin.context.newPage();
+  await adminAtlas.goto(`${origin}/atlas`);
+  await adminAtlas.getByRole("region", { name: "Atlas grid" }).waitFor();
+  await adminAtlas.getByRole("button", { name: "wall tile 0, 0" }).click();
+  await adminAtlas
+    .getByRole("textbox", { name: "Label" })
+    .fill("Fixture wall edited");
+  await adminAtlas
+    .getByRole("button", { name: /Save \(unsaved changes\)/ })
+    .click();
+  await adminAtlas.getByRole("button", { name: "Save", exact: true }).waitFor();
+  const savedCatalog = await adminAtlas.evaluate(async () =>
+    (await fetch("/api/catalog")).json(),
+  );
+  assert.equal(
+    savedCatalog.find((entry: { id: number; label: string }) => entry.id === 1)
+      ?.label,
+    "Fixture wall edited",
+  );
+  const catalogDb = new Database(databasePath);
+  expectedCatalog = catalogDb
+    .query("SELECT * FROM tile_catalog ORDER BY rowid")
+    .all();
+  catalogDb.close();
+  await adminAtlas.close();
   await admin.page.getByRole("toolbar", { name: "Burger tools" }).waitFor();
   await admin.page.getByRole("button", { name: "Palette" }).click();
   await admin.page.getByRole("region", { name: "palette tools" }).waitFor();
@@ -240,7 +278,7 @@ try {
   );
   assert.deepEqual(browserErrors, []);
   console.log(
-    "Burger browser smoke passed: Remix/Pixi mount, assets, two sessions, movement, navigation and disconnect.",
+    "Burger browser smoke passed: Remix/Pixi mount, assets, two sessions, atlas admin edit/member denial, movement, navigation and disconnect.",
   );
 } finally {
   for (const context of contexts) await context.close().catch(() => {});
@@ -257,7 +295,10 @@ try {
         afterDb.query(`SELECT * FROM ${table} ORDER BY rowid`).all(),
       ]),
     ),
-    before,
+    {
+      ...before,
+      ...(expectedCatalog ? { tile_catalog: expectedCatalog } : {}),
+    },
   );
   assert.deepEqual(afterDb.query("PRAGMA foreign_key_check").all(), []);
   assert.equal(

@@ -10,6 +10,7 @@ export default defineConfig({
         game: "app/game/entry.ts",
         "burger-game": "app/game/burger-game.tsx",
         "burger-tools": "app/game/burger-tools.tsx",
+        "burger-atlas": "app/atlas/editor.tsx",
       },
       formats: ["es"],
       fileName: (_format, name) => `assets/${name}.js`,

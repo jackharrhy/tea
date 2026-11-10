@@ -1,3 +1,3 @@
 import { get, route } from "remix/routes";
 
-export const routes = route({ home: get("/") });
+export const routes = route({ home: get("/"), atlas: get("/atlas") });

@@ -3,6 +3,13 @@ import { run } from "remix/component";
 
 run({
   async loadModule(moduleUrl, exportName) {
+    if (
+      moduleUrl === "/assets/burger-atlas.js" &&
+      exportName === "AtlasEditor"
+    ) {
+      const module = await import("../atlas/editor");
+      return module.AtlasEditor;
+    }
     if (moduleUrl !== "/assets/burger-game.js" || exportName !== "BurgerGame")
       if (
         moduleUrl === "/assets/burger-tools.js" &&

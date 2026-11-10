@@ -16,6 +16,12 @@ const router = createRouter<AppContext>({
     render({
       assets: {
         async getScriptEntry(sourceId) {
+          if (sourceId === "file:///app/atlas/editor.tsx")
+            return {
+              href: "/assets/burger-atlas.js",
+              preloads: [],
+              importMap: { imports: {} },
+            };
           if (sourceId === "file:///app/game/burger-tools.tsx")
             return {
               href: "/assets/burger-tools.js",

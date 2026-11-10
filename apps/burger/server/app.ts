@@ -166,6 +166,7 @@ export const buildApp = (deps: AppDeps) => {
     )
     .use(authRoutes({ db, config: authConfig }))
     .get("/", ({ request }) => router.fetch(request))
+    .get("/atlas", ({ request }) => router.fetch(request))
     .get("/login", ({ set }) => {
       set.status = 302;
       set.headers.location = "/auth/login";

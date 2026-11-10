@@ -333,6 +333,7 @@ export const BurgerTools = clientEntry(
                 </button>
                 {user.isAdmin && (
                   <>
+                    <a href="/atlas">Atlas</a>
                     <button
                       type="button"
                       aria-pressed={panel === "zones"}
