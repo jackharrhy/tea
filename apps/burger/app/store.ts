@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla";
 import { eden } from "./eden";
 import type { Me } from "./types";
 
@@ -109,7 +109,7 @@ type GameStore = {
   setWindowSize: (id: string, w: number, h: number) => void;
 };
 
-export const useGameStore = create<GameStore>((set) => ({
+export const useGameStore = createStore<GameStore>((set) => ({
   user: null,
   editor: null,
   metrics: {

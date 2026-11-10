@@ -43,10 +43,10 @@
  *    SoA broadcast carries their Position/Tile field values.
  */
 
-import { existsSync } from "node:fs";
 import type { Database } from "bun:sqlite";
-import { Elysia, file, t } from "elysia";
+import { Elysia, t } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
+import { router } from "../app/router";
 import {
   MESSAGE_TYPES,
   PROTOCOL_VERSION,
@@ -157,45 +157,21 @@ export const buildApp = (deps: AppDeps) => {
     }
   };
 
-  const indexExists = existsSync("./public/index.html");
-
   return (
     new Elysia()
       .use(
         staticPlugin({
-          assets: "./public/assets",
+          assets: process.env.WEB_ROOT
+            ? `${process.env.WEB_ROOT}/assets`
+            : "./public/assets",
           prefix: "/assets",
         }),
       )
       .use(authRoutes({ db, config: authConfig }))
-      // SPA route fallbacks. In production, serves the bundled index.html for
-      // every client-side route so React Router can take over. In dev, redirects
-      // to the vite dev server which serves the SPA at :5173 (with /auth, /api,
-      // /ws proxied back to this server).
-      //
-      // index.html is served with `Cache-Control: no-store` so the browser
-      // never caches it. The bundled JS/CSS it points to ARE content-hashed
-      // (vite handles those, served via staticPlugin with max-age=86400), so
-      // a fresh HTML load picks up the latest hash and the user gets the
-      // newest bundle without manual cache busting.
-      .get("/", ({ set }) => {
-        if (indexExists) {
-          set.headers["cache-control"] = "no-store";
-          return file("./public/index.html");
-        }
-        set.status = 302;
-        set.headers["location"] =
-          process.env.VITE_DEV_URL ?? "http://localhost:5173";
-        return "";
-      })
+      .get("/", ({ request }) => router.fetch(request))
       .get("/login", ({ set }) => {
-        if (indexExists) {
-          set.headers["cache-control"] = "no-store";
-          return file("./public/index.html");
-        }
         set.status = 302;
-        set.headers["location"] =
-          process.env.VITE_DEV_URL ?? "http://localhost:5173";
+        set.headers.location = "/auth/login";
         return "";
       })
       .get("/api/atlas", () => ({

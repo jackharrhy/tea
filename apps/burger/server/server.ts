@@ -127,7 +127,7 @@ const idleTick = () => {
   }
 };
 
-const SERVER_PORT = 5000;
+const SERVER_PORT = Number(process.env.PORT ?? 5000);
 
 createServer({
   port: SERVER_PORT,

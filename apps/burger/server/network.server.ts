@@ -99,8 +99,11 @@ export const createServer = (
   );
   soaSerializer = createSoASerializer(networkedComponents);
 
-  if (!existsSync("./public/assets")) {
-    mkdirSync("./public/assets", { recursive: true });
+  const assetRoot = process.env.WEB_ROOT
+    ? `${process.env.WEB_ROOT}/assets`
+    : "./public/assets";
+  if (!existsSync(assetRoot)) {
+    mkdirSync(assetRoot, { recursive: true });
   }
 
   const app = buildApp(deps).listen(deps.port);

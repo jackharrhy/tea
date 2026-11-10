@@ -29,12 +29,11 @@ export type WorldExtras = {
   cellToZone: Map<string, number>;
 };
 
-// Try a couple of well-known locations for atlas.png and hash whichever we
-// find. The path differs between dev (sibling client package) and prod
-// (copied into burger-server's public dir by `pnpm copy-frontend`).
 const ATLAS_CANDIDATE_PATHS = [
-  "./public/assets/atlas.png", // prod (copy-frontend output)
-  "../burger-client/public/assets/atlas.png", // dev (sibling package)
+  ...(process.env.WEB_ROOT
+    ? [`${process.env.WEB_ROOT}/assets/atlas.png`]
+    : []),
+  "./public/assets/atlas.png",
 ];
 
 const computeAtlasVersion = (): string => {
