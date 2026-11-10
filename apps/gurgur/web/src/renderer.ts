@@ -1770,8 +1770,12 @@ export class WorldRenderer {
       const mesh = this.#meshes.get(identity);
       if (identity === idKey(local.id) || this.#predictedBodyIds.has(identity))
         return body;
-      // Remote players retain buffered motion; nearby rigid bodies match collision poses.
-      if (mesh?.userData.playerBillboard) return body;
+      // A remote holder and their prop must stay on the same playback timeline.
+      if (
+        mesh?.userData.playerBillboard ||
+        ((body.flags ?? 0) & NETWORK_FLAG_HELD) !== 0
+      )
+        return body;
       let interaction = this.#interactionPresentations.get(identity);
       if (!interaction) {
         interaction = {

@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { PresentationBuffer } from "../../web/src/presentation";
 import {
   PHYSICS_HZ,
+  NETWORK_FLAG_AWAKE,
+  NETWORK_FLAG_HELD,
   RENDER_INTERPOLATION_MIN_TICKS,
   type NetworkBodyState,
   type NetworkPlayerState,
@@ -31,6 +33,17 @@ const yaw = (angle: number) => ({
   y: Math.sin(angle / 2),
   z: 0,
   w: Math.cos(angle / 2),
+});
+
+const playerState = (sequence: number, x: number): NetworkPlayerState => ({
+  ...state(sequence, x),
+  kind: "player",
+  yaw: 0,
+  verticalVelocity: 0,
+  grounded: true,
+  crouched: false,
+  lastJumpCounter: 0,
+  stepCooldown: 0,
 });
 
 describe("source-tick proxy presentation", () => {
@@ -169,6 +182,91 @@ describe("source-tick proxy presentation", () => {
     expect(presentation.sample(100)[0]!.position.x).toBe(7);
   });
 
+  test("fills a brief remote player packet gap and stops extrapolating after three ticks", () => {
+    const presentation = new PresentationBuffer();
+    presentation.updateClock(0, 0, 0);
+    presentation.pushNetwork([playerState(0, 0)], 0);
+    presentation.pushNetwork([playerState(1, 0.1)], 1_000 / 30);
+    const at = (tick: number) =>
+      presentation.sample((tick / PHYSICS_HZ) * 1_000)[0]!.position.x;
+    expect(at(7)).toBeCloseTo(0.15);
+    expect(at(8)).toBeCloseTo(0.2);
+    expect(at(9)).toBeCloseTo(0.25);
+    expect(at(10)).toBeCloseTo(0.25);
+  });
+
+  test("a late stop packet settles an extrapolated remote player without a frame snap", () => {
+    const presentation = new PresentationBuffer();
+    presentation.updateClock(0, 0, 0);
+    presentation.pushNetwork([playerState(0, 0)], 0);
+    presentation.pushNetwork(
+      [{ ...playerState(1, 0.1), rotation: yaw(0.2) }],
+      1_000 / 30,
+    );
+    const arrivalMs = (10 / PHYSICS_HZ) * 1_000;
+    const before = presentation.sample(arrivalMs)[0]!;
+    presentation.pushNetwork(
+      [{ ...playerState(2, 0.1), sourceTick: 4, rotation: yaw(0.2) }],
+      arrivalMs,
+    );
+    const after = presentation.sample(arrivalMs)[0]!;
+    expect(after.position.x).toBeCloseTo(before.position.x);
+    expect(after.rotation.y).toBeCloseTo(before.rotation.y);
+    expect(presentation.sample(arrivalMs + 60)[0]!.position.x).toBeGreaterThan(
+      0.1,
+    );
+    const settled = presentation.sample(arrivalMs + 130)[0]!;
+    expect(settled.position.x).toBeCloseTo(0.1);
+    expect(settled.rotation.y).toBeCloseTo(yaw(0.2).y);
+  });
+
+  test("remote players and held props use one playback delay while loose bodies stay independent", () => {
+    const presentation = new PresentationBuffer();
+    presentation.updateClock(20, 1_000, 0);
+    presentation.pushNetwork(
+      [
+        { ...playerState(6, 6), sourceTick: 12 },
+        {
+          ...state(10, 10),
+          id: { index: 2, generation: 1 },
+          flags: NETWORK_FLAG_HELD,
+        },
+        {
+          ...state(10, 10),
+          id: { index: 3, generation: 1 },
+          flags: NETWORK_FLAG_AWAKE,
+        },
+      ],
+      1_000,
+    );
+    presentation.pushNetwork(
+      [
+        { ...playerState(7, 7), sourceTick: 14 },
+        {
+          ...state(11, 11),
+          id: { index: 2, generation: 1 },
+          flags: NETWORK_FLAG_HELD,
+        },
+        {
+          ...state(11, 11),
+          id: { index: 3, generation: 1 },
+          flags: NETWORK_FLAG_AWAKE,
+        },
+      ],
+      1_000.1,
+    );
+    presentation.sample(1_020);
+    const playerDelay = presentation.trackDelayTicks({
+      index: 1,
+      generation: 1,
+    })!;
+    expect(playerDelay).toBeGreaterThan(4);
+    expect(presentation.trackDelayTicks({ index: 2, generation: 1 })).toBe(
+      playerDelay,
+    );
+    expect(presentation.trackDelayTicks({ index: 3, generation: 1 })).toBe(4);
+  });
+
   test("keeps authoritative corrections beneath a local track and removes both together", () => {
     const presentation = new PresentationBuffer();
     presentation.pushNetwork([state(1, 3)], 10);
@@ -263,7 +361,7 @@ describe("fixed-step predicted-body presentation", () => {
     }
   });
 
-  test("the local player stays immediate while its prop interpolates", () => {
+  test("local player and held prop share the immediate timeline while loose props interpolate", () => {
     const presentation = new PresentationBuffer();
     const player = (sequence: number): NetworkPlayerState => ({
       ...state(sequence, sequence),
@@ -276,13 +374,27 @@ describe("fixed-step predicted-body presentation", () => {
       lastJumpCounter: 0,
       stepCooldown: 0,
     });
-    presentation.pushLocal([state(0, 0), player(0)], 0);
-    presentation.pushLocal([state(1, 1), player(1)], stepMs);
+    const held = (sequence: number) => ({
+      ...state(sequence, sequence),
+      id: { index: 3, generation: 1 },
+      flags: NETWORK_FLAG_HELD,
+    });
+    presentation.pushLocal([state(0, 0), player(0), held(0)], 0);
+    presentation.pushLocal([state(1, 1), player(1), held(1)], stepMs);
     const samples = presentation.sample(1.5 * stepMs);
     expect(
       samples.find((sample) => sample.id.index === 1)!.position.x,
     ).toBeCloseTo(0.5);
-    expect(samples.find((sample) => sample.id.index === 2)!.position.x).toBe(1);
+    expect(
+      samples.find((sample) => sample.id.index === 2)!.position.x,
+    ).toBeCloseTo(1.5);
+    expect(
+      samples.find((sample) => sample.id.index === 3)!.position.x,
+    ).toBeCloseTo(1.5);
+    expect(
+      presentation.sample(10 * stepMs).find((sample) => sample.id.index === 2)!
+        .position.x,
+    ).toBe(2);
   });
 
   test("rebases both interpolation endpoints before applying a reconciliation offset", () => {

@@ -10,6 +10,7 @@ import {
   type BodySnapshot,
   type NetworkObjectState,
   type RuntimeId,
+  type Vec3,
 } from "@tea/gurgur-engine";
 import { Quaternion } from "three";
 
@@ -28,6 +29,11 @@ type NetworkTrack = {
   underrunSamples: number;
   latenessSamples: Array<{ receivedAtMs: number; ticks: number }>;
   samples: TimedState[];
+  visualCorrection: {
+    offset: Vec3;
+    rotation: BodySnapshot["rotation"];
+    startedAtMs: number;
+  } | null;
 };
 
 type LocalSample = { producedAtMs: number; state: NetworkObjectState };
@@ -48,6 +54,9 @@ const LATENESS_WINDOW_MS = 10_000;
 const UNDERRUN_HOLD_MS = 500;
 const DELAY_BUILD_RATE_TICKS_PER_TICK = 0.9;
 const DELAY_RELEASE_RATE_TICKS_PER_SECOND = 2;
+const MAX_REMOTE_EXTRAPOLATION_TICKS = 3;
+const REMOTE_CORRECTION_MS = 120;
+const MAX_REMOTE_CORRECTION_METRES = 0.5;
 
 export class PresentationBuffer {
   readonly #networkTracks = new Map<string, NetworkTrack>();
@@ -102,6 +111,14 @@ export class PresentationBuffer {
       } else {
         const latest = track.samples.at(-1)!;
         if (latest.state.stateSequence === state.stateSequence) continue;
+        const previousPresentation = presentedNetworkTrack(
+          track,
+          this.#clockTick(track, receivedAtMs) -
+            (sharedActorTrack(track)
+              ? sharedActorDelay(this.#networkTracks.values())
+              : track.delayTicks),
+          receivedAtMs,
+        );
         const timelineTick = unwrapTick32(
           state.sourceTick,
           latest.timelineTick,
@@ -117,6 +134,38 @@ export class PresentationBuffer {
           track.samples[1]!.timelineTick < cutoff
         )
           track.samples.shift();
+        const nextPresentation = sampleTrack(
+          track,
+          this.#clockTick(track, receivedAtMs) -
+            (sharedActorTrack(track)
+              ? sharedActorDelay(this.#networkTracks.values())
+              : track.delayTicks),
+        );
+        const offset = {
+          x: previousPresentation.position.x - nextPresentation.position.x,
+          y: previousPresentation.position.y - nextPresentation.position.y,
+          z: previousPresentation.position.z - nextPresentation.position.z,
+        };
+        const distance = Math.hypot(offset.x, offset.y, offset.z);
+        const rotation = quaternion(previousPresentation.rotation).multiply(
+          quaternion(nextPresentation.rotation).invert(),
+        );
+        const angle = rotation.angleTo(new Quaternion());
+        track.visualCorrection =
+          (distance > 0.001 || angle > 0.001) &&
+          distance <= MAX_REMOTE_CORRECTION_METRES &&
+          angle <= Math.PI / 2
+            ? {
+                offset,
+                rotation: {
+                  x: rotation.x,
+                  y: rotation.y,
+                  z: rotation.z,
+                  w: rotation.w,
+                },
+                startedAtMs: receivedAtMs,
+              }
+            : null;
       }
       if (!this.#clock || !activeNetworkState(state)) continue;
       track.latenessSamples.push({
@@ -146,7 +195,6 @@ export class PresentationBuffer {
       const track = this.#localTracks.get(identity);
       this.#networkTracks.delete(identity);
       if (
-        state.kind === "player" ||
         !track ||
         track.current.state.authorityVersion !== state.authorityVersion
       ) {
@@ -203,10 +251,19 @@ export class PresentationBuffer {
 
   sample(nowMs: number): BodySnapshot[] {
     const bodies: BodySnapshot[] = [];
-    for (const track of this.#networkTracks.values()) {
+    for (const track of this.#networkTracks.values())
       this.#adaptNetworkDelay(track, nowMs);
+    const actorDelay = sharedActorDelay(this.#networkTracks.values());
+    for (const track of this.#networkTracks.values()) {
+      const delayTicks = sharedActorTrack(track)
+        ? actorDelay
+        : track.delayTicks;
       bodies.push(
-        sampleTrack(track, this.#clockTick(track, nowMs) - track.delayTicks),
+        presentedNetworkTrack(
+          track,
+          this.#clockTick(track, nowMs) - delayTicks,
+          nowMs,
+        ),
       );
     }
     for (const { previous, current } of this.#localTracks.values()) {
@@ -214,9 +271,21 @@ export class PresentationBuffer {
         bodies.push(toBodySnapshot(current.state));
         continue;
       }
+      const spanMs = current.producedAtMs - previous.producedAtMs;
+      if (spanMs <= 0) {
+        bodies.push(toBodySnapshot(current.state));
+        continue;
+      }
+      if (
+        current.state.kind === "player" ||
+        (current.state.flags & NETWORK_FLAG_HELD) !== 0
+      ) {
+        const amount = clamp((nowMs - current.producedAtMs) / spanMs, 0, 1);
+        bodies.push(interpolate(previous.state, current.state, 1 + amount));
+        continue;
+      }
       const amount = clamp(
-        (nowMs - LOCAL_BODY_DELAY_MS - previous.producedAtMs) /
-          (current.producedAtMs - previous.producedAtMs),
+        (nowMs - LOCAL_BODY_DELAY_MS - previous.producedAtMs) / spanMs,
         0,
         1,
       );
@@ -232,8 +301,11 @@ export class PresentationBuffer {
     const delays = tracks.map((track) => track.delayTicks);
     const desired = tracks.map((track) => track.desiredDelayTicks);
     const trackDelayTicks: Record<string, number> = {};
+    const actorDelay = sharedActorDelay(this.#networkTracks.values());
     for (const [identity, track] of this.#networkTracks)
-      trackDelayTicks[identity] = track.delayTicks;
+      trackDelayTicks[identity] = sharedActorTrack(track)
+        ? actorDelay
+        : track.delayTicks;
     for (const [identity, track] of this.#localTracks)
       trackDelayTicks[identity] = track.current.state.kind === "body" ? 1 : 0;
     return {
@@ -259,7 +331,11 @@ export class PresentationBuffer {
     const identity = idKey(id);
     const local = this.#localTracks.get(identity);
     if (local) return local.current.state.kind === "body" ? 1 : 0;
-    return this.#networkTracks.get(identity)?.delayTicks ?? null;
+    const track = this.#networkTracks.get(identity);
+    if (!track) return null;
+    return sharedActorTrack(track)
+      ? sharedActorDelay(this.#networkTracks.values())
+      : track.delayTicks;
   }
 
   latestNetwork(id: RuntimeId): BodySnapshot | null {
@@ -369,6 +445,7 @@ function createNetworkTrack(
     underrunSamples: 0,
     latenessSamples: [],
     samples: [{ receivedAtMs, timelineTick: state.sourceTick, state }],
+    visualCorrection: null,
   };
 }
 
@@ -387,12 +464,72 @@ function activeNetworkState(state: NetworkObjectState): boolean {
   );
 }
 
+function sharedActorTrack(track: NetworkTrack): boolean {
+  const state = track.samples.at(-1)!.state;
+  return state.kind === "player" || (state.flags & NETWORK_FLAG_HELD) !== 0;
+}
+
+function sharedActorDelay(tracks: Iterable<NetworkTrack>): number {
+  let delay = RENDER_INTERPOLATION_MIN_TICKS;
+  for (const track of tracks)
+    if (sharedActorTrack(track)) delay = Math.max(delay, track.delayTicks);
+  return delay;
+}
+
 function sampleTrack(track: NetworkTrack, targetTick: number): BodySnapshot {
   const samples = track.samples;
   if (samples.length === 1 || targetTick <= samples[0]!.timelineTick)
     return toBodySnapshot(samples[0]!.state);
   const latest = samples.at(-1)!;
-  if (targetTick >= latest.timelineTick) return toBodySnapshot(latest.state);
+  if (targetTick >= latest.timelineTick) {
+    const extraTicks = Math.min(
+      targetTick - latest.timelineTick,
+      MAX_REMOTE_EXTRAPOLATION_TICKS,
+    );
+    const previous = samples.at(-2);
+    if (
+      extraTicks <= 0 ||
+      !previous ||
+      !(
+        latest.state.kind === "player" ||
+        (latest.state.flags & (NETWORK_FLAG_AWAKE | NETWORK_FLAG_HELD)) !== 0
+      )
+    )
+      return toBodySnapshot(latest.state);
+    const spanTicks = latest.timelineTick - previous.timelineTick;
+    if (spanTicks <= 0) return toBodySnapshot(latest.state);
+    const seconds = extraTicks / PHYSICS_HZ;
+    const velocity =
+      latest.state.kind === "player"
+        ? {
+            x:
+              (latest.state.position.x - previous.state.position.x) /
+              (spanTicks / PHYSICS_HZ),
+            y:
+              (latest.state.position.y - previous.state.position.y) /
+              (spanTicks / PHYSICS_HZ),
+            z:
+              (latest.state.position.z - previous.state.position.z) /
+              (spanTicks / PHYSICS_HZ),
+          }
+        : latest.state.linearVelocity;
+    const speed = Math.hypot(velocity.x, velocity.y, velocity.z);
+    if (speed > (latest.state.kind === "player" ? 7 : 30))
+      return toBodySnapshot(latest.state);
+    return {
+      ...toBodySnapshot(latest.state),
+      position: {
+        x: latest.state.position.x + velocity.x * seconds,
+        y: latest.state.position.y + velocity.y * seconds,
+        z: latest.state.position.z + velocity.z * seconds,
+      },
+      rotation: mixQuat(
+        previous.state.rotation,
+        latest.state.rotation,
+        1 + extraTicks / spanTicks,
+      ),
+    };
+  }
   for (let index = 1; index < samples.length; index += 1) {
     const next = samples[index]!;
     if (next.timelineTick < targetTick) continue;
@@ -402,6 +539,39 @@ function sampleTrack(track: NetworkTrack, targetTick: number): BodySnapshot {
     return interpolate(previous.state, next.state, amount);
   }
   return toBodySnapshot(latest.state);
+}
+
+function presentedNetworkTrack(
+  track: NetworkTrack,
+  targetTick: number,
+  nowMs: number,
+): BodySnapshot {
+  const body = sampleTrack(track, targetTick);
+  const correction = track.visualCorrection;
+  if (!correction) return body;
+  const remaining =
+    1 - clamp((nowMs - correction.startedAtMs) / REMOTE_CORRECTION_MS, 0, 1);
+  if (remaining <= 0) {
+    track.visualCorrection = null;
+    return body;
+  }
+  const rotation = new Quaternion()
+    .slerp(quaternion(correction.rotation), remaining)
+    .multiply(quaternion(body.rotation));
+  return {
+    ...body,
+    position: {
+      x: body.position.x + correction.offset.x * remaining,
+      y: body.position.y + correction.offset.y * remaining,
+      z: body.position.z + correction.offset.z * remaining,
+    },
+    rotation: {
+      x: rotation.x,
+      y: rotation.y,
+      z: rotation.z,
+      w: rotation.w,
+    },
+  };
 }
 
 function alignClockTick(clockTick: number, reference: number): number {
