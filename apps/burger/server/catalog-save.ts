@@ -20,7 +20,7 @@ export const serializeCatalog = (
   entries: CatalogEntry[],
   meta?: AtlasMeta,
 ): string => {
-  const sorted = [...entries].sort((a, b) => a.id - b.id);
+  const sorted = entries.toSorted((a, b) => a.id - b.id);
   const blocks = sorted.map(
     (e) =>
       `[[tiles]]\nid = ${e.id}\ntype = "${escape(e.type)}"\nsrc_x = ${e.src_x}\nsrc_y = ${e.src_y}\nlabel = "${escape(e.label)}"\n`,

@@ -1,4 +1,5 @@
 import { BurgerGame } from "./game/burger-game";
+import { BurgerTools } from "./game/burger-tools";
 
 export function BurgerPage() {
   return () => (
@@ -12,10 +13,15 @@ export function BurgerPage() {
       </head>
       <body>
         <main>
-          <div id="burger-status" role="status">Loading Burger…</div>
+          <div id="burger-status" role="status">
+            Loading Burger…
+          </div>
           <BurgerGame />
+          <BurgerTools />
           <nav aria-label="Account">
-            <a href="/auth/login" id="burger-login">Sign in to play</a>
+            <a href="/auth/login" id="burger-login">
+              Sign in to play
+            </a>
             <form method="post" action="/auth/logout" id="burger-logout" hidden>
               <button type="submit">Sign out</button>
             </form>

@@ -4,7 +4,10 @@ import { removeEntity } from "bitecs";
 import { MESSAGE_TYPES } from "@tea/burger-core";
 import { runMigrations } from "../../server/db";
 import { initWorld } from "../../server/world";
-import { createServer, getPlayerConnections } from "../../server/network.server";
+import {
+  createServer,
+  getPlayerConnections,
+} from "../../server/network.server";
 import { createPlayer } from "../../server/players";
 import { createSession } from "../../server/auth/sessions";
 import type { AuthConfig } from "../../server/auth/config";
@@ -217,7 +220,7 @@ test("admin GET /api/users returns id + display_name list", async () => {
   setupSession(db, false, "alice");
   const r = await req("GET", "/api/users", undefined, sess);
   expect(r.status).toBe(200);
-  const ids = (r.data.users as { id: string }[]).map((u) => u.id).sort();
+  const ids = (r.data.users as { id: string }[]).map((u) => u.id).toSorted();
   expect(ids).toEqual(["admin1", "alice"]);
 });
 

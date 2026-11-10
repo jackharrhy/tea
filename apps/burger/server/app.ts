@@ -157,198 +157,38 @@ export const buildApp = (deps: AppDeps) => {
     }
   };
 
-  return (
-    new Elysia()
-      .use(
-        staticPlugin({
-          assets: process.env.WEB_ROOT
-            ? `${process.env.WEB_ROOT}/assets`
-            : "./public/assets",
-          prefix: "/assets",
-        }),
-      )
-      .use(authRoutes({ db, config: authConfig }))
-      .get("/", ({ request }) => router.fetch(request))
-      .get("/login", ({ set }) => {
-        set.status = 302;
-        set.headers.location = "/auth/login";
-        return "";
-      })
-      .get("/api/atlas", () => ({
-        width: world.atlasInfo.width,
-        height: world.atlasInfo.height,
-        // url carries the cache-busting version so clients don't have to
-        // know how to construct it. URL changes whenever atlas.png changes.
-        url: `/assets/atlas.png?v=${world.atlasInfo.version}`,
-        typeIdToAtlasSrc: world.typeIdToAtlasSrc,
-      }))
-      .get("/api/catalog", () =>
-        db
-          .query(
-            "SELECT id, type, src_x, src_y, label FROM tile_catalog ORDER BY id",
-          )
-          .all(),
-      )
-      .post(
-        "/api/catalog/save",
-        async ({ body, headers, set }) => {
-          const auth = requireAdmin(headers.cookie ?? null);
-          if (!auth.ok) {
-            set.status = 403;
-            return {
-              ok: false,
-              errors: [{ field: "auth", message: "admin required" }],
-            };
-          }
-
-          const validation = validateCatalog(body, {
-            atlasW: world.atlasInfo.width,
-            atlasH: world.atlasInfo.height,
-          });
-          if (!validation.ok) {
-            set.status = 400;
-            return { ok: false, errors: validation.errors };
-          }
-
-          const result = await saveCatalog({
-            db,
-            entries: validation.entries,
-            broadcast: (catalog) => {
-              // Update in-memory catalog (world.catalog: Map<number, CatalogEntry>).
-              world.catalog.clear();
-              world.catalogIds.clear();
-              for (const e of catalog) {
-                world.catalog.set(e.id, e);
-                world.catalogIds.add(e.id);
-                world.typeIdToAtlasSrc[e.id] = [e.src_x, e.src_y];
-              }
-              // Catch up any tile entity whose catalog row's type just flipped
-              // (wall → floor or vice versa). The bitecs observer stream picks
-              // up the Solid add/remove and broadcasts to all clients.
-              reconcileTileSolidity(world);
-              broadcastCatalogUpdated(catalog);
-            },
-          });
-          if (!result.ok) {
-            set.status = 409;
-            return { ok: false, errors: result.errors };
-          }
-          return { ok: true };
-        },
-        {
-          body: t.Array(
-            t.Object({
-              id: t.Number(),
-              type: t.Union([
-                t.Literal("floor"),
-                t.Literal("wall"),
-                t.Literal("counter"),
-              ]),
-              src_x: t.Number(),
-              src_y: t.Number(),
-              label: t.String(),
-            }),
-          ),
-        },
-      )
-      .post(
-        "/api/catalog/rename",
-        ({ body, headers, set }) => {
-          const auth = requireAdmin(headers.cookie ?? null);
-          if (!auth.ok) {
-            set.status = 403;
-            return {
-              ok: false,
-              errors: [{ field: "auth", message: "admin required" }],
-            };
-          }
-
-          const result = renameCatalogId(db, { from: body.from, to: body.to });
-          if (!result.ok) {
-            set.status = 409;
-            return { ok: false, errors: result.errors };
-          }
-
-          // Cascade rename to in-memory state.
-          const cat = world.catalog.get(body.from);
-          if (cat) {
-            world.catalog.delete(body.from);
-            world.catalogIds.delete(body.from);
-            world.catalog.set(body.to, { ...cat, id: body.to });
-            world.catalogIds.add(body.to);
-            delete world.typeIdToAtlasSrc[body.from];
-            world.typeIdToAtlasSrc[body.to] = [cat.src_x, cat.src_y];
-          }
-
-          // Update existing tile entities in the ECS so their Tile.type matches.
-          const { Tile } = world.components;
-          for (const [, eid] of world.tilesAtPosition) {
-            if (Tile.type[eid] === body.from) {
-              Tile.type[eid] = body.to;
-              markEntityDirty(eid);
-            }
-          }
-
-          // Broadcast the new full catalog.
-          const newCatalog = Array.from(world.catalog.values());
-          broadcastCatalogUpdated(newCatalog);
-
-          return { ok: true };
-        },
-        {
-          body: t.Object({
-            from: t.Number(),
-            to: t.Number(),
-          }),
-        },
-      )
-      .get("/api/settings/spawn", () => world.spawnZone)
-      .post(
-        "/api/settings/spawn",
-        ({ body, headers, set }) => {
-          const auth = requireAdmin(headers.cookie ?? null);
-          if (!auth.ok) {
-            set.status = 403;
-            return {
-              ok: false,
-              errors: [{ field: "auth", message: "admin required" }],
-            };
-          }
-
-          const validation = validateSpawn(body, world.bounds);
-          if (!validation.ok) {
-            set.status = 400;
-            return { ok: false, errors: validation.errors };
-          }
-          const { zone } = validation;
-
-          // Persist to settings table and mutate the live world atomically.
-          const tx = db.transaction(() => {
-            const upsert = db.prepare(
-              "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-            );
-            upsert.run("spawn_x", String(zone.x));
-            upsert.run("spawn_y", String(zone.y));
-            upsert.run("spawn_w", String(zone.w));
-            upsert.run("spawn_h", String(zone.h));
-          });
-          tx();
-
-          world.spawnZone = zone;
-
-          return { ok: true, zone };
-        },
-        {
-          body: t.Object({
-            x: t.Number(),
-            y: t.Number(),
-            w: t.Number(),
-            h: t.Number(),
-          }),
-        },
-      )
-      .get("/api/bots", () => ({ count: getAiEntities().length }))
-      .post("/api/bots/reset", ({ headers, set }) => {
+  return new Elysia()
+    .use(
+      staticPlugin({
+        assets: process.env.WEB_ROOT ?? "./public",
+        prefix: "/",
+      }),
+    )
+    .use(authRoutes({ db, config: authConfig }))
+    .get("/", ({ request }) => router.fetch(request))
+    .get("/login", ({ set }) => {
+      set.status = 302;
+      set.headers.location = "/auth/login";
+      return "";
+    })
+    .get("/api/atlas", () => ({
+      width: world.atlasInfo.width,
+      height: world.atlasInfo.height,
+      // url carries the cache-busting version so clients don't have to
+      // know how to construct it. URL changes whenever atlas.png changes.
+      url: `/assets/atlas.png?v=${world.atlasInfo.version}`,
+      typeIdToAtlasSrc: world.typeIdToAtlasSrc,
+    }))
+    .get("/api/catalog", () =>
+      db
+        .query(
+          "SELECT id, type, src_x, src_y, label FROM tile_catalog ORDER BY id",
+        )
+        .all(),
+    )
+    .post(
+      "/api/catalog/save",
+      async ({ body, headers, set }) => {
         const auth = requireAdmin(headers.cookie ?? null);
         if (!auth.ok) {
           set.status = 403;
@@ -357,10 +197,180 @@ export const buildApp = (deps: AppDeps) => {
             errors: [{ field: "auth", message: "admin required" }],
           };
         }
-        const count = resetAiPlayers(world);
-        return { ok: true, count };
-      })
-      .get("/api/palette", ({ headers, set }) => {
+
+        const validation = validateCatalog(body, {
+          atlasW: world.atlasInfo.width,
+          atlasH: world.atlasInfo.height,
+        });
+        if (!validation.ok) {
+          set.status = 400;
+          return { ok: false, errors: validation.errors };
+        }
+
+        const result = await saveCatalog({
+          db,
+          entries: validation.entries,
+          broadcast: (catalog) => {
+            // Update in-memory catalog (world.catalog: Map<number, CatalogEntry>).
+            world.catalog.clear();
+            world.catalogIds.clear();
+            for (const e of catalog) {
+              world.catalog.set(e.id, e);
+              world.catalogIds.add(e.id);
+              world.typeIdToAtlasSrc[e.id] = [e.src_x, e.src_y];
+            }
+            // Catch up any tile entity whose catalog row's type just flipped
+            // (wall → floor or vice versa). The bitecs observer stream picks
+            // up the Solid add/remove and broadcasts to all clients.
+            reconcileTileSolidity(world);
+            broadcastCatalogUpdated(catalog);
+          },
+        });
+        if (!result.ok) {
+          set.status = 409;
+          return { ok: false, errors: result.errors };
+        }
+        return { ok: true };
+      },
+      {
+        body: t.Array(
+          t.Object({
+            id: t.Number(),
+            type: t.Union([
+              t.Literal("floor"),
+              t.Literal("wall"),
+              t.Literal("counter"),
+            ]),
+            src_x: t.Number(),
+            src_y: t.Number(),
+            label: t.String(),
+          }),
+        ),
+      },
+    )
+    .post(
+      "/api/catalog/rename",
+      ({ body, headers, set }) => {
+        const auth = requireAdmin(headers.cookie ?? null);
+        if (!auth.ok) {
+          set.status = 403;
+          return {
+            ok: false,
+            errors: [{ field: "auth", message: "admin required" }],
+          };
+        }
+
+        const result = renameCatalogId(db, { from: body.from, to: body.to });
+        if (!result.ok) {
+          set.status = 409;
+          return { ok: false, errors: result.errors };
+        }
+
+        // Cascade rename to in-memory state.
+        const cat = world.catalog.get(body.from);
+        if (cat) {
+          world.catalog.delete(body.from);
+          world.catalogIds.delete(body.from);
+          world.catalog.set(body.to, { ...cat, id: body.to });
+          world.catalogIds.add(body.to);
+          delete world.typeIdToAtlasSrc[body.from];
+          world.typeIdToAtlasSrc[body.to] = [cat.src_x, cat.src_y];
+        }
+
+        // Update existing tile entities in the ECS so their Tile.type matches.
+        const { Tile } = world.components;
+        for (const [, eid] of world.tilesAtPosition) {
+          if (Tile.type[eid] === body.from) {
+            Tile.type[eid] = body.to;
+            markEntityDirty(eid);
+          }
+        }
+
+        // Broadcast the new full catalog.
+        const newCatalog = Array.from(world.catalog.values());
+        broadcastCatalogUpdated(newCatalog);
+
+        return { ok: true };
+      },
+      {
+        body: t.Object({
+          from: t.Number(),
+          to: t.Number(),
+        }),
+      },
+    )
+    .get("/api/settings/spawn", () => world.spawnZone)
+    .post(
+      "/api/settings/spawn",
+      ({ body, headers, set }) => {
+        const auth = requireAdmin(headers.cookie ?? null);
+        if (!auth.ok) {
+          set.status = 403;
+          return {
+            ok: false,
+            errors: [{ field: "auth", message: "admin required" }],
+          };
+        }
+
+        const validation = validateSpawn(body, world.bounds);
+        if (!validation.ok) {
+          set.status = 400;
+          return { ok: false, errors: validation.errors };
+        }
+        const { zone } = validation;
+
+        // Persist to settings table and mutate the live world atomically.
+        const tx = db.transaction(() => {
+          const upsert = db.prepare(
+            "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+          );
+          upsert.run("spawn_x", String(zone.x));
+          upsert.run("spawn_y", String(zone.y));
+          upsert.run("spawn_w", String(zone.w));
+          upsert.run("spawn_h", String(zone.h));
+        });
+        tx();
+
+        world.spawnZone = zone;
+
+        return { ok: true, zone };
+      },
+      {
+        body: t.Object({
+          x: t.Number(),
+          y: t.Number(),
+          w: t.Number(),
+          h: t.Number(),
+        }),
+      },
+    )
+    .get("/api/bots", () => ({ count: getAiEntities().length }))
+    .post("/api/bots/reset", ({ headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return {
+          ok: false,
+          errors: [{ field: "auth", message: "admin required" }],
+        };
+      }
+      const count = resetAiPlayers(world);
+      return { ok: true, count };
+    })
+    .get("/api/palette", ({ headers, set }) => {
+      const auth = requireUser(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return {
+          ok: false,
+          errors: [{ field: "auth", message: "authentication required" }],
+        };
+      }
+      return { ok: true, ids: getPalette(db, auth.userId) };
+    })
+    .put(
+      "/api/palette",
+      ({ body, headers, set }) => {
         const auth = requireUser(headers.cookie ?? null);
         if (!auth.ok) {
           set.status = 403;
@@ -369,255 +379,235 @@ export const buildApp = (deps: AppDeps) => {
             errors: [{ field: "auth", message: "authentication required" }],
           };
         }
-        return { ok: true, ids: getPalette(db, auth.userId) };
-      })
-      .put(
-        "/api/palette",
-        ({ body, headers, set }) => {
-          const auth = requireUser(headers.cookie ?? null);
-          if (!auth.ok) {
-            set.status = 403;
+        const validation = validatePaletteIds(body.ids);
+        if (!validation.ok) {
+          set.status = 400;
+          return { ok: false, errors: validation.errors };
+        }
+        // Reject ids not in the catalog.
+        for (const id of validation.ids) {
+          if (!world.catalogIds.has(id)) {
+            set.status = 400;
             return {
               ok: false,
-              errors: [{ field: "auth", message: "authentication required" }],
+              errors: [
+                { field: "ids", message: `tile id ${id} not in catalog` },
+              ],
             };
           }
-          const validation = validatePaletteIds(body.ids);
-          if (!validation.ok) {
-            set.status = 400;
-            return { ok: false, errors: validation.errors };
-          }
-          // Reject ids not in the catalog.
-          for (const id of validation.ids) {
-            if (!world.catalogIds.has(id)) {
-              set.status = 400;
-              return {
-                ok: false,
-                errors: [
-                  { field: "ids", message: `tile id ${id} not in catalog` },
-                ],
-              };
-            }
-          }
-          setPalette(db, auth.userId, validation.ids);
-          return { ok: true, ids: validation.ids };
-        },
-        {
-          body: t.Object({ ids: t.Array(t.Number()) }),
-        },
-      )
-      .get("/api/zones", ({ headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
         }
-        return { zones: zonesList() };
-      })
-      .post("/api/zones", ({ body, headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
-        }
-        const name = (body as { name?: unknown })?.name;
-        const r = createZone(db, zonesState, name);
-        if (!r.ok) {
-          set.status = r.error === "name_taken" ? 409 : 400;
-          return { ok: false, error: r.error };
-        }
-        broadcastZonesUpdated();
-        return { id: r.id, name: r.name };
-      })
-      .patch("/api/zones/:id", ({ params, body, headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
-        }
-        const id = Number(params.id);
-        const name = (body as { name?: unknown })?.name;
-        const r = renameZone(db, zonesState, id, name);
-        if (!r.ok) {
-          set.status =
-            r.error === "name_taken"
-              ? 409
-              : r.error === "not_found"
-                ? 404
-                : 400;
-          return { ok: false, error: r.error };
-        }
-        broadcastZonesUpdated();
-        return { id: r.id, name: r.name };
-      })
-      .delete("/api/zones/:id", ({ params, headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
-        }
-        const id = Number(params.id);
-        const r = deleteZone(db, zonesState, id);
-        if (!r.ok) {
-          set.status = 404;
-          return { ok: false, error: r.error };
-        }
-        broadcastZonesUpdated();
-        sendMyZonesToAffected(r.affectedUserIds);
-        return { ok: true };
-      })
-      .put("/api/zones/:id/cells", ({ params, body, headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
-        }
-        const id = Number(params.id);
-        const b = body as { add?: unknown; remove?: unknown };
-        const r = mutateZoneCells(
-          db,
-          zonesState,
-          id,
-          { add: b?.add, remove: b?.remove },
-          world.bounds,
-        );
-        if (!r.ok) {
-          set.status = 404;
-          return { ok: false, error: r.error };
-        }
-        broadcastZonesUpdated();
-        sendMyZonesToAffected(r.affectedUserIds);
-        return {
-          added: r.added,
-          removed: r.removed,
-          dropped: r.dropped,
+        setPalette(db, auth.userId, validation.ids);
+        return { ok: true, ids: validation.ids };
+      },
+      {
+        body: t.Object({ ids: t.Array(t.Number()) }),
+      },
+    )
+    .get("/api/zones", ({ headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      return { zones: zonesList() };
+    })
+    .post("/api/zones", ({ body, headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      const name = (body as { name?: unknown })?.name;
+      const r = createZone(db, zonesState, name);
+      if (!r.ok) {
+        set.status = r.error === "name_taken" ? 409 : 400;
+        return { ok: false, error: r.error };
+      }
+      broadcastZonesUpdated();
+      return { id: r.id, name: r.name };
+    })
+    .patch("/api/zones/:id", ({ params, body, headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      const id = Number(params.id);
+      const name = (body as { name?: unknown })?.name;
+      const r = renameZone(db, zonesState, id, name);
+      if (!r.ok) {
+        set.status =
+          r.error === "name_taken" ? 409 : r.error === "not_found" ? 404 : 400;
+        return { ok: false, error: r.error };
+      }
+      broadcastZonesUpdated();
+      return { id: r.id, name: r.name };
+    })
+    .delete("/api/zones/:id", ({ params, headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      const id = Number(params.id);
+      const r = deleteZone(db, zonesState, id);
+      if (!r.ok) {
+        set.status = 404;
+        return { ok: false, error: r.error };
+      }
+      broadcastZonesUpdated();
+      sendMyZonesToAffected(r.affectedUserIds);
+      return { ok: true };
+    })
+    .put("/api/zones/:id/cells", ({ params, body, headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      const id = Number(params.id);
+      const b = body as { add?: unknown; remove?: unknown };
+      const r = mutateZoneCells(
+        db,
+        zonesState,
+        id,
+        { add: b?.add, remove: b?.remove },
+        world.bounds,
+      );
+      if (!r.ok) {
+        set.status = 404;
+        return { ok: false, error: r.error };
+      }
+      broadcastZonesUpdated();
+      sendMyZonesToAffected(r.affectedUserIds);
+      return {
+        added: r.added,
+        removed: r.removed,
+        dropped: r.dropped,
+      };
+    })
+    .put("/api/zones/:id/members", ({ params, body, headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      const id = Number(params.id);
+      const user_ids = (body as { user_ids?: unknown })?.user_ids;
+      const r = setZoneMembers(db, zonesState, id, user_ids);
+      if (!r.ok) {
+        set.status = 404;
+        return { ok: false, error: r.error };
+      }
+      broadcastZonesUpdated();
+      sendMyZonesToAffected(r.affectedUserIds);
+      return {
+        member_user_ids: r.memberUserIds,
+        dropped: r.dropped,
+      };
+    })
+    .get("/api/zones/all-cells", ({ headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      const zones = [...world.zones.values()].map((z) => ({
+        id: z.id,
+        cells: [...z.cells].map((key) => {
+          const [x, y] = key.split(",").map(Number);
+          return [x, y] as [number, number];
+        }),
+      }));
+      return { zones };
+    })
+    .get("/api/users", ({ headers, set }) => {
+      const auth = requireAdmin(headers.cookie ?? null);
+      if (!auth.ok) {
+        set.status = 403;
+        return { ok: false };
+      }
+      const users = db
+        .query("SELECT id, display_name FROM users ORDER BY display_name")
+        .all() as { id: string; display_name: string | null }[];
+      return { users };
+    })
+    .ws("/ws", {
+      open(ws) {
+        const data = ws.data as {
+          headers?: Record<string, string | undefined>;
         };
-      })
-      .put("/api/zones/:id/members", ({ params, body, headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
+        const cookieHeader = data.headers?.cookie ?? null;
+        const sessionId = parseSessionCookie(cookieHeader);
+        if (!sessionId) {
+          ws.close(4001, "unauthenticated");
+          return;
         }
-        const id = Number(params.id);
-        const user_ids = (body as { user_ids?: unknown })?.user_ids;
-        const r = setZoneMembers(db, zonesState, id, user_ids);
-        if (!r.ok) {
-          set.status = 404;
-          return { ok: false, error: r.error };
+        const session = getSession(db, sessionId);
+        if (!session) {
+          ws.close(4001, "unauthenticated");
+          return;
         }
-        broadcastZonesUpdated();
-        sendMyZonesToAffected(r.affectedUserIds);
-        return {
-          member_user_ids: r.memberUserIds,
-          dropped: r.dropped,
-        };
-      })
-      .get("/api/zones/all-cells", ({ headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
+        const user = getUserById(db, session.userId);
+        if (!user) {
+          ws.close(4001, "unauthenticated");
+          return;
         }
-        const zones = [...world.zones.values()].map((z) => ({
-          id: z.id,
-          cells: [...z.cells].map((key) => {
-            const [x, y] = key.split(",").map(Number);
-            return [x, y] as [number, number];
+
+        const displayName = user.displayName ?? user.username;
+        const eid = onPlayerJoin(displayName);
+        console.log(`client connected: eid=${eid}, user=${user.username}`);
+
+        registerConnection(ws.raw, {
+          eid,
+          userId: user.id,
+          username: user.username,
+          displayName,
+          isAdmin: user.isAdmin,
+        });
+
+        getObserverSerializers().set(
+          ws.raw,
+          createObserverSerializer(world, Networked, networkedComponents, {
+            buffer: new ArrayBuffer(OBSERVER_BUFFER_SIZE),
           }),
-        }));
-        return { zones };
-      })
-      .get("/api/users", ({ headers, set }) => {
-        const auth = requireAdmin(headers.cookie ?? null);
-        if (!auth.ok) {
-          set.status = 403;
-          return { ok: false };
+        );
+
+        ws.sendBinary(
+          tagMessage(
+            MESSAGE_TYPES.YOUR_EID,
+            new Int32Array([
+              PROTOCOL_VERSION,
+              eid,
+              world.bounds.x,
+              world.bounds.y,
+              world.bounds.w,
+              world.bounds.h,
+            ]).buffer,
+          ),
+        );
+        ws.sendBinary(tagMessage(MESSAGE_TYPES.SNAPSHOT, getSnapshotPayload()));
+
+        // Non-admins get an initial MY_ZONES so the client can paint
+        // inside their zones without waiting for the next mutation
+        // broadcast. Admins are skipped — they refetch via the REST
+        // endpoints triggered by ZONES_UPDATED.
+        if (!user.isAdmin) {
+          sendMyZonesTo(user.id, paintableCellsFor(user.id));
         }
-        const users = db
-          .query("SELECT id, display_name FROM users ORDER BY display_name")
-          .all() as { id: string; display_name: string | null }[];
-        return { users };
-      })
-      .ws("/ws", {
-        open(ws) {
-          const data = ws.data as {
-            headers?: Record<string, string | undefined>;
-          };
-          const cookieHeader = data.headers?.cookie ?? null;
-          const sessionId = parseSessionCookie(cookieHeader);
-          if (!sessionId) {
-            ws.close(4001, "unauthenticated");
-            return;
-          }
-          const session = getSession(db, sessionId);
-          if (!session) {
-            ws.close(4001, "unauthenticated");
-            return;
-          }
-          const user = getUserById(db, session.userId);
-          if (!user) {
-            ws.close(4001, "unauthenticated");
-            return;
-          }
+      },
 
-          const displayName = user.displayName ?? user.username;
-          const eid = onPlayerJoin(displayName);
-          console.log(`client connected: eid=${eid}, user=${user.username}`);
+      close(ws) {
+        console.log("client disconnected");
+        const connection = getPlayerConnections().get(ws.raw);
+        if (connection) onPlayerLeave(connection.eid);
+        unregisterConnection(ws.raw);
+      },
 
-          registerConnection(ws.raw, {
-            eid,
-            userId: user.id,
-            username: user.username,
-            displayName,
-            isAdmin: user.isAdmin,
-          });
-
-          getObserverSerializers().set(
-            ws.raw,
-            createObserverSerializer(world, Networked, networkedComponents, {
-              buffer: new ArrayBuffer(OBSERVER_BUFFER_SIZE),
-            }),
-          );
-
-          ws.sendBinary(
-            tagMessage(
-              MESSAGE_TYPES.YOUR_EID,
-              new Int32Array([
-                PROTOCOL_VERSION,
-                eid,
-                world.bounds.x,
-                world.bounds.y,
-                world.bounds.w,
-                world.bounds.h,
-              ]).buffer,
-            ),
-          );
-          ws.sendBinary(
-            tagMessage(MESSAGE_TYPES.SNAPSHOT, getSnapshotPayload()),
-          );
-
-          // Non-admins get an initial MY_ZONES so the client can paint
-          // inside their zones without waiting for the next mutation
-          // broadcast. Admins are skipped — they refetch via the REST
-          // endpoints triggered by ZONES_UPDATED.
-          if (!user.isAdmin) {
-            sendMyZonesTo(user.id, paintableCellsFor(user.id));
-          }
-        },
-
-        close(ws) {
-          console.log("client disconnected");
-          const connection = getPlayerConnections().get(ws.raw);
-          if (connection) onPlayerLeave(connection.eid);
-          unregisterConnection(ws.raw);
-        },
-
-        message(ws, message) {
-          handleIncomingMessage(world, db, ws.raw, message);
-        },
-      })
-  );
+      message(ws, message) {
+        handleIncomingMessage(world, db, ws.raw, message);
+      },
+    });
 };
 
 export type App = ReturnType<typeof buildApp>;

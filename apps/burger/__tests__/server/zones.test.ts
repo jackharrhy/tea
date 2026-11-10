@@ -1,5 +1,9 @@
 import { expect, test, describe } from "bun:test";
-import { canPaint, validateZoneName, validateZoneCells } from "../../server/zones";
+import {
+  canPaint,
+  validateZoneName,
+  validateZoneCells,
+} from "../../server/zones";
 
 const makeState = (
   zones: { id: number; cells: string[]; members: string[] }[],

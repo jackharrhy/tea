@@ -1,8 +1,8 @@
 import type { Database } from "bun:sqlite";
 
-export const PALETTE_MAX_SIZE = 9;
+const PALETTE_MAX_SIZE = 9;
 
-export type ValidationError = { field: string; message: string };
+type ValidationError = { field: string; message: string };
 
 export type PaletteValidationResult =
   | { ok: true; ids: number[] }

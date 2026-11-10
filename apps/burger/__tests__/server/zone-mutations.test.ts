@@ -99,7 +99,7 @@ describe("deleteZone", () => {
     const r = deleteZone(db, zonesState, c.id);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.affectedUserIds.sort()).toEqual(["u1", "u2"]);
+    expect(r.affectedUserIds.toSorted()).toEqual(["u1", "u2"]);
     expect(zonesState.zones.has(c.id)).toBe(false);
     expect(zonesState.cellToZone.has("16,16")).toBe(false);
     const cellRows = db
@@ -234,9 +234,9 @@ describe("setZoneMembers", () => {
     const r = setZoneMembers(db, zonesState, c.id, ["u2", "ghost"]);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.memberUserIds.sort()).toEqual(["u2"]);
+    expect(r.memberUserIds.toSorted()).toEqual(["u2"]);
     expect(r.dropped).toBe(1);
-    expect(r.affectedUserIds.sort()).toEqual(["u1", "u2"]);
+    expect(r.affectedUserIds.toSorted()).toEqual(["u1", "u2"]);
     expect(zonesState.zones.get(c.id)?.members.has("u1")).toBe(false);
     expect(zonesState.zones.get(c.id)?.members.has("u2")).toBe(true);
   });

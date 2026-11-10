@@ -32,7 +32,7 @@ jobs:
           DRAFT_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft }}
         run: node scripts/ci/affected.mjs
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        if: steps.select.outputs.pool == 'true'
+        if: steps.select.outputs.pool == 'true' || steps.select.outputs.burger == 'true'
         with:
           bun-version: 1.4.4
       - if: steps.select.outputs.any == 'true'
@@ -65,6 +65,8 @@ jobs:
         run: npm run test:browser --workspace @tea/cms
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.pool == 'true'
         run: npm run test:browser --workspace @tea/pool-app
+      - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.burger == 'true'
+        run: npm run test:browser --workspace @tea/burger
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.ref == 'true'
         run: |
           set -eu

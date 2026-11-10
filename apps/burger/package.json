@@ -11,6 +11,7 @@
     "dev": "npm run build && npm run start",
     "typecheck": "tsrs -p tsconfig.json --noEmit",
     "test": "bun test __tests__/server __tests__/game",
+    "test:browser": "bun __tests__/browser/production.ts",
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "@types/bun": "1.4.4",
     "@types/debug": "4.1.13",
     "@types/node": "^26.6.6",
+    "playwright": "^1.65.0",
     "vite": "^8.3.7"
   }
 }

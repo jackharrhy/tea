@@ -1,7 +1,11 @@
 import { expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runMigrations } from "../../server/db";
-import { getPalette, setPalette, validatePaletteIds } from "../../server/palette";
+import {
+  getPalette,
+  setPalette,
+  validatePaletteIds,
+} from "../../server/palette";
 
 const setupDb = (): Database => {
   const db = new Database(":memory:");

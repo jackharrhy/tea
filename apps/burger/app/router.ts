@@ -16,6 +16,12 @@ const router = createRouter<AppContext>({
     render({
       assets: {
         async getScriptEntry(sourceId) {
+          if (sourceId === "file:///app/game/burger-tools.tsx")
+            return {
+              href: "/assets/burger-tools.js",
+              preloads: [],
+              importMap: { imports: {} },
+            };
           if (sourceId !== "file:///app/game/burger-game.tsx")
             throw new Error(`Unknown Burger client entry ${sourceId}`);
           return {

@@ -3,7 +3,10 @@ import { Database } from "bun:sqlite";
 import { query, removeEntity } from "bitecs";
 import { runMigrations } from "../../server/db";
 import { initWorld } from "../../server/world";
-import { createServer, getPlayerConnections } from "../../server/network.server";
+import {
+  createServer,
+  getPlayerConnections,
+} from "../../server/network.server";
 import { spawnAiPlayers } from "../../server/ai";
 import { createPlayer } from "../../server/players";
 import { createSession } from "../../server/auth/sessions";

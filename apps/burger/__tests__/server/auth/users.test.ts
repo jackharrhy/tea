@@ -1,7 +1,10 @@
 import { expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runMigrations } from "../../../server/db";
-import { upsertUserFromIdentity, getUserById } from "../../../server/auth/users";
+import {
+  upsertUserFromIdentity,
+  getUserById,
+} from "../../../server/auth/users";
 
 const setupDb = (): Database => {
   const db = new Database(":memory:");

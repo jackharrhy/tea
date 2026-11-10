@@ -66,7 +66,7 @@ const activeTick = () => {
 
   const playerStates: PlayerState[] = [];
 
-  for (const [_ws, connection] of getPlayerConnections()) {
+  for (const [, connection] of getPlayerConnections()) {
     const { eid, lastAckedSeq } = connection;
     invariant(Position.x[eid] !== undefined);
     invariant(Position.y[eid] !== undefined);

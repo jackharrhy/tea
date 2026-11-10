@@ -1,8 +1,8 @@
-export type SpawnZone = { x: number; y: number; w: number; h: number };
+type SpawnZone = { x: number; y: number; w: number; h: number };
 
 export type WorldBounds = { x: number; y: number; w: number; h: number };
 
-export type ValidationError = {
+type ValidationError = {
   field: string;
   message: string;
 };

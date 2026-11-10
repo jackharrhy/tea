@@ -127,7 +127,6 @@ test("initWorld creates ECS entities for tiles in DB", () => {
 
   const world = initWorld(db);
   const { Position, Tile, Solid } = world.components;
-  const { query } = require("bitecs");
   const tiles = query(world, [Position, Tile]);
   // Two seeded tiles; atlas.toml entries don't add tiles, only catalog rows.
   expect(tiles.length).toBe(2);

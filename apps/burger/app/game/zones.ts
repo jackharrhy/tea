@@ -119,7 +119,7 @@ export const setZonesData = (
   if (state.active) redrawZonesOverlay(state);
 };
 
-export const redrawZonesOverlay = (state: ZonesGameState): void => {
+const redrawZonesOverlay = (state: ZonesGameState): void => {
   const g = state.overlay;
   g.clear();
   const halfTile = TILE_SIZE / 2;
@@ -127,10 +127,10 @@ export const redrawZonesOverlay = (state: ZonesGameState): void => {
     const color = zoneColor(zoneId);
     const alpha = zoneId === state.selectedZoneId ? 0.5 : 0.2;
     for (const [x, y] of cells) {
-      g.rect(x - halfTile, y - halfTile, TILE_SIZE, TILE_SIZE).fill({
-        color,
-        alpha,
-      });
+      g.rect(x - halfTile, y - halfTile, TILE_SIZE, TILE_SIZE);
+      // Pixi Graphics.fill is a paint method, not Array.fill.
+      // oxlint-disable-next-line unicorn/no-array-fill-with-reference-type
+      g.fill({ color, alpha });
     }
   }
 };

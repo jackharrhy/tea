@@ -132,9 +132,9 @@ afterEach(async () => {
   db.close();
 });
 
-const connect = (port: number, session: string) =>
+const connect = (serverPort: number, session: string) =>
   new Promise<WebSocket>((resolve, reject) => {
-    const ws = new WebSocket(`ws://localhost:${port}/ws`, {
+    const ws = new WebSocket(`ws://localhost:${serverPort}/ws`, {
       headers: { Cookie: `burger_session=${session}` },
     } as unknown as ConstructorParameters<typeof WebSocket>[1]);
     ws.binaryType = "arraybuffer";

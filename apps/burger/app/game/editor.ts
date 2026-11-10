@@ -113,7 +113,10 @@ const rebuildPalette = (
     const tex = textures[entry.id];
     if (!tex) return;
     const slotBg = new Graphics();
-    slotBg.rect(0, 0, SLOT_SIZE, SLOT_SIZE).fill({ color: 0x222222 });
+    slotBg.rect(0, 0, SLOT_SIZE, SLOT_SIZE);
+    // Pixi Graphics.fill is a paint method, not Array.fill.
+    // oxlint-disable-next-line unicorn/no-array-fill-with-reference-type
+    slotBg.fill({ color: 0x222222 });
     slotBg.x = i * (SLOT_SIZE + SLOT_PADDING);
     slotBg.y = 0;
     slotBg.eventMode = "static";
@@ -162,9 +165,10 @@ export const setPalette = (
 // overlay active, `none` = both off. The two modes are mutually exclusive;
 // the editor toggles its own `state.active` and notifies the caller so the
 // zones overlay can be flipped in lockstep.
-export type PaintMode = "tile" | "zone" | "none";
+type PaintMode = "tile" | "zone" | "none";
 
 export type InitEditorOptions = {
+  signal?: AbortSignal;
   onTogglePaintMode?: (mode: PaintMode) => void;
   // Called when the user tries to enter paint mode. If returns false, entry
   // is blocked silently. Defaults to "always allow" if omitted.
@@ -226,91 +230,95 @@ export const initEditor = (
   mainContainer.addChild(outline);
 
   // Palette: screen-fixed container, drawn on top of the main world.
-  const palette = new Container();
-  palette.visible = false;
-  state.paletteContainer = palette;
-  app.stage.addChild(palette);
+  const paletteLayer = new Container();
+  paletteLayer.visible = false;
+  state.paletteContainer = paletteLayer;
+  app.stage.addChild(paletteLayer);
 
   rebuildPalette(state, textures);
 
   positionPalette(state, app);
 
   // Toggle edit mode with `e` (or Tab).
-  window.addEventListener("keydown", (e) => {
-    // Don't hijack keys while the user is typing in a form field. Without
-    // this, pressing "e" in the atlas tool's label input would toggle paint
-    // mode (and swallow the character). Same trick the debug-window hotkey
-    // uses in WindowManager.
-    const target = e.target as HTMLElement | null;
-    if (
-      target?.tagName === "INPUT" ||
-      target?.tagName === "TEXTAREA" ||
-      target?.isContentEditable
-    ) {
-      return;
-    }
-
-    if (e.key === "Escape" && state.active) {
-      e.preventDefault();
-      state.active = false;
-      palette.visible = false;
-      if (state.cursorSprite && state.cursorOutline) {
-        state.cursorSprite.visible = false;
-        state.cursorOutline.visible = false;
-      }
-      useGameStore.getState().setEditorActive(false);
-      opts.onTogglePaintMode?.("none");
-      return;
-    }
-
-    if (e.key === "e" || e.key === "Tab") {
-      e.preventDefault();
-      const goingActive = !state.active;
-      // Gate entry on the caller's permission check (non-admin without zones,
-      // etc). Silently no-op when blocked. Exit is always allowed.
-      if (goingActive && opts.getCanEnterPaintMode?.() === false) {
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      // Don't hijack keys while the user is typing in a form field. Without
+      // this, pressing "e" in the atlas tool's label input would toggle paint
+      // mode (and swallow the character). Same trick the debug-window hotkey
+      // uses in WindowManager.
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable
+      ) {
         return;
       }
-      state.active = goingActive;
-      palette.visible = state.active;
-      if (!state.active && state.cursorSprite && state.cursorOutline) {
-        state.cursorSprite.visible = false;
-        state.cursorOutline.visible = false;
-      }
-      useGameStore.getState().setEditorActive(state.active);
-      // Tile-paint mode toggles itself; tell the caller so the zones
-      // overlay can switch off when tile mode turns on (mutual exclusion).
-      opts.onTogglePaintMode?.(state.active ? "tile" : "none");
-      return;
-    }
-    if (e.key === "z") {
-      e.preventDefault();
-      // `z` always enters zone-paint mode and forces tile-paint off. Hide
-      // the tile cursor/palette so the two modes don't visually overlap.
-      if (state.active) {
+
+      if (e.key === "Escape" && state.active) {
+        e.preventDefault();
         state.active = false;
-        palette.visible = false;
+        paletteLayer.visible = false;
         if (state.cursorSprite && state.cursorOutline) {
           state.cursorSprite.visible = false;
           state.cursorOutline.visible = false;
         }
         useGameStore.getState().setEditorActive(false);
+        opts.onTogglePaintMode?.("none");
+        return;
       }
-      opts.onTogglePaintMode?.("zone");
-      return;
-    }
-    if (state.active) {
-      const num = parseInt(e.key, 10);
-      if (
-        !Number.isNaN(num) &&
-        num >= 1 &&
-        num <= 9 &&
-        state.paletteEntries[num - 1]
-      ) {
-        selectTile(state, state.paletteEntries[num - 1]!.id);
+
+      if (e.key === "e" || e.key === "Tab") {
+        e.preventDefault();
+        const goingActive = !state.active;
+        // Gate entry on the caller's permission check (non-admin without zones,
+        // etc). Silently no-op when blocked. Exit is always allowed.
+        if (goingActive && opts.getCanEnterPaintMode?.() === false) {
+          return;
+        }
+        state.active = goingActive;
+        paletteLayer.visible = state.active;
+        if (!state.active && state.cursorSprite && state.cursorOutline) {
+          state.cursorSprite.visible = false;
+          state.cursorOutline.visible = false;
+        }
+        useGameStore.getState().setEditorActive(state.active);
+        // Tile-paint mode toggles itself; tell the caller so the zones
+        // overlay can switch off when tile mode turns on (mutual exclusion).
+        opts.onTogglePaintMode?.(state.active ? "tile" : "none");
+        return;
       }
-    }
-  });
+      if (e.key === "z") {
+        e.preventDefault();
+        // `z` always enters zone-paint mode and forces tile-paint off. Hide
+        // the tile cursor/palette so the two modes don't visually overlap.
+        if (state.active) {
+          state.active = false;
+          paletteLayer.visible = false;
+          if (state.cursorSprite && state.cursorOutline) {
+            state.cursorSprite.visible = false;
+            state.cursorOutline.visible = false;
+          }
+          useGameStore.getState().setEditorActive(false);
+        }
+        opts.onTogglePaintMode?.("zone");
+        return;
+      }
+      if (state.active) {
+        const num = parseInt(e.key, 10);
+        if (
+          !Number.isNaN(num) &&
+          num >= 1 &&
+          num <= 9 &&
+          state.paletteEntries[num - 1]
+        ) {
+          selectTile(state, state.paletteEntries[num - 1]!.id);
+        }
+      }
+    },
+    { signal: opts.signal },
+  );
 
   // Returns true if the screen-space point (canvas-local) is inside the
   // pixi palette strip. The palette renders inside the canvas (not DOM), so
@@ -334,76 +342,96 @@ export const initEditor = (
   // Mouse position → snapped tile-cell center (paint convention is center).
   // Hide the cursor preview when the pointer leaves the canvas (e.g. over
   // a DOM overlay) so it doesn't look like a stale paint cursor.
-  app.canvas.addEventListener("mousemove", (e) => {
-    if (!state.active) return;
-    const rect = app.canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    // Skip if a DOM overlay is over the cursor — keeps the preview from
-    // updating to coords under the overlay, and stops paint-while-dragging
-    // from continuing if you happen to hold a button while crossing into a
-    // window. Same gate for the in-canvas palette strip.
-    const topmost = document.elementFromPoint(e.clientX, e.clientY);
-    if (topmost !== app.canvas || isOverPalette(mouseX, mouseY)) {
+  app.canvas.addEventListener(
+    "mousemove",
+    (e) => {
+      if (!state.active) return;
+      const rect = app.canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      // Skip if a DOM overlay is over the cursor — keeps the preview from
+      // updating to coords under the overlay, and stops paint-while-dragging
+      // from continuing if you happen to hold a button while crossing into a
+      // window. Same gate for the in-canvas palette strip.
+      const topmost = document.elementFromPoint(e.clientX, e.clientY);
+      if (topmost !== app.canvas || isOverPalette(mouseX, mouseY)) {
+        state.isPainting = false;
+        return;
+      }
+      const cam = getCamera();
+      const zoom = getZoom();
+      const worldX = (mouseX - app.screen.width / 2) / zoom + cam.x;
+      const worldY = (mouseY - app.screen.height / 2) / zoom + cam.y;
+      const halfTile = TILE_SIZE / 2;
+      state.cursorX = Math.floor(worldX / TILE_SIZE) * TILE_SIZE + halfTile;
+      state.cursorY = Math.floor(worldY / TILE_SIZE) * TILE_SIZE + halfTile;
+      if (state.isPainting) paintAtCursor(state, network);
+    },
+    { signal: opts.signal },
+  );
+
+  app.canvas.addEventListener(
+    "mousedown",
+    (e) => {
+      if (!state.active) return;
+      // Bail if a DOM overlay is on top of the click (taskbar, window) or if
+      // the click landed on the in-canvas palette strip. The palette has its
+      // own pointertap handler for selecting tiles; we don't want to paint
+      // the world tile underneath when the user is just picking a slot.
+      const topmost = document.elementFromPoint(e.clientX, e.clientY);
+      if (topmost !== app.canvas) return;
+      const rect = app.canvas.getBoundingClientRect();
+      const canvasX = e.clientX - rect.left;
+      const canvasY = e.clientY - rect.top;
+      if (isOverPalette(canvasX, canvasY)) return;
+      e.preventDefault();
+      if (e.button === 0) {
+        state.isPainting = true;
+        state.paintErase = false;
+        paintAtCursor(state, network);
+      } else if (e.button === 2) {
+        state.isPainting = true;
+        state.paintErase = true;
+        paintAtCursor(state, network);
+      }
+    },
+    { signal: opts.signal },
+  );
+
+  window.addEventListener(
+    "mouseup",
+    () => {
       state.isPainting = false;
-      return;
-    }
-    const cam = getCamera();
-    const zoom = getZoom();
-    const worldX = (mouseX - app.screen.width / 2) / zoom + cam.x;
-    const worldY = (mouseY - app.screen.height / 2) / zoom + cam.y;
-    const halfTile = TILE_SIZE / 2;
-    state.cursorX = Math.floor(worldX / TILE_SIZE) * TILE_SIZE + halfTile;
-    state.cursorY = Math.floor(worldY / TILE_SIZE) * TILE_SIZE + halfTile;
-    if (state.isPainting) paintAtCursor(state, network);
-  });
+      state.lastPaintedKey = null;
+    },
+    { signal: opts.signal },
+  );
 
-  app.canvas.addEventListener("mousedown", (e) => {
-    if (!state.active) return;
-    // Bail if a DOM overlay is on top of the click (taskbar, window) or if
-    // the click landed on the in-canvas palette strip. The palette has its
-    // own pointertap handler for selecting tiles; we don't want to paint
-    // the world tile underneath when the user is just picking a slot.
-    const topmost = document.elementFromPoint(e.clientX, e.clientY);
-    if (topmost !== app.canvas) return;
-    const rect = app.canvas.getBoundingClientRect();
-    const canvasX = e.clientX - rect.left;
-    const canvasY = e.clientY - rect.top;
-    if (isOverPalette(canvasX, canvasY)) return;
-    e.preventDefault();
-    if (e.button === 0) {
-      state.isPainting = true;
-      state.paintErase = false;
-      paintAtCursor(state, network);
-    } else if (e.button === 2) {
-      state.isPainting = true;
-      state.paintErase = true;
-      paintAtCursor(state, network);
-    }
-  });
+  app.canvas.addEventListener(
+    "contextmenu",
+    (e) => {
+      if (state.active) e.preventDefault();
+    },
+    { signal: opts.signal },
+  );
 
-  window.addEventListener("mouseup", () => {
-    state.isPainting = false;
-    state.lastPaintedKey = null;
-  });
-
-  app.canvas.addEventListener("contextmenu", (e) => {
-    if (state.active) e.preventDefault();
-  });
-
-  app.canvas.addEventListener("wheel", (e) => {
-    if (!state.active) return;
-    e.preventDefault();
-    if (state.paletteEntries.length === 0) return;
-    const dir = e.deltaY > 0 ? 1 : -1;
-    const idx = state.paletteEntries.findIndex(
-      (c) => c.id === state.selectedTileId,
-    );
-    const next =
-      (idx + dir + state.paletteEntries.length) % state.paletteEntries.length;
-    const entry = state.paletteEntries[next];
-    if (entry) selectTile(state, entry.id);
-  });
+  app.canvas.addEventListener(
+    "wheel",
+    (e) => {
+      if (!state.active) return;
+      e.preventDefault();
+      if (state.paletteEntries.length === 0) return;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const idx = state.paletteEntries.findIndex(
+        (c) => c.id === state.selectedTileId,
+      );
+      const next =
+        (idx + dir + state.paletteEntries.length) % state.paletteEntries.length;
+      const entry = state.paletteEntries[next];
+      if (entry) selectTile(state, entry.id);
+    },
+    { signal: opts.signal },
+  );
 
   return state;
 };

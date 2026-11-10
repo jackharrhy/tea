@@ -30,9 +30,7 @@ export type WorldExtras = {
 };
 
 const ATLAS_CANDIDATE_PATHS = [
-  ...(process.env.WEB_ROOT
-    ? [`${process.env.WEB_ROOT}/assets/atlas.png`]
-    : []),
+  ...(process.env.WEB_ROOT ? [`${process.env.WEB_ROOT}/assets/atlas.png`] : []),
   "./public/assets/atlas.png",
 ];
 

@@ -2,7 +2,7 @@ import { createStore } from "zustand/vanilla";
 import { eden } from "./eden";
 import type { Me } from "./types";
 
-export type DebugMetrics = {
+type DebugMetrics = {
   tickrate: number;
   lag: number;
   jitter: number;
@@ -11,7 +11,7 @@ export type DebugMetrics = {
   bytesReceivedPerSec: number;
 };
 
-export type EditorPublicState = {
+type EditorPublicState = {
   active: boolean;
   selectedTileId: number;
 };
@@ -20,7 +20,7 @@ export type EditorPublicState = {
 // all session-state (no localStorage). Keeps the manager dumb — windows
 // register themselves via WindowManager via `register*` actions; chrome
 // reads `windows` map to render.
-export type WindowState = {
+type WindowState = {
   id: string;
   title: string;
   open: boolean;

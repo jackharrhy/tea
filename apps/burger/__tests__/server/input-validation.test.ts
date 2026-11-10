@@ -36,7 +36,8 @@ test("rejects non-object input", () => {
 test("rejects wrong type tag", () => {
   expect(validateInput({ ...VALID, type: "signal" }, -1)).toBeNull();
   expect(validateInput({ ...VALID, type: undefined }, -1)).toBeNull();
-  const { type: _, ...withoutType } = VALID;
+  const withoutType: Record<string, unknown> = { ...VALID };
+  delete withoutType.type;
   expect(validateInput(withoutType, -1)).toBeNull();
 });
 

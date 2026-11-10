@@ -9,6 +9,7 @@ a Remix 3 monorepo for personal apps and packages.
 | --- | --- | --- |
 | [`@tea/artbin`](apps/artbin/) | Game asset archive, uploads, previews, and API | [README](apps/artbin/README.md) |
 | [`@jackharrhy/tea-artbin`](apps/artbin-cli/) | Game asset command-line client | [README](apps/artbin-cli/README.md) |
+| [`@tea/burger`](apps/burger/) | Remix game UI and authoritative Bun world server | [README](apps/burger/README.md) |
 | [`@tea/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
 | [`@tea/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
 | [`@tea/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
@@ -28,6 +29,7 @@ a Remix 3 monorepo for personal apps and packages.
 | --- | --- | --- |
 | [`@tea/artbin-core`](packages/artbin-core/) | Asset scanning, detection, and upload primitives | [README](packages/artbin-core/README.md) |
 | [`@tea/artbin-ui`](packages/artbin-ui/) | CLI scan interface components | [README](packages/artbin-ui/README.md) |
+| [`@tea/burger-core`](packages/burger-core/) | Shared Burger ECS, physics, and wire constants | [README](packages/burger-core/README.md) |
 | [`@tea/identity`](packages/identity/) | Jack Auth OIDC and API identity verification | [README](packages/identity/README.md) |
 | [`@tea/json-schema`](packages/json-schema/) | Remix data schemas with JSON Schema descriptions | [README](packages/json-schema/README.md) |
 | [`@tea/logger`](packages/logger/) | Request and job logging primitives | [README](packages/logger/README.md) |
@@ -57,6 +59,8 @@ Vite+ runs Oxfmt and Oxlint from [`vite.config.ts`](vite.config.ts). `npm run to
 Workspace `typecheck` and declaration/build scripts use tsrs. `npm run typecheck:tsrs` checks every workspace after Worker types have been generated. `npm run lint` runs the same type-aware Oxlint configuration used in CI.
 
 The local [`compose.yml`](compose.yml) runs Traefik and the containerized apps. Run `docker compose up --build -d`, then open [andrew.localhost](http://andrew.localhost), [luke.localhost](http://luke.localhost), [letters.localhost](http://letters.localhost), [ref.localhost](http://ref.localhost), [radio.localhost](http://radio.localhost), [maps.localhost](http://maps.localhost), [maps-sync.localhost/health](http://maps-sync.localhost/health), [pool.localhost](http://pool.localhost), or [artbin.localhost](http://artbin.localhost). Ref and Radio use local development passwords; set `REF_PASSWORD` and `RADIO_PASSWORD` before starting Compose to choose your own. Maps runs its UI and collaboration Workers on local Celld, and collaboration and the hosted service share `MAPS_REALTIME_TICKET_SECRET` for local signed tickets. Hosted Maps sign-in also needs a registered Jack Auth client: set `MAPS_AUTH_CLIENT_ID`, `AUTH_MAPS_PROJECT_ID`, and `AUTH_ORGANIZATION_ID` before starting the Maps service. To exercise Artbin from the Maps service, provide `TEA_MAPS_ARTBIN_URL`, `AUTH_ARTBIN_PROJECT_ID`, `AUTH_ARTBIN_CLIENT_ID`, and `AUTH_ARTBIN_CLIENT_SECRET` in the local environment; the service leaves Artbin disabled if any is missing. The service binds loopback port 8792, collaboration binds loopback port 8787, and Traefik binds loopback port 80. The Maps UI, hosted service, and collaboration ports are 8790, 8792, and 8787; stop a separate Ref dev server on port 8787 before starting Maps collaboration. Production DNS, TLS, and host setup live in the infrastructure repo.
+
+Burger is opt-in because it needs a registered local OAuth callback. Set `BURGER_AUTH_CLIENT_ID` and `AUTH_BURGER_PROJECT_ID`, then run `docker compose --profile burger up --build -d` to open [burger.localhost](http://burger.localhost). Its [workspace guide](apps/burger/README.md) covers the isolated browser fixture when no local provider client is registered.
 
 CI installs once and runs the `check` scripts for affected workspaces. Package changes also check their consumers; shared config or unknown paths check every workspace with a `check` script. README, `docs/`, Dockerfiles, `.dockerignore`, and the CI selector skip app checks; image builds run in the publish workflows, and the selector has its own tests. A separate [Node image check](docs/node-images.md) builds and exercises the six deployed Node images for runtime/Docker dependency changes without publishing. Draft PR updates compare only commits in that push; ready PRs and `main` check the full change set. Browser setup remains available for workspace checks that include browser tests. Separate integration browser and Celld smokes run for affected apps when a PR is ready for review or on `main`. See [`scripts/ci/affected.mjs`](scripts/ci/affected.mjs).
 

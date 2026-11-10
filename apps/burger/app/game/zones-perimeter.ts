@@ -72,7 +72,7 @@ export const setPerimeterVisible = (
   if (visible) redrawPerimeter(state);
 };
 
-export const redrawPerimeter = (state: PerimeterState): void => {
+const redrawPerimeter = (state: PerimeterState): void => {
   const g = state.overlay;
   g.clear();
   const segments = computePerimeterSegments(state.cells);

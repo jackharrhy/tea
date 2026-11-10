@@ -211,7 +211,7 @@ export const processPlayerInputs = (
   }
 };
 
-export const getSoaPayloadForDirty = (): ArrayBuffer | null => {
+const getSoaPayloadForDirty = (): ArrayBuffer | null => {
   if (dirtyEids.size === 0) return null;
   const eids = Array.from(dirtyEids);
   dirtyEids.clear();

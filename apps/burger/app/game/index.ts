@@ -37,7 +37,6 @@ import {
 } from "./network";
 import {
   CAMERA_LERP_FACTOR,
-  DEADZONE_HEIGHT,
   DEADZONE_WIDTH,
   ERROR_DECAY_RATE,
   INTERP_DELAY,
@@ -88,16 +87,16 @@ const makeWorld = () =>
         interact: boolean;
         interactPressed: boolean;
       }[],
-      Sprite: [] as (PixiSprite | null)[],
-      NameText: [] as (PixiText | null)[],
-      DebugText: [] as (PixiText | null)[],
+      Sprite: [] as (PixiSprite | undefined)[],
+      NameText: [] as (PixiText | undefined)[],
+      DebugText: [] as (PixiText | undefined)[],
       RenderPosition: { x: [] as number[], y: [] as number[] },
       PositionHistory: [] as PositionSnapshot[][],
     },
     time: {
       delta: 0,
       elapsed: 0,
-      then: performance.now(),
+      previousTick: performance.now(),
     },
     bounds: { x: 0, y: 0, w: 0, h: 0 },
     typeIdToAtlasSrc: {} as Record<number, [number, number]>,
@@ -220,14 +219,14 @@ const setupPlayerObserver = (context: Context) => {
     if (sprite) {
       containers.entities.removeChild(sprite);
       sprite.destroy();
-      delete Sprite[eid];
+      Sprite[eid] = undefined;
     }
 
     const nameText = NameText[eid];
     if (nameText) {
       containers.debug.removeChild(nameText);
       nameText.destroy();
-      delete NameText[eid];
+      NameText[eid] = undefined;
     }
 
     if (showDebug) {
@@ -235,7 +234,7 @@ const setupPlayerObserver = (context: Context) => {
       if (debugText) {
         containers.debug.removeChild(debugText);
         debugText.destroy();
-        delete DebugText[eid];
+        DebugText[eid] = undefined;
       }
     }
 
@@ -292,7 +291,7 @@ const setupTileObserver = (context: Context) => {
     if (sprite) {
       containers.tiles.removeChild(sprite);
       sprite.destroy();
-      delete Sprite[eid];
+      Sprite[eid] = undefined;
     }
   });
 };
@@ -300,9 +299,9 @@ const setupTileObserver = (context: Context) => {
 const timeSystem = ({ world }: Context) => {
   const { time } = world;
   const now = performance.now();
-  time.delta = now - time.then;
+  time.delta = now - time.previousTick;
   time.elapsed += time.delta;
-  time.then = now;
+  time.previousTick = now;
 };
 
 const inputSystem = ({ world, input }: Context): void => {
@@ -502,10 +501,10 @@ const cameraSystem = ({ world, app, containers, me, camera }: Context) => {
     cameraTargetX = px - DEADZONE_WIDTH / 2;
   }
 
-  if (py < camera.y - DEADZONE_HEIGHT / 2) {
-    cameraTargetY = py + DEADZONE_HEIGHT / 2;
-  } else if (py > camera.y + DEADZONE_HEIGHT / 2) {
-    cameraTargetY = py - DEADZONE_HEIGHT / 2;
+  if (py < camera.y - DEADZONE_WIDTH / 2) {
+    cameraTargetY = py + DEADZONE_WIDTH / 2;
+  } else if (py > camera.y + DEADZONE_WIDTH / 2) {
+    cameraTargetY = py - DEADZONE_WIDTH / 2;
   }
 
   camera.x = lerp(camera.x, cameraTargetX, CAMERA_LERP_FACTOR);
@@ -573,9 +572,14 @@ const spawnOverlaySystem = ({ overlays }: Context) => {
   const g = overlays.spawn;
   g.clear();
   if (!draft) return;
-  g.rect(draft.x, draft.y, draft.w, draft.h)
-    .stroke({ width: 2, color: 0x00ff88, alpha: 0.9 })
-    .fill({ color: 0x00ff88, alpha: 0.15 });
+  g.rect(draft.x, draft.y, draft.w, draft.h).stroke({
+    width: 2,
+    color: 0x00ff88,
+    alpha: 0.9,
+  });
+  // Pixi Graphics.fill is a paint method, not Array.fill.
+  // oxlint-disable-next-line unicorn/no-array-fill-with-reference-type
+  g.fill({ color: 0x00ff88, alpha: 0.15 });
 };
 
 const update = (context: Context) => {
@@ -633,7 +637,9 @@ export const startGame = (parent: HTMLElement, user: Me): (() => void) => {
   const world = makeWorld();
 
   const app = new Application();
+  const lifetime = new AbortController();
   let isRunning = true;
+  let mountedContext: Context | null = null;
   const teardownCallbacks: Array<() => void> = [];
 
   useGameStore.getState().setUser(user);
@@ -692,7 +698,7 @@ export const startGame = (parent: HTMLElement, user: Me): (() => void) => {
     // Zones overlay. Must be parented to a world-space container (under the
     // camera-translated mainContainer) so the painted cells line up with
     // tile sprites at every zoom level.
-    const zones = initZonesGame(mainContainer);
+    const zoneLayer = initZonesGame(mainContainer);
 
     // Perimeter outline overlay for non-admin paint mode. Parented to
     // mainContainer (world-space) so the yellow outline lines up with tile
@@ -720,6 +726,9 @@ export const startGame = (parent: HTMLElement, user: Me): (() => void) => {
         serverEid: null,
       },
       network: {
+        signal: lifetime.signal,
+        timers: new Set(),
+        lastSendTime: 0,
         socket: null,
         inputSeq: 0,
         lastSentSeq: -1,
@@ -766,7 +775,7 @@ export const startGame = (parent: HTMLElement, user: Me): (() => void) => {
       },
       user,
       editor: null,
-      zones,
+      zones: zoneLayer,
       perimeter,
     };
 
@@ -795,6 +804,7 @@ export const startGame = (parent: HTMLElement, user: Me): (() => void) => {
       network: context.network,
       me: context.me,
       onLocalPlayerReady: async () => {
+        if (!isRunning) return;
         if (context.me.eid !== null) {
           const { Input } = world.components;
           addComponent(world, context.me.eid, Input);
@@ -821,6 +831,7 @@ export const startGame = (parent: HTMLElement, user: Me): (() => void) => {
           () => ZOOM,
           useGameStore.getState().palette,
           {
+            signal: lifetime.signal,
             onTogglePaintMode: (mode) => {
               if (context.user.isAdmin) {
                 // Admin: the `z` key flips between tile-paint and zone-paint;
@@ -1030,10 +1041,14 @@ export const startGame = (parent: HTMLElement, user: Me): (() => void) => {
 
     // expose for debugging from the devtools console
     (window as { context?: Context }).context = context;
+    mountedContext = context;
   })();
 
   return () => {
     isRunning = false;
+    lifetime.abort();
+    if ((window as { context?: Context }).context === mountedContext)
+      (window as { context?: Context }).context = undefined;
     while (teardownCallbacks.length > 0) {
       const fn = teardownCallbacks.pop();
       try {

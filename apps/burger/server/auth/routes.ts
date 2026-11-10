@@ -101,9 +101,9 @@ export const authRoutes = ({
       const state = query.state as string | undefined;
       const error = query.error as string | undefined;
       const oauth = parseOauthCookie(headers.cookie);
-      const callbackError = (error: string) =>
+      const callbackError = (reason: string) =>
         redirect(
-          `/?error=${encodeURIComponent(error)}`,
+          `/?error=${encodeURIComponent(reason)}`,
           clearOauthCookie(config.isProduction),
         );
 

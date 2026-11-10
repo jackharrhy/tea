@@ -63,6 +63,9 @@ const debug = debugFactory("burger:network.client");
 export type PositionSnapshot = { x: number; y: number; time: number };
 
 export type NetworkState = {
+  signal: AbortSignal;
+  timers: Set<ReturnType<typeof setTimeout>>;
+  lastSendTime: number;
   socket: WebSocket | null;
   inputSeq: number;
   lastSentSeq: number;
@@ -126,120 +129,150 @@ export const setupSocket = ({
   const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
   socket.binaryType = "arraybuffer";
   network.socket = socket;
+  const { signal, timers } = network;
+  signal.addEventListener(
+    "abort",
+    () => {
+      for (const timer of timers) clearTimeout(timer);
+      timers.clear();
+      if (network.socket === socket) network.socket = null;
+      socket.close();
+    },
+    { once: true },
+  );
 
-  socket.addEventListener("open", () => {
-    console.log("connected to server");
-  });
+  socket.addEventListener(
+    "open",
+    () => {
+      console.log("connected to server");
+    },
+    { signal },
+  );
 
-  socket.addEventListener("message", (event) => {
-    network.bytesReceived += event.data.byteLength;
+  socket.addEventListener(
+    "message",
+    (event) => {
+      network.bytesReceived += event.data.byteLength;
 
-    const delay = network.lagMs + Math.random() * network.jitterMs;
-    setTimeout(() => {
-      const messageView = new Uint8Array(event.data);
-      const type = messageView[0];
-      const payload = messageView.slice(1).buffer;
+      const delay = network.lagMs + Math.random() * network.jitterMs;
+      const timer = setTimeout(() => {
+        timers.delete(timer);
+        if (signal.aborted) return;
+        const messageView = new Uint8Array(event.data);
+        const type = messageView[0];
+        const payload = messageView.slice(1).buffer;
 
-      switch (type) {
-        case MESSAGE_TYPES.SNAPSHOT:
-          snapshotDeserializer(payload, idMap);
-          tryMapLocalPlayer(me, idMap, onLocalPlayerReady);
-          onSnapshotReceived();
-          break;
+        switch (type) {
+          case MESSAGE_TYPES.SNAPSHOT:
+            snapshotDeserializer(payload, idMap);
+            tryMapLocalPlayer(me, idMap, onLocalPlayerReady);
+            onSnapshotReceived();
+            break;
 
-        case MESSAGE_TYPES.OBSERVER:
-          debug("observer delta: %d bytes", payload.byteLength);
-          observerDeserializer(payload, idMap);
-          tryMapLocalPlayer(me, idMap, onLocalPlayerReady);
-          break;
+          case MESSAGE_TYPES.OBSERVER:
+            debug("observer delta: %d bytes", payload.byteLength);
+            observerDeserializer(payload, idMap);
+            tryMapLocalPlayer(me, idMap, onLocalPlayerReady);
+            break;
 
-        case MESSAGE_TYPES.SOA:
-          // Field-data delta following an OBSERVER add. The observer
-          // announces structural changes (entity / component add/remove)
-          // but doesn't carry field values. The SoA payload fills them in.
-          debug("soa delta: %d bytes", payload.byteLength);
-          soaDeserializer(payload, idMap);
-          break;
+          case MESSAGE_TYPES.SOA:
+            // Field-data delta following an OBSERVER add. The observer
+            // announces structural changes (entity / component add/remove)
+            // but doesn't carry field values. The SoA payload fills them in.
+            debug("soa delta: %d bytes", payload.byteLength);
+            soaDeserializer(payload, idMap);
+            break;
 
-        case MESSAGE_TYPES.GAME_STATE: {
-          const decoder = new TextDecoder();
-          const json = decoder.decode(payload);
-          const gameState = JSON.parse(json);
-          reconcile(world, network, me, gameState);
-          context.metrics.serverTicksCount++;
-          break;
-        }
-
-        case MESSAGE_TYPES.YOUR_EID: {
-          const view = new Int32Array(payload);
-          const version = view[0];
-          if (version !== PROTOCOL_VERSION) {
-            console.error(
-              `Protocol version mismatch: server=${version} client=${PROTOCOL_VERSION}`,
-            );
-            network.socket?.close();
-            return;
+          case MESSAGE_TYPES.GAME_STATE: {
+            const decoder = new TextDecoder();
+            const json = decoder.decode(payload);
+            const gameState = JSON.parse(json);
+            reconcile(world, network, me, gameState);
+            context.metrics.serverTicksCount++;
+            break;
           }
-          me.serverEid = view[1]!;
-          world.bounds = {
-            x: view[2]!,
-            y: view[3]!,
-            w: view[4]!,
-            h: view[5]!,
-          };
-          break;
+
+          case MESSAGE_TYPES.YOUR_EID: {
+            const view = new Int32Array(payload);
+            const version = view[0];
+            if (version !== PROTOCOL_VERSION) {
+              console.error(
+                `Protocol version mismatch: server=${version} client=${PROTOCOL_VERSION}`,
+              );
+              network.socket?.close();
+              return;
+            }
+            me.serverEid = view[1]!;
+            world.bounds = {
+              x: view[2]!,
+              y: view[3]!,
+              w: view[4]!,
+              h: view[5]!,
+            };
+            break;
+          }
+
+          case MESSAGE_TYPES.CATALOG_UPDATED: {
+            debug("catalog_updated received: %d bytes", payload.byteLength);
+            const decoder = new TextDecoder();
+            const json = decoder.decode(payload);
+            const catalog = JSON.parse(json) as Array<{
+              id: number;
+              type: string;
+              src_x: number;
+              src_y: number;
+              label: string;
+            }>;
+            network.onCatalogUpdated?.(catalog);
+            break;
+          }
+
+          case MESSAGE_TYPES.ZONES_UPDATED: {
+            // Admin-only signal. The server only broadcasts this to admin
+            // connections, so no extra client-side gate is needed here.
+            // Errors are swallowed so a transient fetch failure doesn't crash
+            // the WS handler — the next ZONES_UPDATED retries.
+            debug("zones_updated received");
+            refetchZones().catch((err: unknown) => {
+              console.error("refetchZones failed", err);
+            });
+            break;
+          }
+
+          case MESSAGE_TYPES.MY_ZONES: {
+            // Per-user payload: the flat union of cells the user is allowed
+            // to paint. Sent on connect (non-admins) and whenever their
+            // membership or any of their zones' cells change.
+            const decoder = new TextDecoder();
+            const json = decoder.decode(payload);
+            const parsed = JSON.parse(json) as { cells: [number, number][] };
+            useGameStore.getState().setMyZoneCells(parsed.cells);
+            break;
+          }
         }
+      }, delay);
+      timers.add(timer);
+    },
+    { signal },
+  );
 
-        case MESSAGE_TYPES.CATALOG_UPDATED: {
-          debug("catalog_updated received: %d bytes", payload.byteLength);
-          const decoder = new TextDecoder();
-          const json = decoder.decode(payload);
-          const catalog = JSON.parse(json) as Array<{
-            id: number;
-            type: string;
-            src_x: number;
-            src_y: number;
-            label: string;
-          }>;
-          network.onCatalogUpdated?.(catalog);
-          break;
-        }
+  socket.addEventListener(
+    "close",
+    () => {
+      console.log("disconnected from server");
+      network.socket = null;
+      onSocketClose?.();
+    },
+    { signal },
+  );
 
-        case MESSAGE_TYPES.ZONES_UPDATED: {
-          // Admin-only signal. The server only broadcasts this to admin
-          // connections, so no extra client-side gate is needed here.
-          // Errors are swallowed so a transient fetch failure doesn't crash
-          // the WS handler — the next ZONES_UPDATED retries.
-          debug("zones_updated received");
-          refetchZones().catch((err: unknown) => {
-            console.error("refetchZones failed", err);
-          });
-          break;
-        }
-
-        case MESSAGE_TYPES.MY_ZONES: {
-          // Per-user payload: the flat union of cells the user is allowed
-          // to paint. Sent on connect (non-admins) and whenever their
-          // membership or any of their zones' cells change.
-          const decoder = new TextDecoder();
-          const json = decoder.decode(payload);
-          const parsed = JSON.parse(json) as { cells: [number, number][] };
-          useGameStore.getState().setMyZoneCells(parsed.cells);
-          break;
-        }
-      }
-    }, delay);
-  });
-
-  socket.addEventListener("close", () => {
-    console.log("disconnected from server");
-    network.socket = null;
-    onSocketClose?.();
-  });
-
-  socket.addEventListener("error", (error) => {
-    console.error("WebSocket error:", error);
-  });
+  socket.addEventListener(
+    "error",
+    (error) => {
+      console.error("WebSocket error:", error);
+    },
+    { signal },
+  );
 };
 
 export const sendPaint = (
@@ -269,16 +302,15 @@ const tryMapLocalPlayer = (
   }
 };
 
-let lastSendTime = 0;
-
 export const sendInputs = (
   network: NetworkState,
   meEid: number | null,
   metrics?: { updatesCount: number },
 ): void => {
   const now = performance.now();
-  if (now - lastSendTime < CLIENT_UPDATE_RATE) return;
-  lastSendTime = now;
+  if (network.signal.aborted || now - network.lastSendTime < CLIENT_UPDATE_RATE)
+    return;
+  network.lastSendTime = now;
 
   const { socket, pendingInputs, lastSentSeq } = network;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
@@ -299,17 +331,21 @@ export const sendInputs = (
       interact: cmd.interact,
     });
     const delay = network.lagMs + Math.random() * network.jitterMs;
-    setTimeout(() => {
+    const timer = setTimeout(() => {
+      network.timers.delete(timer);
+      if (network.signal.aborted || socket.readyState !== WebSocket.OPEN)
+        return;
       network.bytesSent += msg.length;
       socket.send(msg);
     }, delay);
+    network.timers.add(timer);
   }
 
   network.lastSentSeq = unsentInputs[unsentInputs.length - 1]!.seq;
   if (metrics) metrics.updatesCount++;
 };
 
-export const reconcile = (
+const reconcile = (
   world: World,
   network: NetworkState,
   me: PlayerIdentity,
