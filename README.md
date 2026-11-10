@@ -2,6 +2,8 @@
 
 a Remix 3 monorepo for personal apps and packages.
 
+[WORLD_IDEA.md](WORLD_IDEA.md) records the direction for a future shared world built from Burger, Gurgur, Pool, and Maps.
+
 ### Apps
 
 <!-- prettier-ignore -->
