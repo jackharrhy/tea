@@ -20,7 +20,7 @@ import { mountTemplateRoutes } from "./templates";
 export function adminRoutes(
   db: Db,
   config: Config,
-  dashboard?: (
+  remix?: (
     request: Request,
     user: Pick<
       typeof schema.users.$inferSelect,
@@ -36,23 +36,38 @@ export function adminRoutes(
   app.use(adminAuth(db));
 
   mountCampaignRoutes(app, db, config);
-  if (dashboard)
-    app.get("/", (context) => dashboard(context.request, context.user!));
+  if (remix) app.get("/", (context) => remix(context.request, context.user!));
   else mountDashboardRoutes(app, db, config);
   mountSubscriberRoutes(app, db, config);
-  mountListRoutes(app, db, config);
+  if (remix) {
+    for (const path of [
+      "/lists",
+      "/lists/new",
+      "/lists/:id",
+      "/lists/:id/edit",
+      "/lists/:id/delete",
+    ]) {
+      app.all(path, (context) => remix(context.request, context.user!));
+    }
+  } else mountListRoutes(app, db, config);
   mountMessageRoutes(app, db, config);
   mountActivityRoutes(app, db, config);
-  mountTagRoutes(app, db, config);
+  if (remix) {
+    for (const path of ["/tags", "/tags/new", "/tags/:id", "/tags/:id/delete"])
+      app.all(path, (context) => remix(context.request, context.user!));
+  } else mountTagRoutes(app, db, config);
   mountImportRoutes(app, db, config);
-  if (config.identity && dashboard) {
-    app.get("/users", (context) => dashboard(context.request, context.user!));
-    app.get("/tokens", (context) => dashboard(context.request, context.user!));
+  if (config.identity && remix) {
+    app.get("/users", (context) => remix(context.request, context.user!));
+    app.get("/tokens", (context) => remix(context.request, context.user!));
   } else {
     mountUserRoutes(app, db, config);
     mountTokenRoutes(app, db, config);
   }
-  mountDmarcRoutes(app, db, config);
+  if (remix) {
+    for (const path of ["/dmarc", "/dmarc/:id", "/dmarc/:id/raw"])
+      app.all(path, (context) => remix(context.request, context.user!));
+  } else mountDmarcRoutes(app, db, config);
   mountTemplateRoutes(app, db);
 
   return app;

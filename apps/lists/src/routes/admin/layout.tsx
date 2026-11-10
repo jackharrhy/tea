@@ -83,7 +83,7 @@ export function AdminLayout({
       </head>
       <body
         class="font-sans text-gray-900 bg-gray-50 m-0 p-0 leading-relaxed"
-        hx-boost="true"
+        hx-boost="false"
         hx-target="#app-shell"
         hx-select="#app-shell"
         hx-swap="outerHTML"

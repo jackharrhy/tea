@@ -8,15 +8,15 @@ export function adminNavigation(isAdmin: boolean) {
   const primary: AdminNavigationLink[] = [
     { href: "/admin/", label: "Dashboard", fullPage: true },
     { href: "/admin/subscribers", label: "Subscribers" },
-    { href: "/admin/lists", label: "Lists" },
+    { href: "/admin/lists", label: "Lists", fullPage: true },
     { href: "/admin/campaigns", label: "Campaigns" },
     { href: "/admin/inbound", label: "Inbound" },
   ];
-  if (isAdmin) primary.push({ href: "/admin/dmarc", label: "DMARC" });
+  if (isAdmin) primary.push({ href: "/admin/dmarc", label: "DMARC", fullPage: true });
 
   const secondary: AdminNavigationLink[] = [
     { href: "/admin/activity", label: "Activity" },
-    { href: "/admin/tags", label: "Tags" },
+    { href: "/admin/tags", label: "Tags", fullPage: true },
     { href: "/admin/import", label: "Import" },
   ];
   if (isAdmin)

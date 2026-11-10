@@ -121,9 +121,9 @@ const logout = css({
   fontSize: "12px",
 });
 
-type Viewer = { name: string; isAdmin: boolean };
+export type Viewer = { name: string; isAdmin: boolean };
 
-function AdminDocument(
+export function AdminDocument(
   handle: Handle<{
     title: string;
     activeHref: string;

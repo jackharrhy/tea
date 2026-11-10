@@ -48,7 +48,9 @@ export function createApplication(db: Db, config: Config) {
         adminRoutes(db, config, (request, user) => {
           const url = new URL(request.url);
           if (url.pathname === "/admin/") url.pathname = "/admin";
-          return createAdminRouter(db, user).fetch(new Request(url, request));
+          return createAdminRouter(db, config, user).fetch(
+            new Request(url, request),
+          );
         }),
       ),
     );

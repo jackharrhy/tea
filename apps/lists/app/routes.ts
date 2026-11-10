@@ -9,6 +9,26 @@ export const routes = route({
     dashboard: get("/"),
     users: get("/users"),
     tokens: get("/tokens"),
+    lists: route("/lists", {
+      index: get("/"),
+      new: get("/new"),
+      create: post("/new"),
+      show: get("/:id"),
+      update: post("/:id/edit"),
+      destroy: post("/:id/delete"),
+    }),
+    tags: route("/tags", {
+      index: get("/"),
+      new: get("/new"),
+      create: post("/new"),
+      show: get("/:id"),
+      destroy: post("/:id/delete"),
+    }),
+    dmarc: route("/dmarc", {
+      index: get("/"),
+      show: get("/:id"),
+      raw: get("/:id/raw"),
+    }),
   }),
   subscribe: route("subscribe", {
     show: get("/"),
