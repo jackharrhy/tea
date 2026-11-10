@@ -30,6 +30,8 @@ type Voice = {
 export class GameAudio {
   enabled = false;
   onError: ((message: string) => void) | null = null;
+  private disposed = false;
+  private readonly abort = new AbortController();
   private audio: AudioContext | null = null;
   private master: GainNode | null = null;
   private loading: Promise<void> | null = null;
@@ -57,6 +59,7 @@ export class GameAudio {
   };
 
   toggle() {
+    if (this.disposed) return false;
     this.enabled = !this.enabled;
     if (this.enabled) void this.resume();
     else this.stopAll();
@@ -64,13 +67,14 @@ export class GameAudio {
   }
 
   private report(error: unknown) {
+    if (this.disposed) return;
     const message = `Audio unavailable: ${error instanceof Error ? error.message : String(error)}`;
     console.warn(message);
     this.onError?.(message);
   }
 
   async resume() {
-    if (!this.enabled) return;
+    if (!this.enabled || this.disposed) return;
     try {
       if (!this.audio) {
         this.audio = new AudioContext();
@@ -104,7 +108,9 @@ export class GameAudio {
             "impact-dry.wav",
             "cue-cloth.wav",
           ].map(async (name) => {
-            const response = await fetch(`/audio/${name}`);
+            const response = await fetch(`/audio/${name}`, {
+              signal: this.abort.signal,
+            });
             if (!response.ok)
               throw new Error(`${name}: HTTP ${response.status}`);
             return context.decodeAudioData(await response.arrayBuffer());
@@ -135,12 +141,13 @@ export class GameAudio {
             },
           )
           .catch((error) => {
-            this.loading = null;
+            if (this.audio === context) this.loading = null;
             throw error;
           });
       }
       await Promise.all([resumed, this.loading]);
     } catch (error) {
+      if (this.disposed) return;
       this.stopAll();
       this.report(error);
     }
@@ -505,6 +512,9 @@ export class GameAudio {
   }
 
   dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.abort.abort();
     this.enabled = false;
     this.reset();
     if (this.watchdog) clearInterval(this.watchdog);

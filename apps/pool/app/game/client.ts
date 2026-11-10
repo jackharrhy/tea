@@ -194,7 +194,6 @@ export class GameClient {
     this.previous = performance.now();
     this.session.connect(true);
     await this.view.renderer.setAnimationLoop((now) => this.frame(now));
-    if (this.disposed) await this.view.renderer.setAnimationLoop(null);
   }
   dispose() {
     if (this.disposed) return;
@@ -216,7 +215,9 @@ export class GameClient {
   private disposeView() {
     if (!this.view || this.viewDisposed) return;
     this.viewDisposed = true;
-    this.view.dispose();
+    void this.view.dispose().catch((error) => {
+      console.error("Pool renderer cleanup failed", error);
+    });
   }
   private shotBlocked() {
     return !!this.shots.pending || !!this.poolPrediction?.active;

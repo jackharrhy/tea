@@ -232,7 +232,7 @@ export class HallView {
     await this.renderer.compileAsync(this.vignette.scene, this.vignette.camera);
     console.info("8ball renderer:", this.renderer.backend.constructor.name);
   }
-  dispose() {
+  async dispose() {
     this.renderer.setAnimationLoop(null);
     this.tablePresence.dispose();
     this.collisionDebug?.dispose();
@@ -268,7 +268,8 @@ export class HallView {
     for (const texture of textures) texture.dispose();
     for (const sceneMaterial of materials) sceneMaterial.dispose();
     for (const geometry of geometries) geometry.dispose();
-    this.renderer.dispose();
+    for (const light of this.shadowLights.values()) light.shadow.dispose();
+    await this.renderer.dispose();
   }
   zoomBy(delta: number) {
     this.cameraRig.zoomBy(delta);
