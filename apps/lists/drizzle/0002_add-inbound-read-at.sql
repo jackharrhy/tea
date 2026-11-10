@@ -1,0 +1,1 @@
+ALTER TABLE `inbound_messages` ADD `read_at` text;

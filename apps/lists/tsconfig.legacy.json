@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxImportSource": null,
+    "jsxFactory": "Html.createElement",
+    "jsxFragmentFactory": "Html.Fragment"
+  },
+  "include": ["src/**/*", "emails/**/*"],
+  "exclude": ["src/http-app.ts", "src/index.ts", "src/routes/public.ts"]
+}

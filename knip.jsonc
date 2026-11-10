@@ -79,6 +79,9 @@
         "@fontsource-variable/shantell-sans",
       ],
     },
+    "apps/lists": {
+      "entry": ["src/client.ts", "src/styles/app.css"],
+    },
     "apps/marky": {
       "entry": ["remix-test.config.ts", "app/assets/entry.ts"],
       // Browser modules resolve this package through remix/assets.
