@@ -55,6 +55,9 @@ describe("Systems Garden map", () => {
     expect(bundle.mapRevision).toBe(
       "a1a3377851fe6a80a64d0147d62b59c858742d414cf0c493b020b079ca743039",
     );
+    expect(new Bun.CryptoHasher("sha256").update(encoded).digest("hex")).toBe(
+      "4006aa669800b3185481ac1be74baf283afc522b0c16834bdc9882e958840904",
+    );
     expect(encoded).toEqual(committed);
   });
   test("uses the same default material scale as TrenchBroom", () => {
