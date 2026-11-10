@@ -40,6 +40,7 @@ export interface EditorShapePanelState {
 
 export interface EditorShapePanelContext {
   readonly state: EditorShapePanelState;
+  readonly activate: () => void;
   readonly setField: <K extends keyof ShapeFields>(
     field: K,
     value: ShapeFields[K],
@@ -47,7 +48,10 @@ export interface EditorShapePanelContext {
   readonly setHollow: (value: boolean) => void;
 }
 
-export function initEditorShapePanel(inputChanged: () => void) {
+export function initEditorShapePanel(
+  inputChanged: () => void,
+  activate: () => void,
+) {
   let state: EditorShapePanelState = {
     visible: false,
     result: "Drag to draw",
@@ -60,7 +64,7 @@ export function initEditorShapePanel(inputChanged: () => void) {
     if (!ready) return;
     window.dispatchEvent(
       new CustomEvent<EditorShapePanelContext>("tea-maps-shape-state", {
-        detail: { state, setField, setHollow },
+        detail: { state, activate, setField, setHollow },
       }),
     );
   }

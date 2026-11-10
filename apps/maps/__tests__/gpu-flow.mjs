@@ -151,6 +151,7 @@ try {
   assert.equal(gpu, true, "WebGPU software adapter is unavailable");
   await page.locator("#xy[data-face-alignment-count]").waitFor();
   await page.locator("#inspector-tab-entity").click();
+  await page.locator(".editor-more-tools > summary").click();
   await page.locator("#add-box:enabled").click();
   await page.waitForFunction(
     () => document.querySelector("#brush-count")?.textContent === "1",

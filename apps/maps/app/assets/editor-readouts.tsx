@@ -44,7 +44,11 @@ export const EditorPerspectiveLabel = clientEntry(
       handle.update();
     });
 
-    return () => <span id="perspective-label">{label}</span>;
+    return () => (
+      <span id="perspective-label">
+        {label === "Perspective" ? "3D" : label}
+      </span>
+    );
   },
 );
 
@@ -92,6 +96,14 @@ export const EditorSelectionInfo = clientEntry(
       handle.update();
     });
 
-    return () => <p id="selection-info">{message}</p>;
+    return () => (
+      <div id="selection-info">
+        <strong>Selection</strong>
+        <span>{message}</span>
+        {message === "No selection" ? (
+          <p>Select a brush or face in any view.</p>
+        ) : null}
+      </div>
+    );
   },
 );

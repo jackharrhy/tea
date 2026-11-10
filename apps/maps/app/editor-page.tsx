@@ -76,13 +76,15 @@ export function EditorPage() {
               </summary>
               <div class="editor-menu-content">
                 <div class="editor-menu-heading">File and recovery</div>
+                <EditorDocumentName />
                 <a href="/">Maps home</a>
                 <a href="/projects">Projects</a>
                 <EditorDocumentControls />
                 <EditorRecentProjects />
+                <div class="editor-menu-heading">Appearance</div>
+                <EditorThemeControl />
               </div>
             </details>
-            <EditorDocumentName />
             <nav class="editor-toolbar" aria-label="Map editing toolbar">
               <EditorToolSettings />
               <EditorHistory />
@@ -106,8 +108,8 @@ export function EditorPage() {
               data-menu="project"
               name="editor-topbar"
             >
-              <summary>
-                <i class="ph ph-folders" aria-hidden="true" /> Project
+              <summary aria-label="Project menu" title="Project">
+                <i class="ph ph-folders" aria-hidden="true" />
               </summary>
               <div class="editor-menu-content">
                 <div class="editor-menu-heading">Project</div>
@@ -131,8 +133,11 @@ export function EditorPage() {
               class="hosted-editor-picker"
               name="editor-topbar"
             >
-              <summary title="Hosted maps and collaboration">
-                <i class="ph ph-users-three" aria-hidden="true" /> Hosted
+              <summary
+                aria-label="Hosted maps and collaboration"
+                title="Hosted maps and collaboration"
+              >
+                <i class="ph ph-users-three" aria-hidden="true" />
               </summary>
               <div class="hosted-editor-fields">
                 <EditorHostedPicker />
@@ -149,7 +154,6 @@ export function EditorPage() {
               </div>
             </details>
             <EditorHostedPresenceStrip />
-            <EditorThemeControl />
             <EditorPerformanceToggle />
             <EditorInspectorToggle />
           </header>
@@ -172,7 +176,7 @@ export function EditorPage() {
                 />
               </div>
               <div class="viewport-frame">
-                <span>Top (XY)</span>
+                <span>XY</span>
                 <canvas id="xy" aria-label="Top map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
                 <div
@@ -181,7 +185,7 @@ export function EditorPage() {
                 />
               </div>
               <div class="viewport-frame">
-                <span>Front (XZ)</span>
+                <span>XZ</span>
                 <canvas id="xz" aria-label="Front map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
                 <div
@@ -190,7 +194,7 @@ export function EditorPage() {
                 />
               </div>
               <div class="viewport-frame">
-                <span>Side (YZ)</span>
+                <span>YZ</span>
                 <canvas id="yz" aria-label="Side map viewport" />
                 <div data-viewport-overlay="lasso" aria-hidden="true" />
                 <div

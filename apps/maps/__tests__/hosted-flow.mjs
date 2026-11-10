@@ -351,6 +351,7 @@ try {
 
   const before = Number(await owner.locator("#brush-count").textContent());
   await observer.locator("#inspector-tab-entity").click();
+  await observer.locator(".editor-more-tools > summary").click();
   await observer.locator("#add-box:not([disabled])").click();
   await owner.waitForFunction(
     (count) =>
@@ -367,6 +368,7 @@ try {
 
   await observer.close();
   await owner.locator("#inspector-tab-entity").click();
+  await owner.locator(".editor-more-tools > summary").click();
   await owner.locator("#add-box:not([disabled])").click();
   await owner.waitForFunction(
     (count) =>

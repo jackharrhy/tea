@@ -18,13 +18,12 @@ export const mapsEditorStyles = css({
     borderBottom: "1px solid var(--editor-border)",
     background: "var(--editor-panel)",
   },
-  "& .editor-header > #document-name": {
-    flex: "0 1 170px",
-    "align-self": "center",
-    padding: "0 10px",
+  "& .editor-document-menu #document-name": {
+    padding: "8px",
     color: "var(--editor-muted)",
     "font-size": "11px",
     "font-weight": "500",
+    borderBottom: "1px solid var(--editor-soft-border)",
   },
   "& .editor-toolbar": {
     flex: "1 1 0",
@@ -69,6 +68,25 @@ export const mapsEditorStyles = css({
     {
       "font-size": "18px",
     },
+  "& .editor-tool-button .geometry-icon": {
+    width: "21px",
+    height: "21px",
+  },
+  "& .editor-tool-button[data-tool='select'] .geometry-accent": {
+    color: "var(--editor-danger)",
+  },
+  "& .editor-tool-button[data-tool='entity'] .geometry-accent, & .editor-tool-button[data-tool='hull'] .geometry-accent, & .editor-tool-button[data-tool='face'] .geometry-accent, & .editor-tool-button[data-tool='vertex'] .geometry-accent, & .editor-tool-button[data-tool='edge'] .geometry-accent, & .editor-tool-button[data-tool='create'] .geometry-accent":
+    {
+      color: "var(--editor-warning)",
+    },
+  "& .editor-tool-button[data-tool='sweep'] .geometry-accent, & .editor-tool-button[data-tool='clip'] .geometry-accent, & .editor-tool-button[data-tool='scale'] .geometry-accent":
+    {
+      color: "var(--editor-success)",
+    },
+  "& .editor-tool-button[data-tool='rotate'] .geometry-accent, & .editor-tool-button[data-tool='shear'] .geometry-accent":
+    {
+      color: "var(--editor-accent)",
+    },
   "& .editor-toolbar #undo, & .editor-toolbar #redo, & .editor-toolbar #show-source":
     {
       display: "grid",
@@ -105,21 +123,6 @@ export const mapsEditorStyles = css({
     borderColor: "var(--editor-button-haze)",
     boxShadow: "inset 0 -2px var(--editor-accent)",
   },
-  "& .editor-tool-button[data-tool='select'] .ph": {
-    color: "var(--editor-danger)",
-  },
-  "& .editor-tool-button[data-tool='entity'] .ph, & .editor-tool-button[data-tool='hull'] .ph, & .editor-tool-button[data-tool='face'] .ph, & .editor-tool-button[data-tool='vertex'] .ph, & .editor-tool-button[data-tool='edge'] .ph":
-    {
-      color: "var(--editor-warning)",
-    },
-  "& .editor-tool-button[data-tool='sweep'] .ph, & .editor-tool-button[data-tool='clip'] .ph, & .editor-tool-button[data-tool='scale'] .ph":
-    {
-      color: "var(--editor-success)",
-    },
-  "& .editor-tool-button[data-tool='rotate'] .ph, & .editor-tool-button[data-tool='shear'] .ph":
-    {
-      color: "var(--editor-accent)",
-    },
   "& .editor-tool-select-fallback, & .editor-visually-hidden": {
     position: "absolute",
     width: "1px",
@@ -309,7 +312,11 @@ export const mapsEditorStyles = css({
   "& .editor-theme-choice, & #performance-toggle, & .hosted-presence-toggle": {
     flex: "none",
   },
-  "& .editor-theme-choice": { padding: "0 6px", fontSize: "10px" },
+  "& .editor-menu-content .editor-theme-choice": {
+    justifyContent: "space-between",
+    padding: "6px 8px",
+    fontSize: "11px",
+  },
   "& #editor-theme": {
     padding: "2px 4px",
     borderRadius: "2px",
@@ -418,6 +425,53 @@ export const mapsEditorStyles = css({
     borderBottom: "1px solid var(--editor-soft-border)",
     fontSize: "11px",
   },
+  "& #selection-info > strong": { fontWeight: "650" },
+  "& #selection-info > span": { float: "right", color: "var(--editor-muted)" },
+  "& #selection-info > p": {
+    margin: "18px 0 0",
+    color: "var(--editor-muted)",
+    fontWeight: "400",
+  },
+  "& #shape-tools": {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    alignItems: "center",
+    gap: "7px 6px",
+    padding: "12px 0",
+    borderBottom: "1px solid var(--editor-soft-border)",
+  },
+  "& #shape-tools > strong": { fontSize: "11px" },
+  "& #shape-result": {
+    justifySelf: "end",
+    color: "var(--editor-muted)",
+    fontFamily: "ui-monospace, monospace",
+    fontSize: "9px",
+  },
+  "& #shape-tools > label": {
+    gridColumn: "1 / -1",
+    color: "var(--editor-muted)",
+    fontSize: "10px",
+    textTransform: "uppercase",
+  },
+  "& #shape-tools > select": { minWidth: "0", width: "100%" },
+  "& #shape-tools > p, & #shape-tools > .shape-fields": {
+    gridColumn: "1 / -1",
+  },
+  "& #shape-tools > p": {
+    color: "var(--editor-muted)",
+    lineHeight: "1.35",
+  },
+  "& .editor-more-tools": {
+    marginTop: "12px",
+    borderTop: "1px solid var(--editor-soft-border)",
+  },
+  "& .editor-more-tools > summary": {
+    padding: "8px 0",
+    color: "var(--editor-muted)",
+    cursor: "pointer",
+    fontSize: "11px",
+    fontWeight: "600",
+  },
   "& [data-inspector-panel]": { order: "2", gap: "0", padding: "8px" },
   "& #inspector-panel-map h2": {
     margin: "8px 0 5px",
@@ -492,7 +546,6 @@ export const mapsEditorStyles = css({
   },
   "& #editor-status, & #issue-status, & #pointer-context": { fontSize: "9px" },
   "@media (max-width: 1000px)": {
-    "& .editor-header > #document-name": { display: "none" },
     "& .hosted-presence-toggle": { display: "none" },
     "& .editor-theme-choice": { display: "none" },
   },
