@@ -11,7 +11,8 @@
     "dev": "npm run build && bun dist/server/src/index.js",
     "typecheck": "tsrs -p tsconfig.json --noEmit",
     "test": "bun test __tests__ --path-ignore-patterns='**/performance/**' && bun test __tests__/performance",
-    "check": "npm run typecheck && npm test && npm run build"
+    "test:built": "bun __tests__/built/smoke.ts",
+    "check": "npm run typecheck && npm test && npm run build && npm run test:built"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
