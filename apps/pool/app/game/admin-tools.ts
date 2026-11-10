@@ -74,7 +74,10 @@ function plot(title: string, values: number[], labels: string[], unit: string) {
   return figure;
 }
 
-export function installOwnerTools(account: Account): () => void {
+export function installOwnerTools(
+  account: Account,
+  root: HTMLElement,
+): () => void {
   if (!account.authenticated || !account.owner || !account.csrf)
     return () => {};
   const panel = element("section");
@@ -172,9 +175,9 @@ export function installOwnerTools(account: Account): () => void {
     charts,
   );
   panel.append(heading, status, room, rename, metrics);
-  const menu = document.querySelector("#menu nav");
-  (menu ?? document.body).append(toggle);
-  document.body.append(panel);
+  const menu = root.querySelector("#menu nav");
+  (menu ?? root).append(toggle);
+  root.append(panel);
   let disposed = false;
   let refreshing = false;
   let mutating = false;

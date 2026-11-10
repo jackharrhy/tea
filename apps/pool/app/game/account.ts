@@ -10,6 +10,7 @@ export type Account = Readonly<{
 
 export async function installAccount(
   signal: AbortSignal,
+  root: HTMLElement,
 ): Promise<(() => void) | undefined> {
   try {
     const response = await fetch("/api/account", {
@@ -20,7 +21,7 @@ export async function installAccount(
     if (!response.ok || signal.aborted) return;
     const account: Account = await response.json();
     if (signal.aborted) return;
-    const signIn = document.querySelector<HTMLAnchorElement>("#sign-in");
+    const signIn = root.querySelector<HTMLAnchorElement>("#sign-in");
     if (signIn) signIn.hidden = !account.enabled || account.authenticated;
     if (!account.authenticated) return;
     const container = document.createElement("div");
@@ -50,9 +51,9 @@ export async function installAccount(
       { signal },
     );
     container.append(name, logout);
-    document.querySelector("#menu nav")?.append(container);
+    root.querySelector("#menu nav")?.append(container);
     const disposeOwnerTools = account.owner
-      ? installOwnerTools(account)
+      ? installOwnerTools(account, root)
       : undefined;
     return () => {
       disposeOwnerTools?.();

@@ -46,21 +46,9 @@ export class GameClient {
     y: 1.35,
     z: HALL_SPAWN.z,
   };
-  private readonly ui = new GameUI(this.audio);
-  private readonly session = new Session(() => this.ui.identity(), {
-    message: (message) => this.receive(message),
-    closed: () => this.disconnected(),
-    status: (text) => this.ui.status(text),
-    notice: (text) => this.ui.toast(text),
-  });
-  private readonly shots = new ShotCommands(
-    (command) => {
-      const sent = this.session.send(command);
-      if (sent) this.poolTrace.sent(command.id, performance.now());
-      return sent;
-    },
-    (text) => this.ui.toast(text),
-  );
+  private readonly ui: GameUI;
+  private readonly session: Session;
+  private readonly shots: ShotCommands;
   private room: RoomSettings | null = null;
   private view!: HallView;
   private controls!: Controls;
@@ -83,9 +71,27 @@ export class GameClient {
   private lastCuePose = "";
   private disposed = false;
   private viewReady = false;
+  private viewDisposed = false;
   private readonly abort = new AbortController();
   private readonly intervals: ReturnType<typeof setInterval>[] = [];
   private accountCleanup?: () => void;
+  constructor(root: HTMLElement, canvas: HTMLCanvasElement) {
+    this.ui = new GameUI(this.audio, root, canvas);
+    this.session = new Session(() => this.ui.identity(), {
+      message: (message) => this.receive(message),
+      closed: () => this.disconnected(),
+      status: (text) => this.ui.status(text),
+      notice: (text) => this.ui.toast(text),
+    });
+    this.shots = new ShotCommands(
+      (command) => {
+        const sent = this.session.send(command);
+        if (sent) this.poolTrace.sent(command.id, performance.now());
+        return sent;
+      },
+      (text) => this.ui.toast(text),
+    );
+  }
   async start() {
     if (this.disposed) return;
     try {
@@ -93,16 +99,17 @@ export class GameClient {
       await this.view.init();
       this.viewReady = true;
       if (this.disposed) {
-        this.view.dispose();
+        this.disposeView();
         return;
       }
       this.ui.ready();
       this.audio.onError = (message) => this.ui.toast(message);
-      void installAccount(this.abort.signal).then((cleanup) => {
+      void installAccount(this.abort.signal, this.ui.root).then((cleanup) => {
         if (this.disposed) cleanup?.();
         else this.accountCleanup = cleanup;
       });
     } catch (error) {
+      this.disposeView();
       if (this.disposed) return;
       this.ui.failed();
       throw error;
@@ -187,6 +194,7 @@ export class GameClient {
     this.previous = performance.now();
     this.session.connect(true);
     await this.view.renderer.setAnimationLoop((now) => this.frame(now));
+    if (this.disposed) await this.view.renderer.setAnimationLoop(null);
   }
   dispose() {
     if (this.disposed) return;
@@ -203,7 +211,12 @@ export class GameClient {
     this.poolPrediction?.cancel();
     this.audio.onError = null;
     this.audio.dispose();
-    if (this.viewReady) this.view.dispose();
+    if (this.viewReady) this.disposeView();
+  }
+  private disposeView() {
+    if (!this.view || this.viewDisposed) return;
+    this.viewDisposed = true;
+    this.view.dispose();
   }
   private shotBlocked() {
     return !!this.shots.pending || !!this.poolPrediction?.active;

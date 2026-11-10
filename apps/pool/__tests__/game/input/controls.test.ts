@@ -62,6 +62,9 @@ test("turn changes cancel a charge before capture loss can reenter, and disconne
       canvas,
       { cursor } as unknown as HallView,
       {
+        root: {
+          querySelector: () => ({ querySelector: () => ({ style: {} }) }),
+        } as unknown as HTMLElement,
         closeMenu: () => false,
         closeChat: () => {},
         openChat: () => {},
@@ -207,6 +210,7 @@ test("table clicks walk to the requested seat, wait for authority, and allow man
       movement: (x: number, z: number) => ({ x, z }),
     } as unknown as HallView;
     const ui = {
+      root: { querySelector: () => stick } as unknown as HTMLElement,
       closeMenu: () => false,
       closeChat: () => {},
       openChat: () => {},

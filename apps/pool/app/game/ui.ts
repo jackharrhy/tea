@@ -6,8 +6,6 @@ import type {
   ServerMessage,
 } from "@tea/pool-protocol";
 import { GameAudio } from "./audio";
-const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
-  document.getElementById(id) as T;
 interface UIActions {
   enter(): void;
   action(
@@ -18,19 +16,29 @@ interface UIActions {
   clearKeys(): void;
 }
 export class GameUI {
-  readonly canvas = $<HTMLCanvasElement>("world");
-  private nameInput = $<HTMLInputElement>("name");
-  private colorInput = $<HTMLInputElement>("player-color");
+  private readonly nameInput: HTMLInputElement;
+  private readonly colorInput: HTMLInputElement;
   private chatOpen = false;
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly abort = new AbortController();
   nearby: string | null = null;
-  constructor(private audio: GameAudio) {
+  constructor(
+    private audio: GameAudio,
+    readonly root: HTMLElement,
+    readonly canvas: HTMLCanvasElement,
+  ) {
+    this.nameInput = this.element("name");
+    this.colorInput = this.element("player-color");
     const savedColor = localStorage.getItem("8ball.color");
     if (savedColor && /^#[0-9a-f]{6}$/i.test(savedColor))
       this.colorInput.value = savedColor;
     if (!this.nameInput.value)
       this.nameInput.value = localStorage.getItem("8ball.name") ?? "";
+  }
+  private element<T extends HTMLElement = HTMLElement>(id: string): T {
+    const element = this.root.querySelector<T>(`#${id}`);
+    if (!element) throw new Error(`Pool UI element missing: ${id}`);
+    return element;
   }
   identity() {
     return {
@@ -40,27 +48,34 @@ export class GameUI {
   }
   ready() {
     this.status("Enter the hall");
-    $("entry").querySelector<HTMLButtonElement>("button")!.disabled = false;
+    this.element("entry").querySelector<HTMLButtonElement>("button")!.disabled =
+      false;
   }
   failed() {
-    $("connection").classList.remove("sr-only");
+    this.element("connection").classList.remove("sr-only");
     this.status(
       "The 3D renderer could not start. Try another browser or enable hardware acceleration.",
     );
   }
   status(text: string) {
-    $("connection").textContent = text;
+    this.element("connection").textContent = text;
   }
   welcome() {
-    $("entry").hidden = true;
-    $("menu").hidden = $("chat-toggle").hidden = $("invite").hidden = false;
+    this.element("entry").hidden = true;
+    this.element("menu").hidden =
+      this.element("chat-toggle").hidden =
+      this.element("invite").hidden =
+        false;
     this.canvas.focus();
   }
   toast(text: string) {
-    $("toast").textContent = text;
-    $("toast").hidden = false;
+    this.element("toast").textContent = text;
+    this.element("toast").hidden = false;
     clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => ($("toast").hidden = true), 4500);
+    this.toastTimer = setTimeout(
+      () => (this.element("toast").hidden = true),
+      4500,
+    );
   }
 
   chat(message: Extract<ServerMessage, { type: "chat" }>) {
@@ -68,31 +83,33 @@ export class GameUI {
       name = document.createElement("b");
     name.textContent = `${message.name} `;
     item.append(name, document.createTextNode(message.text));
-    $("messages").append(item);
-    while ($("messages").children.length > 40)
-      $("messages").firstChild?.remove();
-    $("messages").scrollTop = $("messages").scrollHeight;
+    this.element("messages").append(item);
+    while (this.element("messages").children.length > 40)
+      this.element("messages").firstChild?.remove();
+    this.element("messages").scrollTop = this.element("messages").scrollHeight;
   }
   closeMenu() {
-    const menu = $<HTMLDetailsElement>("menu");
+    const menu = this.element<HTMLDetailsElement>("menu");
     const wasOpen = menu.open;
     menu.open = false;
     return wasOpen;
   }
   closeChat() {
     this.chatOpen = false;
-    $("chat-form").hidden = true;
-    $("chat-toggle").setAttribute("aria-expanded", "false");
+    this.element("chat-form").hidden = true;
+    this.element("chat-toggle").setAttribute("aria-expanded", "false");
   }
   openChat() {
     this.chatOpen = true;
-    $("chat-form").hidden = false;
-    $("chat-toggle").setAttribute("aria-expanded", "true");
-    $<HTMLInputElement>("chat-input").focus();
+    this.element("chat-form").hidden = false;
+    this.element("chat-toggle").setAttribute("aria-expanded", "true");
+    this.element<HTMLInputElement>("chat-input").focus();
   }
   private updateSoundLabel() {
-    $("sound").textContent = this.audio.enabled ? "Sound on" : "Sound off";
-    $("sound").setAttribute(
+    this.element("sound").textContent = this.audio.enabled
+      ? "Sound on"
+      : "Sound off";
+    this.element("sound").setAttribute(
       "aria-label",
       this.audio.enabled ? "Turn sound off" : "Turn sound on",
     );
@@ -107,12 +124,14 @@ export class GameUI {
       element.addEventListener(type, handler as EventListener, {
         signal: this.abort.signal,
       });
-    listen($("entry"), "submit", (event) => {
+    listen(this.element("entry"), "submit", (event) => {
       event.preventDefault();
       if (!this.nameInput.value.trim()) return;
       localStorage.setItem("8ball.name", this.nameInput.value.trim());
       localStorage.setItem("8ball.color", this.colorInput.value);
-      $("entry").querySelector<HTMLButtonElement>("button")!.disabled = true;
+      this.element("entry").querySelector<HTMLButtonElement>(
+        "button",
+      )!.disabled = true;
       if (localStorage.getItem("8ball.sound") !== "off" && !this.audio.enabled)
         this.audio.toggle();
       this.updateSoundLabel();
@@ -126,20 +145,20 @@ export class GameUI {
       "leave",
       "rematch",
     ] as const)
-      listen($(action), "click", () => actions.action(action));
-    listen($("chat-toggle"), "click", () => {
+      listen(this.element(action), "click", () => actions.action(action));
+    listen(this.element("chat-toggle"), "click", () => {
       if (this.chatOpen) {
         this.closeChat();
         this.canvas.focus();
       } else this.openChat();
     });
-    listen($("chat-input"), "focus", () => {
+    listen(this.element("chat-input"), "focus", () => {
       actions.clearKeys();
       actions.cancelShot();
     });
-    listen($("chat-form"), "submit", (event) => {
+    listen(this.element("chat-form"), "submit", (event) => {
       event.preventDefault();
-      const input = $<HTMLInputElement>("chat-input");
+      const input = this.element<HTMLInputElement>("chat-input");
       if (input.value.trim()) {
         actions.send({ type: "chat", text: input.value.trim() });
         input.value = "";
@@ -147,7 +166,7 @@ export class GameUI {
       this.closeChat();
       this.canvas.focus();
     });
-    listen($("chat-input"), "keydown", (event) => {
+    listen(this.element("chat-input"), "keydown", (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
@@ -155,7 +174,7 @@ export class GameUI {
         this.canvas.focus();
       }
     });
-    listen($("invite"), "click", async () => {
+    listen(this.element("invite"), "click", async () => {
       try {
         await navigator.clipboard.writeText(location.origin);
         this.toast("Link copied. Send it to a friend.");
@@ -163,14 +182,14 @@ export class GameUI {
         this.toast(`Invite a friend: ${location.origin}`);
       }
     });
-    listen($("sound"), "click", () => {
+    listen(this.element("sound"), "click", () => {
       const soundEnabled = this.audio.toggle();
       localStorage.setItem("8ball.sound", soundEnabled ? "on" : "off");
       this.updateSoundLabel();
       if (soundEnabled) this.audio.preview();
     });
-    listen($("menu"), "toggle", () => {
-      if ($<HTMLDetailsElement>("menu").open) actions.cancelShot();
+    listen(this.element("menu"), "toggle", () => {
+      if (this.element<HTMLDetailsElement>("menu").open) actions.cancelShot();
     });
     for (const action of [
       "back",
@@ -181,9 +200,9 @@ export class GameUI {
       "watch",
       "chat-toggle",
     ])
-      listen($(action), "click", () => {
+      listen(this.element(action), "click", () => {
         actions.cancelShot();
-        $<HTMLDetailsElement>("menu").open = false;
+        this.element<HTMLDetailsElement>("menu").open = false;
         if (action !== "chat-toggle") this.canvas.focus();
       });
   }
@@ -205,18 +224,18 @@ export class GameUI {
       connected && table.match.players[table.match.turn] === id;
     const own = me();
     if (connected && state)
-      $("connection").textContent =
+      this.element("connection").textContent =
         `${state.players.filter((p) => p.connected && !p.bot).length} in hall · ${state.players.filter((p) => p.bot).length} bot`;
-    $("touch").hidden =
+    this.element("touch").hidden =
       !entered ||
       !!focusTable ||
       !!own?.table ||
       !matchMedia("(pointer:coarse)").matches;
     const table = currentTable();
-    $("table-ui").hidden = !entered || !table;
+    this.element("table-ui").hidden = !entered || !table;
     if (table) {
       const match = table.match;
-      const score = $("score");
+      const score = this.element("score");
       score.replaceChildren();
       match.players.forEach((player, seat) => {
         const div = document.createElement("div");
@@ -246,7 +265,7 @@ export class GameUI {
         (p) => p.id === match.players[match.turn],
       );
       const winner = state?.players.find((p) => p.id === match.winner);
-      $("turn").textContent =
+      this.element("turn").textContent =
         match.phase === "waiting"
           ? `Table ${table.id}`
           : match.phase === "finished"
@@ -259,7 +278,7 @@ export class GameUI {
       const bot = state?.players.find(
         (p) => p.bot && match.players.includes(p.id),
       );
-      $("message").textContent =
+      this.element("message").textContent =
         match.phase === "waiting"
           ? bot
             ? `${bot.name} is ready for a game.`
@@ -271,24 +290,27 @@ export class GameUI {
             : match.phase === "ball-in-hand" && myTurn(table)
               ? "Click clear felt to place the cue ball."
               : match.message;
-      $("leave").hidden = own?.table !== table.id;
-      $("take-seat").hidden = !!own?.table || match.players.every(Boolean);
-      $("rematch").hidden =
+      this.element("leave").hidden = own?.table !== table.id;
+      this.element("take-seat").hidden =
+        !!own?.table || match.players.every(Boolean);
+      this.element("rematch").hidden =
         own?.table !== table.id || match.phase !== "finished";
       const ready = table.rematchReady.includes(id);
-      $<HTMLButtonElement>("rematch").disabled =
+      this.element<HTMLButtonElement>("rematch").disabled =
         !connected ||
         ready ||
         !match.players.every(
           (player) => state?.players.find((p) => p.id === player)?.connected,
         );
-      $("rematch").textContent = ready ? "Waiting for opponent" : "Play again";
-      $("back").textContent =
+      this.element("rematch").textContent = ready
+        ? "Waiting for opponent"
+        : "Play again";
+      this.element("back").textContent =
         own?.table === table.id ? "View hall" : "Back to hall";
     }
     this.updateNearby(state, id, entered, focusTable, position);
-    $("back").hidden = !focusTable;
-    $("leave").hidden = !own?.table;
+    this.element("back").hidden = !focusTable;
+    this.element("leave").hidden = !own?.table;
   }
 
   updateNearby(
@@ -302,7 +324,7 @@ export class GameUI {
     const own = me();
     this.nearby = null;
     if (!entered || !own || focusTable || own.table) {
-      $("nearby").hidden = true;
+      this.element("nearby").hidden = true;
       return;
     }
     const { x, z } = position;
@@ -314,13 +336,13 @@ export class GameUI {
         distance = d;
       }
     }
-    $("nearby").hidden = !this.nearby;
+    this.element("nearby").hidden = !this.nearby;
     if (this.nearby) {
       const table = state?.tables.find((t) => t.id === this.nearby);
       const full = table?.match.players.every(Boolean);
-      $("nearby-text").textContent =
+      this.element("nearby-text").textContent =
         `Table ${this.nearby}${state?.players.some((p) => p.bot && p.table === this.nearby) ? " · House bot" : ""}`;
-      $("join").hidden = !!full;
+      this.element("join").hidden = !!full;
     }
   }
 }

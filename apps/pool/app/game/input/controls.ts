@@ -70,10 +70,10 @@ export class Controls {
   constructor(
     private canvas: HTMLCanvasElement,
     private view: HallView,
-    private ui: Pick<GameUI, "closeMenu" | "closeChat" | "openChat">,
+    private ui: Pick<GameUI, "root" | "closeMenu" | "closeChat" | "openChat">,
     private actions: InputActions,
   ) {
-    this.stick = document.getElementById("stick")!;
+    this.stick = ui.root.querySelector("#stick")!;
     this.knob = this.stick.querySelector("i")!;
   }
   private me() {

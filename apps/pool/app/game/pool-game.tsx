@@ -8,25 +8,33 @@ export const PoolGame = clientEntry(
         id="world"
         aria-label="Pool hall. Click to walk or join a table. At the table, aim, hold and pull back to shoot. Use arrow keys to aim and hold Space for power. Escape cancels a shot or returns to the hall."
         tabIndex={0}
-        mix={ref((_canvas, signal) => {
-          void import("./client").then(({ GameClient }) => {
-            if (signal.aborted) return;
-            const game = new GameClient();
-            signal.addEventListener("abort", () => game.dispose(), {
-              once: true,
+        mix={ref((canvas, signal) => {
+          void import("./client")
+            .then(({ GameClient }) => {
+              if (signal.aborted) return;
+              const root = canvas.closest<HTMLElement>("#pool-root");
+              if (!root) throw new Error("Pool root is missing");
+              const game = new GameClient(root, canvas);
+              signal.addEventListener("abort", () => game.dispose(), {
+                once: true,
+              });
+              window.addEventListener("pagehide", () => game.dispose(), {
+                once: true,
+                signal,
+              });
+              window.addEventListener("beforeunload", () => game.dispose(), {
+                once: true,
+                signal,
+              });
+              void game.start().catch((error) => {
+                game.dispose();
+                if (!signal.aborted)
+                  console.error("Pool could not start", error);
+              });
+            })
+            .catch((error) => {
+              if (!signal.aborted) console.error("Pool could not load", error);
             });
-            window.addEventListener("pagehide", () => game.dispose(), {
-              once: true,
-              signal,
-            });
-            window.addEventListener("beforeunload", () => game.dispose(), {
-              once: true,
-              signal,
-            });
-            void game
-              .start()
-              .catch((error) => console.error("Pool could not start", error));
-          });
         })}
       />
     );
