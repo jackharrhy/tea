@@ -239,10 +239,23 @@ export async function mountGurgur(
     scriptUrl: string;
     wasmUrl: string;
   };
+  const setupDisposers: Array<() => void> = [];
+  const disposeSetup = (): void => {
+    for (const dispose of setupDisposers.toReversed()) {
+      try {
+        dispose();
+      } catch (error) {
+        console.error("Gurgur startup cleanup failed", error);
+      }
+    }
+    setupDisposers.length = 0;
+  };
+  signal.addEventListener("abort", disposeSetup, { once: true });
   const worldAudio = new WorldAudio(audioAssetUrls, (state) => {
     root.dataset.audioState = state.state;
     root.dataset.audioAsset = state.asset ?? "";
   });
+  setupDisposers.push(() => worldAudio.dispose());
   let localPlayerId: RuntimeId | null = null;
   let currentWorld: WorldMessage | null = null;
   let workerDiscardedCatchUpSeconds = 0;
@@ -251,6 +264,8 @@ export async function mountGurgur(
   const debugCaptureAssembler = debugEnabled
     ? new DebugPhysicsCaptureAssembler()
     : null;
+  if (debugCaptureAssembler)
+    setupDisposers.push(() => debugCaptureAssembler.dispose());
   let activeDebugPhysicsCaptureId: string | null = null;
   let lastDebugPhysicsCapture: DebugPhysicsCaptureDownload | null = null;
 
@@ -328,6 +343,10 @@ export async function mountGurgur(
           owner.stallForTest(durationMs),
       }),
     });
+    setupDisposers.push(() => {
+      delete (window as Window & { __gurgurDiagnostics?: unknown })
+        .__gurgurDiagnostics;
+    });
   }
   const renderer = new WorldRenderer(
     canvas,
@@ -358,6 +377,7 @@ export async function mountGurgur(
     spriteAssetUrls,
     debugEnabled,
   );
+  setupDisposers.push(() => renderer.dispose());
   const speechSynthesizer = new SpeechSynthesizer({
     ...speechAssetUrls,
     onSpeech(speech) {
@@ -371,6 +391,7 @@ export async function mountGurgur(
       );
     },
   });
+  setupDisposers.push(() => speechSynthesizer.dispose());
   if (followCamera) {
     renderer.setViewAngles(followCamera.yaw, followCamera.pitch);
     renderer.setFollowCamera(followCamera.target, (body) => {
@@ -552,6 +573,7 @@ export async function mountGurgur(
     },
     { traceEnabled: debugEnabled || testEnabled },
   );
+  setupDisposers.push(() => owner.dispose());
   const sendUseOnEdge = (command: InputCommand): void => {
     if (command.interactCounter === lastUseCounter) return;
     lastUseCounter = command.interactCounter;
@@ -594,6 +616,7 @@ export async function mountGurgur(
       return target;
     },
   );
+  setupDisposers.push(() => input.dispose());
   session = new GameSession(
     {
       status(status, close) {
@@ -780,6 +803,7 @@ export async function mountGurgur(
       simulatedSeed: Number(searchParams.get("simulatedSeed") ?? 0x67757267),
     },
   );
+  setupDisposers.push(() => session.close());
   const speechForm = root.querySelector<HTMLFormElement>("#speech-chat");
   const speechField = root.querySelector<HTMLInputElement>("#speech-text");
   const speechStatus = root.querySelector<HTMLOutputElement>("#speech-status");
@@ -792,6 +816,7 @@ export async function mountGurgur(
     input,
     submit: (requestId, text) => session.speak(requestId, text),
   });
+  setupDisposers.push(() => speechChat?.dispose());
 
   let debugPoll: number | null = null;
   let debugRequest: AbortController | null = null;
@@ -799,6 +824,35 @@ export async function mountGurgur(
   let debugCaptureActive = false;
   let debugHotkey: ((event: KeyboardEvent) => void) | null = null;
   let debugPanel: HTMLElement | null = null;
+  const unlockAudio = (): void => {
+    void worldAudio.unlock();
+    void renderer.unlockSpeechAudio();
+  };
+  const dispose = (): void => {
+    if (debugPoll !== null) clearInterval(debugPoll);
+    debugRequest?.abort();
+    debugCaptureRequest?.abort();
+    if (debugHotkey) removeEventListener("keydown", debugHotkey);
+    session.close();
+    speechChat?.dispose();
+    speechSynthesizer.dispose();
+    debugCaptureAssembler?.dispose();
+    owner.dispose();
+    input.dispose();
+    removeEventListener("pointerdown", unlockAudio, { capture: true });
+    removeEventListener("keydown", unlockAudio, { capture: true });
+    worldAudio.dispose();
+    renderer.dispose();
+    debugPanel?.remove();
+    if (testEnabled)
+      delete (window as Window & { __gurgurDiagnostics?: unknown })
+        .__gurgurDiagnostics;
+    delete (window as Window & { __gurgurLastPhysicsCapture?: unknown })
+      .__gurgurLastPhysicsCapture;
+  };
+  signal.addEventListener("abort", dispose, { once: true });
+  signal.removeEventListener("abort", disposeSetup);
+  setupDisposers.length = 0;
   if (debugEnabled) {
     root.dataset.debug = "true";
     const panel = document.createElement("section");
@@ -1046,37 +1100,10 @@ export async function mountGurgur(
 
   renderer.start();
   session.connect();
-  const unlockAudio = (): void => {
-    void worldAudio.unlock();
-    void renderer.unlockSpeechAudio();
-  };
   addEventListener("pointerdown", unlockAudio, {
     passive: true,
     capture: true,
   });
   addEventListener("keydown", unlockAudio, { capture: true });
-  const dispose = () => {
-    if (debugPoll !== null) clearInterval(debugPoll);
-    debugRequest?.abort();
-    debugCaptureRequest?.abort();
-    if (debugHotkey) removeEventListener("keydown", debugHotkey);
-    session.close();
-    speechChat?.dispose();
-    speechSynthesizer.dispose();
-    debugCaptureAssembler?.dispose();
-    owner.dispose();
-    input.dispose();
-    removeEventListener("pointerdown", unlockAudio, { capture: true });
-    removeEventListener("keydown", unlockAudio, { capture: true });
-    worldAudio.dispose();
-    renderer.dispose();
-    debugPanel?.remove();
-    if (testEnabled)
-      delete (window as Window & { __gurgurDiagnostics?: unknown })
-        .__gurgurDiagnostics;
-    delete (window as Window & { __gurgurLastPhysicsCapture?: unknown })
-      .__gurgurLastPhysicsCapture;
-  };
-  signal.addEventListener("abort", dispose, { once: true });
   if (signal.aborted) dispose();
 }

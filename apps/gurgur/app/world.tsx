@@ -44,6 +44,7 @@ export const GurgurWorld = clientEntry(
               await mountGurgur(root, lifetime.signal);
             })().catch((error) => {
               if (lifetime.signal.aborted) return;
+              lifetime.abort();
               console.error("Gurgur could not start", error);
               root.dataset.webgpu = "error";
             });
