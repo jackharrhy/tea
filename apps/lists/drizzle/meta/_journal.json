@@ -176,6 +176,13 @@
       "when": 1794333668135,
       "tag": "0024_auth-subject",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1794333668136,
+      "tag": "0025_service-identity",
+      "breakpoints": true
     }
   ]
 }

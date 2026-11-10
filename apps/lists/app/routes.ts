@@ -7,6 +7,7 @@ export const routes = route({
   }),
   admin: route("admin", {
     dashboard: get("/"),
+    users: get("/users"),
   }),
   subscribe: route("subscribe", {
     show: get("/"),

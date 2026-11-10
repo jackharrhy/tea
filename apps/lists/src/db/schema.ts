@@ -5,6 +5,10 @@ export const users = sqliteTable("users", {
   email: text("email").unique().notNull(),
   name: text("name"),
   authSubject: text("auth_subject").unique(),
+  authPrincipalType: text("auth_principal_type", { enum: ["user", "service"] })
+    .notNull()
+    .default("user"),
+  authClientId: text("auth_client_id"),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["owner", "admin", "member"] })
     .notNull()

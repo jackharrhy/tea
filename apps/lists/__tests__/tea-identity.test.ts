@@ -138,6 +138,32 @@ test("central sign-in accepts only a reviewed subject with its Lists role", asyn
     db.select().from(schema.users).where(eq(schema.users.id, user.id)).get()
       ?.role,
   ).toBe("owner");
+  db.insert(schema.users)
+    .values({
+      email: "service@example.test",
+      passwordHash: "disabled",
+      authSubject: "service-subject",
+      authPrincipalType: "service",
+      authClientId: "service-client",
+      role: "member",
+    })
+    .run();
+  subject = "service-subject";
+  role = "member";
+  expect((await signIn()).status).toBe(403);
+  db.insert(schema.users)
+    .values({
+      email: "member@example.test",
+      passwordHash: "disabled",
+      authSubject: "human-member",
+      role: "member",
+    })
+    .run();
+  subject = "human-member";
+  role = "other";
+  expect((await signIn()).status).toBe(403);
+  role = "member";
+  expect((await signIn()).status).toBe(303);
 });
 
 test("central bearer auth preserves local list access and rejects wrong audience or role", async () => {
@@ -183,6 +209,9 @@ test("central bearer auth preserves local list access and rejects wrong audience
   let aud = ["lists-project"];
   let role = "member";
   let includeListGrant = true;
+  let subject = "member-subject";
+  let clientId = "delegated";
+  let principalType: "user" | "service" = "user";
   const fetcher = (async (input: RequestInfo | URL) => {
     const path = new URL(String(input)).pathname;
     if (path.endsWith("openid-configuration"))
@@ -198,8 +227,8 @@ test("central bearer auth preserves local list access and rejects wrong audience
       return Response.json({
         active: true,
         iss: config.identity!.issuer,
-        sub: "member-subject",
-        client_id: "delegated",
+        sub: subject,
+        client_id: clientId,
         token_type: "Bearer",
         exp: Math.floor(Date.now() / 1000) + 300,
         aud,
@@ -209,10 +238,12 @@ test("central bearer auth preserves local list access and rejects wrong audience
           roleScope("member"),
           roleScope("lists-read"),
         ].join(" "),
-        jack_auth_principal_type: "user",
+        jack_auth_principal_type: principalType,
         "urn:zitadel:iam:org:project:lists-project:roles": {
           [role]: { "our-org": "auth.example.test" },
-          ...(includeListGrant ? { "lists-read": { "our-org": "auth.example.test" } } : {}),
+          ...(includeListGrant
+            ? { "lists-read": { "our-org": "auth.example.test" } }
+            : {}),
         },
       });
     throw new Error(`Unexpected path: ${path}`);
@@ -233,6 +264,37 @@ test("central bearer auth preserves local list access and rejects wrong audience
   aud = ["lists-project"];
   role = "other";
   expect(authenticate(request)).rejects.toMatchObject({ status: 403 });
+  role = "member";
+  const service = db
+    .insert(schema.users)
+    .values({
+      email: "service@example.test",
+      passwordHash: "disabled",
+      authSubject: "service-subject",
+      authPrincipalType: "service",
+      authClientId: "exact-service-client",
+      role: "member",
+    })
+    .returning()
+    .get();
+  db.insert(schema.userLists)
+    .values({ userId: service.id, listId: allowed.id })
+    .run();
+  subject = "service-subject";
+  clientId = "exact-service-client";
+  principalType = "service";
+  const apiRequest = new Request("https://lists.example.test/api/lists", {
+    headers: { Authorization: "Bearer test-token" },
+  });
+  expect((await authenticate(apiRequest)).listIds).toEqual(
+    new Set([allowed.id]),
+  );
+  expect(authenticate(request)).rejects.toMatchObject({ status: 403 });
+  clientId = "other-service-client";
+  expect(authenticate(apiRequest)).rejects.toMatchObject({ status: 403 });
+  clientId = "exact-service-client";
+  principalType = "user";
+  expect(authenticate(apiRequest)).rejects.toMatchObject({ status: 403 });
 });
 
 test("central mode removes the standalone OAuth issuer and password login", async () => {

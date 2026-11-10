@@ -15,4 +15,6 @@ export const OPERATION_ROLES: Record<ApiScope, string> = {
   "dmarc:read": "dmarc-read",
 };
 
-export const OPERATION_SCOPES = API_SCOPES.map((scope) => roleScope(OPERATION_ROLES[scope]));
+export const OPERATION_SCOPES = API_SCOPES.map((scope) =>
+  roleScope(OPERATION_ROLES[scope]),
+);

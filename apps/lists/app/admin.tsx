@@ -95,6 +95,69 @@ export type DashboardData = {
   }>;
 };
 
+export type AdminUserRow = {
+  id: number;
+  name: string | null;
+  email: string;
+  role: "owner" | "admin" | "member";
+  linked: boolean;
+  listCount: number;
+};
+
+export function AdminUsers(handle: Handle<{ users: AdminUserRow[] }>) {
+  return () => (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Users | Lists admin</title>
+      </head>
+      <body mix={body}>
+        <nav mix={nav} aria-label="Admin navigation">
+          <div mix={navInner}>
+            <a mix={brand} href="/admin/">
+              Lists
+            </a>
+            <a mix={navLink} href="/admin/">
+              Dashboard
+            </a>
+            <span mix={label}>Users</span>
+          </div>
+        </nav>
+        <main mix={main}>
+          <h1 mix={title}>Users</h1>
+          <p mix={label}>
+            Access is assigned through central identity. This view shows the
+            local Lists accounts and their list assignments.
+          </p>
+          <table mix={table}>
+            <thead>
+              <tr>
+                <th mix={th}>ID</th>
+                <th mix={th}>Account</th>
+                <th mix={th}>Role</th>
+                <th mix={th}>Identity</th>
+                <th mix={th}>Lists</th>
+              </tr>
+            </thead>
+            <tbody>
+              {handle.props.users.map((user) => (
+                <tr>
+                  <td mix={td}>{user.id}</td>
+                  <td mix={td}>{user.name ?? user.email}</td>
+                  <td mix={td}>{user.role}</td>
+                  <td mix={td}>{user.linked ? "Linked" : "Unlinked"}</td>
+                  <td mix={td}>{user.listCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </main>
+      </body>
+    </html>
+  );
+}
+
 export function AdminDashboard(handle: Handle<{ data: DashboardData }>) {
   return () => {
     const data = handle.props.data;
@@ -199,7 +262,11 @@ export function AdminDashboard(handle: Handle<{ data: DashboardData }>) {
                       <td mix={td}>
                         {new Date(campaign.createdAt).toLocaleDateString(
                           "en-US",
-                          { year: "numeric", month: "short", day: "numeric" },
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          },
                         )}
                       </td>
                     </tr>

@@ -4,7 +4,7 @@ import {
   validLoginTransaction,
   type LoginTransaction,
 } from "@tea/identity";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { render } from "remix/middleware/render";
 import { createController, createRouter } from "remix/router";
 
@@ -114,12 +114,18 @@ export function createAuthRouter(
             const user = db
               .select()
               .from(schema.users)
-              .where(eq(schema.users.authSubject, profile.subject))
+              .where(
+                and(
+                  eq(schema.users.authSubject, profile.subject),
+                  eq(schema.users.authPrincipalType, "user"),
+                ),
+              )
               .get();
             if (
               !user ||
-              ((user.role === "owner" || user.role === "admin") &&
-                !profile.roles.has("admin"))
+              (user.role === "owner" || user.role === "admin"
+                ? !profile.roles.has("admin")
+                : !profile.roles.has("member") && !profile.roles.has("admin"))
             ) {
               return new Response("Lists access has not been assigned", {
                 status: 403,

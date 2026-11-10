@@ -45,7 +45,11 @@ export function adminRoutes(
   mountActivityRoutes(app, db, config);
   mountTagRoutes(app, db, config);
   mountImportRoutes(app, db, config);
-  mountUserRoutes(app, db, config);
+  if (config.identity && dashboard) {
+    app.get("/users", (context) => dashboard(context.request, context.user!));
+  } else {
+    mountUserRoutes(app, db, config);
+  }
   mountDmarcRoutes(app, db, config);
   mountTokenRoutes(app, db, config);
   mountTemplateRoutes(app, db);

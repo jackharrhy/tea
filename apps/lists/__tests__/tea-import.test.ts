@@ -78,3 +78,47 @@ test("imports domain IDs and unsubscribe links with explicit subjects, without o
   source.close();
   destination.close();
 });
+
+test("service account import requires an exact client binding", () => {
+  const source = createEmptyTeaDatabase(":memory:");
+  const old = drizzle(source, { schema });
+  const user = old
+    .insert(schema.users)
+    .values({
+      email: "integration@example.test",
+      role: "member",
+      passwordHash: "old-hash",
+    })
+    .returning()
+    .get();
+  const bundle = createTeaExport(source);
+  const destination = createEmptyTeaDatabase(":memory:");
+  expect(() =>
+    importTeaBundle(destination, bundle, {
+      users: [
+        { id: user.id, subject: "service-subject", principalType: "service" },
+      ],
+    }),
+  ).toThrow("Invalid user subject mapping");
+  importTeaBundle(destination, bundle, {
+    users: [
+      {
+        id: user.id,
+        subject: "service-subject",
+        principalType: "service",
+        clientId: "exact-client",
+      },
+    ],
+  });
+  expect(
+    drizzle(destination, { schema }).select().from(schema.users).get(),
+  ).toMatchObject({
+    id: user.id,
+    authSubject: "service-subject",
+    authPrincipalType: "service",
+    authClientId: "exact-client",
+    passwordHash: "disabled:tea-migration",
+  });
+  source.close();
+  destination.close();
+});

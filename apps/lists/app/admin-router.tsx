@@ -5,7 +5,7 @@ import { createController, createRouter } from "remix/router";
 import type { Db } from "../src/db/index.ts";
 import { schema } from "../src/db/index.ts";
 import { getAccessibleListIds } from "../src/auth.ts";
-import { AdminDashboard, type DashboardData } from "./admin.tsx";
+import { AdminDashboard, AdminUsers, type DashboardData } from "./admin.tsx";
 import type { AppContext } from "./router.tsx";
 import { routes } from "./routes.ts";
 
@@ -117,6 +117,41 @@ export function createAdminRouter(db: Db, user: User) {
         dashboard(context) {
           return context.render(
             <AdminDashboard data={dashboardData(db, user)} />,
+          );
+        },
+        users(context) {
+          if (user.role !== "owner" && user.role !== "admin")
+            return new Response("Forbidden", { status: 403 });
+          const users = db
+            .select({
+              id: schema.users.id,
+              name: schema.users.name,
+              email: schema.users.email,
+              role: schema.users.role,
+              authSubject: schema.users.authSubject,
+            })
+            .from(schema.users)
+            .orderBy(schema.users.id)
+            .all();
+          const assignments = db
+            .select({
+              userId: schema.userLists.userId,
+              count: sql<number>`count(*)`,
+            })
+            .from(schema.userLists)
+            .groupBy(schema.userLists.userId)
+            .all();
+          const assignmentCounts = new Map(
+            assignments.map(({ userId, count: total }) => [userId, total]),
+          );
+          return context.render(
+            <AdminUsers
+              users={users.map(({ authSubject, ...entry }) => ({
+                ...entry,
+                linked: Boolean(authSubject),
+                listCount: assignmentCounts.get(entry.id) ?? 0,
+              }))}
+            />,
           );
         },
       },

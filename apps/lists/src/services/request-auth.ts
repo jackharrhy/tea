@@ -45,14 +45,25 @@ export function createCentralBearerAuth(
       authorization.slice(7),
       credentials,
     );
-    if (token.principalType !== "user")
-      throw new IdentityError("Human Lists identity required", 403);
+    if (
+      token.principalType === "service" &&
+      !new URL(request.url).pathname.startsWith("/api/")
+    )
+      throw new IdentityError("Service identity is REST-only", 403);
     const user = db
       .select()
       .from(schema.users)
       .where(eq(schema.users.authSubject, token.subject))
       .get();
     if (!user) throw new IdentityError("Lists account is not assigned", 403);
+    if (
+      user.authPrincipalType !== token.principalType ||
+      (token.principalType === "service" &&
+        (!user.authClientId ||
+          user.authClientId !== token.clientId ||
+          user.role !== "member"))
+    )
+      throw new IdentityError("Lists identity binding does not match", 403);
     if (user.role === "owner" || user.role === "admin") {
       requireTokenRole(token, projectId, "admin");
     } else {
@@ -72,9 +83,20 @@ export function createCentralBearerAuth(
       db,
       user,
       API_SCOPES.filter((scope) => {
+        if (token.principalType === "service" && !SERVICE_SCOPES.has(scope))
+          return false;
         const role = OPERATION_ROLES[scope];
         return token.scopes.has(roleScope(role)) && token.roles.has(role);
       }),
     );
   };
 }
+
+const SERVICE_SCOPES = new Set([
+  "lists:read",
+  "subscribers:read",
+  "subscribers:write",
+  "campaigns:read",
+  "campaigns:write",
+  "campaigns:send",
+]);

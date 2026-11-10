@@ -10,7 +10,12 @@ import {
 } from "./tea-export.ts";
 
 export type UserSubjectMapping = {
-  users: Array<{ id: number; subject: string }>;
+  users: Array<{
+    id: number;
+    subject: string;
+    principalType?: "user" | "service";
+    clientId?: string;
+  }>;
 };
 
 function assertBundle(value: unknown): asserts value is TeaExportBundle {
@@ -32,21 +37,28 @@ function assertBundle(value: unknown): asserts value is TeaExportBundle {
 function readSubjects(mapping: UserSubjectMapping, userIds: number[]) {
   if (!Array.isArray(mapping?.users))
     throw new Error("User subject mapping is required");
-  const subjects = new Map<number, string>();
+  const subjects = new Map<number, UserSubjectMapping["users"][number]>();
   for (const entry of mapping.users) {
     if (
       !Number.isSafeInteger(entry.id) ||
       typeof entry.subject !== "string" ||
-      !entry.subject.trim()
+      !entry.subject.trim() ||
+      (entry.principalType !== undefined &&
+        entry.principalType !== "user" &&
+        entry.principalType !== "service") ||
+      (entry.principalType === "service" &&
+        (typeof entry.clientId !== "string" || !entry.clientId.trim())) ||
+      (entry.principalType !== "service" && entry.clientId !== undefined)
     ) {
       throw new Error("Invalid user subject mapping");
     }
     if (subjects.has(entry.id)) throw new Error("Duplicate mapped user ID");
-    subjects.set(entry.id, entry.subject);
+    subjects.set(entry.id, entry);
   }
   if (
     subjects.size !== userIds.length ||
-    new Set(subjects.values()).size !== subjects.size
+    new Set([...subjects.values()].map((entry) => entry.subject)).size !==
+      subjects.size
   ) {
     throw new Error("User subject mapping must be one-to-one and complete");
   }
@@ -84,7 +96,9 @@ export function importTeaBundle(
     for (const table of domainTables) {
       const count = sqlite
         .query(`SELECT count(*) AS count FROM ${table}`)
-        .get() as { count: number };
+        .get() as {
+        count: number;
+      };
       if (count.count !== 0)
         throw new Error(`Destination table is not empty: ${table}`);
     }
@@ -109,7 +123,11 @@ export function importTeaBundle(
           table === "users"
             ? {
                 ...sourceRow,
-                auth_subject: subjects.get(sourceRow.id as number),
+                auth_subject: subjects.get(sourceRow.id as number)?.subject,
+                auth_principal_type:
+                  subjects.get(sourceRow.id as number)?.principalType ?? "user",
+                auth_client_id:
+                  subjects.get(sourceRow.id as number)?.clientId ?? null,
                 password_hash: "disabled:tea-migration",
               }
             : sourceRow;
