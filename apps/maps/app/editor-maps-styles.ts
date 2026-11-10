@@ -18,13 +18,12 @@ export const mapsEditorStyles = css({
     borderBottom: "1px solid var(--editor-border)",
     background: "var(--editor-panel)",
   },
-  "& .editor-header > #document-name": {
-    flex: "0 1 170px",
-    "align-self": "center",
-    padding: "0 10px",
+  "& .editor-document-menu #document-name": {
+    padding: "8px",
     color: "var(--editor-muted)",
     "font-size": "11px",
     "font-weight": "500",
+    borderBottom: "1px solid var(--editor-soft-border)",
   },
   "& .editor-toolbar": {
     flex: "1 1 0",
@@ -547,7 +546,6 @@ export const mapsEditorStyles = css({
   },
   "& #editor-status, & #issue-status, & #pointer-context": { fontSize: "9px" },
   "@media (max-width: 1000px)": {
-    "& .editor-header > #document-name": { display: "none" },
     "& .hosted-presence-toggle": { display: "none" },
     "& .editor-theme-choice": { display: "none" },
   },

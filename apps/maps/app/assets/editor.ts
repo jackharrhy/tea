@@ -2854,6 +2854,7 @@ if (!navigator.gpu) {
       onRenderRequest: scheduleRender,
       onDeviceLost: (message) => stopSourceRenderer(message),
     });
+    renderer.setTheme(editorRenderTheme());
     if (rendererFailure) {
       stopSourceRenderer(rendererFailure);
     } else {

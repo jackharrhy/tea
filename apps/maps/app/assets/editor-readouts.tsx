@@ -44,7 +44,11 @@ export const EditorPerspectiveLabel = clientEntry(
       handle.update();
     });
 
-    return () => <span id="perspective-label">{label}</span>;
+    return () => (
+      <span id="perspective-label">
+        {label === "Perspective" ? "3D" : label}
+      </span>
+    );
   },
 );
 
