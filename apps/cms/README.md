@@ -10,7 +10,7 @@ The Node host opens a request record through [`@tea/logger`](../../packages/logg
 
 ## Develop
 
-Use the latest Node.js 24 LTS release (minimum 24.3). From the repo root:
+Use Node.js 26 LTS (minimum 26.13.0). From the repo root:
 
 ```sh
 npm ci

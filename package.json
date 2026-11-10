@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "engines": {
-    "node": ">=24.3.0"
+    "node": ">=26.13.0 <27"
   },
   "scripts": {
     "cms:check": "npm run tooling:check && npm run check --workspace @tea/cms",

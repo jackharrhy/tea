@@ -51,7 +51,7 @@ a Remix 3 monorepo for personal apps and packages.
 
 ## Working in the repo
 
-Use the latest Node.js 24 LTS release (`.nvmrc`; minimum 24.3). Install from the root:
+Use Node.js 26 LTS (`.nvmrc` and `mise.toml`; minimum 26.13.0) for Tea development and CI. The published Artbin CLI retains its separate Node 20+ consumer support. Install from the root:
 
 ```sh
 npm ci

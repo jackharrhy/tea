@@ -25,5 +25,5 @@ An audience grants no permission by itself.
 
 Run `npm run check --workspace @tea/identity`. Tests cover real JWT signatures,
 identity substitution, nonce, state, discovery endpoints, organization/project
-boundaries and API token expiry. The package uses Web Crypto and Node crypto on
-Node 24 or newer; it has no browser UI or application database dependency.
+boundaries and API token expiry. Tea develops and checks it on Node 26 LTS. The
+package has no browser UI or application database dependency.
