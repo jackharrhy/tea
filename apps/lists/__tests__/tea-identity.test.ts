@@ -209,6 +209,7 @@ test("central bearer auth preserves local list access and rejects wrong audience
   let aud = ["lists-project"];
   let role = "member";
   let includeListGrant = true;
+  let includeMembershipScope = true;
   let subject = "member-subject";
   let clientId = "delegated";
   let principalType: "user" | "service" = "user";
@@ -235,7 +236,7 @@ test("central bearer auth preserves local list access and rejects wrong audience
         scope: [
           projectAudienceScope("lists-project"),
           PROJECT_ROLES_SCOPE,
-          roleScope("member"),
+          ...(includeMembershipScope ? [roleScope(role)] : []),
           roleScope("lists-read"),
         ].join(" "),
         jack_auth_principal_type: principalType,
@@ -289,6 +290,12 @@ test("central bearer auth preserves local list access and rejects wrong audience
   expect((await authenticate(apiRequest)).listIds).toEqual(
     new Set([allowed.id]),
   );
+  includeMembershipScope = false;
+  expect(authenticate(apiRequest)).rejects.toMatchObject({ status: 403 });
+  includeMembershipScope = true;
+  role = "admin";
+  expect(authenticate(apiRequest)).rejects.toMatchObject({ status: 403 });
+  role = "member";
   expect(authenticate(request)).rejects.toMatchObject({ status: 403 });
   clientId = "other-service-client";
   expect(authenticate(apiRequest)).rejects.toMatchObject({ status: 403 });

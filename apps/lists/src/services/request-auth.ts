@@ -64,15 +64,19 @@ export function createCentralBearerAuth(
           user.role !== "member"))
     )
       throw new IdentityError("Lists identity binding does not match", 403);
-    if (user.role === "owner" || user.role === "admin") {
-      requireTokenRole(token, projectId, "admin");
-    } else {
-      requireTokenRole(
-        token,
-        projectId,
-        token.roles.has("admin") ? "admin" : "member",
-      );
-    }
+    if (token.principalType === "service" && token.roles.has("admin"))
+      throw new IdentityError("Service identity cannot be an admin", 403);
+    const membershipRole =
+      user.role === "owner" || user.role === "admin"
+        ? "admin"
+        : token.principalType === "service"
+          ? "member"
+          : token.roles.has("admin")
+            ? "admin"
+            : "member";
+    requireTokenRole(token, projectId, membershipRole);
+    if (!token.scopes.has(roleScope(membershipRole)))
+      throw new IdentityError("Lists membership scope is required", 403);
     if (
       !token.scopes.has(projectAudienceScope(projectId)) ||
       !token.scopes.has(PROJECT_ROLES_SCOPE)
