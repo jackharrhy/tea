@@ -6,6 +6,10 @@ import { eq } from "drizzle-orm";
 import { createApplication } from "../src/http-app.ts";
 import { schema } from "../src/db/index.ts";
 import type { Config } from "../src/config.ts";
+import {
+  confirmSubscriber,
+  createSubscriber,
+} from "../src/services/subscriber.ts";
 import { createTestDb, seedList } from "./helpers.ts";
 
 const ses = mockClient(SESv2Client);
@@ -69,5 +73,57 @@ describe("Tea subscription route", () => {
       .get();
     expect(subscriber).toBeDefined();
     expect(ses.commandCalls(SendEmailCommand)).toHaveLength(1);
+  });
+
+  test("leaves the membership unconfirmed when confirmation mail fails", async () => {
+    const db = createTestDb();
+    const list = seedList(db);
+    ses.on(SendEmailCommand).rejects(new Error("mail unavailable"));
+    const app = createApplication(db, config);
+
+    const response = await app.request("/subscribe", {
+      method: "POST",
+      body: new URLSearchParams({
+        email: "reader@example.com",
+        lists: list.slug,
+      }),
+    });
+
+    expect(response.status).toBeGreaterThanOrEqual(500);
+    const memberships = db.select().from(schema.subscriberLists).all();
+    expect(memberships).toHaveLength(1);
+    expect(memberships[0]?.status).toBe("unconfirmed");
+  });
+
+  test("one-click unsubscribe changes only the addressed list", async () => {
+    const db = createTestDb();
+    const first = seedList(db, { slug: "first" });
+    const second = seedList(db, { slug: "second" });
+    const subscriber = createSubscriber(db, "reader@example.com", null, null, [
+      first.slug,
+      second.slug,
+    ]);
+    confirmSubscriber(db, subscriber.unsubscribeToken);
+    const app = createApplication(db, config);
+
+    const response = await app.request(
+      `/unsubscribe/${subscriber.unsubscribeToken}/${first.id}`,
+      {
+        method: "POST",
+        body: "List-Unsubscribe=One-Click",
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const memberships = db.select().from(schema.subscriberLists).all();
+    expect(memberships.find((entry) => entry.listId === first.id)?.status).toBe(
+      "unsubscribed",
+    );
+    expect(
+      memberships.find((entry) => entry.listId === second.id)?.status,
+    ).toBe("confirmed");
+    expect(db.select().from(schema.subscribers).all()[0]?.status).toBe(
+      "active",
+    );
   });
 });
