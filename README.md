@@ -18,7 +18,7 @@ a Remix 3 monorepo for personal apps and packages.
 | [`@tea/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server (migration in progress) | [README](apps/gurgur/README.md) |
 | [`@tea/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
 | [`@tea/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail (migration in progress) | [README](apps/lists/README.md) |
-| [`@tea/maps`](apps/maps/) | Remix 3 BSP viewer and map editor | [README](apps/maps/README.md) |
+| [`@tea/maps`](apps/maps/) | Worldview BSP viewer and map editor | [README](apps/maps/README.md) |
 | [`@tea/marky`](apps/marky/) | Collaborative Markdown editor with Discord access | [README](apps/marky/README.md) |
 | [`@tea/pool-app`](apps/pool/) | Remix pool hall and authoritative Bun game server | [README](apps/pool/README.md) |
 | [`@tea/maps-collaboration`](apps/maps-collaboration/) | Live map sessions and SQLite map cells | [README](apps/maps-collaboration/README.md) |

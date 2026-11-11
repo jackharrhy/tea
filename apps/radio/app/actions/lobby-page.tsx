@@ -19,7 +19,7 @@ export function LobbyPage(
   return () => {
     let { rooms, identity, selectedRoom, message, authMode } = handle.props;
     return (
-      <Document title="Rooms · tea/radio">
+      <Document title="Rooms · radio">
         <main mix={[desktopThemeStyle, lobbyStyle.page]}>
           <RoomLobby
             rooms={rooms}

@@ -27,7 +27,7 @@ export function readEditorWebMcpTools(
     tool(z.strictObject({}), {
       name: "tea_maps_inspect_editor",
       description:
-        "Inspect the live Tea Maps document, selection, project, source-save safety, and perspective camera.",
+        "Inspect the live Worldview document, selection, project, source-save safety, and perspective camera.",
       execute() {
         const current = state();
         const document = current.session.document;

@@ -42,7 +42,7 @@ export const ProjectAccess = clientEntry(
               HostedProjectResponseSchema,
             );
             project = response.project;
-            document.title = `${project.name} · Maps · Tea`;
+            document.title = `${project.name} · Worldview`;
             status = project.role === "owner" ? "Loading project access" : "";
             handle.update();
             if (project.role === "owner") {

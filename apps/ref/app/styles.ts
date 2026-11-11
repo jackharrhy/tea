@@ -38,9 +38,6 @@ export const refStyles = css({
     "letter-spacing": "-0.04em",
     "line-height": "1",
   },
-  "& .wordmark span": {
-    color: "#576b55",
-  },
   "& button:hover": {
     background: "#efefec",
   },

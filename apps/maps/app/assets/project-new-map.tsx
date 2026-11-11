@@ -32,7 +32,7 @@ export const ProjectNewMap = clientEntry(
               HostedProjectResponseSchema,
             );
             project = response.project;
-            document.title = `${project.name} · Maps · Tea`;
+            document.title = `${project.name} · Worldview`;
             status =
               project.role === "viewer"
                 ? "Editor access required to create a map"

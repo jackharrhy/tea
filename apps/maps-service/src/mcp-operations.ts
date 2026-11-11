@@ -68,7 +68,7 @@ const mcpOperations = [
   ),
   operation(
     "tea_maps_create_project",
-    "Create a hosted Tea Maps project owned by this account.",
+    "Create a hosted Worldview project owned by this account.",
     z.strictObject({ name: Name, game: HostedGameSchema }),
     false,
     (options, user, input) => ({

@@ -25,7 +25,7 @@ export function ProjectsPage(
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#252527" />
-        <title>Projects · Maps · Tea</title>
+        <title>Projects · Worldview</title>
         <link rel="icon" href="/favicon.svg" />
         <link rel="stylesheet" href="/icons/style.css" />
       </head>
@@ -33,7 +33,7 @@ export function ProjectsPage(
         <main id="projects-app">
           <header class="projects-header">
             <a class="projects-brand" href="/" data-rmx-document>
-              tea/maps
+              Worldview
             </a>
             <nav aria-label="Maps pages">
               <a href="/viewer" data-rmx-document>

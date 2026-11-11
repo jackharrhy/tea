@@ -7,7 +7,7 @@ export function HomePage() {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#252527" />
-        <title>Maps · Tea</title>
+        <title>Worldview</title>
         <link rel="icon" href="/favicon.svg" />
         <link rel="stylesheet" href="/icons/style.css" />
       </head>
@@ -15,7 +15,7 @@ export function HomePage() {
         <div class="home-shell">
           <header class="home-topbar">
             <a class="home-brand" href="/" aria-current="page">
-              tea<span>/</span>maps
+              Worldview
             </a>
             <nav aria-label="Maps navigation">
               <a href="/projects">Projects</a>
@@ -71,7 +71,7 @@ export function HomePage() {
             </div>
           </main>
           <footer class="home-footer">
-            <span>tea / maps</span>
+            <span>Worldview</span>
             <span>Viewer · Editor · Projects</span>
           </footer>
         </div>

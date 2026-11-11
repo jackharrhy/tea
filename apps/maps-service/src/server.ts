@@ -185,14 +185,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const service = createMapsService(options);
   const port = Number(process.env.PORT ?? 8792);
   service.listen(port, process.env.HOST ?? "127.0.0.1", () =>
-    console.log(`Tea Maps service listening on ${port}`),
+    console.log(`Worldview service listening on ${port}`),
   );
   let stopping = false;
   const stop = () => {
     if (stopping) return;
     stopping = true;
     void stopMapsService(service, options).catch((error: unknown) => {
-      console.error("Tea Maps service shutdown failed", error);
+      console.error("Worldview service shutdown failed", error);
       process.exitCode = 1;
     });
   };
