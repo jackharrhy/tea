@@ -93,7 +93,6 @@ export async function createApp(sites: SiteRuntime[], operator?: Operator) {
         url.protocol = origin.protocol;
         const response = await tenant.router.fetch(new Request(url, request));
         if (
-          !tenant.site.preview &&
           (request.method === "GET" || request.method === "HEAD") &&
           !url.search &&
           !url.pathname.startsWith("/tea/") &&
