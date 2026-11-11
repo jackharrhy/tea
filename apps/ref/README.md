@@ -68,7 +68,7 @@ CELLD_BIN=/absolute/path/to/celld npm run test:celld --workspace @tea/ref
 
 The archive commands use `REF_PASSWORD` while the local password mode is
 active. In Central mode, supply a short-lived delegated `REF_ACCESS_TOKEN`.
-Backup requires a Ref member or admin grant plus `archive-read` role and scope.
+Backup requires a Ref admin grant plus `archive-read` role and scope.
 Restore requires the admin grant and both `archive-read` and `archive-restore`
 roles/scopes; a browser cookie alone never authorizes archive routes. The
 Worker introspects archive requests, board snapshot reads, and image downloads. Resource metadata

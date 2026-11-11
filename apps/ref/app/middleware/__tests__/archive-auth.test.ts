@@ -29,11 +29,12 @@ function token(
 }
 
 describe("Ref delegated archive authorization", () => {
-  it("allows member backup but limits restore to admin with both operation grants", () => {
+  it("limits archive reads and restores to an admin with operation grants", () => {
     const member = token("member", ["archive-read"]);
-    expect(() => authorizeArchive(member, project, "read")).not.toThrow();
+    expect(() => authorizeArchive(member, project, "read")).toThrow();
     expect(() => authorizeArchive(member, project, "restore")).toThrow();
     const admin = token("admin", ["archive-read", "archive-restore"]);
+    expect(() => authorizeArchive(admin, project, "read")).not.toThrow();
     expect(() => authorizeArchive(admin, project, "restore")).not.toThrow();
     expect(() =>
       authorizeArchive(
