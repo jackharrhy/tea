@@ -13,11 +13,20 @@ const documentStyles = css({
     opacity: 1,
     transition: "opacity 0.5s ease-out",
   },
+  "& [data-mug-slot]": { viewTransitionName: "mug" },
+  "@media (prefers-reduced-motion: reduce)": {
+    "&::view-transition-group(*)": { animationDuration: "0s" },
+  },
 });
 
 export function mug(home: boolean) {
   return (
-    <div class="flex justify-center">
+    <div
+      class="flex justify-center"
+      data-mug-slot
+      data-rmx-preserve-dom
+      data-rmx-key={home ? "home-mug" : "header-mug"}
+    >
       <canvas
         id="mug-canvas"
         class={home ? "my-16" : "my-0"}

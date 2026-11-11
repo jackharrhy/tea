@@ -3,6 +3,7 @@ import { test } from "node:test";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { gunzipSync } from "node:zlib";
 import { createContentStore } from "../app/content/store.ts";
 import { createMarkdownRenderer } from "../app/content/markdown.ts";
 import { resolveWikiLink } from "../app/content/garden-routing.mjs";
@@ -164,6 +165,27 @@ test("HTTP pages, feeds, tools, assets and production boundaries", async (t) => 
   const production = createGarden({ ...f.config, development: false });
   const request = (pathname: string) =>
     production.router.fetch(`https://example.test${pathname}`);
+  const plain = await request("/");
+  const html = await plain.text();
+  const compressed = await production.router.fetch(
+    new Request("https://example.test/?ignored=cache-key", {
+      headers: { "Accept-Encoding": "gzip;q=0.5" },
+    }),
+  );
+  assert.equal(compressed.headers.get("Content-Encoding"), "gzip");
+  assert.equal(compressed.headers.get("Vary"), "Accept-Encoding");
+  assert.equal(
+    gunzipSync(Buffer.from(await compressed.arrayBuffer())).toString(),
+    html,
+  );
+  const uncompressed = await production.router.fetch(
+    new Request("https://example.test/", {
+      headers: { "Accept-Encoding": "gzip;q=0" },
+    }),
+  );
+  assert.equal(uncompressed.headers.get("Content-Encoding"), null);
+  assert.equal((await request("/missing-one")).status, 404);
+  assert.equal((await request("/missing-two")).status, 404);
   assert.equal((await request("/debug")).status, 404);
   assert.equal((await request("/__dev/revision")).status, 404);
   assert.equal((await request("/debug/notes")).status, 404);

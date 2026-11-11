@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 import { createRouter } from "remix/router";
 import { render } from "remix/middleware/render";
 import { staticFiles } from "remix/middleware/static";
@@ -22,6 +23,10 @@ import { getLinkblogRaindropStatus } from "./content/linkblog-raindrop.ts";
 
 export function createGarden(config: GardenConfig) {
   const content = createContentStore(config.directory);
+  const pages = new Map<
+    string,
+    Promise<{ html: string; gzip: Uint8Array<ArrayBuffer>; status: number }>
+  >();
   let rendering:
     | { revision: number; render: ReturnType<typeof createMarkdownRenderer> }
     | undefined;
@@ -37,40 +42,86 @@ export function createGarden(config: GardenConfig) {
   async function renderPage(
     id: string,
     context: {
+      request: Request;
       render: (
         node: RemixNode,
         init?: ResponseInit,
       ) => Response | Promise<Response>;
     },
-  ) {
+  ): Promise<Response> {
     const { entries, byId, index } = content.read();
     const entry = byId.get(id);
-    if (!rendering || rendering.revision !== content.revision)
-      rendering = {
-        revision: content.revision,
-        render: createMarkdownRenderer(index),
-      };
-    const found = entry || byId.get("404");
-    if (!found)
+    const cacheKey = entry ? id : "404";
+    async function renderResponse() {
+      if (!rendering || rendering.revision !== content.revision)
+        rendering = {
+          revision: content.revision,
+          render: createMarkdownRenderer(index),
+        };
+      const found = entry || byId.get("404");
+      if (!found)
+        return context.render(
+          document({
+            ...config,
+            title: "Not found",
+            children: <h1>Not found</h1>,
+          }),
+          { status: 404 },
+        );
       return context.render(
-        document({
-          ...config,
-          title: "Not found",
-          children: <h1>Not found</h1>,
-        }),
-        { status: 404 },
-      );
-    return context.render(
-      await page(found, entries, await rendering.render(found.body), config),
-      {
-        status: entry && id !== "404" ? 200 : 404,
-        headers: {
-          "Cache-Control": config.development
-            ? "no-store"
-            : "public, max-age=60",
+        await page(found, entries, await rendering.render(found.body), config),
+        {
+          status: entry && id !== "404" ? 200 : 404,
+          headers: {
+            "Cache-Control": config.development
+              ? "no-store"
+              : "public, max-age=60",
+          },
         },
-      },
-    );
+      );
+    }
+    if (!config.development) {
+      let cached = pages.get(cacheKey);
+      if (!cached) {
+        cached = (async () => {
+          const response = await renderResponse();
+          const html = await response.text();
+          return {
+            html,
+            gzip: new Uint8Array(gzipSync(html)),
+            status: response.status,
+          };
+        })();
+        pages.set(cacheKey, cached);
+        cached.catch(() => pages.delete(cacheKey));
+      }
+      const result = await cached;
+      const compressed = (context.request.headers.get("Accept-Encoding") || "")
+        .split(",")
+        .some((value) => {
+          const [encoding, ...parameters] = value
+            .trim()
+            .toLowerCase()
+            .split(";");
+          const quality = parameters.find((parameter) =>
+            parameter.trim().startsWith("q="),
+          );
+          return (
+            encoding === "gzip" &&
+            (!quality || Number(quality.trim().slice(2)) > 0)
+          );
+        });
+      return new Response(compressed ? result.gzip : result.html, {
+        status: result.status,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "public, max-age=60",
+          Vary: "Accept-Encoding",
+          ...(compressed ? { "Content-Encoding": "gzip" } : {}),
+        },
+      });
+    }
+    return renderResponse();
   }
   router.get(routes.home, (context) => renderPage("home", context));
   router.get(

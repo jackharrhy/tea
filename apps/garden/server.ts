@@ -8,6 +8,21 @@ import { createGarden } from "./app/router.tsx";
 const config = gardenConfig();
 const { router, content, reloadBrowser } = createGarden(config);
 content.read();
+if (!config.development) {
+  for (const entry of content.read().entries) {
+    const response = await router.fetch(
+      `http://localhost/${entry.id === "home" ? "" : entry.id}`,
+    );
+    if (response.status >= 500)
+      throw new Error(`Could not prerender ${entry.id}`);
+    await response.arrayBuffer();
+  }
+  const entry = await router.fetch(
+    "http://localhost/assets/app/ui/public/entry.js",
+  );
+  if (!entry.ok) throw new Error("Could not compile browser entry");
+  await entry.arrayBuffer();
+}
 const watchers: fs.FSWatcher[] = [];
 if (config.development) {
   for (const directory of [config.directory, config.assetsDirectory]) {

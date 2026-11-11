@@ -13,6 +13,8 @@
     "test:parity": "node --env-file-if-exists=.env --import remix/node-tsx __tests__/parity.ts",
     "test:parity:http": "node --env-file-if-exists=.env --import remix/node-tsx __tests__/http-parity.ts",
     "check": "npm run typecheck && npm test",
+    "test:browser": "NODE_ENV=production node --import remix/node-tsx __tests__/navigation.ts",
+    "test:performance": "node --import remix/node-tsx __tests__/performance.ts",
     "content:export": "node --env-file-if-exists=.env --import remix/node-tsx scripts/export.ts",
     "assets:diff": "node scripts/assets.ts diff",
     "assets:check": "node scripts/assets.ts check",
