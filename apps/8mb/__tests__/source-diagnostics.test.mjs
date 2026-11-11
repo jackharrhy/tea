@@ -78,6 +78,7 @@ test("consented diagnostics send only coarse allowlisted data without cookies/re
   assert.equal(validateDiagnostic(event), true);
   assert.equal(event.input, "64g-plus");
   assert.equal(event.browser, "edge");
+  assert.equal("browserMajor" in event, false);
   assert.equal(event.os, "windows");
   assert.doesNotMatch(
     options.body,
@@ -91,7 +92,7 @@ test("consented diagnostics send only coarse allowlisted data without cookies/re
     validateDiagnostic({ ...event, reason: "arbitrary private text" }),
     false,
   );
-  assert.equal(validateDiagnostic({ ...event, browserMajor: 142.5 }), false);
+  assert.equal(validateDiagnostic({ ...event, browserMajor: 142 }), false);
 });
 
 test("opt-out aborts pending sends and never queues a later replay", () => {

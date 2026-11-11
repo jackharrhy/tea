@@ -8,7 +8,7 @@ While off, the diagnostics module does not read file context or the user agent a
 
 ## Data
 
-The schema is flat and exact: schema version, browser family/major, OS family, input-size bucket, duration bucket, resolution bucket, recognized container/video/audio codec, stage, outcome, normalized reason and elapsed-time bucket. The shared validator rejects arbitrary fields and values. Browser and codec strings are mapped to fixed enums; unknown values become `other`/`unknown`.
+The schema is flat and exact: schema version, browser family without a version, OS family, input-size bucket, duration bucket, resolution bucket, recognized container/video/audio codec, stage, outcome, normalized reason and elapsed-time bucket. The shared validator rejects arbitrary fields and values. Browser and codec strings are mapped to fixed enums; unknown values become `other`/`unknown`.
 
 No media, thumbnails, filenames, paths, titles, raw error text/stacks, raw user agents, accounts, persistent device/session IDs or exact client timestamps are sent. Source information remains in the editor; only coarse allowlisted values leave it. Standard HTTP carries IP/UA headers, so the destination owner must verify ingress logging does not retain these requests as analytics. The app endpoint never persists those headers or logs its payload.
 

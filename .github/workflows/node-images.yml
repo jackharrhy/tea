@@ -14,7 +14,7 @@ on:
       - apps/maps-service/Dockerfile
       - apps/maps-compiler/Dockerfile
       - apps/rotund/**
-      - apps/8mb/Dockerfile
+      - apps/8mb/**
   workflow_dispatch:
 permissions:
   contents: read
