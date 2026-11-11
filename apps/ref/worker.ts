@@ -40,7 +40,7 @@ export default {
       try {
         publicOrigin = new URL(env.AUTH_PUBLIC_ORIGIN);
       } catch {
-        return new Response("Central Auth is not configured", { status: 503 });
+        return new Response("Jack Auth is not configured", { status: 503 });
       }
     }
     if (
@@ -52,7 +52,7 @@ export default {
         publicOrigin.protocol !== "https:" ||
         publicOrigin.origin !== env.AUTH_PUBLIC_ORIGIN)
     )
-      return new Response("Central Auth is not configured", { status: 503 });
+      return new Response("Jack Auth is not configured", { status: 503 });
     if (url.pathname === "/.well-known/oauth-protected-resource/api/archive") {
       if (!central) return new Response("Not found", { status: 404 });
       return Response.json(

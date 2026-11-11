@@ -24,12 +24,22 @@ export function AuthPage(
   return () => (
     <Document title="Unlock">
       <main class="auth-page">
-        <div class="auth-form">
+        <div
+          class={
+            handle.props.central ? "auth-form auth-form-central" : "auth-form"
+          }
+        >
           <a class="wordmark" href="/">
             tea<span>/ref</span>
           </a>
           {handle.props.central ? (
-            <a href="/auth/login">Sign in with Central Auth</a>
+            <div class="auth-intro">
+              <h1>A shared board for images and links.</h1>
+              <p>Collect visual references and arrange them together.</p>
+              <a class="auth-link" href="/auth/login">
+                Sign in with Jack Auth
+              </a>
+            </div>
           ) : (
             <form method="post" action="/login">
               <label for="password">Password</label>
