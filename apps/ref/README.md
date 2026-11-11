@@ -2,17 +2,17 @@
 
 A small, private board for images and links. It presents itself as `tea/ref` while retaining Ref's board format and storage contract. This app was adapted from the former standalone Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. Every approved member sees the same boards; there are no per-user spaces. The Newport production deployment runs this workspace's container image.
 
-Central Auth migration: configure `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
+Jack Auth production sign-in uses `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
 `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, and
 `AUTH_PUBLIC_ORIGIN=https://ref.jackharrhy.dev` together. Register the exact
 public PKCE callback `https://ref.jackharrhy.dev/auth/callback`. An app
 member/admin grant opens the shared boards; board and asset IDs stay stable.
-The first Central grant is for Jack only; other users can be admitted later
+The first Jack Auth grant is for Jack only; other users can be admitted later
 without changing the board format.
-Central sessions in `DirectoryCell` carry a subject and expire within one hour.
-Old password sessions cannot authorize Central mode. Keep the live password
-path until browser, WebSocket, and archive CLI acceptance pass. The archive CLI
-uses a delegated resource token in Central mode.
+Jack Auth sessions in `DirectoryCell` carry a subject and expire within one hour.
+Old password sessions cannot authorize Jack Auth mode. Production uses Jack Auth;
+the password path remains for isolated local development. The archive CLI uses
+a delegated resource token in Jack Auth mode.
 
 ## Run locally
 
@@ -67,7 +67,7 @@ CELLD_BIN=/absolute/path/to/celld npm run test:celld --workspace @tea/ref
 ## Back up and restore
 
 The archive commands use `REF_PASSWORD` while the local password mode is
-active. In Central mode, supply a short-lived delegated `REF_ACCESS_TOKEN`.
+active. In Jack Auth mode, supply a short-lived delegated `REF_ACCESS_TOKEN`.
 Backup requires a Ref admin grant plus `archive-read` role and scope.
 Restore requires the admin grant and both `archive-read` and `archive-restore`
 roles/scopes; a browser cookie alone never authorizes archive routes. The

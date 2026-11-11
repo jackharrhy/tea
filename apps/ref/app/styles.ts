@@ -69,9 +69,43 @@ export const refStyles = css({
   "& .auth-form": {
     width: "min(100%, 320px)",
   },
+  "& .auth-form-central": {
+    width: "min(100%, 420px)",
+  },
   "& .auth-form .wordmark": {
     display: "inline-block",
     "margin-bottom": "72px",
+  },
+  "& .auth-form-central .wordmark": {
+    "margin-bottom": "52px",
+  },
+  "& .auth-intro h1": {
+    margin: "0 0 14px",
+    "font-size": "clamp(27px, 5vw, 34px)",
+    "font-weight": "650",
+    "letter-spacing": "-0.035em",
+    "line-height": "1.15",
+  },
+  "& .auth-intro p": {
+    margin: "0 0 28px",
+    color: "#565b55",
+    "font-size": "15px",
+    "line-height": "1.55",
+  },
+  "& .auth-link": {
+    display: "inline-flex",
+    "align-items": "center",
+    "justify-content": "center",
+    "min-height": "46px",
+    padding: "10px 18px",
+    "border-radius": "5px",
+    background: "#292d29",
+    color: "#fff",
+    "font-size": "14px",
+    "font-weight": "600",
+  },
+  "& .auth-link:hover": {
+    background: "#424842",
   },
   "& .auth-form label": {
     display: "block",

@@ -108,7 +108,7 @@ export function RoomLobby(
                 href={routes.auth.login.href()}
                 mix={desktopStyle.primaryButton}
               >
-                Sign in with Central Auth
+                Sign in with Jack Auth
               </a>
             ) : null}
           </div>
