@@ -10,6 +10,7 @@ export const routes = route({
   nowPlaying: get("/tools/lastfm/now-playing"),
   lastfm: get("/tools/lastfm"),
   youtube: get("/tools/youtube-thumbnail-fetcher"),
+  toolResult: get("/tools/result"),
   thumbnail: post("/tools/youtube-thumbnail-fetcher/fetch"),
   tweet: get("/tools/tweet-archiver"),
   archive: post("/tools/tweet-archiver/archive"),

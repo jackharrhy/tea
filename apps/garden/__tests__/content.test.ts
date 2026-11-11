@@ -145,6 +145,9 @@ test("HTTP pages, feeds, tools, assets and production boundaries", async (t) => 
   assert.equal((await get("/asset/escape.md")).status, 400);
   assert.equal((await get("/assets/app/content/store.ts")).status, 404);
   const rss = await get("/linkblog/rss.xml");
+  const idle = await get("/tools/lastfm/now-playing");
+  assert.equal(idle.status, 204);
+  assert.equal(idle.headers.get("Cache-Control"), "no-store");
   assert.equal(rss.headers.get("Access-Control-Allow-Origin"), "*");
   assert.doesNotMatch(await rss.text(), /Secret|Private fixture/);
   const thumbnail = await get("/tools/youtube-thumbnail-fetcher/fetch", {

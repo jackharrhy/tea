@@ -13,7 +13,7 @@ const directory = await fs.mkdtemp(
 );
 await fs.writeFile(
   path.join(directory, "Home.md"),
-  "---\npublic: true\n---\n```component\nMug\n```\n\n[About](/about)",
+  "---\npublic: true\n---\n```component\nMug\n```\n\n```component\nNowPlaying\n```\n\n[About](/about)",
 );
 await fs.writeFile(
   path.join(directory, "About.md"),
@@ -40,10 +40,33 @@ try {
   for (const reducedMotion of ["no-preference", "reduce"] as const) {
     const context = await browser.newContext({ reducedMotion });
     await context.route("**/gc.zgo.at/**", (route) => route.abort());
+    let widgetLoads = 0;
+    await context.route("**/tools/lastfm/now-playing", (route) => {
+      widgetLoads++;
+      assert.equal(route.request().headers()["x-remix-frame"], "true");
+      if (reducedMotion === "reduce") return route.fulfill({ status: 204 });
+      return route.fulfill({
+        status: 200,
+        contentType: "text/html",
+        body: "<p>Fixture now playing</p>",
+      });
+    });
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
+    const modelRequests: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("cuppa.txt"))
+        modelRequests.push(request.url());
+    });
     await page.goto(base, { waitUntil: "networkidle" });
+    if (reducedMotion === "no-preference")
+      await page.getByText("Fixture now playing", { exact: true }).waitFor();
+    await page.waitForFunction(
+      () => performance.getEntriesByName("garden:mug-first-frame").length > 0,
+    );
+    assert.ok(widgetLoads > 0);
+    assert.deepEqual(modelRequests, []);
     assert.equal(
       await page
         .locator("[data-mug-slot]")
@@ -110,6 +133,19 @@ try {
     await page.locator("input[name=url]").fill("https://youtu.be/dQw4w9WgXcQ");
     await page.getByRole("button", { name: "Fetch", exact: true }).click();
     await page.locator("#result img").waitFor();
+    assert.equal(
+      new URL(page.url()).pathname,
+      "/tools/youtube-thumbnail-fetcher",
+    );
+    await page.locator("input[name=url]").fill("invalid");
+    await page.getByRole("button", { name: "Fetch", exact: true }).click();
+    await page
+      .getByRole("alert")
+      .filter({ hasText: "Could not extract video ID" })
+      .waitFor();
+    await page.locator("input[name=url]").fill("https://youtu.be/dQw4w9WgXcQ");
+    await page.getByRole("button", { name: "Fetch", exact: true }).click();
+    await page.locator("#result img").waitFor();
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -118,6 +154,10 @@ try {
   await page.goto(base);
   await page.getByRole("link", { name: "About", exact: true }).first().click();
   assert.equal(await page.title(), "About · Jack Harrhy");
+  await page.getByRole("link", { name: "Thumbnail tool" }).click();
+  await page.locator("input[name=url]").fill("https://youtu.be/dQw4w9WgXcQ");
+  await page.getByRole("button", { name: "Fetch", exact: true }).click();
+  await page.getByAltText("YouTube video thumbnail").waitFor();
   await context.close();
   console.log(
     "Navigation, persistent canvas, history, reduced motion, forms, and no-JS fallback passed",

@@ -15,6 +15,7 @@ import {
 import { resolveOgImage } from "../content/utils.ts";
 import { document, mug } from "./document.tsx";
 import type { GardenConfig } from "../config.ts";
+import { NowPlaying } from "./public/now-playing.tsx";
 
 async function component(
   props: Record<string, string>,
@@ -27,7 +28,7 @@ async function component(
     case "Mug":
       return mug(home);
     case "NowPlaying":
-      return <div class="now-playing my-7" data-now-playing />;
+      return <NowPlaying />;
     case "Letterbird":
       return (
         <div class="not-prose my-8">
