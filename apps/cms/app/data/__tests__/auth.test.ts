@@ -45,3 +45,30 @@ it("reserves login attempts before asynchronous password checks", async () => {
     sqlite.close();
   }
 });
+
+it("links a central subject to the existing user and rejects password sessions in central mode", async () => {
+  const { sqlite } = await openDatabase(":memory:");
+  try {
+    sqlite
+      .prepare(
+        "INSERT INTO users(email,password_hash,auth_subject) VALUES(?,?,?)",
+      )
+      .run("editor@test.local", "unused", "reviewed-subject");
+    const user = createAuthStore(sqlite, true).bySubject("reviewed-subject");
+    assert.ok(user);
+    const passwordSession = createAuthStore(sqlite).createSession(user.id);
+    const central = createAuthStore(sqlite, true);
+    assert.equal(central.resolve(passwordSession.id), null);
+    assert.throws(() =>
+      central.createSession(user.id, 1000, "another-subject"),
+    );
+    const session = central.createSession(user.id, 1000, "reviewed-subject");
+    assert.equal(central.resolve(session.id)?.id, user.id);
+    sqlite
+      .prepare("UPDATE users SET auth_subject=NULL WHERE id=?")
+      .run(user.id);
+    assert.equal(central.resolve(session.id), null);
+  } finally {
+    sqlite.close();
+  }
+});

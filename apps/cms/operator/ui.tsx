@@ -16,7 +16,9 @@ export type Summary = {
   analytics: boolean;
 };
 
-export function Login(handle: Handle<{ error?: string; csrf: string }>) {
+export function Login(
+  handle: Handle<{ error?: string; csrf: string; central?: boolean }>,
+) {
   return () => (
     <Document title="Sign in · teacms" admin static styles={[operatorStyles]}>
       <main className="operator-login">
@@ -28,31 +30,37 @@ export function Login(handle: Handle<{ error?: string; csrf: string }>) {
               {handle.props.error}
             </p>
           )}
-          <form method="post" action="/login" data-rmx-document>
-            <input type="hidden" name="csrf" value={handle.props.csrf} />
-            <label>
-              Email address{" "}
-              <input
-                name="email"
-                type="email"
-                required
-                autoComplete="username"
-                autoFocus
-              />
-            </label>
-            <label>
-              Password{" "}
-              <input
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-              />
-            </label>
-            <button type="submit" className="button primary">
-              Sign in
-            </button>
-          </form>
+          {handle.props.central ? (
+            <a href="/auth/login" className="button primary" data-rmx-document>
+              Sign in with Jack Auth
+            </a>
+          ) : (
+            <form method="post" action="/login" data-rmx-document>
+              <input type="hidden" name="csrf" value={handle.props.csrf} />
+              <label>
+                Email address{" "}
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="username"
+                  autoFocus
+                />
+              </label>
+              <label>
+                Password{" "}
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                />
+              </label>
+              <button type="submit" className="button primary">
+                Sign in
+              </button>
+            </form>
+          )}
         </section>
         <a className="operator-design-link" href="/design">
           Design
