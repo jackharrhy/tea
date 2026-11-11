@@ -6,6 +6,29 @@ import { sessionCookie } from "../auth.ts";
 import { createEdgeRouter, type EdgeContext } from "../index.tsx";
 import type { Bindings } from "../types.ts";
 
+it("requires a preview signing secret only when Central mode exposes preview links", () => {
+  const env = {
+    TEA_SESSION_SECRET: "session-secret",
+    TEA_EDITOR_ORIGIN: "https://cms.example.test",
+    TEA_AUTH_ISSUER: "https://auth.example.test",
+    TEA_AUTH_CLIENT_ID: "client",
+    TEA_AUTH_PROJECT_ID: "project",
+    TEA_AUTH_ORGANIZATION_ID: "org",
+    TEA_AUTH_OWNER_SUBJECT: "owner",
+  } as Bindings;
+  const config = { siteName: "CMS", collections: [] };
+  createEdgeRouter(env, config);
+  assert.throws(
+    () =>
+      createEdgeRouter(env, {
+        ...config,
+        previewUrl: (collection: string, slug: string, token: string) =>
+          `https://preview.example.test/${collection}/${slug}?token=${token}`,
+      }),
+    /preview secrets/,
+  );
+});
+
 it("serves a native Remix editor and public page from one router", async () => {
   const row = {
     collection: "articles",

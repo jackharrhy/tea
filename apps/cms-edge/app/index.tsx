@@ -86,7 +86,12 @@ export function createEdgeRouter(
   extend?: (router: Router<EdgeContext>) => void,
 ) {
   const central = config.auth ? null : centralAuth(env);
-  requireSecrets(env, !config.auth && !central, !config.auth, !central);
+  requireSecrets(
+    env,
+    !config.auth && !central,
+    !config.auth,
+    !central || Boolean(config.previewUrl),
+  );
   const router = createRouter<EdgeContext>({ middleware: [renderMiddleware] });
 
   router.map(

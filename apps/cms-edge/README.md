@@ -13,8 +13,10 @@ For Central Auth instead of the prototype editor password, set
 `<TEA_EDITOR_ORIGIN>/tea/auth/callback`. A project admin grant and exact owner
 subject are both required; password sessions become invalid. The signed local
 session expires after one hour. `TEA_SESSION_SECRET` remains necessary for the
-session signature. `TEA_PREVIEW_SECRET` still signs short-lived preview links;
-it does not authorize the preview API in Central mode. That API requires an
+session signature. If the host configures preview links, their short-lived
+signatures still require `TEA_PREVIEW_SECRET`; the sample Worker has no preview
+links and needs no such secret in Central mode. The secret never authorizes the
+preview API in Central mode. That API requires an
 introspected human project-admin token and the dedicated
 `TEA_AUTH_INTROSPECTION_CLIENT_ID` and `TEA_AUTH_INTROSPECTION_SECRET`
 resource credentials. This prototype has no production origin or Auth client
