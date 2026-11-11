@@ -1,9 +1,8 @@
 import { test, expect, describe, beforeEach } from "bun:test";
-import { eq } from "drizzle-orm";
-import { createHttpApp, type App } from "../src/http";
+import { createApplication } from "../src/http-app.ts";
+type App = ReturnType<typeof createApplication>;
 
 import { createTestDb, seedList, type TestDb } from "./helpers";
-import { adminRoutes } from "../src/routes/admin";
 import { bootstrapOwner } from "../src/bootstrap";
 import * as schema from "../src/db/schema";
 import type { Config } from "../src/config";
@@ -39,11 +38,7 @@ async function seedUser(
   const name = overrides.name ?? null;
   const passwordHash = await Bun.password.hash(password);
 
-  return db
-    .insert(schema.users)
-    .values({ email, name, passwordHash, role })
-    .returning()
-    .get();
+  return db.insert(schema.users).values({ email, name, passwordHash, role }).returning().get();
 }
 
 /** POST /login and return the session cookie string */
@@ -56,7 +51,7 @@ async function login(
   form.set("email", email);
   form.set("password", password);
 
-  const res = await app.request("/login", {
+  const res = await app.request("/admin/login", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: form.toString(),
@@ -79,33 +74,6 @@ async function authGet(app: App, path: string, cookie: string) {
   return app.request(path, {
     method: "GET",
     headers: { Cookie: cookie },
-  });
-}
-
-/** Make an authenticated POST request with form data */
-async function authPost(
-  app: App,
-  path: string,
-  cookie: string,
-  body: Record<string, string | string[]>,
-) {
-  const form = new URLSearchParams();
-  for (const [key, value] of Object.entries(body)) {
-    if (Array.isArray(value)) {
-      for (const v of value) form.append(key, v);
-    } else {
-      form.set(key, value);
-    }
-  }
-
-  return app.request(path, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Cookie: cookie,
-    },
-    body: form.toString(),
-    redirect: "manual",
   });
 }
 
@@ -140,8 +108,7 @@ describe("Login flow", () => {
 
   beforeEach(async () => {
     db = createTestDb();
-    app = createHttpApp();
-    app.use(adminRoutes(db, testConfig));
+    app = createApplication(db, testConfig);
     await seedUser(db, {
       email: "owner@example.com",
       password: "correct-password",
@@ -150,13 +117,9 @@ describe("Login flow", () => {
     });
   });
 
-  test("correct credentials -> 302 redirect with session cookie", async () => {
-    const { res, cookie } = await login(
-      app,
-      "owner@example.com",
-      "correct-password",
-    );
-    expect(res.status).toBe(302);
+  test("correct credentials -> 303 redirect with session cookie", async () => {
+    const { res, cookie } = await login(app, "owner@example.com", "correct-password");
+    expect(res.status).toBe(303);
     expect(cookie).not.toBeNull();
   });
 
@@ -179,8 +142,7 @@ describe("Login flow", () => {
 describe("Role-based access to users page", () => {
   test("owner can access /users, member gets 403", async () => {
     const db = createTestDb();
-    const app = createHttpApp();
-    app.use(adminRoutes(db, testConfig));
+    const app = createApplication(db, testConfig);
 
     await seedUser(db, {
       email: "owner@example.com",
@@ -196,23 +158,15 @@ describe("Role-based access to users page", () => {
     });
 
     // Login as owner
-    const { cookie: ownerCookie } = await login(
-      app,
-      "owner@example.com",
-      "owner-pass",
-    );
+    const { cookie: ownerCookie } = await login(app, "owner@example.com", "owner-pass");
     expect(ownerCookie).not.toBeNull();
-    const ownerRes = await authGet(app, "/users", ownerCookie!);
+    const ownerRes = await authGet(app, "/admin/users", ownerCookie!);
     expect(ownerRes.status).toBe(200);
 
     // Login as member
-    const { cookie: memberCookie } = await login(
-      app,
-      "member@example.com",
-      "member-pass",
-    );
+    const { cookie: memberCookie } = await login(app, "member@example.com", "member-pass");
     expect(memberCookie).not.toBeNull();
-    const memberRes = await authGet(app, "/users", memberCookie!);
+    const memberRes = await authGet(app, "/admin/users", memberCookie!);
     expect(memberRes.status).toBe(403);
   });
 });
@@ -223,8 +177,7 @@ describe("Role-based access to users page", () => {
 describe("Member filtered view", () => {
   test("member only sees assigned lists and their campaigns", async () => {
     const db = createTestDb();
-    const app = createHttpApp();
-    app.use(adminRoutes(db, testConfig));
+    const app = createApplication(db, testConfig);
 
     // Seed owner
     await seedUser(db, {
@@ -273,134 +226,24 @@ describe("Member filtered view", () => {
       password: "member-pass",
       role: "member",
     });
-    db.insert(schema.userLists)
-      .values({ userId: member.id, listId: listA.id })
-      .run();
+    db.insert(schema.userLists).values({ userId: member.id, listId: listA.id }).run();
 
     // Login as member
     const { cookie } = await login(app, "member@example.com", "member-pass");
     expect(cookie).not.toBeNull();
 
     // GET /lists -> should contain "List A" but not "List B"
-    const listsRes = await authGet(app, "/lists", cookie!);
+    const listsRes = await authGet(app, "/admin/lists", cookie!);
     expect(listsRes.status).toBe(200);
     const listsHtml = await listsRes.text();
     expect(listsHtml).toContain("List A");
     expect(listsHtml).not.toContain("List B");
 
     // GET /campaigns -> should contain "Campaign A" but not "Campaign B"
-    const campaignsRes = await authGet(app, "/campaigns", cookie!);
+    const campaignsRes = await authGet(app, "/admin/campaigns", cookie!);
     expect(campaignsRes.status).toBe(200);
     const campaignsHtml = await campaignsRes.text();
     expect(campaignsHtml).toContain("Campaign A");
     expect(campaignsHtml).not.toContain("Campaign B");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 5. Invite user flow
-// ---------------------------------------------------------------------------
-describe("Invite user flow", () => {
-  test("owner can invite a member with list assignments, new user can login", async () => {
-    const db = createTestDb();
-    const app = createHttpApp();
-    app.use(adminRoutes(db, testConfig));
-
-    await seedUser(db, {
-      email: "owner@example.com",
-      password: "owner-pass",
-      role: "owner",
-    });
-
-    const listA = seedList(db, {
-      slug: "list-a",
-      name: "List A",
-      fromDomain: "example.com",
-    });
-
-    // Login as owner
-    const { cookie: ownerCookie } = await login(
-      app,
-      "owner@example.com",
-      "owner-pass",
-    );
-    expect(ownerCookie).not.toBeNull();
-
-    // POST /users/new to invite a member
-    const inviteRes = await authPost(app, "/users/new", ownerCookie!, {
-      email: "newmember@example.com",
-      name: "New Member",
-      password: "new-member-pass",
-      role: "member",
-      lists: [String(listA.id)],
-    });
-    // Should redirect to /admin/users
-    expect(inviteRes.status).toBe(302);
-
-    // Verify user created in DB with correct role
-    const newUser = db
-      .select()
-      .from(schema.users)
-      .where(eq(schema.users.email, "newmember@example.com"))
-      .get();
-    expect(newUser).toBeDefined();
-    expect(newUser!.role).toBe("member");
-    expect(newUser!.name).toBe("New Member");
-
-    // Verify user_lists entry exists
-    const userLists = db
-      .select()
-      .from(schema.userLists)
-      .where(eq(schema.userLists.userId, newUser!.id))
-      .all();
-    expect(userLists).toHaveLength(1);
-    expect(userLists[0].listId).toBe(listA.id);
-
-    // Login as the new user -> should succeed
-    const { res: loginRes, cookie: newCookie } = await login(
-      app,
-      "newmember@example.com",
-      "new-member-pass",
-    );
-    expect(loginRes.status).toBe(302);
-    expect(newCookie).not.toBeNull();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 6. Can't delete yourself
-// ---------------------------------------------------------------------------
-describe("Can't delete yourself", () => {
-  test("POST /users/{own-id}/delete returns 400 and user still exists", async () => {
-    const db = createTestDb();
-    const app = createHttpApp();
-    app.use(adminRoutes(db, testConfig));
-
-    const owner = await seedUser(db, {
-      email: "owner@example.com",
-      password: "owner-pass",
-      role: "owner",
-    });
-
-    const { cookie } = await login(app, "owner@example.com", "owner-pass");
-    expect(cookie).not.toBeNull();
-
-    // Try to delete self
-    const deleteRes = await authPost(
-      app,
-      `/users/${owner.id}/delete`,
-      cookie!,
-      {},
-    );
-    expect(deleteRes.status).toBe(400);
-
-    // Verify user still exists in DB
-    const stillExists = db
-      .select()
-      .from(schema.users)
-      .where(eq(schema.users.id, owner.id))
-      .get();
-    expect(stillExists).toBeDefined();
-    expect(stillExists!.email).toBe("owner@example.com");
   });
 });

@@ -14,6 +14,8 @@ import { createAdminActivityController } from "./admin-activity.tsx";
 import { createAdminSubscribersController } from "./admin-subscribers.tsx";
 import { createAdminTemplatesController } from "./admin-templates.tsx";
 import { createAdminInboundController } from "./admin-inbound.tsx";
+import { createAdminImportController } from "./admin-import.tsx";
+import { createAdminCampaignsController } from "./admin-campaigns.tsx";
 import type { AppContext } from "./router.tsx";
 import { routes } from "./routes.ts";
 
@@ -174,5 +176,7 @@ export function createAdminRouter(db: Db, config: Config, user: User) {
   router.map(routes.admin.subscribers, createAdminSubscribersController(db, config, user));
   router.map(routes.admin.templates, createAdminTemplatesController(db, user));
   router.map(routes.admin.inbound, createAdminInboundController(db, config, user));
+  router.map(routes.admin.import, createAdminImportController(db, user));
+  router.map(routes.admin.campaigns, createAdminCampaignsController(db, config, user));
   return router;
 }

@@ -7,6 +7,9 @@
 **/.cloudflare
 **/.celld
 **/dist
+apps/lists/public/app.js
+apps/lists/public/campaign.js
+apps/lists/public/styles.css
 apps/radio/public/fonts/*.woff2
 apps/radio/public/uploads
 apps/radio/tmp

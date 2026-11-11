@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import MessageValidator from "sns-validator";
 import { type Db, schema } from "../db";
-import { logEvent } from "../services/events";
+import { logEvent } from "./events";
 
 const snsValidator = new MessageValidator();
 

@@ -1,10 +1,10 @@
 # tea/lists
 
-Lists is a mailing-list application for subscriptions, campaign editing and delivery, inbound replies, and DMARC reports. The application uses one Bun process, SQLite, AWS SES/SNS/SQS/S3, and Remix 3 public and admin routes. The Tea deployment is authoritative. The admin dashboard, Users, API access, Lists, Tags, DMARC, and Activity pages use Remix. Subscriber, campaign, inbound, import, and template screens still use the imported Elysia views. Admin links use full document requests while both renderers coexist.
+Lists is a mailing-list application for subscriptions, campaign editing and delivery, inbound replies, and DMARC reports. One Bun process runs the Remix 3 routes, SQLite database, and AWS SES/SNS/SQS/S3 workers. The Tea deployment is authoritative. Public pages, admin pages, REST, MCP, and webhooks use Remix routers and one shared admin document.
 
 ## Entry points and local setup
 
-`src/index.ts` starts the HTTP server and durable background workers. `src/http-app.ts` mounts the Remix public and migrated admin routes from `app/` alongside the API, MCP, webhook, and remaining admin routes. `app/admin-navigation.ts` owns the shared admin link list. The process drains or requeues mail work on SIGTERM before closing SQLite. `src/services/` owns mail and delivery behavior, `src/operations/` owns shared API and MCP operations, and `src/db/` plus `drizzle/` own the SQLite schema and ordered migrations. `emails/` contains the outbound templates.
+`src/index.ts` starts the HTTP server and durable background workers. `src/http-app.ts` dispatches to the Remix routers in `app/`; `app/admin-router.tsx` and `app/admin.tsx` own the admin controllers and document. `app/admin-navigation.ts` owns the admin link list. The process drains or requeues mail work on SIGTERM before closing SQLite. `src/services/` owns mail and delivery behavior, `src/operations/` owns shared API and MCP operations, and `src/db/` plus `drizzle/` own the SQLite schema and ordered migrations. `emails/` contains the outbound templates.
 
 Install from the Tea root with `npm ci` and use Bun 1.4.4 for execution. For local development, provide the environment described in `LOCAL_DEVELOPMENT.md`; run `npm run dev --workspace @tea/lists`. The app listens on port 8080. The local stack uses mocked AWS services and Mailpit. Do not use production AWS credentials for local tests.
 

@@ -34,9 +34,7 @@ test("Remix dashboard keeps a member inside assigned lists", async () => {
     .get();
   const allowed = seedList(db, { slug: "allowed" });
   const other = seedList(db, { slug: "other" });
-  db.insert(schema.userLists)
-    .values({ userId: member.id, listId: allowed.id })
-    .run();
+  db.insert(schema.userLists).values({ userId: member.id, listId: allowed.id }).run();
   const subscriber = seedSubscriber(db);
   db.update(schema.subscribers)
     .set({ status: "active" })
@@ -101,9 +99,7 @@ test("central admin users view is read only and role restricted", async () => {
     .returning()
     .get();
   const list = seedList(db, { slug: "member-list" });
-  db.insert(schema.userLists)
-    .values({ userId: member.id, listId: list.id })
-    .run();
+  db.insert(schema.userLists).values({ userId: member.id, listId: list.id }).run();
   const app = createApplication(db, {
     ...config,
     identity: {
@@ -137,10 +133,9 @@ test("central admin users view is read only and role restricted", async () => {
   expect(listsHtml).toContain('href="/admin/users"');
   expect(listsHtml).toContain('href="/admin/lists/');
   const memberCookie = `session=${createSession(db, member.id)}`;
-  expect(
-    (await app.request("/admin/users", { headers: { Cookie: memberCookie } }))
-      .status,
-  ).toBe(403);
+  expect((await app.request("/admin/users", { headers: { Cookie: memberCookie } })).status).toBe(
+    403,
+  );
   expect(
     (
       await app.request("/admin/users/new", {
@@ -170,7 +165,7 @@ test("central admin users view is read only and role restricted", async () => {
         headers: { Cookie: ownerCookie },
       })
     ).status,
-  ).toBe(404);
+  ).toBe(405);
 });
 
 test("central Lists routes use Remix for scoped reads and mutations", async () => {
@@ -197,9 +192,7 @@ test("central Lists routes use Remix for scoped reads and mutations", async () =
     .get();
   const other = seedList(db, { slug: "other" });
   const allowed = seedList(db, { slug: "allowed" });
-  db.insert(schema.userLists)
-    .values({ userId: member.id, listId: allowed.id })
-    .run();
+  db.insert(schema.userLists).values({ userId: member.id, listId: allowed.id }).run();
   const app = createApplication(db, {
     ...config,
     identity: {
@@ -225,9 +218,7 @@ test("central Lists routes use Remix for scoped reads and mutations", async () =
   const memberHtml = await memberIndex.text();
   expect(memberHtml).toContain("allowed");
   expect(memberHtml).not.toContain("other</a>");
-  expect((await request(`/admin/lists/${other.id}`, memberCookie)).status).toBe(
-    403,
-  );
+  expect((await request(`/admin/lists/${other.id}`, memberCookie)).status).toBe(403);
   expect((await request("/admin/lists/new", memberCookie)).status).toBe(403);
 
   const created = await request("/admin/lists/new", ownerCookie, {
@@ -239,19 +230,13 @@ test("central Lists routes use Remix for scoped reads and mutations", async () =
     }),
   });
   expect(created.status).toBe(303);
-  const list = db
-    .select()
-    .from(schema.lists)
-    .where(eq(schema.lists.slug, "remix-list"))
-    .get();
+  const list = db.select().from(schema.lists).where(eq(schema.lists.slug, "remix-list")).get();
   expect(list?.name).toBe("Remix list");
   expect(list).toBeDefined();
   if (!list) return;
   const detail = await request(`/admin/lists/${list.id}`, ownerCookie);
   expect(detail.status).toBe(200);
-  expect(await detail.text()).toContain(
-    'action="/admin/lists/' + list.id + '/edit"',
-  );
+  expect(await detail.text()).toContain('action="/admin/lists/' + list.id + '/edit"');
   const updated = await request(`/admin/lists/${list.id}/edit`, ownerCookie, {
     method: "POST",
     body: new URLSearchParams({
@@ -261,10 +246,9 @@ test("central Lists routes use Remix for scoped reads and mutations", async () =
     }),
   });
   expect(updated.status).toBe(303);
-  expect(
-    db.select().from(schema.lists).where(eq(schema.lists.id, list.id)).get()
-      ?.name,
-  ).toBe("Updated list");
+  expect(db.select().from(schema.lists).where(eq(schema.lists.id, list.id)).get()?.name).toBe(
+    "Updated list",
+  );
   expect(
     (
       await request(`/admin/lists/${list.id}/delete`, memberCookie, {
@@ -279,9 +263,7 @@ test("central Lists routes use Remix for scoped reads and mutations", async () =
       })
     ).status,
   ).toBe(303);
-  expect(
-    db.select().from(schema.lists).where(eq(schema.lists.id, list.id)).get(),
-  ).toBeUndefined();
+  expect(db.select().from(schema.lists).where(eq(schema.lists.id, list.id)).get()).toBeUndefined();
 });
 
 test("Tags use the Remix document and retain subscriber associations until deletion", async () => {
@@ -312,16 +294,10 @@ test("Tags use the Remix document and retain subscriber associations until delet
     body: new URLSearchParams({ name: "Imported" }),
   });
   expect(created.status).toBe(303);
-  const tag = db
-    .select()
-    .from(schema.tags)
-    .where(eq(schema.tags.name, "Imported"))
-    .get();
+  const tag = db.select().from(schema.tags).where(eq(schema.tags.name, "Imported")).get();
   expect(tag).toBeDefined();
   if (!tag) return;
-  db.insert(schema.subscriberTags)
-    .values({ subscriberId: subscriber.id, tagId: tag.id })
-    .run();
+  db.insert(schema.subscriberTags).values({ subscriberId: subscriber.id, tagId: tag.id }).run();
   const index = await request("/admin/tags");
   expect(index.status).toBe(200);
   expect(await index.text()).toContain('id="app-shell"');
@@ -333,15 +309,9 @@ test("Tags use the Remix document and retain subscriber associations until delet
   });
   expect(deleted.status).toBe(303);
   expect(
-    db
-      .select()
-      .from(schema.subscriberTags)
-      .where(eq(schema.subscriberTags.tagId, tag.id))
-      .all(),
+    db.select().from(schema.subscriberTags).where(eq(schema.subscriberTags.tagId, tag.id)).all(),
   ).toHaveLength(0);
-  expect(
-    db.select().from(schema.tags).where(eq(schema.tags.id, tag.id)).get(),
-  ).toBeUndefined();
+  expect(db.select().from(schema.tags).where(eq(schema.tags.id, tag.id)).get()).toBeUndefined();
 });
 
 test("DMARC remains owner-only and renders through Remix", async () => {
@@ -372,10 +342,9 @@ test("DMARC remains owner-only and renders through Remix", async () => {
   });
   expect(ownerResponse.status).toBe(200);
   expect(await ownerResponse.text()).toContain("DMARC | Lists admin");
-  expect(
-    (await app.request("/admin/dmarc", { headers: { Cookie: memberCookie } }))
-      .status,
-  ).toBe(403);
+  expect((await app.request("/admin/dmarc", { headers: { Cookie: memberCookie } })).status).toBe(
+    403,
+  );
   expect(
     (
       await app.request("/admin/dmarc/1/raw", {
@@ -398,9 +367,7 @@ test("Activity filters events within a member's list", async () => {
     .get();
   const allowed = seedList(db, { slug: "allowed" });
   const other = seedList(db, { slug: "other" });
-  db.insert(schema.userLists)
-    .values({ userId: member.id, listId: allowed.id })
-    .run();
+  db.insert(schema.userLists).values({ userId: member.id, listId: allowed.id }).run();
   const visible = seedSubscriber(db, { email: "visible@example.test" });
   const hidden = seedSubscriber(db, { email: "hidden@example.test" });
   db.insert(schema.subscriberLists)

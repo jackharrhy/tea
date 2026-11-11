@@ -1,9 +1,5 @@
 import type { Config } from "./config.ts";
 import type { Db } from "./db/index.ts";
-import { createHttpApp } from "./http.ts";
-import { adminRoutes } from "./routes/admin/index.ts";
-import { mountDesignRoutes } from "./routes/admin/design.tsx";
-import { oauthRoutes } from "./routes/oauth.tsx";
 import { createAdminRouter } from "../app/admin-router.tsx";
 import { createAuthRouter } from "../app/auth-router.ts";
 import { createListsRouter } from "../app/router.tsx";
@@ -14,22 +10,6 @@ import { createWebhookRouter } from "../app/webhook-router.ts";
 import { getSessionUser } from "./auth.ts";
 import { createAdminAuthRouter } from "../app/admin-auth-router.tsx";
 
-function createLegacyApplication(db: Db, config: Config) {
-  const app = createHttpApp();
-  mountDesignRoutes(app);
-  return app
-    .use(config.identity ? createHttpApp() : oauthRoutes(db, config))
-    .group("/admin", (routes) =>
-      routes.use(
-        adminRoutes(db, config, (request, user) => {
-          const url = new URL(request.url);
-          if (url.pathname === "/admin/") url.pathname = "/admin";
-          return createAdminRouter(db, config, user).fetch(new Request(url, request));
-        }),
-      ),
-    );
-}
-
 export function createApplication(db: Db, config: Config) {
   const main = createMainRouter(config);
   const staticRouter = createStaticRouter();
@@ -39,10 +19,14 @@ export function createApplication(db: Db, config: Config) {
   const adminAuth = createAdminAuthRouter(db, config);
   const publicRouter = createListsRouter(db, config);
   const identityRouter = config.identity ? createAuthRouter(db, config) : null;
-  const legacy = createLegacyApplication(db, config);
   let server: ReturnType<typeof Bun.serve> | undefined;
 
   async function adminPage(request: Request) {
+    const url = new URL(request.url);
+    if (url.pathname === "/admin/") {
+      url.pathname = "/admin";
+      request = new Request(url, request);
+    }
     const token = request.headers
       .get("cookie")
       ?.split(";")
@@ -71,19 +55,14 @@ export function createApplication(db: Db, config: Config) {
       if (path.startsWith("/webhooks/")) return await webhooks.fetch(request);
       if (path === "/admin/login" || path === "/admin/logout")
         return await adminAuth.fetch(request);
-      if (
-        ["/admin/subscribers", "/admin/templates", "/admin/inbound"].some(
-          (prefix) => path === prefix || path.startsWith(`${prefix}/`),
-        )
-      )
-        return await adminPage(request);
+      if (path === "/admin" || path.startsWith("/admin/")) return await adminPage(request);
       if (/^\/(?:subscribe|confirm|unsubscribe|preferences)(?:\/|$)/.test(path))
         return await publicRouter.fetch(request);
       if (path === "/auth/login" || path === "/auth/callback")
         return identityRouter
           ? await identityRouter.fetch(request)
           : new Response("Not Found", { status: 404 });
-      return await legacy.handle(request);
+      return new Response("Not Found", { status: 404 });
     } catch (error) {
       console.error(error);
       return new Response("Internal Server Error", { status: 500 });
@@ -100,7 +79,7 @@ export function createApplication(db: Db, config: Config) {
       return server;
     },
     stop(closeActiveConnections = false) {
-      server?.stop(closeActiveConnections);
+      return server ? server.stop(closeActiveConnections) : Promise.resolve();
     },
   };
 }

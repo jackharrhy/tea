@@ -4,12 +4,11 @@ The REST API and MCP server are transports over the same operations and authoriz
 Credentials belong to an existing Lists user, inherit that user's role and list assignments, and
 are further restricted by scopes.
 
-## Personal access tokens
+## Authentication and scopes
 
-Sign in to `/admin/tokens` to mint or revoke a token. A token is shown once; only its SHA-256 hash
-is stored. Send it as `Authorization: Bearer lst_...`.
+Production REST and MCP requests use Central Auth bearer tokens with the Lists project audience. The resource server checks the issuer, active token, project and organization roles, exact operation scopes, and the local user's list assignments on every request. The `/admin/tokens` page documents this boundary; Lists does not issue personal tokens or OAuth clients. Silicon Harbour uses a dedicated service client for REST only, bound to local user 2 and list 4. It cannot call MCP or use browser sign-in.
 
-Scopes:
+The operation scopes are:
 
 - `lists:read`
 - `subscribers:read`, `subscribers:write`
@@ -18,28 +17,31 @@ Scopes:
 - `deliverability:read`
 - `dmarc:read`
 
+Central Auth represents these as project role scopes with hyphens (for example, `lists:read` becomes `urn:zitadel:iam:org:project:role:lists-read`). Lists maps only these ten known scopes to operations. Local development uses synthetic password accounts and local tokens to exercise mail behavior without production credentials.
+
 ## REST API
 
 The versioned base path is `/api/v1`.
 
-| Method           | Path                             | Scope                                    |
-| ---------------- | -------------------------------- | ---------------------------------------- |
-| GET              | `/lists`                         | `lists:read`                             |
-| GET              | `/lists/:id/stats`               | `lists:read`                             |
-| GET, POST        | `/subscribers`                   | `subscribers:read` / `subscribers:write` |
-| GET, DELETE      | `/subscribers/:id`               | `subscribers:read` / `subscribers:write` |
-| POST             | `/subscribers/:id/unsubscribe`   | `subscribers:write`                      |
-| GET, POST        | `/campaigns`                     | `campaigns:read` / `campaigns:write`     |
-| GET, PUT         | `/campaigns/:id`                 | `campaigns:read` / `campaigns:write`     |
-| GET              | `/campaigns/:id/preview`         | `campaigns:read`                         |
-| GET              | `/campaigns/:id/sends`           | `campaigns:read`                         |
-| POST             | `/campaigns/:id/send`            | `campaigns:send`                         |
-| POST             | `/campaigns/:id/test-send`       | `campaigns:send`                         |
-| GET              | `/deliverability`                | `deliverability:read`                    |
-| GET              | `/dmarc`                         | `dmarc:read`                             |
-| GET, POST        | `/email-templates`               | `templates:read` / `templates:write`     |
-| GET, PUT, DELETE | `/email-templates/:slug`         | `templates:read` / `templates:write`     |
-| POST             | `/email-templates/:slug/preview` | `templates:read`                         |
+<!-- prettier-ignore -->
+| Method | Path | Scope |
+| --- | --- | --- |
+| GET | `/lists` | `lists:read` |
+| GET | `/lists/:id/stats` | `lists:read` |
+| GET, POST | `/subscribers` | `subscribers:read` / `subscribers:write` |
+| GET, DELETE | `/subscribers/:id` | `subscribers:read` / `subscribers:write` |
+| POST | `/subscribers/:id/unsubscribe` | `subscribers:write` |
+| GET, POST | `/campaigns` | `campaigns:read` / `campaigns:write` |
+| GET, PUT | `/campaigns/:id` | `campaigns:read` / `campaigns:write` |
+| GET | `/campaigns/:id/preview` | `campaigns:read` |
+| GET | `/campaigns/:id/sends` | `campaigns:read` |
+| POST | `/campaigns/:id/send` | `campaigns:send` |
+| POST | `/campaigns/:id/test-send` | `campaigns:send` |
+| GET | `/deliverability` | `deliverability:read` |
+| GET | `/dmarc` | `dmarc:read` |
+| GET, POST | `/email-templates` | `templates:read` / `templates:write` |
+| GET, PUT, DELETE | `/email-templates/:slug` | `templates:read` / `templates:write` |
+| POST | `/email-templates/:slug/preview` | `templates:read` |
 
 Destructive actions and sending require explicit confirmation. Campaign send bodies must contain
 `{"confirm":true}`; subscriber deletion requires `?confirm=true`.
@@ -98,14 +100,4 @@ alternative. Scripts, event-handler attributes, embedded browsing contexts, dang
 and non-HTTPS remote assets are rejected. The admin UI at `/admin/templates` is read-only and renders
 previews in sandboxed frames; remote assets are blocked unless explicitly enabled for that preview.
 
-Personal access tokens work directly. OAuth clients discover authorization metadata at:
-
-- `/.well-known/oauth-protected-resource`
-- `/.well-known/oauth-authorization-server`
-
-Register public OAuth clients from `/admin/tokens`. Anonymous dynamic client registration is disabled
-by default; it can be enabled deliberately with `OAUTH_DYNAMIC_REGISTRATION_ENABLED=true`.
-
-The OAuth flow supports authorization code with PKCE (`S256`), one-hour access tokens, and refresh
-tokens. Authorization uses the existing Lists login and account roles; OAuth does not create a
-parallel user system.
+MCP clients discover the Lists resource at `/.well-known/oauth-protected-resource` and register with Central Auth. The MCP endpoint is `/mcp`; human clients use Central Auth consent and PKCE. The app does not serve a standalone OAuth authorization server or dynamic registration endpoint.
