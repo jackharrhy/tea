@@ -219,6 +219,32 @@ for (const [path, status, headers = {}, method = 'GET', sha256] of paths) {
     `,
     );
   }
+  if (app === "8mb") {
+    docker(
+      "exec",
+      id,
+      "node",
+      "--input-type=module",
+      "-e",
+      `
+      import assert from 'node:assert/strict';
+      const response = await fetch('http://127.0.0.1:5188/8mb/api/diagnostics', {
+        method: 'POST',
+        headers: {Origin: 'https://jackharrhy.dev', 'Content-Type': 'application/json'},
+        body: JSON.stringify({schema: 1, browser: 'other', os: 'other', input: 'unknown', duration: 'unknown', resolution: 'unknown', container: 'unknown', video: 'unknown', audio: 'unknown', stage: 'inspect', outcome: 'failed', reason: 'unreadable-input', elapsed: 'unknown'}),
+      });
+      assert.equal(response.status, 204);
+      console.log('diagnostics write passed');
+    `,
+    );
+    docker("stop", "--time", "5", id);
+    assert.equal(
+      docker("inspect", "--format", "{{.State.ExitCode}}", id).trim(),
+      "0",
+    );
+    assert.doesNotMatch(docker("diff", id), /diagnostics\.sqlite-(wal|shm)/);
+    console.log("8mb: SIGTERM closed SQLite without WAL sidecars");
+  }
   if (["artbin", "cms", "maps-service", "maps-compiler"].includes(app)) {
     docker(
       "exec",

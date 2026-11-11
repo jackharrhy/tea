@@ -4,7 +4,7 @@
 
 ## Setup
 
-Use Node 26 and `npm ci` from the repository root. Run `npm run 8mb:dev` to build and serve the app on port 5188. `APP_ORIGIN` defaults to `https://jackharrhy.dev` and must match the browser Origin for consented diagnostics. `DIAGNOSTICS_DB_FILE` defaults to `/app/data/diagnostics.sqlite`; choose a writable app-owned path for local runs. `APP_REVISION` is a trusted server build revision; the image publisher passes the commit SHA. Run the opt-in Compose profile with `docker compose --profile 8mb up --build 8mb` and open `http://8mb.localhost/8mb/`.
+Use Node 26 and `npm ci` from the repository root. Run `npm run 8mb:dev` to build and serve the app on port 5188. `APP_ORIGIN` defaults to `https://jackharrhy.dev` and must match the browser Origin for consented diagnostics. `DIAGNOSTICS_DB_FILE` defaults to `/app/data/diagnostics.sqlite`; choose a writable app-owned path for local runs. `APP_REVISION` is a trusted server build revision; the image publisher passes the commit SHA. The image starts `server.ts` directly so SIGTERM closes the diagnostics database. Run the opt-in Compose profile with `docker compose --profile 8mb up --build 8mb` and open `http://8mb.localhost/8mb/`.
 
 `npm run 8mb:check` runs the workspace build, typecheck, media/domain and diagnostics tests. Browser validation should cover the empty editor, a local synthetic MP4, export, opt-in/off behaviour, desktop and mobile layout, and same-origin isolation headers. The retained `src/style.css` is the source for `scripts/import-styles.mjs`; it generates `app/ui/legacy-styles.ts` plus a small font/keyframe stylesheet. Run that script only when the original static styles change.
 
