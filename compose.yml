@@ -12,6 +12,26 @@ services:
     networks:
       - web
 
+  garden:
+    profiles: [garden]
+    build:
+      context: .
+      dockerfile: apps/garden/Dockerfile
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      GARDEN_VAULT_PATH: /vault/Garden
+      GARDEN_VAULT_ASSETS_PATH: /vault/Assets
+    volumes:
+      - ${GARDEN_VAULT_ROOT:-./apps/garden/tmp/vault}:/vault:ro
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.garden.rule: "Host(`garden.localhost`)"
+      traefik.http.routers.garden.entrypoints: web
+      traefik.http.services.garden.loadbalancer.server.port: "4322"
+    networks:
+      - web
+
   cms:
     build:
       context: .

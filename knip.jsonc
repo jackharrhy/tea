@@ -43,6 +43,16 @@
         "web/src/speech-worker.ts",
       ],
     },
+    "apps/garden": {
+      "entry": [
+        "app/ui/public/entry.js",
+        "app/ui/public/debug.js",
+        "__tests__/parity.ts",
+        "scripts/import-styles.mjs",
+      ],
+      // A type-only JSDoc reference left in the upstream bundled picoCAD viewer.
+      "ignoreUnresolved": ["^\\./model-data-parser$"],
+    },
     "apps/maps": {
       "entry": [
         "app/assets/entry.ts",
