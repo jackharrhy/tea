@@ -10,7 +10,7 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#f6f6f4" />
-        <title>{handle.props.title} · tea/ref</title>
+        <title>{handle.props.title} · ref</title>
         <link rel="icon" href="/favicon.svg" />
       </head>
       <body>{handle.props.children}</body>
@@ -30,7 +30,7 @@ export function AuthPage(
           }
         >
           <a class="wordmark" href="/">
-            tea<span>/ref</span>
+            ref
           </a>
           {handle.props.central ? (
             <div class="auth-intro">
@@ -75,7 +75,7 @@ export function HomePage(
       <main class="home-page">
         <header class="site-header">
           <a class="wordmark" href="/">
-            tea<span>/ref</span>
+            ref
           </a>
           <form method="post" action="/logout">
             <button class="quiet-button" type="submit">

@@ -9,7 +9,7 @@ export function NewMapPage() {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#252527" />
-        <title>New map · Maps · Tea</title>
+        <title>New map · Worldview</title>
         <link rel="icon" href="/favicon.svg" />
         <link rel="stylesheet" href="/icons/style.css" />
       </head>
@@ -17,7 +17,7 @@ export function NewMapPage() {
         <main class="projects-content">
           <header class="projects-header">
             <a class="projects-brand" href="/">
-              tea/maps
+              Worldview
             </a>
             <nav aria-label="Maps pages">
               <a href="/viewer">Viewer</a>

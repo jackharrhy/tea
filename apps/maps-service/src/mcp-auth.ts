@@ -37,7 +37,7 @@ export async function requireMcpAdmin(
   fetcher: typeof fetch = fetch,
 ): Promise<MapsUser> {
   if (!config)
-    throw new ServiceHttpError(503, "Tea Maps MCP is not configured");
+    throw new ServiceHttpError(503, "Worldview MCP is not configured");
   const token = /^Bearer ([^\s]+)$/i.exec(authorization ?? "")?.[1];
   if (!token) throw new ServiceHttpError(401, "Bearer token required");
 

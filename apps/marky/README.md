@@ -1,4 +1,4 @@
-# tea/marky
+# Marky
 
 A real time collaborative Markdown editor adapted from the former standalone Marky project. It uses Remix 3 stable, Node's Fetch server adapter, and a `ws` upgrade for Yjs collaboration. Yjs and ProseMirror synchronize files over `/ws`. Files are saved under `MARKY_CONTENT_DIR` after an idle debounce. Optional Git integration commits and pushes saved files.
 

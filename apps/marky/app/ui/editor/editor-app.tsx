@@ -178,7 +178,7 @@ export const EditorApp = clientEntry(
     return () => (
       <div mix={layoutStyle}>
         <header mix={headerStyle}>
-          <h1 mix={titleStyle}>tea/marky</h1>
+          <h1 mix={titleStyle}>marky</h1>
           {user && (
             <span mix={userBadgeStyle} style={{ color: user.color }}>
               {user.name}

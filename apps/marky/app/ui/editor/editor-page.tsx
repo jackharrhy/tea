@@ -4,7 +4,7 @@ import { entryScript } from "../../assets.ts";
 
 import { EditorApp } from "./editor-app.tsx";
 
-const TITLE = "tea/marky";
+const TITLE = "marky";
 const FONT_STACK =
   "'Source Code Pro', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 

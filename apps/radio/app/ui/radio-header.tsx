@@ -18,7 +18,7 @@ export function RadioHeader(
       <header mix={[desktopStyle.titleBar, radioHeaderStyle.header]}>
         <nav aria-label="Breadcrumb" mix={radioHeaderStyle.breadcrumbs}>
           <a href={routes.home.href()} mix={radioHeaderStyle.brandLink}>
-            tea/radio
+            radio
           </a>
           <span aria-hidden="true" mix={radioHeaderStyle.separator}>
             /

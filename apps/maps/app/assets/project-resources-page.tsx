@@ -51,7 +51,7 @@ export const ProjectResources = clientEntry(
               HostedProjectResponseSchema,
             );
             project = response.project;
-            document.title = `${project.name} · Maps · Tea`;
+            document.title = `${project.name} · Worldview`;
             status = "";
             handle.update();
             await refresh();

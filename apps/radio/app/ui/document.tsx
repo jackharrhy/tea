@@ -8,7 +8,7 @@ export interface DocumentProps {
   title?: string;
 }
 
-const DEFAULT_TITLE = "tea/radio";
+const DEFAULT_TITLE = "radio";
 
 export function Document(handle: Handle<DocumentProps>) {
   return () => {

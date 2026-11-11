@@ -59,7 +59,7 @@ export function EditorPage() {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#252527" />
-        <title>Editor · Maps · Tea</title>
+        <title>Editor · Worldview</title>
         <link rel="icon" href="/favicon.svg" />
         <link rel="stylesheet" href="/icons/style.css" />
       </head>

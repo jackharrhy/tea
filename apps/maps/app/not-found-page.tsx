@@ -7,14 +7,14 @@ export function NotFoundPage() {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#252527" />
-        <title>Page not found · Maps · Tea</title>
+        <title>Page not found · Worldview</title>
         <link rel="icon" href="/favicon.svg" />
         <link rel="stylesheet" href="/icons/style.css" />
       </head>
       <body>
         <main class="projects-content">
           <a class="projects-brand" href="/" data-rmx-document>
-            tea/maps
+            Worldview
           </a>
           <section class="projects-error" aria-labelledby="not-found-title">
             <small>Error 404</small>
