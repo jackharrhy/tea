@@ -12,8 +12,9 @@ ENV NODE_ENV=production PORT=44100 MARKY_CONTENT_DIR=/app/data/content MARKY_SES
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
-COPY apps/marky ./apps/marky
-COPY packages/identity ./packages/identity
+COPY --chown=node:node tsconfig.base.json ./tsconfig.base.json
+COPY --chown=node:node apps/marky ./apps/marky
+COPY --chown=node:node packages/identity ./packages/identity
 RUN mkdir -p /app/data/content /app/data/sessions && chown -R node:node /app/data
 WORKDIR /app/apps/marky
 USER node
