@@ -1,0 +1,36 @@
+{
+  "name": "@harrhy/8mb",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26.13.0 <27"
+  },
+  "scripts": {
+    "dev": "npm run build && node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts",
+    "prebuild": "node scripts/copy-runtime.mjs",
+    "build": "tsrs --noEmit && vite build && node scripts/finish-build.mjs",
+    "start": "NODE_ENV=production node --env-file-if-exists=.env --import remix/node-tsx server.ts",
+    "test": "node --import remix/node-tsx --test __tests__/*.test.ts __tests__/*.test.mjs",
+    "typecheck": "tsrs --noEmit",
+    "check": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@ffmpeg/core": "0.12.10",
+    "@ffmpeg/core-mt": "0.12.10",
+    "@ffmpeg/ffmpeg": "0.12.15",
+    "@harrhy/request-body": "0.1.0",
+    "@mediabunny/aac-encoder": "1.65.2",
+    "hast-util-from-html": "^2.0.0",
+    "hast-util-to-jsx-runtime": "^2.3.0",
+    "lucide": "1.70.0",
+    "mediabunny": "1.65.2",
+    "remix": "3.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "postcss": "^8.5.0",
+    "tsrs": "0.23.0-ts7.1.0-beta",
+    "vite": "8.3.7"
+  }
+}

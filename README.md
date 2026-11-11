@@ -11,6 +11,7 @@ A Remix 3 monorepo for personal apps and packages.
 <!-- prettier-ignore -->
 | Workspace | What it runs | Guide |
 | --- | --- | --- |
+| [`@harrhy/8mb`](apps/8mb/) | Browser video compression and opt-in aggregate diagnostics | [README](apps/8mb/README.md) |
 | [`@harrhy/artbin-app`](apps/artbin/) | Game asset archive, uploads, previews, and API | [README](apps/artbin/README.md) |
 | [`@harrhy/artbin`](apps/artbin-cli/) | Game asset command-line client | [README](apps/artbin-cli/README.md) |
 | [`@harrhy/burger`](apps/burger/) | Remix game UI and authoritative Bun world server | [README](apps/burger/README.md) |

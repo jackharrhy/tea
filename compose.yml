@@ -145,6 +145,24 @@ services:
     networks:
       - web
 
+  8mb:
+    profiles: [8mb]
+    build:
+      context: .
+      dockerfile: apps/8mb/Dockerfile
+    environment:
+      APP_ORIGIN: http://8mb.localhost
+      DIAGNOSTICS_DB_FILE: /app/data/diagnostics.sqlite
+    volumes:
+      - 8mb-data:/app/data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.8mb.rule: "Host(`8mb.localhost`)"
+      traefik.http.routers.8mb.entrypoints: web
+      traefik.http.services.8mb.loadbalancer.server.port: "5188"
+    networks:
+      - web
+
   pool:
     build:
       context: .
@@ -417,6 +435,7 @@ services:
       - gurgur-data:/app/data
 
 volumes:
+  8mb-data:
   artbin-data:
   artbin-uploads:
   artbin-tmp:

@@ -14,6 +14,7 @@ on:
       - apps/maps-service/Dockerfile
       - apps/maps-compiler/Dockerfile
       - apps/rotund/**
+      - apps/8mb/Dockerfile
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,6 +38,7 @@ jobs:
             maps-service,
             maps-compiler,
             rotund,
+            8mb,
           ]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

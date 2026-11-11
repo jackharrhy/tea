@@ -11,6 +11,8 @@
   },
   "scripts": {
     "garden:dev": "npm run dev --workspace @harrhy/garden",
+    "8mb:check": "npm run tooling:check && npm run check --workspace @harrhy/8mb",
+    "8mb:dev": "npm run dev --workspace @harrhy/8mb",
     "garden:check": "npm run tooling:check && npm run check --workspace @harrhy/garden",
     "cms:check": "npm run tooling:check && npm run check --workspace @harrhy/cms",
     "cms:dev": "npm run dev --workspace @harrhy/cms",
