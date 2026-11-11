@@ -3,6 +3,7 @@ import * as assert from "remix/assert";
 import {
   centralSessionCookie,
   isEditor,
+  requireSecrets,
   sameOrigin,
   sessionCookie,
 } from "../auth.ts";
@@ -43,7 +44,6 @@ it("requires an exact reviewed subject for a Central editor session and rejects 
   const env = {
     TEA_ADMIN_PASSWORD: "unused",
     TEA_SESSION_SECRET: "test-session-secret",
-    TEA_PREVIEW_SECRET: "test-preview-secret",
     TEA_EDITOR_ORIGIN: "https://cms.example.test",
     TEA_AUTH_ISSUER: "https://auth.example.test",
     TEA_AUTH_CLIENT_ID: "client",
@@ -51,6 +51,8 @@ it("requires an exact reviewed subject for a Central editor session and rejects 
     TEA_AUTH_ORGANIZATION_ID: "org",
     TEA_AUTH_OWNER_SUBJECT: "reviewed-owner",
   } as Bindings;
+  requireSecrets(env, false, true, false);
+  assert.throws(() => requireSecrets(env, false, true), /preview secrets/);
   const request = new Request("https://cms.example.test/tea");
   const oldCookie = await sessionCookie(request, env);
   assert.equal(

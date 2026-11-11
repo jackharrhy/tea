@@ -70,9 +70,10 @@ export function requireSecrets(
   env: Bindings,
   passwordLogin = true,
   signedSession = true,
+  previewSecret = true,
 ) {
   if (
-    !env.TEA_PREVIEW_SECRET ||
+    (previewSecret && !env.TEA_PREVIEW_SECRET) ||
     (signedSession && !env.TEA_SESSION_SECRET) ||
     (passwordLogin && !env.TEA_ADMIN_PASSWORD)
   )
