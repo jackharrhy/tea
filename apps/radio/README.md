@@ -64,7 +64,8 @@ the existing shared rooms; Radio is intended to be open to all eligible Central
 accounts, so the Auth enrollment rule must grant new members before cutover.
 Each session keeps the immutable Central subject; display names remain cosmetic. Central sign-in
 reuses the signed local cookie but checks its subject and one-hour expiry on
-every request. An open WebSocket rejects further commands after that expiry.
+every request. An open WebSocket rejects further commands after that expiry with
+application close code `4008`.
 The old shared-password cookie cannot authorize Central mode.
 `RADIO_SESSION_SECRET` stays required. Keep production on the password path
 until the Auth client and actual room/WebSocket/media cutover pass, then remove

@@ -20,6 +20,7 @@ type SocketAttachment =
 type JoinedSocketAttachment = Extract<SocketAttachment, { state: "joined" }>;
 
 const AUDIO_LOAD_TIMEOUT_MS = 3000;
+const REJECTED_SOCKET_CLOSE_CODE = 4008;
 
 export class RadioRoomCell extends DurableObject<Env> {
   private store: RadioRoomStore;
@@ -58,7 +59,7 @@ export class RadioRoomCell extends DurableObject<Env> {
   ): Promise<void> {
     let attachment = socket.deserializeAttachment() as SocketAttachment | null;
     if (attachment?.expiresAt && attachment.expiresAt <= Date.now()) {
-      socket.close(1008, "Session expired");
+      socket.close(REJECTED_SOCKET_CLOSE_CODE, "Session expired");
       return;
     }
     let message = parseSocketMessage(raw);
@@ -216,7 +217,7 @@ export class RadioRoomCell extends DurableObject<Env> {
         type: "ERROR",
         message: "Missing listener identity",
       });
-      socket.close(1008);
+      socket.close(REJECTED_SOCKET_CLOSE_CODE);
       return;
     }
     for (let existing of this.ctx.getWebSockets()) {

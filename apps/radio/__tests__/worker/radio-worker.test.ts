@@ -122,7 +122,7 @@ describe("room cells", () => {
       ),
     );
     client.send({ type: "SET_VOLUME", volume: 0.25 });
-    expect(await closed).toBe(1008);
+    expect(await closed).toBe(4008);
     expect((await snapshot("expiring-session-room")).volume).toBe(1);
   });
 
