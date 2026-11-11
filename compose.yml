@@ -123,6 +123,28 @@ services:
     networks:
       - web
 
+  rotund:
+    profiles: [rotund]
+    build:
+      context: .
+      dockerfile: apps/rotund/Dockerfile
+    environment:
+      APP_ORIGIN: ${ROTUND_APP_ORIGIN:-https://rotund.localhost}
+      AUTH_ISSUER: ${ROTUND_AUTH_ISSUER:-https://auth.jackharrhy.dev}
+      AUTH_CLIENT_ID: ${ROTUND_AUTH_CLIENT_ID:-}
+      AUTH_CLIENT_SECRET: ${ROTUND_AUTH_CLIENT_SECRET:-}
+      AUTH_SCOPES: ${ROTUND_AUTH_SCOPES:-}
+      AUTH_ORGANIZATION_ID: ${ROTUND_AUTH_ORGANIZATION_ID:-}
+      SERVICE_BINDINGS: ${ROTUND_SERVICE_BINDINGS:-}
+      SESSION_SECRET: ${ROTUND_SESSION_SECRET:-}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.rotund.rule: "Host(`rotund.localhost`)"
+      traefik.http.routers.rotund.entrypoints: web
+      traefik.http.services.rotund.loadbalancer.server.port: "80"
+    networks:
+      - web
+
   pool:
     build:
       context: .
