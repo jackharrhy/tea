@@ -18,40 +18,44 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
   );
 }
 
-export function AuthPage(handle: Handle<{ error?: string }>) {
+export function AuthPage(handle: Handle<{ error?: string; central?: boolean }>) {
   return () => (
     <Document title="Unlock">
       <main class="auth-page">
-        <form method="post" action="/login" class="auth-form">
+        <div class="auth-form">
           <a class="wordmark" href="/">
             tea<span>/ref</span>
           </a>
-          <label for="password">Password</label>
-          <div class="auth-row">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              autoFocus
-              required
-            />
-            <button type="submit">Enter</button>
-          </div>
+          {handle.props.central ? (
+            <a href="/auth/login">Sign in with Central Auth</a>
+          ) : (
+            <form method="post" action="/login">
+              <label for="password">Password</label>
+              <div class="auth-row">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  autoFocus
+                  required
+                />
+                <button type="submit">Enter</button>
+              </div>
+            </form>
+          )}
           {handle.props.error && (
             <p class="error" role="alert">
               {handle.props.error}
             </p>
           )}
-        </form>
+        </div>
       </main>
     </Document>
   );
 }
 
-export function HomePage(
-  handle: Handle<{ boards: BoardRecord[]; error?: string }>,
-) {
+export function HomePage(handle: Handle<{ boards: BoardRecord[]; error?: string }>) {
   return () => (
     <Document title="Boards">
       <main class="home-page">
@@ -96,9 +100,7 @@ export function HomePage(
   );
 }
 
-export function BoardPage(
-  handle: Handle<{ board: BoardRecord; error?: string }>,
-) {
+export function BoardPage(handle: Handle<{ board: BoardRecord; error?: string }>) {
   const board = handle.props.board;
   return () => (
     <Document title={board.title}>
@@ -149,12 +151,7 @@ export function BoardPage(
           </p>
         )}
         <div class="board-layout">
-          <section
-            id="viewport"
-            class="viewport"
-            aria-label="Image board"
-            tabIndex={0}
-          >
+          <section id="viewport" class="viewport" aria-label="Image board" tabIndex={0}>
             <div id="world" class="world"></div>
             <div id="empty-state" class="empty-state">
               <p>Drop images or links here</p>
@@ -163,12 +160,7 @@ export function BoardPage(
               </button>
             </div>
             <div class="zoom-controls">
-              <button
-                id="tool-fit"
-                type="button"
-                title="Fit board"
-                aria-label="Fit board"
-              >
+              <button id="tool-fit" type="button" title="Fit board" aria-label="Fit board">
                 □
               </button>
               <button id="zoom-out" type="button" aria-label="Zoom out">
@@ -183,11 +175,7 @@ export function BoardPage(
           <aside id="inspector" class="inspector" hidden>
             <div class="inspector-top">
               <span>Image</span>
-              <button
-                id="inspector-close"
-                type="button"
-                aria-label="Close image details"
-              >
+              <button id="inspector-close" type="button" aria-label="Close image details">
                 ×
               </button>
             </div>

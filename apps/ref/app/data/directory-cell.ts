@@ -27,7 +27,8 @@ export class DirectoryCell extends DurableObject<Env> {
         CREATE TABLE IF NOT EXISTS solo_sessions (
           token_hash TEXT PRIMARY KEY,
           expires_at INTEGER NOT NULL,
-          password_version TEXT NOT NULL DEFAULT ''
+          password_version TEXT NOT NULL DEFAULT '',
+          auth_subject TEXT NOT NULL DEFAULT ''
         );
         CREATE TABLE IF NOT EXISTS solo_boards (
           id TEXT PRIMARY KEY,
@@ -45,11 +46,14 @@ export class DirectoryCell extends DurableObject<Env> {
       const sessionColumns = ctx.storage.sql
         .exec<{ name: string }>("PRAGMA table_info(solo_sessions)")
         .toArray();
-      if (
-        !sessionColumns.some((column) => column.name === "password_version")
-      ) {
+      if (!sessionColumns.some((column) => column.name === "password_version")) {
         ctx.storage.sql.exec(
           "ALTER TABLE solo_sessions ADD COLUMN password_version TEXT NOT NULL DEFAULT ''",
+        );
+      }
+      if (!sessionColumns.some((column) => column.name === "auth_subject")) {
+        ctx.storage.sql.exec(
+          "ALTER TABLE solo_sessions ADD COLUMN auth_subject TEXT NOT NULL DEFAULT ''",
         );
       }
       const oldBoards = ctx.storage.sql
@@ -77,13 +81,21 @@ export class DirectoryCell extends DurableObject<Env> {
     return token;
   }
 
+  async createCentralSession(subject: string, expiresAt: number): Promise<string> {
+    const token = newToken();
+    this.ctx.storage.sql.exec(
+      "INSERT INTO solo_sessions (token_hash, expires_at, auth_subject) VALUES (?, ?, ?)",
+      await tokenHash(token),
+      Math.min(expiresAt * 1000, Date.now() + 3600000),
+      subject,
+    );
+    return token;
+  }
+
   consumeLoginAttempt(clientHash: string): number {
     const now = Date.now();
     return this.ctx.storage.transactionSync(() => {
-      this.ctx.storage.sql.exec(
-        "DELETE FROM login_attempts WHERE reset_at <= ?",
-        now,
-      );
+      this.ctx.storage.sql.exec("DELETE FROM login_attempts WHERE reset_at <= ?", now);
       const previous = this.ctx.storage.sql
         .exec<{ attempts: number; reset_at: number }>(
           "SELECT attempts, reset_at FROM login_attempts WHERE client_hash = ?",
@@ -104,10 +116,7 @@ export class DirectoryCell extends DurableObject<Env> {
   }
 
   clearLoginAttempts(clientHash: string): void {
-    this.ctx.storage.sql.exec(
-      "DELETE FROM login_attempts WHERE client_hash = ?",
-      clientHash,
-    );
+    this.ctx.storage.sql.exec("DELETE FROM login_attempts WHERE client_hash = ?", clientHash);
   }
 
   async session(token: string): Promise<boolean> {
@@ -187,16 +196,23 @@ export class DirectoryCell extends DurableObject<Env> {
     return this.board(id);
   }
 
-  async socketAccess(
-    boardId: string,
-    sessionHash: string,
-  ): Promise<{ expiresAt: number } | null> {
+  async socketAccess(boardId: string, sessionHash: string): Promise<{ expiresAt: number } | null> {
     if (!this.board(boardId)) return null;
     const expiresAt = await this.sessionExpiry(sessionHash);
     return expiresAt === null ? null : { expiresAt };
   }
 
   private async sessionExpiry(sessionHash: string): Promise<number | null> {
+    if (this.env.AUTH_ISSUER) {
+      const row = this.ctx.storage.sql
+        .exec<{ expires_at: number }>(
+          "SELECT expires_at FROM solo_sessions WHERE token_hash = ? AND expires_at > ? AND auth_subject <> ''",
+          sessionHash,
+          Date.now(),
+        )
+        .toArray()[0];
+      return row?.expires_at ?? null;
+    }
     const row = this.ctx.storage.sql
       .exec<{ expires_at: number }>(
         "SELECT expires_at FROM solo_sessions WHERE token_hash = ? AND expires_at > ? AND password_version = ?",

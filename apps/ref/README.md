@@ -1,6 +1,16 @@
 # @tea/ref
 
-A small, private board for images and links. It presents itself as `tea/ref` while retaining Ref's board format and storage contract. This app was adapted from the former standalone Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. There are no user accounts or shared spaces. One password opens every board. The Newport production deployment now runs this workspace's container image.
+A small, private board for images and links. It presents itself as `tea/ref` while retaining Ref's board format and storage contract. This app was adapted from the former standalone Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. Every approved member sees the same boards; there are no per-user spaces. The Newport production deployment runs this workspace's container image.
+
+Central Auth migration: configure `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
+`AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, and
+`AUTH_PUBLIC_ORIGIN=https://ref.jackharrhy.dev` together. Register the exact
+public PKCE callback `https://ref.jackharrhy.dev/auth/callback`. An app
+member/admin grant opens the shared boards; board and asset IDs stay stable.
+Central sessions in `DirectoryCell` carry a subject and expire within one hour.
+Old password sessions cannot authorize Central mode. Keep the live password
+path until browser, WebSocket, and archive CLI acceptance pass. The archive CLI
+uses a delegated resource token in Central mode.
 
 ## Run locally
 
@@ -54,7 +64,11 @@ CELLD_BIN=/absolute/path/to/celld npm run test:celld --workspace @tea/ref
 
 ## Back up and restore
 
-The archive commands use the same password as the app. Set `REF_PASSWORD` in your shell or secret manager, and set `REF_URL` to the instance you want to access:
+The archive commands use `REF_PASSWORD` while the local password mode is
+active. In Central mode, supply a short-lived `REF_ACCESS_TOKEN` with this
+app's project audience, admin grant, and explicit admin role scope. The Worker
+introspects it for archive and image download routes; no shared password is
+accepted. Set `REF_URL` to the instance you want to access:
 
 ```sh
 REF_URL=https://ref.example.com npm run backup --workspace @tea/ref -- /safe/place/ref-backup

@@ -4,6 +4,10 @@ export const routes = route({
   home: get("/"),
   login: post("/login"),
   logout: post("/logout"),
+  auth: route("auth", {
+    login: get("/login"),
+    callback: get("/callback"),
+  }),
   boards: {
     create: post("/boards"),
     show: get("/boards/:boardId"),

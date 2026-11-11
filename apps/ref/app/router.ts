@@ -1,13 +1,16 @@
 import { createRouter, type MiddlewareContext } from "remix/router";
+import type { IdentityConfig } from "@tea/identity";
 import { formData } from "remix/middleware/form-data";
 import { render } from "remix/middleware/render";
 import rootController from "./actions/controller.tsx";
+import authController from "./actions/auth-controller.ts";
 import boardsController from "./actions/boards/controller.tsx";
 import resourcesController from "./actions/resources/controller.tsx";
 import archiveController from "./actions/archive/controller.ts";
 import {
   AppRuntime,
   AppPassword,
+  AppIdentity,
   Authenticated,
   CurrentSessionToken,
   type AppRuntimeService,
@@ -29,6 +32,7 @@ export function createAppRouter(
   authenticated: boolean,
   token: string | null,
   password: string,
+  identity: { config: IdentityConfig; origin: string } | null = null,
 ) {
   const router = createRouter<AppContext>({
     middleware: [
@@ -37,6 +41,7 @@ export function createAppRouter(
         context.set(Authenticated, authenticated);
         context.set(CurrentSessionToken, token);
         context.set(AppPassword, password);
+        context.set(AppIdentity, identity);
         return next();
       },
       formData({
@@ -49,6 +54,7 @@ export function createAppRouter(
     ],
   });
   router.map(routes, rootController);
+  router.map(routes.auth, authController);
   router.map(routes.boards, boardsController);
   router.map(routes.resources, resourcesController);
   router.map(routes.archive, archiveController);

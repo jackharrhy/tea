@@ -9,6 +9,7 @@ on:
       - package.json
       - package-lock.json
       - apps/ref/**
+      - packages/identity/**
   workflow_dispatch:
 concurrency:
   group: publish-ref

@@ -1,13 +1,5 @@
 import assert from "node:assert/strict";
-import {
-  access,
-  mkdir,
-  mkdtemp,
-  readFile,
-  rename,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { digest, imageTypes, validateArchive } from "./archive-format.mjs";
 
@@ -15,22 +7,21 @@ const command = process.argv[2];
 const directory = process.argv[3] ? resolve(process.argv[3]) : null;
 const base = new URL(process.env.REF_URL ?? "http://localhost:8787");
 const password = process.env.REF_PASSWORD;
+const accessToken = process.env.REF_ACCESS_TOKEN;
 
-if (!["backup", "restore"].includes(command) || !directory || !password) {
+if (!["backup", "restore"].includes(command) || !directory || (!password && !accessToken)) {
   throw new Error(
-    "Usage: REF_URL=https://host REF_PASSWORD=... npm run backup|restore -- /archive/directory",
+    "Usage: REF_URL=https://host REF_ACCESS_TOKEN=... npm run backup|restore -- /archive/directory",
   );
 }
-if (!["http:", "https:"].includes(base.protocol))
-  throw new Error("REF_URL must use HTTP or HTTPS");
-if (
-  base.protocol === "http:" &&
-  !["localhost", "127.0.0.1", "[::1]"].includes(base.hostname)
-) {
+if (!["http:", "https:"].includes(base.protocol)) throw new Error("REF_URL must use HTTP or HTTPS");
+if (base.protocol === "http:" && !["localhost", "127.0.0.1", "[::1]"].includes(base.hostname)) {
   throw new Error("Use HTTPS for a remote REF_URL");
 }
 
-const session = await login();
+const authorization = accessToken
+  ? { Authorization: `Bearer ${accessToken}` }
+  : { Cookie: await login() };
 if (command === "backup") await backup();
 else await restore();
 
@@ -51,7 +42,7 @@ async function login() {
 
 async function request(path, init = {}) {
   const headers = new Headers(init.headers);
-  headers.set("Cookie", session);
+  for (const [name, value] of Object.entries(authorization)) headers.set(name, value);
   const response = await fetch(new URL(path, base), {
     ...init,
     headers,
@@ -59,9 +50,7 @@ async function request(path, init = {}) {
   });
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 300);
-    throw new Error(
-      `${init.method ?? "GET"} ${path}: ${response.status} ${detail}`,
-    );
+    throw new Error(`${init.method ?? "GET"} ${path}: ${response.status} ${detail}`);
   }
   return response;
 }
@@ -74,8 +63,7 @@ async function download(path, filename, target) {
   const response = await request(path);
   const bytes = Buffer.from(await response.arrayBuffer());
   const contentType = response.headers.get("content-type");
-  if (!imageTypes.has(contentType) || bytes.length === 0)
-    throw new Error(`Invalid image: ${path}`);
+  if (!imageTypes.has(contentType) || bytes.length === 0) throw new Error(`Invalid image: ${path}`);
   await mkdir(dirname(join(target, filename)), { recursive: true });
   await writeFile(join(target, filename), bytes);
   return { contentType, size: bytes.length, sha256: digest(bytes) };
@@ -124,21 +112,13 @@ async function backup() {
       for (const asset of assets.values()) {
         Object.assign(
           asset,
-          await download(
-            `/media/${id}/${asset.id}`,
-            `assets/${id}/${asset.id}`,
-            temporary,
-          ),
+          await download(`/media/${id}/${asset.id}`, `assets/${id}/${asset.id}`, temporary),
         );
       }
       for (const imageId of previews.keys()) {
         previews.set(imageId, {
           id: imageId,
-          ...(await download(
-            `/previews/${id}/${imageId}`,
-            `previews/${id}/${imageId}`,
-            temporary,
-          )),
+          ...(await download(`/previews/${id}/${imageId}`, `previews/${id}/${imageId}`, temporary)),
         });
       }
       const after = await json(`/api/boards/${id}/snapshot`);
@@ -153,15 +133,9 @@ async function backup() {
       });
       console.log(`Saved ${record.title}: ${snapshot.items.length} items`);
     }
-    if (
-      JSON.stringify(boards) !==
-      JSON.stringify(await json("/api/archive/boards"))
-    )
+    if (JSON.stringify(boards) !== JSON.stringify(await json("/api/archive/boards")))
       throw new Error("Board list changed during backup. Try again.");
-    await writeFile(
-      join(temporary, "manifest.json"),
-      JSON.stringify(manifest, null, 2) + "\n",
-    );
+    await writeFile(join(temporary, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
     await rename(temporary, directory);
     console.log(`Backup complete: ${directory}`);
   } catch (error) {
@@ -171,14 +145,10 @@ async function backup() {
 }
 
 async function restore() {
-  const manifest = JSON.parse(
-    await readFile(join(directory, "manifest.json"), "utf8"),
-  );
+  const manifest = JSON.parse(await readFile(join(directory, "manifest.json"), "utf8"));
   await validateArchive(manifest, directory);
   const existing = await json("/api/archive/boards");
-  const expected = new Map(
-    manifest.boards.map(({ record }) => [record.id, record]),
-  );
+  const expected = new Map(manifest.boards.map(({ record }) => [record.id, record]));
   const archivedItems = new Map(
     manifest.boards.map(({ record, items }) => [
       record.id,
@@ -223,11 +193,7 @@ async function restore() {
       );
     }
     for (const link of links) {
-      await post(
-        `/api/archive/boards/${id}/links/${link.assetId}`,
-        "preview",
-        link.preview,
-      );
+      await post(`/api/archive/boards/${id}/links/${link.assetId}`, "preview", link.preview);
     }
     for (const item of items) {
       if (alreadyPresent.get(id)?.has(item.id)) continue;
@@ -247,15 +213,9 @@ async function restore() {
       });
     }
     const restored = await json(`/api/boards/${id}/snapshot`);
-    const actualItems = restored.items.toSorted((a, b) =>
-      a.id.localeCompare(b.id),
-    );
+    const actualItems = restored.items.toSorted((a, b) => a.id.localeCompare(b.id));
     const expectedItems = items.toSorted((a, b) => a.id.localeCompare(b.id));
-    assert.equal(
-      actualItems.length,
-      expectedItems.length,
-      `Board did not restore: ${id}`,
-    );
+    assert.equal(actualItems.length, expectedItems.length, `Board did not restore: ${id}`);
     for (let index = 0; index < actualItems.length; index += 1) {
       assertVisualItem(
         actualItems[index],
@@ -265,27 +225,17 @@ async function restore() {
     }
     for (const asset of assets) {
       const response = await request(`/media/${id}/${asset.id}`);
-      assert.equal(
-        digest(Buffer.from(await response.arrayBuffer())),
-        asset.sha256,
-      );
+      assert.equal(digest(Buffer.from(await response.arrayBuffer())), asset.sha256);
     }
     for (const preview of previews) {
       const response = await request(`/previews/${id}/${preview.id}`);
-      assert.equal(
-        digest(Buffer.from(await response.arrayBuffer())),
-        preview.sha256,
-      );
+      assert.equal(digest(Buffer.from(await response.arrayBuffer())), preview.sha256);
     }
     console.log(`Restored ${record.title}: ${items.length} items`);
   }
   assert.deepEqual(
-    (await json("/api/archive/boards")).toSorted((a, b) =>
-      a.id.localeCompare(b.id),
-    ),
-    manifest.boards
-      .map(({ record }) => record)
-      .toSorted((a, b) => a.id.localeCompare(b.id)),
+    (await json("/api/archive/boards")).toSorted((a, b) => a.id.localeCompare(b.id)),
+    manifest.boards.map(({ record }) => record).toSorted((a, b) => a.id.localeCompare(b.id)),
   );
   console.log("Restore verified");
 }
@@ -322,9 +272,6 @@ async function post(path, key, value) {
 async function upload(path, filename, entry) {
   const bytes = await readFile(join(directory, filename));
   const form = new FormData();
-  form.set(
-    "file",
-    new File([bytes], entry.filename ?? entry.id, { type: entry.contentType }),
-  );
+  form.set("file", new File([bytes], entry.filename ?? entry.id, { type: entry.contentType }));
   await request(path, { method: "POST", body: form });
 }
