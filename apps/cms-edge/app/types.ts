@@ -67,6 +67,8 @@ export type Bindings = {
   TEA_AUTH_PROJECT_ID?: string;
   TEA_AUTH_ORGANIZATION_ID?: string;
   TEA_AUTH_OWNER_SUBJECT?: string;
+  TEA_AUTH_INTROSPECTION_CLIENT_ID?: string;
+  TEA_AUTH_INTROSPECTION_SECRET?: string;
 };
 
 export type EdgeConfig = {

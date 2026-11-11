@@ -13,7 +13,7 @@ exact registered callback. Apps keep short-lived, revocable local sessions.
 | Radio | Shared password | Public PKCE browser client at `radio.jackharrhy.dev/auth/callback` | Every approved member can use the existing shared rooms; chosen display name is cosmetic |
 | Marky | Discord guild OAuth | Public PKCE browser client at `md.jackharrhy.dev/auth/callback` | Explicit Central Auth membership grants replace the live guild check; Markdown and Yjs state stay stable |
 | CMS | Operator and site passwords, static MCP token | Three public PKCE browser clients and human-admin MCP resource credentials | Operator, Andrew editor, and Luke editor permissions remain separate; site content IDs stay stable |
-| CMS Edge | Prototype password and preview bearer | Worker-compatible PKCE editor client; preview API still has its separate static bearer | Reviewed owner subject and project admin grant; no production cutover until the prototype has a real host and preview consumer contract |
+| CMS Edge | Prototype password and preview bearer | Worker-compatible PKCE editor client and introspected human-admin preview API | Reviewed owner subject and project admin grant; no production cutover until the prototype has a real host and preview consumer contract |
 | Gurgur admin reset | Static admin token | Remove production-only test control; retain local test harness token | Production has no reset route or admin credential; player sessions are separate |
 
 Artbin, Lists, and Maps already use `@tea/identity`. Burger and Pool use Central

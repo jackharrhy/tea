@@ -6,6 +6,11 @@ import {
 } from "remix/router";
 import { render as remixRender } from "remix/middleware/render";
 import { readRequestBody } from "@tea/request-body";
+import {
+  createIdentityClient,
+  IdentityError,
+  requireTokenRole,
+} from "@tea/identity";
 import { routes } from "./routes.ts";
 import {
   clearedSessionCookie,
@@ -595,8 +600,39 @@ export function createEdgeRouter(
         !sameOrigin(request, env)
       )
         return new Response("Forbidden", { status: 403 });
-      if (path.startsWith("/api/preview/") && !previewAllowed(request, env))
-        return new Response("Unauthorized", { status: 401 });
+      if (path.startsWith("/api/preview/")) {
+        if (central) {
+          const bearer = request.headers.get("authorization");
+          if (!bearer?.startsWith("Bearer "))
+            return new Response("Unauthorized", { status: 401 });
+          if (
+            !env.TEA_AUTH_INTROSPECTION_CLIENT_ID ||
+            !env.TEA_AUTH_INTROSPECTION_SECRET
+          )
+            return new Response("Preview authentication unavailable", {
+              status: 503,
+            });
+          try {
+            const principal = await createIdentityClient(
+              central.config,
+            ).introspect(bearer.slice(7), {
+              clientId: env.TEA_AUTH_INTROSPECTION_CLIENT_ID,
+              clientSecret: env.TEA_AUTH_INTROSPECTION_SECRET,
+            });
+            if (principal.principalType !== "user")
+              return new Response("Human preview authorization required", {
+                status: 403,
+              });
+            requireTokenRole(principal, central.config.projectId, "admin");
+          } catch (error) {
+            return new Response("Preview authorization failed", {
+              status: error instanceof IdentityError ? error.status : 503,
+            });
+          }
+        } else if (!previewAllowed(request, env)) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+      }
       if (
         (path === "/tea" || path.startsWith("/tea/")) &&
         !["/tea/login", "/tea/auth/login", "/tea/auth/callback"].includes(path)

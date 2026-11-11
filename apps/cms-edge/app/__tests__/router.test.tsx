@@ -190,6 +190,12 @@ it("routes Central editor login and rejects the prototype password session", asy
     }),
   );
   assert.equal(password.status, 404);
+  const oldPreviewToken = await app.fetch(
+    new Request("https://cms.example.test/api/preview/pages", {
+      headers: { Authorization: "Bearer preview-secret" },
+    }),
+  );
+  assert.equal(oldPreviewToken.status, 503);
 });
 
 it("lets a standalone site own staff login and route authorization", async () => {
