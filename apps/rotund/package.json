@@ -1,0 +1,27 @@
+{
+  "name": "@harrhy/rotund",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26.13.0 <27"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test __tests__/*.test.ts",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "jose": "^6.1.0",
+    "openid-client": "^6.8.0",
+    "remix": "3.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^5.9.0",
+    "tsx": "^4.20.0"
+  }
+}

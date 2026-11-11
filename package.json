@@ -37,6 +37,8 @@
     "request-body:check": "npm run tooling:check && npm run check --workspace @harrhy/request-body",
     "ref:check": "npm run tooling:check && npm run check --workspace @harrhy/ref",
     "ref:dev": "npm run dev --workspace @harrhy/ref",
+    "rotund:check": "npm run tooling:check && npm run check --workspace @harrhy/rotund",
+    "rotund:dev": "npm run dev --workspace @harrhy/rotund",
     "result:check": "npm run tooling:check && npm run check --workspace @harrhy/result",
     "tooling:build": "npm run build --workspace @harrhy/worldview-renderer && npm run build --workspace @harrhy/maps-editor && npm run build --workspace @harrhy/maps-protocol",
     "tooling:check": "npm run tooling:build && node scripts/tooling/ensure-worker-types.mjs && node scripts/tooling/tsrslint.mjs check",
