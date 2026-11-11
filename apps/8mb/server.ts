@@ -9,16 +9,18 @@ import { createDiagnosticsRouter } from "./app/diagnostics/router.ts";
 const dist = join(import.meta.dirname, "dist");
 const dataFile =
   process.env.DIAGNOSTICS_DB_FILE ?? "/app/data/diagnostics.sqlite";
-mkdirSync(dirname(dataFile), { recursive: true });
-const store = createDiagnosticsStore({
-  path: dataFile,
-  revision: process.env.APP_REVISION ?? "local",
-});
-store.prune();
 const diagnostics = createDiagnosticsRouter({
   origin: process.env.APP_ORIGIN ?? "https://jackharrhy.dev",
-  openStore: () => store,
+  openStore: () => {
+    mkdirSync(dirname(dataFile), { recursive: true });
+    return createDiagnosticsStore({
+      path: dataFile,
+      revision: process.env.APP_REVISION ?? "local",
+    });
+  },
 });
+if (!diagnostics.initialize())
+  console.warn("8mb diagnostics storage unavailable; editor remains ready");
 const editor = createEditorRouter(dist);
 
 async function fetch(request: Request) {
@@ -45,9 +47,10 @@ async function fetch(request: Request) {
 const server = createServer(createRequestListener(fetch));
 server.requestTimeout = 15000;
 server.headersTimeout = 10000;
-server.listen(Number(process.env.PORT ?? 5188), "0.0.0.0", () =>
-  console.log("8mb ready"),
-);
+server.listen(Number(process.env.PORT ?? 5188), "0.0.0.0", () => {
+  const address = server.address();
+  console.log(`8mb ready ${typeof address === "object" ? address?.port : ""}`);
+});
 for (const signal of ["SIGTERM", "SIGINT"])
   process.on(signal, () => {
     server.close(() => {

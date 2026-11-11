@@ -28,6 +28,25 @@ export function createDiagnosticsRouter({
   let store: ReturnType<typeof createDiagnosticsStore> | undefined;
   let count = 0,
     windowStart = now();
+  function releaseStore() {
+    const current = store;
+    store = undefined;
+    try {
+      current?.close();
+    } catch {
+      // Keep optional diagnostics from preventing editor shutdown.
+    }
+  }
+  function initialize() {
+    try {
+      store ??= openStore();
+      store.prune();
+      return true;
+    } catch {
+      releaseStore();
+      return false;
+    }
+  }
   const router = createRouter();
   router.map(
     routes,
@@ -77,6 +96,7 @@ export function createDiagnosticsRouter({
               store.add(data as Record<string, string | number>) ? 204 : 429,
             );
           } catch {
+            releaseStore();
             return response(503);
           }
         },
@@ -85,8 +105,7 @@ export function createDiagnosticsRouter({
   );
   return {
     router,
-    close() {
-      store?.close();
-    },
+    initialize,
+    close: releaseStore,
   };
 }
