@@ -2,15 +2,11 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { mockClient } from "aws-sdk-client-mock";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { eq } from "drizzle-orm";
-import { createHttpApp } from "../src/http";
-import { apiRoutes } from "../src/routes/api";
-import { mcpRoutes } from "../src/routes/mcp";
-import { oauthRoutes } from "../src/routes/oauth";
+import { createApplication } from "../src/http-app.ts";
 import { createSession } from "../src/auth";
 import { mintApiToken as mintScopedToken } from "../src/services/api-tokens";
 import { createSubscriber } from "../src/services/subscriber";
 import { operationCatalog } from "../src/operations/catalog";
-import { apiOpenApi } from "../src/openapi";
 import { createTestDb, seedList } from "./helpers";
 import * as schema from "../src/db/schema";
 import type { Config } from "../src/config";
@@ -58,11 +54,7 @@ function setup() {
     .returning()
     .get();
   seedList(db, { slug: "news", name: "News" });
-  const app = createHttpApp();
-  app.use(apiOpenApi());
-  app.use(oauthRoutes(db, config));
-  app.group("/api", (group) => group.use(apiRoutes(db, config)));
-  app.group("/mcp", (group) => group.use(mcpRoutes(db, config)));
+  const app = createApplication(db, config);
   return { app, db, user };
 }
 
@@ -71,7 +63,7 @@ function bearer(token: string) {
 }
 
 async function mcpCall(
-  app: ReturnType<typeof createHttpApp>,
+  app: ReturnType<typeof createApplication>,
   token: string,
   name: string,
   args: unknown,

@@ -1,4 +1,3 @@
-import { createHttpApp } from "../http";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import MessageValidator from "sns-validator";
@@ -7,22 +6,16 @@ import { logEvent } from "../services/events";
 
 const snsValidator = new MessageValidator();
 
-export function shouldVerifySnsSignature(
-  env: Record<string, string | undefined> = process.env,
-) {
-  const localEnvironment =
-    env.NODE_ENV === "test" || env.NODE_ENV === "development";
+export function shouldVerifySnsSignature(env: Record<string, string | undefined> = process.env) {
+  const localEnvironment = env.NODE_ENV === "test" || env.NODE_ENV === "development";
   return env.SNS_SKIP_VERIFY !== "true" || !localEnvironment;
 }
 
 async function verifySnsSignature(rawBody: unknown): Promise<boolean> {
   return new Promise((resolve) => {
-    snsValidator.validate(
-      rawBody as Record<string, unknown>,
-      (err: Error | null) => {
-        resolve(!err);
-      },
-    );
+    snsValidator.validate(rawBody as Record<string, unknown>, (err: Error | null) => {
+      resolve(!err);
+    });
   });
 }
 
@@ -140,231 +133,207 @@ const SesLegacyNotification = z.object({
 // Webhook handler
 // ---------------------------------------------------------------------------
 
-export function webhookRoutes(db: Db) {
-  const app = createHttpApp();
+export async function handleSesWebhook(db: Db, request: Request): Promise<Response> {
+  const messageType = request.headers.get("x-amz-sns-message-type");
+  if (!messageType) {
+    return new Response("Missing SNS message type header", { status: 400 });
+  }
 
-  app.post("/ses", async (c) => {
-    const messageType = c.headers["x-amz-sns-message-type"];
-    if (!messageType) {
-      return c.text("Missing SNS message type header", 400);
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+    if (typeof rawBody === "string") {
+      rawBody = JSON.parse(rawBody);
     }
+  } catch {
+    return new Response("Invalid JSON", { status: 400 });
+  }
 
-    let rawBody: unknown;
+  const parsed = SnsHttpBody.safeParse(rawBody);
+  if (!parsed.success) {
+    console.error("SNS body parse error:", parsed.error.flatten());
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  // Verify SNS message signature using AWS's official validator
+  // This checks: SigningCertURL is from amazonaws.com, RSA-SHA1 signature is valid
+  // The local/test bypass is deliberately ignored in production.
+  if (shouldVerifySnsSignature()) {
+    const valid = await verifySnsSignature(rawBody);
+    if (!valid) {
+      console.error("SNS signature verification failed");
+      return new Response("Forbidden", { status: 403 });
+    }
+  }
+
+  const body = parsed.data;
+
+  // 1. Confirm subscription
+  if (body.Type === "SubscriptionConfirmation") {
     try {
-      rawBody = c.body;
-      if (typeof rawBody === "string") {
-        rawBody = JSON.parse(rawBody);
-      }
+      await fetch(body.SubscribeURL);
+      console.log("SNS subscription confirmed for topic:", body.TopicArn);
+    } catch (err) {
+      console.error("Failed to confirm SNS subscription:", err);
+    }
+    return new Response("OK");
+  }
+
+  // 2. Notification
+  if (body.Type === "Notification") {
+    let message: unknown;
+    try {
+      message = JSON.parse(body.Message);
     } catch {
-      return c.text("Invalid JSON", 400);
+      console.error("Failed to parse SNS notification Message as JSON");
+      return new Response("OK");
     }
 
-    const parsed = SnsHttpBody.safeParse(rawBody);
-    if (!parsed.success) {
-      console.error("SNS body parse error:", parsed.error.flatten());
-      return c.text("Bad Request", 400);
-    }
+    // Try both modern (eventType) and legacy (notificationType) formats
+    const event = SesEventNotification.safeParse(message) as
+      | { success: true; data: z.infer<typeof SesEventNotification> }
+      | { success: false };
+    const legacy = !event.success ? SesLegacyNotification.safeParse(message) : null;
 
-    // Verify SNS message signature using AWS's official validator
-    // This checks: SigningCertURL is from amazonaws.com, RSA-SHA1 signature is valid
-    // The local/test bypass is deliberately ignored in production.
-    if (shouldVerifySnsSignature()) {
-      const valid = await verifySnsSignature(rawBody);
-      if (!valid) {
-        console.error("SNS signature verification failed");
-        return c.text("Forbidden", 403);
-      }
-    }
-
-    const body = parsed.data;
-
-    // 1. Confirm subscription
-    if (body.Type === "SubscriptionConfirmation") {
-      try {
-        await fetch(body.SubscribeURL);
-        console.log("SNS subscription confirmed for topic:", body.TopicArn);
-      } catch (err) {
-        console.error("Failed to confirm SNS subscription:", err);
-      }
-      return c.text("OK", 200);
-    }
-
-    // 2. Notification
-    if (body.Type === "Notification") {
-      let message: unknown;
-      try {
-        message = JSON.parse(body.Message);
-      } catch {
-        console.error("Failed to parse SNS notification Message as JSON");
-        return c.text("OK", 200);
-      }
-
-      // Try both modern (eventType) and legacy (notificationType) formats
-      const event = SesEventNotification.safeParse(message) as
-        | { success: true; data: z.infer<typeof SesEventNotification> }
-        | { success: false };
-      const legacy = !event.success
-        ? SesLegacyNotification.safeParse(message)
+    const eventType = event.success
+      ? event.data.eventType
+      : legacy?.success
+        ? legacy.data.notificationType
         : null;
 
-      const eventType = event.success
-        ? event.data.eventType
-        : legacy?.success
-          ? legacy.data.notificationType
-          : null;
+    if (!eventType) return new Response("OK");
 
-      if (!eventType) return c.text("OK", 200);
+    const sesMessageId = event.success
+      ? event.data.mail.messageId
+      : legacy?.success
+        ? legacy.data.mail.messageId
+        : null;
+    const recorded = db
+      .insert(schema.deliveryEvents)
+      .values({
+        providerEventId: body.MessageId,
+        sesMessageId,
+        eventType,
+        payload: body.Message,
+      })
+      .onConflictDoNothing({ target: schema.deliveryEvents.providerEventId })
+      .returning()
+      .get();
+    if (!recorded) return new Response("OK");
 
-      const sesMessageId = event.success
-        ? event.data.mail.messageId
-        : legacy?.success
-          ? legacy.data.mail.messageId
-          : null;
-      const recorded = db
-        .insert(schema.deliveryEvents)
-        .values({
-          providerEventId: body.MessageId,
-          sesMessageId,
-          eventType,
-          payload: body.Message,
-        })
-        .onConflictDoNothing({ target: schema.deliveryEvents.providerEventId })
-        .returning()
-        .get();
-      if (!recorded) return c.text("OK", 200);
+    const now = new Date().toISOString();
+    if (sesMessageId) {
+      const lifecycle =
+        eventType === "Delivery"
+          ? "delivered"
+          : eventType === "DeliveryDelay"
+            ? "delivery_delayed"
+            : eventType === "Reject"
+              ? "rejected"
+              : eventType === "Rendering Failure" || eventType === "RenderingFailure"
+                ? "failed"
+                : eventType === "Send"
+                  ? "accepted"
+                  : null;
+      if (lifecycle) {
+        db.update(schema.campaignSends)
+          .set({
+            status: lifecycle,
+            ...(lifecycle === "delivered" ? { deliveredAt: now } : {}),
+            updatedAt: now,
+          })
+          .where(eq(schema.campaignSends.sesMessageId, sesMessageId))
+          .run();
+      }
+    }
 
-      const now = new Date().toISOString();
-      if (sesMessageId) {
-        const lifecycle =
-          eventType === "Delivery"
-            ? "delivered"
-            : eventType === "DeliveryDelay"
-              ? "delivery_delayed"
-              : eventType === "Reject"
-                ? "rejected"
-                : eventType === "Rendering Failure" ||
-                    eventType === "RenderingFailure"
-                  ? "failed"
-                  : eventType === "Send"
-                    ? "accepted"
-                    : null;
-        if (lifecycle) {
+    const bounce = event.success
+      ? event.data.bounce
+      : legacy?.success
+        ? legacy.data.bounce
+        : undefined;
+    const complaint = event.success
+      ? event.data.complaint
+      : legacy?.success
+        ? legacy.data.complaint
+        : undefined;
+
+    if (eventType === "Bounce" && bounce) {
+      for (const recipient of bounce.bouncedRecipients) {
+        const subscriber = db
+          .select()
+          .from(schema.subscribers)
+          .where(eq(schema.subscribers.email, recipient.emailAddress.toLowerCase()))
+          .get();
+        if (!subscriber) continue;
+
+        if (bounce.bounceType === "Permanent") {
+          db.update(schema.subscribers)
+            .set({ status: "blocklisted" })
+            .where(eq(schema.subscribers.id, subscriber.id))
+            .run();
+          logEvent(db, {
+            type: "subscriber.bounced_hard",
+            detail: `${recipient.emailAddress} hard bounced (${bounce.bounceSubType})`,
+            subscriberId: subscriber.id,
+          });
+          console.log(`Hard bounce: blocklisted ${recipient.emailAddress}`);
+        } else {
+          logEvent(db, {
+            type: "subscriber.bounced_soft",
+            detail: `${recipient.emailAddress} soft bounced (${bounce.bounceType}: ${bounce.bounceSubType})`,
+            subscriberId: subscriber.id,
+          });
+          console.log(`Soft bounce: ${recipient.emailAddress} (${bounce.bounceType})`);
+        }
+
+        if (sesMessageId) {
           db.update(schema.campaignSends)
             .set({
-              status: lifecycle,
-              ...(lifecycle === "delivered" ? { deliveredAt: now } : {}),
+              status: "bounced",
+              bounceType: `${bounce.bounceType}:${bounce.bounceSubType}`,
+              diagnosticCode: recipient.diagnosticCode ?? null,
+              lastError: recipient.diagnosticCode ?? `${bounce.bounceType} bounce`,
               updatedAt: now,
             })
             .where(eq(schema.campaignSends.sesMessageId, sesMessageId))
             .run();
         }
       }
+    } else if (eventType === "Complaint" && complaint) {
+      const feedbackType = complaint.complaintFeedbackType ?? "Unknown";
+      for (const recipient of complaint.complainedRecipients) {
+        const subscriber = db
+          .select()
+          .from(schema.subscribers)
+          .where(eq(schema.subscribers.email, recipient.emailAddress.toLowerCase()))
+          .get();
+        if (!subscriber) continue;
 
-      const bounce = event.success
-        ? event.data.bounce
-        : legacy?.success
-          ? legacy.data.bounce
-          : undefined;
-      const complaint = event.success
-        ? event.data.complaint
-        : legacy?.success
-          ? legacy.data.complaint
-          : undefined;
+        db.update(schema.subscribers)
+          .set({ status: "blocklisted" })
+          .where(eq(schema.subscribers.id, subscriber.id))
+          .run();
+        logEvent(db, {
+          type: "subscriber.complained",
+          detail: `${recipient.emailAddress} reported spam (${feedbackType})`,
+          subscriberId: subscriber.id,
+        });
+        console.log(`Complaint: blocklisted ${recipient.emailAddress} (${feedbackType})`);
 
-      if (eventType === "Bounce" && bounce) {
-        for (const recipient of bounce.bouncedRecipients) {
-          const subscriber = db
-            .select()
-            .from(schema.subscribers)
-            .where(
-              eq(
-                schema.subscribers.email,
-                recipient.emailAddress.toLowerCase(),
-              ),
-            )
-            .get();
-          if (!subscriber) continue;
-
-          if (bounce.bounceType === "Permanent") {
-            db.update(schema.subscribers)
-              .set({ status: "blocklisted" })
-              .where(eq(schema.subscribers.id, subscriber.id))
-              .run();
-            logEvent(db, {
-              type: "subscriber.bounced_hard",
-              detail: `${recipient.emailAddress} hard bounced (${bounce.bounceSubType})`,
-              subscriberId: subscriber.id,
-            });
-            console.log(`Hard bounce: blocklisted ${recipient.emailAddress}`);
-          } else {
-            logEvent(db, {
-              type: "subscriber.bounced_soft",
-              detail: `${recipient.emailAddress} soft bounced (${bounce.bounceType}: ${bounce.bounceSubType})`,
-              subscriberId: subscriber.id,
-            });
-            console.log(
-              `Soft bounce: ${recipient.emailAddress} (${bounce.bounceType})`,
-            );
-          }
-
-          if (sesMessageId) {
-            db.update(schema.campaignSends)
-              .set({
-                status: "bounced",
-                bounceType: `${bounce.bounceType}:${bounce.bounceSubType}`,
-                diagnosticCode: recipient.diagnosticCode ?? null,
-                lastError:
-                  recipient.diagnosticCode ?? `${bounce.bounceType} bounce`,
-                updatedAt: now,
-              })
-              .where(eq(schema.campaignSends.sesMessageId, sesMessageId))
-              .run();
-          }
-        }
-      } else if (eventType === "Complaint" && complaint) {
-        const feedbackType = complaint.complaintFeedbackType ?? "Unknown";
-        for (const recipient of complaint.complainedRecipients) {
-          const subscriber = db
-            .select()
-            .from(schema.subscribers)
-            .where(
-              eq(
-                schema.subscribers.email,
-                recipient.emailAddress.toLowerCase(),
-              ),
-            )
-            .get();
-          if (!subscriber) continue;
-
-          db.update(schema.subscribers)
-            .set({ status: "blocklisted" })
-            .where(eq(schema.subscribers.id, subscriber.id))
+        if (sesMessageId) {
+          db.update(schema.campaignSends)
+            .set({
+              status: "complained",
+              complaintType: feedbackType,
+              updatedAt: now,
+            })
+            .where(eq(schema.campaignSends.sesMessageId, sesMessageId))
             .run();
-          logEvent(db, {
-            type: "subscriber.complained",
-            detail: `${recipient.emailAddress} reported spam (${feedbackType})`,
-            subscriberId: subscriber.id,
-          });
-          console.log(
-            `Complaint: blocklisted ${recipient.emailAddress} (${feedbackType})`,
-          );
-
-          if (sesMessageId) {
-            db.update(schema.campaignSends)
-              .set({
-                status: "complained",
-                complaintType: feedbackType,
-                updatedAt: now,
-              })
-              .where(eq(schema.campaignSends.sesMessageId, sesMessageId))
-              .run();
-          }
         }
       }
     }
+  }
 
-    return c.text("OK", 200);
-  });
-
-  return app;
+  return new Response("OK");
 }

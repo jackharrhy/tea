@@ -1,7 +1,6 @@
 import { test, expect, describe, beforeEach, afterEach, mock } from "bun:test";
-import { createHttpApp, type App } from "../src/http";
+import { createWebhookRouter } from "../app/webhook-router.ts";
 import { createTestDb, seedSubscriber, seedList } from "./helpers";
-import { webhookRoutes } from "../src/routes/webhooks";
 import { eq } from "drizzle-orm";
 
 // Skip SNS signature verification in tests (fake payloads won't have valid RSA sigs)
@@ -19,13 +18,11 @@ const SNS_BASE = {
 };
 
 function makeApp(db: ReturnType<typeof createTestDb>) {
-  const app = createHttpApp();
-  app.group("/webhooks", (group) => group.use(webhookRoutes(db)));
-  return app;
+  return createWebhookRouter(db);
 }
 
 function postSes(
-  app: App,
+  app: ReturnType<typeof createWebhookRouter>,
   body: unknown,
   messageType: string | null = "Notification",
 ) {
@@ -35,7 +32,7 @@ function postSes(
   if (messageType !== null) {
     headers["x-amz-sns-message-type"] = messageType;
   }
-  return app.handle(
+  return app.fetch(
     new Request("http://localhost/webhooks/ses", {
       method: "POST",
       headers,
@@ -44,8 +41,12 @@ function postSes(
   );
 }
 
-function postSesAsSns(app: App, body: unknown, messageType = "Notification") {
-  return app.handle(
+function postSesAsSns(
+  app: ReturnType<typeof createWebhookRouter>,
+  body: unknown,
+  messageType = "Notification",
+) {
+  return app.fetch(
     new Request("http://localhost/webhooks/ses", {
       method: "POST",
       headers: {
@@ -169,10 +170,7 @@ describe("POST /webhooks/ses - Delivery lifecycle", () => {
   test("accepts the text/plain JSON body sent by SNS", async () => {
     const db = createTestDb();
     const app = makeApp(db);
-    const response = await postSesAsSns(
-      app,
-      makeLifecycleBody("Send", "ses-text-body"),
-    );
+    const response = await postSesAsSns(app, makeLifecycleBody("Send", "ses-text-body"));
 
     expect(response.status).toBe(200);
     expect(db.select().from(schema.deliveryEvents).all()).toHaveLength(1);
