@@ -48,12 +48,12 @@ jobs:
           file: apps/rotund/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/harrhy-rotund:latest
-            ghcr.io/jackharrhy/harrhy-rotund:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/rotund:latest
+            ghcr.io/jackharrhy/rotund:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/harrhy-rotund@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/rotund@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

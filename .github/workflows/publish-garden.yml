@@ -47,12 +47,12 @@ jobs:
           file: apps/garden/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-garden:latest
-            ghcr.io/jackharrhy/tea-garden:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/garden:latest
+            ghcr.io/jackharrhy/garden:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-garden@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/garden@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
