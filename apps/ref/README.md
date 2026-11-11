@@ -65,10 +65,13 @@ CELLD_BIN=/absolute/path/to/celld npm run test:celld --workspace @tea/ref
 ## Back up and restore
 
 The archive commands use `REF_PASSWORD` while the local password mode is
-active. In Central mode, supply a short-lived `REF_ACCESS_TOKEN` with this
-app's project audience, admin grant, and explicit admin role scope. The Worker
-introspects it for archive and image download routes; no shared password is
-accepted. Set `REF_URL` to the instance you want to access:
+active. In Central mode, supply a short-lived delegated `REF_ACCESS_TOKEN`.
+Backup requires a Ref member or admin grant plus `archive-read` role and scope.
+Restore requires the admin grant and both `archive-read` and `archive-restore`
+roles/scopes; a browser cookie alone never authorizes archive routes. The
+Worker introspects every archive request and image download. Resource metadata
+is at `/.well-known/oauth-protected-resource/api/archive`. Set `REF_URL` to
+the instance you want to access:
 
 ```sh
 REF_URL=https://ref.example.com npm run backup --workspace @tea/ref -- /safe/place/ref-backup

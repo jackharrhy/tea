@@ -3,10 +3,13 @@ import { DirectoryCell } from "./app/data/directory-cell.ts";
 import { createRuntime } from "./app/data/runtime.ts";
 import { readSessionCookie } from "./app/middleware/session.ts";
 import { createAppRouter } from "./app/router.ts";
+import { authorizeArchive } from "./app/middleware/archive-auth.ts";
 import {
   createIdentityClient,
   IdentityError,
-  requireTokenRole,
+  PROJECT_ROLES_SCOPE,
+  projectAudienceScope,
+  roleScope,
 } from "@tea/identity";
 
 export { BoardCell, DirectoryCell };
@@ -50,6 +53,26 @@ export default {
         publicOrigin.origin !== env.AUTH_PUBLIC_ORIGIN)
     )
       return new Response("Central Auth is not configured", { status: 503 });
+    if (url.pathname === "/.well-known/oauth-protected-resource/api/archive") {
+      if (!central) return new Response("Not found", { status: 404 });
+      return Response.json(
+        {
+          resource: `${env.AUTH_PUBLIC_ORIGIN}/api/archive`,
+          authorization_servers: [env.AUTH_ISSUER],
+          bearer_methods_supported: ["header"],
+          scopes_supported: [
+            "openid",
+            "profile",
+            projectAudienceScope(env.AUTH_PROJECT_ID),
+            PROJECT_ROLES_SCOPE,
+            ...["member", "admin", "archive-read", "archive-restore"].map(
+              roleScope,
+            ),
+          ],
+        },
+        { headers: { "Cache-Control": "public, max-age=300" } },
+      );
+    }
 
     try {
       const runtime = createRuntime(env);
@@ -58,13 +81,15 @@ export default {
         ? await runtime.directory.session(token)
         : false;
       const bearer = request.headers.get("Authorization");
+      const archive = url.pathname.startsWith("/api/archive/");
+      if (central && archive) authenticated = false;
       if (
         central &&
-        !authenticated &&
         bearer?.startsWith("Bearer ") &&
-        (url.pathname.startsWith("/api/archive/") ||
-          url.pathname.startsWith("/media/") ||
-          url.pathname.startsWith("/previews/"))
+        (archive ||
+          (!authenticated &&
+            (url.pathname.startsWith("/media/") ||
+              url.pathname.startsWith("/previews/"))))
       ) {
         if (!env.AUTH_INTROSPECTION_CLIENT_ID || !env.AUTH_INTROSPECTION_SECRET)
           return new Response("Archive authentication is unavailable", {
@@ -80,11 +105,11 @@ export default {
             clientId: env.AUTH_INTROSPECTION_CLIENT_ID,
             clientSecret: env.AUTH_INTROSPECTION_SECRET,
           });
-          if (principal.principalType !== "user")
-            return new Response("Human archive authorization required", {
-              status: 403,
-            });
-          requireTokenRole(principal, env.AUTH_PROJECT_ID, "admin");
+          authorizeArchive(
+            principal,
+            env.AUTH_PROJECT_ID,
+            archive && request.method !== "GET" ? "restore" : "read",
+          );
           authenticated = true;
         } catch (error) {
           return new Response("Archive authorization failed", {
@@ -92,6 +117,13 @@ export default {
           });
         }
       }
+      if (central && archive && !authenticated)
+        return new Response("Archive bearer token required", {
+          status: 401,
+          headers: {
+            "WWW-Authenticate": `Bearer resource_metadata="${env.AUTH_PUBLIC_ORIGIN}/.well-known/oauth-protected-resource/api/archive"`,
+          },
+        });
       const router = createAppRouter(
         runtime,
         authenticated,
