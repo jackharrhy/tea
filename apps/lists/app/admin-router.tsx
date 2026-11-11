@@ -12,6 +12,8 @@ import { createAdminTagsController } from "./admin-tags.tsx";
 import { createAdminDmarcController } from "./admin-dmarc.tsx";
 import { createAdminActivityController } from "./admin-activity.tsx";
 import { createAdminSubscribersController } from "./admin-subscribers.tsx";
+import { createAdminTemplatesController } from "./admin-templates.tsx";
+import { createAdminInboundController } from "./admin-inbound.tsx";
 import type { AppContext } from "./router.tsx";
 import { routes } from "./routes.ts";
 
@@ -170,5 +172,7 @@ export function createAdminRouter(db: Db, config: Config, user: User) {
   router.map(routes.admin.dmarc, createAdminDmarcController(db, config, user));
   router.map(routes.admin.activity, createAdminActivityController(db, user));
   router.map(routes.admin.subscribers, createAdminSubscribersController(db, config, user));
+  router.map(routes.admin.templates, createAdminTemplatesController(db, user));
+  router.map(routes.admin.inbound, createAdminInboundController(db, config, user));
   return router;
 }

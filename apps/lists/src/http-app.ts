@@ -42,6 +42,19 @@ export function createApplication(db: Db, config: Config) {
   const legacy = createLegacyApplication(db, config);
   let server: ReturnType<typeof Bun.serve> | undefined;
 
+  async function adminPage(request: Request) {
+    const token = request.headers
+      .get("cookie")
+      ?.split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith("session="))
+      ?.slice(8);
+    const user = getSessionUser(db, token);
+    return user
+      ? createAdminRouter(db, config, user).fetch(request)
+      : new Response(null, { status: 302, headers: { Location: "/admin/login" } });
+  }
+
   async function fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
     try {
@@ -56,19 +69,14 @@ export function createApplication(db: Db, config: Config) {
       if (path.startsWith("/api/") || path === "/openapi/json") return await api.fetch(request);
       if (path === "/mcp" || path === "/mcp/") return await mcp.fetch(request);
       if (path.startsWith("/webhooks/")) return await webhooks.fetch(request);
-      if (path === "/admin/login" || path === "/admin/logout") return await adminAuth.fetch(request);
-      if (path === "/admin/subscribers" || path.startsWith("/admin/subscribers/")) {
-        const token = request.headers
-          .get("cookie")
-          ?.split(";")
-          .map((part) => part.trim())
-          .find((part) => part.startsWith("session="))
-          ?.slice(8);
-        const user = getSessionUser(db, token);
-        if (!user)
-          return new Response(null, { status: 302, headers: { Location: "/admin/login" } });
-        return await createAdminRouter(db, config, user).fetch(request);
-      }
+      if (path === "/admin/login" || path === "/admin/logout")
+        return await adminAuth.fetch(request);
+      if (
+        ["/admin/subscribers", "/admin/templates", "/admin/inbound"].some(
+          (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+        )
+      )
+        return await adminPage(request);
       if (/^\/(?:subscribe|confirm|unsubscribe|preferences)(?:\/|$)/.test(path))
         return await publicRouter.fetch(request);
       if (path === "/auth/login" || path === "/auth/callback")

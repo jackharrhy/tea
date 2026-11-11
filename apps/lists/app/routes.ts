@@ -23,6 +23,19 @@ export const routes = route({
       addTag: post("/:id/tags/add"),
       removeTag: post("/:id/tags/:tagId/remove"),
     }),
+    templates: route("/templates", {
+      index: get("/"),
+      show: get("/:slug"),
+      preview: get("/:slug/preview"),
+    }),
+    inbound: route("/inbound", {
+      index: get("/"),
+      show: get("/:id"),
+      toggleRead: post("/:id/toggle-read"),
+      destroy: post("/:id/delete"),
+      raw: get("/:id/raw"),
+      reply: post("/:id/reply"),
+    }),
     lists: route("/lists", {
       index: get("/"),
       new: get("/new"),
