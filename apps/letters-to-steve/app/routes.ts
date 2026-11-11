@@ -6,6 +6,11 @@ export const routes = route({
   write: get("/write"),
   issue: get("/letters/:issueId"),
   createLetter: post("/letters"),
+  auth: route("auth", {
+    login: get("/login"),
+    callback: get("/callback"),
+    logout: post("/logout"),
+  }),
   uploads: route("uploads", {
     create: post("/"),
     show: get("/:attachmentId"),

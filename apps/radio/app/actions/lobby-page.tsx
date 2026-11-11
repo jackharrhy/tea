@@ -11,18 +11,20 @@ export function LobbyPage(
   handle: Handle<{
     rooms: RoomRecord[];
     identity: RadioIdentity | null;
+    authMode: "password" | "central";
     selectedRoom: string;
     message?: string;
   }>,
 ) {
   return () => {
-    let { rooms, identity, selectedRoom, message } = handle.props;
+    let { rooms, identity, selectedRoom, message, authMode } = handle.props;
     return (
       <Document title="Rooms · tea/radio">
         <main mix={[desktopThemeStyle, lobbyStyle.page]}>
           <RoomLobby
             rooms={rooms}
             identity={identity}
+            authMode={authMode}
             selectedRoom={selectedRoom}
             message={message}
           />

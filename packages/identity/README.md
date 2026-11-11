@@ -26,4 +26,6 @@ An audience grants no permission by itself.
 Run `npm run check --workspace @tea/identity`. Tests cover real JWT signatures,
 identity substitution, nonce, state, discovery endpoints, organization/project
 boundaries and API token expiry. Tea develops and checks it on Node 26 LTS. The
-package has no browser UI or application database dependency.
+package has no browser UI or application database dependency. PKCE, randomness,
+and Basic-auth encoding use Web APIs so the server-only module also works in
+Worker runtimes. Do not import it into browser assets.

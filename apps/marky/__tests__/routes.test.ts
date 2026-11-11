@@ -142,4 +142,48 @@ describe("routes", () => {
       assert.match(body, /Sign out/);
     }
   });
+
+  it("central mode rejects old and expired sessions", async () => {
+    const sessionStorage = createMemorySessionStorage();
+    const sessionCookie = createCookie("marky.session", { secrets: ["sssh"] });
+    const centralRouter = createRouter({
+      config: loadConfig({
+        MARKY_AUTH: "central",
+        MARKY_BASE_URL: "https://md.example.test",
+        AUTH_ISSUER: "https://auth.example.test",
+        AUTH_CLIENT_ID: "marky-web",
+        AUTH_PROJECT_ID: "marky-project",
+        AUTH_ORGANIZATION_ID: "marky-org",
+        SESSION_SECRET: "sssh",
+      }),
+      sessionStorage,
+      sessionCookie,
+    });
+    const seed = await sessionStorage.read(null);
+    seed.set("identity", { discordId: "7", name: "Jack", color: "#205ea6" });
+    const sessionId = await sessionStorage.save(seed);
+    assert.ok(sessionId);
+    const cookieHeader = await sessionCookie.serialize(sessionId);
+    const request = () =>
+      new Request("https://md.example.test/", {
+        headers: { cookie: cookieHeader },
+      });
+    assert.equal((await centralRouter.fetch(request())).status, 302);
+    seed.set("identity", {
+      subject: "central-subject",
+      name: "Jack",
+      color: "#205ea6",
+      expiresAt: Date.now() - 1,
+    });
+    await sessionStorage.save(seed);
+    assert.equal((await centralRouter.fetch(request())).status, 302);
+    seed.set("identity", {
+      subject: "central-subject",
+      name: "Jack",
+      color: "#205ea6",
+      expiresAt: Date.now() + 60000,
+    });
+    await sessionStorage.save(seed);
+    assert.equal((await centralRouter.fetch(request())).status, 200);
+  });
 });

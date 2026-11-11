@@ -7,6 +7,7 @@ import { WebSocket, WebSocketServer, type RawData } from "ws";
 import type { AppConfig } from "../config.ts";
 import type { ContentStore } from "../data/content-store.ts";
 import type { GitStore } from "../data/git-store.ts";
+import { validCentralIdentity, type IdentityValue } from "./auth.ts";
 import {
   SocketRoom,
   type PeerConnection,
@@ -25,7 +26,8 @@ async function readIdentity(
   header: string,
   cookie: Cookie,
   storage: SessionStorage,
-): Promise<PeerIdentity | undefined> {
+  mode: "discord" | "central",
+): Promise<{ identity: PeerIdentity; expiresAt?: number } | undefined> {
   const raw = await cookie.parse(header);
   if (!raw) return undefined;
   let id: string;
@@ -43,10 +45,22 @@ async function readIdentity(
     return undefined;
   }
   const session = await storage.read(id);
-  const saved = session.get("identity") as
-    | { name: string; color: string; discordId: string }
-    | undefined;
-  return saved ? { name: saved.name, color: saved.color } : undefined;
+  const saved = session.get("identity") as IdentityValue | undefined;
+  if (
+    !saved ||
+    typeof saved.name !== "string" ||
+    typeof saved.color !== "string"
+  )
+    return undefined;
+  if (mode === "central") {
+    if (!validCentralIdentity(saved)) return undefined;
+    return {
+      identity: { name: saved.name, color: saved.color },
+      expiresAt: saved.expiresAt,
+    };
+  }
+  if (!saved.discordId) return undefined;
+  return { identity: { name: saved.name, color: saved.color } };
 }
 
 function reject(socket: Duplex, status: number, reason: string) {
@@ -83,7 +97,8 @@ export function attachSockets(
   server.on("upgrade", async (request, socket, head) => {
     if (request.url !== "/ws") return reject(socket, 404, "Not Found");
     let identity: PeerIdentity | undefined;
-    if (options.config.auth.mode === "discord") {
+    let expiresAt: number | undefined;
+    if (options.config.auth.mode !== "anonymous") {
       if (
         request.headers.origin &&
         request.headers.origin !== options.config.auth.baseUrl
@@ -91,12 +106,15 @@ export function attachSockets(
         return reject(socket, 403, "Forbidden");
       }
       try {
-        identity = await readIdentity(
+        const authenticated = await readIdentity(
           request.headers.cookie ?? "",
           options.sessionCookie,
           options.sessionStorage,
+          options.config.auth.mode,
         );
-        if (!identity) return reject(socket, 401, "Unauthorized");
+        if (!authenticated) return reject(socket, 401, "Unauthorized");
+        identity = authenticated.identity;
+        expiresAt = authenticated.expiresAt;
       } catch (error) {
         console.error("marky: ws session read failed", error);
         return reject(socket, 500, "Internal Server Error");
@@ -111,12 +129,21 @@ export function attachSockets(
         isOpen: () => ws.readyState === WebSocket.OPEN,
       };
       room.addPeer(peer, identity);
+      const expiryTimer = expiresAt
+        ? setTimeout(
+            () => ws.close(1008, "Session expired"),
+            Math.max(0, expiresAt - Date.now()),
+          )
+        : undefined;
       ws.on("message", (data) => {
         void room.receive(peer, toBytes(data)).catch((error) => {
           console.error("marky: error handling ws message:", error);
         });
       });
-      ws.on("close", () => room.removePeer(peer));
+      ws.on("close", () => {
+        if (expiryTimer) clearTimeout(expiryTimer);
+        room.removePeer(peer);
+      });
     });
   });
 

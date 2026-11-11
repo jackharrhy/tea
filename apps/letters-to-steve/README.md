@@ -14,4 +14,19 @@ Run `npm run letters-to-steve:check` for Tea formatting, lint, typecheck, and se
 
 `DATABASE_PATH` defaults to `./db/letters.sqlite`; `UPLOAD_DIRECTORY` defaults to `./tmp/uploads`. Keep both outside the public root and on persistent storage. The Docker image sets them to `/app/data/letters.sqlite` and `/app/data/uploads`, runs on pointer-compressed Node 26, and listens on port 44110. Tea publishes `ghcr.io/jackharrhy/tea-letters-to-steve:latest` from `main`. Newport serves that image at <https://steve-letter-writ.ing> with Watchtower and a persistent store; routing, secrets, and rollback instructions live in the infrastructure repository's `hosts/newport/steve/README.md`.
 
-Basic authentication protects `/steve`; serve it over HTTPS when deployed. `TRUST_PROXY=true` is appropriate only behind a proxy that overwrites forwarding headers. Image uploads accept JPEG, PNG, and WebP, convert to WebP, and have per-image and total size limits. The app does not send email; a private email address is only a reply handoff for Steve.
+The Central Auth migration adds `/auth/login`, `/auth/callback`, and `/auth/logout`.
+Set `AUTH_ISSUER`, `AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`,
+`AUTH_ORGANIZATION_ID`, `AUTH_PUBLIC_ORIGIN`, and an explicitly reviewed
+`AUTH_OWNER_SUBJECT` together. The callback is
+`https://steve-letter-writ.ing/auth/callback`. The signed Central Auth ID token
+must resolve to that subject with this app's admin grant. A successful login
+creates a one-hour opaque session in the existing SQLite database; sign-out
+deletes it. Central mode never accepts the old Basic credential. The Basic
+password remains the current deployment path until the dedicated Auth client,
+owner link, and public browser cutover are verified; remove it with the Infra
+cutover. Letter, issue, and attachment IDs stay the same.
+
+`TRUST_PROXY=true` is appropriate only behind a proxy that overwrites
+forwarding headers. Image uploads accept JPEG, PNG, and WebP, convert to WebP,
+and have per-image and total size limits. The app does not send email; a private
+email address is only a reply handoff for Steve.

@@ -22,7 +22,7 @@ import {
   RichTextValidationError,
   type NormalizedRichText,
 } from "../../ui/rich-text.tsx";
-import { challengeSteve, getSteveAccess } from "./auth.ts";
+import { centralAuthConfig, challengeSteve, getSteveAccess } from "./auth.ts";
 import { SteveInboxPage, type AdminIssue } from "./inbox-page.tsx";
 
 const trimmedString = s.string().transform((value) => value.trim());
@@ -65,7 +65,8 @@ const publicLetterSchema = s.object({
 export default createController(routes.steve, {
   actions: {
     async index(context) {
-      let access = getSteveAccess(context.request);
+      let database = context.get(databaseContext);
+      let access = await getSteveAccess(context.request, database);
       if (access === "unconfigured") {
         return context.render(<SteveInboxPage letters={[]} setupRequired />, {
           status: 503,
@@ -74,7 +75,6 @@ export default createController(routes.steve, {
       }
       if (access === "unauthorized") return challengeSteve();
 
-      let database = context.get(databaseContext);
       let [siteEnabled, allLetters, allIssues, allLinks] = await Promise.all([
         isSiteEnabled(database),
         database.findMany(letters, { orderBy: ["created_at", "desc"] }),
@@ -105,6 +105,7 @@ export default createController(routes.steve, {
 
       return context.render(
         <SteveInboxPage
+          centralAuth={centralAuthConfig() !== null}
           issues={adminIssues}
           letters={allLetters}
           siteEnabled={siteEnabled}
@@ -116,7 +117,10 @@ export default createController(routes.steve, {
     },
 
     async updateSite(context) {
-      let rejection = requireSteveAction(context.request);
+      let rejection = await requireSteveAction(
+        context.request,
+        context.get(databaseContext),
+      );
       if (rejection) return rejection;
 
       let form = await context.request.formData();
@@ -132,7 +136,10 @@ export default createController(routes.steve, {
     },
 
     async createIssue(context) {
-      let rejection = requireSteveAction(context.request);
+      let rejection = await requireSteveAction(
+        context.request,
+        context.get(databaseContext),
+      );
       if (rejection) return rejection;
 
       let form = await context.request.formData();
@@ -252,7 +259,10 @@ export default createController(routes.steve, {
     },
 
     async updateIssue(context) {
-      let rejection = requireSteveAction(context.request);
+      let rejection = await requireSteveAction(
+        context.request,
+        context.get(databaseContext),
+      );
       if (rejection) return rejection;
 
       let issueId = readId(context.params.issueId);
@@ -443,7 +453,10 @@ export default createController(routes.steve, {
     },
 
     async updateLetter(context) {
-      let rejection = requireSteveAction(context.request);
+      let rejection = await requireSteveAction(
+        context.request,
+        context.get(databaseContext),
+      );
       if (rejection) return rejection;
 
       let letterId = readId(context.params.letterId);
@@ -505,8 +518,11 @@ function editorialConflictResponse(error: unknown): Response {
   throw error;
 }
 
-function requireSteveAction(request: Request): Response | null {
-  let access = getSteveAccess(request);
+async function requireSteveAction(
+  request: Request,
+  database: SqliteDatabase,
+): Promise<Response | null> {
+  let access = await getSteveAccess(request, database);
   if (access === "unconfigured") {
     return new Response("Admin password is not configured.", { status: 503 });
   }

@@ -18,6 +18,7 @@ export interface AdminIssue extends Issue {
 }
 
 interface SteveInboxPageProps {
+  centralAuth?: boolean;
   issues?: AdminIssue[];
   letters: Letter[];
   setupRequired?: boolean;
@@ -29,6 +30,7 @@ export function SteveInboxPage(handle: Handle<SteveInboxPageProps>) {
     let {
       issues = [],
       letters,
+      centralAuth = false,
       setupRequired = false,
       siteEnabled = true,
     } = handle.props;
@@ -46,6 +48,11 @@ export function SteveInboxPage(handle: Handle<SteveInboxPageProps>) {
           <header className="admin-header">
             <a href={routes.home.href()}>letters to steve</a>
             <h1>inbox ({inbox.length})</h1>
+            {centralAuth ? (
+              <form action={routes.auth.logout.href()} method="post">
+                <button type="submit">sign out</button>
+              </form>
+            ) : null}
           </header>
 
           <main>

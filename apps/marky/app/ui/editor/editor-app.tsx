@@ -11,7 +11,10 @@ import { MARKDOWN_EXTENSION } from "../../shared/constants.ts";
 export interface EditorAppProps {
   authMode:
     | { mode: "anonymous" }
-    | { mode: "discord"; identity: { name: string; color: string } };
+    | {
+        mode: "discord" | "central";
+        identity: { name: string; color: string };
+      };
 }
 
 // `EditorApp` owns everything browser-side: the websocket, the editor view,
@@ -25,13 +28,13 @@ export const EditorApp = clientEntry(
     // until we know we are in the browser.
     const isBrowser = typeof window !== "undefined";
 
-    // In discord mode the identity is available in props during SSR, so seed
+    // In authenticated mode the identity is available in props during SSR, so seed
     // it eagerly. Otherwise the SSR/hydration trees have different shapes
     // (no `<span>` badge during SSR, one after hydration) and the reconciler
     // can leave the SSR sign-out form orphaned alongside the new tree.
     const authModeProp = handle.props.authMode;
     let user: User | null =
-      authModeProp.mode === "discord" ? authModeProp.identity : null;
+      authModeProp.mode !== "anonymous" ? authModeProp.identity : null;
     let socket: SocketHandler | null = null;
     let editor: CollaborativeEditor | null = null;
     let editorElement: HTMLElement | null = null;
@@ -181,7 +184,7 @@ export const EditorApp = clientEntry(
               {user.name}
             </span>
           )}
-          {handle.props.authMode.mode === "discord" && (
+          {handle.props.authMode.mode !== "anonymous" && (
             <form method="post" action="/auth/sign-out" mix={signOutFormStyle}>
               <button type="submit" mix={signOutButtonStyle}>
                 Sign out

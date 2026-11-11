@@ -2,6 +2,7 @@ import { createRouter, type MiddlewareContext } from "remix/router";
 import { formData } from "remix/middleware/form-data";
 import { cop } from "remix/middleware/cop";
 import controller from "./actions/controller.tsx";
+import authController from "./actions/auth-controller.ts";
 import devController from "./actions/dev/controller.tsx";
 import resourcesController from "./actions/resources/controller.tsx";
 import roomsController from "./actions/rooms/controller.tsx";
@@ -50,6 +51,7 @@ export function createAppRouter(
   });
 
   router.map(routes, controller);
+  router.map(routes.auth, authController);
   router.map(routes.dev, devController);
   router.map(routes.rooms, roomsController);
   router.map(routes.resources, resourcesController);

@@ -4,6 +4,7 @@ import { staticFiles } from "remix/middleware/static";
 
 import controller from "./actions/controller.tsx";
 import steveController from "./actions/steve/controller.tsx";
+import centralAuthController from "./actions/steve/central-auth-controller.ts";
 import uploadsController from "./actions/uploads/controller.ts";
 import { assets } from "./assets.ts";
 import { AttachmentStore } from "./data/attachment-store.ts";
@@ -46,6 +47,7 @@ export async function createAppRouter(
   appRouter.map(routes, controller);
   appRouter.map(routes.uploads, uploadsController);
   appRouter.map(routes.steve, steveController);
+  appRouter.map(routes.auth, centralAuthController);
 
   return { attachmentStore, database, router: appRouter };
 }

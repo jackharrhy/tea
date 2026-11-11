@@ -16,4 +16,15 @@ The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git inst
 
 Production at <https://md.jackharrhy.dev> uses `MARKY_AUTH=discord`. It requires `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, `SESSION_SECRET`, and `MARKY_BASE_URL=https://md.jackharrhy.dev`; `DISCORD_BOT_TOKEN` enables Discord role colors. The Discord application's OAuth callback must include `https://md.jackharrhy.dev/auth/callback`. Anonymous mode is for local development; it allows anyone with access to edit all files.
 
+The Central Auth cutover uses `MARKY_AUTH=central`, `AUTH_ISSUER`,
+`AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, the existing
+`SESSION_SECRET`, and `MARKY_BASE_URL=https://md.jackharrhy.dev`. Register
+`https://md.jackharrhy.dev/auth/callback` for a public PKCE client. Central
+project member/admin grants replace the live Discord guild check after the
+current allowed roster is reviewed. Successful sign-in keeps Marky's local
+session and name/color presence, with at most a one-hour lifetime. Existing
+Discord sessions cannot authorize Central mode, including WebSockets. Keep
+production in Discord mode until the grant roster and actual browser/WebSocket
+cutover pass, then remove the Discord credentials and code.
+
 Set `MARKY_GIT_REPO` to a mounted Git checkout containing the content directory if edits should be committed. `MARKY_GIT_PUSH=true` additionally requires `MARKY_GIT_PAT`. Without Git configuration, Marky still writes Markdown files to disk. See `.env.example` for optional settings. Keep content, sessions, and credentials out of Git.

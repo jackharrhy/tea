@@ -28,14 +28,14 @@ if (config.git) {
 
 const sessionCookie = createCookie("marky.session", {
   secrets: [
-    config.auth.mode === "discord"
-      ? config.auth.sessionSecret
-      : crypto.randomBytes(32).toString("hex"),
+    config.auth.mode === "anonymous"
+      ? crypto.randomBytes(32).toString("hex")
+      : config.auth.sessionSecret,
   ],
   httpOnly: true,
   sameSite: "Lax",
   secure:
-    config.auth.mode === "discord" &&
+    config.auth.mode !== "anonymous" &&
     config.auth.baseUrl.startsWith("https://"),
   maxAge: 60 * 60 * 24 * 7,
   path: "/",

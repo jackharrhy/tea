@@ -17,7 +17,32 @@ describe("loadConfig", () => {
   it("rejects unknown MARKY_AUTH values", () => {
     assert.throws(
       () => loadConfig({ MARKY_AUTH: "github" }),
-      /MARKY_AUTH must be "anonymous" or "discord"/,
+      /MARKY_AUTH must be "anonymous", "discord", or "central"/,
+    );
+  });
+
+  it("requires an exact HTTPS Central Auth configuration", () => {
+    const env = {
+      MARKY_AUTH: "central",
+      AUTH_ISSUER: "https://auth.example.test",
+      AUTH_CLIENT_ID: "marky-web",
+      AUTH_PROJECT_ID: "marky-project",
+      AUTH_ORGANIZATION_ID: "marky-org",
+      MARKY_BASE_URL: "https://md.example.test",
+      SESSION_SECRET: "secret-for-session-signing",
+    };
+    const config = loadConfig(env);
+    assert.equal(config.auth.mode, "central");
+    if (config.auth.mode !== "central") throw new Error("unreachable");
+    assert.equal(config.auth.identity.projectId, "marky-project");
+    assert.equal(config.auth.baseUrl, "https://md.example.test");
+    assert.throws(
+      () => loadConfig({ ...env, AUTH_PROJECT_ID: "" }),
+      /AUTH_PROJECT_ID/,
+    );
+    assert.throws(
+      () => loadConfig({ ...env, MARKY_BASE_URL: "http://md.example.test" }),
+      /HTTPS/,
     );
   });
 

@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import type { IdentityConfig } from "@tea/identity";
 
 // Typed env-derived configuration. Read once at startup via loadConfig() so
 // failures surface before the server binds a port.
@@ -13,7 +14,14 @@ export interface DiscordAuthConfig {
   botToken?: string;
 }
 
-type AuthConfig = { mode: "anonymous" } | DiscordAuthConfig;
+export interface CentralAuthConfig {
+  mode: "central";
+  identity: IdentityConfig;
+  baseUrl: string;
+  sessionSecret: string;
+}
+
+type AuthConfig = { mode: "anonymous" } | DiscordAuthConfig | CentralAuthConfig;
 
 interface GitConfig {
   repoDir: string;
@@ -41,27 +49,61 @@ const DISCORD_REQUIRED = [
   "DISCORD_GUILD_ID",
   "SESSION_SECRET",
 ] as const;
+const CENTRAL_REQUIRED = [
+  "AUTH_ISSUER",
+  "AUTH_CLIENT_ID",
+  "AUTH_PROJECT_ID",
+  "AUTH_ORGANIZATION_ID",
+  "SESSION_SECRET",
+  "MARKY_BASE_URL",
+] as const;
 
 export function loadConfig(
   env: Record<string, string | undefined> = process.env,
 ): AppConfig {
   const mode = env.MARKY_AUTH ?? "anonymous";
-  if (mode !== "anonymous" && mode !== "discord") {
+  if (mode !== "anonymous" && mode !== "discord" && mode !== "central") {
     throw new Error(
-      `MARKY_AUTH must be "anonymous" or "discord", got "${mode}"`,
+      `MARKY_AUTH must be "anonymous", "discord", or "central", got "${mode}"`,
     );
   }
 
   const port = parsePort(env.PORT);
   const auth: AuthConfig =
-    mode === "anonymous" ? { mode: "anonymous" } : loadDiscordConfig(env, port);
-  const baseUrl = auth.mode === "discord" ? auth.baseUrl : null;
+    mode === "anonymous"
+      ? { mode: "anonymous" }
+      : mode === "central"
+        ? loadCentralConfig(env)
+        : loadDiscordConfig(env, port);
+  const baseUrl = auth.mode === "anonymous" ? null : auth.baseUrl;
 
   return {
     auth,
     port,
     contentDir: parseContentDir(env.MARKY_CONTENT_DIR),
     git: loadGitConfig(env, baseUrl),
+  };
+}
+
+function loadCentralConfig(
+  env: Record<string, string | undefined>,
+): CentralAuthConfig {
+  const missing = CENTRAL_REQUIRED.filter((key) => !env[key]?.trim());
+  if (missing.length)
+    throw new Error(`MARKY_AUTH=central requires: ${missing.join(", ")}`);
+  const baseUrl = env.MARKY_BASE_URL!.replace(/\/+$/, "");
+  if (new URL(baseUrl).protocol !== "https:")
+    throw new Error("Central Auth requires an HTTPS MARKY_BASE_URL");
+  return {
+    mode: "central",
+    identity: {
+      issuer: env.AUTH_ISSUER!,
+      clientId: env.AUTH_CLIENT_ID!,
+      projectId: env.AUTH_PROJECT_ID!,
+      organizationId: env.AUTH_ORGANIZATION_ID!,
+    },
+    baseUrl,
+    sessionSecret: env.SESSION_SECRET!,
   };
 }
 

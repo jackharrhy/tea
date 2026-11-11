@@ -11,7 +11,10 @@ const FONT_STACK =
 export interface EditorPageProps {
   authMode:
     | { mode: "anonymous" }
-    | { mode: "discord"; identity: { name: string; color: string } };
+    | {
+        mode: "discord" | "central";
+        identity: { name: string; color: string };
+      };
 }
 
 // Server-rendered shell for the editor. The interactive workspace is a single

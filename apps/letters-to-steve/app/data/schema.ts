@@ -94,3 +94,13 @@ export const siteSettings = table({
     updated_at: c.integer().notNull(),
   },
 });
+
+export const steveSessions = table({
+  name: "steve_sessions",
+  columns: {
+    id: c.integer().primaryKey().autoIncrement(),
+    token_hash: c.text().notNull().unique(),
+    subject: c.text().notNull(),
+    expires_at: c.integer().notNull(),
+  },
+});

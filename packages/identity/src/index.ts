@@ -1,4 +1,3 @@
-import { randomBytes, createHash } from "node:crypto";
 import { createRemoteJWKSet, customFetch, jwtVerify } from "jose";
 
 export interface IdentityConfig {
@@ -64,11 +63,22 @@ export function roleScope(role: string): string {
   return `urn:zitadel:iam:org:project:role:${role}`;
 }
 export const PROJECT_ROLES_SCOPE = "urn:zitadel:iam:org:projects:roles";
+function base64url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+function randomToken(length: number): string {
+  return base64url(crypto.getRandomValues(new Uint8Array(length)));
+}
+
 export function createLoginTransaction(): LoginTransaction {
   return {
-    state: randomBytes(32).toString("base64url"),
-    verifier: randomBytes(48).toString("base64url"),
-    nonce: randomBytes(32).toString("base64url"),
+    state: randomToken(32),
+    verifier: randomToken(48),
+    nonce: randomToken(32),
     createdAt: Math.floor(Date.now() / 1000),
   };
 }
@@ -186,6 +196,14 @@ export function createIdentityClient(
     async authorizationUrl(transaction: LoginTransaction, redirectUri: string) {
       const document = await discovery();
       const url = new URL(String(document.authorization_endpoint));
+      const challenge = base64url(
+        new Uint8Array(
+          await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(transaction.verifier),
+          ),
+        ),
+      );
       url.search = new URLSearchParams({
         response_type: "code",
         client_id: config.clientId,
@@ -193,9 +211,7 @@ export function createIdentityClient(
         scope: `openid profile ${projectAudienceScope(config.projectId)} ${PROJECT_ROLES_SCOPE}`,
         state: transaction.state,
         nonce: transaction.nonce,
-        code_challenge: createHash("sha256")
-          .update(transaction.verifier)
-          .digest("base64url"),
+        code_challenge: challenge,
         code_challenge_method: "S256",
       }).toString();
       return url.href;
@@ -296,7 +312,7 @@ export function createIdentityClient(
       const response = await request(String(document.introspection_endpoint), {
         method: "POST",
         headers: {
-          Authorization: `Basic ${Buffer.from(`${encodeURIComponent(credentials.clientId)}:${encodeURIComponent(credentials.clientSecret)}`).toString("base64")}`,
+          Authorization: `Basic ${btoa(`${encodeURIComponent(credentials.clientId)}:${encodeURIComponent(credentials.clientSecret)}`)}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({ token, token_type_hint: "access_token" }),

@@ -9,6 +9,7 @@ on:
       - package.json
       - package-lock.json
       - apps/marky/**
+      - packages/identity/**
   workflow_dispatch:
 concurrency:
   group: publish-marky
