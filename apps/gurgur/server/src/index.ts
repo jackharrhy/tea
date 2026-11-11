@@ -1,14 +1,8 @@
 import { createGurgurServer } from "./server";
 
 const port = Number(process.env.PORT ?? 3000);
-const adminToken = process.env.ADMIN_TOKEN ?? "";
 if (!Number.isInteger(port) || port < 1 || port > 65_535)
   throw new Error("PORT must be an integer between 1 and 65535");
-if (Bun.env.NODE_ENV === "production" && adminToken.length < 16) {
-  throw new Error(
-    "ADMIN_TOKEN must contain at least 16 characters in production",
-  );
-}
 if (process.env.PUBLIC_ORIGIN) {
   const origin = new URL(process.env.PUBLIC_ORIGIN);
   if (
@@ -46,7 +40,7 @@ if (
 }
 const server = await createGurgurServer({
   port,
-  adminToken,
+  adminToken: process.env.ADMIN_TOKEN,
   publicOrigin: process.env.PUBLIC_ORIGIN,
   extraDynamicBodies,
   playerSpawn: playerSpawn

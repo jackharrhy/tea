@@ -811,6 +811,8 @@ export async function createGurgurServer(
       },
       "/admin/reset": {
         POST(request: Request) {
+          if (!devClientEnabled)
+            return new Response("not found", { status: 404 });
           if (
             !adminToken ||
             request.headers.get("authorization") !== `Bearer ${adminToken}`

@@ -20,7 +20,6 @@ const server = Bun.spawn([process.execPath, "dist/server/src/index.js"], {
     HOST: "127.0.0.1",
     PORT: String(port),
     DATABASE_PATH: join(directory, "world.sqlite"),
-    ADMIN_TOKEN: "built-smoke-test-token",
     PUBLIC_ORIGIN: `http://127.0.0.1:${port}`,
   },
   stdout: "ignore",
@@ -38,6 +37,14 @@ try {
     }
   }
   assert(ready, "the built Gurgur server did not become ready");
+  const reset = await fetch(`http://127.0.0.1:${port}/admin/reset`, {
+    method: "POST",
+  });
+  assert.equal(
+    reset.status,
+    404,
+    "production must not expose the test reset route",
+  );
   server.kill("SIGTERM");
   const exitCode = await Promise.race([
     server.exited,
