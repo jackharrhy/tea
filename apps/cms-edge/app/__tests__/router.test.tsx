@@ -149,6 +149,49 @@ it("serves a native Remix editor and public page from one router", async () => {
   assert.equal(row.revision, 3);
 });
 
+it("routes Central editor login and rejects the prototype password session", async () => {
+  const env = {
+    DB: {},
+    MEDIA: {},
+    TEA_SESSION_SECRET: "session-secret",
+    TEA_PREVIEW_SECRET: "preview-secret",
+    TEA_EDITOR_ORIGIN: "https://cms.example.test",
+    TEA_AUTH_ISSUER: "https://auth.example.test",
+    TEA_AUTH_CLIENT_ID: "client",
+    TEA_AUTH_PROJECT_ID: "project",
+    TEA_AUTH_ORGANIZATION_ID: "org",
+    TEA_AUTH_OWNER_SUBJECT: "owner",
+  } as unknown as Bindings;
+  const app = createEdgeRouter(env, { siteName: "CMS", collections: [] });
+  const oldCookie = await sessionCookie(
+    new Request("https://cms.example.test/tea"),
+    env,
+  );
+  const oldSession = await app.fetch(
+    new Request("https://cms.example.test/tea", {
+      headers: { Cookie: oldCookie },
+    }),
+  );
+  assert.equal(oldSession.status, 303);
+  assert.equal(oldSession.headers.get("location"), "/tea/login");
+  const login = await app.fetch(
+    new Request("https://cms.example.test/tea/login"),
+  );
+  assert.equal(login.headers.get("location"), "/tea/auth/login");
+  const invalidCallback = await app.fetch(
+    new Request("https://cms.example.test/tea/auth/callback"),
+  );
+  assert.equal(invalidCallback.status, 400);
+  const password = await app.fetch(
+    new Request("https://cms.example.test/tea/login", {
+      method: "POST",
+      headers: { Origin: "https://cms.example.test" },
+      body: new URLSearchParams({ password: "old" }),
+    }),
+  );
+  assert.equal(password.status, 404);
+});
+
 it("lets a standalone site own staff login and route authorization", async () => {
   const env = { TEA_PREVIEW_SECRET: "preview-secret" } as Bindings;
   const app = createEdgeRouter(env, {

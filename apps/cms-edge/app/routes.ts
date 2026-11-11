@@ -13,6 +13,8 @@ export const routes = route({
   mediaFile: get("/api/media/:id"),
   auth: route("/tea", {
     login: get("/login"),
+    centralLogin: get("/auth/login"),
+    centralCallback: get("/auth/callback"),
     authenticate: post("/login"),
     logout: post("/logout"),
   }),
