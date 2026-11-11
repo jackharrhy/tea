@@ -18,7 +18,9 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
   );
 }
 
-export function AuthPage(handle: Handle<{ error?: string; central?: boolean }>) {
+export function AuthPage(
+  handle: Handle<{ error?: string; central?: boolean }>,
+) {
   return () => (
     <Document title="Unlock">
       <main class="auth-page">
@@ -55,7 +57,9 @@ export function AuthPage(handle: Handle<{ error?: string; central?: boolean }>) 
   );
 }
 
-export function HomePage(handle: Handle<{ boards: BoardRecord[]; error?: string }>) {
+export function HomePage(
+  handle: Handle<{ boards: BoardRecord[]; error?: string }>,
+) {
   return () => (
     <Document title="Boards">
       <main class="home-page">
@@ -100,7 +104,9 @@ export function HomePage(handle: Handle<{ boards: BoardRecord[]; error?: string 
   );
 }
 
-export function BoardPage(handle: Handle<{ board: BoardRecord; error?: string }>) {
+export function BoardPage(
+  handle: Handle<{ board: BoardRecord; error?: string }>,
+) {
   const board = handle.props.board;
   return () => (
     <Document title={board.title}>
@@ -151,7 +157,12 @@ export function BoardPage(handle: Handle<{ board: BoardRecord; error?: string }>
           </p>
         )}
         <div class="board-layout">
-          <section id="viewport" class="viewport" aria-label="Image board" tabIndex={0}>
+          <section
+            id="viewport"
+            class="viewport"
+            aria-label="Image board"
+            tabIndex={0}
+          >
             <div id="world" class="world"></div>
             <div id="empty-state" class="empty-state">
               <p>Drop images or links here</p>
@@ -160,7 +171,12 @@ export function BoardPage(handle: Handle<{ board: BoardRecord; error?: string }>
               </button>
             </div>
             <div class="zoom-controls">
-              <button id="tool-fit" type="button" title="Fit board" aria-label="Fit board">
+              <button
+                id="tool-fit"
+                type="button"
+                title="Fit board"
+                aria-label="Fit board"
+              >
                 □
               </button>
               <button id="zoom-out" type="button" aria-label="Zoom out">
@@ -175,7 +191,11 @@ export function BoardPage(handle: Handle<{ board: BoardRecord; error?: string }>
           <aside id="inspector" class="inspector" hidden>
             <div class="inspector-top">
               <span>Image</span>
-              <button id="inspector-close" type="button" aria-label="Close image details">
+              <button
+                id="inspector-close"
+                type="button"
+                aria-label="Close image details"
+              >
                 ×
               </button>
             </div>

@@ -46,7 +46,9 @@ export class DirectoryCell extends DurableObject<Env> {
       const sessionColumns = ctx.storage.sql
         .exec<{ name: string }>("PRAGMA table_info(solo_sessions)")
         .toArray();
-      if (!sessionColumns.some((column) => column.name === "password_version")) {
+      if (
+        !sessionColumns.some((column) => column.name === "password_version")
+      ) {
         ctx.storage.sql.exec(
           "ALTER TABLE solo_sessions ADD COLUMN password_version TEXT NOT NULL DEFAULT ''",
         );
@@ -81,7 +83,10 @@ export class DirectoryCell extends DurableObject<Env> {
     return token;
   }
 
-  async createCentralSession(subject: string, expiresAt: number): Promise<string> {
+  async createCentralSession(
+    subject: string,
+    expiresAt: number,
+  ): Promise<string> {
     const token = newToken();
     this.ctx.storage.sql.exec(
       "INSERT INTO solo_sessions (token_hash, expires_at, auth_subject) VALUES (?, ?, ?)",
@@ -95,7 +100,10 @@ export class DirectoryCell extends DurableObject<Env> {
   consumeLoginAttempt(clientHash: string): number {
     const now = Date.now();
     return this.ctx.storage.transactionSync(() => {
-      this.ctx.storage.sql.exec("DELETE FROM login_attempts WHERE reset_at <= ?", now);
+      this.ctx.storage.sql.exec(
+        "DELETE FROM login_attempts WHERE reset_at <= ?",
+        now,
+      );
       const previous = this.ctx.storage.sql
         .exec<{ attempts: number; reset_at: number }>(
           "SELECT attempts, reset_at FROM login_attempts WHERE client_hash = ?",
@@ -116,7 +124,10 @@ export class DirectoryCell extends DurableObject<Env> {
   }
 
   clearLoginAttempts(clientHash: string): void {
-    this.ctx.storage.sql.exec("DELETE FROM login_attempts WHERE client_hash = ?", clientHash);
+    this.ctx.storage.sql.exec(
+      "DELETE FROM login_attempts WHERE client_hash = ?",
+      clientHash,
+    );
   }
 
   async session(token: string): Promise<boolean> {
@@ -196,7 +207,10 @@ export class DirectoryCell extends DurableObject<Env> {
     return this.board(id);
   }
 
-  async socketAccess(boardId: string, sessionHash: string): Promise<{ expiresAt: number } | null> {
+  async socketAccess(
+    boardId: string,
+    sessionHash: string,
+  ): Promise<{ expiresAt: number } | null> {
     if (!this.board(boardId)) return null;
     const expiresAt = await this.sessionExpiry(sessionHash);
     return expiresAt === null ? null : { expiresAt };

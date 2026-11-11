@@ -3,7 +3,11 @@ import { DirectoryCell } from "./app/data/directory-cell.ts";
 import { createRuntime } from "./app/data/runtime.ts";
 import { readSessionCookie } from "./app/middleware/session.ts";
 import { createAppRouter } from "./app/router.ts";
-import { createIdentityClient, IdentityError, requireTokenRole } from "@tea/identity";
+import {
+  createIdentityClient,
+  IdentityError,
+  requireTokenRole,
+} from "@tea/identity";
 
 export { BoardCell, DirectoryCell };
 
@@ -50,7 +54,9 @@ export default {
     try {
       const runtime = createRuntime(env);
       const token = readSessionCookie(request);
-      let authenticated = token ? await runtime.directory.session(token) : false;
+      let authenticated = token
+        ? await runtime.directory.session(token)
+        : false;
       const bearer = request.headers.get("Authorization");
       if (
         central &&
@@ -117,7 +123,10 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
-function withSecurityHeaders(response: Response, privateResponse = false): Response {
+function withSecurityHeaders(
+  response: Response,
+  privateResponse = false,
+): Response {
   if (response.status === 101) return response;
   const headers = new Headers(response.headers);
   headers.set("X-Content-Type-Options", "nosniff");

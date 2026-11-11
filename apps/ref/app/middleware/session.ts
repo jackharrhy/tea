@@ -2,7 +2,9 @@ const COOKIE_NAME = "ref_session";
 
 export function readSessionCookie(request: Request): string | null {
   const header = request.headers.get("Cookie") ?? "";
-  const match = new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([0-9a-f]{64})(?:;|$)`).exec(header);
+  const match = new RegExp(
+    `(?:^|;\\s*)${COOKIE_NAME}=([0-9a-f]{64})(?:;|$)`,
+  ).exec(header);
   return match?.[1] ?? null;
 }
 
@@ -12,7 +14,8 @@ export function sessionCookie(
   maxAge = 2592000,
   forceSecure = false,
 ): string {
-  const secure = forceSecure || new URL(request.url).protocol === "https:" ? "; Secure" : "";
+  const secure =
+    forceSecure || new URL(request.url).protocol === "https:" ? "; Secure" : "";
   return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 

@@ -80,7 +80,10 @@ export default createController(routes.auth, {
           status: 303,
           headers: { "Set-Cookie": cleared },
         });
-        response.headers.append("Set-Cookie", sessionCookie(token, context.request, 3600, true));
+        response.headers.append(
+          "Set-Cookie",
+          sessionCookie(token, context.request, 3600, true),
+        );
         return response;
       } catch (error) {
         const status =
