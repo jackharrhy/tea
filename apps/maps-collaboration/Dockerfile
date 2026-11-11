@@ -9,9 +9,9 @@ RUN apt-get update \
 WORKDIR /app
 COPY . .
 RUN npm ci
-RUN npm run build --workspace @jackharrhy/tea-maps-renderer \
-  && npm run build --workspace @tea/maps-editor \
-  && npm run build --workspace @tea/maps-protocol
+RUN npm run build --workspace @harrhy/worldview-renderer \
+  && npm run build --workspace @harrhy/maps-editor \
+  && npm run build --workspace @harrhy/maps-protocol
 
 FROM node:26-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68 AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*

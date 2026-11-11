@@ -4,7 +4,7 @@ COPY --from=oven/bun:1.4.4 /usr/local/bin/bun /usr/local/bin/bun
 COPY . .
 RUN npm ci
 ARG APP_REVISION=development
-RUN APP_REVISION=$APP_REVISION npm run build --workspace @tea/pool-app
+RUN APP_REVISION=$APP_REVISION npm run build --workspace @harrhy/pool-app
 
 FROM oven/bun:1.4.4-slim AS runtime
 WORKDIR /app

@@ -39,12 +39,12 @@ import {
   type WelcomeMessage,
   type ClientControlMessage,
   type WorldManifestMessage,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   encodeWorldBundle,
   type WorldBundle,
   type WorldMessage,
-} from "@tea/gurgur-game";
+} from "@harrhy/gurgur-game";
 import { NETWORK_TRACE_DURATION_SECONDS, WorldHost } from "./game";
 import {
   loadAssetManifest,

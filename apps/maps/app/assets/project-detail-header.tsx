@@ -1,4 +1,4 @@
-import type { HostedProject } from "@tea/maps-protocol";
+import type { HostedProject } from "@harrhy/maps-protocol";
 import type { Handle } from "remix/component";
 
 const gameNames = {

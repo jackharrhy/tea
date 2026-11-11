@@ -1,4 +1,4 @@
-import { HostedErrorResponseSchema } from "@tea/maps-protocol";
+import { HostedErrorResponseSchema } from "@harrhy/maps-protocol";
 
 type ResponseSchema<T> = {
   safeParse(value: unknown): { success: true; data: T } | { success: false };

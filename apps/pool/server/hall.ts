@@ -1,12 +1,12 @@
-import { PoolPhysics } from "@tea/pool/engine";
+import { PoolPhysics } from "@harrhy/pool/engine";
 import type { GameRecorder } from "./recordings";
 import {
   tableSeatPosition,
   TABLE_JOIN_DISTANCE,
   HALL_SPAWN,
-} from "@tea/pool-simulation/geometry";
-import { INPUT_DT, roomSettingsSchema } from "@tea/pool-protocol";
-import type { MoveInput } from "@tea/pool-protocol";
+} from "@harrhy/pool-simulation/geometry";
+import { INPUT_DT, roomSettingsSchema } from "@harrhy/pool-protocol";
+import type { MoveInput } from "@harrhy/pool-protocol";
 import { chooseBotShot, chooseBotPlacement } from "./bot";
 import {
   createShotResult,
@@ -16,8 +16,8 @@ import {
   createMatch,
   startMatch,
   resolveShot,
-} from "@tea/pool";
-import type { PhysicalBall, PoolMatch, ShotResult } from "@tea/pool";
+} from "@harrhy/pool";
+import type { PhysicalBall, PoolMatch, ShotResult } from "@harrhy/pool";
 import {
   TABLES,
   STOOLS,
@@ -25,7 +25,7 @@ import {
   addAvatar,
   removeAvatar,
   stepAvatar,
-} from "@tea/pool-simulation";
+} from "@harrhy/pool-simulation";
 import type {
   ClientMessage,
   RoomSettings,
@@ -34,7 +34,7 @@ import type {
   ServerMessage,
   Snapshot,
   TableSound,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 
 const MOVEMENT_WINDOW_MS = 500;
 const MAX_QUEUED_INPUTS = Math.round(MOVEMENT_WINDOW_MS / (INPUT_DT * 1000));

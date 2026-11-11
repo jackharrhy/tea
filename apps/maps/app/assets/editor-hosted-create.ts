@@ -2,7 +2,7 @@ import {
   gameProfileSupportsFaceSyntax,
   parseMapSource,
   mapsGameProfile,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   CreateHostedMapRequestSchema,
   CreateHostedProjectRequestSchema,
@@ -11,7 +11,7 @@ import {
   HostedMapCreatedResponseSchema,
   HostedProjectCreatedResponseSchema,
   type HostedGame,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 const MAX_MAP_BYTES = 2 * 1_024 * 1_024;
 

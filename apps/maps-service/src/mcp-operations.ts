@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { HostedGameSchema } from "@tea/maps-protocol";
+import { HostedGameSchema } from "@harrhy/maps-protocol";
 import { canEditProject } from "./access-policy.js";
 import type { MapsUser } from "./database.js";
 import { submitHostedBuild } from "./hosted-build-operation.js";

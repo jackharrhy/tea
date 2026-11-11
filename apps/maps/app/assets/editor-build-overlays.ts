@@ -2,11 +2,11 @@ import {
   parseLeakPath,
   parsePortalFile,
   type MapCompileResult,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import type {
   EditorDiagnosticOverlay,
   EditorSourceRenderer,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 import type { EditorBuildControlState } from "./editor-build-controls-bridge.ts";
 
 type OverlayState = Pick<

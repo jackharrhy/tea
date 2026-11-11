@@ -1,4 +1,4 @@
-# @tea/cms-edge
+# @harrhy/cms-edge
 
 This Remix 3 Cloudflare Worker app serves a CMS editor and content API backed by D1 and R2. `worker.ts` starts the Worker with a sample `pages` collection. `app/` owns the router, auth, content, previews, media, and UI; `db/schema.sql` defines its D1 tables. The Worker has no public site renderer yet. Add public Remix routes through `createEdgeRouter`'s `extend` callback in `worker.ts`.
 
@@ -22,6 +22,6 @@ introspected human project-admin token and the dedicated
 resource credentials. This prototype has no production origin or Auth client
 yet, so it is not part of a live cutover.
 
-The editor is under `/tea`; published JSON is at `/api/content/:collection` and `/api/content/:collection/:slug`. In password mode, `/api/preview/*` requires `Authorization: Bearer <TEA_PREVIEW_SECRET>`; Central mode uses a human admin resource token instead. `TEA_EDITOR_ORIGIN` sets the canonical editor origin. Editor input uses [`@tea/request-body`](../../packages/request-body/README.md) for a 16 KiB stream limit, and request records use [`@tea/logger`](../../packages/logger/README.md).
+The editor is under `/tea`; published JSON is at `/api/content/:collection` and `/api/content/:collection/:slug`. In password mode, `/api/preview/*` requires `Authorization: Bearer <TEA_PREVIEW_SECRET>`; Central mode uses a human admin resource token instead. `TEA_EDITOR_ORIGIN` sets the canonical editor origin. Editor input uses [`@harrhy/request-body`](../../packages/request-body/README.md) for a 16 KiB stream limit, and request records use [`@harrhy/logger`](../../packages/logger/README.md).
 
 From the repo root, run `npm ci`, then `npm run cms-edge:check`. Use `npm run cms-edge:dev` for local development. The Cloudflare `cf` CLI reads `cloudflare.config.ts` and uses the Vite plugin to build the Worker. The check generates Worker types, typechecks, runs tests in `app/__tests__/`, and builds the Worker. Deploy only after replacing the resource placeholder and setting secrets.

@@ -1,5 +1,5 @@
 import type { Database } from "bun:sqlite";
-import { TILE_SIZE } from "@tea/burger-core";
+import { TILE_SIZE } from "@harrhy/burger-core";
 
 export type ZoneRuntime = {
   id: number;

@@ -4,7 +4,7 @@ import {
   selectedBrushIds,
   selectedFaceReferences,
   type EditorMaterial,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { clientEntry, on, ref, type Handle } from "remix/component";
 import type { MaterialBrowserContext } from "./editor-material-browser.ts";
 

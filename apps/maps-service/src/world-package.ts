@@ -1,5 +1,5 @@
 import { zipSync } from "fflate";
-import { gameTreeAssetPath } from "@tea/maps-protocol";
+import { gameTreeAssetPath } from "@harrhy/maps-protocol";
 
 interface WorldPackageAsset {
   readonly name: string;

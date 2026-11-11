@@ -1,7 +1,7 @@
 import { expect, test, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { removeEntity } from "bitecs";
-import { MESSAGE_TYPES } from "@tea/burger-core";
+import { MESSAGE_TYPES } from "@harrhy/burger-core";
 import { runMigrations } from "../../server/db";
 import { initWorld } from "../../server/world";
 import {

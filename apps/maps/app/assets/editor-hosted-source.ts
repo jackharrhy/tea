@@ -1,4 +1,4 @@
-import { parseMapSource } from "@tea/maps-editor/core";
+import { parseMapSource } from "@harrhy/maps-editor/core";
 import {
   HostedErrorResponseSchema,
   HostedMapResponseSchema,
@@ -6,7 +6,7 @@ import {
   ReplaceHostedMapSourceResultSchema,
   type HostedMapLaunch,
   type ReplaceHostedMapSourceResult,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { openDB, type DBSchema } from "idb";
 import { readHostedApi } from "./hosted-api.ts";
 

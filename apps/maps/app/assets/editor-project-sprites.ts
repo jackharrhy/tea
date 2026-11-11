@@ -1,5 +1,5 @@
-import { parseGoldSrcSprite } from "@jackharrhy/tea-maps-renderer/core";
-import type { EditorSpriteMaterial } from "@tea/maps-editor/render";
+import { parseGoldSrcSprite } from "@harrhy/worldview-renderer/core";
+import type { EditorSpriteMaterial } from "@harrhy/maps-editor/render";
 import type { MapDirectoryHandle } from "./editor-project.ts";
 
 async function directoryAt(

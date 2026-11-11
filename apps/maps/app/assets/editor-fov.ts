@@ -1,4 +1,4 @@
-import type { EditorSourceRenderer } from "@tea/maps-editor/render";
+import type { EditorSourceRenderer } from "@harrhy/maps-editor/render";
 
 const STORAGE_KEY = "tea.maps.editor.default-fov";
 const FACTORY_FOV = 60;

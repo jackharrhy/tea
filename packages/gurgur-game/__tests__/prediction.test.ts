@@ -5,7 +5,7 @@ import {
   PhysicsWorld,
   type BodyState,
   type RuntimeId,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   PLAYER_CAPSULE_HALF_SEGMENT,
   PLAYER_CAPSULE_RADIUS,

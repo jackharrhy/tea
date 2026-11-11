@@ -5,7 +5,7 @@ import {
   mapSourceFingerprint,
   parseMapsProject,
   serializeMap,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { deleteDB } from "idb";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { MapFileHandle } from "../editor-files.ts";

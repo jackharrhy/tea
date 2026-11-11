@@ -1,5 +1,5 @@
 {
-  "name": "@tea/maps-service",
+  "name": "@harrhy/maps-service",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -13,17 +13,17 @@
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "@jackharrhy/tea-maps-renderer": "0.2.0",
-    "@tea/maps-editor": "0.1.0",
-    "@tea/maps-protocol": "0.1.0",
-    "@tea/request-body": "0.1.0",
+    "@harrhy/worldview-renderer": "0.2.0",
+    "@harrhy/maps-editor": "0.1.0",
+    "@harrhy/maps-protocol": "0.1.0",
+    "@harrhy/request-body": "0.1.0",
     "@sindresorhus/slugify": "^4.0.1",
     "fflate": "^0.8.3",
     "nanoid": "^6.0.1",
     "remix": "3.2.0",
     "undici": "^8.12.4",
     "zod": "^4.6.7",
-    "@tea/identity": "0.1.0"
+    "@harrhy/identity": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

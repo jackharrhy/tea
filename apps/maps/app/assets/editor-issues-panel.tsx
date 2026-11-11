@@ -3,7 +3,7 @@ import {
   EDITOR_ISSUE_TYPE_INFO,
   type EditorIssue,
   type EditorIssueType,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { clientEntry, on, type Handle } from "remix/component";
 import type {
   IssueBrowserOptions,

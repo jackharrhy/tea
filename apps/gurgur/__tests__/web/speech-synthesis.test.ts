@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { PROTOCOL_VERSION, type SpeechMessage } from "@tea/gurgur-engine";
+import { PROTOCOL_VERSION, type SpeechMessage } from "@harrhy/gurgur-engine";
 import {
   SpeechSynthesizer,
   type SynthesizedSpeech,

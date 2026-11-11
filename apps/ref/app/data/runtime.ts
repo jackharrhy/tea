@@ -1,5 +1,5 @@
 import { createContextKey } from "remix/router";
-import type { IdentityConfig } from "@tea/identity";
+import type { IdentityConfig } from "@harrhy/identity";
 import type { BoardCell } from "./board-cell.ts";
 import type { DirectoryCell } from "./directory-cell.ts";
 

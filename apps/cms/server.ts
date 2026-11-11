@@ -5,7 +5,7 @@ import { loadSites, parseOperatorOrigin } from "./config.ts";
 import { createApp } from "./app.ts";
 import { createOperatorStore } from "./operator/store.ts";
 import { resolve } from "node:path";
-import { createLogger } from "@tea/logger";
+import { createLogger } from "@harrhy/logger";
 const sites = await loadSites();
 const operatorOrigin = parseOperatorOrigin(
   process.env.TEA_OPERATOR_ORIGIN,

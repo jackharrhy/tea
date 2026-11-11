@@ -1,4 +1,4 @@
-import type { SpeechVoice } from "@tea/gurgur-engine";
+import type { SpeechVoice } from "@harrhy/gurgur-engine";
 
 type LinTalkerModule = {
   HEAPU8: Uint8Array;

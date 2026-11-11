@@ -1,4 +1,4 @@
-# @tea/radio
+# @harrhy/radio
 
 A multi-room synchronized audio player adapted from the former standalone Radio repository. Its pages and title bar use the Radio name while preserving existing room and media APIs. Remix renders the application inside a Worker, and each
 named room is a Celld/Cloudflare-compatible Durable Object with private SQLite state and
@@ -6,7 +6,7 @@ hibernatable WebSockets. Audio content lives in the `TRACKS` R2-compatible objec
 
 ## Local development
 
-Install Tea's Node.js version and dependencies from the repository root, then start Wrangler's local development server:
+Install the repository's Node.js version and dependencies from the repository root, then start Wrangler's local development server:
 
 ```sh
 npm ci
@@ -27,16 +27,16 @@ filesystem from which `remix/assets` can compile modules on demand.
 Useful commands:
 
 ```sh
-npm run build --workspace @tea/radio
+npm run build --workspace @harrhy/radio
 npm run radio:dev
-npm run dev:celld --workspace @tea/radio
-npm run types:worker --workspace @tea/radio
+npm run dev:celld --workspace @harrhy/radio
+npm run types:worker --workspace @harrhy/radio
 npm run radio:check
 ```
 
 ## Deployment model
 
-The default Tea configuration uses Worker name `tea-radio` and bucket name `tea-radio-tracks` for new isolated stores. Tea's root `compose.yml` serves it at `radio.localhost` with an independent `radio-data` volume. Mug's production service uses the cutover configuration with the original `radio` Worker and `radio-tracks` bucket, and a separate copied Celld volume.
+The default Tea configuration uses Worker name `tea-radio` and bucket name `tea-radio-tracks` for new isolated stores. The repository's root `compose.yml` serves it at `radio.localhost` with an independent `radio-data` volume. Mug's production service uses the cutover configuration with the original `radio` Worker and `radio-tracks` bucket, and a separate copied Celld volume.
 
 The application image includes Radio and copies `/usr/local/bin/celld` from a digest-pinned Celld 0.6.2 image in the [Celld fork](https://github.com/jackharrhy/celld) with native SQLite object storage. Its published binary matches the release binary used for Radio's 0.5.1-to-0.6.2 upgrade, 1 GiB media, and cold-restore smokes. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse another runtime on an isolated store. Tea's `publish-radio` workflow checks and publishes `ghcr.io/jackharrhy/tea-radio:latest` and a commit tag on relevant `main` changes. Mug uses `:latest` and Watchtower to deploy new main builds.
 The `dev.jackharrhy.radio.celld-image` image label records the bundled Celld binary.
@@ -100,12 +100,12 @@ The default `wrangler.jsonc` uses the separate `tea-radio` Worker and `tea-radio
 To check that path with disposable source data, run the archived Radio checkout's `test:celld` with `--keep-state --output /tmp/radio-source-smoke.json`, then from Tea run:
 
 ```sh
-npm run test:source-cutover --workspace @tea/radio -- /tmp/radio-source-smoke.json
+npm run test:source-cutover --workspace @harrhy/radio -- /tmp/radio-source-smoke.json
 ```
 
 This optional check requires Celld, SQLite's `sqlite3` CLI, and Playwright Chromium. It makes a consistent SQLite snapshot of the stopped source smoke store, starts Tea Radio with the cutover config and fresh credentials, and verifies the original room, track ID, queue title, volume, paused position, audio hash, and suffix range. Tea then renames the copied track and changes its volume, kills Celld, removes its replica cache, and verifies those edits and the audio from the copied authoritative store. It reads but does not change the source store. The production transfer used a cold source copy and a separate audit of the live playing room; see the project import guide.
 
-For a full read-only comparison of two running instances, set `RADIO_SOURCE_URL`, `RADIO_SOURCE_PASSWORD`, `RADIO_TEA_URL`, and `RADIO_TEA_PASSWORD` privately, then run `npm run compare:instances --workspace @tea/radio -- --output /safe/place/radio-comparison.json`. Use distinct origins and pause every room before the comparison; playing positions change with time and are rejected. Keep both datasets free of other writes until it finishes. The command compares the complete room directory, ordered track metadata, paused position, volume, and every track's streamed SHA-256, byte count, content type, and suffix range. It only joins rooms as a temporary listener. The optional report is created with private file permissions and fails if its path already exists. A match is evidence for the copied dataset at that moment; preserve the source backup and perform the separate routing cutover only after reviewing it. The command does not compare listener presence or edit history.
+For a full read-only comparison of two running instances, set `RADIO_SOURCE_URL`, `RADIO_SOURCE_PASSWORD`, `RADIO_TEA_URL`, and `RADIO_TEA_PASSWORD` privately, then run `npm run compare:instances --workspace @harrhy/radio -- --output /safe/place/radio-comparison.json`. Use distinct origins and pause every room before the comparison; playing positions change with time and are rejected. Keep both datasets free of other writes until it finishes. The command compares the complete room directory, ordered track metadata, paused position, volume, and every track's streamed SHA-256, byte count, content type, and suffix range. It only joins rooms as a temporary listener. The optional report is created with private file permissions and fails if its path already exists. A match is evidence for the copied dataset at that moment; preserve the source backup and perform the separate routing cutover only after reviewing it. The command does not compare listener presence or edit history.
 
 ### Upgrading an existing Celld store
 

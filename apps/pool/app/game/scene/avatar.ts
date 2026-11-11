@@ -1,6 +1,6 @@
 import * as THREE from "three/webgpu";
-import { STOOLS, AVATAR_SCALE } from "@tea/pool-simulation/geometry";
-import type { PlayerState } from "@tea/pool-protocol";
+import { STOOLS, AVATAR_SCALE } from "@harrhy/pool-simulation/geometry";
+import type { PlayerState } from "@harrhy/pool-protocol";
 import { label, material } from "./textures";
 
 export function createAvatar(player: PlayerState) {

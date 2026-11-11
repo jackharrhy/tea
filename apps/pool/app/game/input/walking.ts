@@ -1,5 +1,5 @@
-import { WALK_SPEED, type Point } from "@tea/pool-simulation";
-import { INPUT_DT } from "@tea/pool-protocol";
+import { WALK_SPEED, type Point } from "@harrhy/pool-simulation";
+import { INPUT_DT } from "@harrhy/pool-protocol";
 
 export function walkDirection(
   from: Point,

@@ -8,15 +8,15 @@ import {
   PROTOCOL_VERSION,
   cloneNetworkState,
   isStaleNetworkState,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import type {
   InputCommand,
   NetworkObjectState,
   PhysicsDebugFrame,
   RuntimeId,
   UseRequestMessage,
-} from "@tea/gurgur-engine";
-import type { WorldMessage } from "@tea/gurgur-game";
+} from "@harrhy/gurgur-engine";
+import type { WorldMessage } from "@harrhy/gurgur-game";
 import { parseDevFollowCamera, type DevFollowCamera } from "./dev-follow";
 import { installSpeechChat, type SpeechChat } from "./speech-chat";
 import { SpeechSynthesizer } from "./speech-synthesis";

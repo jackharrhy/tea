@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { MapCompileResult } from "@tea/maps-editor/core";
-import type { EditorDiagnosticOverlay } from "@tea/maps-editor/render";
+import type { MapCompileResult } from "@harrhy/maps-editor/core";
+import type { EditorDiagnosticOverlay } from "@harrhy/maps-editor/render";
 import { createBuildOverlays } from "../editor-build-overlays.ts";
 
 function artifact(kind: "leak-path" | "portal", text: string) {

@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { serializeMap, createStarterDocument } from "@tea/maps-editor/core";
+import { serializeMap, createStarterDocument } from "@harrhy/maps-editor/core";
 import { deleteDB } from "idb";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {

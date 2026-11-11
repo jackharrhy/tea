@@ -1,5 +1,5 @@
 {
-  "name": "@tea/marky",
+  "name": "@harrhy/marky",
   "private": true,
   "type": "module",
   "engines": {
@@ -13,7 +13,7 @@
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "@tea/identity": "0.1.0",
+    "@harrhy/identity": "0.1.0",
     "prosemirror-commands": "^1.7.1",
     "prosemirror-keymap": "^1.2.3",
     "prosemirror-model": "^1.25.13",

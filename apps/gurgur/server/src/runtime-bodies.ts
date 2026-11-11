@@ -6,8 +6,8 @@ import type {
   RuntimeId,
   TransferPolicy,
   Vec3,
-} from "@tea/gurgur-engine";
-import type { WorldBundle } from "@tea/gurgur-game";
+} from "@harrhy/gurgur-engine";
+import type { WorldBundle } from "@harrhy/gurgur-game";
 import type { PersistedWorld } from "./store";
 
 export type RuntimeBody = {

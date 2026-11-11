@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { addComponent, addEntity, hasComponent, removeComponent } from "bitecs";
 import type { Database } from "bun:sqlite";
-import { createSharedWorld, TILE_SIZE } from "@tea/burger-core";
+import { createSharedWorld, TILE_SIZE } from "@harrhy/burger-core";
 import atlas from "../atlas.toml";
 import { loadZones, type ZoneRuntime } from "./zones";
 

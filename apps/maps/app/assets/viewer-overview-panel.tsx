@@ -1,8 +1,8 @@
 import {
   planOverview,
   type OverviewCaptureOptions,
-} from "@jackharrhy/tea-maps-renderer";
-import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
+} from "@harrhy/worldview-renderer";
+import type { MapsViewElement } from "@harrhy/worldview-renderer/element";
 import { clientEntry, on, type Handle } from "remix/component";
 import { downloadViewerFile, viewerMapFilename } from "./viewer-download.ts";
 

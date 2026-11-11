@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import type { ClientDiagnostic, ServerMessage } from "@tea/pool-protocol";
-import { INPUT_DT } from "@tea/pool-protocol";
-import { tableSeatPosition } from "@tea/pool-simulation/geometry";
+import type { ClientDiagnostic, ServerMessage } from "@harrhy/pool-protocol";
+import { INPUT_DT } from "@harrhy/pool-protocol";
+import { tableSeatPosition } from "@harrhy/pool-simulation/geometry";
 import { Hall } from "../../server/hall";
 import { GameRecorder } from "../../server/recordings";
 

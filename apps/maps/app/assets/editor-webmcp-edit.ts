@@ -9,7 +9,7 @@ import {
   findBrush,
   pointEntitiesInDocument,
   Vec3Schema,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { z } from "zod";
 import {
   assertDocument,

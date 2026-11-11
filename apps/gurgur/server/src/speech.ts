@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { SpeechVoice } from "@tea/gurgur-engine";
+import type { SpeechVoice } from "@harrhy/gurgur-engine";
 
 type Bucket = {
   tokens: number;

@@ -4,7 +4,7 @@ import {
   moveAndSlide,
   type PlayerState,
   SERVER_TICK_RATE_MS,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 import { removeEntity } from "bitecs";
 import {
   createServer,

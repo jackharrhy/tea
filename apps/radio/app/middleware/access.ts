@@ -6,7 +6,7 @@ import { session } from "remix/middleware/session";
 
 import { routes } from "../routes.ts";
 import { RadioSessionCookie } from "./session-cookie.ts";
-import type { IdentityConfig } from "@tea/identity";
+import type { IdentityConfig } from "@harrhy/identity";
 
 export type RadioIdentity = {
   name: string;

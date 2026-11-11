@@ -1,7 +1,7 @@
 import {
   parseActiveRealtimeTicketPayload,
   type RealtimeTicketPayload,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 export type HostedRealtimeTicket = RealtimeTicketPayload;
 

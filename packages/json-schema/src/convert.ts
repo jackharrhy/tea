@@ -3,11 +3,11 @@
  * Standard JSON Schema into a 2020-12 document, and `withJSONSchema` gives a schema
  * built with `remix/data-schema` directly the JSON Schema it accepts.
  */
-import type { Result } from "@tea/result";
+import type { Result } from "@harrhy/result";
 import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 import type { Schema as DataSchema } from "remix/data-schema";
 
-import { success } from "@tea/result";
+import { success } from "@harrhy/result";
 
 import type { JSONSchemaConversionError } from "./error.ts";
 import type { JSONSchema, JSONSchemaDirection, Schema } from "./types.ts";

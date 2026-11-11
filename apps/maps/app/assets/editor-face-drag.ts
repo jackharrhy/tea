@@ -5,11 +5,11 @@ import {
   selectedFaceReferences,
   type EditorSession,
   type FaceSelection,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   type EditorFaceDragEvent,
   type EditorSourceRenderer,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 
 type FaceCandidate =
   | NonNullable<ReturnType<EditorSession["createFaceSetTranslationCandidate"]>>

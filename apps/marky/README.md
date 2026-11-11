@@ -6,13 +6,13 @@ A real time collaborative Markdown editor adapted from the former standalone Mar
 
 `server.ts` starts the Remix router and WebSocket endpoint. `app/router.tsx` wires HTTP routes; `app/middleware/websocket-server.ts` handles upgrades and `app/middleware/sockets.ts` owns collaboration and persistence. `app/data/content-store.ts` owns Markdown files. `app/ui/editor/` and `app/frontend/` own the browser editor.
 
-From the Tea root, run `npm ci`, then `npm run marky:dev`. The local server listens on port 44100. Alternatively, `docker compose up --build marky` serves the app at <http://md.localhost>. Local Compose uses anonymous access and an isolated `marky-data` volume.
+From the repository root, run `npm ci`, then `npm run marky:dev`. The local server listens on port 44100. Alternatively, `docker compose up --build marky` serves the app at <http://md.localhost>. Local Compose uses anonymous access and an isolated `marky-data` volume.
 
-Run `npm run check --workspace @tea/marky` for typecheck and server tests. `npm run marky:check` also runs shared formatting and linting. Run `npx remix doctor` from this workspace after framework structure changes.
+Run `npm run check --workspace @harrhy/marky` for typecheck and server tests. `npm run marky:check` also runs shared formatting and linting. Run `npx remix doctor` from this workspace after framework structure changes.
 
 ## Runtime and deployment
 
-The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git installed for optional commit and push. `MARKY_CONTENT_DIR=/app/data/content` and `MARKY_SESSION_DIR=/app/data/sessions` should use a persistent, writable volume. The image listens on port 44100. Tea publishes `ghcr.io/jackharrhy/tea-marky` from `main`; production routing and secrets live in the infra repo.
+The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git installed for optional commit and push. `MARKY_CONTENT_DIR=/app/data/content` and `MARKY_SESSION_DIR=/app/data/sessions` should use a persistent, writable volume. The image listens on port 44100. This repository publishes `ghcr.io/jackharrhy/tea-marky` from `main`; production routing and secrets live in the infra repo.
 
 Production at <https://md.jackharrhy.dev> uses `MARKY_AUTH=central`. It requires `AUTH_ISSUER`,
 `AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, the existing

@@ -1,5 +1,5 @@
 {
-  "name": "@tea/json-schema",
+  "name": "@harrhy/json-schema",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "@tea/result": "0.1.0",
+    "@harrhy/result": "0.1.0",
     "@standard-schema/spec": "1.1.0",
     "remix": "3.2.0"
   },

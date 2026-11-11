@@ -9,7 +9,7 @@ import {
   createStarterDocument,
   findBrush,
   selectedBrushIds,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { createEditorClipboard } from "../editor-clipboard.ts";
 
 describe("editor clipboard", () => {

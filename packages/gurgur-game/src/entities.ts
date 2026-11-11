@@ -6,7 +6,7 @@ import type {
   SpriteAssetId,
   Vec3,
   WorldSettings,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import type {
   CompiledGameEntity,
   EntityInput,

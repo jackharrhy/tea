@@ -21,7 +21,7 @@ import {
   type InputCmd,
   type GameStateMessage,
   type PlayerState,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 import {
   createSnapshotSerializer,
   createSoASerializer,

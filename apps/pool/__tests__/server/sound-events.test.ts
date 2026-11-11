@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
-import { INPUT_DT } from "@tea/pool-protocol";
+import { INPUT_DT } from "@harrhy/pool-protocol";
 import { Hall } from "../../server/hall";
-import { tableSeatPosition } from "@tea/pool-simulation/geometry";
-import { POCKETS } from "@tea/pool/table";
+import { tableSeatPosition } from "@harrhy/pool-simulation/geometry";
+import { POCKETS } from "@harrhy/pool/table";
 
 const halls: Hall[] = [];
 function hall() {

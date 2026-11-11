@@ -52,7 +52,7 @@ jobs:
             ghcr.io/jackharrhy/tea-radio:latest
             ghcr.io/jackharrhy/tea-radio:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:

@@ -6,8 +6,8 @@ import {
   type PoolTrace,
   type PoolTraceMessage,
   MAX_POOL_TRACE_RAW_BYTES,
-} from "@tea/pool-protocol";
-import { type PhysicalBall } from "@tea/pool";
+} from "@harrhy/pool-protocol";
+import { type PhysicalBall } from "@harrhy/pool";
 import {
   GameRecorder,
   exportClientTraces,
@@ -15,7 +15,7 @@ import {
 } from "../../server/recordings";
 import { database, recordedClientTraces, recordedShots } from "../../server/db";
 import { Hall, type Peer } from "../../server/hall";
-import { tableSeatPosition } from "@tea/pool-simulation/geometry";
+import { tableSeatPosition } from "@harrhy/pool-simulation/geometry";
 
 const ball: PhysicalBall = {
   id: 0,

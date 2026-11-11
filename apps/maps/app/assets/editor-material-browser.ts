@@ -1,4 +1,4 @@
-import type { EditorMaterial, EditorSession } from "@tea/maps-editor/core";
+import type { EditorMaterial, EditorSession } from "@harrhy/maps-editor/core";
 
 export interface MaterialBrowserContext {
   readonly session: () => EditorSession;

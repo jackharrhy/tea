@@ -7,14 +7,14 @@ import {
   rebaseMapSource,
   type CollaborationOperation,
   type MapDocument,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   parseCollaborationClientFrame,
   type CollaborationServerFrame,
   type HostedCheckpoint,
   type HostedMapSnapshot,
   type ReplaceHostedMapSourceResult,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 interface SocketAttachment {
   readonly actorId: string;

@@ -4,7 +4,7 @@ import {
   type BodyState,
   type InputCommand,
   type RuntimeId,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import { compileWorld, createGamePlayers, type GameEngine } from "../src";
 
 const cube = `{

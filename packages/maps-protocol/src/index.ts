@@ -19,5 +19,5 @@ export {
   type RealtimeTicketPayload,
 } from "./realtime-ticket.js";
 export * from "./hosted.js";
-export { mapsGameProfile } from "@tea/maps-editor/core";
+export { mapsGameProfile } from "@harrhy/maps-editor/core";
 export { gameTreeAssetPath, isGameTreeAssetPath } from "./game-tree-assets.js";

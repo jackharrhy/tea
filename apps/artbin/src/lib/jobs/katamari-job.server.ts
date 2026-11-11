@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sanitizeFilename } from "@tea/artbin-core/detection/filenames";
+import { sanitizeFilename } from "@harrhy/artbin-core/detection/filenames";
 import type { Job } from "#db";
 
 import { registerJobHandler, updateJobProgress } from "../jobs.server.ts";

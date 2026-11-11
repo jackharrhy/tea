@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import type { IdentityConfig } from "@tea/identity";
+import type { IdentityConfig } from "@harrhy/identity";
 
 // Typed env-derived configuration. Read once at startup via loadConfig() so
 // failures surface before the server binds a port.

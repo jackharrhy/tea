@@ -9,8 +9,8 @@ import {
   type EditorGroup,
   type EditorSelection,
   type EditorSession,
-} from "@tea/maps-editor/core";
-import type { EditorPickIntent } from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/core";
+import type { EditorPickIntent } from "@harrhy/maps-editor/render";
 
 export type EditorPickResult =
   | { readonly kind: "open-group"; readonly group: EditorGroup }

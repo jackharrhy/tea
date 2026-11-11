@@ -1,7 +1,7 @@
 import type {
   FaceTextureAlignmentOperation,
   FaceTextureProjectionField,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
 export interface ProjectionInputState {
   readonly value: string;

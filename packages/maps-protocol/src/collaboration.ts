@@ -5,7 +5,7 @@ import {
   Vec3Schema,
   type CollaborationEdit,
   type CollaborationFailure,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { z } from "zod";
 
 import { MapsProtocolError, zodPath } from "./protocol-error.js";

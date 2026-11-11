@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { writeMapFile, type MapFileHandle } from "../editor-files.ts";
-import { mapSourceFingerprint } from "@tea/maps-editor/core";
+import { mapSourceFingerprint } from "@harrhy/maps-editor/core";
 
 function testHandle(initial: string) {
   let content = initial;

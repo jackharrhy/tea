@@ -10,7 +10,7 @@ import {
   PROJECT_ROLES_SCOPE,
   projectAudienceScope,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 export { BoardCell, DirectoryCell };
 

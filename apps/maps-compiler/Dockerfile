@@ -7,10 +7,10 @@ COPY . .
 # Drop preferred prebuilds and rebuild against this compression-enabled runtime (two jobs).
 RUN npm ci && rm -rf node_modules/better-sqlite3/prebuilds \
   && node /usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --directory node_modules/better-sqlite3 --nodedir=/usr/local --jobs=2 \
-  && npm run build --workspace @jackharrhy/tea-maps-renderer \
-  && npm run build --workspace @tea/maps-editor \
-  && npm run build --workspace @tea/maps-protocol \
-  && npm run build --workspace @tea/maps-compiler \
+  && npm run build --workspace @harrhy/worldview-renderer \
+  && npm run build --workspace @harrhy/maps-editor \
+  && npm run build --workspace @harrhy/maps-protocol \
+  && npm run build --workspace @harrhy/maps-compiler \
   && npm prune --omit=dev
 
 FROM platformatic/node-caged:26-slim

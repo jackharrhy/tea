@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import type { HostedResourceMount } from "@tea/maps-protocol";
+import type { HostedResourceMount } from "@harrhy/maps-protocol";
 import {
   hostedWorldSource,
   loadHostedWorldSource,

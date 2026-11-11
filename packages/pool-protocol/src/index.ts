@@ -4,7 +4,7 @@ import {
   MAX_POOL_TRACE_MESSAGE_LENGTH,
 } from "./pool-trace";
 export * from "./pool-trace";
-import type { PoolMatch, PhysicalBall, PoolSound } from "@tea/pool";
+import type { PoolMatch, PhysicalBall, PoolSound } from "@harrhy/pool";
 export type { AdminMetrics } from "./admin";
 export const PROTOCOL_VERSION = 9;
 export const INPUT_DT = 1 / 60;

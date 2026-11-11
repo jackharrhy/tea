@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { parseClientMessage } from "@tea/pool-protocol";
+import { parseClientMessage } from "@harrhy/pool-protocol";
 import { ClientTelemetry } from "../../app/game/client-telemetry";
 
 test("baseline, jitter and submillimeter noise do not report", () => {

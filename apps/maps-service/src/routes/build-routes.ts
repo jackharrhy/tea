@@ -2,7 +2,7 @@ import {
   CreateHostedBuildRequestSchema,
   HostedBuildCreatedResponseSchema,
   HostedBuildsResponseSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 import { submitHostedBuild } from "../hosted-build-operation.js";
 import { hostedBuildProfile } from "../hosted-game-profiles.js";

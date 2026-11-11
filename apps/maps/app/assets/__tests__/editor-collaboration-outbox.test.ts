@@ -11,7 +11,7 @@ import {
   serializeMap,
   type CollaborationOperation,
   type MapDocument,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
 import {
   IndexedDbCollaborationOutbox,

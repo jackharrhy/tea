@@ -29,8 +29,8 @@ export const assetServer = createAssetServer({
     "apps/artbin/app/**/public/**",
   ],
   allowPackages: [
-    "@tea/artbin-core",
-    "@jackharrhy/tea-maps-renderer",
+    "@harrhy/artbin-core",
+    "@harrhy/worldview-renderer",
     "remix",
     "three",
   ],

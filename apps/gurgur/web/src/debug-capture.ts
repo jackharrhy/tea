@@ -1,4 +1,4 @@
-import type { RuntimeId } from "@tea/gurgur-engine";
+import type { RuntimeId } from "@harrhy/gurgur-engine";
 import type { PredictionTraceFrame } from "./prediction-trace";
 
 export const DEBUG_PHYSICS_CAPTURE_SECONDS = 15;

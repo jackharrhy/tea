@@ -1,18 +1,18 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { INPUT_DT, parseClientMessage } from "@tea/pool-protocol";
-import type { ClientMessage, ServerMessage } from "@tea/pool-protocol";
+import { INPUT_DT, parseClientMessage } from "@harrhy/pool-protocol";
+import type { ClientMessage, ServerMessage } from "@harrhy/pool-protocol";
 import {
   TABLES,
   WALK_SPEED,
   STOOLS,
   findPath,
   walkable,
-} from "@tea/pool-simulation";
+} from "@harrhy/pool-simulation";
 import {
   TABLE_CLEARANCE,
   tableSeatPosition,
   TABLE_JOIN_DISTANCE,
-} from "@tea/pool-simulation/geometry";
+} from "@harrhy/pool-simulation/geometry";
 import { Hall } from "../../server/hall";
 import type { Peer } from "../../server/hall";
 

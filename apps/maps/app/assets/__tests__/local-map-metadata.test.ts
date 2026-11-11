@@ -21,9 +21,7 @@ describe("local map sidecars", () => {
     const teaWalkability = localFile(
       "valve/maps/room.tea-maps-walkability.json",
     );
-    const mapsWalkability = localFile(
-      "valve/maps/room.tea-maps-walkability.json",
-    );
+    const mapsWalkability = localFile("valve/maps/room.maps-walkability.json");
     expect(
       await localMapMetadata(
         [bsp, maps, mapsWalkability, tea, teaWalkability],

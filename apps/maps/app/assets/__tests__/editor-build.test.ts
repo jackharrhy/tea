@@ -5,7 +5,7 @@ import {
   type MapBuildService,
   type MapCompileRequest,
   type MapLaunchRequest,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { buildMap, launchLocalBuild } from "../editor-build.ts";
 import type { MapProject } from "../editor-project.ts";
 import { syntheticQuakeBsp } from "../synthetic.ts";

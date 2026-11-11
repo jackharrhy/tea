@@ -1,7 +1,7 @@
 import {
   HostedHealthResponseSchema,
   HostedSessionResponseSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { z } from "zod";
 
 import {

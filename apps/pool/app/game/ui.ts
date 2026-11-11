@@ -1,10 +1,10 @@
-import { TABLES, type Point } from "@tea/pool-simulation";
+import { TABLES, type Point } from "@harrhy/pool-simulation";
 import type {
   ClientMessage,
   Snapshot,
   TableState,
   ServerMessage,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import { GameAudio } from "./audio";
 interface UIActions {
   enter(): void;

@@ -9,8 +9,8 @@ import {
   insertBrush,
   rebaseMapSource,
   serializeMap,
-} from "@tea/maps-editor/core";
-import type { HostedMapLaunch } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import type { HostedMapLaunch } from "@harrhy/maps-protocol";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { deleteEditorDatabase } from "../editor-collaboration-database.ts";

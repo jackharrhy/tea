@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { compileWorld } from "@tea/gurgur-game";
+import { compileWorld } from "@harrhy/gurgur-game";
 
 const fixturePath = "content/maps/fixtures/physics-contraptions.map";
 

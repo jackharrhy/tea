@@ -2,7 +2,7 @@ import {
   HostedProjectsResponseSchema,
   HostedSessionResponseSchema,
   type HostedProjectSummary,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { clientEntry, on, type Handle } from "remix/component";
 import { createHostedProject } from "./editor-hosted-create.ts";
 import { readHostedApi } from "./hosted-api.ts";

@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test";
 import { computePerimeterSegments } from "../../app/game/zones-perimeter";
-import { TILE_SIZE } from "@tea/burger-core";
+import { TILE_SIZE } from "@harrhy/burger-core";
 
 const H = TILE_SIZE / 2;
 const T = TILE_SIZE;

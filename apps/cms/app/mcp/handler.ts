@@ -1,6 +1,6 @@
-import * as s from "@tea/json-schema";
-import * as checks from "@tea/json-schema/checks";
-import { createHandler, createToolError, tool, tools } from "@tea/mcp";
+import * as s from "@harrhy/json-schema";
+import * as checks from "@harrhy/json-schema/checks";
+import { createHandler, createToolError, tool, tools } from "@harrhy/mcp";
 import { contentContext } from "../middleware/context.ts";
 
 const declarations = tools({

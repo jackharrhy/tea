@@ -1,5 +1,5 @@
 import { clientEntry, on, type Handle } from "remix/component";
-import type { HostedMapLaunch } from "@tea/maps-protocol";
+import type { HostedMapLaunch } from "@harrhy/maps-protocol";
 import type { HostedSourceContext } from "./editor-hosted-source-dialog.ts";
 import { downloadMapCopy } from "./editor-files.ts";
 import {

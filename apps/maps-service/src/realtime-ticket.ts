@@ -2,9 +2,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   parseActiveRealtimeTicketPayload,
   type RealtimeTicketPayload,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
-export type { RealtimeTicketPayload } from "@tea/maps-protocol";
+export type { RealtimeTicketPayload } from "@harrhy/maps-protocol";
 
 function encoded(value: string): string {
   return Buffer.from(value).toString("base64url");

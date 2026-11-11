@@ -5,13 +5,13 @@ import {
   FELT_GEOMETRY,
   MESH_REST_OFFSET,
   type StaticBox,
-} from "@tea/pool/table";
+} from "@harrhy/pool/table";
 import {
   AVATAR_RADIUS,
   HALL,
   HALL_MARGIN,
   HALL_OBSTACLES,
-} from "@tea/pool-simulation/geometry";
+} from "@harrhy/pool-simulation/geometry";
 
 const COLORS: Record<StaticBox["kind"], number> = {
   cushion: 0x75df88,

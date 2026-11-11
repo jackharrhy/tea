@@ -3,10 +3,10 @@
  * counterpart, validates by delegating to it, and adds the JSON Schema 2020-12
  * keywords that describe what it accepts.
  */
-import type { Result } from "@tea/result";
+import type { Result } from "@harrhy/result";
 import type { InferInput, InferOutput } from "remix/data-schema";
 
-import { success } from "@tea/result";
+import { success } from "@harrhy/result";
 import * as ds from "remix/data-schema";
 import { lazy as dataLazy } from "remix/data-schema/lazy";
 

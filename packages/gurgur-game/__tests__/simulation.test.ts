@@ -4,7 +4,7 @@ import {
   NETWORK_FLAG_REVERSED,
   type BodyState,
   type RuntimeId,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   compileWorld,
   createGameSimulation,

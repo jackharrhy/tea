@@ -1,4 +1,4 @@
-import type { Vec3 } from "@tea/gurgur-engine";
+import type { Vec3 } from "@harrhy/gurgur-engine";
 import * as THREE from "three/webgpu";
 
 export const CAMERA_BOOM_LENGTH = 4.2;

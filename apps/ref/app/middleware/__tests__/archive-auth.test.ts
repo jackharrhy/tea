@@ -4,7 +4,7 @@ import {
   projectAudienceScope,
   roleScope,
   type TokenPrincipal,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { authorizeArchive } from "../archive-auth.ts";
 
 const project = "ref-project";

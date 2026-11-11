@@ -1,4 +1,4 @@
-import type { TransformAxis } from "@tea/maps-editor/core";
+import type { TransformAxis } from "@harrhy/maps-editor/core";
 
 type AxisValues = readonly [string, string, string];
 

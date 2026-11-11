@@ -10,7 +10,7 @@ import {
   type RevoluteMotor,
   type RuntimeId,
   type Vec3,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import type { GameEngine, HostMechanismEngine } from "./engine-api";
 import { playerChest } from "./grab";
 import {

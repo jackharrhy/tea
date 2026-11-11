@@ -2,8 +2,8 @@ import {
   BALL_RADIUS,
   TABLE_HALF_WIDTH as W,
   TABLE_HALF_LENGTH as L,
-} from "@tea/pool";
-import { FELT_Y, RAIL_TOP_Y } from "@tea/pool/table";
+} from "@harrhy/pool";
+import { FELT_Y, RAIL_TOP_Y } from "@harrhy/pool/table";
 
 export const CUE_CONTACT_MS = 40;
 export const CUE_LENGTH = 1.45;

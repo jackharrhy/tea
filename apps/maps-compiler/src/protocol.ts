@@ -9,9 +9,9 @@ import {
   MapLaunchRequestSchema,
   type MapBuildCapabilities,
   type RemoteLaunchRequest as NativeLaunchRequest,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
-export type { RemoteLaunchRequest as NativeLaunchRequest } from "@tea/maps-editor/core";
+export type { RemoteLaunchRequest as NativeLaunchRequest } from "@harrhy/maps-editor/core";
 
 export function originAllowed(
   origin: string | undefined,

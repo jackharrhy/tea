@@ -1,5 +1,5 @@
 {
-  "name": "@jackharrhy/tea-artbin",
+  "name": "@harrhy/artbin",
   "version": "0.4.1",
   "description": "CLI for scanning, uploading, downloading, and organizing game assets in artbin",
   "keywords": [
@@ -10,9 +10,9 @@
     "quake",
     "textures"
   ],
-  "homepage": "https://github.com/jackharrhy/tea/tree/main/apps/artbin-cli#readme",
+  "homepage": "https://github.com/jackharrhy/harrhy/tree/main/apps/artbin-cli#readme",
   "bugs": {
-    "url": "https://github.com/jackharrhy/tea/issues"
+    "url": "https://github.com/jackharrhy/harrhy/issues"
   },
   "license": "MIT",
   "publishConfig": {
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jackharrhy/tea.git",
+    "url": "git+https://github.com/jackharrhy/harrhy.git",
     "directory": "apps/artbin-cli"
   },
   "bin": {
@@ -42,8 +42,8 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@tea/artbin-core": "0.0.1",
-    "@tea/artbin-ui": "0.0.1",
+    "@harrhy/artbin-core": "0.0.1",
+    "@harrhy/artbin-ui": "0.0.1",
     "@bomb.sh/args": "^0.3.1",
     "@clack/prompts": "^1.9.0",
     "@tailwindcss/vite": "^4.3.5",

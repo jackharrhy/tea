@@ -2,13 +2,13 @@ import type {
   EntityDefinitionCatalog,
   EntityPropertyDefinition,
   MapEntity,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   deriveEditorGroups,
   linkedGroupSiblings,
   protectedEntityProperties,
   type MapDocument,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
 export function canProtectEntityProperties(
   document: MapDocument,

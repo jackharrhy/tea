@@ -3,7 +3,7 @@ import type {
   EditorSourceRenderer,
   EditorViewportCameraState,
   EditorViewportKind,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 import { z } from "zod";
 
 const KINDS = ["perspective", "xy", "xz", "yz"] as const;

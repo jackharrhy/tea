@@ -3,7 +3,10 @@ import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach } from "vitest";
-import { createStarterDocument, parseMapSource } from "@tea/maps-editor/core";
+import {
+  createStarterDocument,
+  parseMapSource,
+} from "@harrhy/maps-editor/core";
 import { FileBlobStore } from "../src/blob-store.js";
 import { RemoteBuildQueue } from "../src/build-queue.js";
 import { MapsDatabase, type MapsUser } from "../src/database.js";

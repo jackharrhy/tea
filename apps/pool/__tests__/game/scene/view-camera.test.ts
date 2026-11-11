@@ -1,5 +1,5 @@
-import { TABLE_HALF_WIDTH as W, TABLE_HALF_LENGTH as L } from "@tea/pool";
-import { FELT_Y, RAIL_WIDTH, RAIL_TOP_Y, POCKETS } from "@tea/pool/table";
+import { TABLE_HALF_WIDTH as W, TABLE_HALF_LENGTH as L } from "@harrhy/pool";
+import { FELT_Y, RAIL_WIDTH, RAIL_TOP_Y, POCKETS } from "@harrhy/pool/table";
 import { describe, expect, test } from "bun:test";
 import { PerspectiveCamera, Vector3 } from "three";
 import { ViewCamera } from "../../../app/game/scene/view-camera";

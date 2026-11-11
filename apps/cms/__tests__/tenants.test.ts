@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { parseFixtureSites } from "./sites.ts";
 import { parseSites } from "../config.ts";
-import luke from "@tea/cms/sites/luke";
+import luke from "@harrhy/cms/sites/luke";
 import { createApp } from "../app.ts";
 import { seedFixture } from "./fixture.ts";
 import { openDatabase } from "../app/data/database.ts";

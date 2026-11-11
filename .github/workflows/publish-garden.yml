@@ -50,7 +50,7 @@ jobs:
             ghcr.io/jackharrhy/tea-garden:latest
             ghcr.io/jackharrhy/tea-garden:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:

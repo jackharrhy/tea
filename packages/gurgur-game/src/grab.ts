@@ -1,4 +1,4 @@
-import type { Quat, RuntimeId, Vec3 } from "@tea/gurgur-engine";
+import type { Quat, RuntimeId, Vec3 } from "@harrhy/gurgur-engine";
 import type { GameEngine } from "./engine-api";
 import type { WorldBundle } from "./world";
 

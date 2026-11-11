@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { RecordedShot } from "@tea/pool/recording";
+import type { RecordedShot } from "@harrhy/pool/recording";
 import { sampleShot, shotDuration } from "../../app/game/replay-playback";
 
 const ball = (id: number, x: number, y: number) => ({

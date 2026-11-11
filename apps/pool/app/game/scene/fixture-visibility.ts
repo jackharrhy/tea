@@ -2,8 +2,8 @@ import {
   BALL_RADIUS,
   TABLE_HALF_WIDTH as W,
   TABLE_HALF_LENGTH as L,
-} from "@tea/pool";
-import { FELT_Y } from "@tea/pool/table";
+} from "@harrhy/pool";
+import { FELT_Y } from "@harrhy/pool/table";
 import { Box3, MathUtils, Ray, Vector3 } from "three";
 
 export function fixtureOpacity(

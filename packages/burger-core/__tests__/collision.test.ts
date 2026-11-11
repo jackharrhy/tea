@@ -5,7 +5,7 @@ import {
   moveAndSlide,
   TILE_SIZE,
   PLAYER_SIZE,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 
 const placeWall = (
   world: ReturnType<typeof createSharedWorld<{}>>,

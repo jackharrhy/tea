@@ -1,5 +1,5 @@
-import { parseMapsProject } from "@tea/maps-editor/core";
-import type { HostedProject } from "@tea/maps-protocol";
+import { parseMapsProject } from "@harrhy/maps-editor/core";
+import type { HostedProject } from "@harrhy/maps-protocol";
 import { describe, expect, it } from "vitest";
 import { validateLinkedLocalProject } from "../project-local.ts";
 

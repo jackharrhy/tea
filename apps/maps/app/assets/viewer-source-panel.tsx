@@ -2,7 +2,7 @@ import type {
   BinarySource,
   CameraState,
   WorldSource,
-} from "@jackharrhy/tea-maps-renderer";
+} from "@harrhy/worldview-renderer";
 import { clientEntry, on, ref, type Handle } from "remix/component";
 import { exampleSource, examples } from "./examples.ts";
 import {

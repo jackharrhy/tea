@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { PoolPhysics } from "@tea/pool/engine";
-import { createShotResult } from "@tea/pool";
-import type { PoolSound } from "@tea/pool";
+import { PoolPhysics } from "@harrhy/pool/engine";
+import { createShotResult } from "@harrhy/pool";
+import type { PoolSound } from "@harrhy/pool";
 import { Quaternion, Vector3 } from "three";
 import {
   RETURN_FLOOR,

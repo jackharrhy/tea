@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { decodeWorldBundle, encodeWorldBundle } from "@tea/gurgur-game";
+import { decodeWorldBundle, encodeWorldBundle } from "@harrhy/gurgur-game";
 
 const worldBundleFile = Bun.file(
   new URL("../../content/generated/systems-garden.bin", import.meta.url),

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { PHYSICS_DT } from "@tea/gurgur-engine";
+import { PHYSICS_DT } from "@harrhy/gurgur-engine";
 import { WorldHost } from "../../server/src/game";
 import { WorldStore } from "../../server/src/store";
 

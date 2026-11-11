@@ -7,8 +7,8 @@ import {
   HostedRealtimeTicketResponseSchema,
   ReplaceHostedMapSourceRequestSchema,
   ReplaceHostedMapSourceResultSchema,
-} from "@tea/maps-protocol";
-import { parseMapSource } from "@tea/maps-editor/core";
+} from "@harrhy/maps-protocol";
+import { parseMapSource } from "@harrhy/maps-editor/core";
 
 import { canEditProject } from "../access-policy.js";
 import { signRealtimeTicket } from "../realtime-ticket.js";

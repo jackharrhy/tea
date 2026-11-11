@@ -1,5 +1,5 @@
-import type { MapsMovementSettings } from "@jackharrhy/tea-maps-renderer";
-import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsMovementSettings } from "@harrhy/worldview-renderer";
+import type { MapsViewElement } from "@harrhy/worldview-renderer/element";
 import { clientEntry, on, type Handle } from "remix/component";
 
 const fields = [

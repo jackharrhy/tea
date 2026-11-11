@@ -1,4 +1,4 @@
-import type { RoomSettings, AdminMetrics } from "@tea/pool-protocol";
+import type { RoomSettings, AdminMetrics } from "@harrhy/pool-protocol";
 import type { Account } from "./account";
 import "./admin-tools.css";
 

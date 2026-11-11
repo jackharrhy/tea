@@ -35,8 +35,8 @@ import {
   type UseRequestMessage,
   type WelcomeMessage,
   type WorldManifestMessage,
-} from "@tea/gurgur-engine";
-import { decodeWorldBundle, type WorldMessage } from "@tea/gurgur-game";
+} from "@harrhy/gurgur-engine";
+import { decodeWorldBundle, type WorldMessage } from "@harrhy/gurgur-game";
 
 export type SessionCallbacks = {
   status(

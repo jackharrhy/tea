@@ -6,7 +6,7 @@ import {
   HostedResourceMountsResponseSchema,
   MountHostedAssetRequestSchema,
   isGameTreeAssetPath,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 const MAX_RESOURCE_BYTES = 512 * 1024 * 1024;
 const kinds: Readonly<Record<string, string>> = {

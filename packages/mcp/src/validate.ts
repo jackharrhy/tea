@@ -4,11 +4,11 @@
  * told. It runs before a handler is entered, so `ctx.input` arrives parsed and typed.
  */
 
-import type { InferOutput, JSONSchema } from "@tea/json-schema";
-import type { Result } from "@tea/result";
+import type { InferOutput, JSONSchema } from "@harrhy/json-schema";
+import type { Result } from "@harrhy/result";
 
-import { parseSafe } from "@tea/json-schema";
-import { failure, success } from "@tea/result";
+import { parseSafe } from "@harrhy/json-schema";
+import { failure, success } from "@harrhy/result";
 
 import type { Tool, ToolSchema } from "./tools.ts";
 

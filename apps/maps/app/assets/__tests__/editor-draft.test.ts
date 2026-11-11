@@ -5,7 +5,7 @@ import {
   parseMapSource,
   planMapSave,
   serializeMap,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   createEditorCheckpoint,
   latestEditorVersion,

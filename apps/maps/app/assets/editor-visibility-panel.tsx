@@ -5,7 +5,7 @@ import {
   selectedEntityIdsForLinks,
   visibleEntityLinks,
   type EntityLinkMode,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { clientEntry, css, on, type Handle } from "remix/component";
 import type { EditorVisibilityState } from "./editor-visibility.ts";
 

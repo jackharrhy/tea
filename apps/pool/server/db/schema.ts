@@ -7,7 +7,7 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-import type { RecordedShot } from "@tea/pool/recording";
+import type { RecordedShot } from "@harrhy/pool/recording";
 
 export const matches = sqliteTable("matches", {
   id: integer("id").primaryKey(),

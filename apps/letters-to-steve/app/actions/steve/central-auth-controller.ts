@@ -3,7 +3,7 @@ import {
   createLoginTransaction,
   validLoginTransaction,
   type LoginTransaction,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { createController } from "remix/router";
 
 import { databaseContext } from "../../middleware/database.ts";

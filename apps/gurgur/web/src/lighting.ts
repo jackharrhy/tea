@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import type { LightPresentation, Vec3 } from "@tea/gurgur-engine";
+import type { LightPresentation, Vec3 } from "@harrhy/gurgur-engine";
 
 export const VOLUMETRIC_LIGHT_LAYER = 10;
 

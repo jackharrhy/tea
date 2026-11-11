@@ -6,7 +6,7 @@ import {
   requireTokenRole,
   roleScope,
   type IdentityConfig,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import type { MapsDatabase, MapsUser } from "./database.js";
 import { ServiceHttpError } from "./service-http.js";
 

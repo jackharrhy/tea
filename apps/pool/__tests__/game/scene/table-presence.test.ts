@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import * as THREE from "three/webgpu";
-import { createMatch, createRack } from "@tea/pool";
-import type { TableState } from "@tea/pool-protocol";
+import { createMatch, createRack } from "@harrhy/pool";
+import type { TableState } from "@harrhy/pool-protocol";
 import { TablePresence } from "../../../app/game/scene/table-presence";
 import { cuePose } from "../../../app/game/scene/cue-pose";
 

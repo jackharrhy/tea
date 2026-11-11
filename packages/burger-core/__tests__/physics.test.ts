@@ -3,7 +3,7 @@ import {
   applyInputToVelocity,
   applyVelocityToPosition,
   PLAYER_SPEED,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 
 const noInput = { up: false, down: false, left: false, right: false };
 

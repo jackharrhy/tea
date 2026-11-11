@@ -1,6 +1,6 @@
-import { createMapsViewer } from "@jackharrhy/tea-maps-renderer";
-import { serializeWalkability } from "@jackharrhy/tea-maps-renderer/walkability";
-import type { BspFormat } from "@jackharrhy/tea-maps-renderer/core";
+import { createMapsViewer } from "@harrhy/worldview-renderer";
+import { serializeWalkability } from "@harrhy/worldview-renderer/walkability";
+import type { BspFormat } from "@harrhy/worldview-renderer/core";
 
 export interface BspOverviewRenderInput {
   format: BspFormat;

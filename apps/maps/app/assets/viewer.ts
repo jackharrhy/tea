@@ -1,12 +1,12 @@
 import {
   defineMapsViewElement,
   type MapsViewElement,
-} from "@jackharrhy/tea-maps-renderer/element";
+} from "@harrhy/worldview-renderer/element";
 import type {
   BinarySource,
   CameraState,
   WorldSource,
-} from "@jackharrhy/tea-maps-renderer";
+} from "@harrhy/worldview-renderer";
 import { sourceName } from "./world-input.ts";
 
 defineMapsViewElement();

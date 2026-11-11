@@ -8,14 +8,14 @@ import {
   type EntityDefinitionDiagnostic,
   type ParsedEntityDefinitionFile,
   type MapsGameProfile,
-} from "@tea/maps-editor/core";
-import type { EditorSpriteMaterial } from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/core";
+import type { EditorSpriteMaterial } from "@harrhy/maps-editor/render";
 import {
   parseGoldSrcSprite,
   parseWad,
   readPcxPalette,
   readWalTextureHeader,
-} from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/worldview-renderer/core";
 import { listHostedResources } from "./editor-hosted-resources.ts";
 import {
   decodeProjectMaterialImage,

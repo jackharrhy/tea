@@ -8,7 +8,7 @@ import {
   moveAndSlide,
   lerp,
   type InputCmd,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 import {
   Application,
   Assets,

@@ -1,4 +1,4 @@
-import { TILE_SIZE } from "@tea/burger-core";
+import { TILE_SIZE } from "@harrhy/burger-core";
 
 export type CatalogEntry = {
   id: number;

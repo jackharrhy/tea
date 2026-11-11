@@ -1,7 +1,7 @@
 import type {
   CollaborationPresence,
   HostedMapLaunch,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 export function hostedShareUrl(mapId: string, origin: string): string {
   const url = new URL("/editor", origin);

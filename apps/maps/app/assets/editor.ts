@@ -47,7 +47,7 @@ import {
   type TransformAxis,
   type MapsGameProfile,
   type Vec3,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   EditorSourceRenderer,
   type EditorBrushDragEvent,
@@ -58,17 +58,17 @@ import {
   type EditorPointEntityPlaceEvent,
   type EditorRemotePresenceOverlay,
   type EditorViewportContextMenuEvent,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 import { editorRenderTheme, editorThemeEvent } from "./editor-theme.ts";
 import {
   defineMapsViewElement,
   type MapsViewElement,
-} from "@jackharrhy/tea-maps-renderer/element";
-import type { CameraUpdate, WorldSource } from "@jackharrhy/tea-maps-renderer";
+} from "@harrhy/worldview-renderer/element";
+import type { CameraUpdate, WorldSource } from "@harrhy/worldview-renderer";
 import type {
   CollaborationPresence,
   HostedMapLaunch,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import {
   createEditorCheckpoint,
   latestEditorVersion,

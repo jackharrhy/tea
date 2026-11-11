@@ -1,5 +1,5 @@
 import { clientEntry, css, on, type Handle } from "remix/component";
-import type { SweepPath } from "@tea/maps-editor/core";
+import type { SweepPath } from "@harrhy/maps-editor/core";
 import { initialSweepFields } from "./editor-sweep-bridge.ts";
 import type {
   EditorSweepPanelContext,

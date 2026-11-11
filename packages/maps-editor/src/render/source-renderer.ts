@@ -18,7 +18,7 @@ import {
   type MapDocument,
   type Vec3,
 } from "../core/index.js";
-import { perspectiveForward } from "@jackharrhy/tea-maps-renderer/core";
+import { perspectiveForward } from "@harrhy/worldview-renderer/core";
 import type {
   EditorSourceRendererOptions,
   EditorSpriteMaterial,

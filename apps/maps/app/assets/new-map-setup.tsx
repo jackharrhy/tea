@@ -1,4 +1,7 @@
-import { mapsGameProfile, type MapsGameProfile } from "@tea/maps-editor/core";
+import {
+  mapsGameProfile,
+  type MapsGameProfile,
+} from "@harrhy/maps-editor/core";
 import { clientEntry, on, ref, type Handle } from "remix/component";
 
 export const NewMapSetup = clientEntry(

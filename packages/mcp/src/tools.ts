@@ -1,6 +1,6 @@
 /**
  * The tool declaration tree: the equivalent of a route table, where a tool's name is its
- * address and its `@tea/json-schema` input schema is what `tools/list` publishes, what
+ * address and its `@harrhy/json-schema` input schema is what `tools/list` publishes, what
  * validates a call, and what types the handler.
  *
  * Declaration is separate from handling: this file says what exists and what it takes,
@@ -12,10 +12,10 @@ import type {
   DescribedSchema,
   InferOutput,
   JSONSchema,
-} from "@tea/json-schema";
+} from "@harrhy/json-schema";
 
-import { toJSONSchema } from "@tea/json-schema";
-import { isFailure } from "@tea/result";
+import { toJSONSchema } from "@harrhy/json-schema";
+import { isFailure } from "@harrhy/result";
 
 import type { AnyRequestContext, ToolContext } from "./context.ts";
 
@@ -39,7 +39,7 @@ export interface ToolAnnotations {
 
 /**
  * A schema a tool's arguments or structured result are declared with: any
- * `@tea/json-schema` schema whose parse yields an object, since MCP requires both to be
+ * `@harrhy/json-schema` schema whose parse yields an object, since MCP requires both to be
  * described by a JSON Schema of `type: "object"`.
  */
 // oxlint-disable-next-line typescript/no-explicit-any -- the accepted input side is whatever the schema documents
@@ -82,7 +82,7 @@ export interface ToolDescriptor {
 }
 
 /** Brands a declared tool so a group can tell one from a nested group. */
-const TOOL = Symbol.for("@tea/mcp.tool");
+const TOOL = Symbol.for("@harrhy/mcp.tool");
 
 /** A declared tool; `map()` binds its handler separately. */
 export interface Tool<Schema extends ToolSchema = ToolSchema> {

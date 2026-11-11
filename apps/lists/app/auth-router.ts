@@ -3,7 +3,7 @@ import {
   createLoginTransaction,
   validLoginTransaction,
   type LoginTransaction,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { and, eq } from "drizzle-orm";
 import { render } from "remix/middleware/render";
 import { createController, createRouter } from "remix/router";

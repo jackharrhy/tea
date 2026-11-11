@@ -3,7 +3,7 @@ import {
   requireTokenRole,
   roleScope,
   type TokenPrincipal,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 export function authorizeArchive(
   principal: TokenPrincipal,

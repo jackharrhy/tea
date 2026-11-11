@@ -1,5 +1,5 @@
-import type { AudioState, MapsViewer } from "@jackharrhy/tea-maps-renderer";
-import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { AudioState, MapsViewer } from "@harrhy/worldview-renderer";
+import type { MapsViewElement } from "@harrhy/worldview-renderer/element";
 import { clientEntry, on, type Handle } from "remix/component";
 
 type MusicTrack = NonNullable<MapsViewer["world"]>["musicTracks"][number];

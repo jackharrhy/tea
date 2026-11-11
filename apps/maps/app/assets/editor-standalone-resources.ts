@@ -5,8 +5,8 @@ import {
   mapsGameProfile,
   type EditorMaterial,
   type MapsGameProfile,
-} from "@tea/maps-editor/core";
-import { parseWad } from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/maps-editor/core";
+import { parseWad } from "@harrhy/worldview-renderer/core";
 
 export interface StandaloneWad {
   readonly name: string;

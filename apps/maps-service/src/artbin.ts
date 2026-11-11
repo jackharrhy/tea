@@ -2,7 +2,7 @@ import {
   projectAudienceScope,
   PROJECT_ROLES_SCOPE,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 

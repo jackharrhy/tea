@@ -15,7 +15,7 @@ import {
   type Vec3,
   type WorldBundle as EngineWorldBundle,
   type WorldMessage as EngineWorldMessage,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 
 type EntityBase = {
   authoredId?: string;

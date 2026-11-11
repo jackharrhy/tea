@@ -1,4 +1,4 @@
-import type { EditorPointerPositionEvent } from "@tea/maps-editor/render";
+import type { EditorPointerPositionEvent } from "@harrhy/maps-editor/render";
 import { clientEntry, type Handle } from "remix/component";
 
 export const EditorPointerReadout = clientEntry(

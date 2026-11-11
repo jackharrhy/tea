@@ -210,7 +210,7 @@ try {
 
   await command(
     "npm",
-    ["run", "build", "--workspace", "@tea/maps-service"],
+    ["run", "build", "--workspace", "@harrhy/maps-service"],
     teaRoot,
   );
   await command(process.execPath, ["scripts/build.mjs", "--dev"], mapsRoot);

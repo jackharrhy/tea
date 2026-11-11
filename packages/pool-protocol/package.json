@@ -1,5 +1,5 @@
 {
-  "name": "@tea/pool-protocol",
+  "name": "@harrhy/pool-protocol",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "@tea/pool": "0.1.0",
+    "@harrhy/pool": "0.1.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

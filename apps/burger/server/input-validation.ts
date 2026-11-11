@@ -1,4 +1,4 @@
-import { MAX_INPUT_MSEC, type InputCmd } from "@tea/burger-core";
+import { MAX_INPUT_MSEC, type InputCmd } from "@harrhy/burger-core";
 
 export type ValidatedInput = InputCmd;
 

@@ -1,5 +1,5 @@
-import type { EditorSession } from "@tea/maps-editor/core";
-import type { EditorSourceRenderer } from "@tea/maps-editor/render";
+import type { EditorSession } from "@harrhy/maps-editor/core";
+import type { EditorSourceRenderer } from "@harrhy/maps-editor/render";
 
 export interface IssueBrowserOptions {
   readonly session: () => EditorSession;

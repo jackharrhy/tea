@@ -1,5 +1,5 @@
 {
-  "name": "@tea/maps-collaboration",
+  "name": "@harrhy/maps-collaboration",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -14,8 +14,8 @@
     "check": "npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run"
   },
   "dependencies": {
-    "@tea/maps-editor": "0.1.0",
-    "@tea/maps-protocol": "0.1.0",
+    "@harrhy/maps-editor": "0.1.0",
+    "@harrhy/maps-protocol": "0.1.0",
     "remix": "3.2.0"
   },
   "devDependencies": {

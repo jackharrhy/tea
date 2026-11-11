@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
-import { createMatch } from "@tea/pool";
-import type { TableState } from "@tea/pool-protocol";
+import { createMatch } from "@harrhy/pool";
+import type { TableState } from "@harrhy/pool-protocol";
 import type { HallView } from "../../../app/game/scene/world";
 import { Controls } from "../../../app/game/input/controls";
 import { CueDrag } from "../../../app/game/input/cue-drag";
-import { INPUT_DT, type PlayerState } from "@tea/pool-protocol";
+import { INPUT_DT, type PlayerState } from "@harrhy/pool-protocol";
 import {
   addAvatar,
   createMovementWorld,
@@ -12,8 +12,8 @@ import {
   tableApproach,
   walkable,
   WALK_SPEED,
-} from "@tea/pool-simulation";
-import { TABLES, tableSeatPosition } from "@tea/pool-simulation/geometry";
+} from "@harrhy/pool-simulation";
+import { TABLES, tableSeatPosition } from "@harrhy/pool-simulation/geometry";
 
 function InputElement() {}
 function ButtonElement() {}

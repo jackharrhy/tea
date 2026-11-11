@@ -1,8 +1,8 @@
-import { readRequestBody } from "@tea/request-body";
+import { readRequestBody } from "@harrhy/request-body";
 import {
   HostedErrorResponseSchema,
   HostedOkResponseSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import type { z } from "zod";
 import type { MapsDatabase, MapsUser } from "./database.js";
 import { ServiceHttpError, sessionUser } from "./service-http.js";

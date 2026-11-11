@@ -1,5 +1,5 @@
 import { Quaternion } from "three";
-import type { BodySnapshot, Vec3 } from "@tea/gurgur-engine";
+import type { BodySnapshot, Vec3 } from "@harrhy/gurgur-engine";
 
 type Pose = Pick<BodySnapshot, "position" | "rotation">;
 

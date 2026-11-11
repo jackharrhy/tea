@@ -1,5 +1,5 @@
-import andrew from "@tea/cms/sites/andrew";
-import luke from "@tea/cms/sites/luke";
+import andrew from "@harrhy/cms/sites/andrew";
+import luke from "@harrhy/cms/sites/luke";
 import { parseSites } from "../config.ts";
 
 const presentations = { andrew, luke };

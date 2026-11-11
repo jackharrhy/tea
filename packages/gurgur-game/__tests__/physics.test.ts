@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { PHYSICS_DT, PHYSICS_SUBSTEPS } from "@tea/gurgur-engine";
+import { PHYSICS_DT, PHYSICS_SUBSTEPS } from "@harrhy/gurgur-engine";
 import {
   PLAYER_CAPSULE_HALF_SEGMENT,
   PLAYER_CAPSULE_RADIUS,
@@ -7,8 +7,8 @@ import {
   PLAYER_MAX_FIXED_TICK_DISPLACEMENT,
   stepPlayerController,
   type PlayerControllerState,
-} from "@tea/gurgur-game";
-import { PhysicsWorld } from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-game";
+import { PhysicsWorld } from "@harrhy/gurgur-engine";
 
 const replay = async (): Promise<string[]> => {
   const world = await PhysicsWorld.create();

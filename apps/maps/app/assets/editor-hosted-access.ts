@@ -5,7 +5,7 @@ import {
   SetProjectMemberRoleRequestSchema,
   type HostedProject,
   type HostedProjectAccessUser,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 type AccessRole = "editor" | "viewer";
 

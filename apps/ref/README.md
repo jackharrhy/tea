@@ -1,4 +1,4 @@
-# @tea/ref
+# @harrhy/ref
 
 A small, private board for images and links. It presents itself as Ref while retaining Ref's board format and storage contract. This app was adapted from the former standalone Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. Every approved member sees the same boards; there are no per-user spaces. The Newport production deployment runs this workspace's container image.
 
@@ -53,7 +53,7 @@ The browser smoke test uses a separate local instance so it does not add a test 
 cd apps/ref
 ../../node_modules/.bin/wrangler dev --port 8788 --persist-to /tmp/tea-ref-smoke
 cd ../..
-REF_SMOKE_PASSWORD='the-value-in-.dev.vars' npm run smoke --workspace @tea/ref
+REF_SMOKE_PASSWORD='the-value-in-.dev.vars' npm run smoke --workspace @harrhy/ref
 ```
 
 Tea CI runs this smoke against a temporary Wrangler store and generated password when Ref is affected on a ready PR or `main`.
@@ -61,7 +61,7 @@ Tea CI runs this smoke against a temporary Wrangler store and generated password
 Ref also runs a production-style Celld check using an isolated SQLite object store and random password. It runs the browser smoke, kills Celld, removes its replica cache, then verifies the board, links, and WebSocket from the authoritative store. CI extracts the Celld binary from the image selected by this app's Dockerfile. To run the same check locally:
 
 ```sh
-CELLD_BIN=/absolute/path/to/celld npm run test:celld --workspace @tea/ref
+CELLD_BIN=/absolute/path/to/celld npm run test:celld --workspace @harrhy/ref
 ```
 
 ## Back up and restore
@@ -76,15 +76,15 @@ is at `/.well-known/oauth-protected-resource/api/archive`. Set `REF_URL` to
 the instance you want to access:
 
 ```sh
-REF_URL=https://ref.example.com npm run backup --workspace @tea/ref -- /safe/place/ref-backup
-REF_URL=https://new-ref.example.com npm run restore --workspace @tea/ref -- /safe/place/ref-backup
+REF_URL=https://ref.example.com npm run backup --workspace @harrhy/ref -- /safe/place/ref-backup
+REF_URL=https://new-ref.example.com npm run restore --workspace @harrhy/ref -- /safe/place/ref-backup
 ```
 
 The backup command creates a new directory containing `manifest.json`, uploaded images, and cached link preview images. It fails if that directory already exists or a board changes while it is being copied. Keep the directory private: it contains your board contents. Restore preserves board and item IDs, layout, link metadata, and image bytes. It verifies every file before changing the destination and reads the restored board and images back afterward. Run it against an empty instance; if a restore is interrupted, rerun the same command to resume. A destination with unrelated boards is rejected.
 
 Archives contain the current board state, not edit history or full copies of linked web pages. Link preview images that were never cached still depend on their external URLs. Restore recreates item revision counters; clients should reload after a cutover.
 
-With an original Ref checkout and Celld installed, run `npm run test:archive:source --workspace @tea/ref` to verify the transfer path. Set `REF_SOURCE_ROOT` to that checkout. This optional check creates a board with an image and link in disposable local source storage, backs it up with the original Ref archive command, restores it into a separate Tea Ref store twice, and compares the resulting archive. It does not read a live deployment or production data. The former local source checkout was removed after production cutover.
+With an original Ref checkout and Celld installed, run `npm run test:archive:source --workspace @harrhy/ref` to verify the transfer path. Set `REF_SOURCE_ROOT` to that checkout. This optional check creates a board with an image and link in disposable local source storage, backs it up with the original Ref archive command, restores it into a separate Tea Ref store twice, and compares the resulting archive. It does not read a live deployment or production data. The former local source checkout was removed after production cutover.
 
 ## Hosting
 

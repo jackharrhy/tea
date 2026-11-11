@@ -36,7 +36,7 @@ const flags = [
   "--disable-vulkan-surface",
   "--enable-unsafe-webgpu",
 ];
-const server = spawn("npm", ["run", "dev", "--workspace", "@tea/maps"], {
+const server = spawn("npm", ["run", "dev", "--workspace", "@harrhy/maps"], {
   cwd: teaRoot,
   detached: true,
   stdio: ["ignore", "pipe", "pipe"],

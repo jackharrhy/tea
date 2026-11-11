@@ -47,7 +47,7 @@ import {
   type GameStateMessage,
   CLIENT_UPDATE_RATE,
   PROTOCOL_VERSION,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 import {
   createObserverDeserializer,
   createSnapshotDeserializer,

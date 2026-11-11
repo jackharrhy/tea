@@ -1,10 +1,10 @@
-# @tea/mcp
+# @harrhy/mcp
 
 Tea's Remix 3 MCP handler and tool/resource definitions. CMS and Shell MCP use this package for stateless Streamable HTTP. Apps register tools on a handler and map its `fetch` function to a Remix route.
 
-`src/index.ts` is the public entry point. `createHandler` owns parsing and protocol responses; `maxRequestBytes` and `requestTimeoutMs` bound JSON input. Tool and protocol errors use `createToolError`, `createForbiddenError`, and `createInvalidArgumentsError`. Schemas come from [`@tea/json-schema`](../json-schema/README.md), results from [`@tea/result`](../result/README.md), and optional request log enrichment from [`@tea/logger`](../logger/README.md).
+`src/index.ts` is the public entry point. `createHandler` owns parsing and protocol responses; `maxRequestBytes` and `requestTimeoutMs` bound JSON input. Tool and protocol errors use `createToolError`, `createForbiddenError`, and `createInvalidArgumentsError`. Schemas come from [`@harrhy/json-schema`](../json-schema/README.md), results from [`@harrhy/result`](../result/README.md), and optional request log enrichment from [`@harrhy/logger`](../logger/README.md).
 
-Run `npm run check --workspace @tea/mcp` from the root. CMS and Shell MCP are its consumers.
+Run `npm run check --workspace @harrhy/mcp` from the root. CMS and Shell MCP are its consumers.
 
 ---
 

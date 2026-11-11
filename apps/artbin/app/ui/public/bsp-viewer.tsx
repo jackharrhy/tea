@@ -1,6 +1,6 @@
-import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
-import type { BspFormat } from "@jackharrhy/tea-maps-renderer/core";
-import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { WorldSource } from "@harrhy/worldview-renderer";
+import type { BspFormat } from "@harrhy/worldview-renderer/core";
+import type { MapsViewElement } from "@harrhy/worldview-renderer/element";
 import {
   clientEntry,
   css,
@@ -79,7 +79,7 @@ async function mountMapsView(
   signal: AbortSignal,
 ): Promise<void> {
   const { defineMapsViewElement } =
-    await import("@jackharrhy/tea-maps-renderer/element");
+    await import("@harrhy/worldview-renderer/element");
   if (signal.aborted) return;
 
   defineMapsViewElement();

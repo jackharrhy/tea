@@ -7,8 +7,8 @@ import {
   type PoolTrace,
   type PoolTraceCorrection,
   type Snapshot,
-} from "@tea/pool-protocol";
-import type { PhysicalBall } from "@tea/pool";
+} from "@harrhy/pool-protocol";
+import type { PhysicalBall } from "@harrhy/pool";
 import { PoolTraceCapture, encodePoolTrace } from "../../app/game/pool-trace";
 const ball: PhysicalBall = {
   id: 0,

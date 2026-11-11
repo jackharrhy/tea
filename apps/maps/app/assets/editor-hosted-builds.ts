@@ -5,7 +5,7 @@ import {
   HostedErrorResponseSchema,
   type HostedBuild,
   type HostedMapLaunch,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 type BuildQuality = "preview" | "final";
 

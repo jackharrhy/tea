@@ -3,7 +3,7 @@ import {
   type Bindings,
   type EdgeConfig,
 } from "./app/index.tsx";
-import { createLogger } from "@tea/logger";
+import { createLogger } from "@harrhy/logger";
 
 const logger = createLogger({ service: "cms-edge" });
 

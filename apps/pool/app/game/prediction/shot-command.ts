@@ -1,4 +1,4 @@
-import type { ClientMessage, ShotAck, Snapshot } from "@tea/pool-protocol";
+import type { ClientMessage, ShotAck, Snapshot } from "@harrhy/pool-protocol";
 export type ShotCommand = Extract<ClientMessage, { type: "shot" }>;
 export type Shot = Pick<ShotCommand, "table" | "turn" | "angle" | "power">;
 export class ShotCommands {

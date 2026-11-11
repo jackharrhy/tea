@@ -1,4 +1,4 @@
-import { createStarterDocument, serializeMap } from "@tea/maps-editor/core";
+import { createStarterDocument, serializeMap } from "@harrhy/maps-editor/core";
 import { describe, expect, it } from "vitest";
 
 import {

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { basename, extname } from "node:path";
 import { setTimeout } from "node:timers/promises";
 import { load } from "cheerio/slim";
-import { sanitizeFilename } from "@tea/artbin-core/detection/filenames";
+import { sanitizeFilename } from "@harrhy/artbin-core/detection/filenames";
 import type { Job } from "#db";
 
 import { registerJobHandler, updateJobProgress } from "../jobs.server.ts";
@@ -102,7 +102,7 @@ async function request(url: string) {
   await setTimeout(200);
   const response = await fetch(url, {
     headers: {
-      "user-agent": "Artbin (+https://github.com/jackharrhy/tea)",
+      "user-agent": "Artbin (+https://github.com/jackharrhy/harrhy)",
     },
     signal: AbortSignal.timeout(120_000),
     redirect: "error",
