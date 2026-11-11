@@ -1,4 +1,7 @@
 .git
+apps/garden/vault
+apps/garden/tmp
+apps/garden/.garden
 **/node_modules
 **/.env*
 !**/.env.example

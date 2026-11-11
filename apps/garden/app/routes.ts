@@ -1,0 +1,24 @@
+import { get, post, route } from "remix/routes";
+
+export const routes = route({
+  home: get("/"),
+  oldHome: get("/home"),
+  health: get("/healthz"),
+  assets: get("/assets/*path"),
+  media: get("/asset/*path"),
+  feed: get("/:source/rss.xml"),
+  nowPlaying: get("/tools/lastfm/now-playing"),
+  lastfm: get("/tools/lastfm"),
+  youtube: get("/tools/youtube-thumbnail-fetcher"),
+  thumbnail: post("/tools/youtube-thumbnail-fetcher/fetch"),
+  tweet: get("/tools/tweet-archiver"),
+  archive: post("/tools/tweet-archiver/archive"),
+  changes: get("/__dev/revision"),
+  debug: get("/debug"),
+  compare: get("/debug/compare"),
+  raindrop: get("/debug/linkblog"),
+  notes: get("/debug/notes"),
+  saveNote: post("/debug/notes"),
+  manifest: get("/deploy-manifest.json"),
+  page: get("/*slug"),
+});

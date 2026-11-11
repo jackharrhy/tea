@@ -10,6 +10,8 @@
     "node": ">=26.13.0 <27"
   },
   "scripts": {
+    "garden:dev": "npm run dev --workspace @tea/garden",
+    "garden:check": "npm run tooling:check && npm run check --workspace @tea/garden",
     "cms:check": "npm run tooling:check && npm run check --workspace @tea/cms",
     "cms:dev": "npm run dev --workspace @tea/cms",
     "cms:test": "npm run test --workspace @tea/cms",
@@ -48,6 +50,17 @@
     "remix": "3.2.0",
     "tsrs": "0.23.0-ts7.1.0-beta",
     "vite-plus": "1.5.1"
+  },
+  "overrides": {
+    "remark-parse@11.0.0": {
+      "mdast-util-from-markdown": {
+        ".": "2.0.3",
+        "micromark": {
+          ".": "4.0.2",
+          "micromark-core-commonmark": "2.0.3"
+        }
+      }
+    }
   },
   "allowScripts": {
     "better-sqlite3@13.0.3": true

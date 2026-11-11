@@ -14,6 +14,7 @@ a Remix 3 monorepo for personal apps and packages.
 | [`@tea/burger`](apps/burger/) | Remix game UI and authoritative Bun world server | [README](apps/burger/README.md) |
 | [`@tea/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
 | [`@tea/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
+| [`@tea/garden`](apps/garden/) | Obsidian-backed personal website and publishing tools | [README](apps/garden/README.md) |
 | [`@tea/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server (migration in progress) | [README](apps/gurgur/README.md) |
 | [`@tea/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
 | [`@tea/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail (migration in progress) | [README](apps/lists/README.md) |

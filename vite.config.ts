@@ -7,6 +7,7 @@ export default defineConfig({
     ignorePatterns: [
       ".agents/**",
       "package-lock.json",
+      "apps/garden/app/ui/public/mug/pico-cad-viewer.js",
       "apps/cms/sites/*/public/icons/**",
       "**/.cloudflare/**",
       "packages/maps-renderer/dist/**",
@@ -56,6 +57,7 @@ export default defineConfig({
     },
     ignorePatterns: [
       "node_modules/**",
+      "apps/garden/app/ui/public/mug/pico-cad-viewer.js",
       "apps/cms/tmp/**",
       "apps/cms/data/**",
       "apps/ref/dist/**",
