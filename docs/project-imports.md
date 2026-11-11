@@ -1,12 +1,24 @@
 # Bringing projects into Tea
 
-Tea contains the former standalone Ref, Radio, Maps, Marky, Letters to Steve, and Artbin projects. Each deployable app owns its routes, UI, storage, and runtime settings. Packages contain only shared or embeddable code. The [root README](../README.md) lists the workspaces and the [Maps app guide](../apps/maps/README.md) documents its current viewer and editor.
+Tea contains the former standalone Ref, Radio, Maps, Marky, Letters to Steve, Artbin, and Garden projects. Each deployable app owns its routes, UI, storage, and runtime settings. Packages contain only shared or embeddable code. The [root README](../README.md) lists the workspaces and the [Maps app guide](../apps/maps/README.md) documents its current viewer and editor.
 
 ## Maps
 
 Maps serves `maps.jackharrhy.dev`. Its Remix app is in `apps/maps/`; the hosted service, collaboration Worker, and local compiler are separate apps. The renderer, editor core, and protocol are packages. Maps owns its public routes, file formats, OAuth scope, browser storage, and Celld Worker identity. The former standalone repository and npm renderer package have been retired.
 
 The viewer and editor use the same Tea renderer and map document model. Artbin uses the renderer for BSP previews. Current workspace checks cover the packages and app boundaries; `npm run test:hosted --workspace @tea/maps`, `npm run test:gpu --workspace @tea/maps`, and `npm run test:embed --workspace @tea/maps` cover browser integration when those paths change.
+
+## Garden import and production rollover
+
+On 2026-11-11, [Tea #78](https://github.com/jackharrhy/tea/pull/78) imported the personal website as the independent native Remix app in `apps/garden`, replacing Astro without adopting TeaCMS. Obsidian remains the authoring environment. Development reads the external Garden and Assets directories and reloads on note, browser-source, and static-file changes; production reads an explicitly published, read-only snapshot. Vault content, credentials, snapshots, and comparison captures are not committed to Tea.
+
+The initial snapshot preserves all 124 deployed note hashes, including the published `Fonts.md` rather than its newer local version. Its manifest records 241 referenced media files instead of listing all 425 vault assets; no R2 objects were uploaded or deleted during the cutover. The original appearance, Obsidian Markdown extensions, component blocks, special layouts, feeds, tools, and URL conventions remain app-owned. Parser versions and the deployed CSS's rounded typography values are preserved for compatibility.
+
+The staged container and public site passed status/text/link comparisons for all 124 notes. Thirty full-page captures across 1440, 768, and 390 pixels matched layout and text, with residual thumbnail/raster differences below 0.04%; the live mug and widget were controlled and GIFs compared at their first frame. The three public feeds retained their 10, 1, and 0 items. Both `jackharrhy.com` and `jackharrhy.dev` returned healthy, development routes and server-source URLs returned 404, and the public browser entry ran without errors.
+
+[Infra #68](https://github.com/jackharrhy/infra/pull/68) changed only the existing Mug site's service image, internal port, and read-only snapshot mount, preserving domain labels, higher-priority routes, and the existing secret file. Production follows `ghcr.io/jackharrhy/tea-garden:latest`; its initial published digest was `sha256:80ac28118b4391b713a16ec2ce63b9d446f2c7b64f01b84d09a8e47368a50d09`. Watchtower remained operational. The original Astro image and pre-cutover configuration remain available for rollback; host paths and the separate content-publishing procedure live in the infrastructure repository's Garden guide.
+
+The standalone [jackharrhy.com repository](https://github.com/jackharrhy/jackharrhy.com) is intentionally retained, not archived or deleted. [Its #53](https://github.com/jackharrhy/jackharrhy.com/pull/53) replaced the active application with a README pointer and local-data ignore rules. The `astro-before-tea-20261111` tag preserves the latest standalone source and its history. The local vault symlink, credentials, and ignored data were left untouched.
 
 ## Ref production transfer
 
