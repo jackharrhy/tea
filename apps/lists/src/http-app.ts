@@ -11,6 +11,8 @@ import { createMainRouter, createStaticRouter } from "../app/main-router.ts";
 import { createApiRouter } from "../app/api-router.ts";
 import { createMcpRouter } from "../app/mcp-router.ts";
 import { createWebhookRouter } from "../app/webhook-router.ts";
+import { getSessionUser } from "./auth.ts";
+import { createAdminAuthRouter } from "../app/admin-auth-router.tsx";
 
 function createLegacyApplication(db: Db, config: Config) {
   const app = createHttpApp();
@@ -34,6 +36,7 @@ export function createApplication(db: Db, config: Config) {
   const api = createApiRouter(db, config);
   const mcp = createMcpRouter(db, config);
   const webhooks = createWebhookRouter(db);
+  const adminAuth = createAdminAuthRouter(db, config);
   const publicRouter = createListsRouter(db, config);
   const identityRouter = config.identity ? createAuthRouter(db, config) : null;
   const legacy = createLegacyApplication(db, config);
@@ -53,6 +56,19 @@ export function createApplication(db: Db, config: Config) {
       if (path.startsWith("/api/") || path === "/openapi/json") return await api.fetch(request);
       if (path === "/mcp" || path === "/mcp/") return await mcp.fetch(request);
       if (path.startsWith("/webhooks/")) return await webhooks.fetch(request);
+      if (path === "/admin/login" || path === "/admin/logout") return await adminAuth.fetch(request);
+      if (path === "/admin/subscribers" || path.startsWith("/admin/subscribers/")) {
+        const token = request.headers
+          .get("cookie")
+          ?.split(";")
+          .map((part) => part.trim())
+          .find((part) => part.startsWith("session="))
+          ?.slice(8);
+        const user = getSessionUser(db, token);
+        if (!user)
+          return new Response(null, { status: 302, headers: { Location: "/admin/login" } });
+        return await createAdminRouter(db, config, user).fetch(request);
+      }
       if (/^\/(?:subscribe|confirm|unsubscribe|preferences)(?:\/|$)/.test(path))
         return await publicRouter.fetch(request);
       if (path === "/auth/login" || path === "/auth/callback")

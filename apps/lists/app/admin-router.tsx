@@ -6,23 +6,16 @@ import type { Db } from "../src/db/index.ts";
 import type { Config } from "../src/config.ts";
 import { schema } from "../src/db/index.ts";
 import { getAccessibleListIds } from "../src/auth.ts";
-import {
-  AdminApiAccess,
-  AdminDashboard,
-  AdminUsers,
-  type DashboardData,
-} from "./admin.tsx";
+import { AdminApiAccess, AdminDashboard, AdminUsers, type DashboardData } from "./admin.tsx";
 import { createAdminListsController } from "./admin-lists.tsx";
 import { createAdminTagsController } from "./admin-tags.tsx";
 import { createAdminDmarcController } from "./admin-dmarc.tsx";
 import { createAdminActivityController } from "./admin-activity.tsx";
+import { createAdminSubscribersController } from "./admin-subscribers.tsx";
 import type { AppContext } from "./router.tsx";
 import { routes } from "./routes.ts";
 
-type User = Pick<
-  typeof schema.users.$inferSelect,
-  "id" | "role" | "name" | "email"
->;
+type User = Pick<typeof schema.users.$inferSelect, "id" | "role" | "name" | "email">;
 
 function count(query: { get(): { count: number } | undefined }) {
   return query.get()?.count ?? 0;
@@ -82,12 +75,7 @@ function dashboardData(db: Db, user: User): DashboardData {
           ),
       );
   const recentCampaigns = all
-    ? db
-        .select()
-        .from(schema.campaigns)
-        .orderBy(desc(schema.campaigns.createdAt))
-        .limit(5)
-        .all()
+    ? db.select().from(schema.campaigns).orderBy(desc(schema.campaigns.createdAt)).limit(5).all()
     : db
         .select()
         .from(schema.campaigns)
@@ -106,14 +94,12 @@ function dashboardData(db: Db, user: User): DashboardData {
     subscribers,
     lists,
     campaigns,
-    recentCampaigns: recentCampaigns.map(
-      ({ id, subject, status, createdAt }) => ({
-        id,
-        subject,
-        status,
-        createdAt,
-      }),
-    ),
+    recentCampaigns: recentCampaigns.map(({ id, subject, status, createdAt }) => ({
+      id,
+      subject,
+      status,
+      createdAt,
+    })),
   };
 }
 
@@ -125,9 +111,7 @@ export function createAdminRouter(db: Db, config: Config, user: User) {
     createController(routes.admin, {
       actions: {
         dashboard(context) {
-          return context.render(
-            <AdminDashboard data={dashboardData(db, user)} />,
-          );
+          return context.render(<AdminDashboard data={dashboardData(db, user)} />);
         },
         users(context) {
           if (user.role !== "owner" && user.role !== "admin")
@@ -185,5 +169,6 @@ export function createAdminRouter(db: Db, config: Config, user: User) {
   router.map(routes.admin.tags, createAdminTagsController(db, user));
   router.map(routes.admin.dmarc, createAdminDmarcController(db, config, user));
   router.map(routes.admin.activity, createAdminActivityController(db, user));
+  router.map(routes.admin.subscribers, createAdminSubscribersController(db, config, user));
   return router;
 }
