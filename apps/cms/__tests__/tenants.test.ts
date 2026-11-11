@@ -73,7 +73,13 @@ it("isolates host routing, sessions, writes, uploads, optional features and anal
         headers: { "Accept-Encoding": "br" },
       }),
     );
-    assert.equal(previewResponse.headers.get("Content-Encoding"), null);
+    assert.equal(previewResponse.headers.get("Content-Encoding"), "br");
+    const sessionResponse = await app.fetch(
+      new Request("http://two.example.test/", {
+        headers: { "Accept-Encoding": "br", Cookie: two.cookie },
+      }),
+    );
+    assert.equal(sessionResponse.headers.get("Content-Encoding"), null);
     assert.equal((await get("unknown.example.test")).status, 404);
     const alias = await get("www.one.example.test", "/example?x=1&x=2");
     assert.equal(alias.status, 308);
