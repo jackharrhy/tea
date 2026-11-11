@@ -8,6 +8,8 @@ UI styles use Remix `css(...)` mixins in `app/ui/`, `operator/`, and each site's
 
 The Node host opens a request record through [`@tea/logger`](../../packages/logger/README.md). MCP handlers enrich that record. Request bodies, headers, and raw URLs are not logged.
 
+Public HTML pages support Brotli and gzip through Remix's response compression. Operator and editor routes, preview sites, requests with cookies or authorization, and query variants are excluded. Pages still render from current published data on each request; this is not a page cache. Media and API responses retain their existing transport behavior.
+
 ## Develop
 
 Use Node.js 26 LTS (minimum 26.13.0). From the repo root:

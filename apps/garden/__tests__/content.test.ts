@@ -3,7 +3,7 @@ import { test } from "node:test";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { gunzipSync } from "node:zlib";
+import { brotliDecompressSync, gunzipSync } from "node:zlib";
 import { createContentStore } from "../app/content/store.ts";
 import { createMarkdownRenderer } from "../app/content/markdown.ts";
 import { resolveWikiLink } from "../app/content/garden-routing.mjs";
@@ -181,12 +181,28 @@ test("HTTP pages, feeds, tools, assets and production boundaries", async (t) => 
     gunzipSync(Buffer.from(await compressed.arrayBuffer())).toString(),
     html,
   );
+  const brotli = await production.router.fetch(
+    new Request("https://example.test/", {
+      headers: { "Accept-Encoding": "br, gzip;q=0.5" },
+    }),
+  );
+  assert.equal(brotli.headers.get("Content-Encoding"), "br");
+  assert.equal(
+    brotliDecompressSync(Buffer.from(await brotli.arrayBuffer())).toString(),
+    html,
+  );
   const uncompressed = await production.router.fetch(
     new Request("https://example.test/", {
       headers: { "Accept-Encoding": "gzip;q=0" },
     }),
   );
   assert.equal(uncompressed.headers.get("Content-Encoding"), null);
+  const rejected = await production.router.fetch(
+    new Request("https://example.test/", {
+      headers: { "Accept-Encoding": "br;q=0,gzip;q=0,identity;q=0" },
+    }),
+  );
+  assert.equal(rejected.status, 406);
   assert.equal((await request("/missing-one")).status, 404);
   assert.equal((await request("/missing-two")).status, 404);
   assert.equal((await request("/debug")).status, 404);
