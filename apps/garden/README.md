@@ -14,6 +14,8 @@ Run `npm run check --workspace @tea/garden` for typecheck and fixture-based serv
 
 The parity runner uses installed Chrome, captures full pages at 1440, 768, and 390 pixels, and compares readable text and pixels. It hides the live mug/iframes, stubs now-playing, and freezes GIFs at their first frame so animations do not create false differences. Override `GARDEN_BEFORE_URL` and `GARDEN_AFTER_URL` to compare staged deployments. The initial migration matched all 30 captures exactly. The original mobile overflow on Quake and one linkblog page is intentionally preserved, not redesigned.
 
+`npm run test:parity:http --workspace @tea/garden` additionally compares status, readable text, and links for every public note. The root dependency override pins the Markdown parser's original transitive versions: a newer CommonMark parser changes intraword emphasis in existing writing. Keep parser upgrades separate from this parity migration.
+
 `/debug` lists public pages; `/debug/compare` compares against production (or `GARDEN_COMPARE_URL`) and stores review notes in ignored `.garden/`. `/debug/linkblog` keeps the Raindrop status and Obsidian deep links. Import commands retain their existing names; draft-writing and sync commands are explicit mutations, not part of dev startup or publishing.
 
 ## Publishing and runtime

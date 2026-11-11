@@ -1,7 +1,8 @@
 import PicoCADViewer from "./mug/pico-cad-viewer.js";
 
-const canvas = document.getElementById("mug-canvas");
-if (canvas) {
+async function initializeMug() {
+  const canvas = document.getElementById("mug-canvas");
+  if (!canvas) return;
   const home = window.location.pathname === "/";
   const viewer = new PicoCADViewer({
     canvas,
@@ -23,6 +24,7 @@ if (canvas) {
     });
   }
 }
+initializeMug().catch(console.error);
 
 for (const element of document.querySelectorAll("[data-now-playing]")) {
   fetch(

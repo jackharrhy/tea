@@ -51,6 +51,17 @@
     "tsrs": "0.23.0-ts7.1.0-beta",
     "vite-plus": "1.5.1"
   },
+  "overrides": {
+    "remark-parse@11.0.0": {
+      "mdast-util-from-markdown": {
+        ".": "2.0.3",
+        "micromark": {
+          ".": "4.0.2",
+          "micromark-core-commonmark": "2.0.3"
+        }
+      }
+    }
+  },
   "allowScripts": {
     "better-sqlite3@13.0.3": true
   }

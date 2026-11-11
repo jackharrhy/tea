@@ -82,6 +82,11 @@ test("Markdown preserves links, media dimensions, code, legacy list rendering, a
   const code = await render(snapshot.byId.get("visible")!.body);
   assert.match(JSON.stringify(code), /astro-code/);
   assert.doesNotMatch(JSON.stringify(code), /<ul>/);
+  const emphasis = await render("un**_it_**");
+  assert.equal(
+    emphasis[0].type === "prose" && emphasis[0].html,
+    "<p>un<strong><em>it</em></strong></p>",
+  );
   assert.deepEqual(
     await render(
       "```component\nProject\nname: Fixture project\nlink: https://example.test\n```",

@@ -11,6 +11,7 @@
     "typecheck": "tsrs --noEmit",
     "test": "NODE_ENV=test node --import remix/node-tsx --test __tests__/*.test.ts",
     "test:parity": "node --env-file-if-exists=.env --import remix/node-tsx __tests__/parity.ts",
+    "test:parity:http": "node --env-file-if-exists=.env --import remix/node-tsx __tests__/http-parity.ts",
     "check": "npm run typecheck && npm test",
     "content:export": "node --env-file-if-exists=.env --import remix/node-tsx scripts/export.ts",
     "assets:diff": "node scripts/assets.ts diff",
