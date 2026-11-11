@@ -2,15 +2,10 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { mockClient } from "aws-sdk-client-mock";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { eq } from "drizzle-orm";
-import { createHttpApp } from "../src/http";
-import { apiRoutes } from "../src/routes/api";
-import { mcpRoutes } from "../src/routes/mcp";
-import { oauthRoutes } from "../src/routes/oauth";
-import { createSession } from "../src/auth";
+import { createApplication } from "../src/http-app.ts";
 import { mintApiToken as mintScopedToken } from "../src/services/api-tokens";
 import { createSubscriber } from "../src/services/subscriber";
 import { operationCatalog } from "../src/operations/catalog";
-import { apiOpenApi } from "../src/openapi";
 import { createTestDb, seedList } from "./helpers";
 import * as schema from "../src/db/schema";
 import type { Config } from "../src/config";
@@ -30,7 +25,6 @@ const config: Config = {
   s3MediaBaseUrl: "",
   ownerEmail: "",
   ownerPassword: "",
-  oauthDynamicRegistrationEnabled: true,
 };
 
 function mintApiToken(
@@ -58,11 +52,7 @@ function setup() {
     .returning()
     .get();
   seedList(db, { slug: "news", name: "News" });
-  const app = createHttpApp();
-  app.use(apiOpenApi());
-  app.use(oauthRoutes(db, config));
-  app.group("/api", (group) => group.use(apiRoutes(db, config)));
-  app.group("/mcp", (group) => group.use(mcpRoutes(db, config)));
+  const app = createApplication(db, config);
   return { app, db, user };
 }
 
@@ -71,7 +61,7 @@ function bearer(token: string) {
 }
 
 async function mcpCall(
-  app: ReturnType<typeof createHttpApp>,
+  app: ReturnType<typeof createApplication>,
   token: string,
   name: string,
   args: unknown,
@@ -282,7 +272,7 @@ describe("scoped API and MCP", () => {
     expect(create.outputSchema.required).toEqual(["id", "email"]);
   });
 
-  test("uses Elysia validation for malformed JSON-RPC requests", async () => {
+  test("rejects malformed JSON-RPC requests", async () => {
     const { app, db, user } = setup();
     const { token } = mintApiToken(db, user.id, "agent", ["lists:read"]);
     const response = await app.request("/mcp/", {
@@ -1114,269 +1104,5 @@ describe("scoped API and MCP", () => {
     expect(created.result.structuredContent.compiledHtml).toContain(
       'role="article"',
     );
-  });
-});
-
-describe("OAuth PKCE", () => {
-  test("publishes protected-resource and authorization-server metadata", async () => {
-    const { app } = setup();
-    const resource = await app.request("/.well-known/oauth-protected-resource");
-    const server = await app.request("/.well-known/oauth-authorization-server");
-    expect(resource.status).toBe(200);
-    expect(((await resource.json()) as any).resource).toBe(
-      "http://localhost/mcp",
-    );
-    expect(
-      ((await server.json()) as any).code_challenge_methods_supported,
-    ).toEqual(["S256"]);
-  });
-  test("registers a client and exchanges a user-approved code", async () => {
-    const { app, db, user } = setup();
-    const registered = await app.request("/oauth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_name: "Codex",
-        redirect_uris: ["http://localhost/callback"],
-      }),
-    });
-    expect(registered.status).toBe(201);
-    expect(registered.headers.get("cache-control")).toBe("no-store");
-    expect(registered.headers.get("pragma")).toBe("no-cache");
-    const client = (await registered.json()) as any;
-    const verifier = "a".repeat(64);
-    const challenge = Buffer.from(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)),
-    ).toString("base64url");
-    const session = createSession(db, user.id);
-    const authorizationParams = new URLSearchParams({
-      client_id: client.client_id,
-      redirect_uri: "http://localhost/callback",
-      response_type: "code",
-      scope: "lists:read dmarc:read",
-      code_challenge: challenge,
-      code_challenge_method: "S256",
-      state: "abc",
-      resource: "http://localhost/mcp",
-    });
-    const approval = await app.request(
-      `/oauth/authorize?${authorizationParams}`,
-      {
-        headers: { Cookie: `session=${session}` },
-      },
-    );
-    expect(approval.status).toBe(200);
-    expect(await approval.text()).toContain('name="resource"');
-    const authorize = await app.request("/oauth/authorize", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Cookie: `session=${session}`,
-      },
-      body: new URLSearchParams({
-        decision: "allow",
-        client_id: client.client_id,
-        redirect_uri: "http://localhost/callback",
-        response_type: "code",
-        scope: "lists:read dmarc:read",
-        code_challenge: challenge,
-        code_challenge_method: "S256",
-        state: "abc",
-        resource: "http://localhost/mcp",
-      }),
-    });
-    expect(authorize.status).toBe(302);
-    const redirect = new URL(authorize.headers.get("location")!);
-    expect(redirect.searchParams.get("state")).toBe("abc");
-
-    const tokenFields = {
-      grant_type: "authorization_code",
-      code: redirect.searchParams.get("code")!,
-      client_id: client.client_id,
-      redirect_uri: "http://localhost/callback",
-      code_verifier: verifier,
-    };
-    const wrongAudience = await app.request("/oauth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(tokenFields),
-    });
-    expect(wrongAudience.status).toBe(400);
-    expect(await wrongAudience.json()).toEqual({ error: "invalid_target" });
-
-    const exchanged = await app.request("/oauth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        ...tokenFields,
-        resource: "http://localhost/mcp",
-      }),
-    });
-    expect(exchanged.status).toBe(200);
-    expect(exchanged.headers.get("cache-control")).toBe("no-store");
-    const tokens = (await exchanged.json()) as any;
-    expect(tokens.access_token).toStartWith("lst_");
-    expect(tokens.refresh_token).toStartWith("lst_refresh_");
-    expect(
-      (
-        await app.request("/api/v1/lists", {
-          headers: bearer(tokens.access_token),
-        })
-      ).status,
-    ).toBe(200);
-    const mcp = await app.request("/mcp/", {
-      method: "POST",
-      headers: {
-        ...bearer(tokens.access_token),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/list",
-        params: {},
-      }),
-    });
-    expect(mcp.status).toBe(200);
-
-    const refreshBody = new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: tokens.refresh_token,
-      client_id: client.client_id,
-      resource: "http://localhost/mcp",
-      scope: "lists:read",
-    });
-    const refreshed = await app.request("/oauth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: refreshBody,
-    });
-    expect(refreshed.status).toBe(200);
-    const rotated = (await refreshed.json()) as any;
-    expect(rotated.refresh_token).toStartWith("lst_refresh_");
-    expect(rotated.refresh_token).not.toBe(tokens.refresh_token);
-    expect(rotated.scope).toBe("lists:read");
-    const replay = await app.request("/oauth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: refreshBody,
-    });
-    expect(replay.status).toBe(400);
-    expect(await replay.json()).toEqual({ error: "invalid_grant" });
-  });
-
-  test("accepts standard dynamic-registration metadata sent by MCP clients", async () => {
-    const { app } = setup();
-    const response = await app.request("/oauth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_name: "Codex",
-        redirect_uris: ["http://127.0.0.1:1455/callback"],
-        token_endpoint_auth_method: "none",
-        grant_types: ["authorization_code", "refresh_token"],
-        response_types: ["code"],
-        scope: "lists:read templates:read",
-        software_id: "codex-cli",
-      }),
-    });
-    expect(response.status).toBe(201);
-    const metadata = (await response.json()) as any;
-    expect(metadata.token_endpoint_auth_method).toBe("none");
-    expect(metadata.scope).toBe("lists:read templates:read");
-  });
-
-  test("escapes self-asserted client metadata on the approval page", async () => {
-    const { app, db, user } = setup();
-    const registered = await app.request("/oauth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_name: "<img src=x onerror=alert(1)>",
-        redirect_uris: ["http://127.0.0.1/callback"],
-      }),
-    });
-    const client = (await registered.json()) as any;
-    const query = new URLSearchParams({
-      client_id: client.client_id,
-      redirect_uri: "http://127.0.0.1/callback",
-      response_type: "code",
-      scope: "lists:read",
-      code_challenge: "a".repeat(43),
-      code_challenge_method: "S256",
-      resource: "http://localhost/mcp",
-    });
-    const approval = await app.request(`/oauth/authorize?${query}`, {
-      headers: { Cookie: `session=${createSession(db, user.id)}` },
-    });
-    const html = await approval.text();
-    expect(approval.status).toBe(200);
-    expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
-    expect(html).not.toContain("<img src=x onerror=alert(1)>");
-  });
-
-  test("rejects insecure redirects, unsupported clients, and incorrect resource targets", async () => {
-    const { app } = setup();
-    for (const redirect_uri of [
-      "http://example.com/callback",
-      "https://example.com/callback#fragment",
-      "https://user:pass@example.com/callback",
-    ]) {
-      const response = await app.request("/oauth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ redirect_uris: [redirect_uri] }),
-      });
-      expect(response.status).toBe(400);
-    }
-    const confidential = await app.request("/oauth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        redirect_uris: ["http://127.0.0.1/callback"],
-        token_endpoint_auth_method: "client_secret_basic",
-      }),
-    });
-    expect(confidential.status).toBe(400);
-    expect(((await confidential.json()) as any).error).toBe(
-      "invalid_client_metadata",
-    );
-    const unknownScope = await app.request("/oauth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        redirect_uris: ["http://127.0.0.1/callback"],
-        scope: "lists:read root:everything",
-      }),
-    });
-    expect(unknownScope.status).toBe(400);
-    expect(((await unknownScope.json()) as any).error).toBe(
-      "invalid_client_metadata",
-    );
-  });
-
-  test("rejects malformed protocol inputs before credential logic", async () => {
-    const { app, db } = setup();
-    const registration = await app.request("/oauth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_name: "Broken",
-        redirect_uris: ["not-a-url"],
-      }),
-    });
-    expect(registration.status).toBe(400);
-    expect(db.select().from(schema.oauthClients).all()).toEqual([]);
-
-    const token = await app.request("/oauth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code: "missing-fields",
-      }),
-    });
-    expect(token.status).toBe(400);
-    expect(await token.json()).toEqual({ error: "invalid_request" });
   });
 });

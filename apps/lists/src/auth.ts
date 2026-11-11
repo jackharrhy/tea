@@ -1,4 +1,3 @@
-import { Elysia } from "elysia";
 import { eq, and, inArray } from "drizzle-orm";
 import type { Db } from "./db";
 import { schema } from "./db";
@@ -56,41 +55,6 @@ export function getSessionUser(db: Db, token: string | undefined) {
         .where(eq(schema.users.id, session.userId))
         .get() ?? null)
     : null;
-}
-
-export function adminAuth(db: Db) {
-  return new Elysia({ name: "admin-auth" })
-    .resolve(({ cookie }) => {
-      const token = cookie.session?.value;
-      const session =
-        typeof token === "string" ? getValidSession(db, token) : null;
-      const user = session
-        ? db
-            .select()
-            .from(schema.users)
-            .where(eq(schema.users.id, session.userId))
-            .get()
-        : null;
-      return { user };
-    })
-    .onBeforeHandle(({ user, redirect }) => {
-      if (!user) return redirect("/admin/login", 302);
-    })
-    .as("scoped");
-}
-
-export function requireRole(...roles: string[]) {
-  return ({
-    user,
-    status,
-  }: {
-    user?: { role: string };
-    status: (code: number, body?: string) => unknown;
-  }) => {
-    if (!user || !roles.includes(user.role)) {
-      return status(403, "Forbidden");
-    }
-  };
 }
 
 export function canAccessList(

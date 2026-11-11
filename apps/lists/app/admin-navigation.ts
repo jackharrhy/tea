@@ -1,12 +1,11 @@
 type AdminNavigationLink = {
   href: string;
   label: string;
-  fullPage?: boolean;
 };
 
 export function adminNavigation(isAdmin: boolean) {
   const primary: AdminNavigationLink[] = [
-    { href: "/admin/", label: "Dashboard", fullPage: true },
+    { href: "/admin/", label: "Dashboard" },
     { href: "/admin/subscribers", label: "Subscribers" },
     { href: "/admin/lists", label: "Lists" },
     { href: "/admin/campaigns", label: "Campaigns" },
@@ -19,12 +18,10 @@ export function adminNavigation(isAdmin: boolean) {
     { href: "/admin/tags", label: "Tags" },
     { href: "/admin/import", label: "Import" },
   ];
-  if (isAdmin)
-    secondary.push({ href: "/admin/users", label: "Users", fullPage: true });
+  if (isAdmin) secondary.push({ href: "/admin/users", label: "Users" });
   secondary.push(
-    { href: "/admin/tokens", label: "API", fullPage: true },
+    { href: "/admin/tokens", label: "API" },
     { href: "/admin/templates", label: "Templates" },
-    { href: "/design", label: "Design", fullPage: true },
   );
 
   return { primary, secondary };

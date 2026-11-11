@@ -1,15 +1,25 @@
 import { test, expect, describe } from "bun:test";
-import { createHttpApp } from "../src/http";
+import { createApplication } from "../src/http-app.ts";
 import {
   createSession,
   destroySession,
-  adminAuth,
-  requireRole,
   getAccessibleListIds,
-} from "../src/auth";
-import { bootstrapOwner } from "../src/bootstrap";
-import { createTestDb } from "./helpers";
-import * as schema from "../src/db/schema";
+} from "../src/auth.ts";
+import { bootstrapOwner } from "../src/bootstrap.ts";
+import { createTestDb } from "./helpers.ts";
+import * as schema from "../src/db/schema.ts";
+
+const testConfig = {
+  ownerEmail: "",
+  ownerPassword: "",
+  awsRegion: "us-east-1",
+  sqsQueueUrl: "",
+  s3Bucket: "",
+  dbPath: ":memory:",
+  fromDomain: "example.com",
+  baseUrl: "http://localhost",
+  sesConfigSet: "",
+};
 
 function seedUser(
   db: ReturnType<typeof createTestDb>,
@@ -27,170 +37,42 @@ function seedUser(
     .get();
 }
 
-describe("createSession", () => {
-  test("returns a string", () => {
-    const db = createTestDb();
-    const user = seedUser(db);
-    const session = createSession(db, user.id);
-    expect(typeof session).toBe("string");
-  });
-
-  test("returns unique sessions", () => {
-    const db = createTestDb();
-    const user = seedUser(db);
-    const a = createSession(db, user.id);
-    const b = createSession(db, user.id);
-    expect(a).not.toBe(b);
-  });
-
-  test("persists sessions in the database across app instances", async () => {
+describe("native admin sessions", () => {
+  test("persists and revokes a session across application instances", async () => {
     const db = createTestDb();
     const user = seedUser(db);
     const token = createSession(db, user.id);
-
-    const restartedApp = createHttpApp();
-    restartedApp.group("/protected", (app) =>
-      app.use(adminAuth(db)).get("/data", (c) => c.text("ok")),
-    );
-
-    const res = await restartedApp.handle(
-      new Request("http://localhost/protected/data", {
-        headers: { Cookie: `session=${token}` },
-      }),
-    );
-    expect(res.status).toBe(200);
-  });
-});
-
-describe("destroySession", () => {
-  test("invalidates a session", async () => {
-    const db = createTestDb();
-    const user = seedUser(db);
-
-    const app = createHttpApp();
-    app.group("/protected", (group) =>
-      group.use(adminAuth(db)).get("/data", (c) => c.text("ok")),
-    );
-
-    const token = createSession(db, user.id);
-
-    // Valid session should grant access
-    const validRes = await app.handle(
-      new Request("http://localhost/protected/data", {
-        headers: { Cookie: `session=${token}` },
-      }),
-    );
-    expect(validRes.status).toBe(200);
-    expect(await validRes.text()).toBe("ok");
-
-    // Destroy and verify it now redirects
+    const app = createApplication(db, testConfig);
+    const headers = { Cookie: `session=${token}` };
+    expect((await app.request("/admin/", { headers })).status).toBe(200);
     destroySession(db, token);
-    const invalidRes = await app.handle(
-      new Request("http://localhost/protected/data", {
-        headers: { Cookie: `session=${token}` },
-      }),
+    const rejected = await createApplication(db, testConfig).request(
+      "/admin/",
+      { headers },
     );
-    expect(invalidRes.status).toBe(302);
-    expect(invalidRes.headers.get("Location")).toBe("/admin/login");
+    expect(rejected.status).toBe(302);
+    expect(rejected.headers.get("location")).toBe("/admin/login");
   });
-});
-
-describe("adminAuth middleware", () => {
-  test("redirects when no session cookie is present", async () => {
+  test("rejects missing and invalid cookies", async () => {
     const db = createTestDb();
-
-    const app = createHttpApp();
-    app.group("/protected", (group) =>
-      group.use(adminAuth(db)).get("/data", (c) => c.text("ok")),
-    );
-
-    const res = await app.handle(
-      new Request("http://localhost/protected/data"),
-    );
-    expect(res.status).toBe(302);
-    expect(res.headers.get("Location")).toBe("/admin/login");
+    const app = createApplication(db, testConfig);
+    expect((await app.request("/admin/")).status).toBe(302);
+    expect(
+      (await app.request("/admin/", { headers: { Cookie: "session=invalid" } }))
+        .status,
+    ).toBe(302);
   });
-
-  test("allows access with valid session cookie and sets user on context", async () => {
+  test("enforces owner access on native users page", async () => {
     const db = createTestDb();
-    const user = seedUser(db, { email: "admin@test.com", role: "admin" });
-
-    const app = createHttpApp();
-    app.group("/protected", (group) =>
-      group.use(adminAuth(db)).get("/data", (c) => {
-        const u = c.user as typeof user;
-        return c.text(`${u.email}:${u.role}`);
-      }),
-    );
-
-    const token = createSession(db, user.id);
-    const res = await app.handle(
-      new Request("http://localhost/protected/data", {
-        headers: { Cookie: `session=${token}` },
-      }),
-    );
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe("admin@test.com:admin");
-  });
-
-  test("redirects with invalid session cookie", async () => {
-    const db = createTestDb();
-
-    const app = createHttpApp();
-    app.group("/protected", (group) =>
-      group.use(adminAuth(db)).get("/data", (c) => c.text("ok")),
-    );
-
-    const res = await app.handle(
-      new Request("http://localhost/protected/data", {
-        headers: { Cookie: "session=bogus-token" },
-      }),
-    );
-    expect(res.status).toBe(302);
-    expect(res.headers.get("Location")).toBe("/admin/login");
-  });
-});
-
-describe("requireRole middleware", () => {
-  test("returns 403 for wrong role", async () => {
-    const db = createTestDb();
-    const user = seedUser(db, { email: "member@test.com", role: "member" });
-
-    const app = createHttpApp();
-    app.group("/protected", (group) =>
-      group.use(adminAuth(db)).get("/data", (c) => c.text("ok"), {
-        beforeHandle: requireRole("owner", "admin"),
-      }),
-    );
-
-    const token = createSession(db, user.id);
-    const res = await app.handle(
-      new Request("http://localhost/protected/data", {
-        headers: { Cookie: `session=${token}` },
-      }),
-    );
-    expect(res.status).toBe(403);
-  });
-
-  test("allows correct role", async () => {
-    const db = createTestDb();
-    const user = seedUser(db, { email: "owner@test.com", role: "owner" });
-
-    const app = createHttpApp();
-    app.group("/protected", (group) =>
-      group.use(adminAuth(db)).get("/data", (c) => c.text("ok"), {
-        beforeHandle: requireRole("owner", "admin"),
-      }),
-    );
-
-    const token = createSession(db, user.id);
-    const res = await app.handle(
-      new Request("http://localhost/protected/data", {
-        headers: { Cookie: `session=${token}` },
-      }),
-    );
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe("ok");
+    const member = seedUser(db, { role: "member" });
+    const token = createSession(db, member.id);
+    expect(
+      (
+        await createApplication(db, testConfig).request("/admin/users", {
+          headers: { Cookie: `session=${token}` },
+        })
+      ).status,
+    ).toBe(403);
   });
 });
 

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createTestDb } from "./helpers";
 import * as schema from "../src/db/schema";
 import { cleanupExpiredAuthRecords } from "../src/services/auth-maintenance";
-import { shouldVerifySnsSignature } from "../src/routes/webhooks";
+import { shouldVerifySnsSignature } from "../src/services/ses-webhook";
 
 describe("auth maintenance", () => {
   test("removes expired ephemeral credentials while retaining valid ones", () => {

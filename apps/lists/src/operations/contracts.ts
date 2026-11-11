@@ -297,10 +297,6 @@ export const dmarcOutput = z.array(
   }),
 );
 
-export const apiErrorOutput = z.object({ error: z.string() });
-export const dataOutput = <S extends z.ZodType>(schema: S) =>
-  z.object({ data: schema });
-
 export type CreateSubscriberInput = z.output<typeof subscriberCreateInput>;
 export type CreateCampaignDraftInput = z.output<typeof campaignCreateInput>;
 export type UpdateCampaignDraftInput = z.output<typeof campaignUpdateInput>;

@@ -221,6 +221,22 @@ function initializePreview() {
     if (button) button.textContent = opening ? "Close Preview" : "Preview";
     if (opening) void update();
   };
+  element<HTMLButtonElement>("#previewToggleBtn")?.addEventListener(
+    "click",
+    () => window.togglePreviewPanel?.(),
+  );
+  element<HTMLButtonElement>("#previewCloseBtn")?.addEventListener(
+    "click",
+    () => window.togglePreviewPanel?.(),
+  );
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-preview-width]")
+    .forEach((button) =>
+      button.addEventListener("click", () => {
+        const width = button.dataset.previewWidth;
+        window.setPreviewWidth?.(width === "full" ? null : Number(width));
+      }),
+    );
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.classList.contains("hidden"))
       window.togglePreviewPanel?.();

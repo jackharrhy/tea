@@ -2,7 +2,7 @@ import { test, expect, describe, beforeEach } from "bun:test";
 import { mockClient } from "aws-sdk-client-mock";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { eq, and, desc } from "drizzle-orm";
-import { createHttpApp } from "../src/http";
+import { createApplication } from "../src/http-app.ts";
 
 import { createTestDb, seedList } from "./helpers";
 import { sendCampaign } from "../src/services/sender";
@@ -11,8 +11,6 @@ import {
   recoverAbandonedDeliveries,
   rescheduleInterruptedCampaigns,
 } from "../src/services/delivery-worker";
-import { publicRoutes } from "../src/routes/public";
-import { adminRoutes } from "../src/routes/admin";
 import * as schema from "../src/db/schema";
 import type { Config } from "../src/config";
 import {
@@ -644,12 +642,13 @@ describe("Per-list unsubscribe flow via App", () => {
     );
     confirmSubscriber(db, subscriber.unsubscribeToken);
 
-    const app = createHttpApp();
-    app.use(publicRoutes(db, testConfig));
+    const app = createApplication(db, testConfig);
 
     const res = await app.request(
       `/unsubscribe/${subscriber.unsubscribeToken}/${listA.id}`,
-      { method: "GET" },
+      {
+        method: "GET",
+      },
     );
 
     expect(res.status).toBe(200);
@@ -707,8 +706,7 @@ describe("Per-list unsubscribe flow via App", () => {
     );
     confirmSubscriber(db, subscriber.unsubscribeToken);
 
-    const app = createHttpApp();
-    app.use(publicRoutes(db, testConfig));
+    const app = createApplication(db, testConfig);
 
     const res = await app.request(
       `/unsubscribe/${subscriber.unsubscribeToken}/${listA.id}`,
@@ -859,8 +857,7 @@ describe("GET /campaigns/:id/preview", () => {
 
     const { sessionToken } = createOwnerAndSession(db);
 
-    const app = createHttpApp();
-    app.group("/admin", (group) => group.use(adminRoutes(db, testConfig)));
+    const app = createApplication(db, testConfig);
 
     const res = await app.request(`/admin/campaigns/${campaign.id}/preview`, {
       headers: { Cookie: `session=${sessionToken}` },
@@ -913,8 +910,7 @@ describe("GET /campaigns/:id/preview?subscriberId=N", () => {
 
     const { sessionToken } = createOwnerAndSession(db);
 
-    const app = createHttpApp();
-    app.group("/admin", (group) => group.use(adminRoutes(db, testConfig)));
+    const app = createApplication(db, testConfig);
 
     const res = await app.request(
       `/admin/campaigns/${campaign.id}/preview?subscriberId=${sub.id}`,
@@ -942,8 +938,7 @@ describe("POST /campaigns/preview", () => {
     const db = createTestDb();
     const { sessionToken } = createOwnerAndSession(db);
 
-    const app = createHttpApp();
-    app.group("/admin", (group) => group.use(adminRoutes(db, testConfig)));
+    const app = createApplication(db, testConfig);
 
     const res = await app.request("/admin/campaigns/preview", {
       method: "POST",
@@ -1146,8 +1141,7 @@ describe("Reply uses RFC 822 Message-ID for threading headers", () => {
 
     sesMock.on(SendEmailCommand).resolves({ MessageId: "ses-reply-msg-id" });
 
-    const app = createHttpApp();
-    app.group("/admin", (group) => group.use(adminRoutes(db, testConfig)));
+    const app = createApplication(db, testConfig);
 
     const formBody = new URLSearchParams({
       fromAddr: "admin@example.com",
@@ -1166,7 +1160,7 @@ describe("Reply uses RFC 822 Message-ID for threading headers", () => {
     });
 
     // Should redirect after success
-    expect(res.status).toBe(302);
+    expect(res.status).toBe(303);
 
     // SES should have been called once
     const sesCalls = sesMock.commandCalls(SendEmailCommand);
@@ -1219,8 +1213,7 @@ describe("Reply omits threading headers when rfc822MessageId is null", () => {
 
     sesMock.on(SendEmailCommand).resolves({ MessageId: "ses-noreply-msg-id" });
 
-    const app = createHttpApp();
-    app.group("/admin", (group) => group.use(adminRoutes(db, testConfig)));
+    const app = createApplication(db, testConfig);
 
     const formBody = new URLSearchParams({
       fromAddr: "admin@example.com",
@@ -1239,7 +1232,7 @@ describe("Reply omits threading headers when rfc822MessageId is null", () => {
     });
 
     // Should redirect after success
-    expect(res.status).toBe(302);
+    expect(res.status).toBe(303);
 
     // SES should have been called once
     const sesCalls = sesMock.commandCalls(SendEmailCommand);
