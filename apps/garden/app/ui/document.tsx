@@ -1,5 +1,17 @@
 import { css, type RemixNode } from "remix/component";
 import { legacyStyles } from "./legacy-styles.ts";
+import { readFileSync } from "node:fs";
+import { Mug } from "./public/mug.tsx";
+import { assets } from "../assets.ts";
+import { ImportMap } from "remix/component/server";
+
+const mugModel = readFileSync(
+  new URL("./public/mug/cuppa.txt", import.meta.url),
+  "utf8",
+);
+const browserEntry = await assets.getScriptEntry(
+  new URL("./public/entry.js", import.meta.url).href,
+);
 
 const documentStyles = css({
   backgroundColor: "var(--color-paper)",
@@ -20,22 +32,7 @@ const documentStyles = css({
 });
 
 export function mug(home: boolean) {
-  return (
-    <div
-      class="flex justify-center"
-      data-mug-slot
-      data-rmx-preserve-dom
-      data-rmx-key={home ? "home-mug" : "header-mug"}
-    >
-      <canvas
-        id="mug-canvas"
-        class={home ? "my-16" : "my-0"}
-        width={home ? 250 : 100}
-        height={home ? 180 : 50}
-        aria-label="Spinning tea mug"
-      />
-    </div>
-  );
+  return <Mug home={home} model={mugModel} />;
 }
 
 export function document(options: {
@@ -71,6 +68,15 @@ export function document(options: {
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width" />
+        <ImportMap value={browserEntry.importMap} />
+        <script
+          type="module"
+          src={browserEntry.href}
+          data-development={development ? "true" : "false"}
+        />
+        {browserEntry.preloads.map((href) => (
+          <link rel="modulepreload" href={href} />
+        ))}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <title>
           {title
@@ -144,11 +150,6 @@ export function document(options: {
             </footer>
           )}
         </div>
-        <script
-          type="module"
-          src="/assets/app/ui/public/entry.js"
-          data-development={development ? "true" : "false"}
-        />
         {!development && (
           <script
             data-goatcounter="https://jackharrhy.goatcounter.com/count"

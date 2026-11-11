@@ -196,28 +196,30 @@ export function createGarden(config: GardenConfig) {
   router.get(routes.youtube, (context) =>
     context.render(tool("youtube", config)),
   );
+  router.get(routes.toolResult, (context) => context.render(null));
   router.get(routes.lastfm, (context) =>
     context.render(tool("lastfm", config)),
   );
   router.get(routes.tweet, (context) => context.render(tool("tweet", config)));
-  router.post(
-    routes.archive,
-    () =>
-      new Response(
-        "This isn't finished yet, so for now this just returns this :)",
-      ),
+  router.post(routes.archive, (context) =>
+    context.render(
+      "This isn't finished yet, so for now this just returns this :)",
+    ),
   );
   router.post(routes.thumbnail, async (context) => {
     const input = (await context.request.formData()).get("url");
     if (typeof input !== "string")
-      return new Response("Missing URL parameter", { status: 400 });
+      return context.render(<p role="alert">Missing URL parameter</p>, {
+        status: 400,
+      });
     const id = input.match(
       /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})(?:[?&#/]|$)/,
     )?.[1];
     if (!id)
-      return new Response("Could not extract video ID from the provided URL", {
-        status: 400,
-      });
+      return context.render(
+        <p role="alert">Could not extract video ID from the provided URL</p>,
+        { status: 400 },
+      );
     return context.render(
       <img
         src={`https://img.youtube.com/vi/${id}/maxresdefault.jpg`}
@@ -273,16 +275,21 @@ export function createGarden(config: GardenConfig) {
                 </p>
               </div>
             </div>,
+            { headers: { "Cache-Control": "no-store" } },
           );
       } catch {
         console.error("Last.fm now-playing request failed");
       }
     }
     return new URL(context.request.url).searchParams.has("debug")
-      ? new Response(
+      ? context.render(
           "Either ran into an error, or no track is currently playing.",
+          { headers: { "Cache-Control": "no-store" } },
         )
-      : new Response(null, { status: 204 });
+      : new Response(null, {
+          status: 204,
+          headers: { "Cache-Control": "no-store" },
+        });
   });
   const boot = Date.now();
   let browserRevision = 0;

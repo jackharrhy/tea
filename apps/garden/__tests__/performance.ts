@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 
 const origin = process.env.GARDEN_PERF_URL || "http://127.0.0.1:4322";
+const latency = Number(process.env.GARDEN_PERF_LATENCY_MS || 0);
 const samples = [];
 for (let index = 0; index < 21; index++) {
   const start = performance.now();
@@ -23,7 +24,49 @@ try {
     const context = await browser.newContext();
     await context.route("**/gc.zgo.at/**", (route) => route.abort());
     const page = await context.newPage();
+    if (latency > 0) {
+      const session = await context.newCDPSession(page);
+      await session.send("Network.emulateNetworkConditions", {
+        offline: false,
+        latency,
+        downloadThroughput: -1,
+        uploadThroughput: -1,
+      });
+    }
     await page.addInitScript(() => {
+      const contexts = new WeakSet<WebGLRenderingContext>();
+      HTMLCanvasElement.prototype.getContext = new Proxy(
+        HTMLCanvasElement.prototype.getContext,
+        {
+          apply(target, canvas: HTMLCanvasElement, args) {
+            const renderingContext = Reflect.apply(
+              target,
+              canvas,
+              args,
+            ) as RenderingContext | null;
+            if (
+              canvas.id === "mug-canvas" &&
+              renderingContext &&
+              "drawArrays" in renderingContext &&
+              !contexts.has(renderingContext)
+            ) {
+              contexts.add(renderingContext);
+              for (const method of ["drawArrays", "drawElements"] as const) {
+                const draw = renderingContext[method];
+                renderingContext[method] = (...parameters: number[]) => {
+                  Reflect.apply(draw, renderingContext, parameters);
+                  if (
+                    !performance.getEntriesByName("garden:mug-first-frame")
+                      .length
+                  )
+                    performance.mark("garden:mug-first-frame");
+                };
+              }
+            }
+            return renderingContext;
+          },
+        },
+      );
       let lcp = 0;
       new PerformanceObserver((list) => {
         lcp = list.getEntries().at(-1)?.startTime || lcp;
@@ -44,6 +87,9 @@ try {
           fcp: performance.getEntriesByName("first-contentful-paint")[0]
             ?.startTime,
           lcp: (window as unknown as { measuredLCP: number }).measuredLCP,
+          mugFirstFrame: performance.getEntriesByName(
+            "garden:mug-first-frame",
+          )[0]?.startTime,
           documentTransferred: navigation.transferSize,
           resourcesTransferred: resources.reduce(
             (sum, resource) => sum + resource.transferSize,
@@ -66,6 +112,7 @@ console.log(
   JSON.stringify(
     {
       origin,
+      browserAddedLatencyMs: latency,
       firstRequest: samples[0],
       warmTTFB: {
         median: warm[10],
