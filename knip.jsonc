@@ -80,7 +80,7 @@
       ],
     },
     "apps/lists": {
-      "entry": ["src/client.ts", "src/styles/app.css"],
+      "entry": ["src/campaign-client.ts"],
     },
     "apps/marky": {
       "entry": ["remix-test.config.ts", "app/assets/entry.ts"],
