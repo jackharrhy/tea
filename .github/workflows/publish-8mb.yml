@@ -50,12 +50,12 @@ jobs:
           push: true
           build-args: VCS_REF=${{ github.sha }}
           tags: |
-            ghcr.io/jackharrhy/harrhy-8mb:latest
-            ghcr.io/jackharrhy/harrhy-8mb:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/8mb:latest
+            ghcr.io/jackharrhy/8mb:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/harrhy-8mb@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/8mb@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
