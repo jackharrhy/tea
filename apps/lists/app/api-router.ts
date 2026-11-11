@@ -19,7 +19,7 @@ import {
 
 type Operation = keyof typeof operationCatalog;
 type Params = Record<string, string | undefined>;
-type Input = (request: Request, params: Params) => Promise<unknown> | unknown;
+type Input = (request: Request, params: Params) => unknown;
 type Method = "GET" | "POST" | "PUT" | "DELETE";
 
 function query(request: Request) {
@@ -35,6 +35,11 @@ async function body(request: Request) {
     ]);
   }
 }
+
+const empty: Input = () => ({});
+const routeParams: Input = (_, value) => value;
+const search: Input = (request) => query(request);
+const payload: Input = (request) => body(request);
 
 function object(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -151,14 +156,10 @@ export function createApiRouter(db: Db, config: Config) {
     };
   }
 
-  const empty: Input = () => ({});
-  const params: Input = (_, value) => value;
-  const search: Input = (request) => query(request);
-  const payload: Input = (request) => body(request);
   register("GET", "/api/v1/lists", "listsList", empty);
-  register("GET", "/api/v1/lists/:id/stats", "listStats", params);
+  register("GET", "/api/v1/lists/:id/stats", "listStats", routeParams);
   register("GET", "/api/v1/subscribers", "subscribersList", search);
-  register("GET", "/api/v1/subscribers/:id", "subscriberGet", params);
+  register("GET", "/api/v1/subscribers/:id", "subscriberGet", routeParams);
   register("POST", "/api/v1/subscribers", "subscriberCreate", payload, 201);
   register(
     "DELETE",
@@ -179,7 +180,7 @@ export function createApiRouter(db: Db, config: Config) {
     }),
   );
   register("GET", "/api/v1/campaigns", "campaignsList", search);
-  register("GET", "/api/v1/campaigns/:id", "campaignGet", params);
+  register("GET", "/api/v1/campaigns/:id", "campaignGet", routeParams);
   register(
     "GET",
     "/api/v1/campaigns/:id/sends",
@@ -189,7 +190,12 @@ export function createApiRouter(db: Db, config: Config) {
       id: value.id,
     }),
   );
-  register("GET", "/api/v1/campaigns/:id/preview", "campaignPreview", params);
+  register(
+    "GET",
+    "/api/v1/campaigns/:id/preview",
+    "campaignPreview",
+    routeParams,
+  );
   register("POST", "/api/v1/campaigns", "campaignCreateDraft", payload, 201);
   register(
     "PUT",
@@ -221,7 +227,7 @@ export function createApiRouter(db: Db, config: Config) {
   register("GET", "/api/v1/deliverability", "deliverabilitySummary", empty);
   register("GET", "/api/v1/dmarc", "dmarcSummary", empty);
   register("GET", "/api/v1/email-templates", "templatesList", empty);
-  register("GET", "/api/v1/email-templates/:slug", "templateGet", params);
+  register("GET", "/api/v1/email-templates/:slug", "templateGet", routeParams);
   register("POST", "/api/v1/email-templates", "templateCreate", payload, 201);
   register(
     "POST",

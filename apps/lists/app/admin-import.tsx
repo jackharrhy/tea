@@ -56,7 +56,7 @@ const table = css({
   width: "100%",
   fontSize: "14px",
 });
-const cell = css({
+const tableCell = css({
   padding: "8px",
   borderBottom: "1px solid #e5e7eb",
   textAlign: "left",
@@ -178,7 +178,7 @@ function Review(
           <thead>
             <tr>
               {stage.headers.map((header, index) => (
-                <th mix={cell}>
+                <th mix={tableCell}>
                   <select mix={input} name={`col_${index}`}>
                     {["ignore", "email", "firstName", "lastName"].map(
                       (value) => (
@@ -196,7 +196,7 @@ function Review(
             </tr>
             <tr>
               {stage.headers.map((header) => (
-                <th mix={cell}>{header}</th>
+                <th mix={tableCell}>{header}</th>
               ))}
             </tr>
           </thead>
@@ -204,7 +204,7 @@ function Review(
             {stage.rows.slice(0, 5).map((row) => (
               <tr>
                 {stage.headers.map((_, index) => (
-                  <td mix={cell}>{row[index] ?? ""}</td>
+                  <td mix={tableCell}>{row[index] ?? ""}</td>
                 ))}
               </tr>
             ))}

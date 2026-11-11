@@ -41,7 +41,7 @@ const toolbar = css({
   gap: "16px",
   flexWrap: "wrap",
 });
-const filters = css({
+const filterBar = css({
   display: "flex",
   alignItems: "end",
   flexWrap: "wrap",
@@ -255,7 +255,7 @@ function SubscriberIndex(
             </a>
           </p>
         ) : null}
-        <form mix={filters} method="get" action="/admin/subscribers">
+        <form mix={filterBar} method="get" action="/admin/subscribers">
           <label mix={field}>
             Search
             <input

@@ -451,17 +451,17 @@ export function CampaignEditor(
                   class={template.slug === selectedTemplate ? "" : "hidden"}
                 >
                   {(JSON.parse(template.sections) as TemplateSection[])
-                    .filter((section) => section.key !== "content")
-                    .map((section) => (
+                    .filter((part) => part.key !== "content")
+                    .map((part) => (
                       <label mix={field}>
-                        {section.name}
-                        {section.required ? "" : " (optional)"}
+                        {part.name}
+                        {part.required ? "" : " (optional)"}
                         <textarea
                           mix={textarea}
-                          data-template-section={section.key}
-                          data-format={section.format}
-                          required={section.required}
-                          value={savedSections[section.key] ?? ""}
+                          data-template-section={part.key}
+                          data-format={part.format}
+                          required={part.required}
+                          value={savedSections[part.key] ?? ""}
                         />
                       </label>
                     ))}
