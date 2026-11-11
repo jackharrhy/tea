@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { constants } from "node:zlib";
 import { join } from "node:path";
 import type { SiteRuntime } from "./app/site.ts";
 import { openDatabase } from "./app/data/database.ts";
@@ -8,6 +9,7 @@ import { createOperatorRouter } from "./operator/router.tsx";
 import type { OperatorStore } from "./operator/store.ts";
 import { currentLog } from "@tea/logger";
 import { parseOperatorOrigin } from "./config.ts";
+import { compressResponse } from "remix/response/compress";
 
 type Operator = { origin: string; store: OperatorStore };
 type Tenant = {
@@ -89,7 +91,25 @@ export async function createApp(sites: SiteRuntime[], operator?: Operator) {
         }
         // Use the registered origin behind TLS termination, never forwarded host headers.
         url.protocol = origin.protocol;
-        return tenant.router.fetch(new Request(url, request));
+        const response = await tenant.router.fetch(new Request(url, request));
+        if (
+          !tenant.site.preview &&
+          (request.method === "GET" || request.method === "HEAD") &&
+          !url.search &&
+          !url.pathname.startsWith("/tea/") &&
+          !request.headers.has("cookie") &&
+          !request.headers.has("authorization") &&
+          !response.headers.has("set-cookie") &&
+          response.headers.get("content-type")?.startsWith("text/html") &&
+          !/\b(?:private|no-store)\b/i.test(
+            response.headers.get("cache-control") ?? "",
+          )
+        )
+          return compressResponse(response, request, {
+            encodings: ["br", "gzip"],
+            brotli: { params: { [constants.BROTLI_PARAM_QUALITY]: 4 } },
+          });
+        return response;
       },
       close() {
         for (const tenant of tenants) tenant.database.sqlite.close();

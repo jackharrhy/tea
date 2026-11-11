@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { gzipSync } from "node:zlib";
+import { brotliCompressSync, constants, gzipSync } from "node:zlib";
+import { AcceptEncoding } from "remix/headers/accept-encoding";
 import { createRouter } from "remix/router";
 import { render } from "remix/middleware/render";
 import { staticFiles } from "remix/middleware/static";
@@ -25,7 +26,12 @@ export function createGarden(config: GardenConfig) {
   const content = createContentStore(config.directory);
   const pages = new Map<
     string,
-    Promise<{ html: string; gzip: Uint8Array<ArrayBuffer>; status: number }>
+    Promise<{
+      html: string;
+      br: Uint8Array<ArrayBuffer>;
+      gzip: Uint8Array<ArrayBuffer>;
+      status: number;
+    }>
   >();
   let rendering:
     | { revision: number; render: ReturnType<typeof createMarkdownRenderer> }
@@ -88,6 +94,11 @@ export function createGarden(config: GardenConfig) {
           const html = await response.text();
           return {
             html,
+            br: new Uint8Array(
+              brotliCompressSync(html, {
+                params: { [constants.BROTLI_PARAM_QUALITY]: 4 },
+              }),
+            ),
             gzip: new Uint8Array(gzipSync(html)),
             status: response.status,
           };
@@ -96,28 +107,28 @@ export function createGarden(config: GardenConfig) {
         cached.catch(() => pages.delete(cacheKey));
       }
       const result = await cached;
-      const compressed = (context.request.headers.get("Accept-Encoding") || "")
-        .split(",")
-        .some((value) => {
-          const [encoding, ...parameters] = value
-            .trim()
-            .toLowerCase()
-            .split(";");
-          const quality = parameters.find((parameter) =>
-            parameter.trim().startsWith("q="),
-          );
-          return (
-            encoding === "gzip" &&
-            (!quality || Number(quality.trim().slice(2)) > 0)
-          );
-        });
-      return new Response(compressed ? result.gzip : result.html, {
+      const header = context.request.headers.get("Accept-Encoding");
+      let encoding: "br" | "gzip" | undefined;
+      if (header) {
+        const accepted = AcceptEncoding.from(header);
+        encoding = accepted.getPreferred(["br", "gzip"] as const) ?? undefined;
+        if (
+          !encoding &&
+          (accepted.get("identity") === 0 ||
+            (accepted.get("identity") === null && accepted.get("*") === 0))
+        )
+          return new Response("No acceptable encoding", {
+            status: 406,
+            headers: { Vary: "Accept-Encoding" },
+          });
+      }
+      return new Response(encoding ? result[encoding] : result.html, {
         status: result.status,
         headers: {
           "Content-Type": "text/html; charset=utf-8",
           "Cache-Control": "public, max-age=60",
           Vary: "Accept-Encoding",
-          ...(compressed ? { "Content-Encoding": "gzip" } : {}),
+          ...(encoding ? { "Content-Encoding": encoding } : {}),
         },
       });
     }

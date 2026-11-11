@@ -1,5 +1,6 @@
 import { it } from "remix/test";
 import * as assert from "node:assert/strict";
+import { brotliDecompressSync } from "node:zlib";
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -45,9 +46,34 @@ it("isolates host routing, sessions, writes, uploads, optional features and anal
     assert.match(home, /First fixture/);
     assert.match(home, /site-sidebar/);
     assert.ok(!home.includes("Second fixture"));
+    const encodedHome = await app.fetch(
+      new Request("http://one.example.test/", {
+        headers: { "Accept-Encoding": "br, gzip" },
+      }),
+    );
+    assert.equal(encodedHome.headers.get("Content-Encoding"), "br");
+    assert.match(encodedHome.headers.get("Vary") ?? "", /Accept-Encoding/i);
+    assert.equal(
+      brotliDecompressSync(
+        Buffer.from(await encodedHome.arrayBuffer()),
+      ).toString(),
+      home,
+    );
+    const editorResponse = await app.fetch(
+      new Request("http://one.example.test/tea/admin", {
+        headers: { "Accept-Encoding": "br, gzip", Cookie: "session=fixture" },
+      }),
+    );
+    assert.equal(editorResponse.headers.get("Content-Encoding"), null);
     const second = await get("two.example.test");
     assert.equal(second.headers.get("x-robots-tag"), "noindex, nofollow");
     assert.match(await second.text(), /site-header/);
+    const previewResponse = await app.fetch(
+      new Request("http://two.example.test/", {
+        headers: { "Accept-Encoding": "br" },
+      }),
+    );
+    assert.equal(previewResponse.headers.get("Content-Encoding"), null);
     assert.equal((await get("unknown.example.test")).status, 404);
     const alias = await get("www.one.example.test", "/example?x=1&x=2");
     assert.equal(alias.status, 308);
