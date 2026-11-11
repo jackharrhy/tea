@@ -96,6 +96,36 @@ describe("room cells", () => {
     client.close();
   });
 
+  it("stops room controls when a Central session expires", async () => {
+    const room = env.RADIO_ROOMS.getByName("expiring-session-room");
+    const expiresAt = Date.now() + 1000;
+    const response = await room.fetch("https://cell.test/websocket", {
+      headers: {
+        Upgrade: "websocket",
+        "x-radio-room": "expiring-session-room",
+        "x-radio-listener-name": "Listener",
+        "x-radio-session-expires-at": String(expiresAt),
+      },
+    });
+    expect(response.status).toBe(101);
+    const socket = response.webSocket!;
+    socket.accept();
+    const client = new SocketClient(socket);
+    client.send({ type: "JOIN", clientId: "expiring-listener" });
+    await client.next("ROOM_STATE");
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.max(0, expiresAt - Date.now() + 10)),
+    );
+    const closed = new Promise<number>((resolve) =>
+      socket.addEventListener("close", (event: Event) =>
+        resolve((event as CloseEvent).code),
+      ),
+    );
+    client.send({ type: "SET_VOLUME", volume: 0.25 });
+    expect(await closed).toBe(1008);
+    expect((await snapshot("expiring-session-room")).volume).toBe(1);
+  });
+
   it("treats duplicate readiness as one listener and cancels removed pending tracks", async () => {
     let track = await uploadTrack("pending-room", "Pending");
     let first = await join("pending-room", "first");

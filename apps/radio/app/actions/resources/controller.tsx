@@ -13,7 +13,11 @@ export default createController(routes.resources, {
   actions: {
     websocket(context) {
       let headers = new Headers(context.request.headers);
-      headers.set("x-radio-listener-name", context.get(RadioAccess)!.name);
+      let listener = context.get(RadioAccess)!;
+      headers.set("x-radio-listener-name", listener.name);
+      if (listener.expiresAt)
+        headers.set("x-radio-session-expires-at", String(listener.expiresAt));
+      else headers.delete("x-radio-session-expires-at");
       return context
         .get(RadioRuntime)!
         .fetchRoom(context.get(CurrentRoom)!.slug, "/websocket", {
