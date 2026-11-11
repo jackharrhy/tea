@@ -1,5 +1,4 @@
 export interface IdentityValue {
-  discordId?: string;
   subject?: string;
   expiresAt?: number;
   name: string;

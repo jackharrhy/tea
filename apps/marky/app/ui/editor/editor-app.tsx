@@ -12,7 +12,7 @@ export interface EditorAppProps {
   authMode:
     | { mode: "anonymous" }
     | {
-        mode: "discord" | "central";
+        mode: "central";
         identity: { name: string; color: string };
       };
 }
@@ -137,7 +137,7 @@ export const EditorApp = clientEntry(
 
     if (isBrowser) {
       // Anonymous identity lives in localStorage, so it can only be resolved
-      // in the browser. Discord identity was already seeded above.
+      // in the browser. Central identity was already seeded above.
       if (authModeProp.mode === "anonymous") user = getUser();
       socket = new SocketHandler({
         onFileListUpdate: (next) => {

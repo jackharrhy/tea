@@ -4,16 +4,6 @@ import type { IdentityConfig } from "@tea/identity";
 // Typed env-derived configuration. Read once at startup via loadConfig() so
 // failures surface before the server binds a port.
 
-export interface DiscordAuthConfig {
-  mode: "discord";
-  clientId: string;
-  clientSecret: string;
-  guildId: string;
-  baseUrl: string;
-  sessionSecret: string;
-  botToken?: string;
-}
-
 export interface CentralAuthConfig {
   mode: "central";
   identity: IdentityConfig;
@@ -21,7 +11,7 @@ export interface CentralAuthConfig {
   sessionSecret: string;
 }
 
-type AuthConfig = { mode: "anonymous" } | DiscordAuthConfig | CentralAuthConfig;
+type AuthConfig = { mode: "anonymous" } | CentralAuthConfig;
 
 interface GitConfig {
   repoDir: string;
@@ -43,12 +33,6 @@ const DEFAULT_PORT = 44100;
 const DEFAULT_PERSIST_IDLE_MS = 60_000;
 const DEFAULT_PUSH_INTERVAL_MS = 300_000;
 
-const DISCORD_REQUIRED = [
-  "DISCORD_CLIENT_ID",
-  "DISCORD_CLIENT_SECRET",
-  "DISCORD_GUILD_ID",
-  "SESSION_SECRET",
-] as const;
 const CENTRAL_REQUIRED = [
   "AUTH_ISSUER",
   "AUTH_CLIENT_ID",
@@ -62,19 +46,15 @@ export function loadConfig(
   env: Record<string, string | undefined> = process.env,
 ): AppConfig {
   const mode = env.MARKY_AUTH ?? "anonymous";
-  if (mode !== "anonymous" && mode !== "discord" && mode !== "central") {
+  if (mode !== "anonymous" && mode !== "central") {
     throw new Error(
-      `MARKY_AUTH must be "anonymous", "discord", or "central", got "${mode}"`,
+      `MARKY_AUTH must be "anonymous" or "central", got "${mode}"`,
     );
   }
 
   const port = parsePort(env.PORT);
   const auth: AuthConfig =
-    mode === "anonymous"
-      ? { mode: "anonymous" }
-      : mode === "central"
-        ? loadCentralConfig(env)
-        : loadDiscordConfig(env, port);
+    mode === "anonymous" ? { mode: "anonymous" } : loadCentralConfig(env);
   const baseUrl = auth.mode === "anonymous" ? null : auth.baseUrl;
 
   return {
@@ -104,34 +84,6 @@ function loadCentralConfig(
     },
     baseUrl,
     sessionSecret: env.SESSION_SECRET!,
-  };
-}
-
-function loadDiscordConfig(
-  env: Record<string, string | undefined>,
-  port: number,
-): DiscordAuthConfig {
-  const missing = DISCORD_REQUIRED.filter((key) => !env[key]?.trim());
-  if (missing.length > 0) {
-    throw new Error(
-      `MARKY_AUTH=discord requires the following env vars: ${missing.join(", ")}`,
-    );
-  }
-
-  const rawBaseUrl = env.MARKY_BASE_URL?.trim();
-  const baseUrl = (rawBaseUrl || `http://localhost:${port}`).replace(
-    /\/+$/,
-    "",
-  );
-
-  return {
-    mode: "discord",
-    clientId: env.DISCORD_CLIENT_ID!.trim(),
-    clientSecret: env.DISCORD_CLIENT_SECRET!.trim(),
-    guildId: env.DISCORD_GUILD_ID!.trim(),
-    baseUrl,
-    sessionSecret: env.SESSION_SECRET!.trim(),
-    botToken: env.DISCORD_BOT_TOKEN?.trim() || undefined,
   };
 }
 

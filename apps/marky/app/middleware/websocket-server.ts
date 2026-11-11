@@ -26,7 +26,6 @@ async function readIdentity(
   header: string,
   cookie: Cookie,
   storage: SessionStorage,
-  mode: "discord" | "central",
 ): Promise<{ identity: PeerIdentity; expiresAt?: number } | undefined> {
   const raw = await cookie.parse(header);
   if (!raw) return undefined;
@@ -46,21 +45,11 @@ async function readIdentity(
   }
   const session = await storage.read(id);
   const saved = session.get("identity") as IdentityValue | undefined;
-  if (
-    !saved ||
-    typeof saved.name !== "string" ||
-    typeof saved.color !== "string"
-  )
-    return undefined;
-  if (mode === "central") {
-    if (!validCentralIdentity(saved)) return undefined;
-    return {
-      identity: { name: saved.name, color: saved.color },
-      expiresAt: saved.expiresAt,
-    };
-  }
-  if (!saved.discordId) return undefined;
-  return { identity: { name: saved.name, color: saved.color } };
+  if (!validCentralIdentity(saved)) return undefined;
+  return {
+    identity: { name: saved.name, color: saved.color },
+    expiresAt: saved.expiresAt,
+  };
 }
 
 function reject(socket: Duplex, status: number, reason: string) {
@@ -110,7 +99,6 @@ export function attachSockets(
           request.headers.cookie ?? "",
           options.sessionCookie,
           options.sessionStorage,
-          options.config.auth.mode,
         );
         if (!authenticated) return reject(socket, 401, "Unauthorized");
         identity = authenticated.identity;

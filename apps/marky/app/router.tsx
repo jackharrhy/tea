@@ -10,7 +10,6 @@ import type { SessionStorage } from "remix/session";
 
 import { assets } from "./assets.ts";
 import type { AppConfig } from "./config.ts";
-import { createAuthController } from "./controllers/auth/controller.tsx";
 import { createCentralAuthController } from "./controllers/auth/central-controller.ts";
 import { EditorPage } from "./ui/editor/editor-page.tsx";
 import { routes } from "./routes.ts";
@@ -57,16 +56,12 @@ export function createRouter(deps: RouterDeps) {
           const identity = context.session.get("identity") as
             | IdentityValue
             | undefined;
-          if (
-            !identity ||
-            (deps.config.auth.mode === "central" &&
-              !validCentralIdentity(identity))
-          )
+          if (!validCentralIdentity(identity))
             return redirect(routes.auth.signIn.href());
           return context.render(
             <EditorPage
               authMode={{
-                mode: deps.config.auth.mode,
+                mode: "central",
                 identity: { name: identity.name, color: identity.color },
               }}
             />,
@@ -75,9 +70,7 @@ export function createRouter(deps: RouterDeps) {
       },
     }),
   );
-  if (deps.config.auth.mode === "discord") {
-    router.map(routes.auth, createAuthController({ auth: deps.config.auth }));
-  } else if (deps.config.auth.mode === "central") {
+  if (deps.config.auth.mode === "central") {
     router.map(routes.auth, createCentralAuthController(deps.config.auth));
   }
   return router;

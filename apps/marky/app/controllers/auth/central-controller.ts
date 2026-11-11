@@ -8,7 +8,7 @@ import { createController } from "remix/router";
 import { redirect } from "remix/response/redirect";
 
 import type { CentralAuthConfig } from "../../config.ts";
-import { deterministicPaletteColor } from "../../data/discord.ts";
+import { deterministicPaletteColor } from "../../data/color.ts";
 import type { IdentityValue } from "../../middleware/auth.ts";
 import { routes } from "../../routes.ts";
 
