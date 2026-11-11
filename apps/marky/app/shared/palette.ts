@@ -1,6 +1,4 @@
-// Shared color palette used by both browser and server. Browser uses it for
-// anonymous-user color assignment; server uses it as the deterministic
-// fallback when no Discord role color is available.
+// Browser and server use this palette for stable presence colors.
 
 export const PALETTE_COLORS = [
   "#205ea6", // blue

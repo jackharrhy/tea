@@ -12,7 +12,7 @@ export interface EditorPageProps {
   authMode:
     | { mode: "anonymous" }
     | {
-        mode: "discord" | "central";
+        mode: "central";
         identity: { name: string; color: string };
       };
 }

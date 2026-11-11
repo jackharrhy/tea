@@ -62,13 +62,6 @@ describe("routes", () => {
     assert.notEqual(response.status, 200);
   });
 
-  it("asset route denies app/data/discord.ts", async () => {
-    const url =
-      "http://localhost" + routes.assets.href({ path: "app/data/discord.ts" });
-    const response = await router.fetch(new Request(url));
-    assert.notEqual(response.status, 200);
-  });
-
   it("asset route denies app/data/git-store.ts", async () => {
     const url =
       "http://localhost" +
@@ -86,55 +79,64 @@ describe("routes", () => {
     assert.notEqual(response.status, 200);
   });
 
-  it("home redirects to /auth/sign-in when discord mode and no session", async () => {
+  it("home redirects to /auth/sign-in in Central mode without a session", async () => {
     const sessionStorage = createMemorySessionStorage();
     const sessionCookie = createCookie("marky.session", { secrets: ["sssh"] });
-    const discordRouter = createRouter({
+    const centralRouter = createRouter({
       config: loadConfig({
-        MARKY_AUTH: "discord",
-        DISCORD_CLIENT_ID: "cid",
-        DISCORD_CLIENT_SECRET: "cs",
-        DISCORD_GUILD_ID: "gid",
-        MARKY_BASE_URL: "http://localhost",
+        MARKY_AUTH: "central",
+        AUTH_ISSUER: "https://auth.example.test",
+        AUTH_CLIENT_ID: "marky-web",
+        AUTH_PROJECT_ID: "marky-project",
+        AUTH_ORGANIZATION_ID: "marky-org",
+        MARKY_BASE_URL: "https://md.example.test",
         SESSION_SECRET: "sssh",
       }),
       sessionStorage,
       sessionCookie,
     });
     {
-      const response = await discordRouter.fetch(
-        new Request("http://localhost/"),
+      const response = await centralRouter.fetch(
+        new Request("https://md.example.test/"),
       );
       assert.equal(response.status, 302);
       assert.equal(response.headers.get("location"), "/auth/sign-in");
     }
   });
 
-  it("home renders editor in discord mode when session has identity", async () => {
+  it("home renders editor for a live Central session", async () => {
     const sessionStorage = createMemorySessionStorage();
     const sessionCookie = createCookie("marky.session", { secrets: ["sssh"] });
 
     const seed = await sessionStorage.read(null);
-    seed.set("identity", { discordId: "7", name: "Jack", color: "#205ea6" });
+    seed.set("identity", {
+      subject: "reviewed-jack",
+      expiresAt: Date.now() + 60_000,
+      name: "Jack",
+      color: "#205ea6",
+    });
     const sessionId = await sessionStorage.save(seed);
     if (!sessionId) throw new Error("expected session id");
     const cookieHeader = await sessionCookie.serialize(sessionId);
 
-    const discordRouter = createRouter({
+    const centralRouter = createRouter({
       config: loadConfig({
-        MARKY_AUTH: "discord",
-        DISCORD_CLIENT_ID: "cid",
-        DISCORD_CLIENT_SECRET: "cs",
-        DISCORD_GUILD_ID: "gid",
-        MARKY_BASE_URL: "http://localhost",
+        MARKY_AUTH: "central",
+        AUTH_ISSUER: "https://auth.example.test",
+        AUTH_CLIENT_ID: "marky-web",
+        AUTH_PROJECT_ID: "marky-project",
+        AUTH_ORGANIZATION_ID: "marky-org",
+        MARKY_BASE_URL: "https://md.example.test",
         SESSION_SECRET: "sssh",
       }),
       sessionStorage,
       sessionCookie,
     });
     {
-      const response = await discordRouter.fetch(
-        new Request("http://localhost/", { headers: { cookie: cookieHeader } }),
+      const response = await centralRouter.fetch(
+        new Request("https://md.example.test/", {
+          headers: { cookie: cookieHeader },
+        }),
       );
       assert.equal(response.status, 200);
       const body = await response.text();
@@ -160,7 +162,7 @@ describe("routes", () => {
       sessionCookie,
     });
     const seed = await sessionStorage.read(null);
-    seed.set("identity", { discordId: "7", name: "Jack", color: "#205ea6" });
+    seed.set("identity", { name: "Jack", color: "#205ea6" });
     const sessionId = await sessionStorage.save(seed);
     assert.ok(sessionId);
     const cookieHeader = await sessionCookie.serialize(sessionId);

@@ -12,7 +12,7 @@ import { loadConfig } from "../app/config.ts";
 import { ContentStore } from "../app/data/content-store.ts";
 import { attachSockets } from "../app/middleware/websocket-server.ts";
 
-it("requires a live signed Discord session for WebSocket upgrades", async () => {
+it("requires a live signed Central session for WebSocket upgrades", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "tea-marky-ws-"));
   const store = new ContentStore({ dir });
   await store.ensureDir();
@@ -22,12 +22,13 @@ it("requires a live signed Discord session for WebSocket upgrades", async () => 
   });
   const storage = createMemorySessionStorage();
   const config = loadConfig({
-    MARKY_AUTH: "discord",
-    DISCORD_CLIENT_ID: "id",
-    DISCORD_CLIENT_SECRET: "secret",
-    DISCORD_GUILD_ID: "guild",
+    MARKY_AUTH: "central",
+    AUTH_ISSUER: "https://auth.example.test",
+    AUTH_CLIENT_ID: "marky-web",
+    AUTH_PROJECT_ID: "marky-project",
+    AUTH_ORGANIZATION_ID: "marky-org",
     SESSION_SECRET: "test-secret",
-    MARKY_BASE_URL: "http://localhost",
+    MARKY_BASE_URL: "https://md.example.test",
   });
   const server = http.createServer((_request, response) => response.end());
   const sockets = attachSockets(server, {
@@ -40,7 +41,10 @@ it("requires a live signed Discord session for WebSocket upgrades", async () => 
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("no port");
   const url = `ws://127.0.0.1:${address.port}/ws`;
-  async function status(cookieHeader?: string, origin = "http://localhost") {
+  async function status(
+    cookieHeader?: string,
+    origin = "https://md.example.test",
+  ) {
     return new Promise<number>((resolve, reject) => {
       const ws = new WebSocket(url, {
         origin,
@@ -60,7 +64,12 @@ it("requires a live signed Discord session for WebSocket upgrades", async () => 
   try {
     assert.equal(await status(), 401);
     const session = await storage.read(null);
-    session.set("identity", { discordId: "1", name: "Jack", color: "#123456" });
+    session.set("identity", {
+      subject: "reviewed-jack",
+      expiresAt: Date.now() + 60_000,
+      name: "Jack",
+      color: "#123456",
+    });
     const id = await storage.save(session);
     assert.ok(id);
     const live = await cookie.serialize(
