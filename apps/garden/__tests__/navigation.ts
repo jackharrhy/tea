@@ -44,6 +44,22 @@ try {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(base, { waitUntil: "networkidle" });
+    assert.equal(
+      await page
+        .locator("[data-mug-slot]")
+        .evaluate((element) => getComputedStyle(element).viewTransitionName),
+      "mug",
+    );
+    const popup = context.waitForEvent("page");
+    await page
+      .getByRole("link", { name: "About", exact: true })
+      .first()
+      .click({ modifiers: ["ControlOrMeta"] });
+    const tab = await popup;
+    await tab.waitForLoadState();
+    assert.equal(new URL(tab.url()).pathname, "/about");
+    await tab.close();
+    assert.equal(new URL(page.url()).pathname, "/");
     await page.evaluate(() => {
       Object.assign(window, {
         originalCanvas: document.querySelector("canvas"),
