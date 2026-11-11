@@ -388,7 +388,6 @@ services:
       HOST: 127.0.0.1
       DATABASE_PATH: /app/data/world.sqlite
       PUBLIC_ORIGIN: http://127.0.0.1:8814
-      ADMIN_TOKEN: ${GURGUR_ADMIN_TOKEN:-}
       RTC_PORT_MIN: "41160"
       RTC_PORT_MAX: "41210"
       GURGUR_DEV_MCP: "0"

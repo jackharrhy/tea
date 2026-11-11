@@ -10,6 +10,7 @@ on:
       - package-lock.json
       - apps/artbin/**
       - packages/artbin-core/**
+      - packages/identity/**
   workflow_dispatch:
 concurrency:
   group: publish-artbin

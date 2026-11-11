@@ -12,12 +12,19 @@ export function RoomLobby(
   handle: Handle<{
     rooms: RoomRecord[];
     identity: RadioIdentity | null;
+    authMode?: "password" | "central";
     selectedRoom: string;
     message?: string;
   }>,
 ) {
   return () => {
-    let { rooms, identity, selectedRoom, message } = handle.props;
+    let {
+      rooms,
+      identity,
+      selectedRoom,
+      message,
+      authMode = "password",
+    } = handle.props;
     return (
       <section mix={[desktopStyle.window, roomLobbyStyle.window]}>
         <RadioHeader />
@@ -57,43 +64,53 @@ export function RoomLobby(
               ))}
             </form>
 
-            <form
-              method="post"
-              action={routes.join.href()}
-              data-authenticated={identity ? "true" : "false"}
-              mix={roomLobbyStyle.joinForm}
-            >
-              <input name="roomSlug" type="hidden" value={selectedRoom} />
-              <input
-                mix={desktopStyle.input}
-                name="name"
-                type="text"
-                autocomplete="name"
-                aria-label="Username"
-                placeholder="username"
-                value={identity?.name ?? ""}
-                maxlength={40}
-                required={true}
-              />
-              {!identity ? (
+            {identity || authMode === "password" ? (
+              <form
+                method="post"
+                action={routes.join.href()}
+                data-authenticated={identity ? "true" : "false"}
+                mix={roomLobbyStyle.joinForm}
+              >
+                <input name="roomSlug" type="hidden" value={selectedRoom} />
                 <input
                   mix={desktopStyle.input}
-                  name="password"
-                  type="password"
-                  autocomplete="current-password"
-                  aria-label="Password"
-                  placeholder="password"
-                  maxlength={256}
+                  name="name"
+                  type="text"
+                  autocomplete="name"
+                  aria-label="Username"
+                  placeholder="username"
+                  value={identity?.name ?? ""}
+                  maxlength={40}
                   required={true}
                 />
-              ) : null}
-              <button
-                mix={[desktopStyle.primaryButton, roomLobbyStyle.joinButton]}
-                type="submit"
+                {!identity && authMode === "password" ? (
+                  <input
+                    mix={desktopStyle.input}
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    aria-label="Password"
+                    placeholder="password"
+                    maxlength={256}
+                    required={true}
+                  />
+                ) : null}
+                <button
+                  mix={[desktopStyle.primaryButton, roomLobbyStyle.joinButton]}
+                  type="submit"
+                >
+                  join
+                </button>
+              </form>
+            ) : null}
+            {!identity && authMode === "central" ? (
+              <a
+                href={routes.auth.login.href()}
+                mix={desktopStyle.primaryButton}
               >
-                join
-              </button>
-            </form>
+                Sign in with Central Auth
+              </a>
+            ) : null}
           </div>
 
           {identity ? (

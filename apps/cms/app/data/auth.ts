@@ -9,15 +9,20 @@ export interface User {
 export interface AuthStore {
   throttled(email: string): boolean;
   verify(email: string, password: string): Promise<User | null>;
+  bySubject(subject: string): User | null;
   createSession(
     userId: number,
     durationMs?: number,
+    subject?: string,
   ): { id: string; expiresAt: Date };
   resolve(id: string): User | null;
   revoke(id: string): void;
 }
 
-export function createAuthStore(sqlite: DatabaseSync): AuthStore {
+export function createAuthStore(
+  sqlite: DatabaseSync,
+  central = false,
+): AuthStore {
   const attempts = new Map<string, { count: number; until: number }>();
   let checking = 0;
 
@@ -58,12 +63,28 @@ export function createAuthStore(sqlite: DatabaseSync): AuthStore {
     }
   }
 
-  function createSession(userId: number, durationMs = 30 * 24 * 60 * 60_000) {
+  function bySubject(subject: string): User | null {
+    if (!subject || subject.length > 512) return null;
+    const row = sqlite
+      .prepare("SELECT id,email FROM users WHERE auth_subject=?")
+      .get(subject);
+    return row ? { id: Number(row.id), email: String(row.email) } : null;
+  }
+
+  function createSession(
+    userId: number,
+    durationMs = 30 * 24 * 60 * 60_000,
+    subject?: string,
+  ) {
+    if (central && (!subject || bySubject(subject)?.id !== userId))
+      throw new Error("CMS Central Auth subject is not linked to this user");
     const id = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + durationMs);
     sqlite
-      .prepare("INSERT INTO sessions (id,user_id,expires_at) VALUES (?,?,?)")
-      .run(id, userId, expiresAt.toISOString());
+      .prepare(
+        "INSERT INTO sessions (id,user_id,expires_at,auth_subject) VALUES (?,?,?,?)",
+      )
+      .run(id, userId, expiresAt.toISOString(), subject ?? null);
     return { id, expiresAt };
   }
 
@@ -71,7 +92,8 @@ export function createAuthStore(sqlite: DatabaseSync): AuthStore {
     if (!id || id.length > 128) return null;
     const row = sqlite
       .prepare(
-        "SELECT u.id,u.email,s.expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.id=?",
+        `SELECT u.id,u.email,s.expires_at FROM sessions s JOIN users u ON u.id=s.user_id
+         WHERE s.id=? ${central ? "AND s.auth_subject=u.auth_subject AND s.auth_subject IS NOT NULL" : ""}`,
       )
       .get(id);
     if (!row || !(Date.parse(String(row.expires_at)) > Date.now())) return null;
@@ -82,7 +104,7 @@ export function createAuthStore(sqlite: DatabaseSync): AuthStore {
     sqlite.prepare("DELETE FROM sessions WHERE id=?").run(id);
   }
 
-  return { throttled, verify, createSession, resolve, revoke };
+  return { throttled, verify, bySubject, createSession, resolve, revoke };
 }
 export function cookieValue(request: Request, name: string) {
   return (

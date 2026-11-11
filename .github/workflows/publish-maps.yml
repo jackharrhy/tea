@@ -16,6 +16,7 @@ on:
       - packages/maps-protocol/**
       - packages/maps-renderer/**
       - packages/request-body/**
+      - packages/identity/**
   workflow_dispatch:
 concurrency:
   group: publish-maps
@@ -61,6 +62,8 @@ jobs:
               selected = apps if shared else [
                   app for app in apps if any(path.startswith(f"apps/{app}/") for path in paths)
               ]
+              if any(path.startswith("packages/identity/") for path in paths):
+                  selected = list(dict.fromkeys([*selected, "maps-service"]))
               if not selected:
                   selected = apps
           print("apps=" + json.dumps(selected))

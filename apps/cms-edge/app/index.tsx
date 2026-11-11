@@ -6,9 +6,17 @@ import {
 } from "remix/router";
 import { render as remixRender } from "remix/middleware/render";
 import { readRequestBody } from "@tea/request-body";
+import {
+  createIdentityClient,
+  IdentityError,
+  requireTokenRole,
+} from "@tea/identity";
 import { routes } from "./routes.ts";
 import {
   clearedSessionCookie,
+  beginCentralLogin,
+  centralAuth,
+  finishCentralLogin,
   isEditor,
   passwordMatches,
   previewAllowed,
@@ -77,7 +85,13 @@ export function createEdgeRouter(
   config: EdgeConfig,
   extend?: (router: Router<EdgeContext>) => void,
 ) {
-  requireSecrets(env, !config.auth);
+  const central = config.auth ? null : centralAuth(env);
+  requireSecrets(
+    env,
+    !config.auth && !central,
+    !config.auth,
+    !central || Boolean(config.previewUrl),
+  );
   const router = createRouter<EdgeContext>({ middleware: [renderMiddleware] });
 
   router.map(
@@ -165,6 +179,7 @@ export function createEdgeRouter(
       actions: {
         async login({ request, render }) {
           if (config.auth) return redirect(config.auth.loginPath);
+          if (central) return redirect("/tea/auth/login");
           if (await isEditor(request, env)) return redirect("/tea");
           return render(<LoginPage siteName={config.siteName} />, {
             headers: { "Cache-Control": "no-store" },
@@ -172,6 +187,7 @@ export function createEdgeRouter(
         },
         async authenticate({ request, render }) {
           if (config.auth) return redirect(config.auth.loginPath);
+          if (central) return new Response("Not found", { status: 404 });
           const form = await request.formData();
           if (!(await passwordMatches(String(form.get("password") ?? ""), env)))
             return render(
@@ -184,6 +200,14 @@ export function createEdgeRouter(
           config.auth
             ? config.auth.logout(request)
             : redirect("/tea/login", clearedSessionCookie()),
+        centralLogin: ({ request }) =>
+          central
+            ? beginCentralLogin(request, env)
+            : new Response("Not found", { status: 404 }),
+        centralCallback: ({ request }) =>
+          central
+            ? finishCentralLogin(request, env)
+            : new Response("Not found", { status: 404 }),
       },
     }),
   );
@@ -581,11 +605,42 @@ export function createEdgeRouter(
         !sameOrigin(request, env)
       )
         return new Response("Forbidden", { status: 403 });
-      if (path.startsWith("/api/preview/") && !previewAllowed(request, env))
-        return new Response("Unauthorized", { status: 401 });
+      if (path.startsWith("/api/preview/")) {
+        if (central) {
+          const bearer = request.headers.get("authorization");
+          if (!bearer?.startsWith("Bearer "))
+            return new Response("Unauthorized", { status: 401 });
+          if (
+            !env.TEA_AUTH_INTROSPECTION_CLIENT_ID ||
+            !env.TEA_AUTH_INTROSPECTION_SECRET
+          )
+            return new Response("Preview authentication unavailable", {
+              status: 503,
+            });
+          try {
+            const principal = await createIdentityClient(
+              central.config,
+            ).introspect(bearer.slice(7), {
+              clientId: env.TEA_AUTH_INTROSPECTION_CLIENT_ID,
+              clientSecret: env.TEA_AUTH_INTROSPECTION_SECRET,
+            });
+            if (principal.principalType !== "user")
+              return new Response("Human preview authorization required", {
+                status: 403,
+              });
+            requireTokenRole(principal, central.config.projectId, "admin");
+          } catch (error) {
+            return new Response("Preview authorization failed", {
+              status: error instanceof IdentityError ? error.status : 503,
+            });
+          }
+        } else if (!previewAllowed(request, env)) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+      }
       if (
         (path === "/tea" || path.startsWith("/tea/")) &&
-        path !== "/tea/login"
+        !["/tea/login", "/tea/auth/login", "/tea/auth/callback"].includes(path)
       ) {
         if (config.auth) {
           const access = await config.auth.authorize(request);

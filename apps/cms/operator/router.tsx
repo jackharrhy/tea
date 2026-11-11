@@ -12,6 +12,11 @@ import { operatorRoutes } from "./routes.ts";
 import { Dashboard, Login, type Summary } from "./ui.tsx";
 import { Design } from "./design.tsx";
 import type { OperatorStore } from "./store.ts";
+import {
+  beginCentralLogin,
+  centralAuth,
+  finishCentralLogin,
+} from "../app/data/central-auth.ts";
 
 const cookieName = "tea-operator-session";
 const csrfCookieName = "tea-operator-csrf";
@@ -75,6 +80,8 @@ export function createOperatorRouter(
   origin: string,
   sites: SiteRow[],
 ) {
+  const central = centralAuth(origin, process.env.TEA_AUTH_OPERATOR_CLIENT_ID);
+  const transactionCookie = "tea-operator-oauth";
   const byId = new Map(sites.map(({ site }) => [site.id, site]));
   const router = createRouter({
     middleware: [
@@ -141,7 +148,9 @@ export function createOperatorRouter(
               headers: { Location: "/" },
             });
           const csrf = csrfToken(context.request);
-          const response = context.render(<Login csrf={csrf} />);
+          const response = context.render(
+            <Login csrf={csrf} central={Boolean(central)} />,
+          );
           response.headers.append(
             "Set-Cookie",
             sessionCookie(
@@ -157,7 +166,59 @@ export function createOperatorRouter(
         design(context) {
           return context.render(<Design />);
         },
+        centralLogin() {
+          if (!central) return new Response("Not found", { status: 404 });
+          return beginCentralLogin(
+            central,
+            operatorRoutes.centralCallback.href(),
+            transactionCookie,
+          );
+        },
+        async centralCallback(context) {
+          if (!central) return new Response("Not found", { status: 404 });
+          const result = await finishCentralLogin(
+            context.request,
+            central,
+            operatorRoutes.centralCallback.href(),
+            transactionCookie,
+          );
+          if (!result.ok) return result.response;
+          const user = result.profile.roles.has("admin")
+            ? store.auth.bySubject(result.profile.subject)
+            : null;
+          if (!user)
+            return new Response("Operator access is not assigned", {
+              status: 403,
+              headers: { "Set-Cookie": result.cleared },
+            });
+          store.auth.revoke(cookieValue(context.request, cookieName));
+          const session = store.auth.createSession(
+            user.id,
+            60 * 60_000,
+            result.profile.subject,
+          );
+          const response = new Response(null, {
+            status: 303,
+            headers: { Location: "/", "Set-Cookie": result.cleared },
+          });
+          response.headers.append(
+            "Set-Cookie",
+            sessionCookie(
+              context.request,
+              session.id,
+              session.expiresAt,
+              origin,
+              cookieName,
+              "Lax",
+            ),
+          );
+          return response;
+        },
         async authenticate(context) {
+          if (central)
+            return new Response("Password sign-in is disabled", {
+              status: 404,
+            });
           const data = await context.request.formData();
           if (!validCsrf(context.request, data.get("csrf")))
             return new Response("Invalid form token", { status: 403 });

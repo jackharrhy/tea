@@ -11,7 +11,7 @@ const digest = (value: string) =>
 
 export type OperatorStore = ReturnType<typeof createOperatorStore>;
 
-export function createOperatorStore(path: string) {
+export function createOperatorStore(path: string, central = false) {
   if (path !== ":memory:")
     mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
   const sqlite = new DatabaseSync(path);
@@ -42,7 +42,20 @@ export function createOperatorStore(path: string) {
         expires_at TEXT NOT NULL
       );
     `);
-  const auth = createAuthStore(sqlite);
+  const columns = sqlite.prepare("PRAGMA table_info(users)").all() as {
+    name: string;
+  }[];
+  if (!columns.some((column) => column.name === "auth_subject"))
+    sqlite.exec("ALTER TABLE users ADD COLUMN auth_subject TEXT");
+  sqlite.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS users_auth_subject_unique ON users(auth_subject) WHERE auth_subject IS NOT NULL",
+  );
+  const sessionColumns = sqlite
+    .prepare("PRAGMA table_info(sessions)")
+    .all() as { name: string }[];
+  if (!sessionColumns.some((column) => column.name === "auth_subject"))
+    sqlite.exec("ALTER TABLE sessions ADD COLUMN auth_subject TEXT");
+  const auth = createAuthStore(sqlite, central);
 
   function issueTicket(operatorSessionId: string, siteId: string) {
     if (!auth.resolve(operatorSessionId)) return null;
@@ -89,7 +102,8 @@ export function createOperatorStore(path: string) {
         `SELECT u.id,u.email FROM site_sessions ss
          JOIN sessions s ON s.id=ss.session_id
          JOIN users u ON u.id=s.user_id
-         WHERE ss.id=? AND ss.site_id=? AND ss.expires_at>? AND s.expires_at>?`,
+         WHERE ss.id=? AND ss.site_id=? AND ss.expires_at>? AND s.expires_at>?
+           ${central ? "AND s.auth_subject=u.auth_subject AND s.auth_subject IS NOT NULL" : ""}`,
       )
       .get(id, siteId, new Date().toISOString(), new Date().toISOString());
     return row ? { id: Number(row.id), email: String(row.email) } : null;

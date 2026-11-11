@@ -5,8 +5,8 @@ if [ -n "${CELLD_VARS_FILE:-}" ] && [ ! -r "$CELLD_VARS_FILE" ]; then
   echo "CELLD_VARS_FILE is not readable" >&2
   exit 1
 fi
-if [ -z "${CELLD_VARS_FILE:-}" ] && [ -z "${CELLD_VAR_REF_PASSWORD:-}" ]; then
-  echo "REF_PASSWORD is not configured" >&2
+if [ -z "${CELLD_VARS_FILE:-}" ] && [ -z "${CELLD_VAR_REF_PASSWORD:-}" ] && [ -z "${CELLD_VAR_AUTH_ISSUER:-}" ]; then
+  echo "REF_PASSWORD or AUTH_ISSUER is not configured" >&2
   exit 1
 fi
 

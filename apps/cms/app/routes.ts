@@ -4,6 +4,9 @@ export const routes = route({
   assets: get("/assets/*path"),
   home: get("/"),
   health: get("/healthz"),
+  protectedResource: route("/.well-known/oauth-protected-resource/tea", {
+    mcp: get("/mcp"),
+  }),
   mcp: route("/tea", { endpoint: post("/mcp") }),
   sitemap: get("/sitemap.xml"),
   robots: get("/robots.txt"),
@@ -12,6 +15,8 @@ export const routes = route({
   operatorEnter: get("/tea/operator-enter"),
   auth: route("/tea", {
     login: get("/login"),
+    centralLogin: get("/auth/login"),
+    centralCallback: get("/auth/callback"),
     authenticate: post("/login"),
     logout: post("/logout"),
   }),

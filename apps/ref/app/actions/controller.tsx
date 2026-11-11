@@ -2,6 +2,7 @@ import { createController } from "remix/router";
 import { redirect } from "remix/response/redirect";
 import {
   AppPassword,
+  AppIdentity,
   AppRuntime,
   Authenticated,
   CurrentSessionToken,
@@ -17,11 +18,18 @@ export default createController(routes, {
       const error =
         new URL(context.request.url).searchParams.get("error") ?? undefined;
       if (!context.get(Authenticated))
-        return context.render(<AuthPage error={error} />);
+        return context.render(
+          <AuthPage
+            error={error}
+            central={Boolean(context.get(AppIdentity))}
+          />,
+        );
       const boards = await context.get(AppRuntime)!.directory.listBoards();
       return context.render(<HomePage boards={boards} error={error} />);
     },
     async login(context) {
+      if (context.get(AppIdentity))
+        return new Response("Not found", { status: 404 });
       const form = context.get(FormData)!;
       const runtime = context.get(AppRuntime)!;
       // Celld supplies an empty cf object; only Cloudflare sets colo and owns this header.

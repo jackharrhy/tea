@@ -7,6 +7,10 @@ export const routes = route({
   home: get("/"),
   join: post("/join"),
   logout: post("/logout"),
+  auth: route("auth", {
+    login: get("/login"),
+    callback: get("/callback"),
+  }),
   rooms: {
     create: post("/rooms"),
     show: get("/rooms/:roomSlug"),

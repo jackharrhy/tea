@@ -7,10 +7,109 @@ import * as assert from "remix/assert";
 import { describe, it } from "remix/test";
 import sharp from "sharp";
 
+import { createSteveSession, sessionCookie } from "../steve/auth.ts";
 import { createAppRouter } from "../../router.ts";
 import { routes } from "../../routes.ts";
 
 describe("editorial letter routes", () => {
+  it("separates the reviewed recipient inbox from site administration", async () => {
+    const config = {
+      AUTH_ISSUER: "https://auth.example.test",
+      AUTH_CLIENT_ID: "letters-web",
+      AUTH_PROJECT_ID: "letters-project",
+      AUTH_ORGANIZATION_ID: "letters-org",
+      AUTH_PUBLIC_ORIGIN: "https://steve-letter-writ.ing",
+      AUTH_ADMIN_SUBJECT: "owner-subject",
+      AUTH_RECIPIENT_SUBJECT: "recipient-subject",
+    };
+    const previous = Object.fromEntries(
+      Object.keys(config).map((key) => [key, process.env[key]]),
+    );
+    Object.assign(process.env, config);
+    const { database, router } = await createAppRouter({
+      databasePath: ":memory:",
+    });
+    try {
+      const expiredAt = Math.floor(Date.now() / 1000) + 3600;
+      const other = await createSteveSession(
+        database,
+        "other-subject",
+        expiredAt,
+      );
+      const owner = await createSteveSession(
+        database,
+        "owner-subject",
+        expiredAt,
+      );
+      const recipient = await createSteveSession(
+        database,
+        "recipient-subject",
+        expiredAt,
+      );
+      const recipientCookie = sessionCookie(recipient, 3600).split(";")[0];
+      const headers = { Cookie: sessionCookie(owner, 3600).split(";")[0] };
+      assert.equal(
+        (await router.fetch(request(routes.steve.index.href()))).status,
+        303,
+      );
+      assert.equal(
+        (
+          await router.fetch(
+            request(routes.steve.index.href(), { headers: steveHeaders() }),
+          )
+        ).status,
+        303,
+      );
+      assert.equal(
+        (
+          await router.fetch(
+            request(routes.steve.index.href(), {
+              headers: { Cookie: sessionCookie(other, 3600).split(";")[0] },
+            }),
+          )
+        ).status,
+        303,
+      );
+      assert.equal(
+        (await router.fetch(request(routes.steve.index.href(), { headers })))
+          .status,
+        200,
+      );
+      const recipientPage = await router.fetch(
+        request(routes.steve.index.href(), {
+          headers: { Cookie: recipientCookie },
+        }),
+      );
+      assert.equal(recipientPage.status, 200);
+      assert.doesNotMatch(await recipientPage.text(), /name="enabled"/);
+      const deniedSetting = await router.fetch(
+        request(routes.steve.updateSite.href(), {
+          method: "POST",
+          headers: { Cookie: recipientCookie, Origin: "http://letters.test" },
+          body: new URLSearchParams({ enabled: "on" }),
+        }),
+      );
+      assert.equal(deniedSetting.status, 403);
+      const logout = await router.fetch(
+        request(routes.auth.logout.href(), {
+          method: "POST",
+          headers: { ...headers, Origin: "http://letters.test" },
+        }),
+      );
+      assert.equal(logout.status, 303);
+      assert.equal(
+        (await router.fetch(request(routes.steve.index.href(), { headers })))
+          .status,
+        303,
+      );
+    } finally {
+      await database.close();
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
   it("keeps submissions private until Steve publishes a grouped issue", async () => {
     let previousPassword = process.env.STEVE_ADMIN_PASSWORD;
     process.env.STEVE_ADMIN_PASSWORD = "test-secret";

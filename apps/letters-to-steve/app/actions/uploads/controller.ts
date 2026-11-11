@@ -100,7 +100,9 @@ export default createController(routes.uploads, {
       let database = context.get(databaseContext);
       if (
         !(await isSiteEnabled(database)) &&
-        getSteveAccess(context.request) !== "authorized"
+        !["admin", "member"].includes(
+          await getSteveAccess(context.request, database),
+        )
       ) {
         return new Response("Image not found.", { status: 404 });
       }

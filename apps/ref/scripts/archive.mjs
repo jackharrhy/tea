@@ -15,10 +15,15 @@ const command = process.argv[2];
 const directory = process.argv[3] ? resolve(process.argv[3]) : null;
 const base = new URL(process.env.REF_URL ?? "http://localhost:8787");
 const password = process.env.REF_PASSWORD;
+const accessToken = process.env.REF_ACCESS_TOKEN;
 
-if (!["backup", "restore"].includes(command) || !directory || !password) {
+if (
+  !["backup", "restore"].includes(command) ||
+  !directory ||
+  (!password && !accessToken)
+) {
   throw new Error(
-    "Usage: REF_URL=https://host REF_PASSWORD=... npm run backup|restore -- /archive/directory",
+    "Usage: REF_URL=https://host REF_ACCESS_TOKEN=... npm run backup|restore -- /archive/directory",
   );
 }
 if (!["http:", "https:"].includes(base.protocol))
@@ -30,7 +35,9 @@ if (
   throw new Error("Use HTTPS for a remote REF_URL");
 }
 
-const session = await login();
+const authorization = accessToken
+  ? { Authorization: `Bearer ${accessToken}` }
+  : { Cookie: await login() };
 if (command === "backup") await backup();
 else await restore();
 
@@ -51,7 +58,8 @@ async function login() {
 
 async function request(path, init = {}) {
   const headers = new Headers(init.headers);
-  headers.set("Cookie", session);
+  for (const [name, value] of Object.entries(authorization))
+    headers.set(name, value);
   const response = await fetch(new URL(path, base), {
     ...init,
     headers,

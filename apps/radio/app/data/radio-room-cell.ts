@@ -15,8 +15,8 @@ import {
 } from "./track-metadata.ts";
 
 type SocketAttachment =
-  | { state: "pending"; name: string }
-  | ({ state: "joined" } & ClientInfo);
+  | { state: "pending"; name: string; expiresAt?: number }
+  | ({ state: "joined"; expiresAt?: number } & ClientInfo);
 type JoinedSocketAttachment = Extract<SocketAttachment, { state: "joined" }>;
 
 const AUDIO_LOAD_TIMEOUT_MS = 3000;
@@ -56,6 +56,11 @@ export class RadioRoomCell extends DurableObject<Env> {
     socket: WebSocket,
     raw: string | ArrayBuffer,
   ): Promise<void> {
+    let attachment = socket.deserializeAttachment() as SocketAttachment | null;
+    if (attachment?.expiresAt && attachment.expiresAt <= Date.now()) {
+      socket.close(1008, "Session expired");
+      return;
+    }
     let message = parseSocketMessage(raw);
     if (!message) {
       this.send(socket, { type: "ERROR", message: "Invalid message" });
@@ -66,7 +71,7 @@ export class RadioRoomCell extends DurableObject<Env> {
       return;
     }
 
-    let client = socket.deserializeAttachment() as SocketAttachment | null;
+    let client = attachment;
     if (!client || client.state !== "joined") {
       this.send(socket, {
         type: "ERROR",
@@ -186,10 +191,20 @@ export class RadioRoomCell extends DurableObject<Env> {
     let name = request.headers.get("x-radio-listener-name")?.trim();
     if (!name)
       return new Response("Missing listener identity", { status: 401 });
+    let rawExpiry = request.headers.get("x-radio-session-expires-at");
+    let expiresAt = rawExpiry ? Number(rawExpiry) : undefined;
+    if (
+      rawExpiry &&
+      (!Number.isSafeInteger(expiresAt) ||
+        expiresAt! <= Date.now() ||
+        expiresAt! > Date.now() + 3600000)
+    )
+      return new Response("Invalid listener session", { status: 401 });
     this.ctx.acceptWebSocket(pair[1]);
     pair[1].serializeAttachment({
       state: "pending",
       name,
+      expiresAt,
     } satisfies SocketAttachment);
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
@@ -218,6 +233,7 @@ export class RadioRoomCell extends DurableObject<Env> {
       state: "joined",
       clientId,
       name: previous.name,
+      expiresAt: previous.expiresAt,
       rtt: previous.state === "joined" ? previous.rtt : 0,
       compensationMs: previous.state === "joined" ? previous.compensationMs : 0,
       nudgeMs: previous.state === "joined" ? previous.nudgeMs : 0,

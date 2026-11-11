@@ -18,32 +18,40 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
   );
 }
 
-export function AuthPage(handle: Handle<{ error?: string }>) {
+export function AuthPage(
+  handle: Handle<{ error?: string; central?: boolean }>,
+) {
   return () => (
     <Document title="Unlock">
       <main class="auth-page">
-        <form method="post" action="/login" class="auth-form">
+        <div class="auth-form">
           <a class="wordmark" href="/">
             tea<span>/ref</span>
           </a>
-          <label for="password">Password</label>
-          <div class="auth-row">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              autoFocus
-              required
-            />
-            <button type="submit">Enter</button>
-          </div>
+          {handle.props.central ? (
+            <a href="/auth/login">Sign in with Central Auth</a>
+          ) : (
+            <form method="post" action="/login">
+              <label for="password">Password</label>
+              <div class="auth-row">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  autoFocus
+                  required
+                />
+                <button type="submit">Enter</button>
+              </div>
+            </form>
+          )}
           {handle.props.error && (
             <p class="error" role="alert">
               {handle.props.error}
             </p>
           )}
-        </form>
+        </div>
       </main>
     </Document>
   );

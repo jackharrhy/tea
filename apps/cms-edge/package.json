@@ -11,6 +11,7 @@
     "deploy": "cf deploy"
   },
   "dependencies": {
+    "@tea/identity": "0.1.0",
     "@tea/logger": "0.1.0",
     "@tea/request-body": "0.1.0",
     "remix": "3.2.0"

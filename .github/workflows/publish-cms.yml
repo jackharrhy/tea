@@ -15,6 +15,7 @@ on:
       - packages/request-body/**
       - packages/result/**
       - packages/rich-text/**
+      - packages/identity/**
   workflow_dispatch:
 concurrency:
   group: publish-cms

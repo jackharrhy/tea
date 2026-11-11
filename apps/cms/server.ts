@@ -16,6 +16,7 @@ const operator = operatorOrigin
       origin: operatorOrigin,
       store: createOperatorStore(
         resolve(process.env.TEA_DATA_DIR ?? "data", "operator", "operator.db"),
+        Boolean(process.env.TEA_AUTH_ISSUER),
       ),
     }
   : undefined;

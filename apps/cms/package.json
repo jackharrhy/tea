@@ -5,9 +5,6 @@
   "exports": {
     "./sites/*": "./sites/*/app/site.ts"
   },
-  "engines": {
-    "node": ">=26.13.0 <27"
-  },
   "scripts": {
     "dev": "NODE_ENV=development node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts",
     "start": "NODE_ENV=production node --env-file-if-exists=.env --import remix/node-tsx server.ts",
@@ -17,18 +14,15 @@
     "test:browser": "playwright test",
     "cms:seed-users": "node --env-file-if-exists=.env --import remix/node-tsx scripts/seed-users.ts",
     "cms:seed-operator": "node --env-file-if-exists=.env --import remix/node-tsx scripts/seed-operator.ts",
+    "link:central-auth": "node --env-file-if-exists=.env --import remix/node-tsx scripts/link-central-auth.ts",
     "lint": "vp lint .",
     "lint:fix": "vp lint --fix .",
     "format": "vp fmt .",
     "format:check": "vp fmt --check .",
     "check": "npm run build && npm test"
   },
-  "devDependencies": {
-    "@playwright/test": "^1.65.0",
-    "@types/node": "^26.6.6",
-    "@types/sanitize-html": "^2.16.0"
-  },
   "dependencies": {
+    "@tea/identity": "0.1.0",
     "@tea/json-schema": "0.1.0",
     "@tea/logger": "0.1.0",
     "@tea/mcp": "0.1.0",
@@ -39,5 +33,13 @@
     "morphdom": "2.7.8",
     "remix": "3.2.0",
     "sanitize-html": "2.18.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^26.6.6",
+    "@types/sanitize-html": "^2.16.0"
+  },
+  "engines": {
+    "node": ">=26.13.0 <27"
   }
 }

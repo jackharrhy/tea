@@ -8,9 +8,15 @@ export function readSessionCookie(request: Request): string | null {
   return match?.[1] ?? null;
 }
 
-export function sessionCookie(token: string, request: Request): string {
-  const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
-  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`;
+export function sessionCookie(
+  token: string,
+  request: Request,
+  maxAge = 2592000,
+  forceSecure = false,
+): string {
+  const secure =
+    forceSecure || new URL(request.url).protocol === "https:" ? "; Secure" : "";
+  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
 export function clearSessionCookie(request: Request): string {

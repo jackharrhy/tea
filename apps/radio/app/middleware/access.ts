@@ -6,17 +6,22 @@ import { session } from "remix/middleware/session";
 
 import { routes } from "../routes.ts";
 import { RadioSessionCookie } from "./session-cookie.ts";
+import type { IdentityConfig } from "@tea/identity";
 
 export type RadioIdentity = {
   name: string;
   authenticatedAt: number;
+  subject?: string;
+  expiresAt?: number;
 };
 
 export type RadioAccessConfig = {
-  password: string;
   sessionSecret: string;
   secureCookies: boolean;
-};
+} & (
+  | { mode: "password"; password: string }
+  | { mode: "central"; identity: IdentityConfig; publicOrigin: string }
+);
 
 export const RadioAccess = createContextKey<RadioIdentity | null>();
 export const AccessConfig = createContextKey<RadioAccessConfig>();
@@ -40,12 +45,23 @@ export function access(config: RadioAccessConfig): Middleware {
     let authenticated = currentSession.get("authenticated") === true;
     let name = currentSession.get("name");
     let authenticatedAt = currentSession.get("authenticatedAt");
+    let subject = currentSession.get("subject");
+    let expiresAt = currentSession.get("expiresAt");
     context.set(
       RadioAccess,
       authenticated &&
         typeof name === "string" &&
-        typeof authenticatedAt === "number"
-        ? { name, authenticatedAt }
+        typeof authenticatedAt === "number" &&
+        (config.mode === "password" ||
+          (typeof subject === "string" &&
+            subject.length > 0 &&
+            typeof expiresAt === "number" &&
+            expiresAt > Date.now()))
+        ? {
+            name,
+            authenticatedAt,
+            ...(config.mode === "central" ? { subject, expiresAt } : {}),
+          }
         : null,
     );
     return next();
@@ -87,7 +103,14 @@ export async function passwordMatches(
 }
 
 function requireConfig(config: RadioAccessConfig): void {
-  if (!config.password) throw new Error("RADIO_PASSWORD is required");
+  if (config.mode === "password" && !config.password)
+    throw new Error("RADIO_PASSWORD is required");
+  if (
+    config.mode === "central" &&
+    (new URL(config.publicOrigin).protocol !== "https:" ||
+      new URL(config.publicOrigin).origin !== config.publicOrigin)
+  )
+    throw new Error("AUTH_PUBLIC_ORIGIN must be an HTTPS origin");
   if (config.sessionSecret.length < 32) {
     throw new Error("RADIO_SESSION_SECRET must contain at least 32 characters");
   }

@@ -1,2 +1,7 @@
 RADIO_PASSWORD="choose-a-local-password"
+AUTH_ISSUER=""
+AUTH_CLIENT_ID=""
+AUTH_PROJECT_ID=""
+AUTH_ORGANIZATION_ID=""
+AUTH_PUBLIC_ORIGIN=""
 RADIO_SESSION_SECRET="replace-with-at-least-32-random-characters"
