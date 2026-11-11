@@ -12,18 +12,13 @@ export function authorizeArchive(
 ): void {
   if (principal.principalType !== "user")
     throw new IdentityError("Human archive authorization required", 403);
-  const selected = (["member", "admin"] as const).filter(
-    (role) =>
-      principal.roles.has(role) && principal.scopes.has(roleScope(role)),
-  );
-  if (selected.length !== 1)
-    throw new IdentityError(
-      "Exactly one archive membership scope is required",
-      403,
-    );
-  requireTokenRole(principal, projectId, selected[0]);
-  if (operation === "restore" && selected[0] !== "admin")
-    throw new IdentityError("Archive restore requires an admin grant", 403);
+  if (
+    principal.roles.has("member") ||
+    principal.scopes.has(roleScope("member")) ||
+    !principal.scopes.has(roleScope("admin"))
+  )
+    throw new IdentityError("Archive requires an admin scope", 403);
+  requireTokenRole(principal, projectId, "admin");
   const permissions =
     operation === "read"
       ? ["archive-read"]
