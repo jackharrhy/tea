@@ -6,16 +6,32 @@ import { z } from "zod";
 import { getAccessibleLists } from "../src/auth.ts";
 import { schema, type Db } from "../src/db/index.ts";
 import { logEvent } from "../src/services/events.ts";
-import { confirmSubscriber, createSubscriber } from "../src/services/subscriber.ts";
+import {
+  confirmSubscriber,
+  createSubscriber,
+} from "../src/services/subscriber.ts";
 import { AdminDocument, type Viewer } from "./admin.tsx";
 import { routes } from "./routes.ts";
 
-type User = Pick<typeof schema.users.$inferSelect, "id" | "role" | "name" | "email">;
+type User = Pick<
+  typeof schema.users.$inferSelect,
+  "id" | "role" | "name" | "email"
+>;
 type List = typeof schema.lists.$inferSelect;
-type Stage = { userId: number; expiresAt: number; headers: string[]; rows: string[][] };
+type Stage = {
+  userId: number;
+  expiresAt: number;
+  headers: string[];
+  rows: string[][];
+};
 const uploads = new Map<string, Stage>();
 const title = css({ fontSize: "24px", fontWeight: 700, margin: "0 0 20px" });
-const field = css({ display: "grid", gap: "6px", marginBottom: "16px", fontSize: "14px" });
+const field = css({
+  display: "grid",
+  gap: "6px",
+  marginBottom: "16px",
+  fontSize: "14px",
+});
 const input = css({
   boxSizing: "border-box",
   padding: "8px 10px",
@@ -35,11 +51,32 @@ const action = css({
   font: "inherit",
   cursor: "pointer",
 });
-const table = css({ borderCollapse: "collapse", width: "100%", fontSize: "14px" });
-const cell = css({ padding: "8px", borderBottom: "1px solid #e5e7eb", textAlign: "left" });
-const section = css({ fontSize: "18px", fontWeight: 600, margin: "24px 0 10px" });
-const check = css({ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" });
-const error = css({ padding: "12px", backgroundColor: "#fef2f2", color: "#991b1b" });
+const table = css({
+  borderCollapse: "collapse",
+  width: "100%",
+  fontSize: "14px",
+});
+const cell = css({
+  padding: "8px",
+  borderBottom: "1px solid #e5e7eb",
+  textAlign: "left",
+});
+const section = css({
+  fontSize: "18px",
+  fontWeight: 600,
+  margin: "24px 0 10px",
+});
+const check = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  marginBottom: "8px",
+});
+const error = css({
+  padding: "12px",
+  backgroundColor: "#fef2f2",
+  color: "#991b1b",
+});
 const link = css({ color: "#1d4ed8", textDecoration: "none" });
 
 function viewer(user: User): Viewer {
@@ -76,7 +113,8 @@ function parseCSV(source: string): string[][] {
 function mapping(header: string) {
   const value = header.toLowerCase();
   if (value.includes("mail")) return "email";
-  if ((value.includes("first") && value.includes("name")) || value === "name") return "firstName";
+  if ((value.includes("first") && value.includes("name")) || value === "name")
+    return "firstName";
   if (value.includes("last") && value.includes("name")) return "lastName";
   return "ignore";
 }
@@ -93,10 +131,20 @@ function Start(handle: Handle<{ viewer: Viewer; problem?: string }>) {
           {handle.props.problem}
         </p>
       ) : null}
-      <form method="post" action="/admin/import/upload" encType="multipart/form-data">
+      <form
+        method="post"
+        action="/admin/import/upload"
+        encType="multipart/form-data"
+      >
         <label mix={field}>
           CSV file
-          <input mix={input} type="file" name="csv" accept=".csv,text/csv" required />
+          <input
+            mix={input}
+            type="file"
+            name="csv"
+            accept=".csv,text/csv"
+            required
+          />
         </label>
         <button mix={action} type="submit">
           Review CSV
@@ -105,12 +153,25 @@ function Start(handle: Handle<{ viewer: Viewer; problem?: string }>) {
     </AdminDocument>
   );
 }
-function Review(handle: Handle<{ viewer: Viewer; stageId: string; stage: Stage; lists: List[] }>) {
+function Review(
+  handle: Handle<{
+    viewer: Viewer;
+    stageId: string;
+    stage: Stage;
+    lists: List[];
+  }>,
+) {
   const { stage, stageId, lists } = handle.props;
   return () => (
-    <AdminDocument title="Map columns" activeHref="/admin/import" viewer={handle.props.viewer}>
+    <AdminDocument
+      title="Map columns"
+      activeHref="/admin/import"
+      viewer={handle.props.viewer}
+    >
       <h1 mix={title}>Map columns</h1>
-      <p>{stage.rows.length} rows found. Review the first five before importing.</p>
+      <p>
+        {stage.rows.length} rows found. Review the first five before importing.
+      </p>
       <form method="post" action="/admin/import/process">
         <input type="hidden" name="stageId" value={stageId} />
         <table mix={table}>
@@ -119,11 +180,16 @@ function Review(handle: Handle<{ viewer: Viewer; stageId: string; stage: Stage; 
               {stage.headers.map((header, index) => (
                 <th mix={cell}>
                   <select mix={input} name={`col_${index}`}>
-                    {["ignore", "email", "firstName", "lastName"].map((value) => (
-                      <option value={value} selected={mapping(header) === value}>
-                        {value}
-                      </option>
-                    ))}
+                    {["ignore", "email", "firstName", "lastName"].map(
+                      (value) => (
+                        <option
+                          value={value}
+                          selected={mapping(header) === value}
+                        >
+                          {value}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </th>
               ))}
@@ -167,14 +233,23 @@ function Review(handle: Handle<{ viewer: Viewer; stageId: string; stage: Stage; 
   );
 }
 function Result(
-  handle: Handle<{ viewer: Viewer; imported: number; skipped: number; errors: number }>,
+  handle: Handle<{
+    viewer: Viewer;
+    imported: number;
+    skipped: number;
+    errors: number;
+  }>,
 ) {
   return () => (
-    <AdminDocument title="Import complete" activeHref="/admin/import" viewer={handle.props.viewer}>
+    <AdminDocument
+      title="Import complete"
+      activeHref="/admin/import"
+      viewer={handle.props.viewer}
+    >
       <h1 mix={title}>Import complete</h1>
       <p>
-        {handle.props.imported} imported · {handle.props.skipped} existing · {handle.props.errors}{" "}
-        invalid
+        {handle.props.imported} imported · {handle.props.skipped} existing ·{" "}
+        {handle.props.errors} invalid
       </p>
       <a mix={link} href="/admin/subscribers">
         View subscribers
@@ -194,9 +269,12 @@ export function createAdminImportController(db: Db, user: User) {
         const form = await context.request.formData();
         const file = form.get("csv");
         if (!(file instanceof File) || file.size === 0 || file.size > 5_000_000)
-          return context.render(<Start viewer={account} problem="Choose a CSV under 5 MB." />, {
-            status: 400,
-          });
+          return context.render(
+            <Start viewer={account} problem="Choose a CSV under 5 MB." />,
+            {
+              status: 400,
+            },
+          );
         let rows: string[][];
         try {
           rows = parseCSV(await file.text());
@@ -217,7 +295,8 @@ export function createAdminImportController(db: Db, user: User) {
             />,
             { status: 400 },
           );
-        for (const [key, value] of uploads) if (value.expiresAt < Date.now()) uploads.delete(key);
+        for (const [key, value] of uploads)
+          if (value.expiresAt < Date.now()) uploads.delete(key);
         if (uploads.size >= 10) uploads.delete(uploads.keys().next().value!);
         const stageId = crypto.randomUUID();
         const stage = {
@@ -242,7 +321,10 @@ export function createAdminImportController(db: Db, user: User) {
         const stage = uploads.get(key);
         if (!stage || stage.userId !== user.id || stage.expiresAt < Date.now())
           return context.render(
-            <Start viewer={account} problem="Upload expired. Choose the CSV again." />,
+            <Start
+              viewer={account}
+              problem="Upload expired. Choose the CSV again."
+            />,
             { status: 400 },
           );
         const columns = stage.headers.map((_, index) =>
@@ -250,10 +332,15 @@ export function createAdminImportController(db: Db, user: User) {
         );
         const emailIndex = columns.indexOf("email");
         if (emailIndex < 0)
-          return context.render(<Start viewer={account} problem="Map one column to email." />, {
-            status: 400,
-          });
-        const allowed = new Set(getAccessibleLists(db, user).map((list) => list.slug));
+          return context.render(
+            <Start viewer={account} problem="Map one column to email." />,
+            {
+              status: 400,
+            },
+          );
+        const allowed = new Set(
+          getAccessibleLists(db, user).map((list) => list.slug),
+        );
         const lists = form
           .getAll("lists")
           .filter((item): item is string => typeof item === "string");
@@ -262,7 +349,8 @@ export function createAdminImportController(db: Db, user: User) {
         if (user.role === "member" && lists.length === 0)
           return new Response("Select a list", { status: 400 });
         const tagName = String(form.get("importTag") ?? "").trim();
-        if (tagName.length > 255) return new Response("Invalid tag", { status: 400 });
+        if (tagName.length > 255)
+          return new Response("Invalid tag", { status: 400 });
         uploads.delete(key);
         let tagId: number | null = null;
         if (tagName)
@@ -272,8 +360,11 @@ export function createAdminImportController(db: Db, user: User) {
               .from(schema.tags)
               .where(eq(schema.tags.name, tagName))
               .get()?.id ??
-            db.insert(schema.tags).values({ name: tagName }).returning({ id: schema.tags.id }).get()
-              .id;
+            db
+              .insert(schema.tags)
+              .values({ name: tagName })
+              .returning({ id: schema.tags.id })
+              .get().id;
         const firstNameIndex = columns.indexOf("firstName"),
           lastNameIndex = columns.indexOf("lastName");
         let imported = 0,
@@ -300,7 +391,8 @@ export function createAdminImportController(db: Db, user: User) {
             );
             if (exists) skipped++;
             else imported++;
-            if (form.get("preconfirm") === "1") confirmSubscriber(db, subscriber.unsubscribeToken);
+            if (form.get("preconfirm") === "1")
+              confirmSubscriber(db, subscriber.unsubscribeToken);
             if (tagId !== null)
               db.insert(schema.subscriberTags)
                 .values({ subscriberId: subscriber.id, tagId })
@@ -316,7 +408,12 @@ export function createAdminImportController(db: Db, user: User) {
           userId: user.id,
         });
         return context.render(
-          <Result viewer={account} imported={imported} skipped={skipped} errors={errors} />,
+          <Result
+            viewer={account}
+            imported={imported}
+            skipped={skipped}
+            errors={errors}
+          />,
         );
       },
     },

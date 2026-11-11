@@ -5,20 +5,35 @@ import { createController } from "remix/router";
 import { z } from "zod";
 
 import { renderConfirmation } from "../emails/render.ts";
-import { canAccessList, getAccessibleListIds, getAccessibleLists } from "../src/auth.ts";
+import {
+  canAccessList,
+  getAccessibleListIds,
+  getAccessibleLists,
+} from "../src/auth.ts";
 import { buildConfirmUrl } from "../src/compliance.ts";
 import type { Config } from "../src/config.ts";
 import { schema, type Db } from "../src/db/index.ts";
 import { logEvent } from "../src/services/events.ts";
 import { sendEmail } from "../src/services/mailer.ts";
-import { confirmSubscriber, createSubscriber } from "../src/services/subscriber.ts";
+import {
+  confirmSubscriber,
+  createSubscriber,
+} from "../src/services/subscriber.ts";
 import { AdminDocument, type Viewer } from "./admin.tsx";
 import { routes } from "./routes.ts";
 
-type User = Pick<typeof schema.users.$inferSelect, "id" | "role" | "name" | "email">;
+type User = Pick<
+  typeof schema.users.$inferSelect,
+  "id" | "role" | "name" | "email"
+>;
 type Subscriber = typeof schema.subscribers.$inferSelect;
 const PAGE_SIZE = 50;
-const heading = css({ fontSize: "24px", lineHeight: "32px", fontWeight: 700, margin: "0 0 20px" });
+const heading = css({
+  fontSize: "24px",
+  lineHeight: "32px",
+  fontWeight: 700,
+  margin: "0 0 20px",
+});
 const toolbar = css({
   display: "flex",
   alignItems: "center",
@@ -33,7 +48,12 @@ const filters = css({
   gap: "12px",
   marginBottom: "24px",
 });
-const field = css({ display: "grid", gap: "5px", color: "#4b5563", fontSize: "13px" });
+const field = css({
+  display: "grid",
+  gap: "5px",
+  color: "#4b5563",
+  fontSize: "13px",
+});
 const input = css({
   boxSizing: "border-box",
   minHeight: "38px",
@@ -59,11 +79,28 @@ const button = css({
 });
 const link = css({ color: "#1d4ed8", textDecoration: "none" });
 const muted = css({ color: "#6b7280", fontSize: "14px" });
-const table = css({ width: "100%", borderCollapse: "collapse", fontSize: "14px" });
-const cell = css({ padding: "10px 8px", borderBottom: "1px solid #e5e7eb", textAlign: "left" });
-const section = css({ margin: "28px 0 12px", fontSize: "18px", fontWeight: 600 });
+const table = css({
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: "14px",
+});
+const cell = css({
+  padding: "10px 8px",
+  borderBottom: "1px solid #e5e7eb",
+  textAlign: "left",
+});
+const section = css({
+  margin: "28px 0 12px",
+  fontSize: "18px",
+  fontWeight: 600,
+});
 const form = css({ display: "grid", gap: "16px", maxWidth: "580px" });
-const inline = css({ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" });
+const inline = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  flexWrap: "wrap",
+});
 const notice = css({
   padding: "10px 14px",
   backgroundColor: "#ecfdf5",
@@ -103,13 +140,15 @@ function visible(db: Db, user: User, subscriberId: number) {
 }
 function requireSubscriber(db: Db, user: User, rawId: string) {
   const subscriberId = id(rawId);
-  if (!subscriberId) return { error: new Response("Not Found", { status: 404 }) } as const;
+  if (!subscriberId)
+    return { error: new Response("Not Found", { status: 404 }) } as const;
   const subscriber = db
     .select()
     .from(schema.subscribers)
     .where(eq(schema.subscribers.id, subscriberId))
     .get();
-  if (!subscriber) return { error: new Response("Not Found", { status: 404 }) } as const;
+  if (!subscriber)
+    return { error: new Response("Not Found", { status: 404 }) } as const;
   if (!visible(db, user, subscriberId))
     return { error: new Response("Forbidden", { status: 403 }) } as const;
   return { subscriber } as const;
@@ -119,11 +158,21 @@ function subscriberForm(subscriber?: Subscriber) {
     <>
       <label mix={field}>
         Email
-        <input mix={input} type="email" name="email" required value={subscriber?.email ?? ""} />
+        <input
+          mix={input}
+          type="email"
+          name="email"
+          required
+          value={subscriber?.email ?? ""}
+        />
       </label>
       <label mix={field}>
         First name
-        <input mix={input} name="firstName" value={subscriber?.firstName ?? ""} />
+        <input
+          mix={input}
+          name="firstName"
+          value={subscriber?.firstName ?? ""}
+        />
       </label>
       <label mix={field}>
         Last name
@@ -148,14 +197,22 @@ function SubscriberIndex(
   handle: Handle<{
     viewer: Viewer;
     rows: Array<
-      Pick<Subscriber, "id" | "email" | "firstName" | "lastName" | "status" | "createdAt"> & {
+      Pick<
+        Subscriber,
+        "id" | "email" | "firstName" | "lastName" | "status" | "createdAt"
+      > & {
         membershipCount: number;
       }
     >;
     total: number;
     page: number;
     orphaned: number;
-    filters: { search: string; status: string; confirmed: string; membership: string };
+    filters: {
+      search: string;
+      status: string;
+      confirmed: string;
+      membership: string;
+    };
     notice: string | null;
   }>,
 ) {
@@ -175,7 +232,11 @@ function SubscriberIndex(
       return `/admin/subscribers?${query}`;
     };
     return (
-      <AdminDocument title="Subscribers" activeHref="/admin/subscribers" viewer={account}>
+      <AdminDocument
+        title="Subscribers"
+        activeHref="/admin/subscribers"
+        viewer={account}
+      >
         {status ? (
           <p mix={notice} role="status">
             {status}
@@ -197,7 +258,12 @@ function SubscriberIndex(
         <form mix={filters} method="get" action="/admin/subscribers">
           <label mix={field}>
             Search
-            <input mix={input} name="search" value={selected.search} placeholder="Email or name" />
+            <input
+              mix={input}
+              name="search"
+              value={selected.search}
+              placeholder="Email or name"
+            />
           </label>
           <label mix={field}>
             Status
@@ -206,7 +272,10 @@ function SubscriberIndex(
               <option value="active" selected={selected.status === "active"}>
                 Active
               </option>
-              <option value="blocklisted" selected={selected.status === "blocklisted"}>
+              <option
+                value="blocklisted"
+                selected={selected.status === "blocklisted"}
+              >
                 Blocklisted
               </option>
             </select>
@@ -216,7 +285,10 @@ function SubscriberIndex(
               Membership
               <select mix={input} name="membership">
                 <option value="">All</option>
-                <option value="orphaned" selected={selected.membership === "orphaned"}>
+                <option
+                  value="orphaned"
+                  selected={selected.membership === "orphaned"}
+                >
                   Orphaned
                 </option>
               </select>
@@ -226,10 +298,16 @@ function SubscriberIndex(
             Confirmed
             <select mix={input} name="confirmed">
               <option value="">All</option>
-              <option value="confirmed" selected={selected.confirmed === "confirmed"}>
+              <option
+                value="confirmed"
+                selected={selected.confirmed === "confirmed"}
+              >
                 Confirmed
               </option>
-              <option value="unconfirmed" selected={selected.confirmed === "unconfirmed"}>
+              <option
+                value="unconfirmed"
+                selected={selected.confirmed === "unconfirmed"}
+              >
                 Unconfirmed
               </option>
             </select>
@@ -260,7 +338,9 @@ function SubscriberIndex(
                   </a>
                 </td>
                 <td mix={cell}>
-                  {[subscriber.firstName, subscriber.lastName].filter(Boolean).join(" ") || "—"}
+                  {[subscriber.firstName, subscriber.lastName]
+                    .filter(Boolean)
+                    .join(" ") || "—"}
                 </td>
                 <td mix={cell}>{subscriber.status}</td>
                 <td mix={cell}>{subscriber.membershipCount || "Orphaned"}</td>
@@ -298,7 +378,10 @@ function SubscriberIndex(
   };
 }
 function SubscriberNew(
-  handle: Handle<{ viewer: Viewer; lists: Array<typeof schema.lists.$inferSelect> }>,
+  handle: Handle<{
+    viewer: Viewer;
+    lists: Array<typeof schema.lists.$inferSelect>;
+  }>,
 ) {
   return () => (
     <AdminDocument
@@ -335,8 +418,17 @@ function SubscriberShow(
     subscriber: Subscriber;
     lists: Array<{ id: number; name: string; status: string | null }>;
     tags: Array<{ id: number; name: string; applied: boolean }>;
-    events: Array<{ id: number; type: string; detail: string | null; createdAt: string }>;
-    sends: Array<{ campaignId: number; status: string; subject: string | null }>;
+    events: Array<{
+      id: number;
+      type: string;
+      detail: string | null;
+      createdAt: string;
+    }>;
+    sends: Array<{
+      campaignId: number;
+      status: string;
+      subject: string | null;
+    }>;
     notice: string | null;
   }>,
 ) {
@@ -352,7 +444,11 @@ function SubscriberShow(
     } = handle.props;
     const base = `/admin/subscribers/${subscriber.id}`;
     return (
-      <AdminDocument title={subscriber.email} activeHref="/admin/subscribers" viewer={account}>
+      <AdminDocument
+        title={subscriber.email}
+        activeHref="/admin/subscribers"
+        viewer={account}
+      >
         {status ? (
           <p mix={notice} role="status">
             {status}
@@ -367,7 +463,10 @@ function SubscriberShow(
               <option value="active" selected={subscriber.status === "active"}>
                 active
               </option>
-              <option value="blocklisted" selected={subscriber.status === "blocklisted"}>
+              <option
+                value="blocklisted"
+                selected={subscriber.status === "blocklisted"}
+              >
                 blocklisted
               </option>
             </select>
@@ -393,21 +492,36 @@ function SubscriberShow(
                 <td mix={cell}>
                   {list.status ? (
                     <div mix={inline}>
-                      <form method="post" action={`${base}/list/${list.id}/status`}>
+                      <form
+                        method="post"
+                        action={`${base}/list/${list.id}/status`}
+                      >
                         <select name="listStatus" mix={input}>
-                          <option value="unconfirmed" selected={list.status === "unconfirmed"}>
+                          <option
+                            value="unconfirmed"
+                            selected={list.status === "unconfirmed"}
+                          >
                             Unconfirmed
                           </option>
-                          <option value="confirmed" selected={list.status === "confirmed"}>
+                          <option
+                            value="confirmed"
+                            selected={list.status === "confirmed"}
+                          >
                             Confirmed
                           </option>
-                          <option value="unsubscribed" selected={list.status === "unsubscribed"}>
+                          <option
+                            value="unsubscribed"
+                            selected={list.status === "unsubscribed"}
+                          >
                             Unsubscribed
                           </option>
                         </select>
                         <button type="submit">Save</button>
                       </form>
-                      <form method="post" action={`${base}/list/${list.id}/remove`}>
+                      <form
+                        method="post"
+                        action={`${base}/list/${list.id}/remove`}
+                      >
                         <button type="submit">Remove</button>
                       </form>
                     </div>
@@ -470,7 +584,8 @@ function SubscriberShow(
           <ul>
             {events.map((event) => (
               <li>
-                {event.type}: {event.detail} <small>{event.createdAt.slice(0, 16)}</small>
+                {event.type}: {event.detail}{" "}
+                <small>{event.createdAt.slice(0, 16)}</small>
               </li>
             ))}
           </ul>
@@ -486,7 +601,11 @@ function SubscriberShow(
   };
 }
 
-export function createAdminSubscribersController(db: Db, config: Config, user: User) {
+export function createAdminSubscribersController(
+  db: Db,
+  config: Config,
+  user: User,
+) {
   const account = viewer(user);
   function required(rawId: string) {
     return requireSubscriber(db, user, rawId);
@@ -524,9 +643,14 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
         }
         if (filters.status === "active" || filters.status === "blocklisted")
           conditions.push(eq(schema.subscribers.status, filters.status));
-        if (filters.confirmed === "confirmed" || filters.confirmed === "unconfirmed") {
+        if (
+          filters.confirmed === "confirmed" ||
+          filters.confirmed === "unconfirmed"
+        ) {
           const exists = sql`EXISTS (SELECT 1 FROM subscriber_lists sl WHERE sl.subscriber_id = ${schema.subscribers.id} AND sl.status = 'confirmed')`;
-          conditions.push(filters.confirmed === "confirmed" ? exists : sql`NOT ${exists}`);
+          conditions.push(
+            filters.confirmed === "confirmed" ? exists : sql`NOT ${exists}`,
+          );
         }
         if (access === "all" && filters.membership === "orphaned")
           conditions.push(
@@ -589,20 +713,30 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
       },
       new(context) {
         return context.render(
-          <SubscriberNew viewer={account} lists={getAccessibleLists(db, user)} />,
+          <SubscriberNew
+            viewer={account}
+            lists={getAccessibleLists(db, user)}
+          />,
         );
       },
       async create(context) {
         const data = await context.request.formData();
         const parsed = z
-          .object({ email: z.email(), firstName: z.string(), lastName: z.string() })
+          .object({
+            email: z.email(),
+            firstName: z.string(),
+            lastName: z.string(),
+          })
           .safeParse({
             email: text(data.get("email")).toLowerCase(),
             firstName: text(data.get("firstName")),
             lastName: text(data.get("lastName")),
           });
-        if (!parsed.success) return new Response("Invalid subscriber", { status: 400 });
-        const allowed = new Map(getAccessibleLists(db, user).map((list) => [list.slug, list]));
+        if (!parsed.success)
+          return new Response("Invalid subscriber", { status: 400 });
+        const allowed = new Map(
+          getAccessibleLists(db, user).map((list) => [list.slug, list]),
+        );
         const requested = data.getAll("lists").map(text);
         if (user.role === "member" && requested.length === 0)
           return new Response("Select a list", { status: 400 });
@@ -615,7 +749,8 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
           parsed.data.lastName || null,
           requested,
         );
-        if (data.get("skip_confirm") === "1") confirmSubscriber(db, subscriber.unsubscribeToken);
+        if (data.get("skip_confirm") === "1")
+          confirmSubscriber(db, subscriber.unsubscribeToken);
         logEvent(db, {
           type: "admin.subscriber_added",
           detail: subscriber.email,
@@ -633,7 +768,9 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
           .from(schema.subscriberLists)
           .where(eq(schema.subscriberLists.subscriberId, subscriber.id))
           .all();
-        const memberStatus = new Map(memberships.map((item) => [item.listId, item.status]));
+        const memberStatus = new Map(
+          memberships.map((item) => [item.listId, item.status]),
+        );
         const lists = getAccessibleLists(db, user).map((list) => ({
           id: list.id,
           name: list.name,
@@ -651,7 +788,11 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
           .select()
           .from(schema.tags)
           .all()
-          .map((tag) => ({ id: tag.id, name: tag.name, applied: applied.has(tag.id) }));
+          .map((tag) => ({
+            id: tag.id,
+            name: tag.name,
+            applied: applied.has(tag.id),
+          }));
         const events = db
           .select({
             id: schema.events.id,
@@ -671,7 +812,10 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
             subject: schema.campaigns.subject,
           })
           .from(schema.campaignSends)
-          .leftJoin(schema.campaigns, eq(schema.campaignSends.campaignId, schema.campaigns.id))
+          .leftJoin(
+            schema.campaigns,
+            eq(schema.campaignSends.campaignId, schema.campaigns.id),
+          )
           .where(eq(schema.campaignSends.subscriberId, subscriber.id))
           .orderBy(desc(schema.campaignSends.sentAt))
           .all();
@@ -704,7 +848,8 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
             lastName: text(data.get("lastName")),
             status: text(data.get("status")),
           });
-        if (!parsed.success) return new Response("Invalid subscriber", { status: 400 });
+        if (!parsed.success)
+          return new Response("Invalid subscriber", { status: 400 });
         db.update(schema.subscribers)
           .set({
             ...parsed.data,
@@ -719,7 +864,9 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
           subscriberId: found.subscriber.id,
           userId: user.id,
         });
-        return redirect(`/admin/subscribers/${found.subscriber.id}?status=saved`);
+        return redirect(
+          `/admin/subscribers/${found.subscriber.id}?status=saved`,
+        );
       },
       destroy(context) {
         const found = required(context.params.id);
@@ -739,7 +886,9 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
             .set({ subscriberId: null })
             .where(eq(schema.events.subscriberId, subscriber.id))
             .run();
-          tx.delete(schema.subscribers).where(eq(schema.subscribers.id, subscriber.id)).run();
+          tx.delete(schema.subscribers)
+            .where(eq(schema.subscribers.id, subscriber.id))
+            .run();
           logEvent(tx, {
             type: "admin.subscriber_deleted",
             detail: subscriber.email,
@@ -762,7 +911,10 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
             fromDomain: schema.lists.fromDomain,
           })
           .from(schema.subscriberLists)
-          .innerJoin(schema.lists, eq(schema.subscriberLists.listId, schema.lists.id))
+          .innerJoin(
+            schema.lists,
+            eq(schema.subscriberLists.listId, schema.lists.id),
+          )
           .where(
             and(
               eq(schema.subscriberLists.subscriberId, subscriber.id),
@@ -775,10 +927,16 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
               canAccessList(db, user, item.listId) &&
               (!requestedDomain || item.fromDomain === requestedDomain),
           );
-        if (!unconfirmed.length) return redirect(`/admin/subscribers/${subscriber.id}`);
-        const domain = requestedDomain || unconfirmed[0]!.fromDomain || config.fromDomain;
+        if (!unconfirmed.length)
+          return redirect(`/admin/subscribers/${subscriber.id}`);
+        const domain =
+          requestedDomain || unconfirmed[0]!.fromDomain || config.fromDomain;
         const { html } = await renderConfirmation({
-          confirmUrl: buildConfirmUrl(config.baseUrl, subscriber.unsubscribeToken, domain),
+          confirmUrl: buildConfirmUrl(
+            config.baseUrl,
+            subscriber.unsubscribeToken,
+            domain,
+          ),
           listNames: unconfirmed.map((item) => item.name),
         });
         await sendEmail(
@@ -814,7 +972,8 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
         const status = z
           .enum(["unconfirmed", "confirmed", "unsubscribed"])
           .safeParse(text(data.get("listStatus")) || "unconfirmed");
-        if (!status.success) return new Response("Invalid list status", { status: 400 });
+        if (!status.success)
+          return new Response("Invalid list status", { status: 400 });
         db.insert(schema.subscriberLists)
           .values({
             subscriberId: target.subscriber.id,
@@ -832,7 +991,8 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
         const status = z
           .enum(["unconfirmed", "confirmed", "unsubscribed"])
           .safeParse(text(data.get("listStatus")));
-        if (!status.success) return new Response("Invalid list status", { status: 400 });
+        if (!status.success)
+          return new Response("Invalid list status", { status: 400 });
         db.update(schema.subscriberLists)
           .set({ status: status.data })
           .where(
@@ -862,7 +1022,10 @@ export function createAdminSubscribersController(db: Db, config: Config, user: U
         if (found.error) return found.error;
         const data = await context.request.formData();
         const tagId = id(text(data.get("tagId")));
-        if (!tagId || !db.select().from(schema.tags).where(eq(schema.tags.id, tagId)).get())
+        if (
+          !tagId ||
+          !db.select().from(schema.tags).where(eq(schema.tags.id, tagId)).get()
+        )
           return new Response("Invalid tag", { status: 400 });
         db.insert(schema.subscriberTags)
           .values({ subscriberId: found.subscriber.id, tagId })

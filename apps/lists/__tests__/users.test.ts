@@ -38,7 +38,11 @@ async function seedUser(
   const name = overrides.name ?? null;
   const passwordHash = await Bun.password.hash(password);
 
-  return db.insert(schema.users).values({ email, name, passwordHash, role }).returning().get();
+  return db
+    .insert(schema.users)
+    .values({ email, name, passwordHash, role })
+    .returning()
+    .get();
 }
 
 /** POST /login and return the session cookie string */
@@ -118,7 +122,11 @@ describe("Login flow", () => {
   });
 
   test("correct credentials -> 303 redirect with session cookie", async () => {
-    const { res, cookie } = await login(app, "owner@example.com", "correct-password");
+    const { res, cookie } = await login(
+      app,
+      "owner@example.com",
+      "correct-password",
+    );
     expect(res.status).toBe(303);
     expect(cookie).not.toBeNull();
   });
@@ -158,13 +166,21 @@ describe("Role-based access to users page", () => {
     });
 
     // Login as owner
-    const { cookie: ownerCookie } = await login(app, "owner@example.com", "owner-pass");
+    const { cookie: ownerCookie } = await login(
+      app,
+      "owner@example.com",
+      "owner-pass",
+    );
     expect(ownerCookie).not.toBeNull();
     const ownerRes = await authGet(app, "/admin/users", ownerCookie!);
     expect(ownerRes.status).toBe(200);
 
     // Login as member
-    const { cookie: memberCookie } = await login(app, "member@example.com", "member-pass");
+    const { cookie: memberCookie } = await login(
+      app,
+      "member@example.com",
+      "member-pass",
+    );
     expect(memberCookie).not.toBeNull();
     const memberRes = await authGet(app, "/admin/users", memberCookie!);
     expect(memberRes.status).toBe(403);
@@ -226,7 +242,9 @@ describe("Member filtered view", () => {
       password: "member-pass",
       role: "member",
     });
-    db.insert(schema.userLists).values({ userId: member.id, listId: listA.id }).run();
+    db.insert(schema.userLists)
+      .values({ userId: member.id, listId: listA.id })
+      .run();
 
     // Login as member
     const { cookie } = await login(app, "member@example.com", "member-pass");

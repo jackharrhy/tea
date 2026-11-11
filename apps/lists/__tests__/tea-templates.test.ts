@@ -33,10 +33,17 @@ test("native template gallery and preview retain the shared shell and restrictiv
   const gallery = await app.request("/admin/templates", { headers });
   expect(gallery.status).toBe(200);
   expect(await gallery.text()).toContain(template.name);
-  const workspace = await app.request(`/admin/templates/${template.slug}`, { headers });
+  const workspace = await app.request(`/admin/templates/${template.slug}`, {
+    headers,
+  });
   expect(workspace.status).toBe(200);
   expect(await workspace.text()).toContain('id="app-shell"');
-  const preview = await app.request(`/admin/templates/${template.slug}/preview`, { headers });
+  const preview = await app.request(
+    `/admin/templates/${template.slug}/preview`,
+    { headers },
+  );
   expect(preview.status).toBe(200);
-  expect(preview.headers.get("content-security-policy")).toContain("default-src 'none'");
+  expect(preview.headers.get("content-security-policy")).toContain(
+    "default-src 'none'",
+  );
 });

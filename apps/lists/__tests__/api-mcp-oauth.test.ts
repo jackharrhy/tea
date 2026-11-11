@@ -35,7 +35,14 @@ function mintApiToken(
   scopes: Parameters<typeof mintScopedToken>[3],
   expiresAt: string | null = null,
 ) {
-  return mintScopedToken(db, userId, name, scopes, expiresAt, "http://localhost/mcp");
+  return mintScopedToken(
+    db,
+    userId,
+    name,
+    scopes,
+    expiresAt,
+    "http://localhost/mcp",
+  );
 }
 
 function setup() {
@@ -86,8 +93,14 @@ describe("scoped API and MCP", () => {
   test("only exposes the versioned REST contract", async () => {
     const { app, db, user } = setup();
     const { token } = mintApiToken(db, user.id, "reader", ["subscribers:read"]);
-    expect((await app.request("/api/subscribers", { headers: bearer(token) })).status).toBe(404);
-    expect((await app.request("/api/v1/subscribers", { headers: bearer(token) })).status).toBe(200);
+    expect(
+      (await app.request("/api/subscribers", { headers: bearer(token) }))
+        .status,
+    ).toBe(404);
+    expect(
+      (await app.request("/api/v1/subscribers", { headers: bearer(token) }))
+        .status,
+    ).toBe(200);
   });
 
   test("publishes the typed REST contract as OpenAPI", async () => {
@@ -95,15 +108,20 @@ describe("scoped API and MCP", () => {
     const response = await app.request("/openapi/json");
     expect(response.status).toBe(200);
     const document = (await response.json()) as any;
-    const createSubscriberOperation = document.paths["/api/v1/subscribers"].post;
+    const createSubscriberOperation =
+      document.paths["/api/v1/subscribers"].post;
     expect(createSubscriberOperation.security).toEqual([{ bearerAuth: [] }]);
     expect(
-      createSubscriberOperation.requestBody.content["application/json"].schema.required,
+      createSubscriberOperation.requestBody.content["application/json"].schema
+        .required,
     ).toEqual(["email", "lists"]);
     expect(
-      createSubscriberOperation.responses[201].content["application/json"].schema.properties.data,
+      createSubscriberOperation.responses[201].content["application/json"]
+        .schema.properties.data,
     ).toBeDefined();
-    expect(document.components.securitySchemes.bearerAuth.scheme).toBe("bearer");
+    expect(document.components.securitySchemes.bearerAuth.scheme).toBe(
+      "bearer",
+    );
   });
 
   test("REST and MCP call the same list operation with the same token", async () => {
@@ -132,12 +150,18 @@ describe("scoped API and MCP", () => {
       headers: bearer(token),
     });
     expect(forbidden.status).toBe(403);
-    expect(db.select().from(schema.apiTokens).get()!.tokenHash).not.toContain(token);
+    expect(db.select().from(schema.apiTokens).get()!.tokenHash).not.toContain(
+      token,
+    );
   });
 
   test("campaign send records expose recipient emails only within the member's list", async () => {
     const { app, db } = setup();
-    const list = db.select().from(schema.lists).where(eq(schema.lists.slug, "news")).get()!;
+    const list = db
+      .select()
+      .from(schema.lists)
+      .where(eq(schema.lists.slug, "news"))
+      .get()!;
     const other = seedList(db, { slug: "other", name: "Other" });
     const member = db
       .insert(schema.users)
@@ -148,9 +172,15 @@ describe("scoped API and MCP", () => {
       })
       .returning()
       .get();
-    db.insert(schema.userLists).values({ userId: member.id, listId: list.id }).run();
-    const { token } = mintApiToken(db, member.id, "campaign reader", ["campaigns:read"]);
-    const recipient = createSubscriber(db, "pilot@example.com", null, null, [list.slug]);
+    db.insert(schema.userLists)
+      .values({ userId: member.id, listId: list.id })
+      .run();
+    const { token } = mintApiToken(db, member.id, "campaign reader", [
+      "campaigns:read",
+    ]);
+    const recipient = createSubscriber(db, "pilot@example.com", null, null, [
+      list.slug,
+    ]);
     const visible = db
       .insert(schema.campaigns)
       .values({
@@ -230,12 +260,16 @@ describe("scoped API and MCP", () => {
         .map((operation) => operation.mcpName)
         .toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
     );
-    const create = body.result.tools.find((tool: any) => tool.name === "subscriber_create");
+    const create = body.result.tools.find(
+      (tool: any) => tool.name === "subscriber_create",
+    );
     expect(create.inputSchema.required).toEqual(["email", "lists"]);
     expect(create.inputSchema.properties.email.format).toBe("email");
-    expect(body.result.tools.some((tool: any) => tool.name === "email_template_activate")).toBe(
-      false,
-    );
+    expect(
+      body.result.tools.some(
+        (tool: any) => tool.name === "email_template_activate",
+      ),
+    ).toBe(false);
     expect(create.outputSchema.required).toEqual(["id", "email"]);
   });
 
@@ -257,7 +291,9 @@ describe("scoped API and MCP", () => {
 
   test("creates subscribers through the same contract in REST and MCP", async () => {
     const { app, db, user } = setup();
-    const { token } = mintApiToken(db, user.id, "writer", ["subscribers:write"]);
+    const { token } = mintApiToken(db, user.id, "writer", [
+      "subscribers:write",
+    ]);
     const rest = await app.request("/api/v1/subscribers", {
       method: "POST",
       headers: { ...bearer(token), "Content-Type": "application/json" },
@@ -289,7 +325,9 @@ describe("scoped API and MCP", () => {
   test("optionally sends confirmation for unconfirmed memberships but not confirmed ones", async () => {
     const { app, db, user } = setup();
     db.update(schema.lists).set({ fromAddress: "news@example.com" }).run();
-    const { token } = mintApiToken(db, user.id, "writer", ["subscribers:write"]);
+    const { token } = mintApiToken(db, user.id, "writer", [
+      "subscribers:write",
+    ]);
     sesMock.on(SendEmailCommand).resolves({ MessageId: "confirmation" });
     const input = {
       email: "signup@example.com",
@@ -304,9 +342,9 @@ describe("scoped API and MCP", () => {
     });
     expect(first.status).toBe(201);
     expect(sesMock.commandCalls(SendEmailCommand)).toHaveLength(1);
-    expect(sesMock.commandCalls(SendEmailCommand)[0]!.args[0].input.FromEmailAddress).toBe(
-      '"News" <news@example.com>',
-    );
+    expect(
+      sesMock.commandCalls(SendEmailCommand)[0]!.args[0].input.FromEmailAddress,
+    ).toBe('"News" <news@example.com>');
 
     const repeated = await mcpCall(app, token, "subscriber_create", input);
     expect(repeated.result.isError).toBeUndefined();
@@ -332,12 +370,16 @@ describe("scoped API and MCP", () => {
     const resubscribed = await mcpCall(app, token, "subscriber_create", input);
     expect(resubscribed.result.isError).toBeUndefined();
     expect(sesMock.commandCalls(SendEmailCommand)).toHaveLength(3);
-    expect(db.select().from(schema.subscriberLists).get()?.status).toBe("unconfirmed");
+    expect(db.select().from(schema.subscriberLists).get()?.status).toBe(
+      "unconfirmed",
+    );
   });
 
   test("propagates confirmation provider errors and leaves membership unconfirmed", async () => {
     const { app, db, user } = setup();
-    const { token } = mintApiToken(db, user.id, "writer", ["subscribers:write"]);
+    const { token } = mintApiToken(db, user.id, "writer", [
+      "subscribers:write",
+    ]);
     sesMock.on(SendEmailCommand).rejects(new Error("SES unavailable"));
     const response = await app.request("/api/v1/subscribers", {
       method: "POST",
@@ -349,7 +391,9 @@ describe("scoped API and MCP", () => {
       }),
     });
     expect(response.status).toBe(500);
-    expect(db.select().from(schema.subscriberLists).get()?.status).toBe("unconfirmed");
+    expect(db.select().from(schema.subscriberLists).get()?.status).toBe(
+      "unconfirmed",
+    );
 
     sesMock.reset();
     sesMock.on(SendEmailCommand).resolves({ MessageId: "retry" });
@@ -368,7 +412,9 @@ describe("scoped API and MCP", () => {
 
   test("rejects invalid subscriber input consistently without writing data", async () => {
     const { app, db, user } = setup();
-    const { token } = mintApiToken(db, user.id, "writer", ["subscribers:write"]);
+    const { token } = mintApiToken(db, user.id, "writer", [
+      "subscribers:write",
+    ]);
     const input = { email: "not-an-email", lists: ["news"] };
     const rest = await app.request("/api/v1/subscribers", {
       method: "POST",
@@ -383,12 +429,19 @@ describe("scoped API and MCP", () => {
 
   test("filters subscribers by accessible list and unsubscribes only that membership", async () => {
     const { app, db } = setup();
-    const news = db.select().from(schema.lists).where(eq(schema.lists.slug, "news")).get()!;
+    const news = db
+      .select()
+      .from(schema.lists)
+      .where(eq(schema.lists.slug, "news"))
+      .get()!;
     const other = seedList(db, { slug: "other", name: "Other" });
-    const subscriber = createSubscriber(db, "reader@example.com", "Reader", null, [
-      "news",
-      "other",
-    ]);
+    const subscriber = createSubscriber(
+      db,
+      "reader@example.com",
+      "Reader",
+      null,
+      ["news", "other"],
+    );
     db.update(schema.subscriberLists)
       .set({ status: "confirmed" })
       .where(eq(schema.subscriberLists.subscriberId, subscriber.id))
@@ -402,7 +455,9 @@ describe("scoped API and MCP", () => {
       })
       .returning()
       .get();
-    db.insert(schema.userLists).values({ userId: member.id, listId: news.id }).run();
+    db.insert(schema.userLists)
+      .values({ userId: member.id, listId: news.id })
+      .run();
     const { token } = mintApiToken(db, member.id, "member", [
       "lists:read",
       "subscribers:read",
@@ -416,7 +471,9 @@ describe("scoped API and MCP", () => {
       },
     );
     expect(listed.status).toBe(200);
-    expect(((await listed.json()) as any).data[0].membershipStatus).toBe("confirmed");
+    expect(((await listed.json()) as any).data[0].membershipStatus).toBe(
+      "confirmed",
+    );
     const stats = await app.request(`/api/v1/lists/${news.id}/stats`, {
       headers: bearer(token),
     });
@@ -463,9 +520,17 @@ describe("scoped API and MCP", () => {
       })
       .returning()
       .get();
-    const visible = db.select().from(schema.lists).where(eq(schema.lists.slug, "news")).get()!;
-    db.insert(schema.userLists).values({ userId: member.id, listId: visible.id }).run();
-    const { token } = mintApiToken(db, member.id, "member writer", ["subscribers:write"]);
+    const visible = db
+      .select()
+      .from(schema.lists)
+      .where(eq(schema.lists.slug, "news"))
+      .get()!;
+    db.insert(schema.userLists)
+      .values({ userId: member.id, listId: visible.id })
+      .run();
+    const { token } = mintApiToken(db, member.id, "member writer", [
+      "subscribers:write",
+    ]);
     const input = { email: "blocked@example.com", lists: [hidden.slug] };
 
     const rest = await app.request("/api/v1/subscribers", {
@@ -481,7 +546,9 @@ describe("scoped API and MCP", () => {
 
   test("rejects malformed campaign audiences consistently without writing data", async () => {
     const { app, db, user } = setup();
-    const { token } = mintApiToken(db, user.id, "campaign writer", ["campaigns:write"]);
+    const { token } = mintApiToken(db, user.id, "campaign writer", [
+      "campaigns:write",
+    ]);
     const input = {
       subject: "Bad audience",
       bodyMarkdown: "Body",
@@ -502,7 +569,11 @@ describe("scoped API and MCP", () => {
 
   test("replaces only accessible drafts through REST and MCP without sending", async () => {
     const { app, db, user } = setup();
-    const list = db.select().from(schema.lists).where(eq(schema.lists.slug, "news")).get()!;
+    const list = db
+      .select()
+      .from(schema.lists)
+      .where(eq(schema.lists.slug, "news"))
+      .get()!;
     const { token } = mintApiToken(db, user.id, "writer", ["campaigns:write"]);
     const draft = {
       subject: "Initial",
@@ -536,11 +607,18 @@ describe("scoped API and MCP", () => {
     });
     expect(mcp.result.structuredContent.subject).toBe("Final");
     expect(
-      db.select().from(schema.campaigns).where(eq(schema.campaigns.id, id)).get()?.subject,
+      db
+        .select()
+        .from(schema.campaigns)
+        .where(eq(schema.campaigns.id, id))
+        .get()?.subject,
     ).toBe("Final");
     expect(sesMock.commandCalls(SendEmailCommand)).toHaveLength(0);
 
-    db.update(schema.campaigns).set({ status: "sent" }).where(eq(schema.campaigns.id, id)).run();
+    db.update(schema.campaigns)
+      .set({ status: "sent" })
+      .where(eq(schema.campaigns.id, id))
+      .run();
     const sent = await app.request(`/api/v1/campaigns/${id}`, {
       method: "PUT",
       headers: { ...bearer(token), "Content-Type": "application/json" },
@@ -548,15 +626,27 @@ describe("scoped API and MCP", () => {
     });
     expect(sent.status).toBe(400);
     expect(
-      db.select().from(schema.campaigns).where(eq(schema.campaigns.id, id)).get()?.subject,
+      db
+        .select()
+        .from(schema.campaigns)
+        .where(eq(schema.campaigns.id, id))
+        .get()?.subject,
     ).toBe("Final");
   });
 
   test("previews a draft and sends a test copy only to selected confirmed list members", async () => {
     const { app, db } = setup();
-    const list = db.select().from(schema.lists).where(eq(schema.lists.slug, "news")).get()!;
-    const selected = createSubscriber(db, "selected@example.com", null, null, ["news"]);
-    const unselected = createSubscriber(db, "other@example.com", null, null, ["news"]);
+    const list = db
+      .select()
+      .from(schema.lists)
+      .where(eq(schema.lists.slug, "news"))
+      .get()!;
+    const selected = createSubscriber(db, "selected@example.com", null, null, [
+      "news",
+    ]);
+    const unselected = createSubscriber(db, "other@example.com", null, null, [
+      "news",
+    ]);
     db.update(schema.subscriberLists).set({ status: "confirmed" }).run();
     const member = db
       .insert(schema.users)
@@ -567,7 +657,9 @@ describe("scoped API and MCP", () => {
       })
       .returning()
       .get();
-    db.insert(schema.userLists).values({ userId: member.id, listId: list.id }).run();
+    db.insert(schema.userLists)
+      .values({ userId: member.id, listId: list.id })
+      .run();
     const { token } = mintApiToken(db, member.id, "member sender", [
       "campaigns:read",
       "campaigns:write",
@@ -591,7 +683,9 @@ describe("scoped API and MCP", () => {
       headers: bearer(token),
     });
     expect(preview.status).toBe(200);
-    expect(((await preview.json()) as any).data.text).toContain("A local update.");
+    expect(((await preview.json()) as any).data.text).toContain(
+      "A local update.",
+    );
 
     const sent = await app.request(`/api/v1/campaigns/${id}/test-send`, {
       method: "POST",
@@ -601,10 +695,15 @@ describe("scoped API and MCP", () => {
     expect(sent.status).toBe(200);
     expect(sesMock.commandCalls(SendEmailCommand)).toHaveLength(1);
     expect(
-      sesMock.commandCalls(SendEmailCommand)[0]!.args[0].input.Destination?.ToAddresses,
+      sesMock.commandCalls(SendEmailCommand)[0]!.args[0].input.Destination
+        ?.ToAddresses,
     ).toEqual([selected.email]);
     expect(
-      db.select().from(schema.campaigns).where(eq(schema.campaigns.id, id)).get()?.status,
+      db
+        .select()
+        .from(schema.campaigns)
+        .where(eq(schema.campaigns.id, id))
+        .get()?.status,
     ).toBe("draft");
 
     db.update(schema.subscriberLists)
@@ -622,7 +721,11 @@ describe("scoped API and MCP", () => {
 
   test("rejects draft updates without write scope or access to either audience", async () => {
     const { app, db, user } = setup();
-    const news = db.select().from(schema.lists).where(eq(schema.lists.slug, "news")).get()!;
+    const news = db
+      .select()
+      .from(schema.lists)
+      .where(eq(schema.lists.slug, "news"))
+      .get()!;
     const hidden = seedList(db, { slug: "hidden", name: "Hidden" });
     const campaign = db
       .insert(schema.campaigns)
@@ -642,7 +745,9 @@ describe("scoped API and MCP", () => {
       audienceType: "list",
       audienceId: hidden.id,
     };
-    const { token: readOnly } = mintApiToken(db, user.id, "reader", ["campaigns:read"]);
+    const { token: readOnly } = mintApiToken(db, user.id, "reader", [
+      "campaigns:read",
+    ]);
     const noWrite = await app.request(`/api/v1/campaigns/${campaign.id}`, {
       method: "PUT",
       headers: { ...bearer(readOnly), "Content-Type": "application/json" },
@@ -659,27 +764,39 @@ describe("scoped API and MCP", () => {
       })
       .returning()
       .get();
-    db.insert(schema.userLists).values({ userId: member.id, listId: news.id }).run();
-    const { token: memberToken } = mintApiToken(db, member.id, "member writer", [
-      "campaigns:write",
-    ]);
+    db.insert(schema.userLists)
+      .values({ userId: member.id, listId: news.id })
+      .run();
+    const { token: memberToken } = mintApiToken(
+      db,
+      member.id,
+      "member writer",
+      ["campaigns:write"],
+    );
     const forbidden = await mcpCall(app, memberToken, "campaign_update_draft", {
       id: campaign.id,
       campaign: input,
     });
     expect(forbidden.result.isError).toBe(true);
     expect(
-      db.select().from(schema.campaigns).where(eq(schema.campaigns.id, campaign.id)).get()?.subject,
+      db
+        .select()
+        .from(schema.campaigns)
+        .where(eq(schema.campaigns.id, campaign.id))
+        .get()?.subject,
     ).toBe("Protected");
   });
 
   test("revoked tokens stop authenticating", async () => {
     const { app, db, user } = setup();
     const minted = mintApiToken(db, user.id, "temporary", ["lists:read"]);
-    db.update(schema.apiTokens).set({ revokedAt: new Date().toISOString() }).run();
-    expect((await app.request("/api/v1/lists", { headers: bearer(minted.token) })).status).toBe(
-      401,
-    );
+    db.update(schema.apiTokens)
+      .set({ revokedAt: new Date().toISOString() })
+      .run();
+    expect(
+      (await app.request("/api/v1/lists", { headers: bearer(minted.token) }))
+        .status,
+    ).toBe(401);
   });
 
   test("subscriber deletion is confirmation-gated in both transports", async () => {
@@ -696,7 +813,9 @@ describe("scoped API and MCP", () => {
         subscriberId: subscriber.id,
       })
       .run();
-    const { token } = mintApiToken(db, user.id, "writer", ["subscribers:write"]);
+    const { token } = mintApiToken(db, user.id, "writer", [
+      "subscribers:write",
+    ]);
     expect(
       (
         await app.request(`/api/v1/subscribers/${subscriber.id}`, {
@@ -772,9 +891,10 @@ describe("scoped API and MCP", () => {
   test("rejects bearer tokens that were not issued for the MCP resource", async () => {
     const { app, db, user } = setup();
     const unbound = mintScopedToken(db, user.id, "REST only", ["lists:read"]);
-    expect((await app.request("/api/v1/lists", { headers: bearer(unbound.token) })).status).toBe(
-      200,
-    );
+    expect(
+      (await app.request("/api/v1/lists", { headers: bearer(unbound.token) }))
+        .status,
+    ).toBe(200);
     const mcp = await app.request("/mcp/", {
       method: "POST",
       headers: { ...bearer(unbound.token), "Content-Type": "application/json" },
@@ -802,8 +922,11 @@ describe("scoped API and MCP", () => {
       subjectSource: "A note for {{subscriber.firstName}}",
       htmlSource:
         '<!doctype html><html><body>{{> header}}<main>{{{sections.letter.html}}}</main><a href="{{links.unsubscribe}}">Leave</a></body></html>',
-      textSource: "{{> text_header}}\n{{sections.letter.text}}\nLeave: {{links.unsubscribe}}",
-      sections: [{ key: "letter", name: "Letter", format: "markdown", required: true }],
+      textSource:
+        "{{> text_header}}\n{{sections.letter.text}}\nLeave: {{links.unsubscribe}}",
+      sections: [
+        { key: "letter", name: "Letter", format: "markdown", required: true },
+      ],
       partials: {
         header: "<header>Hello {{subscriber.firstName}}</header>",
         text_header: "Hello {{subscriber.firstName}}",
@@ -817,8 +940,12 @@ describe("scoped API and MCP", () => {
       app,
       token,
       "email_template_validate",
-      (({ slug: _slug, name: _name, description: _description, ...templateSource }) =>
-        templateSource)(source),
+      (({
+        slug: _slug,
+        name: _name,
+        description: _description,
+        ...templateSource
+      }) => templateSource)(source),
     );
     expect(validated.result.structuredContent.valid).toBe(true);
 
@@ -826,7 +953,9 @@ describe("scoped API and MCP", () => {
       slug: source.slug,
       sectionSources: { letter: "# Complete control\n\nHello **world**." },
     });
-    expect(preview.result.structuredContent.html).toContain("<h1>Complete control</h1>");
+    expect(preview.result.structuredContent.html).toContain(
+      "<h1>Complete control</h1>",
+    );
     expect(preview.result.structuredContent.html).toContain("Hello Jane");
     expect(preview.result.structuredContent.text).toContain("Hello world");
 
@@ -834,25 +963,33 @@ describe("scoped API and MCP", () => {
       ...source,
       name: "Personal Letter Updated",
     });
-    expect(updated.result.structuredContent.name).toBe("Personal Letter Updated");
+    expect(updated.result.structuredContent.name).toBe(
+      "Personal Letter Updated",
+    );
     expect(updated.result.structuredContent.status).toBe("active");
 
     const rest = await app.request(`/api/v1/email-templates/${source.slug}`, {
       headers: bearer(token),
     });
     expect(rest.status).toBe(200);
-    expect(((await rest.json()) as any).data.name).toBe("Personal Letter Updated");
+    expect(((await rest.json()) as any).data.name).toBe(
+      "Personal Letter Updated",
+    );
     const duplicate = await mcpCall(app, token, "email_template_duplicate", {
       slug: source.slug,
       newSlug: "personal-letter-copy",
     });
-    expect(duplicate.result.structuredContent.slug).toBe("personal-letter-copy");
+    expect(duplicate.result.structuredContent.slug).toBe(
+      "personal-letter-copy",
+    );
     expect(duplicate.result.structuredContent.status).toBe("active");
   });
 
   test("requires templates:write and rejects executable HTML before persistence", async () => {
     const { app, db, user } = setup();
-    const reader = mintApiToken(db, user.id, "template reader", ["templates:read"]);
+    const reader = mintApiToken(db, user.id, "template reader", [
+      "templates:read",
+    ]);
     const input = {
       slug: "unsafe",
       name: "Unsafe",
@@ -860,18 +997,32 @@ describe("scoped API and MCP", () => {
       htmlSource:
         '<html><body><script>alert(1)</script>{{{sections.content.html}}}<a href="{{links.unsubscribe}}">Leave</a></body></html>',
       textSource: "{{sections.content.text}} {{links.unsubscribe}}",
-      sections: [{ key: "content", name: "Content", format: "markdown", required: true }],
+      sections: [
+        { key: "content", name: "Content", format: "markdown", required: true },
+      ],
       partials: {},
     };
-    expect((await mcpCall(app, reader.token, "email_template_create", input)).result.isError).toBe(
-      true,
+    expect(
+      (await mcpCall(app, reader.token, "email_template_create", input)).result
+        .isError,
+    ).toBe(true);
+    const writer = mintApiToken(db, user.id, "template writer", [
+      "templates:write",
+    ]);
+    const rejected = await mcpCall(
+      app,
+      writer.token,
+      "email_template_create",
+      input,
     );
-    const writer = mintApiToken(db, user.id, "template writer", ["templates:write"]);
-    const rejected = await mcpCall(app, writer.token, "email_template_create", input);
     expect(rejected.result.isError).toBe(true);
     expect(rejected.result.content[0].text).toContain("forbidden <script>");
     expect(
-      db.select().from(schema.emailTemplates).where(eq(schema.emailTemplates.slug, "unsafe")).all(),
+      db
+        .select()
+        .from(schema.emailTemplates)
+        .where(eq(schema.emailTemplates.slug, "unsafe"))
+        .all(),
     ).toEqual([]);
   });
 
@@ -888,11 +1039,14 @@ describe("scoped API and MCP", () => {
       htmlSource:
         '<html><body>{{{sections.content.html}}}<a href="{{links.unsubscribe}}">Leave</a></body></html>',
       textSource: "{{sections.content.text}} {{links.unsubscribe}}",
-      sections: [{ key: "content", name: "Content", format: "markdown", required: true }],
+      sections: [
+        { key: "content", name: "Content", format: "markdown", required: true },
+      ],
       partials: {},
     };
     expect(
-      (await mcpCall(app, token, "email_template_create", source)).result.isError,
+      (await mcpCall(app, token, "email_template_create", source)).result
+        .isError,
     ).toBeUndefined();
 
     const malformed = await mcpCall(app, token, "email_template_update", {
@@ -917,7 +1071,9 @@ describe("scoped API and MCP", () => {
       partials: { loop: "{{> loop}}" },
     });
     expect(recursive.result.isError).toBe(true);
-    expect(recursive.result.content[0].text).toContain("Recursive partial chain");
+    expect(recursive.result.content[0].text).toContain(
+      "Recursive partial chain",
+    );
     expect(
       db
         .select()
@@ -940,10 +1096,14 @@ describe("scoped API and MCP", () => {
       htmlSource:
         '<mjml><mj-body><mj-section><mj-column><mj-text>{{{sections.content.html}}}</mj-text><mj-text><a href="{{links.unsubscribe}}">Unsubscribe</a></mj-text></mj-column></mj-section></mj-body></mjml>',
       textSource: "{{sections.content.text}}\n{{links.unsubscribe}}",
-      sections: [{ key: "content", name: "Content", format: "markdown", required: true }],
+      sections: [
+        { key: "content", name: "Content", format: "markdown", required: true },
+      ],
       partials: {},
     });
     expect(created.result.isError).toBeUndefined();
-    expect(created.result.structuredContent.compiledHtml).toContain('role="article"');
+    expect(created.result.structuredContent.compiledHtml).toContain(
+      'role="article"',
+    );
   });
 });

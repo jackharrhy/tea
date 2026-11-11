@@ -2,7 +2,11 @@ import { and, desc, eq, inArray, like, sql } from "drizzle-orm";
 import { createController } from "remix/router";
 import { z } from "zod";
 
-import { canAccessList, getAccessibleListIds, getAccessibleLists } from "../src/auth.ts";
+import {
+  canAccessList,
+  getAccessibleListIds,
+  getAccessibleLists,
+} from "../src/auth.ts";
 import { buildPreferencesUrl, buildUnsubscribeUrl } from "../src/compliance.ts";
 import type { Config } from "../src/config.ts";
 import { schema, type Db } from "../src/db/index.ts";
@@ -16,7 +20,10 @@ import {
 import { renderCampaignMessage } from "../src/services/campaign-renderer.ts";
 import { TemplateValidationError } from "../src/services/email-templates.ts";
 import { logEvent } from "../src/services/events.ts";
-import { deleteCampaignS3Images, processImage } from "../src/services/images.ts";
+import {
+  deleteCampaignS3Images,
+  processImage,
+} from "../src/services/images.ts";
 import { sendCampaign } from "../src/services/sender.ts";
 import {
   CampaignDetail,
@@ -28,7 +35,10 @@ import {
 import type { Viewer } from "./admin.tsx";
 import { routes } from "./routes.ts";
 
-type User = Pick<typeof schema.users.$inferSelect, "id" | "role" | "name" | "email">;
+type User = Pick<
+  typeof schema.users.$inferSelect,
+  "id" | "role" | "name" | "email"
+>;
 type Campaign = typeof schema.campaigns.$inferSelect;
 const PAGE_SIZE = 25;
 function viewer(user: User): Viewer {
@@ -42,7 +52,11 @@ function redirect(path: string) {
   return new Response(null, { status: 303, headers: { Location: path } });
 }
 
-export function createAdminCampaignsController(db: Db, config: Config, user: User) {
+export function createAdminCampaignsController(
+  db: Db,
+  config: Config,
+  user: User,
+) {
   const account = viewer(user);
   const access = getAccessibleListIds(db, user);
   const options = () => ({
@@ -68,13 +82,15 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
   });
   function getVisible(raw: string) {
     const campaignId = id(raw);
-    if (!campaignId) return { error: new Response("Not Found", { status: 404 }) } as const;
+    if (!campaignId)
+      return { error: new Response("Not Found", { status: 404 }) } as const;
     const campaign = db
       .select()
       .from(schema.campaigns)
       .where(eq(schema.campaigns.id, campaignId))
       .get();
-    if (!campaign) return { error: new Response("Not Found", { status: 404 }) } as const;
+    if (!campaign)
+      return { error: new Response("Not Found", { status: 404 }) } as const;
     if (
       access !== "all" &&
       (campaign.audienceType !== "list" ||
@@ -89,11 +105,21 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
     const parsed = CampaignEditorFormSchema.safeParse(Object.fromEntries(data));
     if (!parsed.success)
       return {
-        error: new Response(parsed.error.issues[0]?.message ?? "Invalid campaign", { status: 400 }),
+        error: new Response(
+          parsed.error.issues[0]?.message ?? "Invalid campaign",
+          { status: 400 },
+        ),
       } as const;
     try {
       const savedId = campaign
-        ? (await updateCampaignFromEditor(db, config, user, campaign.id, parsed.data), campaign.id)
+        ? (await updateCampaignFromEditor(
+            db,
+            config,
+            user,
+            campaign.id,
+            parsed.data,
+          ),
+          campaign.id)
         : (await createCampaignFromEditor(db, config, user, parsed.data)).id;
       logEvent(db, {
         type: campaign ? "admin.campaign_edited" : "admin.campaign_created",
@@ -138,16 +164,27 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
       index(context) {
         const search = context.url.searchParams.get("search") ?? "";
         const status = context.url.searchParams.get("status") ?? "";
-        const page = Math.max(1, Number(context.url.searchParams.get("page")) || 1);
+        const page = Math.max(
+          1,
+          Number(context.url.searchParams.get("page")) || 1,
+        );
         const conditions = [];
-        if (search) conditions.push(like(schema.campaigns.subject, `%${search}%`));
-        if (["draft", "scheduled", "sending", "sent", "failed"].includes(status))
-          conditions.push(eq(schema.campaigns.status, status as Campaign["status"]));
+        if (search)
+          conditions.push(like(schema.campaigns.subject, `%${search}%`));
+        if (
+          ["draft", "scheduled", "sending", "sent", "failed"].includes(status)
+        )
+          conditions.push(
+            eq(schema.campaigns.status, status as Campaign["status"]),
+          );
         if (access !== "all")
           conditions.push(
             and(
               eq(schema.campaigns.audienceType, "list"),
-              inArray(schema.campaigns.audienceId, access.length ? access : [-1]),
+              inArray(
+                schema.campaigns.audienceId,
+                access.length ? access : [-1],
+              ),
             )!,
           );
         const where = conditions.length ? and(...conditions) : undefined;
@@ -176,7 +213,9 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
         );
       },
       new(context) {
-        return context.render(<CampaignEditor viewer={account} config={config} {...options()} />);
+        return context.render(
+          <CampaignEditor viewer={account} config={config} {...options()} />,
+        );
       },
       async create(context) {
         const result = await editorForm(context.request);
@@ -195,7 +234,8 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
                 .get()?.name
             : undefined;
         const audience =
-          listName ?? (campaign.audienceType === "list" ? "List" : campaign.audienceType);
+          listName ??
+          (campaign.audienceType === "list" ? "List" : campaign.audienceType);
         const sends = db
           .select({
             email: schema.subscribers.email,
@@ -219,8 +259,11 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
             .get()?.count ?? 0;
         const selectedTestCount =
           campaign.audienceType === "list" && campaign.audienceData
-            ? ((JSON.parse(campaign.audienceData) as { testSubscriberIds?: number[] })
-                .testSubscriberIds?.length ?? null)
+            ? ((
+                JSON.parse(campaign.audienceData) as {
+                  testSubscriberIds?: number[];
+                }
+              ).testSubscriberIds?.length ?? null)
             : null;
         return context.render(
           <CampaignDetail
@@ -253,7 +296,9 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
         if (!["draft", "failed", "scheduled"].includes(found.campaign.status))
           return redirect(`/admin/campaigns/${found.campaign.id}`);
         const result = await editorForm(context.request, found.campaign);
-        return result.error ?? redirect(`/admin/campaigns/${found.campaign.id}`);
+        return (
+          result.error ?? redirect(`/admin/campaigns/${found.campaign.id}`)
+        );
       },
       async preview(context) {
         const found = getVisible(context.params.id);
@@ -261,16 +306,26 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
         const campaign = found.campaign;
         const list =
           campaign.audienceType === "list" && campaign.audienceId
-            ? db.select().from(schema.lists).where(eq(schema.lists.id, campaign.audienceId)).get()
+            ? db
+                .select()
+                .from(schema.lists)
+                .where(eq(schema.lists.id, campaign.audienceId))
+                .get()
             : null;
-        let subscriber: { email: string; firstName?: string | null; lastName?: string | null } = {
+        let subscriber: {
+          email: string;
+          firstName?: string | null;
+          lastName?: string | null;
+        } = {
           email: "subscriber@example.com",
           firstName: "Jane",
           lastName: "Doe",
         };
         let unsubscribe = "#unsubscribe",
           preferences = "#preferences";
-        const subscriberId = id(context.url.searchParams.get("subscriberId") ?? "");
+        const subscriberId = id(
+          context.url.searchParams.get("subscriberId") ?? "",
+        );
         if (subscriberId) {
           const selected = db
             .select()
@@ -282,9 +337,14 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
             unsubscribe = buildUnsubscribeUrl(
               config.baseUrl,
               selected.unsubscribeToken,
-              campaign.audienceType === "list" ? (campaign.audienceId ?? undefined) : undefined,
+              campaign.audienceType === "list"
+                ? (campaign.audienceId ?? undefined)
+                : undefined,
             );
-            preferences = buildPreferencesUrl(config.baseUrl, selected.unsubscribeToken);
+            preferences = buildPreferencesUrl(
+              config.baseUrl,
+              selected.unsubscribeToken,
+            );
           }
         }
         const rendered = await renderCampaignMessage(db, {
@@ -311,7 +371,8 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
             templateSections: z.record(z.string(), z.string()).default({}),
           })
           .safeParse(body);
-        if (!parsed.success) return new Response("Invalid preview", { status: 400 });
+        if (!parsed.success)
+          return new Response("Invalid preview", { status: 400 });
         const rendered = await renderCampaignMessage(db, {
           campaign: {
             subject: parsed.data.subject,
@@ -319,7 +380,11 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
             templateSlug: parsed.data.templateSlug,
             templateSections: JSON.stringify(parsed.data.templateSections),
           },
-          subscriber: { firstName: "Jane", lastName: "Doe", email: "subscriber@example.com" },
+          subscriber: {
+            firstName: "Jane",
+            lastName: "Doe",
+            email: "subscriber@example.com",
+          },
           list: { name: parsed.data.listName },
           links: { unsubscribe: "#unsubscribe", preferences: "#preferences" },
         });
@@ -328,13 +393,20 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
       async uploadImage(context) {
         const data = await context.request.formData();
         const file = data.get("image");
-        if (!(file instanceof File) || !file.type.startsWith("image/") || file.size > 20_000_000)
+        if (
+          !(file instanceof File) ||
+          !file.type.startsWith("image/") ||
+          file.size > 20_000_000
+        )
           return Response.json({ error: "Invalid image" }, { status: 400 });
         try {
           const image = await processImage(await file.arrayBuffer());
           return Response.json({ ...image, originalSizeBytes: file.size });
         } catch {
-          return Response.json({ error: "Failed to process image" }, { status: 400 });
+          return Response.json(
+            { error: "Failed to process image" },
+            { status: 400 },
+          );
         }
       },
       send(context) {
@@ -382,7 +454,9 @@ export function createAdminCampaignsController(db: Db, config: Config, user: Use
           tx.delete(schema.campaignSends)
             .where(eq(schema.campaignSends.campaignId, campaign.id))
             .run();
-          tx.delete(schema.campaigns).where(eq(schema.campaigns.id, campaign.id)).run();
+          tx.delete(schema.campaigns)
+            .where(eq(schema.campaigns.id, campaign.id))
+            .run();
           logEvent(tx, {
             type: "admin.campaign_deleted",
             detail: campaign.subject,

@@ -36,7 +36,9 @@ test("Remix REST and MCP share list operations and preserve member ACL", async (
     .get();
   const allowed = seedList(db, { slug: "allowed" });
   const denied = seedList(db, { slug: "denied" });
-  db.insert(schema.userLists).values({ userId: user.id, listId: allowed.id }).run();
+  db.insert(schema.userLists)
+    .values({ userId: user.id, listId: allowed.id })
+    .run();
   const { token } = mintApiToken(
     db,
     user.id,
@@ -49,14 +51,20 @@ test("Remix REST and MCP share list operations and preserve member ACL", async (
   const api = createApiRouter(db, config);
   const mcp = createMcpRouter(db, config);
 
-  const lists = await api.fetch(new Request("http://localhost/api/v1/lists", { headers }));
+  const lists = await api.fetch(
+    new Request("http://localhost/api/v1/lists", { headers }),
+  );
   expect(lists.status).toBe(200);
-  expect(((await lists.json()) as { data: { id: number }[] }).data.map((list) => list.id)).toEqual([
-    allowed.id,
-  ]);
+  expect(
+    ((await lists.json()) as { data: { id: number }[] }).data.map(
+      (list) => list.id,
+    ),
+  ).toEqual([allowed.id]);
 
   const inaccessible = await api.fetch(
-    new Request(`http://localhost/api/v1/lists/${denied.id}/stats`, { headers }),
+    new Request(`http://localhost/api/v1/lists/${denied.id}/stats`, {
+      headers,
+    }),
   );
   expect(inaccessible.status).toBe(403);
 
@@ -73,8 +81,12 @@ test("Remix REST and MCP share list operations and preserve member ACL", async (
     }),
   );
   expect(call.status).toBe(200);
-  const payload = (await call.json()) as { result: { structuredContent: { id: number }[] } };
-  expect(payload.result.structuredContent.map((list) => list.id)).toEqual([allowed.id]);
+  const payload = (await call.json()) as {
+    result: { structuredContent: { id: number }[] };
+  };
+  expect(payload.result.structuredContent.map((list) => list.id)).toEqual([
+    allowed.id,
+  ]);
 });
 
 test("application serves Remix health, public pages, REST and MCP from the same fetch server", async () => {

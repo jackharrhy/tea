@@ -12,7 +12,10 @@ import {
 import { operationCatalog } from "../src/operations/catalog.ts";
 import { AccessDeniedError } from "../src/services/access.ts";
 import { TemplateValidationError } from "../src/services/email-templates.ts";
-import { authenticateBearer, createCentralBearerAuth } from "../src/services/request-auth.ts";
+import {
+  authenticateBearer,
+  createCentralBearerAuth,
+} from "../src/services/request-auth.ts";
 
 type Operation = keyof typeof operationCatalog;
 type Params = Record<string, string | undefined>;
@@ -27,7 +30,9 @@ async function body(request: Request) {
   try {
     return await request.json();
   } catch {
-    throw new z.ZodError([{ code: "custom", path: [], message: "Invalid JSON body" }]);
+    throw new z.ZodError([
+      { code: "custom", path: [], message: "Invalid JSON body" },
+    ]);
   }
 }
 
@@ -39,7 +44,9 @@ function object(value: unknown): Record<string, unknown> {
 
 function confirmation(request: Request) {
   if (new URL(request.url).searchParams.get("confirm") !== "true")
-    throw new z.ZodError([{ code: "custom", path: ["confirm"], message: "confirm must be true" }]);
+    throw new z.ZodError([
+      { code: "custom", path: ["confirm"], message: "confirm must be true" },
+    ]);
 }
 
 function errorResponse(error: unknown) {
@@ -82,8 +89,11 @@ export function createApiRouter(db: Db, config: Config) {
     status = 200,
   ) {
     try {
-      const principal = central ? await central(request) : authenticateBearer(db, request);
-      if (!principal) return Response.json({ error: "Unauthorized" }, { status: 401 });
+      const principal = central
+        ? await central(request)
+        : authenticateBearer(db, request);
+      if (!principal)
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
       const context: OperationContext = { db, config, principal };
       const value = await operationCatalog[operation].execute(
         context,
@@ -115,7 +125,9 @@ export function createApiRouter(db: Db, config: Config) {
       method === "POST" || method === "PUT"
         ? {
             required: true,
-            content: { "application/json": { schema: z.toJSONSchema(definition.input) } },
+            content: {
+              "application/json": { schema: z.toJSONSchema(definition.input) },
+            },
           }
         : undefined;
     entry[method.toLowerCase()] = {
@@ -148,10 +160,15 @@ export function createApiRouter(db: Db, config: Config) {
   register("GET", "/api/v1/subscribers", "subscribersList", search);
   register("GET", "/api/v1/subscribers/:id", "subscriberGet", params);
   register("POST", "/api/v1/subscribers", "subscriberCreate", payload, 201);
-  register("DELETE", "/api/v1/subscribers/:id", "subscriberDelete", (request, value) => {
-    confirmation(request);
-    return { id: value.id, confirm: true };
-  });
+  register(
+    "DELETE",
+    "/api/v1/subscribers/:id",
+    "subscriberDelete",
+    (request, value) => {
+      confirmation(request);
+      return { id: value.id, confirm: true };
+    },
+  );
   register(
     "POST",
     "/api/v1/subscribers/:id/unsubscribe",
@@ -163,53 +180,92 @@ export function createApiRouter(db: Db, config: Config) {
   );
   register("GET", "/api/v1/campaigns", "campaignsList", search);
   register("GET", "/api/v1/campaigns/:id", "campaignGet", params);
-  register("GET", "/api/v1/campaigns/:id/sends", "campaignSends", (request, value) => ({
-    ...query(request),
-    id: value.id,
-  }));
+  register(
+    "GET",
+    "/api/v1/campaigns/:id/sends",
+    "campaignSends",
+    (request, value) => ({
+      ...query(request),
+      id: value.id,
+    }),
+  );
   register("GET", "/api/v1/campaigns/:id/preview", "campaignPreview", params);
   register("POST", "/api/v1/campaigns", "campaignCreateDraft", payload, 201);
-  register("PUT", "/api/v1/campaigns/:id", "campaignUpdateDraft", async (request, value) => ({
-    id: value.id,
-    campaign: await body(request),
-  }));
-  register("POST", "/api/v1/campaigns/:id/send", "campaignSend", async (request, value) => {
-    const sent = await body(request);
-    return { id: value.id, ...object(sent) };
-  });
+  register(
+    "PUT",
+    "/api/v1/campaigns/:id",
+    "campaignUpdateDraft",
+    async (request, value) => ({
+      id: value.id,
+      campaign: await body(request),
+    }),
+  );
+  register(
+    "POST",
+    "/api/v1/campaigns/:id/send",
+    "campaignSend",
+    async (request, value) => {
+      const sent = await body(request);
+      return { id: value.id, ...object(sent) };
+    },
+  );
   register(
     "POST",
     "/api/v1/campaigns/:id/test-send",
     "campaignTestSend",
-    async (request, value) => ({ id: value.id, ...object(await body(request)) }),
+    async (request, value) => ({
+      id: value.id,
+      ...object(await body(request)),
+    }),
   );
   register("GET", "/api/v1/deliverability", "deliverabilitySummary", empty);
   register("GET", "/api/v1/dmarc", "dmarcSummary", empty);
   register("GET", "/api/v1/email-templates", "templatesList", empty);
   register("GET", "/api/v1/email-templates/:slug", "templateGet", params);
   register("POST", "/api/v1/email-templates", "templateCreate", payload, 201);
-  register("POST", "/api/v1/email-templates/validate", "templateValidate", payload);
-  register("PUT", "/api/v1/email-templates/:slug", "templateUpdate", async (request, value) => ({
-    ...object(await body(request)),
-    slug: value.slug,
-  }));
+  register(
+    "POST",
+    "/api/v1/email-templates/validate",
+    "templateValidate",
+    payload,
+  );
+  register(
+    "PUT",
+    "/api/v1/email-templates/:slug",
+    "templateUpdate",
+    async (request, value) => ({
+      ...object(await body(request)),
+      slug: value.slug,
+    }),
+  );
   register(
     "POST",
     "/api/v1/email-templates/:slug/preview",
     "templatePreview",
-    async (request, value) => ({ ...object(await body(request)), slug: value.slug }),
+    async (request, value) => ({
+      ...object(await body(request)),
+      slug: value.slug,
+    }),
   );
   register(
     "POST",
     "/api/v1/email-templates/:slug/duplicate",
     "templateDuplicate",
-    async (request, value) => ({ ...object(await body(request)), slug: value.slug }),
+    async (request, value) => ({
+      ...object(await body(request)),
+      slug: value.slug,
+    }),
     201,
   );
-  register("DELETE", "/api/v1/email-templates/:slug", "templateArchive", (request, value) => {
-    confirmation(request);
-    return { slug: value.slug, confirm: true };
-  });
+  register(
+    "DELETE",
+    "/api/v1/email-templates/:slug",
+    "templateArchive",
+    (request, value) => {
+      confirmation(request);
+      return { slug: value.slug, confirm: true };
+    },
+  );
   router.get("/openapi/json", () =>
     Response.json({
       openapi: "3.1.0",
@@ -220,7 +276,9 @@ export function createApiRouter(db: Db, config: Config) {
           "Scoped API for managing mailing lists, subscribers, campaigns, and deliverability.",
       },
       paths,
-      components: { securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } } },
+      components: {
+        securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } },
+      },
     }),
   );
   return router;

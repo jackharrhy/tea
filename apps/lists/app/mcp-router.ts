@@ -5,7 +5,10 @@ import { z } from "zod";
 import type { Config } from "../src/config.ts";
 import type { Db } from "../src/db/index.ts";
 import { mcpOperations, mcpTools } from "../src/operations/catalog.ts";
-import { authenticateBearer, createCentralBearerAuth } from "../src/services/request-auth.ts";
+import {
+  authenticateBearer,
+  createCentralBearerAuth,
+} from "../src/services/request-auth.ts";
 
 const RpcRequest = z.object({
   jsonrpc: z.literal("2.0"),
@@ -55,17 +58,23 @@ export function createMcpRouter(db: Db, config: Config) {
       });
     }
     if (request.method === "GET")
-      return new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST" } });
+      return new Response("Method Not Allowed", {
+        status: 405,
+        headers: { Allow: "POST" },
+      });
     let parsed: z.infer<typeof RpcRequest>;
     try {
       parsed = RpcRequest.parse(await request.json());
     } catch {
-      return Response.json(rpcError(null, -32600, "Invalid Request"), { status: 400 });
+      return Response.json(rpcError(null, -32600, "Invalid Request"), {
+        status: 400,
+      });
     }
     if (parsed.method === "initialize") {
       const requested = parsed.params?.protocolVersion;
       const protocolVersion =
-        typeof requested === "string" && versions.includes(requested as (typeof versions)[number])
+        typeof requested === "string" &&
+        versions.includes(requested as (typeof versions)[number])
           ? requested
           : versions[0];
       return Response.json(
@@ -76,15 +85,20 @@ export function createMcpRouter(db: Db, config: Config) {
         }),
       );
     }
-    if (parsed.method === "notifications/initialized") return new Response(null, { status: 202 });
+    if (parsed.method === "notifications/initialized")
+      return new Response(null, { status: 202 });
     if (parsed.method === "tools/list")
       return Response.json(result(parsed.id, { tools: mcpTools }));
     if (parsed.method === "tools/call") {
       const params = parsed.params ?? {};
       try {
         const operation = mcpOperations.get(String(params.name ?? ""));
-        if (!operation) throw new Error(`Unknown tool: ${String(params.name ?? "")}`);
-        const value = await operation.execute({ db, config, principal }, params.arguments ?? {});
+        if (!operation)
+          throw new Error(`Unknown tool: ${String(params.name ?? "")}`);
+        const value = await operation.execute(
+          { db, config, principal },
+          params.arguments ?? {},
+        );
         return Response.json(
           result(parsed.id, {
             content: [{ type: "text", text: JSON.stringify(value, null, 2) }],
@@ -95,7 +109,10 @@ export function createMcpRouter(db: Db, config: Config) {
         return Response.json(
           result(parsed.id, {
             content: [
-              { type: "text", text: error instanceof Error ? error.message : "Tool failed" },
+              {
+                type: "text",
+                text: error instanceof Error ? error.message : "Tool failed",
+              },
             ],
             isError: true,
           }),

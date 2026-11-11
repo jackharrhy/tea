@@ -24,12 +24,18 @@ test("native CSV review imports into an assigned list without accepting a forged
   const db = createTestDb();
   const member = db
     .insert(schema.users)
-    .values({ email: "member@example.com", passwordHash: "hash", role: "member" })
+    .values({
+      email: "member@example.com",
+      passwordHash: "hash",
+      role: "member",
+    })
     .returning()
     .get();
   const allowed = seedList(db, { slug: "allowed" });
   const denied = seedList(db, { slug: "denied" });
-  db.insert(schema.userLists).values({ userId: member.id, listId: allowed.id }).run();
+  db.insert(schema.userLists)
+    .values({ userId: member.id, listId: allowed.id })
+    .run();
   const app = createApplication(db, config);
   const headers = { Cookie: `session=${createSession(db, member.id)}` };
   const upload = new FormData();
@@ -73,5 +79,7 @@ test("native CSV review imports into an assigned list without accepting a forged
   });
   expect(accepted.status).toBe(200);
   expect(db.select().from(schema.subscribers).get()?.firstName).toBe("A, B");
-  expect(db.select().from(schema.subscriberLists).get()?.listId).toBe(allowed.id);
+  expect(db.select().from(schema.subscriberLists).get()?.listId).toBe(
+    allowed.id,
+  );
 });

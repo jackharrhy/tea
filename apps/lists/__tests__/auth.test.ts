@@ -1,6 +1,10 @@
 import { test, expect, describe } from "bun:test";
 import { createApplication } from "../src/http-app.ts";
-import { createSession, destroySession, getAccessibleListIds } from "../src/auth.ts";
+import {
+  createSession,
+  destroySession,
+  getAccessibleListIds,
+} from "../src/auth.ts";
 import { bootstrapOwner } from "../src/bootstrap.ts";
 import { createTestDb } from "./helpers.ts";
 import * as schema from "../src/db/schema.ts";
@@ -23,7 +27,12 @@ function seedUser(
 ) {
   return db
     .insert(schema.users)
-    .values({ email: "test@example.com", passwordHash: "hashed", role: "owner", ...overrides })
+    .values({
+      email: "test@example.com",
+      passwordHash: "hashed",
+      role: "owner",
+      ...overrides,
+    })
     .returning()
     .get();
 }
@@ -37,7 +46,10 @@ describe("native admin sessions", () => {
     const headers = { Cookie: `session=${token}` };
     expect((await app.request("/admin/", { headers })).status).toBe(200);
     destroySession(db, token);
-    const rejected = await createApplication(db, testConfig).request("/admin/", { headers });
+    const rejected = await createApplication(db, testConfig).request(
+      "/admin/",
+      { headers },
+    );
     expect(rejected.status).toBe(302);
     expect(rejected.headers.get("location")).toBe("/admin/login");
   });
@@ -45,9 +57,10 @@ describe("native admin sessions", () => {
     const db = createTestDb();
     const app = createApplication(db, testConfig);
     expect((await app.request("/admin/")).status).toBe(302);
-    expect((await app.request("/admin/", { headers: { Cookie: "session=invalid" } })).status).toBe(
-      302,
-    );
+    expect(
+      (await app.request("/admin/", { headers: { Cookie: "session=invalid" } }))
+        .status,
+    ).toBe(302);
   });
   test("enforces owner access on native users page", async () => {
     const db = createTestDb();
@@ -92,7 +105,9 @@ describe("getAccessibleListIds", () => {
       .get();
 
     // Assign member to list1 only
-    db.insert(schema.userLists).values({ userId: user.id, listId: list1.id }).run();
+    db.insert(schema.userLists)
+      .values({ userId: user.id, listId: list1.id })
+      .run();
 
     const ids = getAccessibleListIds(db, user);
     expect(ids).toEqual([list1.id]);

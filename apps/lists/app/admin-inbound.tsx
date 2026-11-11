@@ -1,7 +1,17 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { and, desc, eq, inArray, isNotNull, isNull, like, or, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  like,
+  or,
+  sql,
+} from "drizzle-orm";
 import * as nodemailer from "nodemailer";
 import { css, type Handle, unsafeHTML } from "remix/component";
 import { createController } from "remix/router";
@@ -15,10 +25,18 @@ import { sendEmail } from "../src/services/mailer.ts";
 import { AdminDocument, type Viewer } from "./admin.tsx";
 import { routes } from "./routes.ts";
 
-type User = Pick<typeof schema.users.$inferSelect, "id" | "role" | "name" | "email">;
+type User = Pick<
+  typeof schema.users.$inferSelect,
+  "id" | "role" | "name" | "email"
+>;
 type Message = typeof schema.messages.$inferSelect;
 const PAGE_SIZE = 50;
-const heading = css({ fontSize: "24px", lineHeight: "32px", fontWeight: 700, margin: "0 0 20px" });
+const heading = css({
+  fontSize: "24px",
+  lineHeight: "32px",
+  fontWeight: 700,
+  margin: "0 0 20px",
+});
 const toolbar = css({
   display: "flex",
   gap: "12px",
@@ -26,7 +44,12 @@ const toolbar = css({
   alignItems: "end",
   marginBottom: "20px",
 });
-const field = css({ display: "grid", gap: "5px", color: "#4b5563", fontSize: "13px" });
+const field = css({
+  display: "grid",
+  gap: "5px",
+  color: "#4b5563",
+  fontSize: "13px",
+});
 const input = css({
   boxSizing: "border-box",
   minHeight: "38px",
@@ -49,11 +72,23 @@ const button = css({
   fontSize: "14px",
   cursor: "pointer",
 });
-const table = css({ width: "100%", borderCollapse: "collapse", fontSize: "14px" });
-const cell = css({ padding: "10px 8px", borderBottom: "1px solid #e5e7eb", textAlign: "left" });
+const table = css({
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: "14px",
+});
+const cell = css({
+  padding: "10px 8px",
+  borderBottom: "1px solid #e5e7eb",
+  textAlign: "left",
+});
 const link = css({ color: "#1d4ed8", textDecoration: "none" });
 const muted = css({ color: "#6b7280", fontSize: "14px" });
-const section = css({ fontSize: "18px", fontWeight: 600, margin: "28px 0 12px" });
+const section = css({
+  fontSize: "18px",
+  fontWeight: 600,
+  margin: "28px 0 12px",
+});
 const messageBox = css({
   padding: "16px",
   border: "1px solid #e5e7eb",
@@ -86,7 +121,12 @@ const area = css({
   font: "inherit",
   fontSize: "14px",
 });
-const inline = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" });
+const inline = css({
+  display: "flex",
+  gap: "8px",
+  flexWrap: "wrap",
+  alignItems: "center",
+});
 
 function viewer(user: User): Viewer {
   return { name: user.name ?? user.email, isAdmin: user.role !== "member" };
@@ -123,7 +163,11 @@ function InboundIndex(
       return `/admin/inbound?${query}`;
     };
     return (
-      <AdminDocument title="Inbound" activeHref="/admin/inbound" viewer={handle.props.viewer}>
+      <AdminDocument
+        title="Inbound"
+        activeHref="/admin/inbound"
+        viewer={handle.props.viewer}
+      >
         <h1 mix={heading}>Inbound mail</h1>
         <form mix={toolbar} method="get" action="/admin/inbound">
           <label mix={field}>
@@ -149,7 +193,12 @@ function InboundIndex(
           </label>
           <label mix={field}>
             Campaign ID
-            <input mix={input} name="campaign" inputMode="numeric" value={filters.campaign} />
+            <input
+              mix={input}
+              name="campaign"
+              inputMode="numeric"
+              value={filters.campaign}
+            />
           </label>
           <button mix={button} type="submit">
             Filter
@@ -241,7 +290,9 @@ function InboundThread(
         ) : null}
         <div mix={inline}>
           <form method="post" action={`${base}/toggle-read`}>
-            <button type="submit">Mark as {root.readAt ? "unread" : "read"}</button>
+            <button type="submit">
+              Mark as {root.readAt ? "unread" : "read"}
+            </button>
           </form>
           <form method="post" action={`${base}/delete`}>
             <button type="submit">Delete thread</button>
@@ -252,8 +303,10 @@ function InboundThread(
           <article mix={messageBox}>
             <p mix={muted}>
               {message.direction === "inbound" ? "From" : "To"}:{" "}
-              {message.direction === "inbound" ? message.fromAddr : message.toAddr} ·{" "}
-              {message.createdAt.slice(0, 16)}
+              {message.direction === "inbound"
+                ? message.fromAddr
+                : message.toAddr}{" "}
+              · {message.createdAt.slice(0, 16)}
             </p>
             <p>
               <strong>{message.subject}</strong>
@@ -270,7 +323,8 @@ function InboundThread(
             )}
             {message.direction === "inbound" ? (
               <p mix={muted}>
-                SPF {message.spfVerdict || "—"} · DKIM {message.dkimVerdict || "—"} · DMARC{" "}
+                SPF {message.spfVerdict || "—"} · DKIM{" "}
+                {message.dkimVerdict || "—"} · DMARC{" "}
                 {message.dmarcVerdict || "—"}
               </p>
             ) : null}
@@ -308,7 +362,11 @@ function InboundThread(
             <input
               mix={input}
               name="subject"
-              value={root.subject.startsWith("Re:") ? root.subject : `Re: ${root.subject}`}
+              value={
+                root.subject.startsWith("Re:")
+                  ? root.subject
+                  : `Re: ${root.subject}`
+              }
               required
             />
           </label>
@@ -325,7 +383,11 @@ function InboundThread(
   };
 }
 
-export function createAdminInboundController(db: Db, config: Config, user: User) {
+export function createAdminInboundController(
+  db: Db,
+  config: Config,
+  user: User,
+) {
   const access = getAccessibleListIds(db, user);
   const allowedCampaignIds =
     access === "all"
@@ -336,20 +398,25 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
           .where(
             and(
               eq(schema.campaigns.audienceType, "list"),
-              inArray(schema.campaigns.audienceId, access.length ? access : [-1]),
+              inArray(
+                schema.campaigns.audienceId,
+                access.length ? access : [-1],
+              ),
             ),
           )
           .all()
           .map((campaign) => campaign.id);
   function getVisible(raw: string) {
     const messageId = id(raw);
-    if (!messageId) return { error: new Response("Not Found", { status: 404 }) } as const;
+    if (!messageId)
+      return { error: new Response("Not Found", { status: 404 }) } as const;
     const message = db
       .select()
       .from(schema.messages)
       .where(eq(schema.messages.id, messageId))
       .get();
-    if (!message) return { error: new Response("Not Found", { status: 404 }) } as const;
+    if (!message)
+      return { error: new Response("Not Found", { status: 404 }) } as const;
     if (
       allowedCampaignIds &&
       (!message.campaignId || !allowedCampaignIds.includes(message.campaignId))
@@ -367,7 +434,10 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
           read: query.get("read") ?? "",
           campaign: query.get("campaign") ?? "",
         };
-        const where = [eq(schema.messages.direction, "inbound"), isNull(schema.messages.parentId)];
+        const where = [
+          eq(schema.messages.direction, "inbound"),
+          isNull(schema.messages.parentId),
+        ];
         if (filters.search)
           where.push(
             or(
@@ -375,8 +445,10 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
               like(schema.messages.fromAddr, `%${filters.search}%`),
             )!,
           );
-        if (filters.read === "unread") where.push(isNull(schema.messages.readAt));
-        if (filters.read === "read") where.push(isNotNull(schema.messages.readAt));
+        if (filters.read === "unread")
+          where.push(isNull(schema.messages.readAt));
+        if (filters.read === "read")
+          where.push(isNotNull(schema.messages.readAt));
         const campaignId = id(filters.campaign);
         if (campaignId) where.push(eq(schema.messages.campaignId, campaignId));
         if (allowedCampaignIds)
@@ -423,7 +495,10 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
           .all();
         const campaign = root.campaignId
           ? (db
-              .select({ id: schema.campaigns.id, subject: schema.campaigns.subject })
+              .select({
+                id: schema.campaigns.id,
+                subject: schema.campaigns.subject,
+              })
               .from(schema.campaigns)
               .where(eq(schema.campaigns.id, root.campaignId))
               .get() ?? null)
@@ -448,7 +523,9 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
         const found = getVisible(context.params.id);
         if (found.error) return found.error;
         db.update(schema.messages)
-          .set({ readAt: found.message.readAt ? null : new Date().toISOString() })
+          .set({
+            readAt: found.message.readAt ? null : new Date().toISOString(),
+          })
           .where(eq(schema.messages.id, found.message.id))
           .run();
         return redirect(`/admin/inbound/${found.message.id}`);
@@ -469,7 +546,9 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
               .set({ messageId: null })
               .where(inArray(schema.events.messageId, ids))
               .run();
-          tx.delete(schema.messages).where(eq(schema.messages.threadId, message.threadId)).run();
+          tx.delete(schema.messages)
+            .where(eq(schema.messages.threadId, message.threadId))
+            .run();
           logEvent(tx, {
             type: "admin.inbound_deleted",
             detail: message.subject,
@@ -482,15 +561,22 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
       async raw(context) {
         const found = getVisible(context.params.id);
         if (found.error) return found.error;
-        if (!found.message.s3Key) return new Response("Not Found", { status: 404 });
+        if (!found.message.s3Key)
+          return new Response("Not Found", { status: 404 });
         const client = new S3Client(s3ClientConfig(config));
         try {
           const url = await getSignedUrl(
             client,
-            new GetObjectCommand({ Bucket: config.s3Bucket, Key: found.message.s3Key }),
+            new GetObjectCommand({
+              Bucket: config.s3Bucket,
+              Key: found.message.s3Key,
+            }),
             { expiresIn: 300 },
           );
-          return new Response(null, { status: 302, headers: { Location: url } });
+          return new Response(null, {
+            status: 302,
+            headers: { Location: url },
+          });
         } finally {
           client.destroy();
         }
@@ -509,7 +595,10 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
           return new Response("Invalid reply", { status: 400 });
         const inReplyTo = message.rfc822MessageId;
         const rfc822MessageId = `<${crypto.randomUUID()}@${fromAddr.split("@")[1] ?? config.fromDomain}>`;
-        const transport = nodemailer.createTransport({ streamTransport: true, buffer: true });
+        const transport = nodemailer.createTransport({
+          streamTransport: true,
+          buffer: true,
+        });
         const info = await transport.sendMail({
           from: fromAddr,
           to: toAddr,
@@ -517,7 +606,9 @@ export function createAdminInboundController(db: Db, config: Config, user: User)
           text: body,
           headers: {
             "Message-ID": rfc822MessageId,
-            ...(inReplyTo ? { "In-Reply-To": inReplyTo, References: inReplyTo } : {}),
+            ...(inReplyTo
+              ? { "In-Reply-To": inReplyTo, References: inReplyTo }
+              : {}),
           },
         });
         const result = await sendEmail(

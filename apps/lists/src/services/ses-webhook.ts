@@ -6,16 +6,22 @@ import { logEvent } from "./events";
 
 const snsValidator = new MessageValidator();
 
-export function shouldVerifySnsSignature(env: Record<string, string | undefined> = process.env) {
-  const localEnvironment = env.NODE_ENV === "test" || env.NODE_ENV === "development";
+export function shouldVerifySnsSignature(
+  env: Record<string, string | undefined> = process.env,
+) {
+  const localEnvironment =
+    env.NODE_ENV === "test" || env.NODE_ENV === "development";
   return env.SNS_SKIP_VERIFY !== "true" || !localEnvironment;
 }
 
 async function verifySnsSignature(rawBody: unknown): Promise<boolean> {
   return new Promise((resolve) => {
-    snsValidator.validate(rawBody as Record<string, unknown>, (err: Error | null) => {
-      resolve(!err);
-    });
+    snsValidator.validate(
+      rawBody as Record<string, unknown>,
+      (err: Error | null) => {
+        resolve(!err);
+      },
+    );
   });
 }
 
@@ -133,7 +139,10 @@ const SesLegacyNotification = z.object({
 // Webhook handler
 // ---------------------------------------------------------------------------
 
-export async function handleSesWebhook(db: Db, request: Request): Promise<Response> {
+export async function handleSesWebhook(
+  db: Db,
+  request: Request,
+): Promise<Response> {
   const messageType = request.headers.get("x-amz-sns-message-type");
   if (!messageType) {
     return new Response("Missing SNS message type header", { status: 400 });
@@ -193,7 +202,9 @@ export async function handleSesWebhook(db: Db, request: Request): Promise<Respon
     const event = SesEventNotification.safeParse(message) as
       | { success: true; data: z.infer<typeof SesEventNotification> }
       | { success: false };
-    const legacy = !event.success ? SesLegacyNotification.safeParse(message) : null;
+    const legacy = !event.success
+      ? SesLegacyNotification.safeParse(message)
+      : null;
 
     const eventType = event.success
       ? event.data.eventType
@@ -230,7 +241,8 @@ export async function handleSesWebhook(db: Db, request: Request): Promise<Respon
             ? "delivery_delayed"
             : eventType === "Reject"
               ? "rejected"
-              : eventType === "Rendering Failure" || eventType === "RenderingFailure"
+              : eventType === "Rendering Failure" ||
+                  eventType === "RenderingFailure"
                 ? "failed"
                 : eventType === "Send"
                   ? "accepted"
@@ -263,7 +275,9 @@ export async function handleSesWebhook(db: Db, request: Request): Promise<Respon
         const subscriber = db
           .select()
           .from(schema.subscribers)
-          .where(eq(schema.subscribers.email, recipient.emailAddress.toLowerCase()))
+          .where(
+            eq(schema.subscribers.email, recipient.emailAddress.toLowerCase()),
+          )
           .get();
         if (!subscriber) continue;
 
@@ -284,7 +298,9 @@ export async function handleSesWebhook(db: Db, request: Request): Promise<Respon
             detail: `${recipient.emailAddress} soft bounced (${bounce.bounceType}: ${bounce.bounceSubType})`,
             subscriberId: subscriber.id,
           });
-          console.log(`Soft bounce: ${recipient.emailAddress} (${bounce.bounceType})`);
+          console.log(
+            `Soft bounce: ${recipient.emailAddress} (${bounce.bounceType})`,
+          );
         }
 
         if (sesMessageId) {
@@ -293,7 +309,8 @@ export async function handleSesWebhook(db: Db, request: Request): Promise<Respon
               status: "bounced",
               bounceType: `${bounce.bounceType}:${bounce.bounceSubType}`,
               diagnosticCode: recipient.diagnosticCode ?? null,
-              lastError: recipient.diagnosticCode ?? `${bounce.bounceType} bounce`,
+              lastError:
+                recipient.diagnosticCode ?? `${bounce.bounceType} bounce`,
               updatedAt: now,
             })
             .where(eq(schema.campaignSends.sesMessageId, sesMessageId))
@@ -306,7 +323,9 @@ export async function handleSesWebhook(db: Db, request: Request): Promise<Respon
         const subscriber = db
           .select()
           .from(schema.subscribers)
-          .where(eq(schema.subscribers.email, recipient.emailAddress.toLowerCase()))
+          .where(
+            eq(schema.subscribers.email, recipient.emailAddress.toLowerCase()),
+          )
           .get();
         if (!subscriber) continue;
 
@@ -319,7 +338,9 @@ export async function handleSesWebhook(db: Db, request: Request): Promise<Respon
           detail: `${recipient.emailAddress} reported spam (${feedbackType})`,
           subscriberId: subscriber.id,
         });
-        console.log(`Complaint: blocklisted ${recipient.emailAddress} (${feedbackType})`);
+        console.log(
+          `Complaint: blocklisted ${recipient.emailAddress} (${feedbackType})`,
+        );
 
         if (sesMessageId) {
           db.update(schema.campaignSends)

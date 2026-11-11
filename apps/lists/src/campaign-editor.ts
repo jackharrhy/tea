@@ -38,7 +38,9 @@ function initializeAudience(form: HTMLFormElement) {
     document
       .querySelectorAll<HTMLElement>("[data-audience]")
       .forEach((node) => node.classList.add("hidden"));
-    element<HTMLElement>(`[data-audience="${mode.value}"]`)?.classList.remove("hidden");
+    element<HTMLElement>(`[data-audience="${mode.value}"]`)?.classList.remove(
+      "hidden",
+    );
   });
 
   const address = element<HTMLInputElement>("#fromAddress");
@@ -47,28 +49,34 @@ function initializeAudience(form: HTMLFormElement) {
   element<HTMLSelectElement>("#listId")?.addEventListener("change", (event) => {
     const select = event.currentTarget as HTMLSelectElement;
     const next = select.selectedOptions[0]?.dataset.fromAddress ?? "";
-    if (address && (!address.value || address.value === lastListDefault)) address.value = next;
-    if (fromName && !fromName.value && next) fromName.value = next.split("@")[0] ?? "";
+    if (address && (!address.value || address.value === lastListDefault))
+      address.value = next;
+    if (fromName && !fromName.value && next)
+      fromName.value = next.split("@")[0] ?? "";
     lastListDefault = next;
   });
 
-  element<HTMLSelectElement>("#fromPersona")?.addEventListener("change", (event) => {
-    const select = event.currentTarget as HTMLSelectElement;
-    const option = select.selectedOptions[0];
-    const custom = element<HTMLElement>("#fromCustomFields");
-    if (!option?.value) {
-      if (custom) custom.style.display = "";
-      if (address) address.required = true;
-      return;
-    }
-    if (address) {
-      address.value =
-        option.dataset.fromAddress || `${option.dataset.slug}@${option.dataset.fromDomain}`;
-      address.required = false;
-    }
-    if (fromName) fromName.value = option.dataset.fromName ?? "";
-    if (custom) custom.style.display = "none";
-  });
+  element<HTMLSelectElement>("#fromPersona")?.addEventListener(
+    "change",
+    (event) => {
+      const select = event.currentTarget as HTMLSelectElement;
+      const option = select.selectedOptions[0];
+      const custom = element<HTMLElement>("#fromCustomFields");
+      if (!option?.value) {
+        if (custom) custom.style.display = "";
+        if (address) address.required = true;
+        return;
+      }
+      if (address) {
+        address.value =
+          option.dataset.fromAddress ||
+          `${option.dataset.slug}@${option.dataset.fromDomain}`;
+        address.required = false;
+      }
+      if (fromName) fromName.value = option.dataset.fromName ?? "";
+      if (custom) custom.style.display = "none";
+    },
+  );
 
   address?.addEventListener("blur", () => {
     if (fromName && !fromName.value && address.value)
@@ -79,17 +87,25 @@ function initializeAudience(form: HTMLFormElement) {
   const utcSchedule = element<HTMLInputElement>("#scheduledAt");
   const utcLabel = element<HTMLElement>("#scheduledAtUtc");
   localSchedule?.addEventListener("change", () => {
-    const utc = localSchedule.value ? new Date(localSchedule.value).toISOString() : "";
+    const utc = localSchedule.value
+      ? new Date(localSchedule.value).toISOString()
+      : "";
     if (utcSchedule) utcSchedule.value = utc;
-    if (utcLabel) utcLabel.textContent = utc ? `UTC: ${new Date(utc).toUTCString()}` : "";
+    if (utcLabel)
+      utcLabel.textContent = utc ? `UTC: ${new Date(utc).toUTCString()}` : "";
   });
 
   initializeSubscriberPicker(form);
 }
 
 function initializeSubscriberPicker(form: HTMLFormElement) {
-  const subscribers = parseData<SubscriberOption[]>(form.dataset.subscribers, []);
-  const selected = new Set(parseData<number[]>(form.dataset.selectedSubscriberIds, []));
+  const subscribers = parseData<SubscriberOption[]>(
+    form.dataset.subscribers,
+    [],
+  );
+  const selected = new Set(
+    parseData<number[]>(form.dataset.selectedSubscriberIds, []),
+  );
   const search = element<HTMLInputElement>("#subscriberSearch");
   const results = element<HTMLElement>("#searchResults");
   const chips = element<HTMLElement>("#selectedSubscribers");
@@ -108,7 +124,8 @@ function initializeSubscriberPicker(form: HTMLFormElement) {
       const remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "×";
-      remove.className = "ml-1 text-blue-600 hover:text-blue-800 cursor-pointer";
+      remove.className =
+        "ml-1 text-blue-600 hover:text-blue-800 cursor-pointer";
       remove.addEventListener("click", () => {
         selected.delete(id);
         render();
@@ -127,17 +144,22 @@ function initializeSubscriberPicker(form: HTMLFormElement) {
     }
     const matches = subscribers
       .filter((subscriber) => {
-        const name = [subscriber.firstName ?? "", subscriber.lastName ?? ""].join(" ").trim();
+        const name = [subscriber.firstName ?? "", subscriber.lastName ?? ""]
+          .join(" ")
+          .trim();
         return (
           !selected.has(subscriber.id) &&
-          (subscriber.email.toLowerCase().includes(query) || name.toLowerCase().includes(query))
+          (subscriber.email.toLowerCase().includes(query) ||
+            name.toLowerCase().includes(query))
         );
       })
       .slice(0, 10);
     results.replaceChildren(
       ...matches.map((subscriber) => {
         const option = document.createElement("div");
-        const name = [subscriber.firstName ?? "", subscriber.lastName ?? ""].join(" ").trim();
+        const name = [subscriber.firstName ?? "", subscriber.lastName ?? ""]
+          .join(" ")
+          .trim();
         option.className = "px-3 py-2 cursor-pointer hover:bg-gray-50 text-sm";
         option.textContent = `${subscriber.email}${name ? ` (${name})` : ""}`;
         option.addEventListener("click", () => {
@@ -171,7 +193,8 @@ function initializePreview() {
         bodyMarkdown: textarea.value,
         subject: subject.value || "Preview",
         listName: "Preview",
-        templateSlug: element<HTMLSelectElement>("#templateSlug")?.value || "newsletter",
+        templateSlug:
+          element<HTMLSelectElement>("#templateSlug")?.value || "newsletter",
         templateSections: collectTemplateSections(),
       }),
     });
@@ -198,18 +221,22 @@ function initializePreview() {
     if (button) button.textContent = opening ? "Close Preview" : "Preview";
     if (opening) void update();
   };
-  element<HTMLButtonElement>("#previewToggleBtn")?.addEventListener("click", () =>
-    window.togglePreviewPanel?.(),
+  element<HTMLButtonElement>("#previewToggleBtn")?.addEventListener(
+    "click",
+    () => window.togglePreviewPanel?.(),
   );
-  element<HTMLButtonElement>("#previewCloseBtn")?.addEventListener("click", () =>
-    window.togglePreviewPanel?.(),
+  element<HTMLButtonElement>("#previewCloseBtn")?.addEventListener(
+    "click",
+    () => window.togglePreviewPanel?.(),
   );
-  document.querySelectorAll<HTMLButtonElement>("[data-preview-width]").forEach((button) =>
-    button.addEventListener("click", () => {
-      const width = button.dataset.previewWidth;
-      window.setPreviewWidth?.(width === "full" ? null : Number(width));
-    }),
-  );
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-preview-width]")
+    .forEach((button) =>
+      button.addEventListener("click", () => {
+        const width = button.dataset.previewWidth;
+        window.setPreviewWidth?.(width === "full" ? null : Number(width));
+      }),
+    );
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.classList.contains("hidden"))
       window.togglePreviewPanel?.();
@@ -219,9 +246,12 @@ function initializePreview() {
 function collectTemplateSections() {
   const sections: Record<string, string> = {};
   document
-    .querySelectorAll<HTMLTextAreaElement>("[data-template]:not(.hidden) [data-template-section]")
+    .querySelectorAll<HTMLTextAreaElement>(
+      "[data-template]:not(.hidden) [data-template-section]",
+    )
     .forEach((field) => {
-      if (field.dataset.templateSection) sections[field.dataset.templateSection] = field.value;
+      if (field.dataset.templateSection)
+        sections[field.dataset.templateSection] = field.value;
     });
   return sections;
 }
@@ -231,9 +261,14 @@ function initializeTemplateSections(form: HTMLFormElement) {
   const hidden = element<HTMLInputElement>("#templateSectionsJson");
   if (!select || !hidden) return;
   const showSelected = () => {
-    document.querySelectorAll<HTMLElement>("[data-template]").forEach((group) => {
-      group.classList.toggle("hidden", group.dataset.template !== select.value);
-    });
+    document
+      .querySelectorAll<HTMLElement>("[data-template]")
+      .forEach((group) => {
+        group.classList.toggle(
+          "hidden",
+          group.dataset.template !== select.value,
+        );
+      });
   };
   select.addEventListener("change", showSelected);
   form.addEventListener("submit", () => {
@@ -305,8 +340,9 @@ function initializeImages() {
     insert(`\n<!-- s3-pending:${id} -->\n`);
     modal.classList.add("hidden");
   });
-  element<HTMLButtonElement>("#imageModalClose")?.addEventListener("click", () =>
-    modal.classList.add("hidden"),
+  element<HTMLButtonElement>("#imageModalClose")?.addEventListener(
+    "click",
+    () => modal.classList.add("hidden"),
   );
   modal.addEventListener("click", (event) => {
     if (event.target === modal) modal.classList.add("hidden");
@@ -314,7 +350,9 @@ function initializeImages() {
 }
 
 export function initializeCampaignEditor() {
-  const form = document.querySelector<HTMLFormElement>("form[data-campaign-editor]");
+  const form = document.querySelector<HTMLFormElement>(
+    "form[data-campaign-editor]",
+  );
   if (!form || form.dataset.initialized) return;
   form.dataset.initialized = "true";
   initializeAudience(form);

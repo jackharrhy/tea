@@ -13,7 +13,10 @@ import {
 } from "../src/services/delivery-worker";
 import * as schema from "../src/db/schema";
 import type { Config } from "../src/config";
-import { createSubscriber, confirmSubscriber } from "../src/services/subscriber";
+import {
+  createSubscriber,
+  confirmSubscriber,
+} from "../src/services/subscriber";
 import { createSession } from "../src/auth";
 import { compileTemplate } from "../src/services/email-templates";
 
@@ -47,7 +50,9 @@ describe("Full campaign send flow", () => {
     });
 
     // create confirmed subscriber
-    const sub = createSubscriber(db, "reader@example.com", "Reader", null, ["newsletter"]);
+    const sub = createSubscriber(db, "reader@example.com", "Reader", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub.unsubscribeToken);
 
     // create draft campaign
@@ -112,13 +117,20 @@ describe("Full campaign send flow", () => {
       name: "Custom List",
       fromDomain: "example.com",
     });
-    const subscriber = createSubscriber(db, "reader@example.com", "Reader", null, ["custom"]);
+    const subscriber = createSubscriber(
+      db,
+      "reader@example.com",
+      "Reader",
+      null,
+      ["custom"],
+    );
     confirmSubscriber(db, subscriber.unsubscribeToken);
     const source = {
       sourceFormat: "html" as const,
       htmlSource:
         '<html><body><h1>V1 {{subscriber.firstName}}</h1>{{{sections.message.html}}}<a href="{{links.unsubscribe}}">bye</a></body></html>',
-      textSource: "V1 {{subscriber.firstName}}\n{{sections.message.text}}\n{{links.unsubscribe}}",
+      textSource:
+        "V1 {{subscriber.firstName}}\n{{sections.message.text}}\n{{links.unsubscribe}}",
       sections: [
         {
           key: "message",
@@ -165,12 +177,15 @@ describe("Full campaign send flow", () => {
       })
       .where(eq(schema.emailTemplates.id, template.id))
       .run();
-    sesMock.on(SendEmailCommand).resolves({ MessageId: "custom-template-message" });
+    sesMock
+      .on(SendEmailCommand)
+      .resolves({ MessageId: "custom-template-message" });
 
     await sendCampaign(db, testConfig, campaign.id);
 
     const raw = new TextDecoder().decode(
-      sesMock.commandCalls(SendEmailCommand)[0]!.args[0].input.Content!.Raw!.Data as Uint8Array,
+      sesMock.commandCalls(SendEmailCommand)[0]!.args[0].input.Content!.Raw!
+        .Data as Uint8Array,
     );
     expect(raw).toContain("V2 Reader");
     expect(raw).not.toContain("V1 Reader");
@@ -184,7 +199,9 @@ describe("Full campaign send flow", () => {
       slug: "newsletter",
       fromDomain: "example.com",
     });
-    const sub = createSubscriber(db, "retry@example.com", "Retry", null, ["newsletter"]);
+    const sub = createSubscriber(db, "retry@example.com", "Retry", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub.unsubscribeToken);
     const campaign = db
       .insert(schema.campaigns)
@@ -232,7 +249,9 @@ describe("Full campaign send flow", () => {
       slug: "newsletter",
       fromDomain: "example.com",
     });
-    const sub = createSubscriber(db, "stranded@example.com", "Stranded", null, ["newsletter"]);
+    const sub = createSubscriber(db, "stranded@example.com", "Stranded", null, [
+      "newsletter",
+    ]);
     const campaign = db
       .insert(schema.campaigns)
       .values({
@@ -259,7 +278,9 @@ describe("Full campaign send flow", () => {
       .returning()
       .get();
 
-    expect(recoverAbandonedDeliveries(db, new Date("2026-01-01T00:16:00.000Z"))).toBe(1);
+    expect(
+      recoverAbandonedDeliveries(db, new Date("2026-01-01T00:16:00.000Z")),
+    ).toBe(1);
     const recovered = db
       .select()
       .from(schema.campaignSends)
@@ -283,7 +304,9 @@ describe("Full campaign send flow", () => {
       .returning()
       .get();
 
-    expect(rescheduleInterruptedCampaigns(db, new Date("2026-01-01T00:00:00.000Z"))).toBe(1);
+    expect(
+      rescheduleInterruptedCampaigns(db, new Date("2026-01-01T00:00:00.000Z")),
+    ).toBe(1);
     const recovered = db
       .select()
       .from(schema.campaigns)
@@ -305,7 +328,9 @@ describe("Campaign send failure flow", () => {
       fromDomain: "example.com",
     });
 
-    const sub = createSubscriber(db, "reader@example.com", "Reader", null, ["newsletter"]);
+    const sub = createSubscriber(db, "reader@example.com", "Reader", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub.unsubscribeToken);
 
     const campaign = db
@@ -323,7 +348,9 @@ describe("Campaign send failure flow", () => {
 
     sesMock.on(SendEmailCommand).rejects(new Error("SES rate limit exceeded"));
 
-    expect(sendCampaign(db, testConfig, campaign.id)).rejects.toThrow("failed for 1 recipient");
+    expect(sendCampaign(db, testConfig, campaign.id)).rejects.toThrow(
+      "failed for 1 recipient",
+    );
 
     const updated = db
       .select()
@@ -354,13 +381,19 @@ describe("Campaign send failure flow", () => {
     expect(retried[0].status).toBe("accepted");
     expect(retried[0].attemptCount).toBe(2);
     expect(
-      db.select().from(schema.campaigns).where(eq(schema.campaigns.id, campaign.id)).get()!.status,
+      db
+        .select()
+        .from(schema.campaigns)
+        .where(eq(schema.campaigns.id, campaign.id))
+        .get()!.status,
     ).toBe("sent");
   });
 
   test("throws for non-existent campaign", async () => {
     const db = createTestDb();
-    expect(sendCampaign(db, testConfig, 9999)).rejects.toThrow("Campaign 9999 not found");
+    expect(sendCampaign(db, testConfig, 9999)).rejects.toThrow(
+      "Campaign 9999 not found",
+    );
   });
 
   test("throws for campaign that is already sent", async () => {
@@ -401,11 +434,15 @@ describe("Campaign retry skips already sent", () => {
     });
 
     // subscriber 1: already sent
-    const sub1 = createSubscriber(db, "already@example.com", "Already", null, ["newsletter"]);
+    const sub1 = createSubscriber(db, "already@example.com", "Already", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub1.unsubscribeToken);
 
     // subscriber 2: not yet sent
-    const sub2 = createSubscriber(db, "pending@example.com", "Pending", null, ["newsletter"]);
+    const sub2 = createSubscriber(db, "pending@example.com", "Pending", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub2.unsubscribeToken);
 
     // create a "failed" campaign (eligible for retry)
@@ -509,7 +546,11 @@ describe("Inbound message processing", () => {
       const match = toAddr.match(/^([^@]+)@reply\./);
       if (!match) continue;
       const slug = match[1];
-      const matchedList = db.select().from(schema.lists).where(eq(schema.lists.slug, slug!)).get();
+      const matchedList = db
+        .select()
+        .from(schema.lists)
+        .where(eq(schema.lists.slug, slug!))
+        .get();
       if (!matchedList) continue;
       const matchedCampaign = db
         .select()
@@ -529,7 +570,9 @@ describe("Inbound message processing", () => {
       }
     }
 
-    const s3Key = payload.action.objectKey || payload.action.objectKeyPrefix + payload.messageId;
+    const s3Key =
+      payload.action.objectKey ||
+      payload.action.objectKeyPrefix + payload.messageId;
 
     const fromAddr = payload.from[0] ?? payload.source;
     const toAddr = payload.to[0] ?? "";
@@ -590,17 +633,23 @@ describe("Per-list unsubscribe flow via App", () => {
       fromDomain: "example.com",
     });
 
-    const subscriber = createSubscriber(db, "reader@example.com", "Reader", null, [
-      "list-a",
-      "list-b",
-    ]);
+    const subscriber = createSubscriber(
+      db,
+      "reader@example.com",
+      "Reader",
+      null,
+      ["list-a", "list-b"],
+    );
     confirmSubscriber(db, subscriber.unsubscribeToken);
 
     const app = createApplication(db, testConfig);
 
-    const res = await app.request(`/unsubscribe/${subscriber.unsubscribeToken}/${listA.id}`, {
-      method: "GET",
-    });
+    const res = await app.request(
+      `/unsubscribe/${subscriber.unsubscribeToken}/${listA.id}`,
+      {
+        method: "GET",
+      },
+    );
 
     expect(res.status).toBe(200);
     const html = await res.text();
@@ -648,19 +697,25 @@ describe("Per-list unsubscribe flow via App", () => {
       fromDomain: "example.com",
     });
 
-    const subscriber = createSubscriber(db, "reader@example.com", "Reader", null, [
-      "list-a",
-      "list-b",
-    ]);
+    const subscriber = createSubscriber(
+      db,
+      "reader@example.com",
+      "Reader",
+      null,
+      ["list-a", "list-b"],
+    );
     confirmSubscriber(db, subscriber.unsubscribeToken);
 
     const app = createApplication(db, testConfig);
 
-    const res = await app.request(`/unsubscribe/${subscriber.unsubscribeToken}/${listA.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "List-Unsubscribe=One-Click",
-    });
+    const res = await app.request(
+      `/unsubscribe/${subscriber.unsubscribeToken}/${listA.id}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "List-Unsubscribe=One-Click",
+      },
+    );
 
     expect(res.status).toBe(200);
     const text = await res.text();
@@ -704,7 +759,9 @@ describe("audienceData format regression", () => {
       slug: "newsletter",
       fromDomain: "example.com",
     });
-    const sub1 = createSubscriber(db, "a@example.com", "A", null, ["newsletter"]);
+    const sub1 = createSubscriber(db, "a@example.com", "A", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub1.unsubscribeToken);
 
     // This is the OLD broken format that the admin UI was producing
@@ -833,7 +890,9 @@ describe("GET /campaigns/:id/preview?subscriberId=N", () => {
       fromDomain: "example.com",
     });
 
-    const sub = createSubscriber(db, "reader@example.com", "Reader", null, ["newsletter"]);
+    const sub = createSubscriber(db, "reader@example.com", "Reader", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub.unsubscribeToken);
 
     const campaign = db
@@ -933,7 +992,9 @@ describe("Poller stores rfc822MessageId", () => {
       },
     };
 
-    const s3Key = payload.action.objectKey || payload.action.objectKeyPrefix + payload.messageId;
+    const s3Key =
+      payload.action.objectKey ||
+      payload.action.objectKeyPrefix + payload.messageId;
 
     db.insert(schema.messages)
       .values({
@@ -1013,7 +1074,9 @@ describe("Poller handles missing rfc822MessageId", () => {
       };
     };
 
-    const s3Key = payload.action.objectKey || payload.action.objectKeyPrefix + payload.messageId;
+    const s3Key =
+      payload.action.objectKey ||
+      payload.action.objectKeyPrefix + payload.messageId;
 
     db.insert(schema.messages)
       .values({
@@ -1198,8 +1261,10 @@ describe("Thread matching via SES-rewritten Message-ID", () => {
     // SES rewrites this to <sesId@email.amazonses.com> on delivery
     // When recipient replies, their In-Reply-To points to the SES-rewritten ID
 
-    const outboundSesId = "0100019cfd0b2cd2-c18f07a0-4e9e-45c7-8a4c-bc835326eb3c-000000";
-    const ourGeneratedMsgId = "<f02cdfa1-8fee-4cdb-bad2-799dd524e6ac@reply.example.com>";
+    const outboundSesId =
+      "0100019cfd0b2cd2-c18f07a0-4e9e-45c7-8a4c-bc835326eb3c-000000";
+    const ourGeneratedMsgId =
+      "<f02cdfa1-8fee-4cdb-bad2-799dd524e6ac@reply.example.com>";
 
     // Insert the original inbound message (root of thread)
     db.insert(schema.messages)

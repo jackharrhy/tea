@@ -8,7 +8,10 @@ import { createApplication } from "../src/http-app.ts";
 import { createTestDb, seedList, type TestDb } from "./helpers";
 import * as schema from "../src/db/schema";
 import type { Config } from "../src/config";
-import { createSubscriber, confirmSubscriber } from "../src/services/subscriber";
+import {
+  createSubscriber,
+  confirmSubscriber,
+} from "../src/services/subscriber";
 
 const sesMock = mockClient(SESv2Client);
 const s3Mock = mockClient(S3Client);
@@ -82,7 +85,11 @@ async function authPost(
   });
 }
 
-async function authGet(app: ReturnType<typeof createApplication>, path: string, cookie: string) {
+async function authGet(
+  app: ReturnType<typeof createApplication>,
+  path: string,
+  cookie: string,
+) {
   return app.request(path, {
     method: "GET",
     headers: { Cookie: cookie },
@@ -101,8 +108,16 @@ describe("Full HTTP flow: campaign create+send (list audience)", () => {
       name: "Newsletter",
       fromDomain: "example.com",
     });
-    const selected = createSubscriber(db, "selected@example.com", "Selected", null, ["newsletter"]);
-    const other = createSubscriber(db, "other@example.com", "Other", null, ["newsletter"]);
+    const selected = createSubscriber(
+      db,
+      "selected@example.com",
+      "Selected",
+      null,
+      ["newsletter"],
+    );
+    const other = createSubscriber(db, "other@example.com", "Other", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, selected.unsubscribeToken);
     confirmSubscriber(db, other.unsubscribeToken);
     const campaign = db
@@ -128,7 +143,11 @@ describe("Full HTTP flow: campaign create+send (list audience)", () => {
 
     const app = createApp(db);
     const cookie = await login(app);
-    const response = await authGet(app, `/admin/campaigns/${campaign.id}`, cookie);
+    const response = await authGet(
+      app,
+      `/admin/campaigns/${campaign.id}`,
+      cookie,
+    );
     const html = await response.text();
     expect(response.status).toBe(200);
     expect(html).toContain("Test: 1 selected from Newsletter");
@@ -147,7 +166,9 @@ describe("Full HTTP flow: campaign create+send (list audience)", () => {
     });
 
     // Create a confirmed subscriber
-    const sub = createSubscriber(db, "reader@example.com", "Reader", "One", ["newsletter"]);
+    const sub = createSubscriber(db, "reader@example.com", "Reader", "One", [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub.unsubscribeToken);
 
     const app = createApp(db);
@@ -176,7 +197,12 @@ describe("Full HTTP flow: campaign create+send (list audience)", () => {
     // Mock SES and send
     sesMock.on(SendEmailCommand).resolves({ MessageId: "list-msg-id" });
 
-    const sendRes = await authPost(app, `/admin/campaigns/${campaign!.id}/send`, cookie, {});
+    const sendRes = await authPost(
+      app,
+      `/admin/campaigns/${campaign!.id}/send`,
+      cookie,
+      {},
+    );
     expect(sendRes.status).toBe(303);
 
     // Verify campaign is now "sent"
@@ -211,7 +237,9 @@ async function setupCampaignDeletion() {
     slug: "newsletter",
     fromDomain: "example.com",
   });
-  const sub = createSubscriber(db, "reader@example.com", "Reader", null, ["newsletter"]);
+  const sub = createSubscriber(db, "reader@example.com", "Reader", null, [
+    "newsletter",
+  ]);
   const campaign = db
     .insert(schema.campaigns)
     .values({
@@ -266,32 +294,54 @@ describe("Full HTTP flow: delete campaign", () => {
         name: "AccessDenied",
       }),
     );
-    const response = await authPost(app, `/admin/campaigns/${campaign.id}/delete`, cookie, {});
+    const response = await authPost(
+      app,
+      `/admin/campaigns/${campaign.id}/delete`,
+      cookie,
+      {},
+    );
 
     expect(response.status).toBe(500);
     expect(db.select().from(schema.campaigns).all()).toHaveLength(1);
     expect(db.select().from(schema.campaignSends).all()).toHaveLength(1);
     expect(
-      db.select().from(schema.events).where(eq(schema.events.type, "admin.campaign_deleted")).all(),
+      db
+        .select()
+        .from(schema.events)
+        .where(eq(schema.events.type, "admin.campaign_deleted"))
+        .all(),
     ).toEqual([]);
   });
 
   test("deletes linked records transactionally after S3 cleanup succeeds", async () => {
-    const { db, campaign, message, app, cookie } = await setupCampaignDeletion();
+    const { db, campaign, message, app, cookie } =
+      await setupCampaignDeletion();
     s3Mock.on(ListObjectsV2Command).resolves({ Contents: [] });
 
-    const response = await authPost(app, `/admin/campaigns/${campaign.id}/delete`, cookie, {});
+    const response = await authPost(
+      app,
+      `/admin/campaigns/${campaign.id}/delete`,
+      cookie,
+      {},
+    );
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/admin/campaigns");
     expect(db.select().from(schema.campaigns).all()).toEqual([]);
     expect(db.select().from(schema.campaignSends).all()).toEqual([]);
     expect(
-      db.select().from(schema.messages).where(eq(schema.messages.id, message.id)).get()!.campaignId,
+      db
+        .select()
+        .from(schema.messages)
+        .where(eq(schema.messages.id, message.id))
+        .get()!.campaignId,
     ).toBeNull();
     expect(
-      db.select().from(schema.events).where(eq(schema.events.type, "campaign.created")).get()!
-        .campaignId,
+      db
+        .select()
+        .from(schema.events)
+        .where(eq(schema.events.type, "campaign.created"))
+        .get()!.campaignId,
     ).toBeNull();
     const deletionEvent = db
       .select()
@@ -321,7 +371,11 @@ describe("Full HTTP flow: create list", () => {
 
     expect(response.status).toBe(303);
     expect(
-      db.select().from(schema.lists).where(eq(schema.lists.slug, "new-list")).get(),
+      db
+        .select()
+        .from(schema.lists)
+        .where(eq(schema.lists.slug, "new-list"))
+        .get(),
     ).toBeDefined();
     const event = db
       .select()
@@ -368,11 +422,17 @@ describe("Full HTTP flow: campaign create+send (specific subscribers)", () => {
       fromDomain: "example.com",
     });
 
-    const sub1 = createSubscriber(db, "pick1@example.com", "Pick", "One", ["newsletter"]);
+    const sub1 = createSubscriber(db, "pick1@example.com", "Pick", "One", [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub1.unsubscribeToken);
-    const sub2 = createSubscriber(db, "skip@example.com", "Skip", "Me", ["newsletter"]);
+    const sub2 = createSubscriber(db, "skip@example.com", "Skip", "Me", [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub2.unsubscribeToken);
-    const sub3 = createSubscriber(db, "pick3@example.com", "Pick", "Three", ["newsletter"]);
+    const sub3 = createSubscriber(db, "pick3@example.com", "Pick", "Three", [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub3.unsubscribeToken);
 
     const app = createApp(db);
@@ -418,7 +478,9 @@ describe("Full HTTP flow: campaign create+send (specific subscribers)", () => {
     const sentIds = sends
       .map((s) => s.subscriberId)
       .toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-    expect(sentIds).toEqual([sub1.id, sub3.id].toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+    expect(sentIds).toEqual(
+      [sub1.id, sub3.id].toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+    );
   });
 });
 
@@ -435,17 +497,35 @@ describe("Full HTTP flow: campaign create+send (tag audience)", () => {
       fromDomain: "example.com",
     });
 
-    const sub1 = createSubscriber(db, "tagged1@example.com", "Tagged", "One", ["newsletter"]);
+    const sub1 = createSubscriber(db, "tagged1@example.com", "Tagged", "One", [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub1.unsubscribeToken);
-    const sub2 = createSubscriber(db, "tagged2@example.com", "Tagged", "Two", ["newsletter"]);
+    const sub2 = createSubscriber(db, "tagged2@example.com", "Tagged", "Two", [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub2.unsubscribeToken);
-    const sub3 = createSubscriber(db, "untagged@example.com", "Untagged", null, ["newsletter"]);
+    const sub3 = createSubscriber(
+      db,
+      "untagged@example.com",
+      "Untagged",
+      null,
+      ["newsletter"],
+    );
     confirmSubscriber(db, sub3.unsubscribeToken);
 
     // Create tag and apply to sub1 and sub2
-    const tag = db.insert(schema.tags).values({ name: "vip" }).returning().get();
-    db.insert(schema.subscriberTags).values({ subscriberId: sub1.id, tagId: tag.id }).run();
-    db.insert(schema.subscriberTags).values({ subscriberId: sub2.id, tagId: tag.id }).run();
+    const tag = db
+      .insert(schema.tags)
+      .values({ name: "vip" })
+      .returning()
+      .get();
+    db.insert(schema.subscriberTags)
+      .values({ subscriberId: sub1.id, tagId: tag.id })
+      .run();
+    db.insert(schema.subscriberTags)
+      .values({ subscriberId: sub2.id, tagId: tag.id })
+      .run();
 
     const app = createApp(db);
     const cookie = await login(app);
@@ -484,7 +564,9 @@ describe("Full HTTP flow: campaign create+send (tag audience)", () => {
     const sentIds = sends
       .map((s) => s.subscriberId)
       .toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-    expect(sentIds).toEqual([sub1.id, sub2.id].toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+    expect(sentIds).toEqual(
+      [sub1.id, sub2.id].toSorted((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+    );
   });
 });
 
@@ -507,13 +589,20 @@ describe("Full HTTP flow: campaign create+send (all subscribers)", () => {
     });
 
     // sub1: on list-a only
-    const sub1 = createSubscriber(db, "sub1@example.com", "Sub", "One", ["list-a"]);
+    const sub1 = createSubscriber(db, "sub1@example.com", "Sub", "One", [
+      "list-a",
+    ]);
     confirmSubscriber(db, sub1.unsubscribeToken);
     // sub2: on list-b only
-    const sub2 = createSubscriber(db, "sub2@example.com", "Sub", "Two", ["list-b"]);
+    const sub2 = createSubscriber(db, "sub2@example.com", "Sub", "Two", [
+      "list-b",
+    ]);
     confirmSubscriber(db, sub2.unsubscribeToken);
     // sub3: on BOTH lists (should only get 1 email)
-    const sub3 = createSubscriber(db, "sub3@example.com", "Sub", "Three", ["list-a", "list-b"]);
+    const sub3 = createSubscriber(db, "sub3@example.com", "Sub", "Three", [
+      "list-a",
+      "list-b",
+    ]);
     confirmSubscriber(db, sub3.unsubscribeToken);
 
     const app = createApp(db);
@@ -627,9 +716,12 @@ describe("Full HTTP flow: subscribe → confirm → receive campaign", () => {
     expect(sesMock.commandCalls(SendEmailCommand)).toHaveLength(1);
 
     // 2. GET /confirm/:token/:domain
-    const confirmRes = await app.request(`/confirm/${subscriber!.unsubscribeToken}/example.com`, {
-      method: "GET",
-    });
+    const confirmRes = await app.request(
+      `/confirm/${subscriber!.unsubscribeToken}/example.com`,
+      {
+        method: "GET",
+      },
+    );
     expect(confirmRes.status).toBe(200);
     const confirmHtml = await confirmRes.text();
     expect(confirmHtml).toContain("Confirmed");
@@ -648,7 +740,11 @@ describe("Full HTTP flow: subscribe → confirm → receive campaign", () => {
     sesMock.on(SendEmailCommand).resolves({ MessageId: "campaign-msg-id" });
 
     const cookie = await login(app);
-    const list = db.select().from(schema.lists).where(eq(schema.lists.slug, "newsletter")).get();
+    const list = db
+      .select()
+      .from(schema.lists)
+      .where(eq(schema.lists.slug, "newsletter"))
+      .get();
 
     await authPost(app, "/admin/campaigns/new", cookie, {
       audienceMode: "list",
@@ -718,12 +814,17 @@ describe("Full HTTP flow: reply to inbound message", () => {
     const cookie = await login(app);
 
     // POST reply
-    const replyRes = await authPost(app, `/admin/inbound/${inbound.id}/reply`, cookie, {
-      fromAddr: "admin@example.com",
-      toAddr: "sender@gmail.com",
-      subject: "Re: Question about newsletter",
-      body: "Thanks for reaching out!",
-    });
+    const replyRes = await authPost(
+      app,
+      `/admin/inbound/${inbound.id}/reply`,
+      cookie,
+      {
+        fromAddr: "admin@example.com",
+        toAddr: "sender@gmail.com",
+        subject: "Re: Question about newsletter",
+        body: "Thanks for reaching out!",
+      },
+    );
 
     // Should redirect
     expect(replyRes.status).toBe(303);
@@ -769,7 +870,9 @@ describe("Full HTTP flow: campaign edit then send", () => {
       fromDomain: "example.com",
     });
 
-    const sub = createSubscriber(db, "reader@example.com", "Reader", null, ["newsletter"]);
+    const sub = createSubscriber(db, "reader@example.com", "Reader", null, [
+      "newsletter",
+    ]);
     confirmSubscriber(db, sub.unsubscribeToken);
 
     const app = createApp(db);
@@ -790,13 +893,18 @@ describe("Full HTTP flow: campaign edit then send", () => {
     expect(campaign!.bodyMarkdown).toBe("Original body");
 
     // Edit the campaign
-    const editRes = await authPost(app, `/admin/campaigns/${campaign!.id}/edit`, cookie, {
-      audienceMode: "list",
-      listId: String(list.id),
-      fromAddress: "test@example.com",
-      subject: "Updated Subject",
-      bodyMarkdown: "Updated body with {{firstName}}",
-    });
+    const editRes = await authPost(
+      app,
+      `/admin/campaigns/${campaign!.id}/edit`,
+      cookie,
+      {
+        audienceMode: "list",
+        listId: String(list.id),
+        fromAddress: "test@example.com",
+        subject: "Updated Subject",
+        bodyMarkdown: "Updated body with {{firstName}}",
+      },
+    );
     expect(editRes.status).toBe(303);
 
     // Verify updated in DB
@@ -882,14 +990,19 @@ describe("Campaign editor validation and authorization", () => {
     const app = createApp(db);
     const cookie = await login(app);
 
-    const response = await authPost(app, `/admin/campaigns/${campaign.id}/edit`, cookie, {
-      audienceMode: "list",
-      listId: String(list.id),
-      fromAddress: "news@example.com",
-      subject: "After",
-      bodyMarkdown: "Updated",
-      scheduledAt: "2026-09-02T12:00:00.000Z",
-    });
+    const response = await authPost(
+      app,
+      `/admin/campaigns/${campaign.id}/edit`,
+      cookie,
+      {
+        audienceMode: "list",
+        listId: String(list.id),
+        fromAddress: "news@example.com",
+        subject: "After",
+        bodyMarkdown: "Updated",
+        scheduledAt: "2026-09-02T12:00:00.000Z",
+      },
+    );
 
     expect(response.status).toBe(303);
     const updated = db
@@ -1065,12 +1178,16 @@ describe("Subscriber orphan cleanup", () => {
         campaignId: campaign.id,
       })
       .run();
-    createSubscriber(db, "member@example.com", "List", "Member", ["newsletter"]);
+    createSubscriber(db, "member@example.com", "List", "Member", [
+      "newsletter",
+    ]);
     createSubscriber(db, "orphan@example.com", "No", "Lists", []);
     const app = createApp(db);
     const cookie = await login(app);
 
-    const indexHtml = await (await authGet(app, "/admin/subscribers", cookie)).text();
+    const indexHtml = await (
+      await authGet(app, "/admin/subscribers", cookie)
+    ).text();
     expect(indexHtml).toContain("1 orphaned");
     expect(indexHtml).toContain("orphan@example.com");
     expect(indexHtml).toContain("Orphaned");
@@ -1081,7 +1198,12 @@ describe("Subscriber orphan cleanup", () => {
     expect(filteredHtml).toContain("orphan@example.com");
     expect(filteredHtml).not.toContain("member@example.com");
 
-    const deleted = await authPost(app, `/admin/lists/${list.id}/delete`, cookie, {});
+    const deleted = await authPost(
+      app,
+      `/admin/lists/${list.id}/delete`,
+      cookie,
+      {},
+    );
     expect(deleted.status).toBe(303);
     const afterDeleteHtml = await (
       await authGet(app, "/admin/subscribers?membership=orphaned", cookie)
@@ -1090,8 +1212,11 @@ describe("Subscriber orphan cleanup", () => {
     expect(afterDeleteHtml).toContain("orphan@example.com");
     expect(afterDeleteHtml).toContain("member@example.com");
     expect(
-      db.select().from(schema.events).where(eq(schema.events.type, "campaign.created")).get()!
-        .campaignId,
+      db
+        .select()
+        .from(schema.events)
+        .where(eq(schema.events.type, "campaign.created"))
+        .get()!.campaignId,
     ).toBeNull();
   });
 });
@@ -1121,13 +1246,17 @@ describe("Inbound history cleanup", () => {
     const app = createApp(db);
     const cookie = await login(app);
 
-    expect((await authPost(app, `/admin/inbound/${message.id}/delete`, cookie, {})).status).toBe(
-      303,
-    );
+    expect(
+      (await authPost(app, `/admin/inbound/${message.id}/delete`, cookie, {}))
+        .status,
+    ).toBe(303);
     expect(db.select().from(schema.messages).all()).toEqual([]);
     expect(
-      db.select().from(schema.events).where(eq(schema.events.type, "message.received")).get()!
-        .messageId,
+      db
+        .select()
+        .from(schema.events)
+        .where(eq(schema.events.type, "message.received"))
+        .get()!.messageId,
     ).toBeNull();
     const deletionEvent = db
       .select()
@@ -1221,11 +1350,27 @@ describe("Email template gallery", () => {
     expect(detailHtml).toContain("&#x3C;!");
     expect(detailHtml).not.toContain('<div class="template-source"><!doctype');
 
-    const blocked = await authGet(app, "/admin/templates/newsletter/preview", cookie);
-    expect(blocked.headers.get("content-security-policy")).toContain("img-src data: cid:");
-    const allowed = await authGet(app, "/admin/templates/newsletter/preview?remote=1", cookie);
-    expect(allowed.headers.get("content-security-policy")).toContain("img-src https: data: cid:");
-    const text = await authGet(app, "/admin/templates/newsletter/preview?mode=text", cookie);
+    const blocked = await authGet(
+      app,
+      "/admin/templates/newsletter/preview",
+      cookie,
+    );
+    expect(blocked.headers.get("content-security-policy")).toContain(
+      "img-src data: cid:",
+    );
+    const allowed = await authGet(
+      app,
+      "/admin/templates/newsletter/preview?remote=1",
+      cookie,
+    );
+    expect(allowed.headers.get("content-security-policy")).toContain(
+      "img-src https: data: cid:",
+    );
+    const text = await authGet(
+      app,
+      "/admin/templates/newsletter/preview?mode=text",
+      cookie,
+    );
     expect(text.headers.get("content-type")).toContain("text/html");
     expect(await text.text()).toContain("Unsubscribe:");
   });

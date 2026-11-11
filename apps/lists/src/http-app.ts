@@ -36,7 +36,10 @@ export function createApplication(db: Db, config: Config) {
     const user = getSessionUser(db, token);
     return user
       ? createAdminRouter(db, config, user).fetch(request)
-      : new Response(null, { status: 302, headers: { Location: "/admin/login" } });
+      : new Response(null, {
+          status: 302,
+          headers: { Location: "/admin/login" },
+        });
   }
 
   async function fetch(request: Request): Promise<Response> {
@@ -50,12 +53,14 @@ export function createApplication(db: Db, config: Config) {
         url.pathname = url.pathname.slice("/static".length);
         return await staticRouter.fetch(new Request(url, request));
       }
-      if (path.startsWith("/api/") || path === "/openapi/json") return await api.fetch(request);
+      if (path.startsWith("/api/") || path === "/openapi/json")
+        return await api.fetch(request);
       if (path === "/mcp" || path === "/mcp/") return await mcp.fetch(request);
       if (path.startsWith("/webhooks/")) return await webhooks.fetch(request);
       if (path === "/admin/login" || path === "/admin/logout")
         return await adminAuth.fetch(request);
-      if (path === "/admin" || path.startsWith("/admin/")) return await adminPage(request);
+      if (path === "/admin" || path.startsWith("/admin/"))
+        return await adminPage(request);
       if (/^\/(?:subscribe|confirm|unsubscribe|preferences)(?:\/|$)/.test(path))
         return await publicRouter.fetch(request);
       if (path === "/auth/login" || path === "/auth/callback")

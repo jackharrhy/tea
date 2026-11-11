@@ -13,7 +13,12 @@ type Subscriber = Pick<
   "id" | "email" | "firstName" | "lastName"
 >;
 type Template = typeof schema.emailTemplates.$inferSelect;
-const heading = css({ fontSize: "24px", lineHeight: "32px", fontWeight: 700, margin: "0 0 20px" });
+const heading = css({
+  fontSize: "24px",
+  lineHeight: "32px",
+  fontWeight: 700,
+  margin: "0 0 20px",
+});
 const toolbar = css({
   display: "flex",
   alignItems: "center",
@@ -29,7 +34,12 @@ const filters = css({
   flexWrap: "wrap",
   marginBottom: "24px",
 });
-const field = css({ display: "grid", gap: "5px", marginBottom: "16px", fontSize: "14px" });
+const field = css({
+  display: "grid",
+  gap: "5px",
+  marginBottom: "16px",
+  fontSize: "14px",
+});
 const input = css({
   boxSizing: "border-box",
   minHeight: "38px",
@@ -73,13 +83,30 @@ const smallButton = css({
   font: "inherit",
   fontSize: "13px",
 });
-const table = css({ width: "100%", borderCollapse: "collapse", fontSize: "14px" });
-const cell = css({ padding: "10px 8px", borderBottom: "1px solid #e5e7eb", textAlign: "left" });
+const table = css({
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: "14px",
+});
+const cell = css({
+  padding: "10px 8px",
+  borderBottom: "1px solid #e5e7eb",
+  textAlign: "left",
+});
 const link = css({ color: "#1d4ed8", textDecoration: "none" });
 const muted = css({ color: "#6b7280", fontSize: "14px" });
-const section = css({ fontSize: "18px", fontWeight: 600, margin: "28px 0 12px" });
+const section = css({
+  fontSize: "18px",
+  fontWeight: 600,
+  margin: "28px 0 12px",
+});
 const form = css({ maxWidth: "680px", "& .hidden": { display: "none" } });
-const inline = css({ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" });
+const inline = css({
+  display: "flex",
+  gap: "8px",
+  alignItems: "center",
+  flexWrap: "wrap",
+});
 const previewPanel = css({
   position: "fixed",
   inset: 0,
@@ -147,7 +174,11 @@ export function CampaignIndex(
       return `/admin/campaigns?${q}`;
     };
     return (
-      <AdminDocument title="Campaigns" activeHref="/admin/campaigns" viewer={handle.props.viewer}>
+      <AdminDocument
+        title="Campaigns"
+        activeHref="/admin/campaigns"
+        viewer={handle.props.viewer}
+      >
         <div mix={toolbar}>
           <h1 mix={heading}>Campaigns</h1>
           <a mix={action} href="/admin/campaigns/new">
@@ -157,17 +188,24 @@ export function CampaignIndex(
         <form mix={filters} method="get" action="/admin/campaigns">
           <label mix={field}>
             Search
-            <input mix={input} name="search" value={selected.search} placeholder="Subject" />
+            <input
+              mix={input}
+              name="search"
+              value={selected.search}
+              placeholder="Subject"
+            />
           </label>
           <label mix={field}>
             Status
             <select mix={input} name="status">
               <option value="">All</option>
-              {["draft", "scheduled", "sending", "sent", "failed"].map((status) => (
-                <option value={status} selected={selected.status === status}>
-                  {status}
-                </option>
-              ))}
+              {["draft", "scheduled", "sending", "sent", "failed"].map(
+                (status) => (
+                  <option value={status} selected={selected.status === status}>
+                    {status}
+                  </option>
+                ),
+              )}
             </select>
           </label>
           <button mix={action} type="submit">
@@ -257,7 +295,9 @@ export function CampaignEditor(
       problem,
     } = handle.props;
     const mode =
-      campaign?.audienceType === "subscribers" ? "specific" : (campaign?.audienceType ?? "list");
+      campaign?.audienceType === "subscribers"
+        ? "specific"
+        : (campaign?.audienceType ?? "list");
     const selectedIds =
       campaign?.audienceType === "subscribers" && campaign.audienceData
         ? (JSON.parse(campaign.audienceData) as number[])
@@ -265,7 +305,8 @@ export function CampaignEditor(
     const savedSections = campaign?.templateSections
       ? (JSON.parse(campaign.templateSections) as Record<string, string>)
       : {};
-    const selectedTemplate = campaign?.templateSlug ?? templates[0]?.slug ?? "newsletter";
+    const selectedTemplate =
+      campaign?.templateSlug ?? templates[0]?.slug ?? "newsletter";
     return (
       <AdminDocument
         title={campaign ? "Edit campaign" : "New campaign"}
@@ -273,7 +314,9 @@ export function CampaignEditor(
         viewer={account}
       >
         <div mix={toolbar}>
-          <h1 mix={heading}>{campaign ? `Edit: ${campaign.subject}` : "New campaign"}</h1>
+          <h1 mix={heading}>
+            {campaign ? `Edit: ${campaign.subject}` : "New campaign"}
+          </h1>
           <button id="previewToggleBtn" mix={smallButton} type="button">
             Preview
           </button>
@@ -286,14 +329,23 @@ export function CampaignEditor(
         <div mix={form}>
           <form
             method="post"
-            action={campaign ? `/admin/campaigns/${campaign.id}/edit` : "/admin/campaigns/new"}
+            action={
+              campaign
+                ? `/admin/campaigns/${campaign.id}/edit`
+                : "/admin/campaigns/new"
+            }
             data-campaign-editor
             data-subscribers={JSON.stringify(subscribers)}
             data-selected-subscriber-ids={JSON.stringify(selectedIds)}
           >
             <label mix={field}>
               Audience
-              <select mix={input} id="audienceMode" name="audienceMode" required>
+              <select
+                mix={input}
+                id="audienceMode"
+                name="audienceMode"
+                required
+              >
                 <option value="list" selected={mode === "list"}>
                   A list
                 </option>
@@ -324,7 +376,8 @@ export function CampaignEditor(
                       value={String(list.id)}
                       data-from-address={list.fromAddress}
                       selected={
-                        campaign?.audienceType === "list" && campaign.audienceId === list.id
+                        campaign?.audienceType === "list" &&
+                        campaign.audienceId === list.id
                       }
                     >
                       {list.name} ({list.slug})
@@ -341,7 +394,10 @@ export function CampaignEditor(
                   {tags.map((tag) => (
                     <option
                       value={String(tag.id)}
-                      selected={campaign?.audienceType === "tag" && campaign.audienceId === tag.id}
+                      selected={
+                        campaign?.audienceType === "tag" &&
+                        campaign.audienceId === tag.id
+                      }
                     >
                       {tag.name}
                     </option>
@@ -349,10 +405,17 @@ export function CampaignEditor(
                 </select>
               </label>
             </div>
-            <div data-audience="specific" class={mode === "specific" ? "" : "hidden"}>
+            <div
+              data-audience="specific"
+              class={mode === "specific" ? "" : "hidden"}
+            >
               <label mix={field}>
                 Find subscribers
-                <input mix={input} id="subscriberSearch" placeholder="Email or name" />
+                <input
+                  mix={input}
+                  id="subscriberSearch"
+                  placeholder="Email or name"
+                />
               </label>
               <div id="searchResults" class="hidden" />
               <div id="selectedSubscribers" mix={inline} />
@@ -365,9 +428,17 @@ export function CampaignEditor(
             </div>
             <label mix={field}>
               Email template
-              <select mix={input} id="templateSlug" name="templateSlug" required>
+              <select
+                mix={input}
+                id="templateSlug"
+                name="templateSlug"
+                required
+              >
                 {templates.map((template) => (
-                  <option value={template.slug} selected={template.slug === selectedTemplate}>
+                  <option
+                    value={template.slug}
+                    selected={template.slug === selectedTemplate}
+                  >
                     {template.name}
                   </option>
                 ))}
@@ -435,7 +506,12 @@ export function CampaignEditor(
               </label>
               <label mix={field}>
                 From name
-                <input mix={input} id="fromName" name="fromName" value={campaign?.fromName ?? ""} />
+                <input
+                  mix={input}
+                  id="fromName"
+                  name="fromName"
+                  value={campaign?.fromName ?? ""}
+                />
               </label>
             </div>
             <label mix={field}>
@@ -460,13 +536,20 @@ export function CampaignEditor(
             </label>
             <p mix={muted}>
               Variables:{" "}
-              {"{{firstName}}, {{lastName}}, {{email}}, {{unsubscribeUrl}}, {{preferencesUrl}}"}
+              {
+                "{{firstName}}, {{lastName}}, {{email}}, {{unsubscribeUrl}}, {{preferencesUrl}}"
+              }
             </p>
             <div id="imageDropZone" mix={dropzone}>
               Drop an image here or click to upload
               <input type="file" id="imageFileInput" accept="image/*" hidden />
             </div>
-            <input type="hidden" id="pendingImagesJson" name="pendingImagesJson" value="{}" />
+            <input
+              type="hidden"
+              id="pendingImagesJson"
+              name="pendingImagesJson"
+              value="{}"
+            />
             <h2 mix={section}>Sending options</h2>
             <label mix={field}>
               Schedule for (local time)
@@ -520,7 +603,11 @@ export function CampaignEditor(
             <strong>Campaign preview</strong>
             <div mix={inline}>
               {[375, 600].map((width) => (
-                <button mix={smallButton} type="button" data-preview-width={String(width)}>
+                <button
+                  mix={smallButton}
+                  type="button"
+                  data-preview-width={String(width)}
+                >
                   {width}px
                 </button>
               ))}
@@ -538,7 +625,9 @@ export function CampaignEditor(
             mix={previewFrame}
             title="Campaign preview"
             sandbox=""
-            src={campaign ? `/admin/campaigns/${campaign.id}/preview` : undefined}
+            src={
+              campaign ? `/admin/campaigns/${campaign.id}/preview` : undefined
+            }
           />
         </div>
         <div id="imageModal" mix={modal} class="hidden">
@@ -575,7 +664,8 @@ export function CampaignDetail(
   }>,
 ) {
   return () => {
-    const { campaign, audience, sends, totalRecipients, selectedTestCount } = handle.props;
+    const { campaign, audience, sends, totalRecipients, selectedTestCount } =
+      handle.props;
     const base = `/admin/campaigns/${campaign.id}`;
     return (
       <AdminDocument
@@ -595,13 +685,13 @@ export function CampaignDetail(
           ) : null}
         </div>
         <p mix={muted}>
-          Status: {campaign.status} · Audience: {audience} · Send records: {totalRecipients} ·
-          Created {campaign.createdAt.slice(0, 16)}
+          Status: {campaign.status} · Audience: {audience} · Send records:{" "}
+          {totalRecipients} · Created {campaign.createdAt.slice(0, 16)}
         </p>
         {selectedTestCount !== null ? (
           <p mix={notice}>
-            Test: {selectedTestCount} selected from {audience}. This campaign was not sent to the
-            full list.
+            Test: {selectedTestCount} selected from {audience}. This campaign
+            was not sent to the full list.
           </p>
         ) : null}
         <p mix={muted}>
@@ -697,6 +787,9 @@ export function previewResponse(html: string) {
   });
 }
 export function textPreview(text: string) {
-  const escaped = text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  const escaped = text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
   return `<pre style="white-space:pre-wrap;font-family:system-ui;padding:24px">${escaped}</pre>`;
 }

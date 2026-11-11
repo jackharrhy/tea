@@ -3,7 +3,10 @@ import { css, type Handle, unsafeHTML } from "remix/component";
 import { createController } from "remix/router";
 
 import { schema, type Db } from "../src/db/index.ts";
-import { renderTemplate, type TemplateSection } from "../src/services/email-templates.ts";
+import {
+  renderTemplate,
+  type TemplateSection,
+} from "../src/services/email-templates.ts";
 import { highlightTemplateSource } from "../src/services/source-highlighter.ts";
 import { AdminDocument, type Viewer } from "./admin.tsx";
 import { routes } from "./routes.ts";
@@ -11,7 +14,12 @@ import { routes } from "./routes.ts";
 type Template = typeof schema.emailTemplates.$inferSelect;
 type User = Pick<typeof schema.users.$inferSelect, "role" | "name" | "email">;
 const heading = css({ fontSize: "24px", fontWeight: 700, margin: "0 0 16px" });
-const intro = css({ maxWidth: "640px", color: "#4b5563", fontSize: "14px", lineHeight: 1.6 });
+const intro = css({
+  maxWidth: "640px",
+  color: "#4b5563",
+  fontSize: "14px",
+  lineHeight: 1.6,
+});
 const templateList = css({ display: "grid", gap: "12px", marginTop: "24px" });
 const templateCard = css({
   display: "grid",
@@ -58,7 +66,11 @@ const workspacePreview = css({
   borderRadius: "6px",
   backgroundColor: "#fff",
 });
-const sectionHeading = css({ fontSize: "17px", fontWeight: 600, margin: "24px 0 10px" });
+const sectionHeading = css({
+  fontSize: "17px",
+  fontWeight: 600,
+  margin: "24px 0 10px",
+});
 const link = css({ color: "#1d4ed8", textDecoration: "none" });
 
 function viewer(user: User): Viewer {
@@ -74,11 +86,15 @@ function Gallery(handle: Handle<{ viewer: Viewer; templates: Template[] }>) {
     >
       <h1 mix={heading}>Email templates</h1>
       <p mix={intro}>
-        Preview the layouts available to campaigns. Use the API or MCP to create and update them.
+        Preview the layouts available to campaigns. Use the API or MCP to create
+        and update them.
       </p>
       <div mix={templateList}>
         {handle.props.templates.map((template) => (
-          <a mix={templateCard} href={`/admin/templates/${encodeURIComponent(template.slug)}`}>
+          <a
+            mix={templateCard}
+            href={`/admin/templates/${encodeURIComponent(template.slug)}`}
+          >
             <iframe
               mix={previewFrame}
               title={`${template.name} preview`}
@@ -90,12 +106,15 @@ function Gallery(handle: Handle<{ viewer: Viewer; templates: Template[] }>) {
               <h2 mix={cardTitle}>{template.name}</h2>
               <p mix={intro}>{template.description || "No description."}</p>
               <p mix={metadata}>
-                {template.slug} · {template.status} · {template.sourceFormat.toUpperCase()}
+                {template.slug} · {template.status} ·{" "}
+                {template.sourceFormat.toUpperCase()}
               </p>
             </div>
           </a>
         ))}
-        {handle.props.templates.length === 0 ? <p mix={intro}>No templates yet.</p> : null}
+        {handle.props.templates.length === 0 ? (
+          <p mix={intro}>No templates yet.</p>
+        ) : null}
       </div>
     </AdminDocument>
   );
@@ -113,7 +132,11 @@ function Workspace(
     const sections = JSON.parse(template.sections) as TemplateSection[];
     const preview = `/admin/templates/${encodeURIComponent(template.slug)}/preview`;
     return (
-      <AdminDocument title={template.name} activeHref="/admin/templates" viewer={account}>
+      <AdminDocument
+        title={template.name}
+        activeHref="/admin/templates"
+        viewer={account}
+      >
         <a mix={link} href="/admin/templates">
           ← All templates
         </a>
@@ -138,7 +161,12 @@ function Workspace(
                 Remote images
               </a>
             </p>
-            <iframe mix={workspacePreview} title="Template preview" sandbox="" src={preview} />
+            <iframe
+              mix={workspacePreview}
+              title="Template preview"
+              sandbox=""
+              src={preview}
+            />
           </section>
           <section>
             <h2 mix={sectionHeading}>HTML source</h2>
@@ -159,7 +187,10 @@ function Workspace(
 }
 
 function textDocument(text: string) {
-  const escaped = text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  const escaped = text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
   return `<!doctype html><meta charset="utf-8"><style>body{margin:0;padding:28px;font:14px/1.6 ui-monospace,monospace;color:#222}pre{white-space:pre-wrap}</style><pre>${escaped}</pre>`;
 }
 
@@ -179,12 +210,17 @@ export function createAdminTemplatesController(db: Db, user: User) {
           .from(schema.emailTemplates)
           .orderBy(schema.emailTemplates.name)
           .all();
-        return context.render(<Gallery viewer={viewer(user)} templates={templates} />);
+        return context.render(
+          <Gallery viewer={viewer(user)} templates={templates} />,
+        );
       },
       async show(context) {
         const template = find(context.params.slug);
         if (!template) return new Response("Not Found", { status: 404 });
-        const partials = JSON.parse(template.partials) as Record<string, string>;
+        const partials = JSON.parse(template.partials) as Record<
+          string,
+          string
+        >;
         const [html, text, entries] = await Promise.all([
           highlightTemplateSource(template.htmlSource, template.sourceFormat),
           highlightTemplateSource(template.textSource, "text"),
@@ -218,7 +254,11 @@ export function createAdminTemplatesController(db: Db, user: User) {
           ]),
         );
         const rendered = await renderTemplate(template, {
-          subscriber: { email: "reader@example.com", firstName: "Jane", lastName: "Doe" },
+          subscriber: {
+            email: "reader@example.com",
+            firstName: "Jane",
+            lastName: "Doe",
+          },
           campaign: { subject: "Template preview" },
           list: { name: "Example Newsletter", slug: "example" },
           links: { unsubscribe: "#unsubscribe", preferences: "#preferences" },

@@ -25,12 +25,18 @@ test("native inbound routes keep thread access scoped to assigned campaigns", as
   const db = createTestDb();
   const member = db
     .insert(schema.users)
-    .values({ email: "member@example.com", passwordHash: "hash", role: "member" })
+    .values({
+      email: "member@example.com",
+      passwordHash: "hash",
+      role: "member",
+    })
     .returning()
     .get();
   const allowed = seedList(db, { slug: "allowed" });
   const denied = seedList(db, { slug: "denied" });
-  db.insert(schema.userLists).values({ userId: member.id, listId: allowed.id }).run();
+  db.insert(schema.userLists)
+    .values({ userId: member.id, listId: allowed.id })
+    .run();
   const first = db
     .insert(schema.campaigns)
     .values({
@@ -93,8 +99,15 @@ test("native inbound routes keep thread access scoped to assigned campaigns", as
   const thread = await app.request(`/admin/inbound/${message.id}`, { headers });
   expect(thread.status).toBe(200);
   expect(await thread.text()).toContain("A reply");
-  expect((await app.request(`/admin/inbound/${hidden.id}`, { headers })).status).toBe(403);
   expect(
-    (await app.request(`/admin/inbound/${hidden.id}/delete`, { method: "POST", headers })).status,
+    (await app.request(`/admin/inbound/${hidden.id}`, { headers })).status,
+  ).toBe(403);
+  expect(
+    (
+      await app.request(`/admin/inbound/${hidden.id}/delete`, {
+        method: "POST",
+        headers,
+      })
+    ).status,
   ).toBe(403);
 });

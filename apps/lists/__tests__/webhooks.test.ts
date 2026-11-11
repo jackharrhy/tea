@@ -170,7 +170,10 @@ describe("POST /webhooks/ses - Delivery lifecycle", () => {
   test("accepts the text/plain JSON body sent by SNS", async () => {
     const db = createTestDb();
     const app = makeApp(db);
-    const response = await postSesAsSns(app, makeLifecycleBody("Send", "ses-text-body"));
+    const response = await postSesAsSns(
+      app,
+      makeLifecycleBody("Send", "ses-text-body"),
+    );
 
     expect(response.status).toBe(200);
     expect(db.select().from(schema.deliveryEvents).all()).toHaveLength(1);

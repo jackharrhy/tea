@@ -1,13 +1,21 @@
 import { createRouter } from "remix/router";
 import { staticFiles } from "remix/middleware/static";
-import { PROJECT_ROLES_SCOPE, projectAudienceScope, roleScope } from "@tea/identity";
+import {
+  PROJECT_ROLES_SCOPE,
+  projectAudienceScope,
+  roleScope,
+} from "@tea/identity";
 
 import type { Config } from "../src/config.ts";
 import { OPERATION_SCOPES } from "../src/services/central-scopes.ts";
 
 export function createMainRouter(config: Config) {
   const router = createRouter();
-  router.get("/", () => new Response(null, { status: 302, headers: { Location: "/subscribe" } }));
+  router.get(
+    "/",
+    () =>
+      new Response(null, { status: 302, headers: { Location: "/subscribe" } }),
+  );
   router.get("/health", () => Response.json({ ok: true }));
   if (config.identity) {
     const { projectId, issuer } = config.identity;

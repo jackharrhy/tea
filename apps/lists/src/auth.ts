@@ -5,7 +5,11 @@ import { hashToken } from "./services/api-tokens";
 
 type SessionData = { userId: number; expiry: number };
 
-export function createSession(db: Db, userId: number, centralExpiresAt?: number): string {
+export function createSession(
+  db: Db,
+  userId: number,
+  centralExpiresAt?: number,
+): string {
   const token = crypto.randomUUID();
   const expiry = Math.min(
     Date.now() + 24 * 60 * 60 * 1000,
@@ -45,22 +49,38 @@ function getValidSession(db: Db, token: string): SessionData | null {
 export function getSessionUser(db: Db, token: string | undefined) {
   const session = token ? getValidSession(db, token) : null;
   return session
-    ? (db.select().from(schema.users).where(eq(schema.users.id, session.userId)).get() ?? null)
+    ? (db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.id, session.userId))
+        .get() ?? null)
     : null;
 }
 
-export function canAccessList(db: Db, user: { id: number; role: string }, listId: number): boolean {
+export function canAccessList(
+  db: Db,
+  user: { id: number; role: string },
+  listId: number,
+): boolean {
   if (user.role === "owner" || user.role === "admin") return true;
   const access = db
     .select()
     .from(schema.userLists)
-    .where(and(eq(schema.userLists.userId, user.id), eq(schema.userLists.listId, listId)))
+    .where(
+      and(
+        eq(schema.userLists.userId, user.id),
+        eq(schema.userLists.listId, listId),
+      ),
+    )
     .get();
 
   return Boolean(access);
 }
 
-export function getAccessibleListIds(db: Db, user: { id: number; role: string }): "all" | number[] {
+export function getAccessibleListIds(
+  db: Db,
+  user: { id: number; role: string },
+): "all" | number[] {
   if (user.role === "owner" || user.role === "admin") return "all";
 
   const rows = db
@@ -76,5 +96,9 @@ export function getAccessibleLists(db: Db, user: { id: number; role: string }) {
   const listIds = getAccessibleListIds(db, user);
   if (listIds === "all") return db.select().from(schema.lists).all();
   if (listIds.length === 0) return [];
-  return db.select().from(schema.lists).where(inArray(schema.lists.id, listIds)).all();
+  return db
+    .select()
+    .from(schema.lists)
+    .where(inArray(schema.lists.id, listIds))
+    .all();
 }
