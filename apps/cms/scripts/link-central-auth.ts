@@ -6,8 +6,7 @@ type Link = { id: number; subject: string };
 type Manifest = { operator: Link[]; sites: Record<string, Link[]> };
 
 function links(value: unknown): Link[] {
-  if (!Array.isArray(value) || value.length === 0)
-    throw new Error("Every target needs reviewed links");
+  if (!Array.isArray(value)) throw new Error("Invalid reviewed links");
   const ids = new Set<number>();
   const subjects = new Set<string>();
   return value.map((row) => {
@@ -29,7 +28,7 @@ function links(value: unknown): Link[] {
   });
 }
 
-function manifest(value: unknown): Manifest {
+export function parseReviewedManifest(value: unknown): Manifest {
   if (!value || typeof value !== "object") throw new Error("Invalid manifest");
   const root = value as Record<string, unknown>;
   if (
@@ -45,7 +44,9 @@ function manifest(value: unknown): Manifest {
     }),
   );
   if (!Object.keys(sites).length) throw new Error("Site links are required");
-  return { operator: links(root.operator), sites };
+  const operator = links(root.operator);
+  if (!operator.length) throw new Error("An operator link is required");
+  return { operator, sites };
 }
 
 function check(database: DatabaseSync, rows: Link[]) {
@@ -121,7 +122,9 @@ if (
     );
   if (statSync(input).mode & 0o077)
     throw new Error("The reviewed manifest must be private (mode 0600)");
-  const reviewed = manifest(JSON.parse(readFileSync(input, "utf8")));
+  const reviewed = parseReviewedManifest(
+    JSON.parse(readFileSync(input, "utf8")),
+  );
   const root = resolve(process.env.TEA_DATA_DIR ?? "data");
   const targets = [
     {

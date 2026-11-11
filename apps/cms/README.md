@@ -32,8 +32,11 @@ Host tests and fixtures live in `__tests__/`; feature tests live in `__tests__/`
 ## Central Auth transition
 
 The existing operator and site password logins stay active until the operator
-and both editors have reviewed Central Auth subject links and live browser
-acceptance. Set `TEA_AUTH_ISSUER`, `TEA_AUTH_PROJECT_ID`,
+has a reviewed Central Auth subject link and live browser/editor acceptance.
+The first Central cutover can link only the operator: the existing one-use,
+site-bound tickets still let the operator enter both editors. Direct site
+login stays unavailable until each editor has an explicit reviewed link. Set
+`TEA_AUTH_ISSUER`, `TEA_AUTH_PROJECT_ID`,
 `TEA_AUTH_ORGANIZATION_ID`, and the three public client IDs
 `TEA_AUTH_OPERATOR_CLIENT_ID`, `TEA_AUTH_ANDREW_CLIENT_ID`, and
 `TEA_AUTH_LUKE_CLIENT_ID` together to enable Central mode. The exact callbacks
@@ -55,9 +58,10 @@ owners, not this repository.
 
 With the CMS stopped and backed up, apply a private mode-0600 reviewed link
 manifest of `{ "operator": [{ "id": 1, "subject": "..." }], "sites": {
-"andrew": [{ "id": 1, "subject": "..." }], "luke": [{ "id": 1,
-"subject": "..." }] } }`. Use the actual reviewed local IDs; the example IDs
-are placeholders. First run `npm run link:central-auth --workspace @tea/cms --
+"andrew": [], "luke": [] } }` for the initial operator-only cutover. Add
+site links only after the corresponding local IDs and Central subjects are
+reviewed. Use the actual reviewed local IDs; the example operator ID is a
+placeholder. First run `npm run link:central-auth --workspace @tea/cms --
 /private/links.json` to validate every target without changing links, then
 repeat with `--apply`. The command rejects unknown IDs, conflicting links,
 duplicate subjects within a database, missing schema migrations, and missing
