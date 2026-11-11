@@ -19,6 +19,7 @@ export interface AdminIssue extends Issue {
 
 interface SteveInboxPageProps {
   centralAuth?: boolean;
+  canManageSite?: boolean;
   issues?: AdminIssue[];
   letters: Letter[];
   setupRequired?: boolean;
@@ -31,6 +32,7 @@ export function SteveInboxPage(handle: Handle<SteveInboxPageProps>) {
       issues = [],
       letters,
       centralAuth = false,
+      canManageSite = true,
       setupRequired = false,
       siteEnabled = true,
     } = handle.props;
@@ -66,7 +68,10 @@ export function SteveInboxPage(handle: Handle<SteveInboxPageProps>) {
               </section>
             ) : (
               <>
-                <SiteAvailability enabled={siteEnabled} />
+                <SiteAvailability
+                  enabled={siteEnabled}
+                  canManage={canManageSite}
+                />
 
                 <IssueSection issues={drafts} title="drafts" />
 
@@ -112,7 +117,9 @@ export function SteveInboxPage(handle: Handle<SteveInboxPageProps>) {
   };
 }
 
-function SiteAvailability(handle: Handle<{ enabled: boolean }>) {
+function SiteAvailability(
+  handle: Handle<{ enabled: boolean; canManage: boolean }>,
+) {
   return () => {
     let { enabled } = handle.props;
 
@@ -126,22 +133,24 @@ function SiteAvailability(handle: Handle<{ enabled: boolean }>) {
           <h2 id="site-availability-title">public site</h2>
           <p>{enabled ? "letters are open." : "only Steve is visible."}</p>
         </div>
-        <form action={routes.steve.updateSite.href()} method="post">
-          <button
-            type="submit"
-            className="site-switch"
-            role="switch"
-            aria-checked={enabled ? "true" : "false"}
-            aria-label={`Turn the public site ${enabled ? "off" : "on"}`}
-            name="enabled"
-            value={enabled ? "off" : "on"}
-          >
-            <span className="site-switch-track" aria-hidden="true">
-              <span />
-            </span>
-            <span>{enabled ? "on" : "off"}</span>
-          </button>
-        </form>
+        {handle.props.canManage ? (
+          <form action={routes.steve.updateSite.href()} method="post">
+            <button
+              type="submit"
+              className="site-switch"
+              role="switch"
+              aria-checked={enabled ? "true" : "false"}
+              aria-label={`Turn the public site ${enabled ? "off" : "on"}`}
+              name="enabled"
+              value={enabled ? "off" : "on"}
+            >
+              <span className="site-switch-track" aria-hidden="true">
+                <span />
+              </span>
+              <span>{enabled ? "on" : "off"}</span>
+            </button>
+          </form>
+        ) : null}
       </section>
     );
   };

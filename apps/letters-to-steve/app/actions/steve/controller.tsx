@@ -106,6 +106,7 @@ export default createController(routes.steve, {
       return context.render(
         <SteveInboxPage
           centralAuth={centralAuthConfig() !== null}
+          canManageSite={access === "admin"}
           issues={adminIssues}
           letters={allLetters}
           siteEnabled={siteEnabled}
@@ -120,6 +121,7 @@ export default createController(routes.steve, {
       let rejection = await requireSteveAction(
         context.request,
         context.get(databaseContext),
+        true,
       );
       if (rejection) return rejection;
 
@@ -521,12 +523,17 @@ function editorialConflictResponse(error: unknown): Response {
 async function requireSteveAction(
   request: Request,
   database: SqliteDatabase,
+  adminOnly = false,
 ): Promise<Response | null> {
   let access = await getSteveAccess(request, database);
   if (access === "unconfigured") {
     return new Response("Admin password is not configured.", { status: 503 });
   }
   if (access === "unauthorized") return challengeSteve();
+  if (adminOnly && access !== "admin")
+    return new Response("Site administration requires an admin grant.", {
+      status: 403,
+    });
 
   let origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) {

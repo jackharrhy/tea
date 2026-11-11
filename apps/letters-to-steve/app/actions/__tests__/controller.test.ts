@@ -12,14 +12,15 @@ import { createAppRouter } from "../../router.ts";
 import { routes } from "../../routes.ts";
 
 describe("editorial letter routes", () => {
-  it("allows only the mapped central owner session to read and edit the inbox", async () => {
+  it("separates the reviewed recipient inbox from site administration", async () => {
     const config = {
       AUTH_ISSUER: "https://auth.example.test",
       AUTH_CLIENT_ID: "letters-web",
       AUTH_PROJECT_ID: "letters-project",
       AUTH_ORGANIZATION_ID: "letters-org",
       AUTH_PUBLIC_ORIGIN: "https://steve-letter-writ.ing",
-      AUTH_OWNER_SUBJECT: "owner-subject",
+      AUTH_ADMIN_SUBJECT: "owner-subject",
+      AUTH_RECIPIENT_SUBJECT: "recipient-subject",
     };
     const previous = Object.fromEntries(
       Object.keys(config).map((key) => [key, process.env[key]]),
@@ -40,6 +41,12 @@ describe("editorial letter routes", () => {
         "owner-subject",
         expiredAt,
       );
+      const recipient = await createSteveSession(
+        database,
+        "recipient-subject",
+        expiredAt,
+      );
+      const recipientCookie = sessionCookie(recipient, 3600).split(";")[0];
       const headers = { Cookie: sessionCookie(owner, 3600).split(";")[0] };
       assert.equal(
         (await router.fetch(request(routes.steve.index.href()))).status,
@@ -68,6 +75,21 @@ describe("editorial letter routes", () => {
           .status,
         200,
       );
+      const recipientPage = await router.fetch(
+        request(routes.steve.index.href(), {
+          headers: { Cookie: recipientCookie },
+        }),
+      );
+      assert.equal(recipientPage.status, 200);
+      assert.doesNotMatch(await recipientPage.text(), /name="enabled"/);
+      const deniedSetting = await router.fetch(
+        request(routes.steve.updateSite.href(), {
+          method: "POST",
+          headers: { Cookie: recipientCookie, Origin: "http://letters.test" },
+          body: new URLSearchParams({ enabled: "on" }),
+        }),
+      );
+      assert.equal(deniedSetting.status, 403);
       const logout = await router.fetch(
         request(routes.auth.logout.href(), {
           method: "POST",

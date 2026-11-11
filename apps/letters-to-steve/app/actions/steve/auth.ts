@@ -5,12 +5,13 @@ import type { SqliteDatabase } from "remix/data-table/sqlite";
 
 import { steveSessions } from "../../data/schema.ts";
 
-export type SteveAccess = "authorized" | "unauthorized" | "unconfigured";
+export type SteveAccess = "admin" | "member" | "unauthorized" | "unconfigured";
 
 export function centralAuthConfig(): {
   identity: IdentityConfig;
   origin: string;
-  ownerSubject: string;
+  adminSubject: string;
+  recipientSubject: string;
 } | null {
   const issuer = process.env.AUTH_ISSUER;
   if (!issuer) return null;
@@ -18,8 +19,17 @@ export function centralAuthConfig(): {
   const projectId = process.env.AUTH_PROJECT_ID;
   const organizationId = process.env.AUTH_ORGANIZATION_ID;
   const origin = process.env.AUTH_PUBLIC_ORIGIN;
-  const ownerSubject = process.env.AUTH_OWNER_SUBJECT;
-  if (!clientId || !projectId || !organizationId || !origin || !ownerSubject)
+  const adminSubject = process.env.AUTH_ADMIN_SUBJECT;
+  const recipientSubject = process.env.AUTH_RECIPIENT_SUBJECT;
+  if (
+    !clientId ||
+    !projectId ||
+    !organizationId ||
+    !origin ||
+    !adminSubject ||
+    !recipientSubject ||
+    adminSubject === recipientSubject
+  )
     throw new Error("Central authentication is incomplete");
   const url = new URL(origin);
   if (
@@ -32,7 +42,8 @@ export function centralAuthConfig(): {
   return {
     identity: { issuer, clientId, projectId, organizationId },
     origin: url.origin,
-    ownerSubject,
+    adminSubject,
+    recipientSubject,
   };
 }
 
@@ -90,10 +101,10 @@ export async function getSteveAccess(
     const session = await database.findOne(steveSessions, {
       where: { token_hash: tokenHash(token) },
     });
-    return session?.subject === central.ownerSubject &&
-      session.expires_at > Date.now()
-      ? "authorized"
-      : "unauthorized";
+    if (!session || session.expires_at <= Date.now()) return "unauthorized";
+    if (session.subject === central.adminSubject) return "admin";
+    if (session.subject === central.recipientSubject) return "member";
+    return "unauthorized";
   }
 
   const expectedPassword = process.env.STEVE_ADMIN_PASSWORD;
@@ -115,7 +126,7 @@ export async function getSteveAccess(
   return username === "steve" &&
     actualBytes.length === expectedBytes.length &&
     timingSafeEqual(actualBytes, expectedBytes)
-    ? "authorized"
+    ? "admin"
     : "unauthorized";
 }
 

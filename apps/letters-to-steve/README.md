@@ -16,10 +16,13 @@ Run `npm run letters-to-steve:check` for Tea formatting, lint, typecheck, and se
 
 The Central Auth migration adds `/auth/login`, `/auth/callback`, and `/auth/logout`.
 Set `AUTH_ISSUER`, `AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`,
-`AUTH_ORGANIZATION_ID`, `AUTH_PUBLIC_ORIGIN`, and an explicitly reviewed
-`AUTH_OWNER_SUBJECT` together. The callback is
+`AUTH_ORGANIZATION_ID`, `AUTH_PUBLIC_ORIGIN`, and explicitly reviewed
+`AUTH_ADMIN_SUBJECT` and `AUTH_RECIPIENT_SUBJECT` together. The callback is
 `https://steve-letter-writ.ing/auth/callback`. The signed Central Auth ID token
-must resolve to that subject with this app's admin grant. A successful login
+must resolve to one of those subjects with its matching admin or member grant.
+The recipient can read letters, compose and publish replies, and manage the
+inbox; only the administrator can change whether the public site is open.
+A successful login
 creates a one-hour opaque session in the existing SQLite database; sign-out
 deletes it. Central mode never accepts the old Basic credential. The Basic
 password remains the current deployment path until the dedicated Auth client,

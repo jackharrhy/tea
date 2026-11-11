@@ -8,7 +8,7 @@ exact registered callback. Apps keep short-lived, revocable local sessions.
 <!-- prettier-ignore -->
 | App | Current credential | Central boundary | Local authorization to preserve |
 | --- | --- | --- | --- |
-| Letters to Steve | Shared Basic password | Public PKCE browser client at `steve-letter-writ.ing/auth/callback` | One reviewed owner subject with app admin role; private inbox and attachments |
+| Letters to Steve | Shared Basic password | Public PKCE browser client at `steve-letter-writ.ing/auth/callback` | Reviewed Jack admin and Steve recipient subjects; both can work in the inbox, only admin can change site availability |
 | Ref | Shared password | Public PKCE browser client at `ref.jackharrhy.dev/auth/callback` | Every approved member can use the existing shared boards; board and asset IDs stay stable |
 | Radio | Shared password | Public PKCE browser client at `radio.jackharrhy.dev/auth/callback` | Every approved member can use the existing shared rooms; chosen display name is cosmetic |
 | Marky | Discord guild OAuth | Public PKCE browser client at `md.jackharrhy.dev/auth/callback` | Explicit Central Auth membership grants replace the live guild check; Markdown and Yjs state stay stable |

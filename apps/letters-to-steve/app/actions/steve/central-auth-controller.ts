@@ -85,10 +85,12 @@ export default createController(routes.auth, {
           transaction,
           `${config.origin}${routes.auth.callback.href()}`,
         );
-        if (
-          profile.subject !== config.ownerSubject ||
-          !profile.roles.has("admin")
-        )
+        const admin =
+          profile.subject === config.adminSubject && profile.roles.has("admin");
+        const recipient =
+          profile.subject === config.recipientSubject &&
+          profile.roles.has("member");
+        if (!admin && !recipient)
           return new Response("Steve access has not been assigned", {
             status: 403,
             headers: response.headers,
