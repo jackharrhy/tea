@@ -1,0 +1,12 @@
+{
+  "events": [
+    {
+      "t": 0.1,
+      "type": "drag",
+      "key": "text-selection",
+      "dx": 70,
+      "dy": -95,
+      "dur": 0.6
+    }
+  ]
+}

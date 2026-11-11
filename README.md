@@ -1,6 +1,6 @@
 # Harrhy
 
-A Remix 3 monorepo for personal apps and packages.
+A monorepo for personal apps and packages: Remix 3 web apps and native tools.
 
 [WORLD_IDEA.md](WORLD_IDEA.md) records the direction for a future shared world built from Burger, Gurgur, Pool, and Worldview.
 [WORLD_CINEMA_IDEA.md](WORLD_CINEMA_IDEA.md) explores an access-controlled cinema room within that world.
@@ -21,6 +21,7 @@ A Remix 3 monorepo for personal apps and packages.
 | [`@harrhy/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
 | [`@harrhy/garden`](apps/garden/) | Obsidian-backed personal website and publishing tools | [README](apps/garden/README.md) |
 | [`@harrhy/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server | [README](apps/gurgur/README.md) |
+| [`@harrhy/img`](apps/img/) | Native Rust/Rune image and GIF operation editor | [README](apps/img/README.md) |
 | [`@harrhy/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
 | [`@harrhy/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail | [README](apps/lists/README.md) |
 | [`@harrhy/worldview`](apps/worldview/) | Worldview BSP viewer and map editor | [README](apps/worldview/README.md) |
@@ -66,6 +67,8 @@ Use Node.js 26 LTS (`.nvmrc` and `mise.toml`; minimum 26.13.0) for monorepo deve
 ```sh
 npm ci
 ```
+
+The native Img app additionally needs Rust and platform build prerequisites; see [its guide](apps/img/README.md). `npm run img:dev` starts it and `npm run img:check` checks it.
 
 Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @harrhy/cms` starts CMS. Run `npm run` for root scripts, including `npm run artbin:check`, `npm run cms:check`, `npm run letters-to-steve:check`, `npm run ref:check`, `npm run radio:check`, and `npm run worldview:check`. Each workspace README has its own setup and checks.
 

@@ -46,7 +46,9 @@
     "tooling:check": "npm run tooling:build && node scripts/tooling/ensure-worker-types.mjs && node scripts/tooling/tsrslint.mjs check",
     "artbin:check": "npm run tooling:check && npm run check --workspace @harrhy/artbin-core && npm run check --workspace @harrhy/artbin-ui && npm run build --workspace @harrhy/worldview-renderer && npm run check --workspace @harrhy/artbin-app && npm run check --workspace @harrhy/artbin",
     "artbin:dev": "npm run dev --workspace @harrhy/artbin-app",
-    "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace @harrhy/artbin"
+    "artbin-cli:release-check": "npm run artbin:check && npm run build --workspace @harrhy/artbin",
+    "img:dev": "npm run dev --workspace @harrhy/img --",
+    "img:check": "npm run check --workspace @harrhy/img"
   },
   "devDependencies": {
     "@maschwenk/tsrslint": "0.1.6",

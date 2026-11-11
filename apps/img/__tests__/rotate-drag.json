@@ -1,0 +1,12 @@
+{
+  "events": [
+    {
+      "t": 0.1,
+      "type": "drag",
+      "key": "spatial-rotate",
+      "dx": 65,
+      "dy": 40,
+      "dur": 0.6
+    }
+  ]
+}
