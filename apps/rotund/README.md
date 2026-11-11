@@ -1,6 +1,6 @@
 # Rotund
 
-Rotund is the small Remix 3 service directory at `https://rotund.org`. It keeps the original face and compact page. `server.ts` validates configuration and starts the Node server on port 80. `app/routes.ts` defines routes, `app/router.ts` installs session, static-file and render middleware, `app/actions/` handles pages and auth, and `app/services.ts` filters the catalogue. The face and favicon live in `public/`.
+Rotund is the small Remix 3 service directory at `https://rotund.org`. It keeps the original face and compact page. `server.ts` validates configuration and starts the Node server on port 80. `app/routes.ts` defines routes, `app/router.ts` installs session, static-file and render middleware, `app/actions/` handles pages and auth, and `app/services.ts` filters the catalogue. The face and favicon live in `public/`; the build copies them into `dist/public/` beside the compiled server.
 
 ## Configuration
 
@@ -18,4 +18,4 @@ Jellyfin retains its native login. Navidrome has its own existing Jack Auth enti
 
 ## Checks
 
-Run `npm run rotund:check`, `npm run build --workspace @harrhy/rotund`, and `npm run test --workspace @harrhy/rotund`. Tests live in `__tests__/`. Run `npx remix doctor --strict` in this workspace after structural changes. Verify anonymous, owner, restricted and no-grant behaviour against a disposable issuer fixture before rollout. The production switch and any protected binding values are managed outside this repository.
+Run `npm run rotund:check`, `npm run build --workspace @harrhy/rotund`, and `npm run test --workspace @harrhy/rotund`. Tests live in `__tests__/`. Build the Dockerfile and run `node scripts/ci/node-image-smoke.mjs rotund <image>` to check the compiled HTTP server and both original image hashes; CI runs this smoke on app changes. Run `npx remix doctor --strict` in this workspace after structural changes. Verify anonymous, owner, restricted and no-grant behaviour against a disposable issuer fixture before rollout. The production switch and any protected binding values are managed outside this repository.

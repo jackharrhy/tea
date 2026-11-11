@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts",
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-public.mjs",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test __tests__/*.test.ts",

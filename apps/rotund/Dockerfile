@@ -15,7 +15,6 @@ ENV NODE_ENV=production PORT=80
 WORKDIR /app
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/rotund/dist ./apps/rotund/dist
-COPY --chown=node:node apps/rotund/public ./apps/rotund/public
 COPY --chown=node:node apps/rotund/package.json ./apps/rotund/package.json
 WORKDIR /app/apps/rotund
 USER node

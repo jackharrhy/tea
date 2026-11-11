@@ -9,6 +9,7 @@ The deployed Node apps use prebuilt `platformatic/node-caged:26-slim` in both st
 | `artbin` | Node + `remix/node-tsx`, better-sqlite3, sharp, Chromium | `tea-artbin`, Newport |
 | `letters-to-steve` | `npm start` → Node + `remix/node-tsx`, built-in SQLite, sharp | `tea-letters-to-steve`, Newport |
 | `marky` | `npm start` → Node + `remix/node-tsx`, filesystem/Git/WebSocket | `tea-marky`, Newport |
+| `rotund` | Node + Remix, static face and favicon | `harrhy-rotund`, Newport |
 | `maps-service` | Node, built-in SQLite | `tea-maps-service`, Newport |
 | `maps-compiler` | Node; external native executables are not bundled | `tea-maps-compiler`, Newport (including Gower instance) |
 | `maps` | Celld Worker; Node builds/deploys it | `tea-maps`; unchanged |
@@ -36,4 +37,4 @@ node scripts/ci/node-image-smoke.mjs maps-compiler tea-smoke gower
 
 The smoke starts the real image command with no host mounts, ports or network, then checks Node 26, pointer compression, UID, loader startup, HTTP/auth boundaries and applicable migrated databases/native bindings. Disposable container layers are removed even on assertion failure. Compiler checks deliberately assert unconfigured health/compile responses: they do not call production toolchains, OAuth, game launches or remote services.
 
-The repository-owned Node images workflow builds each of these six images serially on runtime/Docker dependency changes or manual dispatch. It never logs into a registry or publishes. The existing affected-workspace checks and publisher selectors, matrices, wrappers, migrations and tag rules remain separate and unchanged.
+The repository-owned Node images workflow builds these seven images serially on runtime/Docker dependency changes or manual dispatch. The Rotund smoke reaches its actual compiled server over HTTP and checks the original face and favicon byte hashes. It never logs into a registry or publishes. The existing affected-workspace checks and publisher selectors, matrices, wrappers, migrations and tag rules remain separate and unchanged.

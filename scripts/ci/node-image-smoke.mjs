@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 
-// Uses only a disposable container layer: no host ports, mounts or network.
+// Uses only a disposable container layer, with no host ports or mounts.
 const [app, image] = process.argv.slice(2);
 const configs = {
   cms: {
@@ -50,6 +50,34 @@ const configs = {
       ["/compile", 503, {}, "POST"],
     ],
   },
+  rotund: {
+    port: 80,
+    env: [
+      "AUTH_CLIENT_ID=container-smoke-client",
+      "AUTH_CLIENT_SECRET=container-smoke-secret",
+      "AUTH_SCOPES=openid profile",
+      "AUTH_ORGANIZATION_ID=container-smoke-organization",
+      'SERVICE_BINDINGS=[{"id":"jellyfin","projectId":"fixture","requiredAnyRole":["member"]},{"id":"sonarr","projectId":"fixture","requiredAnyRole":["admin"]},{"id":"radarr","projectId":"fixture","requiredAnyRole":["admin"]},{"id":"prowlarr","projectId":"fixture","requiredAnyRole":["admin"]},{"id":"qbittorrent","projectId":"fixture","requiredAnyRole":["admin"]}]',
+      "SESSION_SECRET=container-smoke-secret-at-least-32-chars",
+    ],
+    paths: [
+      ["/health", 200],
+      [
+        "/rotund.png",
+        200,
+        {},
+        "GET",
+        "03f4721df40704325979ac433dc1f5c64f7a65e17b62296d1991b35d2c3d3052",
+      ],
+      [
+        "/favicon.png",
+        200,
+        {},
+        "GET",
+        "03f4721df40704325979ac433dc1f5c64f7a65e17b62296d1991b35d2c3d3052",
+      ],
+    ],
+  },
 };
 assert.ok(
   configs[app] && image,
@@ -87,24 +115,25 @@ const id = docker(
   "run",
   "-d",
   "--network",
-  "none",
+  app === "rotund" ? "bridge" : "none",
   ...config.env.flatMap((value) => ["-e", value]),
   image,
 ).trim();
 try {
   const requestCheck = `
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { request } from 'node:http';
 const paths = ${JSON.stringify(config.paths)};
-for (const [path, status, headers = {}, method = 'GET'] of paths) {
+for (const [path, status, headers = {}, method = 'GET', sha256] of paths) {
   let response;
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
       response = await new Promise((resolve, reject) => {
         const req = request('http://127.0.0.1:${config.port}' + path, {headers, method}, async res => {
-          let body = '';
-          for await (const chunk of res) body += chunk;
-          resolve({status: res.statusCode, body});
+          const chunks = [];
+          for await (const chunk of res) chunks.push(chunk);
+          resolve({status: res.statusCode, body: Buffer.concat(chunks)});
         });
         req.on('error', reject);
         req.end();
@@ -112,7 +141,8 @@ for (const [path, status, headers = {}, method = 'GET'] of paths) {
       break;
     } catch (error) { if (attempt === 59) throw error; await new Promise(resolve => setTimeout(resolve, 500)); }
   }
-  assert.equal(response.status, status, path + ': ' + response.body);
+  assert.equal(response.status, status, path + ': ' + response.body.toString());
+  if (sha256) assert.equal(createHash('sha256').update(response.body).digest('hex'), sha256, path);
   console.log(method + ' ' + path + ' ' + status);
 }
 `;
