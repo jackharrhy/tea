@@ -15,18 +15,32 @@ names stay installable while consumers move to the new names.
 
 ## First publication
 
-The maintainer must configure a trusted publisher separately for each new npm
-package. Use GitHub Actions, GitHub owner `jackharrhy`, repository `harrhy`,
-workflow filename `publish-npm.yml`, no environment, and allow direct
-`npm publish`. Do this after the repository rename and the workflow are on
-`main`. npm requires a new trusted publisher to complete its first successful
-publish within two days.
+npm requires a package to exist before a trusted publisher can be configured.
+After the repository rename and the source is on `main`, an `@harrhy` npm
+maintainer with an authenticated npm CLI must publish each new package once:
 
-Run the **Publish npm package** workflow manually on `main`, selecting one
-package at a time. It installs from the lockfile, runs repository tooling and
-the workspace check, builds and inspects the package, then publishes with npm
-OIDC and provenance. It has no npm token or automatic main-push trigger.
-Check the resulting registry package and a clean install before directing new
+```sh
+npm run check --workspace @harrhy/worldview-renderer
+npm run build --workspace @harrhy/worldview-renderer
+npm publish --workspace @harrhy/worldview-renderer --access public
+
+npm run check --workspace @harrhy/artbin
+npm run build --workspace @harrhy/artbin
+npm publish --workspace @harrhy/artbin --access public
+```
+
+Then configure a trusted publisher separately in each npm package's settings:
+GitHub Actions, owner `jackharrhy`, repository `harrhy`, workflow filename
+`publish-npm.yml`, no environment, with direct `npm publish` allowed. A new
+trusted publisher must complete its first successful publish within two days,
+so configure it when the next package version is ready. The already published
+version cannot be published again.
+
+For later versions, run the **Publish npm package** workflow manually on `main`,
+selecting one package at a time. It installs from the lockfile, runs repository
+tooling and the workspace check, builds and inspects the package, then publishes
+with npm OIDC and provenance. It has no npm token or automatic main-push
+trigger. Check the registry package and a clean install before directing new
 consumers to it. Keep the existing `@jackharrhy/tea-*` releases available; any
 deprecation notice should follow verified replacement installs.
 
