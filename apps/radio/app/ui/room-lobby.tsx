@@ -12,19 +12,12 @@ export function RoomLobby(
   handle: Handle<{
     rooms: RoomRecord[];
     identity: RadioIdentity | null;
-    authMode?: "password" | "central";
     selectedRoom: string;
     message?: string;
   }>,
 ) {
   return () => {
-    let {
-      rooms,
-      identity,
-      selectedRoom,
-      message,
-      authMode = "password",
-    } = handle.props;
+    let { rooms, identity, selectedRoom, message } = handle.props;
     return (
       <section mix={[desktopStyle.window, roomLobbyStyle.window]}>
         <RadioHeader />
@@ -64,7 +57,7 @@ export function RoomLobby(
               ))}
             </form>
 
-            {identity || authMode === "password" ? (
+            {identity ? (
               <form
                 method="post"
                 action={routes.join.href()}
@@ -83,18 +76,6 @@ export function RoomLobby(
                   maxlength={40}
                   required={true}
                 />
-                {!identity && authMode === "password" ? (
-                  <input
-                    mix={desktopStyle.input}
-                    name="password"
-                    type="password"
-                    autocomplete="current-password"
-                    aria-label="Password"
-                    placeholder="password"
-                    maxlength={256}
-                    required={true}
-                  />
-                ) : null}
                 <button
                   mix={[desktopStyle.primaryButton, roomLobbyStyle.joinButton]}
                   type="submit"
@@ -103,7 +84,7 @@ export function RoomLobby(
                 </button>
               </form>
             ) : null}
-            {!identity && authMode === "central" ? (
+            {!identity ? (
               <a
                 href={routes.auth.login.href()}
                 mix={desktopStyle.primaryButton}

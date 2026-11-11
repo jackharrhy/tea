@@ -8,11 +8,7 @@ import {
   roomPath,
 } from "../data/room-id.ts";
 import { RadioRuntime } from "../data/radio-runtime.ts";
-import {
-  AccessConfig,
-  passwordMatches,
-  RadioAccess,
-} from "../middleware/access.ts";
+import { RadioAccess } from "../middleware/access.ts";
 import { routes } from "../routes.ts";
 import { LobbyPage } from "./lobby-page.tsx";
 
@@ -28,7 +24,6 @@ export default createController(routes, {
         : (rooms[0]?.slug ?? DEFAULT_ROOM_SLUG);
       return context.render(
         <LobbyPage
-          authMode={context.get(AccessConfig)!.mode}
           rooms={rooms}
           identity={context.get(RadioAccess) ?? null}
           selectedRoom={selectedRoom}
@@ -42,7 +37,6 @@ export default createController(routes, {
       let roomSlug = normalizeRoomSlug(String(form.get("roomSlug") ?? ""));
       let runtime = context.get(RadioRuntime)!;
       let currentIdentity = context.get(RadioAccess) ?? null;
-      let config = context.get(AccessConfig)!;
       if (
         !name ||
         name.length > 40 ||
@@ -55,30 +49,9 @@ export default createController(routes, {
           roomSlug,
         );
       }
-      if (!currentIdentity && config.mode === "central")
-        return redirect(routes.auth.login.href(), 303);
-      if (
-        !currentIdentity &&
-        config.mode === "password" &&
-        !(await passwordMatches(
-          String(form.get("password") ?? ""),
-          config.password,
-        ))
-      ) {
-        return lobbyError(
-          context.get(Session)!,
-          "That password does not match.",
-          roomSlug,
-        );
-      }
+      if (!currentIdentity) return redirect(routes.auth.login.href(), 303);
       let session = context.get(Session)!;
-      if (!currentIdentity) session.regenerateId();
-      session.set("authenticated", true);
       session.set("name", name);
-      session.set(
-        "authenticatedAt",
-        currentIdentity?.authenticatedAt ?? Date.now(),
-      );
       return redirect(roomPath(roomSlug), 303);
     },
     logout(context) {

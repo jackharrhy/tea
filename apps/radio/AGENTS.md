@@ -47,7 +47,7 @@ Keep an inspection-only clone at `./.upstream/beatsync`. That directory is ignor
 - `app/data/radio-room-store.ts` owns the per-room SQLite schema and persistence operations.
 - `app/data/room-directory-cell.ts` owns the persistent public room directory.
 - `app/data/` owns the shared protocol, room identity, and timing policy.
-- `app/middleware/access.ts` owns the shared-password session and access boundaries.
+- `app/middleware/access.ts` owns the subject-bound Central session and access boundaries.
 - `app/ui/` owns shared server UI and cross-route visual primitives.
 
 Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` only when a nested route map needs its own actions or middleware. Do not create generic `app/lib/` or `app/components/` buckets.
@@ -76,11 +76,11 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
 - `dist/client/` contains ignored, generated browser assets.
 - Each room has isolated SQLite state and hibernatable WebSockets in one named cell.
 - Uploaded audio lives in the `TRACKS` R2-compatible binding, not a filesystem.
-- The public lobby lists rooms. A signed 30-day application session protects room pages,
+- The public lobby lists rooms. A signed application session lasting at most one hour protects room pages,
   WebSockets, uploads, and room mutations. Listener names come from that trusted session rather
   than WebSocket messages.
-- Authentication currently uses one shared application password. There are no individual users,
-  room owners, or room-level permissions; every password holder can create and mutate every room.
+- Central Auth admits eligible members on first Join. There are no room owners or room-level
+  permissions; every signed-in member can create and mutate every room.
 - The approved production boundary is one Celld runtime behind Traefik TLS with rate limiting on the
   native `/join` action. Expose only Celld's public Worker listener; keep its internal
   peer/operator listener private.

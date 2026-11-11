@@ -184,7 +184,12 @@ export function KitchenSinkPage() {
               <Specimen label="signed in">
                 <RoomLobby
                   rooms={rooms}
-                  identity={{ name: "Jack", authenticatedAt: 1 }}
+                  identity={{
+                    name: "Jack",
+                    authenticatedAt: 1,
+                    subject: "dev-member",
+                    expiresAt: 4_000_000_000_000,
+                  }}
                   selectedRoom="kitchen"
                 />
               </Specimen>

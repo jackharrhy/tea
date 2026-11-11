@@ -278,7 +278,11 @@ services:
       context: .
       dockerfile: apps/radio/Dockerfile
     environment:
-      CELLD_VAR_RADIO_PASSWORD: ${RADIO_PASSWORD:-tea-radio-local-password}
+      CELLD_VAR_AUTH_ISSUER: ${RADIO_AUTH_ISSUER:-https://auth.jackharrhy.dev}
+      CELLD_VAR_AUTH_CLIENT_ID: ${RADIO_AUTH_CLIENT_ID:-local-unregistered}
+      CELLD_VAR_AUTH_PROJECT_ID: ${RADIO_AUTH_PROJECT_ID:-local-unregistered}
+      CELLD_VAR_AUTH_ORGANIZATION_ID: ${RADIO_AUTH_ORGANIZATION_ID:-local-unregistered}
+      CELLD_VAR_AUTH_PUBLIC_ORIGIN: ${RADIO_AUTH_PUBLIC_ORIGIN:-https://radio.localhost}
       CELLD_VAR_RADIO_SESSION_SECRET: ${RADIO_SESSION_SECRET:-tea-radio-local-session-secret-change-me}
     volumes:
       - radio-data:/app/.celld

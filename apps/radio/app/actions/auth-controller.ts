@@ -17,8 +17,6 @@ export default createController(routes.auth, {
   actions: {
     async login(context) {
       const config = context.get(AccessConfig)!;
-      if (config.mode !== "central")
-        return new Response("Not found", { status: 404 });
       const transaction = createLoginTransaction();
       context.get(Session)!.set(transactionKey, transaction);
       return redirect(
@@ -30,8 +28,6 @@ export default createController(routes.auth, {
     },
     async callback(context) {
       const config = context.get(AccessConfig)!;
-      if (config.mode !== "central")
-        return new Response("Not found", { status: 404 });
       const session = context.get(Session)!;
       const transaction = session.get(transactionKey) as
         | LoginTransaction
