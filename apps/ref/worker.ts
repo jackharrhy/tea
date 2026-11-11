@@ -82,11 +82,15 @@ export default {
         : false;
       const bearer = request.headers.get("Authorization");
       const archive = url.pathname.startsWith("/api/archive/");
+      const archiveSnapshot =
+        request.method === "GET" &&
+        /^\/api\/boards\/[^/]+\/snapshot$/.test(url.pathname);
       if (central && archive) authenticated = false;
       if (
         central &&
         bearer?.startsWith("Bearer ") &&
         (archive ||
+          archiveSnapshot ||
           (!authenticated &&
             (url.pathname.startsWith("/media/") ||
               url.pathname.startsWith("/previews/"))))
