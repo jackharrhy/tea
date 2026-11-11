@@ -4,6 +4,15 @@ import { execFileSync } from "node:child_process";
 // Uses only a disposable container layer, with no host ports or mounts.
 const [app, image] = process.argv.slice(2);
 const configs = {
+  "8mb": {
+    port: 5188,
+    env: [],
+    paths: [
+      ["/8mb/", 200],
+      ["/8mb/icon.svg", 200],
+      ["/8mb/api/diagnostics", 405],
+    ],
+  },
   cms: {
     port: 4351,
     env: [],

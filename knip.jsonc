@@ -9,6 +9,11 @@
       // Root tsconfig.base.json uses Remix's HMR types.
       "ignoreDependencies": ["remix"],
     },
+    "apps/8mb": {
+      "entry": ["public/sw.js", "scripts/import-styles.mjs"],
+      // The build copies these FFmpeg cores as browser-loadable JavaScript and WASM.
+      "ignoreDependencies": ["@ffmpeg/core", "@ffmpeg/core-mt"],
+    },
     "apps/cms": {
       "entry": [
         "__tests__/server.ts",
