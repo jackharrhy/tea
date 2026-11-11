@@ -48,12 +48,12 @@ jobs:
           file: apps/marky/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-marky:latest
-            ghcr.io/jackharrhy/tea-marky:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/marky:latest
+            ghcr.io/jackharrhy/marky:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-marky@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/marky@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

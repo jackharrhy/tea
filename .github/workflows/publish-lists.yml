@@ -52,12 +52,12 @@ jobs:
           file: apps/lists/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-lists:latest
-            ghcr.io/jackharrhy/tea-lists:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/lists:latest
+            ghcr.io/jackharrhy/lists:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-lists@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/lists@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

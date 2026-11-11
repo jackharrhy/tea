@@ -91,12 +91,25 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Choose image name
+        id: image
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          case "$APP" in
+            maps) name=worldview ;;
+            maps-service) name=worldview-service ;;
+            maps-collaboration) name=worldview-collaboration ;;
+            maps-compiler) name=worldview-compiler ;;
+            *) exit 1 ;;
+          esac
+          echo "name=$name" >> "$GITHUB_OUTPUT"
       - name: Set image tags
         id: tags
         run: |
-          tags="ghcr.io/jackharrhy/tea-${{ matrix.app }}:sha-${GITHUB_SHA}"
+          tags="ghcr.io/jackharrhy/${{ steps.image.outputs.name }}:sha-${GITHUB_SHA}"
           if [ "$GITHUB_REF" = refs/heads/main ]; then
-            tags="$tags,ghcr.io/jackharrhy/tea-${{ matrix.app }}:latest"
+            tags="$tags,ghcr.io/jackharrhy/${{ steps.image.outputs.name }}:latest"
           fi
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
       - id: build
@@ -112,4 +125,4 @@ jobs:
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-${{ matrix.app }}@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/${{ steps.image.outputs.name }}@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

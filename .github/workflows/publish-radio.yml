@@ -49,12 +49,12 @@ jobs:
           file: apps/radio/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-radio:latest
-            ghcr.io/jackharrhy/tea-radio:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/radio:latest
+            ghcr.io/jackharrhy/radio:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-radio@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/radio@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
