@@ -234,6 +234,7 @@ export function createGarden(config: GardenConfig) {
       : new Response(null, { status: 204 });
   });
   const boot = Date.now();
+  let browserRevision = 0;
   router.get(routes.compare, async (context) => {
     if (!config.development) return new Response("Not found", { status: 404 });
     const pathname = comparePath(
@@ -289,7 +290,7 @@ export function createGarden(config: GardenConfig) {
   });
   router.get(routes.changes, () =>
     config.development
-      ? new Response(`${boot}:${content.revision}`, {
+      ? new Response(`${boot}:${content.revision}:${browserRevision}`, {
           headers: { "Cache-Control": "no-store" },
         })
       : new Response("Not found", { status: 404 }),
@@ -347,5 +348,11 @@ export function createGarden(config: GardenConfig) {
       return new Response("Not found", { status: 404 });
     return renderPage(context.params.slug, context);
   });
-  return { router, content };
+  return {
+    router,
+    content,
+    reloadBrowser() {
+      browserRevision++;
+    },
+  };
 }

@@ -1,4 +1,4 @@
-// One-time migration utility: translate the original compiled stylesheet into a Remix css mixin.
+// One-time migration utility: preserve the deployed CSS values and cascade in Remix mixins.
 import fs from "node:fs";
 import postcss from "postcss";
 
@@ -10,7 +10,7 @@ function convert(nodes, top = false) {
     if (node.type === "decl") {
       result[node.prop] = node.value + (node.important ? " !important" : "");
     } else if (node.type === "rule") {
-      let selector = node.selector;
+      let selector = node.selector.replace(/\[data-astro-cid-[^\]]+\]/g, "");
       if (top)
         selector = selector
           .split(/,(?![^()]*\))/)
@@ -23,7 +23,7 @@ function convert(nodes, top = false) {
           .join(", ");
       result[selector] = { ...result[selector], ...convert(node.nodes) };
     } else if (node.type === "atrule" && node.nodes) {
-      if (node.name === "property") {
+      if (node.name === "property" || node.name === "font-face") {
         properties.push(node.toString());
         continue;
       }
@@ -33,10 +33,25 @@ function convert(nodes, top = false) {
   }
   return result;
 }
-const styles = convert(source.nodes, true);
+function flattenLayers(nodes) {
+  return nodes.flatMap((node) =>
+    node.type === "atrule" && node.name === "layer" && node.nodes
+      ? flattenLayers(node.nodes)
+      : [node],
+  );
+}
+// One mixin per rule keeps late typography overrides after responsive rules.
+const styles = flattenLayers(source.nodes)
+  .filter(
+    (node) =>
+      node.name !== "keyframes" &&
+      !node.selector?.startsWith(".astro-route-announcer"),
+  )
+  .map((node) => convert([node], true))
+  .filter((value) => Object.keys(value).length > 0);
 fs.writeFileSync(
   new URL("../app/ui/legacy-styles.ts", import.meta.url),
-  `// Migrated from the original site's compiled CSS. Keep visual changes separate from the port.\nimport { css } from 'remix/component';\nexport const legacyStyles = css(${JSON.stringify(styles, null, 2)} as Parameters<typeof css>[0]);\n`,
+  `// Migrated from the deployed Astro CSS. Rule order and rounded values preserve visual parity.\nimport { css } from 'remix/component';\nexport const legacyStyles = [\n${styles.map((value) => `css(${JSON.stringify(value, null, 2)} as Parameters<typeof css>[0])`).join(",\n")}\n];\n`,
 );
 fs.writeFileSync(
   new URL("../public/properties.css", import.meta.url),

@@ -57,7 +57,7 @@ export function document(options: {
     <html
       lang="en"
       class="bg-paper font-serif h-full"
-      mix={[legacyStyles, documentStyles]}
+      mix={[...legacyStyles, documentStyles]}
     >
       <head>
         <meta charSet="UTF-8" />

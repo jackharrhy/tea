@@ -1,11 +1,12 @@
 import http from "node:http";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createRequestListener } from "remix/node-fetch-server";
 import { gardenConfig } from "./app/config.ts";
 import { createGarden } from "./app/router.tsx";
 
 const config = gardenConfig();
-const { router, content } = createGarden(config);
+const { router, content, reloadBrowser } = createGarden(config);
 content.read();
 const watchers: fs.FSWatcher[] = [];
 if (config.development) {
@@ -14,6 +15,15 @@ if (config.development) {
       watchers.push(
         fs.watch(directory, { recursive: true }, () => content.invalidate()),
       );
+  }
+  for (const directory of ["./app/ui/public/", "./public/"]) {
+    watchers.push(
+      fs.watch(
+        fileURLToPath(new URL(directory, import.meta.url)),
+        { recursive: true },
+        reloadBrowser,
+      ),
+    );
   }
 }
 const server = http.createServer(
