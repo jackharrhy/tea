@@ -1,5 +1,5 @@
-import type { PoolSound } from "@tea/pool";
-import { RETURNS, MESH_REST_OFFSET } from "@tea/pool/table";
+import type { PoolSound } from "@harrhy/pool";
+import { RETURNS, MESH_REST_OFFSET } from "@harrhy/pool/table";
 import { Quaternion, Vector3 } from "three";
 
 // The shared receiving floor is the widest chute, not an inbound lane or boot.

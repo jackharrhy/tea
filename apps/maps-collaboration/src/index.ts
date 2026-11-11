@@ -5,7 +5,7 @@ import {
   MapCellCheckpointRequestSchema,
   MapCellInitializeRequestSchema,
   ReplaceHostedMapSourceRequestSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { verifyHostedRealtimeTicket } from "./realtime-ticket.js";
 import { routes } from "./routes.js";
 

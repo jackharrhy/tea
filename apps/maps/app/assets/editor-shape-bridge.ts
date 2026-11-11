@@ -1,7 +1,7 @@
 import {
   DEFAULT_SIMPLE_SHAPE_OPTIONS,
   type SimpleShapeOptions,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
 export interface ShapeFields {
   readonly kind: SimpleShapeOptions["kind"];

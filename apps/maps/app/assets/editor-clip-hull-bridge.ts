@@ -1,4 +1,4 @@
-import type { BrushClipMode } from "@tea/maps-editor/core";
+import type { BrushClipMode } from "@harrhy/maps-editor/core";
 
 export interface EditorClipHullState {
   readonly clipVisible: boolean;

@@ -1,10 +1,10 @@
 # Viewer API
 
-`@jackharrhy/tea-maps-renderer` is the embeddable viewer package. It renders Quake BSP29, sanitized BSP2,
+`@harrhy/worldview-renderer` is the embeddable viewer package. It renders Quake BSP29, sanitized BSP2,
 GoldSrc BSP30, and Quake II IBSP/QBSP version 38 through WebGPU and TypeGPU.
 
 ```sh
-npm install @jackharrhy/tea-maps-renderer
+npm install @harrhy/worldview-renderer
 ```
 
 ## Create a viewer
@@ -12,7 +12,7 @@ npm install @jackharrhy/tea-maps-renderer
 Pass a canvas and a `WorldSource` to `createMapsViewer()`:
 
 ```ts
-import { createMapsViewer } from "@jackharrhy/tea-maps-renderer";
+import { createMapsViewer } from "@harrhy/worldview-renderer";
 
 const viewer = await createMapsViewer({
   canvas: document.querySelector("canvas")!,
@@ -85,7 +85,7 @@ The resolver receives paths such as `pics/colormap.pcx`, `textures/e1u1/wall.wal
 not mount PAK or PK3 archives itself.
 
 Asset services can inspect formats and ask for the exact candidate paths the viewer will use
-through the renderer-free `@jackharrhy/tea-maps-renderer/core` entrypoint. See the
+through the renderer-free `@harrhy/worldview-renderer/core` entrypoint. See the
 [format core guide](./format-core.md) for `identifyBsp()`, `parseBspTextures()`, strengthened WAD
 records, and `planWorldAssets()`.
 
@@ -126,7 +126,7 @@ import {
   generateWalkability,
   parseWalkability,
   serializeWalkability,
-} from "@jackharrhy/tea-maps-renderer/walkability";
+} from "@harrhy/worldview-renderer/walkability";
 
 const graph = await generateWalkability(viewer.world!, {
   spacing: 32,
@@ -158,7 +158,7 @@ fixture graph as `<map>.tea-maps-walkability.json` beside its BSP to load it aut
 Register `<tea-map-view>` when your application uses the npm package:
 
 ```ts
-import { defineMapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import { defineMapsViewElement } from "@harrhy/worldview-renderer/element";
 
 defineMapsViewElement();
 ```
@@ -174,7 +174,7 @@ keeps authenticated resolvers and the rest of the map load in one operation:
 import {
   MapsViewElement,
   defineMapsViewElement,
-} from "@jackharrhy/tea-maps-renderer/element";
+} from "@harrhy/worldview-renderer/element";
 
 defineMapsViewElement();
 
@@ -206,7 +206,7 @@ The standalone module registers the element for pages without a build step:
 <tea-map-view game-base-url="/games/id1/" src="maps/start.bsp"></tea-map-view>
 ```
 
-Run `npm run test:embed --workspace @tea/maps` in this repository for browser checks, including the
+Run `npm run test:embed --workspace @harrhy/maps` in this repository for browser checks, including the
 packaged element's shadow-root pointer lock and gesture-activated audio. These tests use generated
 maps and WAVs to measure camera movement, nonzero audio output, and recovery from suspended audio
 without requiring game files or speakers.
@@ -220,7 +220,7 @@ the BSP renderer:
 import {
   AnimationFrameScheduler,
   SnapshotStore,
-} from "@jackharrhy/tea-maps-renderer/runtime";
+} from "@harrhy/worldview-renderer/runtime";
 ```
 
 ## Game data

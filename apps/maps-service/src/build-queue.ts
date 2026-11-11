@@ -6,8 +6,11 @@ import {
   RemoteCompileResultSchema,
   compiledBspVersion,
   type RemoteCompileRequest,
-} from "@tea/maps-editor/core";
-import { HostedErrorResponseSchema, type HostedGame } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import {
+  HostedErrorResponseSchema,
+  type HostedGame,
+} from "@harrhy/maps-protocol";
 import { Agent, fetch as undiciFetch } from "undici";
 
 const compileDispatcher = new Agent({ headersTimeout: 0, bodyTimeout: 0 });

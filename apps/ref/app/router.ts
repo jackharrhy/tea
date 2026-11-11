@@ -1,5 +1,5 @@
 import { createRouter, type MiddlewareContext } from "remix/router";
-import type { IdentityConfig } from "@tea/identity";
+import type { IdentityConfig } from "@harrhy/identity";
 import { formData } from "remix/middleware/form-data";
 import { render } from "remix/middleware/render";
 import rootController from "./actions/controller.tsx";

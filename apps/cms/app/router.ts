@@ -25,7 +25,7 @@ import {
   projectAudienceScope,
   requireTokenRole,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { centralAuth } from "./data/central-auth.ts";
 import { createPublicController } from "./actions/controller.tsx";
 import { createAuthController } from "./actions/auth/controller.tsx";

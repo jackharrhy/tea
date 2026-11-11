@@ -1,9 +1,9 @@
-import type { HostedResourceMount } from "@tea/maps-protocol";
-import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
+import type { HostedResourceMount } from "@harrhy/maps-protocol";
+import type { WorldSource } from "@harrhy/worldview-renderer";
 import {
   normalizeGameAssetPath,
   parseBsp,
-} from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/worldview-renderer/core";
 
 const skyboxSuffixes = ["rt", "bk", "lf", "ft", "up", "dn"] as const;
 

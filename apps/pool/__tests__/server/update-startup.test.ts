@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PROTOCOL_VERSION, type ServerMessage } from "@tea/pool-protocol";
+import { PROTOCOL_VERSION, type ServerMessage } from "@harrhy/pool-protocol";
 import { preUpdate } from "../../server/pre-update";
 
 async function wait(check: () => boolean) {

@@ -1,5 +1,5 @@
 import { clientEntry, css, on, type Handle } from "remix/component";
-import type { BrushClipMode } from "@tea/maps-editor/core";
+import type { BrushClipMode } from "@harrhy/maps-editor/core";
 import type { EditorClipHullContext } from "./editor-clip-hull-bridge.ts";
 
 const clipModes = [

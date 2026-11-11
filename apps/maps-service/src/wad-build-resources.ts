@@ -5,8 +5,8 @@ import {
   materialUsageInDocument,
   parseMap,
   serializeMapForCompile,
-} from "@tea/maps-editor/core";
-import type { HostedResourceMount } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import type { HostedResourceMount } from "@harrhy/maps-protocol";
 import type { BlobStore } from "./blob-store.js";
 import { subsetWadTextures } from "./wad-subset.js";
 

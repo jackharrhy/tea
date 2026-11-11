@@ -1,0 +1,48 @@
+name: Publish npm package
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Public workspace to publish
+        required: true
+        type: choice
+        options:
+          - "@harrhy/worldview-renderer"
+          - "@harrhy/artbin"
+concurrency:
+  group: publish-npm-${{ inputs.package }}
+  cancel-in-progress: false
+permissions: {}
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm ci --allow-remote=all
+      - run: npm run tooling:check
+      - env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          npm run check --workspace "$PACKAGE"
+          npm run build --workspace "$PACKAGE"
+          npm pack --dry-run --json --workspace "$PACKAGE" > "$RUNNER_TEMP/package.json"
+          PACKAGE="$PACKAGE" node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const [packed] = JSON.parse(readFileSync(process.argv[1], "utf8"));
+            if (packed?.name !== process.env.PACKAGE) throw new Error("Wrong package packed");
+          ' "$RUNNER_TEMP/package.json"
+      - env:
+          PACKAGE: ${{ inputs.package }}
+        run: npm publish --workspace "$PACKAGE" --access public --provenance

@@ -1,5 +1,5 @@
 {
-  "name": "@tea/gurgur",
+  "name": "@harrhy/gurgur",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
-    "@tea/gurgur-engine": "0.1.0",
-    "@tea/gurgur-game": "0.1.0",
+    "@harrhy/gurgur-engine": "0.1.0",
+    "@harrhy/gurgur-game": "0.1.0",
     "box3d.js": "0.0.2",
     "remix": "3.2.0",
     "three": "0.185.1",

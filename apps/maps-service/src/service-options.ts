@@ -3,7 +3,7 @@ import type {
   HostedCheckpointSource,
   HostedMapSnapshot,
   ReplaceHostedMapSourceResult,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 import type { ArtbinClient } from "./artbin.js";
 import type { BlobStore } from "./blob-store.js";

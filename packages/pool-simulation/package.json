@@ -1,5 +1,5 @@
 {
-  "name": "@tea/pool-simulation",
+  "name": "@harrhy/pool-simulation",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "@tea/pool": "0.1.0",
+    "@harrhy/pool": "0.1.0",
     "bitecs": "0.4.0",
     "navcat": "0.4.1"
   },

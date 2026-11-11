@@ -1,5 +1,5 @@
 import { Container, Graphics } from "pixi.js";
-import { TILE_SIZE } from "@tea/burger-core";
+import { TILE_SIZE } from "@harrhy/burger-core";
 
 export type PerimeterState = {
   cells: Set<string>;

@@ -1,7 +1,7 @@
 /**
  * Schema builders that validate like remix/data-schema and describe themselves as JSON
  * Schema 2020-12, so the schema a handler validates with is the schema an API publishes.
- * Group builders with `import * as s from "@tea/json-schema"`.
+ * Group builders with `import * as s from "@harrhy/json-schema"`.
  */
 
 export type { ToJSONSchemaOptions } from "./convert.ts";

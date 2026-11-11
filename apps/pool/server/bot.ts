@@ -6,9 +6,9 @@ import {
   shotPower,
   type Ball,
   type PoolMatch,
-} from "@tea/pool";
+} from "@harrhy/pool";
 
-import { CUSHIONS, POCKETS } from "@tea/pool/table";
+import { CUSHIONS, POCKETS } from "@harrhy/pool/table";
 
 type Point = { x: number; z: number };
 type Shot = { angle: number; power: number };

@@ -1,4 +1,4 @@
-# @tea/identity
+# @harrhy/identity
 
 Server-side OIDC and API token validation for Jack Auth consumers. `src/index.ts`
 uses discovery, PKCE, nonce and `jose` signature validation for browser login, then
@@ -23,9 +23,9 @@ claim and must belong to the configured organization. Standard audience and role
 scopes are exported for protected-resource metadata and machine token requests.
 An audience grants no permission by itself.
 
-Run `npm run check --workspace @tea/identity`. Tests cover real JWT signatures,
+Run `npm run check --workspace @harrhy/identity`. Tests cover real JWT signatures,
 identity substitution, nonce, state, discovery endpoints, organization/project
-boundaries and API token expiry. Tea develops and checks it on Node 26 LTS. The
+boundaries and API token expiry. This monorepo develops and checks it on Node 26 LTS. The
 package has no browser UI or application database dependency. PKCE, randomness,
 and Basic-auth encoding use Web APIs so the server-only module also works in
 Worker runtimes. Do not import it into browser assets.

@@ -3,7 +3,7 @@ import {
   compileWorld,
   type AmbientAudioEntity,
   type WorldBundle,
-} from "@tea/gurgur-game";
+} from "@harrhy/gurgur-game";
 import { selectAmbientAudio } from "../../web/src/audio";
 
 const source = await Bun.file(

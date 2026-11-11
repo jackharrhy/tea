@@ -24,7 +24,7 @@ export const assets = createAssetServer({
   ],
   allowPackages: [
     "remix",
-    "@tea/rich-text",
+    "@harrhy/rich-text",
     "@tiptap/core",
     "@tiptap/pm",
     "@tiptap/starter-kit",

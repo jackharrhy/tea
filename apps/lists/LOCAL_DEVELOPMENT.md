@@ -13,7 +13,7 @@ The local application database and Mailpit messages live in `lists-data` and `li
 Run focused checks from Tea's root:
 
 ```sh
-npm run check --workspace @tea/lists
+npm run check --workspace @harrhy/lists
 ```
 
 The Compose-backed suite can run inside the app container after the stack is healthy:

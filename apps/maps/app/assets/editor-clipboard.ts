@@ -11,8 +11,8 @@ import {
   serializeObjectClipboard,
   type EditorSession,
   type MapDocument,
-} from "@tea/maps-editor/core";
-import type { EditorPointerPositionEvent } from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/core";
+import type { EditorPointerPositionEvent } from "@harrhy/maps-editor/render";
 
 type PastePlacement = "pointer" | "original";
 

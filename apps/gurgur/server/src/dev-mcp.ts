@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import type { RuntimeEntityRef, RuntimeId, Vec3 } from "@tea/gurgur-engine";
+import type { RuntimeEntityRef, RuntimeId, Vec3 } from "@harrhy/gurgur-engine";
 import * as z from "zod/v4";
 import { type DevPlayerIntentUpdate, type WorldHost } from "./game";
 import { runtimeBodyRef } from "./runtime-bodies";

@@ -7,7 +7,7 @@ import {
   type MapDocument,
   type MapSourceState,
   type MapsGameProfile,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { z } from "zod";
 
 import {

@@ -4,7 +4,7 @@ import {
   HostedResourceMountedResponseSchema,
   HostedResourceMountsResponseSchema,
   MountHostedAssetRequestSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 import { defineWebRoute, pathParameter } from "../service-routing.js";
 import {

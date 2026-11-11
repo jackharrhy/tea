@@ -2,7 +2,7 @@ import { openDB, type DBSchema } from "idb";
 import {
   MapCompileResultSchema,
   type MapCompileResult,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { z } from "zod";
 
 const DATABASE_NAME = "tea-maps-local-builds";

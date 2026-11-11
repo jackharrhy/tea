@@ -11,7 +11,7 @@ import {
   type NetworkObjectState,
   type RuntimeId,
   type Vec3,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import { Quaternion } from "three";
 
 type TimedState = {

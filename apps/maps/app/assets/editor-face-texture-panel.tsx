@@ -2,7 +2,7 @@ import { clientEntry, css, on, type Handle } from "remix/component";
 import type {
   FaceTextureAlignmentOperation,
   FaceTextureProjectionField,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import type { EditorFaceTextureContext } from "./editor-face-texture-bridge.ts";
 
 const projectionFields = [

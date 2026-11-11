@@ -2,7 +2,7 @@ import {
   createQuakePalette,
   decodeMipTexture,
   parseWad,
-} from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/worldview-renderer/core";
 import {
   createCompilerToolMaterials,
   createDevelopmentMaterials,

@@ -7,7 +7,7 @@ import {
   HostedProjectResponseSchema,
   HostedProjectsResponseSchema,
   SetProjectMemberRoleRequestSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 import { canEditProject } from "../access-policy.js";
 import { MAX_HOSTED_MAP_BYTES } from "../service-http.js";

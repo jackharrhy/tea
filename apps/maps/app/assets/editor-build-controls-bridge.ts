@@ -1,4 +1,4 @@
-import type { MapsGameProfile } from "@tea/maps-editor/core";
+import type { MapsGameProfile } from "@harrhy/maps-editor/core";
 
 export interface EditorBuildControlState {
   readonly game: MapsGameProfile;

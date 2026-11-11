@@ -14,7 +14,7 @@ import {
   PROJECT_ROLES_SCOPE,
   projectAudienceScope,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 test("central sign-in accepts only a reviewed subject with its Lists role", async () => {
   const db = createTestDb();

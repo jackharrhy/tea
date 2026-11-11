@@ -1,5 +1,5 @@
-import { TABLE_HALF_WIDTH as W, TABLE_HALF_LENGTH as L } from "@tea/pool";
-import { FELT_Y, RAIL_WIDTH, RAIL_TOP_Y } from "@tea/pool/table";
+import { TABLE_HALF_WIDTH as W, TABLE_HALF_LENGTH as L } from "@harrhy/pool";
+import { FELT_Y, RAIL_WIDTH, RAIL_TOP_Y } from "@harrhy/pool/table";
 import { MathUtils, PerspectiveCamera, Vector3 } from "three";
 
 type Mode = "hall" | "table";

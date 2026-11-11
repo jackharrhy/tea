@@ -1,4 +1,4 @@
-import type { HostedMapLaunch, HostedProject } from "@tea/maps-protocol";
+import type { HostedMapLaunch, HostedProject } from "@harrhy/maps-protocol";
 import { initHostedAccess } from "./editor-hosted-access.ts";
 import { initEditorHostedResources } from "./editor-hosted-resources-bridge.ts";
 import type { DetachedHostedMap } from "./editor-collaboration.ts";

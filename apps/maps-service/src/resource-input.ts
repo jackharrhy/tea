@@ -1,4 +1,4 @@
-import { isGameTreeAssetPath } from "@tea/maps-protocol";
+import { isGameTreeAssetPath } from "@harrhy/maps-protocol";
 
 export const RESOURCE_KINDS = new Set([
   "wad",

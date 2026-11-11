@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { compileWorld, type WorldBundle } from "@tea/gurgur-game";
+import { compileWorld, type WorldBundle } from "@harrhy/gurgur-game";
 import {
   PHYSICS_DT,
   PHYSICS_HZ,
@@ -11,7 +11,7 @@ import {
   type NetworkBodyState,
   type NetworkPlayerState,
   type RuntimeId,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   NETWORK_TRACE_DURATION_SECONDS,
   WorldHost,

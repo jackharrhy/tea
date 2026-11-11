@@ -1,8 +1,8 @@
-import type { EditorSession } from "@tea/maps-editor/core";
+import type { EditorSession } from "@harrhy/maps-editor/core";
 import type {
   EditorFaceTransferEvent,
   EditorSourceRenderer,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 
 export function handleFaceTransfer(
   event: EditorFaceTransferEvent,

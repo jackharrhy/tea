@@ -1,4 +1,4 @@
-import type { IdentityConfig } from "@tea/identity";
+import type { IdentityConfig } from "@harrhy/identity";
 
 export type Config = {
   awsRegion: string;

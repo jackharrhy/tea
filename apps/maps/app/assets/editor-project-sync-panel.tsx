@@ -1,5 +1,5 @@
 import { clientEntry, on, type Handle } from "remix/component";
-import type { HostedProject } from "@tea/maps-protocol";
+import type { HostedProject } from "@harrhy/maps-protocol";
 import type { MapProject } from "./editor-project.ts";
 import type { ProjectSyncContext } from "./editor-project-sync-dialog.ts";
 import {

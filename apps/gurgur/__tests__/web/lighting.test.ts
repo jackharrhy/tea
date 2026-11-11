@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import * as THREE from "three/webgpu";
-import type { LightPresentation } from "@tea/gurgur-engine";
+import type { LightPresentation } from "@harrhy/gurgur-engine";
 import {
   createPresentationLight,
   VOLUMETRIC_LIGHT_LAYER,

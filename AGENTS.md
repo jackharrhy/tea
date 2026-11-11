@@ -1,6 +1,6 @@
-# Tea contributor guidance
+# Harrhy contributor guidance
 
-Tea is a Remix 3 monorepo of independently deployable apps and importable packages. The [root README](README.md) lists them. Before editing a workspace, read its README and any local `AGENTS.md`. Keep its README accurate for people and agents: purpose, entry points, setup, checks, and boundaries. Add a README and a root table row for each new workspace.
+Harrhy is a Remix 3 monorepo of independently deployable apps and importable packages. The [root README](README.md) lists them. Before editing a workspace, read its README and any local `AGENTS.md`. Keep its README accurate for people and agents: purpose, entry points, setup, checks, and boundaries. Add a README and a root table row for each new workspace.
 
 <!-- prettier-ignore -->
 | Location | Responsibility |

@@ -1,65 +1,67 @@
-# tea
+# Harrhy
 
-a Remix 3 monorepo for personal apps and packages.
+A Remix 3 monorepo for personal apps and packages.
 
-[WORLD_IDEA.md](WORLD_IDEA.md) records the direction for a future shared world built from Burger, Gurgur, Pool, and Maps.
+[WORLD_IDEA.md](WORLD_IDEA.md) records the direction for a future shared world built from Burger, Gurgur, Pool, and Worldview.
+
+[npm publication](docs/npm-publication.md) describes the two public `@harrhy` packages and their release boundary.
 
 ### Apps
 
 <!-- prettier-ignore -->
 | Workspace | What it runs | Guide |
 | --- | --- | --- |
-| [`@tea/artbin`](apps/artbin/) | Game asset archive, uploads, previews, and API | [README](apps/artbin/README.md) |
-| [`@jackharrhy/tea-artbin`](apps/artbin-cli/) | Game asset command-line client | [README](apps/artbin-cli/README.md) |
-| [`@tea/burger`](apps/burger/) | Remix game UI and authoritative Bun world server | [README](apps/burger/README.md) |
-| [`@tea/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
-| [`@tea/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
-| [`@tea/garden`](apps/garden/) | Obsidian-backed personal website and publishing tools | [README](apps/garden/README.md) |
-| [`@tea/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server (migration in progress) | [README](apps/gurgur/README.md) |
-| [`@tea/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
-| [`@tea/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail (migration in progress) | [README](apps/lists/README.md) |
-| [`@tea/maps`](apps/maps/) | Worldview BSP viewer and map editor | [README](apps/maps/README.md) |
-| [`@tea/marky`](apps/marky/) | Collaborative Markdown editor with Discord access | [README](apps/marky/README.md) |
-| [`@tea/pool-app`](apps/pool/) | Remix pool hall and authoritative Bun game server | [README](apps/pool/README.md) |
-| [`@tea/maps-collaboration`](apps/maps-collaboration/) | Live map sessions and SQLite map cells | [README](apps/maps-collaboration/README.md) |
-| [`@tea/maps-compiler`](apps/maps-compiler/) | Local native map compiler helper | [README](apps/maps-compiler/README.md) |
-| [`@tea/maps-service`](apps/maps-service/) | Hosted map projects and API | [README](apps/maps-service/README.md) |
-| [`@tea/ref`](apps/ref/) | Private image and link boards on a Worker and Celld | [README](apps/ref/README.md) |
-| [`@tea/radio`](apps/radio/) | Synchronized listening rooms on a Worker and Celld | [README](apps/radio/README.md) |
+| [`@harrhy/artbin-app`](apps/artbin/) | Game asset archive, uploads, previews, and API | [README](apps/artbin/README.md) |
+| [`@harrhy/artbin`](apps/artbin-cli/) | Game asset command-line client | [README](apps/artbin-cli/README.md) |
+| [`@harrhy/burger`](apps/burger/) | Remix game UI and authoritative Bun world server | [README](apps/burger/README.md) |
+| [`@harrhy/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
+| [`@harrhy/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
+| [`@harrhy/garden`](apps/garden/) | Obsidian-backed personal website and publishing tools | [README](apps/garden/README.md) |
+| [`@harrhy/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server (migration in progress) | [README](apps/gurgur/README.md) |
+| [`@harrhy/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
+| [`@harrhy/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail (migration in progress) | [README](apps/lists/README.md) |
+| [`@harrhy/maps`](apps/maps/) | Worldview BSP viewer and map editor | [README](apps/maps/README.md) |
+| [`@harrhy/marky`](apps/marky/) | Collaborative Markdown editor with Discord access | [README](apps/marky/README.md) |
+| [`@harrhy/pool-app`](apps/pool/) | Remix pool hall and authoritative Bun game server | [README](apps/pool/README.md) |
+| [`@harrhy/maps-collaboration`](apps/maps-collaboration/) | Live map sessions and SQLite map cells | [README](apps/maps-collaboration/README.md) |
+| [`@harrhy/maps-compiler`](apps/maps-compiler/) | Local native map compiler helper | [README](apps/maps-compiler/README.md) |
+| [`@harrhy/maps-service`](apps/maps-service/) | Hosted map projects and API | [README](apps/maps-service/README.md) |
+| [`@harrhy/ref`](apps/ref/) | Private image and link boards on a Worker and Celld | [README](apps/ref/README.md) |
+| [`@harrhy/radio`](apps/radio/) | Synchronized listening rooms on a Worker and Celld | [README](apps/radio/README.md) |
 
 ### Packages
 
 <!-- prettier-ignore -->
 | Workspace | What it provides | Guide |
 | --- | --- | --- |
-| [`@tea/artbin-core`](packages/artbin-core/) | Asset scanning, detection, and upload primitives | [README](packages/artbin-core/README.md) |
-| [`@tea/artbin-ui`](packages/artbin-ui/) | CLI scan interface components | [README](packages/artbin-ui/README.md) |
-| [`@tea/burger-core`](packages/burger-core/) | Shared Burger ECS, physics, and wire constants | [README](packages/burger-core/README.md) |
-| [`@tea/identity`](packages/identity/) | Jack Auth OIDC and API identity verification | [README](packages/identity/README.md) |
-| [`@tea/gurgur-engine`](packages/gurgur-engine/) | Gurgur Box3D physics, protocol and world format | [README](packages/gurgur-engine/README.md) |
-| [`@tea/gurgur-game`](packages/gurgur-game/) | Gurgur controllers, simulation and map compiler | [README](packages/gurgur-game/README.md) |
-| [`@tea/json-schema`](packages/json-schema/) | Remix data schemas with JSON Schema descriptions | [README](packages/json-schema/README.md) |
-| [`@tea/logger`](packages/logger/) | Request and job logging primitives | [README](packages/logger/README.md) |
-| [`@tea/maps-editor`](packages/maps-editor/) | Map document and source-rendering primitives | [README](packages/maps-editor/README.md) |
-| [`@tea/maps-protocol`](packages/maps-protocol/) | Hosted and collaborative map schemas | [README](packages/maps-protocol/README.md) |
-| [`@jackharrhy/tea-maps-renderer`](packages/maps-renderer/) | Embeddable WebGPU map renderer and BSP core | [README](packages/maps-renderer/README.md) |
-| [`@tea/mcp`](packages/mcp/) | MCP tools, resources, and Streamable HTTP handler | [README](packages/mcp/README.md) |
-| [`@tea/pool`](packages/pool/) | Shared pool rules, Box3D physics, and recordings | [README](packages/pool/README.md) |
-| [`@tea/pool-protocol`](packages/pool-protocol/) | Versioned pool WebSocket messages | [README](packages/pool-protocol/README.md) |
-| [`@tea/pool-simulation`](packages/pool-simulation/) | Hall movement and navigation | [README](packages/pool-simulation/README.md) |
-| [`@tea/request-body`](packages/request-body/) | Bounded Web request-body reading | [README](packages/request-body/README.md) |
-| [`@tea/result`](packages/result/) | Success and failure values and helpers | [README](packages/result/README.md) |
-| [`@tea/rich-text`](packages/rich-text/) | Inline document format and rich text editor | [README](packages/rich-text/README.md) |
+| [`@harrhy/artbin-core`](packages/artbin-core/) | Asset scanning, detection, and upload primitives | [README](packages/artbin-core/README.md) |
+| [`@harrhy/artbin-ui`](packages/artbin-ui/) | CLI scan interface components | [README](packages/artbin-ui/README.md) |
+| [`@harrhy/burger-core`](packages/burger-core/) | Shared Burger ECS, physics, and wire constants | [README](packages/burger-core/README.md) |
+| [`@harrhy/identity`](packages/identity/) | Jack Auth OIDC and API identity verification | [README](packages/identity/README.md) |
+| [`@harrhy/gurgur-engine`](packages/gurgur-engine/) | Gurgur Box3D physics, protocol and world format | [README](packages/gurgur-engine/README.md) |
+| [`@harrhy/gurgur-game`](packages/gurgur-game/) | Gurgur controllers, simulation and map compiler | [README](packages/gurgur-game/README.md) |
+| [`@harrhy/json-schema`](packages/json-schema/) | Remix data schemas with JSON Schema descriptions | [README](packages/json-schema/README.md) |
+| [`@harrhy/logger`](packages/logger/) | Request and job logging primitives | [README](packages/logger/README.md) |
+| [`@harrhy/maps-editor`](packages/maps-editor/) | Map document and source-rendering primitives | [README](packages/maps-editor/README.md) |
+| [`@harrhy/maps-protocol`](packages/maps-protocol/) | Hosted and collaborative map schemas | [README](packages/maps-protocol/README.md) |
+| [`@harrhy/worldview-renderer`](packages/maps-renderer/) | Embeddable WebGPU map renderer and BSP core | [README](packages/maps-renderer/README.md) |
+| [`@harrhy/mcp`](packages/mcp/) | MCP tools, resources, and Streamable HTTP handler | [README](packages/mcp/README.md) |
+| [`@harrhy/pool`](packages/pool/) | Shared pool rules, Box3D physics, and recordings | [README](packages/pool/README.md) |
+| [`@harrhy/pool-protocol`](packages/pool-protocol/) | Versioned pool WebSocket messages | [README](packages/pool-protocol/README.md) |
+| [`@harrhy/pool-simulation`](packages/pool-simulation/) | Hall movement and navigation | [README](packages/pool-simulation/README.md) |
+| [`@harrhy/request-body`](packages/request-body/) | Bounded Web request-body reading | [README](packages/request-body/README.md) |
+| [`@harrhy/result`](packages/result/) | Success and failure values and helpers | [README](packages/result/README.md) |
+| [`@harrhy/rich-text`](packages/rich-text/) | Inline document format and rich text editor | [README](packages/rich-text/README.md) |
 
 ## Working in the repo
 
-Use Node.js 26 LTS (`.nvmrc` and `mise.toml`; minimum 26.13.0) for Tea development and CI. The published Artbin CLI retains its separate Node 20+ consumer support. Install from the root:
+Use Node.js 26 LTS (`.nvmrc` and `mise.toml`; minimum 26.13.0) for monorepo development and CI. The published Artbin CLI retains its separate Node 20+ consumer support. Install from the root:
 
 ```sh
 npm ci
 ```
 
-Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @tea/cms` starts CMS. Run `npm run` for root scripts, including `npm run artbin:check`, `npm run cms:check`, `npm run letters-to-steve:check`, `npm run ref:check`, `npm run radio:check`, and `npm run maps:check`. Each workspace README has its own setup and checks.
+Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @harrhy/cms` starts CMS. Run `npm run` for root scripts, including `npm run artbin:check`, `npm run cms:check`, `npm run letters-to-steve:check`, `npm run ref:check`, `npm run radio:check`, and `npm run maps:check`. Each workspace README has its own setup and checks.
 
 Vite+ runs Oxfmt and Oxlint from [`vite.config.ts`](vite.config.ts). `npm run tooling:check` builds the three importable Maps packages, generates missing Worker types, then checks formatting and type-aware lint through tsrslint. `npm run format` formats files. `npm run knip:check` runs the full unused-code audit in CI. The [Knip config](knip.jsonc) lists browser, Worker, public package, and other entry points that are not visible through imports. Review Knip findings before deleting code.
 

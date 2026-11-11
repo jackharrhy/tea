@@ -1,4 +1,4 @@
-import type { CameraState } from "@jackharrhy/tea-maps-renderer";
+import type { CameraState } from "@harrhy/worldview-renderer";
 import { localMapPath } from "./world-input.ts";
 
 export interface LocalMapMetadata {

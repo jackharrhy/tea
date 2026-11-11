@@ -9,12 +9,12 @@ import {
   type EditorObjectViewState,
   type EditorSession,
   type Vec3,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   type EditorSourceRenderer,
   type EditorTransformDragEvent,
   type EditorTransformPivotDragEvent,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 import { initEditorTransformTool } from "./editor-transform-tool-bridge.ts";
 
 type Candidate =

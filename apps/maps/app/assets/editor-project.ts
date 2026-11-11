@@ -10,14 +10,14 @@ import {
   type EditorMaterial,
   type ParsedEntityDefinitionFile,
   type MapsProjectManifest,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   parseWad,
   readPcxPalette,
   readWalTextureHeader,
-} from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/worldview-renderer/core";
 import type { MapFileHandle } from "./editor-files.ts";
-import type { EditorSpriteMaterial } from "@tea/maps-editor/render";
+import type { EditorSpriteMaterial } from "@harrhy/maps-editor/render";
 import {
   decodeProjectMaterialImage,
   projectMaterialName,

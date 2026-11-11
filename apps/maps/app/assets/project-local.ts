@@ -1,8 +1,8 @@
 import {
   parseMapsProject,
   type MapsProjectManifest,
-} from "@tea/maps-editor/core";
-import type { HostedProject } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import type { HostedProject } from "@harrhy/maps-protocol";
 import {
   pickProjectDirectory,
   projectManifestFile,

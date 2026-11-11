@@ -8,7 +8,7 @@ Letters to Steve is a correspondence site. Readers submit private letters with o
 
 From the Tea root, run `npm ci`, copy `apps/letters-to-steve/.env.example` to `apps/letters-to-steve/.env`, set `STEVE_ADMIN_PASSWORD`, then run `npm run letters-to-steve:dev`. Open <http://localhost:44110>. Alternatively, `docker compose up --build letters-to-steve` serves <http://letters.localhost> with an isolated data volume and a local development password. Set `STEVE_ADMIN_PASSWORD` before starting Compose to choose your own. The admin username is `steve`; its route is `/steve`.
 
-Run `npm run letters-to-steve:check` for Tea formatting, lint, typecheck, and server tests. `npm run db:status --workspace @tea/letters-to-steve` reports migrations; `db:migrate` applies them. The server also applies committed migrations on startup. The editor enhances a working text-only form, so the public flow works without browser JavaScript.
+Run `npm run letters-to-steve:check` for Tea formatting, lint, typecheck, and server tests. `npm run db:status --workspace @harrhy/letters-to-steve` reports migrations; `db:migrate` applies them. The server also applies committed migrations on startup. The editor enhances a working text-only form, so the public flow works without browser JavaScript.
 
 ## Runtime and data
 

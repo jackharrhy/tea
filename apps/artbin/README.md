@@ -12,7 +12,7 @@ From the Tea root, run `npm ci`, then `npm run artbin:dev`. Node 26 LTS (26.13.0
 
 ## Checks and deployment
 
-Run `npm run artbin:check` from the root or `npm run check --workspace @tea/artbin`. `Dockerfile` produces the Node image published by `.github/workflows/publish-artbin.yml`. Root `compose.yml` provides a local Artbin container. Production host configuration and data migration belong in the infrastructure repo; keep the database and uploads together when changing images. The container expects writable `data`, `public/uploads`, and `tmp/uploads` directories under `/app/apps/artbin`.
+Run `npm run artbin:check` from the root or `npm run check --workspace @harrhy/artbin-app`. `Dockerfile` produces the Node image published by `.github/workflows/publish-artbin.yml`. Root `compose.yml` provides a local Artbin container. Production host configuration and data migration belong in the infrastructure repo; keep the database and uploads together when changing images. The container expects writable `data`, `public/uploads`, and `tmp/uploads` directories under `/app/apps/artbin`.
 
 Artbin keeps its own UI and storage behavior inside this app. Artbin consumes the Tea map renderer through its public package entry points. Keep its preview behavior, visual assets, and component styles intact when updating the renderer.
 
@@ -36,5 +36,5 @@ API machine tokens require this project's audience, its role claims and the
 explicit requested role scopes for `assets-read` or `assets-content`. The Maps
 service has only those two roles. MCP requires a human administrator, the `admin`
 role scope and the mapped local administrator record. Protected-resource metadata
-advertises the central issuer and full required scopes. `@tea/identity` verifies
+advertises the central issuer and full required scopes. `@harrhy/identity` verifies
 tokens; local sessions, user records and authorization remain in this app.

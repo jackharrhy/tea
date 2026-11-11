@@ -6,7 +6,7 @@ import {
   type HostedBuild,
   type HostedProjectMap,
   type HostedProjectSummary,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { clientEntry, on, type Handle } from "remix/component";
 import { listHostedResources } from "./editor-hosted-resources.ts";
 import { readHostedApi } from "./hosted-api.ts";

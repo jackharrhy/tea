@@ -3,7 +3,7 @@ import {
   MapCompileLogSchema,
   MapDocumentSchema,
   MapsGameProfileSchema,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { z } from "zod";
 
 import { ProjectRoleSchema } from "./realtime-ticket.js";

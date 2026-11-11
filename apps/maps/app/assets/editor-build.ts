@@ -14,10 +14,10 @@ import {
   type MapDocument,
   type MapBuildService,
   type MapsGameProfile,
-} from "@tea/maps-editor/core";
-import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
-import { classifyMaterial } from "@jackharrhy/tea-maps-renderer/core";
-import { isGameTreeAssetPath } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import type { WorldSource } from "@harrhy/worldview-renderer";
+import { classifyMaterial } from "@harrhy/worldview-renderer/core";
+import { isGameTreeAssetPath } from "@harrhy/maps-protocol";
 import { projectFile, type MapProject } from "./editor-project.ts";
 import type { StandaloneResources } from "./editor-standalone-resources.ts";
 import {

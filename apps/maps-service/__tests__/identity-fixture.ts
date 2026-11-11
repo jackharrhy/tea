@@ -3,7 +3,7 @@ import {
   projectAudienceScope,
   PROJECT_ROLES_SCOPE,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 export const identityConfig = {
   issuer: "https://auth.test",

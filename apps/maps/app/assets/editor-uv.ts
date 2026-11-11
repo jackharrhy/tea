@@ -6,7 +6,7 @@ import {
   type MapFace,
   type Vec2,
   type Vec3,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VIEW_WIDTH = 320;

@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import { HALL, STOOLS, BAR } from "@tea/pool-simulation/geometry";
+import { HALL, STOOLS, BAR } from "@harrhy/pool-simulation/geometry";
 import { wallMaterial } from "./lighting";
 import { material } from "./textures";
 

@@ -4,9 +4,9 @@ import {
   parseBsp,
   parseWad,
   planWorldAssets,
-} from "@jackharrhy/tea-maps-renderer/core";
-import type { MapCompileInputAsset } from "@tea/maps-editor/core";
-import type { WorldSource } from "@jackharrhy/tea-maps-renderer";
+} from "@harrhy/worldview-renderer/core";
+import type { MapCompileInputAsset } from "@harrhy/maps-editor/core";
+import type { WorldSource } from "@harrhy/worldview-renderer";
 import type { MapDirectoryHandle, MapProject } from "./editor-project.ts";
 
 export interface BuildExportInput {

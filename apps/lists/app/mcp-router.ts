@@ -1,4 +1,4 @@
-import { IdentityError } from "@tea/identity";
+import { IdentityError } from "@harrhy/identity";
 import { createRouter } from "remix/router";
 import { z } from "zod";
 

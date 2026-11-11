@@ -2,13 +2,13 @@ import {
   mapSourceFingerprint,
   parseMapSource,
   serializeMapsProject,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   HostedMapResponseSchema,
   HostedProjectResponseSchema,
   type HostedMapLaunch,
   type HostedProject,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { openDB, type DBSchema } from "idb";
 import { writeMapFile } from "./editor-files.ts";
 import { replaceHostedSource } from "./editor-hosted-source.ts";

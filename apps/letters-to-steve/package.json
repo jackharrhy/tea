@@ -1,5 +1,5 @@
 {
-  "name": "@tea/letters-to-steve",
+  "name": "@harrhy/letters-to-steve",
   "private": true,
   "type": "module",
   "engines": {
@@ -16,7 +16,7 @@
     "db:status": "remix db status"
   },
   "dependencies": {
-    "@tea/identity": "0.1.0",
+    "@harrhy/identity": "0.1.0",
     "@fontsource-variable/literata": "^5.3.0",
     "@fontsource-variable/shantell-sans": "^5.3.0",
     "@tiptap/core": "3.33.0",

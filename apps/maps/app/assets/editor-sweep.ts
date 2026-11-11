@@ -9,11 +9,11 @@ import {
   type SweepOptions,
   type SweepTransform,
   type Vec3,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   type EditorSourceRenderer,
   type EditorSweepDragEvent,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 import { initEditorSweepPanel } from "./editor-sweep-bridge.ts";
 
 function vector(values: readonly number[]): Vec3 {

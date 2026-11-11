@@ -193,7 +193,7 @@ export function CliPage(
               <h2 mix={quickStartTitleStyle}>Install and sign in</h2>
               <pre mix={quickStartCodeStyle}>
                 <code>
-                  {"npm install --global @jackharrhy/tea-artbin\nartbin login"}
+                  {"npm install --global @harrhy/artbin\nartbin login"}
                 </code>
               </pre>
               <p mix={quickStartNoteStyle}>

@@ -1,5 +1,5 @@
-import { TABLE_HALF_LENGTH as L } from "@tea/pool";
-import { FELT_Y } from "@tea/pool/table";
+import { TABLE_HALF_LENGTH as L } from "@harrhy/pool";
+import { FELT_Y } from "@harrhy/pool/table";
 import * as THREE from "three/webgpu";
 import {
   float,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createStarterDocument } from "@tea/maps-editor/core";
+import { createStarterDocument } from "@harrhy/maps-editor/core";
 import { summarizeEditorDocument } from "../editor-document-summary.ts";
 
 describe("editor document summary", () => {

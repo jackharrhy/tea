@@ -5,7 +5,7 @@ import {
   PROTOCOL_VERSION,
   decodeServerControl,
   type WelcomeMessage,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import { createGurgurServer } from "../server/src/server";
 
 const cycles = Number(process.env.CONNECTION_SOAK_CYCLES ?? 1_000);

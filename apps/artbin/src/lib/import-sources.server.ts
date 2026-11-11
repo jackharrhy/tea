@@ -45,7 +45,7 @@ export function describeRemoteImport(manifest: RemoteImportManifest): string {
 
 const ARCHIVE_FILE_PATTERN = /\.(?:zip|7z|rar)(?:\.\d{3})?$/i;
 const REQUEST_HEADERS = {
-  "user-agent": "artbin/0.1 (+https://github.com/jackharrhy/tea)",
+  "user-agent": "artbin/0.1 (+https://github.com/jackharrhy/harrhy)",
   accept: "application/json,text/html;q=0.9,*/*;q=0.5",
 };
 

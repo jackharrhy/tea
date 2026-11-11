@@ -1,14 +1,14 @@
 {
-  "name": "@jackharrhy/tea-maps-renderer",
+  "name": "@harrhy/worldview-renderer",
   "version": "0.2.0",
   "description": "Embeddable WebGPU renderer for Quake, BSP2, GoldSrc, and Quake II maps",
-  "homepage": "https://github.com/jackharrhy/tea/tree/main/packages/maps-renderer#readme",
+  "homepage": "https://github.com/jackharrhy/harrhy/tree/main/packages/maps-renderer#readme",
   "bugs": {
-    "url": "https://github.com/jackharrhy/tea/issues"
+    "url": "https://github.com/jackharrhy/harrhy/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jackharrhy/tea.git",
+    "url": "git+https://github.com/jackharrhy/harrhy.git",
     "directory": "packages/maps-renderer"
   },
   "files": [

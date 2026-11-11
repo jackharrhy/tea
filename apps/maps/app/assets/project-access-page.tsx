@@ -3,7 +3,7 @@ import {
   HostedSessionResponseSchema,
   type HostedProject,
   type HostedProjectAccessUser,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { clientEntry, on, type Handle } from "remix/component";
 import {
   listHostedAccess,

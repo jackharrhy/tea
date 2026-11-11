@@ -1,4 +1,8 @@
-import type { RuntimeId, SpeechMessage, SpeechVoice } from "@tea/gurgur-engine";
+import type {
+  RuntimeId,
+  SpeechMessage,
+  SpeechVoice,
+} from "@harrhy/gurgur-engine";
 
 type SpeechJob = {
   jobId: number;

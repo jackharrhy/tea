@@ -4,7 +4,7 @@ import {
   requireTokenRole,
   roleScope,
   type TokenPrincipal,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { identityClient, identityConfig } from "./oauth.server.ts";
 
 export const serviceScopes = {

@@ -1,5 +1,5 @@
 import * as s from "remix/data-schema";
-import { readRequestBody } from "@tea/request-body";
+import { readRequestBody } from "@harrhy/request-body";
 import { parseAdornmentInstances } from "../features/adornments/public/adornment-instances.ts";
 import type { ContentBlock, Page } from "../ui/public/content-types.ts";
 

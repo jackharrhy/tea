@@ -1,4 +1,4 @@
-import type { HostedMapLaunch } from "@tea/maps-protocol";
+import type { HostedMapLaunch } from "@harrhy/maps-protocol";
 import type { HostedEditorConnection } from "./editor-hosted-collaboration.ts";
 
 export interface HostedSourceContext {

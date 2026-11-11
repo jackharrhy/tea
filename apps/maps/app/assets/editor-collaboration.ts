@@ -7,12 +7,12 @@ import {
   type CollaborationFailure,
   type EditorSession,
   type MapDocument,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   parseCollaborationServerFrame,
   type CollaborationPresence,
   type CollaborationServerFrame,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import {
   IndexedDbCollaborationOutbox,
   type CollaborationOutbox,
@@ -21,7 +21,7 @@ import {
   type HostedReconnectDecision,
 } from "./editor-collaboration-outbox.ts";
 
-export type { CollaborationPresence } from "@tea/maps-protocol";
+export type { CollaborationPresence } from "@harrhy/maps-protocol";
 const SOCKET_OPEN = 1;
 export {
   IndexedDbCollaborationOutbox,

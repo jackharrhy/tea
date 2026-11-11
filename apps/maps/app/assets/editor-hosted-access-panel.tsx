@@ -1,5 +1,5 @@
 import { clientEntry, on, type Handle } from "remix/component";
-import type { HostedProjectAccessUser } from "@tea/maps-protocol";
+import type { HostedProjectAccessUser } from "@harrhy/maps-protocol";
 import {
   currentHostedAccessProject,
   listHostedAccess,

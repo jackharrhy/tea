@@ -16,7 +16,7 @@ exact registered callback. Apps keep short-lived, revocable local sessions.
 | CMS Edge | Prototype password and preview bearer | Worker-compatible PKCE editor client and introspected human-admin preview API | Reviewed owner subject and project admin grant; no production cutover until the prototype has a real host and preview consumer contract |
 | Gurgur admin reset | Static admin token | Remove production-only test control; retain local test harness token | Production has no reset route or admin credential; player sessions are separate |
 
-Artbin, Lists, and Maps already use `@tea/identity`. Burger and Pool use Central
+Artbin, Lists, and Maps already use `@harrhy/identity`. Burger and Pool use Central
 Auth with app-owned OIDC code; consolidating those clients into the shared
 identity package is a separate code cleanup after their existing contracts are
 verified. Pool guests and spectators remain supported.

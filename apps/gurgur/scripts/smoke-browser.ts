@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import { chromium, type Browser, type Page } from "playwright-core";
-import { compileWorld, PLAYER_HALF_HEIGHT } from "@tea/gurgur-game";
+import { compileWorld, PLAYER_HALF_HEIGHT } from "@harrhy/gurgur-game";
 import { createGurgurServer } from "../server/src/server";
 import type { PredictionTraceFrame } from "../web/src/prediction-trace";
 

@@ -1,6 +1,6 @@
 import type { SerializableProps, SerializableValue } from "remix/component";
-import type { Inline } from "@tea/rich-text/inline.ts";
-export type { Inline } from "@tea/rich-text/inline.ts";
+import type { Inline } from "@harrhy/rich-text/inline.ts";
+export type { Inline } from "@harrhy/rich-text/inline.ts";
 export interface ContentBlock extends SerializableProps {
   id: string;
   type: string;

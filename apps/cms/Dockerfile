@@ -7,7 +7,7 @@ COPY . .
 # Drop preferred prebuilds and rebuild against this compression-enabled runtime (two jobs).
 RUN npm ci && rm -rf node_modules/better-sqlite3/prebuilds \
   && node /usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --directory node_modules/better-sqlite3 --nodedir=/usr/local --jobs=2 \
-  && npm run build --workspace @tea/cms && npm prune --omit=dev
+  && npm run build --workspace @harrhy/cms && npm prune --omit=dev
 
 FROM platformatic/node-caged:26-slim
 RUN groupadd --gid 1000 node && useradd --uid 1000 --gid node --create-home node

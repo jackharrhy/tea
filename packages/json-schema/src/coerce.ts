@@ -1,4 +1,4 @@
-import { success } from "@tea/result";
+import { success } from "@harrhy/result";
 import * as coerce from "remix/data-schema/coerce";
 
 /**

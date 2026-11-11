@@ -170,4 +170,4 @@ function finite(value: unknown): value is number {
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
-import type { Vec3 } from "@tea/gurgur-engine";
+import type { Vec3 } from "@harrhy/gurgur-engine";

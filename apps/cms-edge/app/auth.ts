@@ -6,7 +6,7 @@ import {
   validLoginTransaction,
   type IdentityConfig,
   type LoginTransaction,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 const encoder = new TextEncoder();
 const cookieName = "tea_edge_session";

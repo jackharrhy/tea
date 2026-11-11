@@ -4,12 +4,12 @@ import { join } from "node:path";
 import {
   HostedBuildsResponseSchema,
   HostedSessionResponseSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import {
   RemoteCompileRequestSchema,
   RemoteCompileResultSchema,
   type RemoteCompileResult,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { describe, expect, test } from "vitest";
 import { identityFixture } from "./identity-fixture.js";
 import { fixture, session } from "./service-fixture.js";

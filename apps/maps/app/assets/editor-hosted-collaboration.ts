@@ -7,15 +7,15 @@ import {
   type CollaborationOperation,
   type MapDocument,
   type MapSourceState,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   HostedMapSnapshotSchema,
   HostedRealtimeTicketResponseSchema,
   type HostedMapLaunch,
   type HostedMapSnapshot,
   type CollaborationPresence,
-} from "@tea/maps-protocol";
-import type { EditorPointerPositionEvent } from "@tea/maps-editor/render";
+} from "@harrhy/maps-protocol";
+import type { EditorPointerPositionEvent } from "@harrhy/maps-editor/render";
 
 import {
   CollaborationController,

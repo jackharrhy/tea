@@ -1,8 +1,8 @@
-import { parseMapSource, type MapDocument } from "@tea/maps-editor/core";
+import { parseMapSource, type MapDocument } from "@harrhy/maps-editor/core";
 import type {
   EditorReferenceScene,
   EditorSourceRenderer,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 
 interface ReferenceOptions {
   readonly document: () => MapDocument;

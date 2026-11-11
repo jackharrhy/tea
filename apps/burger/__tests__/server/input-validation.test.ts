@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { validateInput } from "../../server/input-validation";
-import { MAX_INPUT_MSEC } from "@tea/burger-core";
+import { MAX_INPUT_MSEC } from "@harrhy/burger-core";
 
 const VALID = {
   type: "input",

@@ -1,4 +1,4 @@
-import type { EditorLayer, EditorLayerFlag } from "@tea/maps-editor/core";
+import type { EditorLayer, EditorLayerFlag } from "@harrhy/maps-editor/core";
 
 export type EditorLayerCommand =
   | { readonly type: "choose"; readonly id: string | null }

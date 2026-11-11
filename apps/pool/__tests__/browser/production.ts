@@ -1,19 +1,19 @@
 import assert from "node:assert/strict";
 import { chromium, expect } from "@playwright/test";
-import { INPUT_DT, PROTOCOL_VERSION } from "@tea/pool-protocol";
+import { INPUT_DT, PROTOCOL_VERSION } from "@harrhy/pool-protocol";
 import type {
   ClientMessage,
   MoveInput,
   ServerMessage,
   Snapshot,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import {
   addAvatar,
   createMovementWorld,
   findPath,
   stepAvatar,
-} from "@tea/pool-simulation";
-import { tableSeatPosition } from "@tea/pool-simulation/geometry";
+} from "@harrhy/pool-simulation";
+import { tableSeatPosition } from "@harrhy/pool-simulation/geometry";
 import { walkDirection } from "../../app/game/input/walking";
 
 const baseURL = process.env.POOL_E2E_URL ?? "http://127.0.0.1:3188";

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import type { ShotAck, Snapshot, TableState } from "@tea/pool-protocol";
-import { createMatch } from "@tea/pool";
+import type { ShotAck, Snapshot, TableState } from "@harrhy/pool-protocol";
+import { createMatch } from "@harrhy/pool";
 import {
   ShotCommands,
   type ShotCommand,

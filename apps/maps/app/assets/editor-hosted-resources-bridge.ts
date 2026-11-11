@@ -1,4 +1,4 @@
-import type { HostedProject } from "@tea/maps-protocol";
+import type { HostedProject } from "@harrhy/maps-protocol";
 
 export interface EditorHostedResourcesContext {
   readonly project: HostedProject | null;

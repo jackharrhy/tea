@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { RuntimeId, Vec3 } from "@tea/gurgur-engine";
+import type { RuntimeId, Vec3 } from "@harrhy/gurgur-engine";
 import { createGurgurServer } from "../../server/src/server";
 
 const cleanup: Array<() => void | Promise<void>> = [];

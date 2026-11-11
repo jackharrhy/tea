@@ -1,12 +1,12 @@
 import { afterEach, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import { request } from "node:http";
-import { tableSeatPosition } from "@tea/pool-simulation/geometry";
+import { tableSeatPosition } from "@harrhy/pool-simulation/geometry";
 import {
   INPUT_DT,
   type ClientMessage,
   type ServerMessage,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import { Hall } from "../../server/hall";
 import { GameRecorder } from "../../server/recordings";
 import { createUpdateControl } from "../../server/update-control";

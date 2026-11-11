@@ -1,7 +1,7 @@
 import {
   DEFAULT_EDITOR_RENDER_THEME,
   type EditorRenderTheme,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 
 export type EditorTheme = "dark" | "light";
 

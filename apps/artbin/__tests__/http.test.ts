@@ -180,7 +180,7 @@ describe("HTTP integration tests", () => {
 
     test("replaces Node environment references in browser dependencies", async () => {
       const mapsRequire = createRequire(
-        import.meta.resolve("@jackharrhy/tea-maps-renderer"),
+        import.meta.resolve("@harrhy/worldview-renderer"),
       );
       const envPath = join(
         dirname(mapsRequire.resolve("typegpu")),

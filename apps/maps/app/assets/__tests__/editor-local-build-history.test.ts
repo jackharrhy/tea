@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { MapCompileResult } from "@tea/maps-editor/core";
+import type { MapCompileResult } from "@harrhy/maps-editor/core";
 import {
   listLocalBuilds,
   recordLocalBuild,

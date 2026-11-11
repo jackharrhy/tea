@@ -4,7 +4,7 @@ import {
   PROJECT_ROLES_SCOPE,
   projectAudienceScope,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 import type { Config } from "../src/config.ts";
 import { OPERATION_SCOPES } from "../src/services/central-scopes.ts";

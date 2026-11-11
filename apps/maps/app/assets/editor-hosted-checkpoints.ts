@@ -4,7 +4,7 @@ import {
   HostedCheckpointSourceResponseSchema,
   HostedCheckpointsResponseSchema,
   HostedErrorResponseSchema,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { readHostedApi } from "./hosted-api.ts";
 
 export async function listHostedCheckpoints(mapId: string) {

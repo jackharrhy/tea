@@ -7,7 +7,7 @@ import {
   RENDER_INTERPOLATION_MIN_TICKS,
   type NetworkBodyState,
   type NetworkPlayerState,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   correctedPredictionPose,
   reconcilePredictionCorrection,

@@ -16,7 +16,7 @@ import {
   rebaseMapSource,
   serializeMap,
   selectedBrushIds,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   CollaborationController,
   EditorCollaborationBridge,

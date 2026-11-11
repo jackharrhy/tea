@@ -1,6 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
-import type { IdentityConfig } from "@tea/identity";
+import type { IdentityConfig } from "@harrhy/identity";
 import type { SqliteDatabase } from "remix/data-table/sqlite";
 
 import { steveSessions } from "../../data/schema.ts";

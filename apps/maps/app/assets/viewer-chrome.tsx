@@ -1,4 +1,4 @@
-import type { MapsViewElement } from "@jackharrhy/tea-maps-renderer/element";
+import type { MapsViewElement } from "@harrhy/worldview-renderer/element";
 import { clientEntry, type Handle } from "remix/component";
 import { sourceFromFiles } from "./world-input.ts";
 

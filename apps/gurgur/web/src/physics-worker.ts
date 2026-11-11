@@ -31,7 +31,7 @@ import {
   type RuntimeId,
   type PhysicsStepEvents,
   type PredictionCheckpointPacket,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   PLAYER_CAPSULE_HALF_SEGMENT,
   PLAYER_CAPSULE_RADIUS,
@@ -50,7 +50,7 @@ import {
   type PlayerControllerState,
   type WorldBundle,
   type WorldMessage,
-} from "@tea/gurgur-game";
+} from "@harrhy/gurgur-game";
 import type {
   PhysicsWorkerRequest,
   PhysicsWorkerResponse,

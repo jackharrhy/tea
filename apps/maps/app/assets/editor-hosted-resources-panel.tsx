@@ -2,7 +2,7 @@ import {
   type HostedAsset,
   type HostedProject,
   type HostedResourceMount,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { clientEntry, on, ref, type Handle } from "remix/component";
 import {
   listHostedResources,

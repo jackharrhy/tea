@@ -2,7 +2,7 @@ import {
   entityDefinitions,
   SKIP_MATERIAL,
   type PropertyDefinition,
-} from "@tea/gurgur-game";
+} from "@harrhy/gurgur-game";
 
 const fgdType = (property: PropertyDefinition): string =>
   ({
@@ -18,7 +18,10 @@ const fgdType = (property: PropertyDefinition): string =>
 
 const quote = (value: string | number | boolean): string =>
   ` : "${String(value)}"`;
-const lines = ["// Generated from @tea/gurgur-game. Do not edit by hand.", ""];
+const lines = [
+  "// Generated from @harrhy/gurgur-game. Do not edit by hand.",
+  "",
+];
 for (const [classname, definition] of Object.entries(entityDefinitions)) {
   const kind = definition.editor.kind === "solid" ? "SolidClass" : "PointClass";
   const size = definition.editor.size

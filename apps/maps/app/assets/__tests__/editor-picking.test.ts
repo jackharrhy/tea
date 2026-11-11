@@ -6,7 +6,7 @@ import {
   EditorSession,
   selectedBrushIds,
   selectedFaceReferences,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { applyViewportPick } from "../editor-picking.ts";
 
 const singlePick = { additive: false, expansion: "single" } as const;

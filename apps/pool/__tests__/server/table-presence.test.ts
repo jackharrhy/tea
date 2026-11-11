@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { Hall, type Peer } from "../../server/hall";
-import { tableSeatPosition } from "@tea/pool-simulation/geometry";
-import { parseClientMessage, type ClientMessage } from "@tea/pool-protocol";
+import { tableSeatPosition } from "@harrhy/pool-simulation/geometry";
+import { parseClientMessage, type ClientMessage } from "@harrhy/pool-protocol";
 
 const halls: Hall[] = [];
 afterEach(() => {

@@ -9,11 +9,11 @@ import {
   type EntityId,
   type SimpleShapeKind,
   type SimpleShapeOptions,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import {
   type EditorBrushCreateEvent,
   type EditorSourceRenderer,
-} from "@tea/maps-editor/render";
+} from "@harrhy/maps-editor/render";
 import { initEditorShapePanel, shapeFields } from "./editor-shape-bridge.ts";
 
 function number(raw: string): number {

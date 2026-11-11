@@ -1,5 +1,5 @@
 import { clientEntry, css, on, type Handle } from "remix/component";
-import type { TransformAxis } from "@tea/maps-editor/core";
+import type { TransformAxis } from "@harrhy/maps-editor/core";
 import type { EditorTransformsContext } from "./editor-transforms-bridge.ts";
 
 const axes = ["X", "Y", "Z"] as const;

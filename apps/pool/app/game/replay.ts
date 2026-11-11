@@ -1,6 +1,6 @@
 import * as THREE from "three/webgpu";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { parseRecording, type GameRecording } from "@tea/pool/recording";
+import { parseRecording, type GameRecording } from "@harrhy/pool/recording";
 import { createTable, FELT_Y } from "./scene/table";
 import { createBallMaterials } from "./scene/textures";
 import { sampleShot, shotDuration } from "./replay-playback";

@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import { TABLES } from "@tea/pool-simulation/geometry";
+import { TABLES } from "@harrhy/pool-simulation/geometry";
 
 function noise(x: number, y: number) {
   const hash = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;

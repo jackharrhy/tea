@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { createAdmin } from "../../server/admin";
 import type { AuthSession } from "../../server/auth";
-import type { AdminMetrics, RoomSettings } from "@tea/pool-protocol";
+import type { AdminMetrics, RoomSettings } from "@harrhy/pool-protocol";
 
 const origin = "https://hall.example";
 const owner: AuthSession = {

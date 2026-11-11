@@ -3,8 +3,8 @@ import { expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createMatch, createShotResult, type PhysicalBall } from "@tea/pool";
-import { parseRecording } from "@tea/pool/recording";
+import { createMatch, createShotResult, type PhysicalBall } from "@harrhy/pool";
+import { parseRecording } from "@harrhy/pool/recording";
 import { GameRecorder, exportRecording } from "../../server/recordings";
 
 const ball = (): PhysicalBall => ({

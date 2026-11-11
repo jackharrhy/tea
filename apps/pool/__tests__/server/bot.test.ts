@@ -12,9 +12,9 @@ import {
   startMatch,
   type Ball,
   type PoolMatch,
-} from "@tea/pool";
-import { PoolPhysics } from "@tea/pool/engine";
-import { POCKETS } from "@tea/pool/table";
+} from "@harrhy/pool";
+import { PoolPhysics } from "@harrhy/pool/engine";
+import { POCKETS } from "@harrhy/pool/table";
 import { chooseBotPlacement, chooseBotShot } from "../../server/bot";
 
 const ball = (id: number, x: number, z: number): Ball => ({

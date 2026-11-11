@@ -1,4 +1,4 @@
-import type { RuntimeId } from "@tea/gurgur-engine";
+import type { RuntimeId } from "@harrhy/gurgur-engine";
 
 export const DEV_FOLLOW_DEFAULT_YAW = 0;
 export const DEV_FOLLOW_DEFAULT_PITCH = -0.18;

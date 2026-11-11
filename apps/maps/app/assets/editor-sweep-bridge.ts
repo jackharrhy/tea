@@ -1,4 +1,4 @@
-import type { SweepPath } from "@tea/maps-editor/core";
+import type { SweepPath } from "@harrhy/maps-editor/core";
 
 export type SweepField =
   | "translateX"

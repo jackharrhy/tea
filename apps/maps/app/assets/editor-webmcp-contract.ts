@@ -6,9 +6,9 @@ import {
   type EditorSession,
   type EditorMaterial,
   type MapSourceState,
-} from "@tea/maps-editor/core";
-import type { EditorSourceRenderer } from "@tea/maps-editor/render";
-import type { HostedMapLaunch } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import type { EditorSourceRenderer } from "@harrhy/maps-editor/render";
+import type { HostedMapLaunch } from "@harrhy/maps-protocol";
 import { z } from "zod";
 import type { MapProject } from "./editor-project.ts";
 

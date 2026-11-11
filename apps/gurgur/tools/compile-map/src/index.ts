@@ -1,6 +1,6 @@
 import { rename, writeFile } from "node:fs/promises";
-import { addMissingAuthoredIds, compileWorld } from "@tea/gurgur-game";
-import { encodeWorldBundle } from "@tea/gurgur-game";
+import { addMissingAuthoredIds, compileWorld } from "@harrhy/gurgur-game";
+import { encodeWorldBundle } from "@harrhy/gurgur-game";
 
 const sourcePath = "content/maps/systems-garden.map";
 const originalSource = await Bun.file(sourcePath).text();

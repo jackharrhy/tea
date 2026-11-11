@@ -30,8 +30,8 @@ import {
   type RuntimeId,
   type WelcomeMessage,
   type WorldManifestMessage,
-} from "@tea/gurgur-engine";
-import { compileWorld } from "@tea/gurgur-game";
+} from "@harrhy/gurgur-engine";
+import { compileWorld } from "@harrhy/gurgur-game";
 import { createGurgurServer, type GurgurServer } from "../../server/src/server";
 import { guardIceUdpSockets } from "../../server/src/rtc";
 

@@ -2,7 +2,7 @@ import {
   PHYSICS_HZ,
   PROTOCOL_VERSION,
   type InputCommand,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 
 const MOVEMENT_KEYS = new Set([
   "KeyW",

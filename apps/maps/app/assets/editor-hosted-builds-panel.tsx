@@ -1,4 +1,4 @@
-import type { HostedBuild } from "@tea/maps-protocol";
+import type { HostedBuild } from "@harrhy/maps-protocol";
 import { clientEntry, on, type Handle } from "remix/component";
 import {
   hostedBuildArtifactPath,

@@ -4,7 +4,7 @@ import {
   PROJECT_ROLES_SCOPE,
   requireTokenRole,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { identityConfig } from "./oauth.server.ts";
 import { eq } from "drizzle-orm";
 

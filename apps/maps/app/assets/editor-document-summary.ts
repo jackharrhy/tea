@@ -6,7 +6,7 @@ import {
   isEditorLayerEntity,
   type EditorObjectViewState,
   type MapDocument,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
 export interface EditorDocumentSummaryState {
   readonly revision: number;

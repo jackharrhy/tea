@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
 import { beforeEach, describe, expect, it } from "vitest";
-import { developmentTexturePack } from "@tea/maps-editor/core";
+import { developmentTexturePack } from "@harrhy/maps-editor/core";
 import {
   addStandaloneWad,
   emptyStandaloneResources,

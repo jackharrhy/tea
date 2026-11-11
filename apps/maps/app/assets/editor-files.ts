@@ -1,4 +1,4 @@
-import { mapSourceFingerprint } from "@tea/maps-editor/core";
+import { mapSourceFingerprint } from "@harrhy/maps-editor/core";
 
 export interface MapFileHandle {
   readonly name: string;

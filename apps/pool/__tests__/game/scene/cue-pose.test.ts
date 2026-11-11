@@ -3,13 +3,13 @@ import {
   BALL_RADIUS,
   TABLE_HALF_WIDTH as W,
   TABLE_HALF_LENGTH as L,
-} from "@tea/pool";
+} from "@harrhy/pool";
 import {
   cuePose,
   CUE_LENGTH,
   CUE_RADIUS,
 } from "../../../app/game/scene/cue-pose";
-import { FELT_Y, RAIL_TOP_Y, RAIL_WIDTH } from "@tea/pool/table";
+import { FELT_Y, RAIL_TOP_Y, RAIL_WIDTH } from "@harrhy/pool/table";
 
 test("cue stays above the cloth and rails while aiming and pulling back near every cushion", () => {
   let clothClearance = Infinity,

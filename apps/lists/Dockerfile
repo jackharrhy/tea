@@ -4,12 +4,12 @@ COPY --from=oven/bun:1.4.4 /usr/local/bin/bun /usr/local/bin/bun
 COPY package.json package-lock.json ./
 COPY apps/lists/package.json apps/lists/package.json
 COPY packages/identity/package.json packages/identity/package.json
-RUN npm ci --workspace @tea/lists --include-workspace-root=false
+RUN npm ci --workspace @harrhy/lists --include-workspace-root=false
 COPY apps/lists apps/lists
 COPY packages/identity packages/identity
 WORKDIR /app/apps/lists
 RUN npm run build:assets
-RUN npm prune --omit=dev --workspace @tea/lists --include-workspace-root=false
+RUN npm prune --omit=dev --workspace @harrhy/lists --include-workspace-root=false
 
 FROM oven/bun:1.4.4-slim AS runtime
 ENV NODE_ENV=production DB_PATH=/data/lists.db PORT=8080

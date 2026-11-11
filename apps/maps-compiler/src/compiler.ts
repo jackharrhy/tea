@@ -11,7 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { gameTreeAssetPath } from "@tea/maps-protocol";
+import { gameTreeAssetPath } from "@harrhy/maps-protocol";
 
 import type {
   MapCompileDiagnostic as NativeCompileDiagnostic,
@@ -19,15 +19,15 @@ import type {
   RemoteCompileRequest as NativeCompilerRequest,
   RemoteCompileResult as NativeCompilerResult,
   MapsGameProfile as CompilerGameProfile,
-} from "@tea/maps-editor/core";
-import { MapsGameProfileSchema } from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
+import { MapsGameProfileSchema } from "@harrhy/maps-editor/core";
 
 export type {
   MapCompileQuality as CompileQuality,
   RemoteCompileRequest as NativeCompilerRequest,
   RemoteCompileResult as NativeCompilerResult,
   MapsGameProfile as CompilerGameProfile,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 
 export function parseCompilerGameProfile(
   value: string | undefined,
