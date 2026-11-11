@@ -20,7 +20,6 @@ const config: Config = {
   s3MediaBaseUrl: "",
   ownerEmail: "",
   ownerPassword: "",
-  oauthDynamicRegistrationEnabled: true,
 };
 
 test("Remix REST and MCP share list operations and preserve member ACL", async () => {

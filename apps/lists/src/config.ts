@@ -13,7 +13,6 @@ export type Config = {
   ownerEmail: string;
   ownerPassword: string;
   publicSubscriptionsEnabled?: boolean;
-  oauthDynamicRegistrationEnabled?: boolean;
   awsEndpointUrl?: string;
   smtpUrl?: string;
   shutdownSignal?: AbortSignal;
@@ -77,8 +76,6 @@ export function loadConfig(): Config {
     ownerPassword: process.env.OWNER_PASSWORD ?? "",
     publicSubscriptionsEnabled:
       process.env.PUBLIC_SUBSCRIPTIONS_ENABLED === "true",
-    oauthDynamicRegistrationEnabled:
-      process.env.OAUTH_DYNAMIC_REGISTRATION_ENABLED === "true",
     awsEndpointUrl: process.env.AWS_ENDPOINT_URL || undefined,
     smtpUrl: process.env.SMTP_URL || undefined,
     identity,

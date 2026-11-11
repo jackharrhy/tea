@@ -25,7 +25,6 @@ const config: Config = {
   s3MediaBaseUrl: "",
   ownerEmail: "",
   ownerPassword: "",
-  oauthDynamicRegistrationEnabled: true,
 };
 
 function mintApiToken(
