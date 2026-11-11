@@ -7,6 +7,8 @@ Central Auth migration: configure `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
 `AUTH_PUBLIC_ORIGIN=https://ref.jackharrhy.dev` together. Register the exact
 public PKCE callback `https://ref.jackharrhy.dev/auth/callback`. An app
 member/admin grant opens the shared boards; board and asset IDs stay stable.
+The first Central grant is for Jack only; other users can be admitted later
+without changing the board format.
 Central sessions in `DirectoryCell` carry a subject and expire within one hour.
 Old password sessions cannot authorize Central mode. Keep the live password
 path until browser, WebSocket, and archive CLI acceptance pass. The archive CLI
@@ -69,7 +71,7 @@ active. In Central mode, supply a short-lived delegated `REF_ACCESS_TOKEN`.
 Backup requires a Ref member or admin grant plus `archive-read` role and scope.
 Restore requires the admin grant and both `archive-read` and `archive-restore`
 roles/scopes; a browser cookie alone never authorizes archive routes. The
-Worker introspects every archive request and image download. Resource metadata
+Worker introspects archive requests, board snapshot reads, and image downloads. Resource metadata
 is at `/.well-known/oauth-protected-resource/api/archive`. Set `REF_URL` to
 the instance you want to access:
 

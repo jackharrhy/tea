@@ -60,7 +60,9 @@ The Central Auth cutover sets `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
 `AUTH_PUBLIC_ORIGIN=https://radio.jackharrhy.dev` together. It uses a dedicated
 public PKCE browser client with the exact callback
 `https://radio.jackharrhy.dev/auth/callback`. An app member/admin grant opens
-the existing shared rooms; display names remain cosmetic. Central sign-in
+the existing shared rooms; Radio is intended to be open to all eligible Central
+accounts, so the Auth enrollment rule must grant new members before cutover.
+Each session keeps the immutable Central subject; display names remain cosmetic. Central sign-in
 reuses the signed local cookie but checks its subject and one-hour expiry on
 every request. The old shared-password cookie cannot authorize Central mode.
 `RADIO_SESSION_SECRET` stays required. Keep production on the password path
@@ -70,8 +72,9 @@ until the Auth client and actual room/WebSocket/media cutover pass, then remove
 Set `CELLD_VAR_RADIO_PASSWORD` and a random 32-character-or-longer
 `CELLD_VAR_RADIO_SESSION_SECRET`. When enabling `CELLD_TRUST_FORWARDED_HEADERS=1`, configure
 Traefik to replace forwarded host/protocol headers. Only the public listener should be exposed.
-The application has no individual accounts or room-level authorization: every holder of the
-shared password can see, create, and mutate every room. The upload limit remains **1 GiB**
+The application has no persistent user profiles or room-level authorization:
+every signed-in Central member can see, create, and mutate every room. In the
+old mode, every holder of the shared password has that access. The upload limit remains **1 GiB**
 (1,073,741,824 bytes) per track.
 
 Azure remains available for baseline comparisons and migration. Set `CELLD_BUCKET=az://CONTAINER`
