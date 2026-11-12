@@ -88,7 +88,7 @@ try {
 import {runtime} from ${JSON.stringify(absolute("apps/fourm/app/runtime.ts"))};
 import {createAppRouter} from ${JSON.stringify(absolute("apps/fourm/app/router.tsx"))};
 export {CommunityCell};
-export default {async fetch(request,env,context){const path=new URL(request.url).pathname;if(path==='/health')return new Response('ready');if(path.startsWith('/static/')||path.startsWith('/assets/'))return env.ASSETS.fetch(request);const store=runtime(env);if(path==='/seed'){await store.call('restore',{users:[{id:41,username:'fixture',display_name:'Fixture',password_hash:'',is_admin:1},{id:72,username:'member',display_name:'Member',password_hash:''}],media:[{id:1,user_id:41,storage_path:'fixture/kept.txt',mime_type:'text/plain',size_bytes:4},{id:2,user_id:41,storage_path:'fixture/missing.txt',mime_type:'text/plain',size_bytes:4}]});await env.MEDIA.put('fixture/kept.txt','kept');await env.MEDIA.put('fixture/orphan.txt','orphan');return new Response('seeded');}if(path==='/orphan-again'){await env.MEDIA.put('fixture/orphan.txt','orphan');return new Response('seeded');}if(path==='/claim'){return Response.json(await store.call('beginOrphanCleanup',41,'fixture/orphan.txt'));}if(path==='/inspect'){return Response.json({records:await store.call('adminMediaRecords',41),pending:await store.call('hasOrphanCleanup'),kept:await (await env.MEDIA.get('fixture/kept.txt'))?.text(),orphan:!!(await env.MEDIA.head('fixture/orphan.txt'))});}const viewer={member:request.headers.get('X-Fixture-Actor')?await store.call('member',41):null,sessionHash:null};try{return await createAppRouter(env,store,viewer,p=>context.waitUntil(p)).fetch(request);}catch(error){return new Response(error.message,{status:error.status||500});}}};`;
+export default {async fetch(request,env,context){const path=new URL(request.url).pathname;if(path==='/health')return new Response('ready');if(path.startsWith('/static/')||path.startsWith('/assets/'))return env.ASSETS.fetch(request);const store=runtime(env);if(path==='/seed'){await store.call('restore',{users:[{id:41,username:'fixture',display_name:'Fixture',password_hash:'',is_admin:1},{id:72,username:'member',display_name:'Member',password_hash:''}],media:[{id:1,user_id:41,storage_path:'fixture/kept.txt',mime_type:'text/plain',size_bytes:4},{id:2,user_id:41,storage_path:'fixture/missing.txt',mime_type:'text/plain',size_bytes:4}]});await env.MEDIA.put('fixture/kept.txt','kept');await env.MEDIA.put('fixture/orphan.txt','orphan');return new Response('seeded');}if(path==='/orphan-again'){await env.MEDIA.put('fixture/orphan.txt','orphan');return new Response('seeded');}if(path==='/backup-begin'){return Response.json(await store.call('beginBackup',41));}if(path==='/backup-status'){return Response.json(await store.call('backupStatus',41));}if(path==='/backup-finish'){const status=await store.call('backupStatus',41);return Response.json(await store.call('completeBackup',status.pending.name,1024,1));}if(path==='/claim'){return Response.json(await store.call('beginOrphanCleanup',41,'fixture/orphan.txt'));}if(path==='/inspect'){return Response.json({records:await store.call('adminMediaRecords',41),pending:await store.call('hasOrphanCleanup'),kept:await (await env.MEDIA.get('fixture/kept.txt'))?.text(),orphan:!!(await env.MEDIA.head('fixture/orphan.txt'))});}const viewer={member:request.headers.get('X-Fixture-Actor')?await store.call('member',41):null,sessionHash:null};try{return await createAppRouter(env,store,viewer,p=>context.waitUntil(p)).fetch(request);}catch(error){return new Response(error.message,{status:error.status||500});}}};`;
   await writeFile(join(state, "worker.ts"), worker);
   await cp(absolute("apps/fourm/dist/client"), join(state, "assets"), {
     recursive: true,
@@ -211,10 +211,26 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
   }
   assert.equal((await request("/orphan-again", "POST")).status, 200);
   assert.equal(await (await request("/claim", "POST")).json(), true);
+  const backupRun = await (await request("/backup-begin", "POST")).json();
+  assert.equal(backupRun.state, "pending");
+  assert.deepEqual(
+    await (await request("/backup-begin", "POST")).json(),
+    backupRun,
+  );
   await stop();
   await rm(join(state, "replica"), { recursive: true, force: true });
   await start();
   assert.equal((await (await request("/inspect")).json()).pending, true);
+  assert.equal(
+    (await (await request("/backup-status")).json()).pending.name,
+    backupRun.name,
+  );
+  const backupFinished = await (await request("/backup-finish", "POST")).json();
+  assert.equal(backupFinished.state, "complete");
+  const backupStatus = await (await request("/backup-status")).json();
+  assert.equal(backupStatus.pending, null);
+  assert.equal(backupStatus.backups[0].name, backupRun.name);
+
   const cleanup = await request("/admin/cleanup/files", "POST");
   assert.equal(cleanup.status, 303);
   assert.equal(cleanup.headers.get("location"), "/admin?cleaned_files=1");
@@ -240,6 +256,9 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
         scope:
           "actual native Celld DO/R2, isolated synthetic fixture, actual admin routes; no real OAuth or real-content browser claim",
         browserCleanupControls: true,
+        backupRunStateRecovery: true,
+        backupRunLimit:
+          "State transitions only; synthetic receipt inventory, no snapshot created or restored",
         coldRestart: true,
         replicaRemoved: true,
         authorityRecovered: true,
