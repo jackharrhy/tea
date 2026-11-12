@@ -9,7 +9,7 @@ export default defineConfig({
       fileName: () => "index.js",
     },
     rollupOptions: {
-      external: ["@tea/maps-editor/core", "zod"],
+      external: ["@harrhy/maps-editor/core", "zod"],
     },
     sourcemap: true,
     emptyOutDir: true,

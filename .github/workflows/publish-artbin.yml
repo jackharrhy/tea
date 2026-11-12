@@ -58,12 +58,12 @@ jobs:
           file: apps/artbin/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-artbin:latest
-            ghcr.io/jackharrhy/tea-artbin:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/artbin:latest
+            ghcr.io/jackharrhy/artbin:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-artbin@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/artbin@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

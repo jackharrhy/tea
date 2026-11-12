@@ -1,4 +1,4 @@
-import type { HostedSessionUser } from "@tea/maps-protocol";
+import type { HostedSessionUser } from "@harrhy/maps-protocol";
 import type { MapsDatabase, MapsUser } from "./database.js";
 
 export const SESSION_COOKIE = "tea_maps_session";

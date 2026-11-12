@@ -1,5 +1,5 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
-import type { ClientMessage, ServerMessage } from "@tea/pool-protocol";
+import type { ClientMessage, ServerMessage } from "@harrhy/pool-protocol";
 import { Session } from "../../app/game/session";
 
 class Socket extends EventTarget {

@@ -10,8 +10,8 @@ import type {
   PredictionCheckpointPacket,
   LifecycleMessage,
   RuntimeId,
-} from "@tea/gurgur-engine";
-import type { WorldMessage } from "@tea/gurgur-game";
+} from "@harrhy/gurgur-engine";
+import type { WorldMessage } from "@harrhy/gurgur-game";
 
 export type PhysicsWorkerRequest =
   | {

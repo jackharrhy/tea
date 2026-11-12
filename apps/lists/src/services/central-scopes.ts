@@ -1,4 +1,4 @@
-import { roleScope } from "@tea/identity";
+import { roleScope } from "@harrhy/identity";
 
 import { API_SCOPES, type ApiScope } from "./access";
 

@@ -6,7 +6,7 @@ import {
   TABLE_HALF_WIDTH as W,
   TABLE_HALF_LENGTH as L,
   createRack,
-} from "@tea/pool";
+} from "@harrhy/pool";
 import {
   FELT_Y,
   FELT_GEOMETRY,
@@ -20,7 +20,7 @@ import {
   RETURN_TRAY,
   CABINET_BOUNDS,
   POCKET_WELL_BOTTOM_Y,
-} from "@tea/pool/table";
+} from "@harrhy/pool/table";
 import { canvasTexture } from "./textures";
 import { pendantRig } from "./lighting";
 export { FELT_Y };

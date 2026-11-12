@@ -1,6 +1,6 @@
 import invariant from "tiny-invariant";
 import { addComponent } from "bitecs";
-import { moveAndSlide } from "@tea/burger-core";
+import { moveAndSlide } from "@harrhy/burger-core";
 import type { World } from "./world";
 import { createPlayer } from "./players";
 

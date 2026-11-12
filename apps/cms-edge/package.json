@@ -1,5 +1,5 @@
 {
-  "name": "@tea/cms-edge",
+  "name": "@harrhy/cms-edge",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,9 @@
     "deploy": "cf deploy"
   },
   "dependencies": {
-    "@tea/identity": "0.1.0",
-    "@tea/logger": "0.1.0",
-    "@tea/request-body": "0.1.0",
+    "@harrhy/identity": "0.1.0",
+    "@harrhy/logger": "0.1.0",
+    "@harrhy/request-body": "0.1.0",
     "remix": "3.2.0"
   },
   "devDependencies": {

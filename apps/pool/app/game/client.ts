@@ -1,6 +1,6 @@
 import { Vector3 } from "three";
 import { listenerPose } from "./audio-listener";
-import { FELT_Y } from "@tea/pool/table";
+import { FELT_Y } from "@harrhy/pool/table";
 import { CUE_CONTACT_MS } from "./scene/cue-pose";
 import { HallView } from "./scene/world";
 import { LocalPrediction, RemoteMotion } from "./prediction/net-state";
@@ -15,10 +15,10 @@ import {
   HALL_SPAWN,
   TABLES,
   tableSeatPosition,
-} from "@tea/pool-simulation/geometry";
-import { tableApproach } from "@tea/pool-simulation";
-import type { Point } from "@tea/pool-simulation";
-import { INPUT_DT, MAX_INPUT_BATCH } from "@tea/pool-protocol";
+} from "@harrhy/pool-simulation/geometry";
+import { tableApproach } from "@harrhy/pool-simulation";
+import type { Point } from "@harrhy/pool-simulation";
+import { INPUT_DT, MAX_INPUT_BATCH } from "@harrhy/pool-protocol";
 import type {
   MoveInput,
   ServerMessage,
@@ -26,7 +26,7 @@ import type {
   PoolTraceMessage,
   RoomSettings,
   TableState,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import { installAccount } from "./account";
 import { ClientTelemetry } from "./client-telemetry";
 import { PoolTraceCapture, encodePoolTrace } from "./pool-trace";

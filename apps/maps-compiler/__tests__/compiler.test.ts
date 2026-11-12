@@ -1,7 +1,7 @@
 import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { RemoteMapCompiler } from "@tea/maps-editor/core";
+import { RemoteMapCompiler } from "@harrhy/maps-editor/core";
 import { describe, expect, it } from "vitest";
 
 import {

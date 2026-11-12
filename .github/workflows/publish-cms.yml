@@ -54,12 +54,12 @@ jobs:
           file: apps/cms/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-cms:latest
-            ghcr.io/jackharrhy/tea-cms:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/teacms:latest
+            ghcr.io/jackharrhy/teacms:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-cms@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/teacms@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

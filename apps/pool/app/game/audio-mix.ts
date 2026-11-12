@@ -1,5 +1,5 @@
-import type { PhysicalBall, PoolSound } from "@tea/pool";
-import { FELT_Y, MESH_REST_OFFSET, FELT_LIP_DROP } from "@tea/pool/table";
+import type { PhysicalBall, PoolSound } from "@harrhy/pool";
+import { FELT_Y, MESH_REST_OFFSET, FELT_LIP_DROP } from "@harrhy/pool/table";
 
 import { isReturnFloorLanding } from "./audio-surfaces";
 

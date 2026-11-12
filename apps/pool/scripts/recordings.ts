@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { statSync, writeFileSync } from "node:fs";
-import { createShotResult } from "@tea/pool";
-import { parseRecording } from "@tea/pool/recording";
+import { createShotResult } from "@harrhy/pool";
+import { parseRecording } from "@harrhy/pool/recording";
 import {
   exportRecording,
   exportClientTraces,
@@ -13,7 +13,7 @@ if (command === "compare" && path) {
   if (statSync(path).size > 64 * 1024 * 1024)
     throw new Error("Recording exceeds 64 MB; export a single shot");
   const recording = parseRecording(await Bun.file(path).json());
-  const { PoolPhysics } = await import("@tea/pool/engine");
+  const { PoolPhysics } = await import("@harrhy/pool/engine");
   for (const shot of recording.shots) {
     if (shot.flags.includes("gravity_changed")) {
       console.log(

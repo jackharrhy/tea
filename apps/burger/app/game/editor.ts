@@ -5,7 +5,7 @@ import {
   Texture,
   Graphics,
 } from "pixi.js";
-import { TILE_SIZE } from "@tea/burger-core";
+import { TILE_SIZE } from "@harrhy/burger-core";
 import { sendPaint, type NetworkState } from "./network";
 import { useGameStore } from "../store";
 

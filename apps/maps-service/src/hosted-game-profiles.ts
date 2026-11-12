@@ -1,5 +1,5 @@
-import type { HostedGame } from "@tea/maps-protocol";
-import type { MapFaceSyntax } from "@tea/maps-editor/core";
+import type { HostedGame } from "@harrhy/maps-protocol";
+import type { MapFaceSyntax } from "@harrhy/maps-editor/core";
 
 export type HostedBuildProfile =
   | {

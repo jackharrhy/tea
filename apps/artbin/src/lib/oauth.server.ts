@@ -1,7 +1,10 @@
-import { createIdentityClient, type IdentityConfig } from "@tea/identity";
+import { createIdentityClient, type IdentityConfig } from "@harrhy/identity";
 
-export { createLoginTransaction, validLoginTransaction } from "@tea/identity";
-export type { LoginTransaction } from "@tea/identity";
+export {
+  createLoginTransaction,
+  validLoginTransaction,
+} from "@harrhy/identity";
+export type { LoginTransaction } from "@harrhy/identity";
 
 export function identityConfig(): IdentityConfig {
   return {

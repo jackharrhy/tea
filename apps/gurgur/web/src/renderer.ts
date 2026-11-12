@@ -11,8 +11,8 @@ import {
   type RuntimeEntityRef,
   type RuntimeId,
   type Vec3,
-} from "@tea/gurgur-engine";
-import { PLAYER_GRAB_REACH, type WorldMessage } from "@tea/gurgur-game";
+} from "@harrhy/gurgur-engine";
+import { PLAYER_GRAB_REACH, type WorldMessage } from "@harrhy/gurgur-game";
 import {
   createInteractionOutlineMaterial,
   createInteractionOutlineMaskMaterial,

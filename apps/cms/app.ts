@@ -7,7 +7,7 @@ import { transaction } from "./app/data/transaction.ts";
 import { createTeaRouter } from "./app/router.ts";
 import { createOperatorRouter } from "./operator/router.tsx";
 import type { OperatorStore } from "./operator/store.ts";
-import { currentLog } from "@tea/logger";
+import { currentLog } from "@harrhy/logger";
 import { parseOperatorOrigin } from "./config.ts";
 import { compressResponse } from "remix/response/compress";
 

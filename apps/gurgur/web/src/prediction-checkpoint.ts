@@ -2,7 +2,7 @@ import {
   unwrapTick32,
   type NetworkPlayerState,
   type PredictionCheckpointPacket,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 
 export function acceptsPredictionCheckpoint(
   checkpoint: PredictionCheckpointPacket,

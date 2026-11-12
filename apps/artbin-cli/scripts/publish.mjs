@@ -143,8 +143,7 @@ async function main() {
     const bin = join(
       installDir,
       "node_modules",
-      "@jackharrhy",
-      "tea-artbin",
+      ...manifest.name.split("/"),
       "dist",
       "index.js",
     );

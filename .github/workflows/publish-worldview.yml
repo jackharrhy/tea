@@ -1,0 +1,128 @@
+name: Publish Worldview
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-worldview.yml
+      - .dockerignore
+      - .nvmrc
+      - package.json
+      - package-lock.json
+      - apps/worldview/**
+      - apps/maps-service/**
+      - apps/maps-collaboration/**
+      - apps/maps-compiler/**
+      - packages/maps-editor/**
+      - packages/maps-protocol/**
+      - packages/maps-renderer/**
+      - packages/request-body/**
+      - packages/identity/**
+  workflow_dispatch:
+concurrency:
+  group: publish-worldview
+  cancel-in-progress: false
+permissions: {}
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      apps: ${{ steps.apps.outputs.apps }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: apps
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import subprocess
+
+          apps = ["worldview", "maps-service", "maps-collaboration", "maps-compiler"]
+          before = os.environ.get("BEFORE", "")
+          if os.environ["EVENT"] == "workflow_dispatch" or not before or set(before) == {"0"}:
+              selected = apps
+          else:
+              paths = subprocess.check_output(
+                  ["git", "diff", "--name-only", before, os.environ["GITHUB_SHA"]],
+                  text=True,
+              ).splitlines()
+              shared = any(
+                  path in {".dockerignore", ".nvmrc", "package.json", "package-lock.json"}
+                  or path.startswith(("packages/maps-editor/", "packages/maps-protocol/", "packages/maps-renderer/", "packages/request-body/"))
+                  for path in paths
+              )
+              selected = apps if shared else [
+                  app for app in apps if any(path.startswith(f"apps/{app}/") for path in paths)
+              ]
+              if any(path.startswith("packages/identity/") for path in paths):
+                  selected = list(dict.fromkeys([*selected, "maps-service"]))
+              if not selected:
+                  selected = apps
+          print("apps=" + json.dumps(selected))
+          PY
+  publish:
+    needs: select
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.select.outputs.apps) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cache-binary: false
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Choose image name
+        id: image
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          case "$APP" in
+            worldview) name=worldview ;;
+            maps-service) name=worldview-service ;;
+            maps-collaboration) name=worldview-collaboration ;;
+            maps-compiler) name=worldview-compiler ;;
+            *) exit 1 ;;
+          esac
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Set image tags
+        id: tags
+        run: |
+          tags="ghcr.io/jackharrhy/${{ steps.image.outputs.name }}:sha-${GITHUB_SHA}"
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            tags="$tags,ghcr.io/jackharrhy/${{ steps.image.outputs.name }}:latest"
+          fi
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+      - id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Show deployable image
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: echo "ghcr.io/jackharrhy/${{ steps.image.outputs.name }}@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

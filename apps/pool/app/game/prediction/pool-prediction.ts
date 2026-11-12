@@ -1,12 +1,12 @@
-import { PoolPhysics } from "@tea/pool/engine";
-import { createShotResult } from "@tea/pool";
-import type { PhysicalBall, PoolSound } from "@tea/pool";
-import { INPUT_DT } from "@tea/pool-protocol";
+import { PoolPhysics } from "@harrhy/pool/engine";
+import { createShotResult } from "@harrhy/pool";
+import type { PhysicalBall, PoolSound } from "@harrhy/pool";
+import { INPUT_DT } from "@harrhy/pool-protocol";
 import type {
   PoolTraceCorrection,
   Snapshot,
   TableState,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import type { MotionEntity } from "./net-state";
 
 function toPoses(values: Iterable<MotionEntity>) {

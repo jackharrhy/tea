@@ -1,5 +1,5 @@
-import type { Vec3 } from "@tea/gurgur-engine";
-import type { PhysicsWorld } from "@tea/gurgur-engine";
+import type { Vec3 } from "@harrhy/gurgur-engine";
+import type { PhysicsWorld } from "@harrhy/gurgur-engine";
 
 export const PLAYER_SPEED = 5;
 export const PLAYER_GRAVITY = 10;

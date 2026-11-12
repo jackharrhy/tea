@@ -1,6 +1,6 @@
-import type { Snapshot } from "@tea/pool-protocol";
-import type { PoolSound } from "@tea/pool";
-import { TABLES } from "@tea/pool-simulation/geometry";
+import type { Snapshot } from "@harrhy/pool-protocol";
+import type { PoolSound } from "@harrhy/pool";
+import { TABLES } from "@harrhy/pool-simulation/geometry";
 import {
   AudioEventGate,
   consumeHeard,

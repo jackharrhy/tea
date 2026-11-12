@@ -1,12 +1,12 @@
 # TeaCMS
 
-This Remix 3 Node app is the multi-site CMS. It selects sites by hostname and uses [`@tea/rich-text`](../../packages/rich-text/README.md), [`@tea/mcp`](../../packages/mcp/README.md), and other shared packages. Andrew and Luke each keep their presentation and assets under `sites/`, exported as `@tea/cms/sites/andrew` and `@tea/cms/sites/luke`.
+This Remix 3 Node app is the multi-site CMS. It selects sites by hostname and uses [`@harrhy/rich-text`](../../packages/rich-text/README.md), [`@harrhy/mcp`](../../packages/mcp/README.md), and other shared packages. Andrew and Luke each keep their presentation and assets under `sites/`, exported as `@harrhy/cms/sites/andrew` and `@harrhy/cms/sites/luke`.
 
 `server.ts` starts the server, `config.ts` registers sites and origins, and `app.ts` connects each site to its router. `app/` owns routes, controllers, editor UI, storage, and assets; `createContentStore` and `createAuthStore` bind storage to a database. `operator/` owns the dashboard and `createOperatorStore`; `db/` holds SQLite migrations. Keep site code and assets in `sites/<id>/`.
 
 UI styles use Remix `css(...)` mixins in `app/ui/`, `operator/`, and each site's `app/styles.ts`. `public/fonts.css` contains only the Inter font faces.
 
-The Node host opens a request record through [`@tea/logger`](../../packages/logger/README.md). MCP handlers enrich that record. Request bodies, headers, and raw URLs are not logged.
+The Node host opens a request record through [`@harrhy/logger`](../../packages/logger/README.md). MCP handlers enrich that record. Request bodies, headers, and raw URLs are not logged.
 
 Public HTML pages, including public pages on preview sites, support Brotli and gzip through Remix's response compression. Operator and editor routes, requests with cookies or authorization, and query variants are excluded. Pages still render from current published data on each request; this is not a page cache. Media and API responses retain their existing transport behavior.
 
@@ -24,7 +24,7 @@ Checks:
 ```sh
 npm run cms:check
 npx playwright install chromium
-npm run test:browser --workspace @tea/cms
+npm run test:browser --workspace @harrhy/cms
 ```
 
 Host tests and fixtures live in `__tests__/`; feature tests live in `__tests__/` beside their code. Operational scripts live in `scripts/`. See [Compose](../../compose.yml) and [operations](../../docs/cms/operations.md) for deployment and data, [MCP](../../docs/cms/mcp.md) for the optional read-only endpoint, and [AGENTS.md](AGENTS.md) for CMS editing rules.
@@ -61,11 +61,11 @@ manifest of `{ "operator": [{ "id": 1, "subject": "..." }], "sites": {
 "andrew": [], "luke": [] } }` for the initial operator-only cutover. Add
 site links only after the corresponding local IDs and Central subjects are
 reviewed. Use the actual reviewed local IDs; the example operator ID is a
-placeholder. First run `npm run link:central-auth --workspace @tea/cms --
+placeholder. First run `npm run link:central-auth --workspace @harrhy/cms --
 /private/links.json` to validate every target without changing links, then
 repeat with `--apply`. The command rejects unknown IDs, conflicting links,
 duplicate subjects within a database, missing schema migrations, and missing
 database files. It reports counts only. A retry with the same manifest is
 idempotent. Keep the existing SQLite backup until production acceptance.
 
-The [CMS publish workflow](../../.github/workflows/publish-cms.yml) runs on `main` changes to this app or its shared dependencies. It checks the CMS and publishes `ghcr.io/jackharrhy/tea-cms:latest` plus a commit tag. It can also be started manually. Mug follows `latest` with Watchtower; the commit tag supports rollback.
+The [CMS publish workflow](../../.github/workflows/publish-cms.yml) runs on `main` changes to this app or its shared dependencies. It checks the CMS and publishes `ghcr.io/jackharrhy/teacms:latest` plus a commit tag. It can also be started manually. Mug follows `latest` with Watchtower; the commit tag supports rollback.

@@ -1,16 +1,17 @@
 import type { Handle, RemixNode } from "remix/component";
+import { uiControlStyles, uiPrimaryActionStyles } from "@harrhy/ui";
 import type { BoardRecord } from "../data/directory-cell.ts";
 import { browserAssets } from "../assets/build-manifest.ts";
-import { refStyles } from "../styles.ts";
+import { refStyles, refThemeStyles } from "../styles.ts";
 
 function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
   return () => (
-    <html lang="en" mix={refStyles}>
+    <html lang="en" mix={[refThemeStyles, uiControlStyles, refStyles]}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#f6f6f4" />
-        <title>{handle.props.title} · tea/ref</title>
+        <title>{handle.props.title} · ref</title>
         <link rel="icon" href="/favicon.svg" />
       </head>
       <body>{handle.props.children}</body>
@@ -18,34 +19,21 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
   );
 }
 
-export function AuthPage(
-  handle: Handle<{ error?: string; central?: boolean }>,
-) {
+export function AuthPage(handle: Handle<{ error?: string }>) {
   return () => (
     <Document title="Unlock">
       <main class="auth-page">
         <div class="auth-form">
           <a class="wordmark" href="/">
-            tea<span>/ref</span>
+            ref
           </a>
-          {handle.props.central ? (
-            <a href="/auth/login">Sign in with Central Auth</a>
-          ) : (
-            <form method="post" action="/login">
-              <label for="password">Password</label>
-              <div class="auth-row">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  autoFocus
-                  required
-                />
-                <button type="submit">Enter</button>
-              </div>
-            </form>
-          )}
+          <div class="auth-intro">
+            <h1>A shared board for images and links.</h1>
+            <p>Collect visual references and arrange them together.</p>
+            <a class="auth-link" href="/auth/login" mix={uiPrimaryActionStyles}>
+              Sign in with Jack Auth
+            </a>
+          </div>
           {handle.props.error && (
             <p class="error" role="alert">
               {handle.props.error}
@@ -65,7 +53,7 @@ export function HomePage(
       <main class="home-page">
         <header class="site-header">
           <a class="wordmark" href="/">
-            tea<span>/ref</span>
+            ref
           </a>
           <form method="post" action="/logout">
             <button class="quiet-button" type="submit">
@@ -88,15 +76,23 @@ export function HomePage(
               required
               maxLength={100}
             />
-            <button type="submit">Create</button>
+            <button type="submit" mix={uiPrimaryActionStyles}>
+              Create
+            </button>
           </form>
           <div class="board-list">
-            {handle.props.boards.map((board) => (
-              <a class="board-row" href={`/boards/${board.id}`}>
-                <span>{board.title}</span>
-                <time>{new Date(board.updatedAt).toLocaleDateString()}</time>
-              </a>
-            ))}
+            {handle.props.boards.length === 0 ? (
+              <p class="board-list-empty">
+                No boards yet. Create one to start collecting references.
+              </p>
+            ) : (
+              handle.props.boards.map((board) => (
+                <a class="board-row" href={`/boards/${board.id}`}>
+                  <span>{board.title}</span>
+                  <time>{new Date(board.updatedAt).toLocaleDateString()}</time>
+                </a>
+              ))
+            )}
           </div>
         </section>
       </main>
@@ -133,7 +129,12 @@ export function BoardPage(
             <span class="connection-dot"></span>
             <span class="connection-text">Connecting</span>
           </div>
-          <button id="tool-add" class="header-add" type="button">
+          <button
+            id="tool-add"
+            class="header-add"
+            type="button"
+            mix={uiPrimaryActionStyles}
+          >
             Add images
           </button>
           <details id="link-menu" class="add-link-menu">

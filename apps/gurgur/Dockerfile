@@ -3,7 +3,7 @@ WORKDIR /app
 COPY --from=oven/bun:1.4.4 /usr/local/bin/bun /usr/local/bin/bun
 COPY . .
 RUN npm ci
-RUN npm run build --workspace @tea/gurgur
+RUN npm run build --workspace @harrhy/gurgur
 
 FROM oven/bun:1.4.4-slim AS runtime
 WORKDIR /app/dist

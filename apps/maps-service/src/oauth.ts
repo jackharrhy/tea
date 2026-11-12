@@ -3,7 +3,7 @@ import {
   createLoginTransaction,
   type IdentityConfig,
   type LoginTransaction,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import type { MapsDatabase, MapsUser } from "./database.js";
 
 export interface OAuthConfig extends IdentityConfig {

@@ -117,7 +117,7 @@ test("code flow sends PKCE and nonce, verifies a signed identity and uses scoped
     ),
     transaction.verifier,
   );
-  assert.ok(calls.every((call) => call.options?.redirect === "error"));
+  assert.ok(calls.every((call) => call.options?.redirect === "manual"));
 });
 test("wrong nonce, issuer, audience, authorized party and signing key cannot create a session", async () => {
   const other = await generateKeyPair("RS256");
@@ -186,6 +186,21 @@ test("login transactions expire and must match browser state", () => {
     false,
   );
 });
+
+test("HTTP issuer is limited to local development hosts", () => {
+  assert.doesNotThrow(() =>
+    createIdentityClient({ ...config, issuer: "http://127.0.0.1:8786" }),
+  );
+  assert.doesNotThrow(() =>
+    createIdentityClient({
+      ...config,
+      issuer: "http://ref-auth.localhost:8786",
+    }),
+  );
+  assert.throws(() =>
+    createIdentityClient({ ...config, issuer: "http://auth.example" }),
+  );
+});
 test("API tokens need active proof, exact issuer, project audience, scoped roles and expiry", async () => {
   const now = Math.floor(Date.now() / 1000);
   let payload: Record<string, unknown> = {
@@ -203,7 +218,7 @@ test("API tokens need active proof, exact issuer, project audience, scoped roles
     },
   };
   const fetcher = (async (input, options) => {
-    assert.equal(options?.redirect, "error");
+    assert.equal(options?.redirect, "manual");
     return Response.json(
       String(input).endsWith("openid-configuration") ? discovery : payload,
     );
@@ -226,6 +241,46 @@ test("API tokens need active proof, exact issuer, project audience, scoped roles
       status: 401,
     });
   }
+});
+
+test("native acted access token verifies signed actor and target roles without a scope claim", async () => {
+  const accessToken = await new SignJWT({
+    act: { iss: config.issuer, sub: "support-actor" },
+    ...granted,
+  })
+    .setProtectedHeader({ alg: "RS256", kid: "signing-key" })
+    .setIssuer(config.issuer)
+    .setSubject("central-id")
+    .setAudience(config.projectId)
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(pair.privateKey);
+  const fetcher = (async (input) =>
+    Response.json(
+      String(input).endsWith("openid-configuration")
+        ? discovery
+        : { keys: [jwk] },
+    )) as typeof fetch;
+  const client = createIdentityClient(config, fetcher);
+  const verified = await client.verifyActedAccessToken(accessToken);
+  assert.equal(verified.subject, "central-id");
+  assert.equal(verified.actor.subject, "support-actor");
+  assert.ok(verified.roles.has("admin"));
+
+  const tampered = await new SignJWT({
+    act: { iss: "https://wrong.example", sub: "support-actor" },
+    ...granted,
+  })
+    .setProtectedHeader({ alg: "RS256", kid: "signing-key" })
+    .setIssuer(config.issuer)
+    .setSubject("central-id")
+    .setAudience(config.projectId)
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(pair.privateKey);
+  await assert.rejects(client.verifyActedAccessToken(tampered), {
+    status: 401,
+  });
 });
 
 test("resource permission requires both its granted role and explicitly requested scope", () => {

@@ -1,0 +1,46 @@
+{
+  "name": "@harrhy/worldview",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build:client": "node scripts/build.mjs",
+    "build": "npm run build:client && wrangler deploy --dry-run",
+    "dev": "node scripts/build.mjs --dev && node scripts/dev.mjs",
+    "typecheck": "tsrs --noEmit",
+    "test": "vitest run",
+    "test:embed": "npm run build --workspace @harrhy/worldview-renderer && node __tests__/embed-flow.mjs",
+    "test:gpu": "node __tests__/gpu-flow.mjs",
+    "test:corpus:gpu": "node __tests__/gpu-flow.mjs --corpus",
+    "test:corpus:gpu:all": "node __tests__/gpu-flow.mjs --corpus-all",
+    "test:hosted": "node __tests__/hosted-flow.mjs",
+    "corpus:steam": "bash scripts/download-steam-bsp-corpus.sh",
+    "archive:goldsrc": "node scripts/archive-goldsrc-server.mjs",
+    "archive:goldsrc:client": "node scripts/archive-goldsrc-client.mjs",
+    "corpus:check": "node scripts/check-bsp-corpus.mjs",
+    "check": "npm run build:client && npm run typecheck && npm test && wrangler deploy --dry-run"
+  },
+  "dependencies": {
+    "@phosphor-icons/web": "^2.1.2",
+    "@harrhy/maps-editor": "0.1.0",
+    "@harrhy/maps-protocol": "0.1.0",
+    "@harrhy/worldview-renderer": "0.2.0",
+    "fflate": "^0.8.3",
+    "idb": "^8.0.4",
+    "remix": "3.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.8",
+    "playwright": "1.62.1",
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.159.0",
+    "zod": "^4.6.7"
+  },
+  "engines": {
+    "node": ">=26.13.0 <27"
+  }
+}

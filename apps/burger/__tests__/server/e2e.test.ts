@@ -11,7 +11,7 @@ import {
   MESSAGE_TYPES,
   PLAYER_SPEED,
   type PlayerState,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 import {
   createServer,
   getPlayerConnections,

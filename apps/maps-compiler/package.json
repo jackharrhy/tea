@@ -1,5 +1,5 @@
 {
-  "name": "@tea/maps-compiler",
+  "name": "@harrhy/maps-compiler",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -13,9 +13,9 @@
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "@tea/maps-editor": "0.1.0",
-    "@tea/maps-protocol": "0.1.0",
-    "@tea/request-body": "0.1.0",
+    "@harrhy/maps-editor": "0.1.0",
+    "@harrhy/maps-protocol": "0.1.0",
+    "@harrhy/request-body": "0.1.0",
     "remix": "3.2.0",
     "zod": "^4.6.7"
   },

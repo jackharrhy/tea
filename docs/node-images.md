@@ -3,20 +3,22 @@
 The deployed Node apps use prebuilt `platformatic/node-caged:26-slim` in both stages (Debian Trixie). Local development and CI use Node 26 LTS through the root `.nvmrc`. The runtime creates `node` explicitly at UID/GID 1000 because this base does not provide that account.
 
 <!-- prettier-ignore -->
-| Dockerfile under `apps/` | Runtime | Image / scope |
+| Dockerfile under `apps/` | Runtime | Short image / scope |
 | --- | --- | --- |
-| `cms` | Node + `remix/node-tsx`, built-in SQLite | `tea-cms`, Mug |
-| `artbin` | Node + `remix/node-tsx`, better-sqlite3, sharp, Chromium | `tea-artbin`, Newport |
-| `letters-to-steve` | `npm start` → Node + `remix/node-tsx`, built-in SQLite, sharp | `tea-letters-to-steve`, Newport |
-| `marky` | `npm start` → Node + `remix/node-tsx`, filesystem/Git/WebSocket | `tea-marky`, Newport |
-| `maps-service` | Node, built-in SQLite | `tea-maps-service`, Newport |
-| `maps-compiler` | Node; external native executables are not bundled | `tea-maps-compiler`, Newport (including Gower instance) |
-| `maps` | Celld Worker; Node builds/deploys it | `tea-maps`; unchanged |
-| `maps-collaboration` | Celld Worker; Node builds/deploys it | `tea-maps-collaboration`; unchanged |
-| `ref` | Celld Worker; Node builds/deploys it | `tea-ref`; unchanged |
-| `radio` | Celld Worker; Node builds/deploys it | `tea-radio`; unchanged |
+| `cms` | Node + `remix/node-tsx`, built-in SQLite | `teacms`, Mug |
+| `artbin` | Node + `remix/node-tsx`, better-sqlite3, sharp, Chromium | `artbin`, Newport |
+| `letters-to-steve` | `npm start` → Node + `remix/node-tsx`, built-in SQLite, sharp | `letters-to-steve`, Newport |
+| `marky` | `npm start` → Node + `remix/node-tsx`, filesystem/Git/WebSocket | `marky`, Newport |
+| `rotund` | Node + Remix, static face and favicon | `rotund`, Newport |
+| `8mb` | Node + Remix, local media workers and opt-in aggregate SQLite | `8mb`, Mug |
+| `maps-service` | Node, built-in SQLite | `worldview-service`, Newport |
+| `maps-compiler` | Node; external native executables are not bundled | `worldview-compiler`, Newport (including Gower instance) |
+| `maps` | Celld Worker; Node builds/deploys it | `worldview`, Newport |
+| `maps-collaboration` | Celld Worker; Node builds/deploys it | `worldview-collaboration`, Newport |
+| `ref` | Celld Worker; Node builds/deploys it | `ref`, Newport |
+| `radio` | Celld Worker; Node builds/deploys it | `radio`, Newport |
 
-The table covers Node-hosted apps and the Celld Workers built with Node 26. Burger, Gurgur, and Pool also use Node 26 in their build stages and Bun in their runtime stages. The published Artbin CLI remains compatible with Node 20+ for consumers; Tea builds and checks it on Node 26. All published image names in the table use `ghcr.io/jackharrhy/` and retain their existing tags and publishing workflows.
+The table covers Node-hosted apps and the Celld Workers built with Node 26. Burger, Gurgur, and Pool also use Node 26 in their build stages and Bun in their runtime stages. The published Artbin CLI remains compatible with Node 20+ for consumers; Harrhy builds and checks it on Node 26. All short images use `ghcr.io/jackharrhy/`. Keep previous image packages and their tags available for rollback until each runtime is switched and accepted.
 
 ## Native modules
 
@@ -27,7 +29,7 @@ Artbin's selected install also includes root dev tools: its renderer build needs
 ## Reproduce
 
 ```sh
-app=artbin # cms, letters-to-steve, marky, maps-service, maps-compiler
+app=artbin # cms, letters-to-steve, marky, rotund, 8mb, maps-service, maps-compiler
 docker build -f "apps/$app/Dockerfile" -t tea-smoke .
 node scripts/ci/node-image-smoke.mjs "$app" tea-smoke
 # The same compiler image also serves Gower:
@@ -36,4 +38,4 @@ node scripts/ci/node-image-smoke.mjs maps-compiler tea-smoke gower
 
 The smoke starts the real image command with no host mounts, ports or network, then checks Node 26, pointer compression, UID, loader startup, HTTP/auth boundaries and applicable migrated databases/native bindings. Disposable container layers are removed even on assertion failure. Compiler checks deliberately assert unconfigured health/compile responses: they do not call production toolchains, OAuth, game launches or remote services.
 
-The repository-owned Node images workflow builds each of these six images serially on runtime/Docker dependency changes or manual dispatch. It never logs into a registry or publishes. The existing affected-workspace checks and publisher selectors, matrices, wrappers, migrations and tag rules remain separate and unchanged.
+The repository-owned Node images workflow builds these eight images serially on runtime/Docker dependency changes or manual dispatch. The Rotund smoke reaches its actual compiled server over HTTP and checks the original face and favicon byte hashes. The 8mb smoke checks the editor and diagnostics request boundary. It never logs into a registry or publishes.

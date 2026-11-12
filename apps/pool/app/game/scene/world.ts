@@ -11,14 +11,18 @@ import { createSmoke } from "./smoke";
 import type { MotionEntity } from "../prediction/net-state";
 import { ViewCamera } from "./view-camera";
 import { TablePresence, type LocalPlacement } from "./table-presence";
-import { TABLES, AVATAR_SCALE } from "@tea/pool-simulation/geometry";
+import { TABLES, AVATAR_SCALE } from "@harrhy/pool-simulation/geometry";
 import {
   BALL_RADIUS,
   TABLE_HALF_WIDTH as W,
   TABLE_HALF_LENGTH as L,
-} from "@tea/pool";
-import { FELT_Y, RAIL_WIDTH, RAIL_TOP_Y } from "@tea/pool/table";
-import type { PlayerState, TableState, RoomSettings } from "@tea/pool-protocol";
+} from "@harrhy/pool";
+import { FELT_Y, RAIL_WIDTH, RAIL_TOP_Y } from "@harrhy/pool/table";
+import type {
+  PlayerState,
+  TableState,
+  RoomSettings,
+} from "@harrhy/pool-protocol";
 export class HallView {
   readonly renderer: THREE.WebGPURenderer;
   private vignette = viewportVignette();

@@ -3,14 +3,14 @@
  * with a describer, and describing walks nested schemas with one context that collects
  * named schemas, so `$defs` holds each name once and recursion terminates.
  */
-import type { Result } from "@tea/result";
+import type { Result } from "@harrhy/result";
 import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 import type {
   Check as DataCheck,
   Schema as DataSchema,
 } from "remix/data-schema";
 
-import { failure, success } from "@tea/result";
+import { failure, success } from "@harrhy/result";
 
 import type {
   Annotations,
@@ -30,7 +30,7 @@ const DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
  * Registered globally so schemas built by two copies of this package still describe each
  * other as their own, keeping presence and naming intact across the boundary.
  */
-const NODE = Symbol.for("@tea/json-schema.node");
+const NODE = Symbol.for("@harrhy/json-schema.node");
 
 /** The state one conversion threads through every nested schema. */
 export interface DescribeContext {

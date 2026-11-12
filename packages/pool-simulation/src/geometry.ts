@@ -1,4 +1,4 @@
-import { TABLE_BOUNDS } from "@tea/pool/table";
+import { TABLE_BOUNDS } from "@harrhy/pool/table";
 
 export const TABLES = [
   { id: "1", x: -2.5, z: -2.7 },

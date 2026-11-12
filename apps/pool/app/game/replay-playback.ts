@@ -1,5 +1,5 @@
 import { Quaternion } from "three";
-import type { RecordedShot } from "@tea/pool/recording";
+import type { RecordedShot } from "@harrhy/pool/recording";
 
 export function shotDuration(shot: RecordedShot): number {
   return shot.frames.at(-1)?.at ?? 0;

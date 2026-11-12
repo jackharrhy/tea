@@ -1,4 +1,4 @@
-import { parseWad } from "@jackharrhy/tea-maps-renderer/core";
+import { parseWad } from "@harrhy/worldview-renderer/core";
 
 /** Retains original MIPTEX bytes, palettes, and directory order for a map's materials. */
 export function subsetWadTextures(

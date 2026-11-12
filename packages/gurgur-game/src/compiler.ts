@@ -9,7 +9,7 @@ import {
   parseValve220,
   type MapBrush,
   type ValveMap,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   deriveWorldBuffers,
   type CompiledBrush,
@@ -18,7 +18,7 @@ import {
   type Vec2,
   type Vec3,
   type WorldSettings,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   encodeWorldBundle,
   entityInputDomain,

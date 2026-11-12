@@ -10,7 +10,7 @@ import {
   PROJECT_ROLES_SCOPE,
   projectAudienceScope,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 export { BoardCell, DirectoryCell };
 
@@ -32,29 +32,32 @@ export default {
       return withSecurityHeaders(await env.ASSETS.fetch(request));
     }
 
-    const central = Boolean(env.AUTH_ISSUER);
-    if (!central && !env.REF_PASSWORD)
-      return new Response("REF_PASSWORD is not configured", { status: 503 });
     let publicOrigin: URL | null = null;
-    if (central && env.AUTH_PUBLIC_ORIGIN) {
+    if (env.AUTH_PUBLIC_ORIGIN) {
       try {
         publicOrigin = new URL(env.AUTH_PUBLIC_ORIGIN);
       } catch {
-        return new Response("Central Auth is not configured", { status: 503 });
+        return new Response("Jack Auth is not configured", { status: 503 });
       }
     }
     if (
-      central &&
-      (!env.AUTH_CLIENT_ID ||
-        !env.AUTH_PROJECT_ID ||
-        !env.AUTH_ORGANIZATION_ID ||
-        !publicOrigin ||
-        publicOrigin.protocol !== "https:" ||
-        publicOrigin.origin !== env.AUTH_PUBLIC_ORIGIN)
+      !env.AUTH_ISSUER ||
+      !env.AUTH_CLIENT_ID ||
+      !env.AUTH_PROJECT_ID ||
+      !env.AUTH_ORGANIZATION_ID ||
+      !publicOrigin ||
+      (publicOrigin.protocol !== "https:" &&
+        !(
+          publicOrigin.protocol === "http:" &&
+          (["localhost", "127.0.0.1", "[::1]"].includes(
+            publicOrigin.hostname,
+          ) ||
+            publicOrigin.hostname.endsWith(".localhost"))
+        )) ||
+      publicOrigin.origin !== env.AUTH_PUBLIC_ORIGIN
     )
-      return new Response("Central Auth is not configured", { status: 503 });
+      return new Response("Jack Auth is not configured", { status: 503 });
     if (url.pathname === "/.well-known/oauth-protected-resource/api/archive") {
-      if (!central) return new Response("Not found", { status: 404 });
       return Response.json(
         {
           resource: `${env.AUTH_PUBLIC_ORIGIN}/api/archive`,
@@ -76,6 +79,10 @@ export default {
 
     try {
       const runtime = createRuntime(env);
+      if (url.pathname === "/ready") {
+        await runtime.directory.listBoards();
+        return Response.json({ ready: true });
+      }
       const token = readSessionCookie(request);
       let authenticated = token
         ? await runtime.directory.session(token)
@@ -85,9 +92,8 @@ export default {
       const archiveSnapshot =
         request.method === "GET" &&
         /^\/api\/boards\/[^/]+\/snapshot$/.test(url.pathname);
-      if (central && archive) authenticated = false;
+      if (archive) authenticated = false;
       if (
-        central &&
         bearer?.startsWith("Bearer ") &&
         (archive ||
           archiveSnapshot ||
@@ -121,30 +127,22 @@ export default {
           });
         }
       }
-      if (central && archive && !authenticated)
+      if (archive && !authenticated)
         return new Response("Archive bearer token required", {
           status: 401,
           headers: {
             "WWW-Authenticate": `Bearer resource_metadata="${env.AUTH_PUBLIC_ORIGIN}/.well-known/oauth-protected-resource/api/archive"`,
           },
         });
-      const router = createAppRouter(
-        runtime,
-        authenticated,
-        token,
-        env.REF_PASSWORD,
-        central
-          ? {
-              config: {
-                issuer: env.AUTH_ISSUER,
-                clientId: env.AUTH_CLIENT_ID,
-                projectId: env.AUTH_PROJECT_ID,
-                organizationId: env.AUTH_ORGANIZATION_ID,
-              },
-              origin: env.AUTH_PUBLIC_ORIGIN,
-            }
-          : null,
-      );
+      const router = createAppRouter(runtime, authenticated, token, {
+        config: {
+          issuer: env.AUTH_ISSUER,
+          clientId: env.AUTH_CLIENT_ID,
+          projectId: env.AUTH_PROJECT_ID,
+          organizationId: env.AUTH_ORGANIZATION_ID,
+        },
+        origin: env.AUTH_PUBLIC_ORIGIN,
+      });
       return withSecurityHeaders(await router.fetch(request), true);
     } catch (error) {
       console.error(

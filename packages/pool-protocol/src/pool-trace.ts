@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { physicalBallSchema } from "@tea/pool/recording";
+import { physicalBallSchema } from "@harrhy/pool/recording";
 
 export const MAX_POOL_TRACE_BYTES = 128 * 1024;
 export const MAX_POOL_TRACE_RAW_BYTES = 1024 * 1024;

@@ -2,11 +2,9 @@ import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 
 const base = process.env.REF_SMOKE_URL ?? "http://localhost:8788";
-const password = process.env.REF_SMOKE_PASSWORD;
 if (!["localhost", "127.0.0.1", "::1"].includes(new URL(base).hostname)) {
   throw new Error("Smoke test only accepts a local URL");
 }
-if (!password) throw new Error("Set REF_SMOKE_PASSWORD for the local instance");
 
 const browser = await chromium.launch({ headless: true });
 try {
@@ -17,11 +15,10 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(base);
-  await page.locator("#password").fill("wrong-password");
-  await page.getByRole("button", { name: "Enter" }).click();
-  await page.getByText("Incorrect password").waitFor();
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Enter" }).click();
+  assert.equal(await page.locator('input[type="password"]').count(), 0);
+  assert.equal((await context.request.post(`${base}/login`)).status(), 404);
+  await page.getByRole("link", { name: "Sign in with Jack Auth" }).click();
+  await page.getByRole("button", { name: "Continue as local user" }).click();
   await page.getByRole("heading", { name: "Boards" }).waitFor();
   await page.locator("input[name=title]").fill("Smoke board");
   await page.getByRole("button", { name: "Create" }).click();
@@ -142,7 +139,7 @@ try {
   await page.locator("#link-form button").click();
   await page.locator(".link-item").waitFor({ timeout: 20_000 });
   await second.locator(".link-item").waitFor();
-  assert.match(await page.locator(".link-card").innerText(), /Example Domain/);
+  assert.match(await page.locator(".link-card").innerText(), /example\.com/i);
   assert.equal(
     await page.evaluate(
       (id) =>

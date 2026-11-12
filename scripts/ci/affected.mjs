@@ -164,16 +164,16 @@ if (
   }
   console.log(`Affected checks: ${JSON.stringify(checks)}`);
   const mapsHosted = [
-    "@tea/maps",
-    "@tea/maps-service",
-    "@tea/maps-collaboration",
-    "@tea/maps-editor",
-    "@jackharrhy/tea-maps-renderer",
-    "@tea/maps-protocol",
+    "@harrhy/worldview",
+    "@harrhy/maps-service",
+    "@harrhy/maps-collaboration",
+    "@harrhy/maps-editor",
+    "@harrhy/worldview-renderer",
+    "@harrhy/maps-protocol",
   ].some((name) => checks.includes(name));
   if (process.env.GITHUB_OUTPUT)
     appendFileSync(
       process.env.GITHUB_OUTPUT,
-      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@tea/cms", "@tea/ref", "@tea/radio", "@tea/burger"].some((name) => checks.includes(name))}\ncms=${checks.includes("@tea/cms")}\nref=${checks.includes("@tea/ref")}\nradio=${checks.includes("@tea/radio")}\npool=${checks.includes("@tea/pool-app")}\nburger=${checks.includes("@tea/burger")}\ngurgur=${checks.includes("@tea/gurgur")}\nmaps_hosted=${mapsHosted}\n`,
+      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@harrhy/cms", "@harrhy/ref", "@harrhy/radio", "@harrhy/burger"].some((name) => checks.includes(name))}\ncms=${checks.includes("@harrhy/cms")}\nref=${checks.includes("@harrhy/ref")}\nradio=${checks.includes("@harrhy/radio")}\npool=${checks.includes("@harrhy/pool-app")}\nburger=${checks.includes("@harrhy/burger")}\ngurgur=${checks.includes("@harrhy/gurgur")}\nmaps_hosted=${mapsHosted}\n`,
     );
 }

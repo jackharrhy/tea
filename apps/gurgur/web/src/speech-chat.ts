@@ -1,4 +1,4 @@
-import { validSpeechText } from "@tea/gurgur-engine";
+import { validSpeechText } from "@harrhy/gurgur-engine";
 import type { PlayerInput } from "./input";
 
 export type SpeechChat = {

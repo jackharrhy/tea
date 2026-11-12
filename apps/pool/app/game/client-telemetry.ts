@@ -1,4 +1,4 @@
-import type { ClientDiagnostic } from "@tea/pool-protocol";
+import type { ClientDiagnostic } from "@harrhy/pool-protocol";
 
 const meaningful = (window: ClientDiagnostic): boolean =>
   window.count >= 3 || window.maxError >= (window.kind === "pool" ? 0.05 : 0.1);

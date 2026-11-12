@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/marky/package.json apps/marky/package.json
 COPY packages/identity/package.json packages/identity/package.json
-RUN npm ci --workspace @tea/marky --include-workspace-root=false && npm prune --omit=dev --workspace @tea/marky
+RUN npm ci --workspace @harrhy/marky --include-workspace-root=false && npm prune --omit=dev --workspace @harrhy/marky
 
 FROM platformatic/node-caged:26-slim
 RUN groupadd --gid 1000 node && useradd --uid 1000 --gid node --create-home node

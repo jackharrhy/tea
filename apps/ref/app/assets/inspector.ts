@@ -109,7 +109,17 @@ function renderLinkInspector(
   link: LinkPreview,
   onRefresh: () => Promise<void>,
 ) {
-  if (link.imageUrl) {
+  if (link.videoUrl) {
+    const video = document.createElement("video");
+    video.className = "link-inspector-video";
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "none";
+    video.src = link.videoUrl;
+    if (link.imageUrl) video.poster = link.imageUrl;
+    video.setAttribute("aria-label", `${displaySiteName(link)} video`);
+    content.appendChild(video);
+  } else if (link.imageUrl) {
     const image = document.createElement("img");
     image.className = "link-inspector-image";
     image.src = link.imageUrl;

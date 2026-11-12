@@ -8,10 +8,10 @@ import {
   addAvatar,
   createMovementWorld,
   stepAvatar,
-} from "@tea/pool-simulation";
+} from "@harrhy/pool-simulation";
 
-import { INPUT_DT } from "@tea/pool-protocol";
-import type { MoveInput } from "@tea/pool-protocol";
+import { INPUT_DT } from "@harrhy/pool-protocol";
+import type { MoveInput } from "@harrhy/pool-protocol";
 export { INPUT_DT };
 export type { MoveInput };
 export type AuthoritativePosition = {

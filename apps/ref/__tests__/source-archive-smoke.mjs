@@ -23,6 +23,7 @@ const image = Buffer.from(
 let runtime;
 let runtimeLogs = "";
 let browser;
+let authOrigin;
 
 async function freePort() {
   return new Promise((resolve, reject) => {
@@ -36,7 +37,7 @@ async function freePort() {
 }
 
 function environment(name, port) {
-  return {
+  const base = {
     ...Object.fromEntries(
       Object.entries(process.env).filter(([key]) => !key.startsWith("CELLD_")),
     ),
@@ -45,9 +46,20 @@ function environment(name, port) {
     CELLD_ADDR: `127.0.0.1:${port}`,
     CELLD_INTERNAL_ADDR: "127.0.0.1:0",
     CELLD_DURABILITY: "bucket",
-    CELLD_VAR_REF_PASSWORD: password,
     CELLD_ESBUILD: join(teaRoot, "../../node_modules/.bin/esbuild"),
   };
+  return name === "source"
+    ? { ...base, CELLD_VAR_REF_PASSWORD: password }
+    : {
+        ...base,
+        CELLD_VAR_AUTH_ISSUER: authOrigin,
+        CELLD_VAR_AUTH_CLIENT_ID: "ref-local-browser",
+        CELLD_VAR_AUTH_PROJECT_ID: "ref-local-project",
+        CELLD_VAR_AUTH_ORGANIZATION_ID: "ref-local-org",
+        CELLD_VAR_AUTH_PUBLIC_ORIGIN: `http://127.0.0.1:${port}`,
+        CELLD_VAR_AUTH_INTROSPECTION_CLIENT_ID: "ref-local-resource",
+        CELLD_VAR_AUTH_INTROSPECTION_SECRET: "ref-local-resource-secret",
+      };
 }
 
 function command(cwd, env, args) {
@@ -73,7 +85,7 @@ function command(cwd, env, args) {
   });
 }
 
-async function start(cwd, env, origin) {
+async function start(cwd, env, origin, name) {
   runtimeLogs = "";
   let startupError;
   runtime = spawn(binary, ["--no-control-plane"], {
@@ -93,13 +105,18 @@ async function start(cwd, env, origin) {
         `Celld exited during startup\n${runtimeLogs.slice(-12000)}`,
       );
     try {
-      const response = await fetch(`${origin}/login`, {
-        method: "POST",
-        body: new URLSearchParams({ password }),
-        redirect: "manual",
-        signal: AbortSignal.timeout(2_000),
-      });
-      if (response.status === 303 && response.headers.has("set-cookie")) return;
+      const response =
+        name === "source"
+          ? await fetch(`${origin}/login`, {
+              method: "POST",
+              body: new URLSearchParams({ password }),
+              redirect: "manual",
+              signal: AbortSignal.timeout(2_000),
+            })
+          : await fetch(`${origin}/health`, {
+              signal: AbortSignal.timeout(2_000),
+            });
+      if (name === "source" ? response.status === 303 : response.ok) return;
     } catch {}
     await delay(200);
   }
@@ -121,8 +138,8 @@ async function stop() {
   runtime = undefined;
 }
 
-async function open(name, root) {
-  const port = await freePort();
+async function open(name, root, selectedPort) {
+  const port = selectedPort ?? (await freePort());
   const origin = `http://127.0.0.1:${port}`;
   const env = environment(name, port);
   await command(root, env, [
@@ -132,14 +149,20 @@ async function open(name, root) {
     "--bucket",
     env.CELLD_BUCKET,
   ]);
-  await start(root, env, origin);
+  await start(root, env, origin, name);
   return { origin, env };
 }
 
 async function archive(root, instance, action, path) {
   await command(
     root,
-    { ...instance.env, REF_URL: instance.origin, REF_PASSWORD: password },
+    root === sourceRoot
+      ? { ...instance.env, REF_URL: instance.origin, REF_PASSWORD: password }
+      : {
+          ...instance.env,
+          REF_URL: instance.origin,
+          REF_ACCESS_TOKEN_FILE: join(state, "tea-token"),
+        },
     [process.execPath, "scripts/archive.mjs", action, path],
   );
 }
@@ -176,33 +199,71 @@ try {
   await archive(sourceRoot, source, "backup", originalArchive);
   await stop();
 
-  const tea = await open("tea", teaRoot);
-  await archive(teaRoot, tea, "restore", originalArchive);
-  await archive(teaRoot, tea, "restore", originalArchive);
-  const teaArchive = join(state, "tea-archive");
-  await archive(teaRoot, tea, "backup", teaArchive);
-  const original = JSON.parse(
-    await readFile(join(originalArchive, "manifest.json"), "utf8"),
-  );
-  const restored = JSON.parse(
-    await readFile(join(teaArchive, "manifest.json"), "utf8"),
-  );
-  delete original.createdAt;
-  delete restored.createdAt;
-  assert.deepEqual(restored, original);
-  assert.equal(original.boards.length, 1);
-  assert.equal(original.boards[0].assets.length, 1);
-  assert.equal(original.boards[0].links.length, 1);
-  console.log(
-    JSON.stringify({
-      ok: true,
-      boards: original.boards.length,
-      items: original.boards[0].items.length,
-      assets: original.boards[0].assets.length,
-      links: original.boards[0].links.length,
-      repeatedRestore: true,
-    }),
-  );
+  const teaPort = await freePort();
+  const authPort = await freePort();
+  authOrigin = `http://127.0.0.1:${authPort}`;
+  const auth = spawn(process.execPath, ["packages/dev-auth/server.mjs"], {
+    cwd: join(teaRoot, "../.."),
+    env: {
+      ...process.env,
+      HARRHY_DEV_AUTH_PORT: String(authPort),
+      HARRHY_DEV_AUTH_ORIGIN: authOrigin,
+      HARRHY_DEV_AUTH_CALLBACK: `http://127.0.0.1:${teaPort}/auth/callback`,
+    },
+    stdio: "ignore",
+  });
+  try {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      try {
+        if ((await fetch(`${authOrigin}/.well-known/openid-configuration`)).ok)
+          break;
+      } catch {}
+      if (attempt === 49) throw new Error("Local Jack Auth did not start");
+      await delay(100);
+    }
+    await command(
+      join(teaRoot, "../.."),
+      {
+        ...process.env,
+        HARRHY_DEV_AUTH_ORIGIN: authOrigin,
+        HARRHY_DEV_AUTH_CALLBACK: `http://127.0.0.1:${teaPort}/auth/callback`,
+      },
+      [
+        process.execPath,
+        "packages/dev-auth/token.mjs",
+        join(state, "tea-token"),
+      ],
+    );
+    const tea = await open("tea", teaRoot, teaPort);
+    await archive(teaRoot, tea, "restore", originalArchive);
+    await archive(teaRoot, tea, "restore", originalArchive);
+    const teaArchive = join(state, "tea-archive");
+    await archive(teaRoot, tea, "backup", teaArchive);
+    const original = JSON.parse(
+      await readFile(join(originalArchive, "manifest.json"), "utf8"),
+    );
+    const restored = JSON.parse(
+      await readFile(join(teaArchive, "manifest.json"), "utf8"),
+    );
+    delete original.createdAt;
+    delete restored.createdAt;
+    assert.deepEqual(restored, original);
+    assert.equal(original.boards.length, 1);
+    assert.equal(original.boards[0].assets.length, 1);
+    assert.equal(original.boards[0].links.length, 1);
+    console.log(
+      JSON.stringify({
+        ok: true,
+        boards: original.boards.length,
+        items: original.boards[0].items.length,
+        assets: original.boards[0].assets.length,
+        links: original.boards[0].links.length,
+        repeatedRestore: true,
+      }),
+    );
+  } finally {
+    auth.kill();
+  }
 } finally {
   await browser?.close();
   await stop();

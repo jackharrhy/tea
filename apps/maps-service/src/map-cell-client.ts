@@ -9,12 +9,12 @@ import {
   type HostedMapSnapshot,
   type HostedCheckpointSource,
   type ReplaceHostedMapSourceResult,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 export type {
   HostedCheckpoint as HostedMapCheckpoint,
   HostedMapSnapshot,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 
 export class MapCellClient {
   public constructor(

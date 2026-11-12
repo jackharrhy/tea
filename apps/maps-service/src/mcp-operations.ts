@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { HostedGameSchema } from "@tea/maps-protocol";
+import { HostedGameSchema } from "@harrhy/maps-protocol";
 import { canEditProject } from "./access-policy.js";
 import type { MapsUser } from "./database.js";
 import { submitHostedBuild } from "./hosted-build-operation.js";
@@ -68,7 +68,7 @@ const mcpOperations = [
   ),
   operation(
     "tea_maps_create_project",
-    "Create a hosted Tea Maps project owned by this account.",
+    "Create a hosted Worldview project owned by this account.",
     z.strictObject({ name: Name, game: HostedGameSchema }),
     false,
     (options, user, input) => ({

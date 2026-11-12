@@ -6,8 +6,8 @@ import {
   entityDefinitions,
   SKIP_MATERIAL,
   type EntityClassname,
-} from "@tea/gurgur-game";
-import { MATERIAL_TEXTURE_SIZE, parseValve220 } from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-game";
+import { MATERIAL_TEXTURE_SIZE, parseValve220 } from "@harrhy/gurgur-engine";
 
 const source = await Bun.file(
   new URL("../../content/maps/systems-garden.map", import.meta.url),

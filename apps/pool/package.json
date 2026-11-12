@@ -1,5 +1,5 @@
 {
-  "name": "@tea/pool-app",
+  "name": "@harrhy/pool-app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "@geckos.io/snapshot-interpolation": "1.1.1",
-    "@tea/pool": "0.1.0",
-    "@tea/pool-protocol": "0.1.0",
-    "@tea/pool-simulation": "0.1.0",
+    "@harrhy/pool": "0.1.0",
+    "@harrhy/pool-protocol": "0.1.0",
+    "@harrhy/pool-simulation": "0.1.0",
     "drizzle-orm": "0.45.4",
     "jose": "6.2.13",
     "math": "0.1.0",

@@ -11,7 +11,7 @@ import {
 import { createPlayer } from "../../server/players";
 import { createSession } from "../../server/auth/sessions";
 import type { AuthConfig } from "../../server/auth/config";
-import { MAX_PAINTS_PER_TICK, TILE_SIZE } from "@tea/burger-core";
+import { MAX_PAINTS_PER_TICK, TILE_SIZE } from "@harrhy/burger-core";
 
 let db: Database;
 let world: ReturnType<typeof initWorld>;

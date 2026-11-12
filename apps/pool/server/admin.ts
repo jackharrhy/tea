@@ -1,4 +1,4 @@
-import { roomSettingsPatchSchema } from "@tea/pool-protocol";
+import { roomSettingsPatchSchema } from "@harrhy/pool-protocol";
 import { z } from "zod";
 import type { Hall } from "./hall";
 import type { GameRecorder } from "./recordings";

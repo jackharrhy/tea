@@ -1,4 +1,4 @@
-import { PhysicsWorld, type PhysicsStepEvents } from "@tea/gurgur-engine";
+import { PhysicsWorld, type PhysicsStepEvents } from "@harrhy/gurgur-engine";
 import {
   createGameSimulation,
   PLAYER_HALF_HEIGHT,
@@ -9,7 +9,7 @@ import {
   type HostMechanismEngine,
   type WorldBundle,
   type WorldMessage,
-} from "@tea/gurgur-game";
+} from "@harrhy/gurgur-game";
 import {
   MAX_CATCH_UP_TICKS,
   PREDICTION_BODY_CAPACITY,
@@ -38,7 +38,7 @@ import {
   type RuntimeId,
   type Snapshot,
   type Vec3,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import {
   createRuntimeBodies,
   createRuntimeProp,

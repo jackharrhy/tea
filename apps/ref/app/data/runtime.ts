@@ -1,5 +1,5 @@
 import { createContextKey } from "remix/router";
-import type { IdentityConfig } from "@tea/identity";
+import type { IdentityConfig } from "@harrhy/identity";
 import type { BoardCell } from "./board-cell.ts";
 import type { DirectoryCell } from "./directory-cell.ts";
 
@@ -12,7 +12,6 @@ export interface AppRuntimeService {
 export const AppRuntime = createContextKey<AppRuntimeService>();
 export const Authenticated = createContextKey<boolean>();
 export const CurrentSessionToken = createContextKey<string | null>();
-export const AppPassword = createContextKey<string>();
 export const AppIdentity = createContextKey<{
   config: IdentityConfig;
   origin: string;

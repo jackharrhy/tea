@@ -10,14 +10,14 @@ import {
   extractPk3Entry,
   extractPakEntry,
   getFileEntries,
-} from "@tea/artbin-core/parsers/archives";
+} from "@harrhy/artbin-core/parsers/archives";
 import {
   cleanFolderSlug,
   cleanFolderPath,
   sanitizeFilename,
-} from "@tea/artbin-core/detection/filenames";
-import { isImportableFile } from "@tea/artbin-core/scanning/filters";
-import { MAX_UPLOAD_BYTES } from "@tea/artbin-core/uploads";
+} from "@harrhy/artbin-core/detection/filenames";
+import { isImportableFile } from "@harrhy/artbin-core/scanning/filters";
+import { MAX_UPLOAD_BYTES } from "@harrhy/artbin-core/uploads";
 
 interface PreparedFile {
   relativePath: string;

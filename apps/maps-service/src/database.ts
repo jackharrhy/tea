@@ -9,9 +9,9 @@ import {
   type HostedGame,
   type HostedResourceMount,
   type ProjectRole as ProtocolProjectRole,
-} from "@tea/maps-protocol";
+} from "@harrhy/maps-protocol";
 import { z } from "zod";
-import { validLoginTransaction, type LoginTransaction } from "@tea/identity";
+import { validLoginTransaction, type LoginTransaction } from "@harrhy/identity";
 import { createHostedId, hostedSlug, isHostedId } from "./hosted-identity.js";
 import { initializeMapsDatabase } from "./database-schema.js";
 import {

@@ -51,7 +51,7 @@ import {
   MESSAGE_TYPES,
   PROTOCOL_VERSION,
   networkedComponents,
-} from "@tea/burger-core";
+} from "@harrhy/burger-core";
 import { createObserverSerializer } from "bitecs/serialization";
 import { reconcileTileSolidity, type World } from "./world";
 import type { AuthConfig } from "./auth/config";

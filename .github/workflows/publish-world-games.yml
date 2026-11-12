@@ -101,12 +101,12 @@ jobs:
             APP_REVISION=${{ github.sha }}
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-${{ matrix.app }}:latest
-            ghcr.io/jackharrhy/tea-${{ matrix.app }}:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/${{ matrix.app }}:latest
+            ghcr.io/jackharrhy/${{ matrix.app }}:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-${{ matrix.app }}@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/${{ matrix.app }}@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

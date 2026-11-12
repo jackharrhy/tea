@@ -7,8 +7,8 @@ import {
   type PoolTraceMessage,
   type ShotAck,
   type Snapshot,
-} from "@tea/pool-protocol";
-import type { PhysicalBall } from "@tea/pool";
+} from "@harrhy/pool-protocol";
+import type { PhysicalBall } from "@harrhy/pool";
 import type { MotionEntity } from "./prediction/net-state";
 
 const copy = <T>(value: T): T => structuredClone(value);

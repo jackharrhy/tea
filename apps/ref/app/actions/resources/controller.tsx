@@ -99,7 +99,11 @@ export default createController(routes.resources, {
       if (refresh && !existing)
         return new Response("Link is no longer on this board", { status: 404 });
       const fetched = await previewLink(url);
-      if (refresh && (!fetched.imageUrl || isGenericSocialPreview(fetched)))
+      if (
+        refresh &&
+        ((!fetched.imageUrl && !fetched.videoUrl) ||
+          isGenericSocialPreview(fetched))
+      )
         return new Response("The post did not provide a usable preview yet", {
           status: 422,
         });
@@ -110,6 +114,7 @@ export default createController(routes.resources, {
       );
       if (
         refresh &&
+        !preview.videoUrl &&
         !preview.imageUrl?.startsWith(`/previews/${context.params.boardId}/`)
       )
         return new Response("Could not cache the new preview image", {

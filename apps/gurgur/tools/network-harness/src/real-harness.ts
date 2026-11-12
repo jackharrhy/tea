@@ -25,7 +25,7 @@ import {
   type RuntimeId,
   type WelcomeMessage,
   type WorldManifestMessage,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 import { PresentationBuffer } from "../../../web/src/presentation";
 import { createGurgurServer } from "../../../server/src/server";
 import { guardIceUdpSockets } from "../../../server/src/rtc";

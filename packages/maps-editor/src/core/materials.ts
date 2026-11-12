@@ -6,7 +6,7 @@ import {
   readMipTextureHeader,
   WAD2_MIPTEX,
   WAD3_MIPTEX,
-} from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/worldview-renderer/core";
 
 export interface EditorMaterial {
   readonly name: string;

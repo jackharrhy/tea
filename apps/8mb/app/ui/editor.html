@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fafaf9" />
+    <meta
+      name="description"
+      content="Compress videos to under 8 MB in your browser. Trim the part you want to keep. Your video stays on your device."
+    />
+    <title>8mb - shrink your video</title>
+    <link rel="canonical" href="https://jackharrhy.dev/8mb/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jackharrhy.dev/8mb/" />
+    <meta property="og:site_name" content="8mb" />
+    <meta property="og:title" content="8mb - shrink your video" />
+    <meta
+      property="og:description"
+      content="semaglutide injection for your mp4s"
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="8mb - shrink your video" />
+    <meta
+      name="twitter:description"
+      content="semaglutide injection for your mp4s"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link
+      rel="preload"
+      href="/fonts/inter-variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to editor</a>
+    <main id="main" class="workspace">
+      <h1 class="sr-only">Video compressor</h1>
+      <div class="toolbar" id="file-toolbar" hidden>
+        <div class="file-info">
+          <strong id="filename">No video selected</strong
+          ><span id="file-meta" class="muted"></span>
+        </div>
+        <button id="choose" class="with-icon">
+          <i data-lucide="folder-open"></i>Open video</button
+        ><input
+          id="file"
+          type="file"
+          accept="video/*,.mkv,.avi,.wmv,.flv,.ts"
+          hidden
+        />
+      </div>
+      <p id="error" class="error" role="alert" hidden></p>
+      <section id="edit-panel" aria-label="Video editor">
+        <div class="editor">
+          <div class="editing">
+            <div id="preview" class="preview">
+              <div id="empty" class="empty-state">
+                <i data-lucide="film" class="film-icon"></i>
+                <p>Drop a video here.</p>
+                <button id="empty-choose" class="primary">Open video</button
+                ><span class="hint">Files stay on this device.</span>
+              </div>
+              <video
+                id="video"
+                playsinline
+                controls
+                hidden
+                aria-label="Source video preview"
+              ></video
+              ><canvas
+                id="frame"
+                hidden
+                aria-label="Source frame preview"
+              ></canvas>
+              <div id="crop-overlay" hidden>
+                <div
+                  id="crop-box"
+                  tabindex="0"
+                  role="group"
+                  aria-label="Crop selection. Use numeric crop fields to adjust precisely."
+                ></div>
+              </div>
+            </div>
+
+            <div class="timeline-section" id="trim-section" hidden>
+              <div class="section-line">
+                <h2>Trim</h2>
+                <span id="selection-duration" class="muted"></span>
+              </div>
+              <div id="timeline" class="timeline">
+                <canvas id="waveform" aria-label="Audio waveform"></canvas>
+                <div id="trim-selection" class="trim-selection"></div>
+                <input
+                  id="playhead"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.001"
+                  value="0"
+                  aria-label="Playhead"
+                  disabled
+                />
+                <input
+                  id="trim-start"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value="0"
+                  aria-label="Trim start"
+                  disabled
+                /><input
+                  id="trim-end"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value="100"
+                  aria-label="Trim end"
+                  disabled
+                />
+                <div
+                  id="encode-position"
+                  class="encode-position"
+                  hidden
+                  role="progressbar"
+                  aria-label="Encoding position"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+              <div class="time-ruler">
+                <span>0:00</span
+                ><output id="current-time" for="playhead">0:00.00</output
+                ><span id="timeline-end">0:00</span>
+              </div>
+
+              <p id="waveform-status" class="hint"></p>
+            </div>
+            <div class="export-actions" id="export-actions" hidden>
+              <button id="export" class="primary with-icon" disabled>
+                <i data-lucide="download"></i
+                ><span id="export-label">Make under 8 MB</span></button
+              ><button id="cancel" hidden>Cancel</button>
+            </div>
+            <div class="job-status">
+              <p id="status" class="hint" role="status"></p>
+              <output id="elapsed" class="hint"></output>
+              <div id="encoding-preview" hidden>
+                <canvas
+                  id="encoder-frame"
+                  width="240"
+                  height="135"
+                  aria-label="Frame being encoded"
+                ></canvas
+                ><span id="encoder-time" class="hint"></span>
+              </div>
+            </div>
+            <div id="result" hidden>
+              <strong id="result-size"></strong
+              ><a id="download" class="button primary" download="">Save video</a
+              ><video
+                id="result-video"
+                controls
+                playsinline
+                aria-label="Exported video"
+              ></video>
+            </div>
+            <details id="advanced-settings" hidden>
+              <summary id="advanced-tab">Advanced</summary>
+              <div class="advanced-controls">
+                <div class="preview-tools">
+                  <button id="crop-toggle" disabled class="with-icon">
+                    <i data-lucide="crop"></i>Crop frame</button
+                  ><button id="crop-clear" disabled>Reset crop</button
+                  ><span class="muted" id="dimensions">Original frame</span>
+                </div>
+                <fieldset id="crop-fields" hidden>
+                  <legend>Crop in source pixels</legend>
+                  <div class="four-fields">
+                    <label
+                      >X<input
+                        id="crop-x"
+                        name="crop-x"
+                        type="number"
+                        min="0"
+                        step="2"
+                        value="0" /></label
+                    ><label
+                      >Y<input
+                        id="crop-y"
+                        name="crop-y"
+                        type="number"
+                        min="0"
+                        step="2"
+                        value="0" /></label
+                    ><label
+                      >Width<input
+                        id="crop-w"
+                        name="crop-w"
+                        type="number"
+                        min="2"
+                        step="2" /></label
+                    ><label
+                      >Height<input
+                        id="crop-h"
+                        name="crop-h"
+                        type="number"
+                        min="2"
+                        step="2"
+                    /></label>
+                  </div>
+                </fieldset>
+                <div class="trim-fields">
+                  <label
+                    >Start
+                    <span class="input-unit"
+                      ><input
+                        id="start"
+                        name="start"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                        disabled
+                      /><span>sec</span></span
+                    ></label
+                  ><label
+                    >End
+                    <span class="input-unit"
+                      ><input
+                        id="end"
+                        name="end"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                        disabled
+                      /><span>sec</span></span
+                    ></label
+                  ><button id="preview-clip" disabled class="with-icon">
+                    <i data-lucide="play"></i>Play selection
+                  </button>
+                </div>
+                <fieldset id="settings">
+                  <label
+                    >Maximum size
+                    <span class="input-unit"
+                      ><input
+                        id="target"
+                        name="target"
+                        type="number"
+                        min="0.1"
+                        max="4096"
+                        step="0.1"
+                        value="8"
+                      /><span>MB</span></span
+                    ></label
+                  >
+
+                  <label
+                    >Format<select id="format" name="format">
+                      <option value="mp4">MP4 · H.264</option>
+                      <option value="webm">WebM · VP9</option>
+                    </select></label
+                  ><label
+                    >Audio<select id="audio" name="audio">
+                      <option value="compress">Compress</option>
+                      <option value="keep">Keep original audio</option>
+                      <option value="mute">Remove audio</option>
+                    </select></label
+                  >
+                  <label
+                    >Resolution<select id="height" name="height">
+                      <option value="auto">Automatic</option>
+                      <option value="0">Original</option>
+                      <option value="1080">1080p</option>
+                      <option value="720">720p</option>
+                      <option value="480">480p</option>
+                    </select></label
+                  ><label
+                    >Frame rate<select id="fps" name="fps">
+                      <option value="0">Original</option>
+                      <option value="60">60 fps</option>
+                      <option value="30">30 fps</option>
+                      <option value="24">24 fps</option>
+                      <option value="15">15 fps</option>
+                    </select></label
+                  >
+                </fieldset>
+                <dl class="export-summary">
+                  <div>
+                    <dt>Video bitrate</dt>
+                    <dd id="budget">—</dd>
+                  </div>
+                </dl>
+                <details id="ffmpeg-workspace">
+                  <summary id="ffmpeg-toggle">FFmpeg command</summary>
+                  <section
+                    id="advanced-panel"
+                    aria-label="Advanced FFmpeg workspace"
+                  >
+                    <div class="advanced-intro">
+                      <p class="muted">
+                        Use <code>input.ext</code> for the selected file. Omit
+                        <code>-i</code> to insert it automatically.
+                      </p>
+                      <p class="hint">
+                        Input limit: 2 GiB. Large files may run out of memory.
+                      </p>
+                    </div>
+                    <div class="favorite-row">
+                      <label
+                        >Saved commands<select
+                          id="favorites"
+                          name="favorites"
+                        ></select></label
+                      ><button id="save-favorite">Save command</button
+                      ><button id="delete-favorite">Delete saved</button>
+                    </div>
+                    <label
+                      >Command arguments<textarea
+                        id="command"
+                        name="command"
+                        spellcheck="false"
+                        rows="3"
+                      >
+-vsync vfr -c:v libx264 -preset fast -threads 2 -crf 22 -c:a aac output.mp4</textarea>
+                    </label>
+                    <div class="advanced-actions">
+                      <button
+                        id="run-command"
+                        class="primary with-icon"
+                        disabled
+                      >
+                        <i data-lucide="play"></i>Run command</button
+                      ><button id="stop-command" hidden>Stop</button
+                      ><span
+                        id="advanced-status"
+                        role="status"
+                        class="hint"
+                      ></span>
+                    </div>
+                    <pre
+                      id="logs"
+                      tabindex="0"
+                      aria-label="FFmpeg output"
+                    ></pre>
+                    <div id="advanced-result" hidden>
+                      <div class="section-line">
+                        <h2>Command output</h2>
+                        <a
+                          id="advanced-download"
+                          class="button primary"
+                          download=""
+                          >Save output</a
+                        >
+                      </div>
+                      <img
+                        id="advanced-image"
+                        alt="Converted GIF preview"
+                        width="640"
+                        height="360"
+                        hidden
+                      /><video
+                        id="advanced-video"
+                        controls
+                        playsinline
+                        aria-label="Command output preview"
+                      ></video>
+                    </div>
+                  </section>
+                </details>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+      <footer class="diagnostics-footer">
+        <label>
+          <input id="diagnostics-consent" type="checkbox" />
+          <span>send anonymous telemetry to help improve 8mb</span>
+        </label>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

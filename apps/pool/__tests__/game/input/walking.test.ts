@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { INPUT_DT } from "@tea/pool-protocol";
+import { INPUT_DT } from "@harrhy/pool-protocol";
 import {
   addAvatar,
   createMovementWorld,
@@ -7,8 +7,8 @@ import {
   stepAvatar,
   walkable,
   WALK_SPEED,
-} from "@tea/pool-simulation";
-import { HALL, HALL_MARGIN, TABLES } from "@tea/pool-simulation/geometry";
+} from "@harrhy/pool-simulation";
+import { HALL, HALL_MARGIN, TABLES } from "@harrhy/pool-simulation/geometry";
 import { walkDirection } from "../../../app/game/input/walking";
 
 test("intermediate steering reaches a nearby corner without overshooting", () => {

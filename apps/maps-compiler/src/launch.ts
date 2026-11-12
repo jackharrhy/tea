@@ -4,7 +4,7 @@ import { once } from "node:events";
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { z } from "zod";
-import type { MapLaunchResult } from "@tea/maps-editor/core";
+import type { MapLaunchResult } from "@harrhy/maps-editor/core";
 
 import {
   parseCompilerGameProfile,

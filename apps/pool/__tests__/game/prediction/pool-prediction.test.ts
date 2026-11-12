@@ -1,9 +1,9 @@
 import { expect, test, spyOn } from "bun:test";
-import { PoolPhysics } from "@tea/pool/engine";
-import { createMatch, createShotResult, shotPower } from "@tea/pool";
-import { POCKETS } from "@tea/pool/table";
-import { INPUT_DT } from "@tea/pool-protocol";
-import type { TableState, Snapshot } from "@tea/pool-protocol";
+import { PoolPhysics } from "@harrhy/pool/engine";
+import { createMatch, createShotResult, shotPower } from "@harrhy/pool";
+import { POCKETS } from "@harrhy/pool/table";
+import { INPUT_DT } from "@harrhy/pool-protocol";
+import type { TableState, Snapshot } from "@harrhy/pool-protocol";
 import { PoolPrediction } from "../../../app/game/prediction/pool-prediction";
 import type { MotionEntity } from "../../../app/game/prediction/net-state";
 
@@ -592,7 +592,7 @@ test("predicted contact audio starts locally and never replays already-heard cor
 
 test("correction trace preserves aligned physics and the displayed pose separately", () => {
   const { engine, table } = setup();
-  const traces: import("@tea/pool-protocol").PoolTraceCorrection[] = [];
+  const traces: import("@harrhy/pool-protocol").PoolTraceCorrection[] = [];
   const predictor = new PoolPrediction(undefined, undefined, (event) =>
     traces.push(structuredClone(event)),
   );

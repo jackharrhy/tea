@@ -5,60 +5,60 @@ import { planChecks, selectChecks } from "../affected.mjs";
 const workspaces = [
   {
     path: "apps/cms",
-    name: "@tea/cms",
+    name: "@harrhy/cms",
     manifest: {
       scripts: { check: "npm test" },
       dependencies: {
-        "@tea/rich-text": "*",
-        "@tea/request-body": "0.1.0",
-        "@tea/mcp": "0.1.0",
-        "@tea/json-schema": "0.1.0",
+        "@harrhy/rich-text": "*",
+        "@harrhy/request-body": "0.1.0",
+        "@harrhy/mcp": "0.1.0",
+        "@harrhy/json-schema": "0.1.0",
       },
     },
   },
-  { path: "packages/rich-text", name: "@tea/rich-text", manifest: {} },
+  { path: "packages/rich-text", name: "@harrhy/rich-text", manifest: {} },
   {
     path: "apps/cms-edge",
-    name: "@tea/cms-edge",
+    name: "@harrhy/cms-edge",
     manifest: {
       scripts: { check: "npm test" },
-      dependencies: { "@tea/request-body": "0.1.0" },
+      dependencies: { "@harrhy/request-body": "0.1.0" },
     },
   },
   {
     path: "packages/request-body",
-    name: "@tea/request-body",
+    name: "@harrhy/request-body",
     manifest: { scripts: { check: "npm test" } },
   },
   {
     path: "packages/mcp",
-    name: "@tea/mcp",
+    name: "@harrhy/mcp",
     manifest: {
       scripts: { check: "npm test" },
       dependencies: {
-        "@tea/request-body": "0.1.0",
-        "@tea/json-schema": "0.1.0",
-        "@tea/logger": "0.1.0",
-        "@tea/result": "0.1.0",
+        "@harrhy/request-body": "0.1.0",
+        "@harrhy/json-schema": "0.1.0",
+        "@harrhy/logger": "0.1.0",
+        "@harrhy/result": "0.1.0",
       },
     },
   },
   {
     path: "packages/json-schema",
-    name: "@tea/json-schema",
+    name: "@harrhy/json-schema",
     manifest: {
       scripts: { check: "npm test" },
-      dependencies: { "@tea/result": "0.1.0" },
+      dependencies: { "@harrhy/result": "0.1.0" },
     },
   },
   {
     path: "packages/logger",
-    name: "@tea/logger",
+    name: "@harrhy/logger",
     manifest: { scripts: { check: "npm test" } },
   },
   {
     path: "packages/result",
-    name: "@tea/result",
+    name: "@harrhy/result",
     manifest: { scripts: { check: "npm test" } },
   },
 ];
@@ -68,14 +68,14 @@ const checks = (...names) => names.toSorted((a, b) => a.localeCompare(b));
 test("a package change reaches its transitive app consumers", () => {
   assert.deepEqual(
     selectChecks(["packages/rich-text/inline.ts"], workspaces),
-    checks("@tea/cms"),
+    checks("@harrhy/cms"),
   );
 });
 
 test("edge and documentation changes do not start CMS checks", () => {
   assert.deepEqual(
     selectChecks(["apps/cms-edge/app/index.tsx"], workspaces),
-    checks("@tea/cms-edge"),
+    checks("@harrhy/cms-edge"),
   );
   assert.deepEqual(selectChecks(["docs/architecture.md"], workspaces), []);
   assert.deepEqual(
@@ -95,38 +95,48 @@ test("edge and documentation changes do not start CMS checks", () => {
 test("request body changes reach every consumer", () => {
   assert.deepEqual(
     selectChecks(["packages/request-body/read.ts"], workspaces),
-    checks("@tea/cms", "@tea/cms-edge", "@tea/request-body", "@tea/mcp"),
+    checks(
+      "@harrhy/cms",
+      "@harrhy/cms-edge",
+      "@harrhy/request-body",
+      "@harrhy/mcp",
+    ),
   );
 });
 
 test("ported dependency changes reach their consumers", () => {
   assert.deepEqual(
     selectChecks(["packages/result/src/index.ts"], workspaces),
-    checks("@tea/cms", "@tea/mcp", "@tea/json-schema", "@tea/result"),
+    checks(
+      "@harrhy/cms",
+      "@harrhy/mcp",
+      "@harrhy/json-schema",
+      "@harrhy/result",
+    ),
   );
   assert.deepEqual(
     selectChecks(["packages/logger/src/index.ts"], workspaces),
-    checks("@tea/cms", "@tea/mcp", "@tea/logger"),
+    checks("@harrhy/cms", "@harrhy/mcp", "@harrhy/logger"),
   );
 });
 
 test("an independently checked workspace is picked up automatically", () => {
   const extra = {
     path: "apps/radio",
-    name: "@tea/radio",
+    name: "@harrhy/radio",
     manifest: {
       scripts: { check: "npm test" },
-      dependencies: { "@tea/result": "0.1.0" },
+      dependencies: { "@harrhy/result": "0.1.0" },
     },
   };
   assert.deepEqual(
     selectChecks(["packages/result/src/index.ts"], [...workspaces, extra]),
     checks(
-      "@tea/cms",
-      "@tea/mcp",
-      "@tea/json-schema",
-      "@tea/result",
-      "@tea/radio",
+      "@harrhy/cms",
+      "@harrhy/mcp",
+      "@harrhy/json-schema",
+      "@harrhy/result",
+      "@harrhy/radio",
     ),
   );
 });
@@ -140,7 +150,7 @@ test("workflow lint and dependency-update metadata do not run app checks", () =>
   assert.deepEqual(selectChecks(metadata, workspaces), []);
   assert.deepEqual(
     selectChecks([...metadata, "apps/cms/app/router.ts"], workspaces),
-    checks("@tea/cms"),
+    checks("@harrhy/cms"),
   );
 });
 

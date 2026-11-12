@@ -2,7 +2,7 @@ FROM platformatic/node-caged:26-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/garden/package.json apps/garden/package.json
-RUN npm ci --workspace @tea/garden --include-workspace-root=false && npm prune --omit=dev --workspace @tea/garden
+RUN npm ci --workspace @harrhy/garden --include-workspace-root=false && npm prune --omit=dev --workspace @harrhy/garden
 
 FROM platformatic/node-caged:26-slim
 RUN groupadd --gid 1000 node && useradd --uid 1000 --gid node --create-home node

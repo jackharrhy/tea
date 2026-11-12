@@ -1,5 +1,5 @@
-import type { AmbientAudioEntity, WorldBundle } from "@tea/gurgur-game";
-import type { CompiledBrush, Vec3 } from "@tea/gurgur-engine";
+import type { AmbientAudioEntity, WorldBundle } from "@harrhy/gurgur-game";
+import type { CompiledBrush, Vec3 } from "@harrhy/gurgur-engine";
 
 type SelectedAudio = {
   entityIndex: number;

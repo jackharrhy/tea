@@ -5,12 +5,12 @@ import {
   type Router,
 } from "remix/router";
 import { render as remixRender } from "remix/middleware/render";
-import { readRequestBody } from "@tea/request-body";
+import { readRequestBody } from "@harrhy/request-body";
 import {
   createIdentityClient,
   IdentityError,
   requireTokenRole,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { routes } from "./routes.ts";
 import {
   clearedSessionCookie,

@@ -48,12 +48,12 @@ jobs:
           file: apps/letters-to-steve/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-letters-to-steve:latest
-            ghcr.io/jackharrhy/tea-letters-to-steve:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/letters-to-steve:latest
+            ghcr.io/jackharrhy/letters-to-steve:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-letters-to-steve@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/letters-to-steve@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

@@ -3,7 +3,7 @@ import {
   projectAudienceScope,
   PROJECT_ROLES_SCOPE,
   roleScope,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 export const identityEnvironment = {
   AUTH_ISSUER: "https://auth.test",

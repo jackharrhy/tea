@@ -9,7 +9,7 @@ import {
   requireTokenRole,
   roleScope,
   type TokenPrincipal,
-} from "@tea/identity";
+} from "@harrhy/identity";
 import { eq } from "drizzle-orm";
 import { schema } from "../db";
 import { API_SCOPES, principalForUser } from "./access";

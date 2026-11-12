@@ -3,19 +3,19 @@ import { join, extname, relative } from "path";
 import {
   DEFAULT_SCAN_SETTINGS,
   type ScanSettings,
-} from "@tea/artbin-core/scanning/settings";
+} from "@harrhy/artbin-core/scanning/settings";
 import {
   shouldExclude,
   findGameDir,
   isImportableFile,
   shouldSkipDirectory,
-} from "@tea/artbin-core/scanning/filters";
+} from "@harrhy/artbin-core/scanning/filters";
 import {
   parseArchive,
   getFileEntries,
   detectArchiveType,
   type ArchiveEntry,
-} from "@tea/artbin-core/parsers/archives";
+} from "@harrhy/artbin-core/parsers/archives";
 
 const ARCHIVE_EXTENSIONS = new Set(["pak", "pk3", "pk4", "zip", "bsp"]);
 

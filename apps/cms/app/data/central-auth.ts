@@ -5,7 +5,7 @@ import {
   validLoginTransaction,
   type IdentityConfig,
   type LoginTransaction,
-} from "@tea/identity";
+} from "@harrhy/identity";
 
 export type CentralAuth = { config: IdentityConfig; origin: string };
 

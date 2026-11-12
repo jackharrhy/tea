@@ -3,8 +3,8 @@ import {
   addAvatar,
   createMovementWorld,
   stepAvatar,
-} from "@tea/pool-simulation";
-import { WALK_SPEED } from "@tea/pool-simulation/geometry";
+} from "@harrhy/pool-simulation";
+import { WALK_SPEED } from "@harrhy/pool-simulation/geometry";
 import {
   INPUT_DT,
   LocalPrediction,

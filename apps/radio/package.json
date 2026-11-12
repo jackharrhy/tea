@@ -1,5 +1,5 @@
 {
-  "name": "@tea/radio",
+  "name": "@harrhy/radio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
     "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example"
   },
   "dependencies": {
-    "@tea/identity": "0.1.0",
+    "@harrhy/identity": "0.1.0",
     "@chenglou/pretext": "^1.0.0",
     "@material-symbols/font-400": "^0.48.3",
     "remix": "3.2.0"

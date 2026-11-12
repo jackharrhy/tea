@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu";
-import type { TableState } from "@tea/pool-protocol";
-import { BALL_RADIUS, canPlaceCue } from "@tea/pool";
-import { FELT_Y } from "@tea/pool/table";
+import type { TableState } from "@harrhy/pool-protocol";
+import { BALL_RADIUS, canPlaceCue } from "@harrhy/pool";
+import { FELT_Y } from "@harrhy/pool/table";
 import { cuePose } from "./cue-pose";
 
 export type LocalPlacement = {

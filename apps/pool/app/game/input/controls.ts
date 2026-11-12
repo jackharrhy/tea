@@ -2,20 +2,20 @@ import {
   BALL_RADIUS,
   TABLE_HALF_WIDTH as W,
   TABLE_HALF_LENGTH as L,
-} from "@tea/pool";
-import { RAIL_WIDTH } from "@tea/pool/table";
+} from "@harrhy/pool";
+import { RAIL_WIDTH } from "@harrhy/pool/table";
 import {
   STOOLS,
   TABLES,
   findPath,
   tableApproach,
   type Point,
-} from "@tea/pool-simulation";
+} from "@harrhy/pool-simulation";
 import type {
   PlayerState,
   TableState,
   ClientMessage,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import type { HallView } from "../scene/world";
 import type { GameUI } from "../ui";
 import type { Shot } from "../prediction/shot-command";

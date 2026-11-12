@@ -79,8 +79,8 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
 - The public lobby lists rooms. A signed application session lasting at most one hour protects room pages,
   WebSockets, uploads, and room mutations. Listener names come from that trusted session rather
   than WebSocket messages.
-- Central Auth admits eligible members on first Join. There are no room owners or room-level
-  permissions; every signed-in member can create and mutate every room.
+- Jack Auth admits eligible members through an explicit first Join. There are no room owners or
+  room-level permissions; every admitted member can create and mutate every room.
 - The approved production boundary is one Celld runtime behind Traefik TLS with rate limiting on the
   native `/join` action. Expose only Celld's public Worker listener; keep its internal
   peer/operator listener private.

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { validatePaint } from "../../server/paint-validation";
-import { TILE_SIZE } from "@tea/burger-core";
+import { TILE_SIZE } from "@harrhy/burger-core";
 
 const world = {
   bounds: { x: 0, y: 0, w: TILE_SIZE * 10, h: TILE_SIZE * 10 },

@@ -7,8 +7,8 @@ import {
   type NetworkBodyState,
   type NetworkPlayerState,
   type PredictionCheckpointPacket,
-} from "@tea/gurgur-engine";
-import { compileWorld, type WorldMessage } from "@tea/gurgur-game";
+} from "@harrhy/gurgur-engine";
+import { compileWorld, type WorldMessage } from "@harrhy/gurgur-game";
 import type {
   PhysicsWorkerRequest,
   PhysicsWorkerResponse,

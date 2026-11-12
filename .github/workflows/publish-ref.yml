@@ -10,6 +10,7 @@ on:
       - package-lock.json
       - apps/ref/**
       - packages/identity/**
+      - packages/ui/**
   workflow_dispatch:
 concurrency:
   group: publish-ref
@@ -48,12 +49,12 @@ jobs:
           file: apps/ref/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-ref:latest
-            ghcr.io/jackharrhy/tea-ref:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/ref:latest
+            ghcr.io/jackharrhy/ref:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-ref@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/ref@$DIGEST" >> "$GITHUB_STEP_SUMMARY"

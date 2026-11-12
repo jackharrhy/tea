@@ -1,0 +1,271 @@
+import { browserAssets } from "./assets/build-manifest.ts";
+import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
+import {
+  EditorHostedPresence,
+  EditorHostedPresenceStrip,
+} from "./assets/editor-hosted-presence-panel.tsx";
+import { EditorHostedAccess } from "./assets/editor-hosted-access-panel.tsx";
+import { EditorHostedResources } from "./assets/editor-hosted-resources-panel.tsx";
+import { EditorHostedPicker } from "./assets/editor-hosted-picker-panel.tsx";
+import { EditorHostedBuilds } from "./assets/editor-hosted-builds-panel.tsx";
+import { EditorFov } from "./assets/editor-fov-panel.tsx";
+import {
+  EditorInspector,
+  EditorInspectorToggle,
+  EditorWorkspaceToggle,
+} from "./assets/editor-workspace-toggle.tsx";
+import { EditorExportSettings } from "./assets/editor-export-settings-panel.tsx";
+import { EditorBuildControls } from "./assets/editor-build-controls-panel.tsx";
+import { EditorDocumentControls } from "./assets/editor-document-controls-panel.tsx";
+import { EditorProjectContextPanel } from "./assets/editor-project-context-panel.tsx";
+import { EditorSelectionCommands } from "./assets/editor-selection-commands-panel.tsx";
+import { EditorEditActions } from "./assets/editor-edit-actions-panel.tsx";
+import { EditorToolSettings } from "./assets/editor-tool-settings-panel.tsx";
+import { EditorHistory } from "./assets/editor-history-panel.tsx";
+import { EditorSwitchMapDialog } from "./assets/editor-switch-map-panel.tsx";
+import { EditorContextMenu } from "./assets/editor-context-menu-panel.tsx";
+import { EditorDetachedMaps } from "./assets/editor-detached-maps-panel.tsx";
+import { EditorProjectMapSelector } from "./assets/editor-project-map-selector-panel.tsx";
+import { EditorThemeControl } from "./assets/editor-theme-control.tsx";
+import { EditorVersions } from "./assets/editor-versions-panel.tsx";
+import {
+  EditorProjectSync,
+  EditorProjectSyncOpen,
+} from "./assets/editor-project-sync-panel.tsx";
+import {
+  EditorHostedSource,
+  EditorHostedSourceOpen,
+} from "./assets/editor-hosted-source-panel.tsx";
+import { EditorSourceComparison } from "./assets/editor-source-compare-panel.tsx";
+import { EditorIssueStatus } from "./assets/editor-issues-panel.tsx";
+import { EditorPointerReadout } from "./assets/editor-pointer-readout.tsx";
+import {
+  EditorDocumentName,
+  EditorPerspectiveLabel,
+  EditorSelectionInfo,
+  EditorStatus,
+} from "./assets/editor-readouts.tsx";
+import {
+  EditorPerformancePanel,
+  EditorPerformanceToggle,
+} from "./assets/editor-performance-panel.tsx";
+import { editorStyles } from "./editor-styles.ts";
+import { mapsEditorStyles } from "./editor-maps-styles.ts";
+
+export function EditorPage() {
+  return () => (
+    <html lang="en" mix={[editorStyles, mapsEditorStyles]}>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#252527" />
+        <title>Editor · Worldview</title>
+        <link rel="icon" href="/favicon.svg" />
+        <link rel="stylesheet" href="/icons/style.css" />
+      </head>
+      <body>
+        <main class="editor-shell">
+          <header class="editor-header">
+            <details
+              class="editor-menu editor-document-menu"
+              data-menu="file"
+              name="editor-topbar"
+            >
+              <summary aria-label="Map document menu" title="Map document menu">
+                <i class="ph ph-cube" aria-hidden="true" />
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">File and recovery</div>
+                <EditorDocumentName />
+                <a href="/">Maps home</a>
+                <a href="/projects">Projects</a>
+                <EditorDocumentControls />
+                <EditorRecentProjects />
+                <div class="editor-menu-heading">Appearance</div>
+                <EditorThemeControl />
+              </div>
+            </details>
+            <nav class="editor-toolbar" aria-label="Map editing toolbar">
+              <EditorToolSettings />
+              <EditorHistory />
+            </nav>
+            <details
+              class="editor-menu editor-selection-menu"
+              data-menu="selection"
+              name="editor-topbar"
+            >
+              <summary aria-label="More edit actions" title="More edit actions">
+                <i class="ph ph-dots-three" aria-hidden="true" />
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">Selection and visibility</div>
+                <EditorSelectionCommands />
+                <EditorEditActions />
+              </div>
+            </details>
+            <details
+              class="editor-menu"
+              data-menu="project"
+              name="editor-topbar"
+            >
+              <summary aria-label="Project menu" title="Project">
+                <i class="ph ph-folders" aria-hidden="true" />
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">Project</div>
+                <EditorProjectContextPanel />
+                <EditorProjectSyncOpen />
+              </div>
+            </details>
+            <details class="editor-menu" data-menu="build" name="editor-topbar">
+              <summary>
+                <i class="ph ph-hammer" aria-hidden="true" /> Build
+              </summary>
+              <div class="editor-menu-content">
+                <div class="editor-menu-heading">Build and export</div>
+                <EditorBuildControls />
+                <EditorExportSettings />
+                <EditorHostedBuilds />
+              </div>
+            </details>
+            <details
+              id="hosted-editor-picker"
+              class="hosted-editor-picker"
+              name="editor-topbar"
+            >
+              <summary
+                aria-label="Hosted maps and collaboration"
+                title="Hosted maps and collaboration"
+              >
+                <i class="ph ph-users-three" aria-hidden="true" />
+              </summary>
+              <div class="hosted-editor-fields">
+                <EditorHostedPicker />
+                <EditorHostedResources />
+                <EditorHostedAccess />
+                <EditorHostedSourceOpen />
+                <EditorHostedPresence />
+                <EditorDetachedMaps />
+                <p>
+                  Hosted members can edit with live sync. Source changes replace
+                  the hosted map after a version check. Recovery copies and
+                  source drafts stay on this device.
+                </p>
+              </div>
+            </details>
+            <EditorHostedPresenceStrip />
+            <EditorPerformanceToggle />
+            <EditorInspectorToggle />
+          </header>
+          <div class="editor-workspace">
+            <section class="viewports" aria-label="Map viewports">
+              <div class="viewport-frame">
+                <div class="perspective-header">
+                  <EditorPerspectiveLabel />
+                  <EditorFov />
+                  <EditorWorkspaceToggle />
+                </div>
+                <canvas
+                  id="perspective"
+                  aria-label="Perspective map viewport"
+                />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
+              </div>
+              <div class="viewport-frame">
+                <span>XY</span>
+                <canvas id="xy" aria-label="Top map viewport" />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
+              </div>
+              <div class="viewport-frame">
+                <span>XZ</span>
+                <canvas id="xz" aria-label="Front map viewport" />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
+              </div>
+              <div class="viewport-frame">
+                <span>YZ</span>
+                <canvas id="yz" aria-label="Side map viewport" />
+                <div data-viewport-overlay="lasso" aria-hidden="true" />
+                <div
+                  data-viewport-overlay="transform-readout"
+                  aria-hidden="true"
+                />
+              </div>
+              <div
+                class="viewport-resizer column-resizer"
+                role="separator"
+                aria-label="Resize viewport columns"
+                aria-orientation="vertical"
+                aria-valuemin={30}
+                aria-valuemax={76}
+                aria-valuenow={50}
+                tabIndex={0}
+                data-resize="column"
+              />
+              <div
+                class="viewport-resizer row-resizer"
+                role="separator"
+                aria-label="Resize viewport rows"
+                aria-orientation="horizontal"
+                aria-valuemin={20}
+                aria-valuemax={80}
+                aria-valuenow={50}
+                tabIndex={0}
+                data-resize="row"
+              />
+              <div
+                class="viewport-resizer cross-resizer"
+                role="separator"
+                aria-label="Resize viewport rows and columns"
+                aria-valuetext="Column 50%, row 50%"
+                tabIndex={0}
+                data-resize="cross"
+              />
+            </section>
+            <div
+              id="inspector-resizer"
+              role="separator"
+              aria-label="Resize inspector"
+              aria-orientation="vertical"
+              aria-valuemin={240}
+              aria-valuemax={520}
+              aria-valuenow={320}
+              tabIndex={0}
+              data-resize="inspector"
+            />
+            <aside id="editor-inspector" class="source-panel">
+              <EditorSelectionInfo />
+              <EditorInspector />
+            </aside>
+            <EditorProjectMapSelector />
+          </div>
+          <footer class="editor-statusbar">
+            <EditorStatus />
+            <EditorIssueStatus />
+            <EditorPointerReadout />
+          </footer>
+        </main>
+        <EditorPerformancePanel />
+        <EditorSwitchMapDialog />
+        <EditorVersions />
+        <EditorProjectSync />
+        <EditorSourceComparison />
+        <EditorHostedSource />
+        <EditorContextMenu />
+        <script type="module" src={browserAssets.editor}></script>
+        <script type="module" src={browserAssets.entry}></script>
+      </body>
+    </html>
+  );
+}

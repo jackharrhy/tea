@@ -12,7 +12,7 @@ From the Tea root, run `npm ci`, then `npm run artbin:dev`. Node 26 LTS (26.13.0
 
 ## Checks and deployment
 
-Run `npm run artbin:check` from the root or `npm run check --workspace @tea/artbin`. `Dockerfile` produces the Node image published by `.github/workflows/publish-artbin.yml`. Root `compose.yml` provides a local Artbin container. Production host configuration and data migration belong in the infrastructure repo; keep the database and uploads together when changing images. The container expects writable `data`, `public/uploads`, and `tmp/uploads` directories under `/app/apps/artbin`.
+Run `npm run artbin:check` from the root or `npm run check --workspace @harrhy/artbin-app`. `Dockerfile` produces the Node image published by `.github/workflows/publish-artbin.yml`. Root `compose.yml` provides a local Artbin container. Production host configuration and data migration belong in the infrastructure repo; keep the database and uploads together when changing images. The container expects writable `data`, `public/uploads`, and `tmp/uploads` directories under `/app/apps/artbin`.
 
 Artbin keeps its own UI and storage behavior inside this app. Artbin consumes the Tea map renderer through its public package entry points. Keep its preview behavior, visual assets, and component styles intact when updating the renderer.
 
@@ -36,5 +36,37 @@ API machine tokens require this project's audience, its role claims and the
 explicit requested role scopes for `assets-read` or `assets-content`. The Maps
 service has only those two roles. MCP requires a human administrator, the `admin`
 role scope and the mapped local administrator record. Protected-resource metadata
-advertises the central issuer and full required scopes. `@tea/identity` verifies
+advertises the central issuer and full required scopes. `@harrhy/identity` verifies
 tokens; local sessions, user records and authorization remain in this app.
+
+## Support login
+
+Artbin contains a separate, disabled-by-default support login adapter. The
+`/auth/support/start` and `/auth/support/callback` routes use Jack Auth's
+one-use, PKCE-bound support handoff; they never create or update an Artbin user.
+The target must already have an exact `users.auth_subject` row. The support
+token must be a signed native token with the human actor in `act`, an active
+resource introspection result for the same target and dedicated support client,
+the Artbin project audience and the target's organization-qualified `member` or
+`admin` role claim. Native acted JWTs omit `scope`; ordinary browser scopes are
+checked on the same token's resource introspection result. This browser check does
+not change CLI, machine API or MCP role-scope rules.
+
+Support sessions are held in this Node process for at most ten minutes. Each
+support request checks both Jack Auth support status and native introspection
+again; an unavailable check denies access. Restarting Artbin invalidates every
+support session. A surviving support cookie blocks ordinary-session fallback;
+`/auth/support/recover` offers an explicit CSRF-protected exit after restart.
+The banner names the actor and target, and its exit button ends only the
+support session. Normal actor login remains separate. The Auth
+service owns durable expiry and native token revocation if Artbin restarts or an
+exit request cannot reach it. Mutation logs include actor and target references.
+Initial acceptance must make no content changes.
+
+Keep `ARTBIN_SUPPORT_LOGIN_ENABLED=0` until the matching Jack Auth support
+endpoints, dedicated confidential client, transport credential, native policy
+and isolated consumer acceptance are ready. The private production configuration
+will need `AUTH_SUPPORT_CLIENT_ID` and a distinct
+`AUTH_SUPPORT_TRANSPORT_SECRET`; do not reuse the resource introspection secret.
+Set `AUTH_SUPPORT_ORIGIN` to the Jack Auth support HTTP origin; the native
+`AUTH_ISSUER` remains the authority for signed tokens and introspection.

@@ -1,5 +1,5 @@
 {
-  "name": "@tea/artbin",
+  "name": "@harrhy/artbin-app",
   "type": "module",
   "imports": {
     "#db": "./src/db/index.ts",
@@ -22,8 +22,9 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@jackharrhy/tea-maps-renderer": "0.2.0",
-    "@tea/artbin-core": "0.0.1",
+    "@harrhy/worldview-renderer": "0.2.0",
+    "@harrhy/artbin-core": "0.0.1",
+    "@harrhy/request-body": "0.1.0",
     "@tus/file-store": "2.1.2",
     "@tus/server": "2.4.7",
     "7zip-bin-full": "^26.6.0",
@@ -41,7 +42,7 @@
     "sharp": "^0.35.5",
     "three": "^0.187.0",
     "zod": "^4.6.7",
-    "@tea/identity": "0.1.0"
+    "@harrhy/identity": "0.1.0"
   },
   "devDependencies": {
     "@types/archiver": "^8.0.0",

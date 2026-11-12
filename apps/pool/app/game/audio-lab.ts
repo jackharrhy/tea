@@ -1,6 +1,6 @@
-import { createMatch, type PoolSound, type PhysicalBall } from "@tea/pool";
-import { FELT_Y } from "@tea/pool/table";
-import type { Snapshot } from "@tea/pool-protocol";
+import { createMatch, type PoolSound, type PhysicalBall } from "@harrhy/pool";
+import { FELT_Y } from "@harrhy/pool/table";
+import type { Snapshot } from "@harrhy/pool-protocol";
 import { RETURN_FLOOR_POINT } from "./audio-surfaces";
 import { GameAudio } from "./audio";
 

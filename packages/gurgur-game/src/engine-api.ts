@@ -7,7 +7,7 @@ import type {
   RevoluteMotor,
   RuntimeId,
   Vec3,
-} from "@tea/gurgur-engine";
+} from "@harrhy/gurgur-engine";
 
 export type CapsuleShape = { radius: number; halfSegment: number };
 export type RuntimeBodyRef = { id: RuntimeId; entityIndex: number };

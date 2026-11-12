@@ -6,8 +6,8 @@ import {
   materialUsageInDocument,
   parseMap,
   serializeMap,
-} from "@tea/maps-editor/core";
-import type { HostedResourceMount } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import type { HostedResourceMount } from "@harrhy/maps-protocol";
 import { prepareGameTreeBuildResources } from "../src/game-tree-build-resources.js";
 import { hostedBuildProfile } from "../src/hosted-game-profiles.js";
 import { createWorldPackage } from "../src/world-package.js";

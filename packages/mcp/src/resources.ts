@@ -40,7 +40,7 @@ export interface ResourceDescriptor extends ResourceDeclaration {
 }
 
 /** Brands a declared resource so a group can tell one from a nested group. */
-const RESOURCE = Symbol.for("@tea/mcp.resource");
+const RESOURCE = Symbol.for("@harrhy/mcp.resource");
 
 /**
  * The address a pattern or a URI is routed under.

@@ -10,7 +10,7 @@ import {
   parseWad,
   type BspWarning,
   type WadWarning,
-} from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/worldview-renderer/core";
 
 export interface ExtractedTexture {
   name: string;

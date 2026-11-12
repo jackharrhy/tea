@@ -1,5 +1,5 @@
 {
-  "name": "@tea/mcp",
+  "name": "@harrhy/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,10 +12,10 @@
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "@tea/request-body": "0.1.0",
-    "@tea/json-schema": "0.1.0",
-    "@tea/logger": "0.1.0",
-    "@tea/result": "0.1.0",
+    "@harrhy/request-body": "0.1.0",
+    "@harrhy/json-schema": "0.1.0",
+    "@harrhy/logger": "0.1.0",
+    "@harrhy/result": "0.1.0",
     "remix": "3.2.0"
   },
   "devDependencies": {

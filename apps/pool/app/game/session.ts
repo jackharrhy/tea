@@ -1,5 +1,5 @@
-import { PROTOCOL_VERSION } from "@tea/pool-protocol";
-import type { ClientMessage, ServerMessage } from "@tea/pool-protocol";
+import { PROTOCOL_VERSION } from "@harrhy/pool-protocol";
+import type { ClientMessage, ServerMessage } from "@harrhy/pool-protocol";
 interface SessionEvents {
   message(message: ServerMessage): void;
   closed(): void;

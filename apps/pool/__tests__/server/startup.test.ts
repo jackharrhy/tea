@@ -92,7 +92,7 @@ test("oversized websocket frames require joining and are throttled before parsin
       .decode(value)
       .match(/listening on 127\.0\.0\.1:(\d+)/)?.[1];
     expect(port).toBeDefined();
-    const { PROTOCOL_VERSION } = await import("@tea/pool-protocol");
+    const { PROTOCOL_VERSION } = await import("@harrhy/pool-protocol");
     socket = new WebSocket(`ws://127.0.0.1:${port}/ws`);
     const messages: { type: string; time?: number }[] = [];
     socket.addEventListener("message", (event) =>

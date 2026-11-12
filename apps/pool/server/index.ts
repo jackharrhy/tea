@@ -8,7 +8,7 @@ import {
   MAX_POOL_TRACE_MESSAGE_LENGTH,
   MAX_CLIENT_MESSAGE_LENGTH,
   parseClientMessage,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import { Hall } from "./hall";
 import { createUpdateControl } from "./update-control";
 import { GameRecorder } from "./recordings";

@@ -1,12 +1,12 @@
-# @tea/radio
+# @harrhy/radio
 
-A multi-room synchronized audio player adapted from the former standalone Radio repository. Its pages and title bar use the `tea/radio` identity while preserving existing room and media APIs. Remix renders the application inside a Worker, and each
+A multi-room synchronized audio player adapted from the former standalone Radio repository. Its pages and title bar use the Radio name while preserving existing room and media APIs. Remix renders the application inside a Worker, and each
 named room is a Celld/Cloudflare-compatible Durable Object with private SQLite state and
 hibernatable WebSockets. Audio content lives in the `TRACKS` R2-compatible object binding.
 
 ## Local development
 
-Install Tea's Node.js version and dependencies from the repository root, then start Wrangler's local development server:
+Install the repository's Node.js version and dependencies from the repository root, then start Wrangler's local development server:
 
 ```sh
 npm ci
@@ -34,18 +34,18 @@ filesystem from which `remix/assets` can compile modules on demand.
 Useful commands:
 
 ```sh
-npm run build --workspace @tea/radio
+npm run build --workspace @harrhy/radio
 npm run radio:dev
-npm run dev:celld --workspace @tea/radio
-npm run types:worker --workspace @tea/radio
+npm run dev:celld --workspace @harrhy/radio
+npm run types:worker --workspace @harrhy/radio
 npm run radio:check
 ```
 
 ## Deployment model
 
-The default Tea configuration uses Worker name `tea-radio` and bucket name `tea-radio-tracks` for new isolated stores. Tea's root `compose.yml` serves it at `radio.localhost` with an independent `radio-data` volume. Mug's production service uses the cutover configuration with the original `radio` Worker and `radio-tracks` bucket, and a separate copied Celld volume.
+The default Tea configuration uses Worker name `tea-radio` and bucket name `tea-radio-tracks` for new isolated stores. The repository's root `compose.yml` serves it at `radio.localhost` with an independent `radio-data` volume. Mug's production service uses the cutover configuration with the original `radio` Worker and `radio-tracks` bucket, and a separate copied Celld volume.
 
-The application image includes Radio and copies `/usr/local/bin/celld` from a digest-pinned Celld 0.6.2 image in the [Celld fork](https://github.com/jackharrhy/celld) with native SQLite object storage. Its published binary matches the release binary used for Radio's 0.5.1-to-0.6.2 upgrade, 1 GiB media, and cold-restore smokes. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse another runtime on an isolated store. Tea's `publish-radio` workflow checks and publishes `ghcr.io/jackharrhy/tea-radio:latest` and a commit tag on relevant `main` changes. Mug uses `:latest` and Watchtower to deploy new main builds.
+The application image includes Radio and copies `/usr/local/bin/celld` from a digest-pinned Celld 0.6.2 image in the [Celld fork](https://github.com/jackharrhy/celld) with native SQLite object storage. Its published binary matches the release binary used for Radio's 0.5.1-to-0.6.2 upgrade, 1 GiB media, and cold-restore smokes. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse another runtime on an isolated store. The `publish-radio` workflow checks and publishes `ghcr.io/jackharrhy/radio:latest` and a commit tag on relevant `main` changes. Mug uses `:latest` and Watchtower to deploy new main builds.
 The `dev.jackharrhy.radio.celld-image` image label records the bundled Celld binary.
 
 One container prepares the configured backend, runs `celld diagnose`, deploys the Worker and
@@ -60,7 +60,7 @@ Object SQLite schemas. Replica files can be rebuilt from the object store.
 This backend runs one Radio runtime per local store. It has no host-loss failover or multi-host
 shared-disk mode. The fork rejects a second runtime using the same store. The public Worker
 listener is `0.0.0.0:44100`; its internal listener stays on loopback. Traefik terminates TLS and
-should rate-limit `/join`. Radio uses Central Auth and a signed local session
+should rate-limit `/join`. Radio uses Jack Auth and a signed local session
 that expires within one hour.
 
 Set `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
@@ -68,9 +68,9 @@ Set `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
 `AUTH_PUBLIC_ORIGIN=https://radio.jackharrhy.dev` together. It uses a dedicated
 public PKCE browser client with the exact callback
 `https://radio.jackharrhy.dev/auth/callback`. An app member/admin grant opens
-the existing shared rooms; Radio is intended to be open to all eligible Central
-accounts; the Auth enrollment rule grants eligible members on their first Join.
-Each session keeps the immutable Central subject; display names remain cosmetic. Central sign-in
+the existing shared rooms. Eligible Jack Auth users explicitly Join Radio to
+receive a member grant; there is no automatic cohort grant.
+Each session keeps the immutable Jack Auth subject; display names remain cosmetic. Sign-in
 reuses the signed local cookie but checks its subject and one-hour expiry on
 every request. An open WebSocket rejects further commands after that expiry with
 application close code `4008`.
@@ -81,7 +81,7 @@ Set the five `CELLD_VAR_AUTH_*` fields and a random 32-character-or-longer
 `CELLD_VAR_RADIO_SESSION_SECRET`. When enabling `CELLD_TRUST_FORWARDED_HEADERS=1`, configure
 Traefik to replace forwarded host/protocol headers. Only the public listener should be exposed.
 The application has no persistent user profiles or room-level authorization:
-every signed-in Central member can see, create, and mutate every room. The upload limit remains **1 GiB**
+every signed-in Radio member can see, create, and mutate every room. The upload limit remains **1 GiB**
 (1,073,741,824 bytes) per track.
 
 Azure remains available for baseline comparisons and migration. Set `CELLD_BUCKET=az://CONTAINER`
@@ -156,8 +156,8 @@ For storage or resource-limit investigations, the optional full 1 GiB container 
 pull the image and run:
 
 ```sh
-docker pull ghcr.io/jackharrhy/tea-radio:latest
-node scripts/test-celld.mjs --image ghcr.io/jackharrhy/tea-radio:latest --upload-bytes 1073741824 --output /tmp/radio-container-smoke.json
+docker pull ghcr.io/jackharrhy/radio:latest
+node scripts/test-celld.mjs --image ghcr.io/jackharrhy/radio:latest --upload-bytes 1073741824 --output /tmp/radio-container-smoke.json
 ```
 
 The container test uses Docker's host network and a fresh temporary bind mount. It runs as the

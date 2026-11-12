@@ -6,7 +6,7 @@ import {
   MAX_POOL_TRACE_RAW_BYTES,
   type PoolTrace,
   type PoolTraceMessage,
-} from "@tea/pool-protocol";
+} from "@harrhy/pool-protocol";
 import type { Database } from "bun:sqlite";
 import {
   and,
@@ -30,21 +30,21 @@ import {
   recordedClientTraces,
   type AppDatabase,
 } from "./db";
-import type { AdminMetrics, ClientDiagnostic } from "@tea/pool-protocol";
+import type { AdminMetrics, ClientDiagnostic } from "@harrhy/pool-protocol";
 import {
   RECORDING_FORMAT,
   type GameRecording,
   type RecordedFrame,
   type RecordedShot,
   type RecordingEvent,
-} from "@tea/pool/recording";
+} from "@harrhy/pool/recording";
 import {
   BALL_RADIUS,
   type PhysicalBall,
   type PoolMatch,
   type ShotResult,
-} from "@tea/pool";
-import { FELT_Y } from "@tea/pool/table";
+} from "@harrhy/pool";
+import { FELT_Y } from "@harrhy/pool/table";
 
 const MAX_FRAMES = 7200;
 const CHUNK_FRAMES = 120;

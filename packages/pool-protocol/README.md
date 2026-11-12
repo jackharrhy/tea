@@ -1,4 +1,4 @@
-# @tea/pool-protocol
+# @harrhy/pool-protocol
 
 Internal Tea package imported from 8ballworld revision `ad1dc4446e1ab8e7b32111c95f6a3479ab8e532c`.
 
@@ -12,7 +12,7 @@ Versioned hall WebSocket messages and validation shared by the pool browser and 
 
 ## Setup and checks
 
-From the Tea root, run `npm ci` then `npm run check --workspace @tea/pool-protocol`. The check typechecks the source and runs its physics/protocol tests.
+From the Tea root, run `npm ci` then `npm run check --workspace @harrhy/pool-protocol`. The check typechecks the source and runs its physics/protocol tests.
 
 ## Boundary
 

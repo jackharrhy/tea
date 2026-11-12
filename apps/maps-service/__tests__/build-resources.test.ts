@@ -9,14 +9,14 @@ import {
   encodeQuakeWad2,
   parseMap,
   serializeMap,
-} from "@tea/maps-editor/core";
-import type { HostedResourceMount } from "@tea/maps-protocol";
+} from "@harrhy/maps-editor/core";
+import type { HostedResourceMount } from "@harrhy/maps-protocol";
 import { prepareWadBuildResources } from "../src/wad-build-resources.js";
 import {
   createQuakePalette,
   parseWad,
   decodeMipTexture,
-} from "@jackharrhy/tea-maps-renderer/core";
+} from "@harrhy/worldview-renderer/core";
 
 const source = serializeMap(createStarterDocument());
 const palette = createDiagnosticQuakePalette();

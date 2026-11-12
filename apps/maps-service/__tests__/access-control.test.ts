@@ -3,7 +3,7 @@ import {
   createDevelopmentMaterials,
   createDiagnosticQuakePalette,
   encodeQuakeWad2,
-} from "@tea/maps-editor/core";
+} from "@harrhy/maps-editor/core";
 import { verifyRealtimeTicket } from "../src/realtime-ticket.js";
 import {
   fixture,

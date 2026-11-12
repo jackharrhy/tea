@@ -1,13 +1,13 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import type { Quat, Vec3 } from "@tea/gurgur-engine";
+import type { Quat, Vec3 } from "@harrhy/gurgur-engine";
 import {
   decodePersistedGameState,
   encodePersistedGameState,
   type PersistedGameState,
   type PersistedPlayerState,
-} from "@tea/gurgur-game";
+} from "@harrhy/gurgur-game";
 
 export type PersistedWorld = {
   worldEpoch: number;

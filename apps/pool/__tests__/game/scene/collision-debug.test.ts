@@ -6,7 +6,7 @@ import {
   FELT_Y,
   POCKETS,
   MESH_REST_OFFSET,
-} from "@tea/pool/table";
+} from "@harrhy/pool/table";
 import { tableCollisionView } from "../../../app/game/scene/collision-debug";
 
 test("collision view uses the native felt height and leaves all pocket holes open", () => {

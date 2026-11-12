@@ -7,7 +7,7 @@ import type {
   Adornment,
 } from "../../../ui/public/content-types.ts";
 import { ImageFields } from "../../../features/adornments/public/image-fields.tsx";
-import { RichText } from "@tea/rich-text/rich-text.tsx";
+import { RichText } from "@harrhy/rich-text/rich-text.tsx";
 
 export function BlockFields(
   handle: Handle<{

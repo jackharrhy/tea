@@ -123,6 +123,46 @@ services:
     networks:
       - web
 
+  rotund:
+    profiles: [rotund]
+    build:
+      context: .
+      dockerfile: apps/rotund/Dockerfile
+    environment:
+      APP_ORIGIN: ${ROTUND_APP_ORIGIN:-https://rotund.localhost}
+      AUTH_ISSUER: ${ROTUND_AUTH_ISSUER:-https://auth.jackharrhy.dev}
+      AUTH_CLIENT_ID: ${ROTUND_AUTH_CLIENT_ID:-}
+      AUTH_CLIENT_SECRET: ${ROTUND_AUTH_CLIENT_SECRET:-}
+      AUTH_SCOPES: ${ROTUND_AUTH_SCOPES:-}
+      AUTH_ORGANIZATION_ID: ${ROTUND_AUTH_ORGANIZATION_ID:-}
+      SERVICE_BINDINGS: ${ROTUND_SERVICE_BINDINGS:-}
+      SESSION_SECRET: ${ROTUND_SESSION_SECRET:-}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.rotund.rule: "Host(`rotund.localhost`)"
+      traefik.http.routers.rotund.entrypoints: web
+      traefik.http.services.rotund.loadbalancer.server.port: "80"
+    networks:
+      - web
+
+  8mb:
+    profiles: [8mb]
+    build:
+      context: .
+      dockerfile: apps/8mb/Dockerfile
+    environment:
+      APP_ORIGIN: http://8mb.localhost
+      DIAGNOSTICS_DB_FILE: /app/data/diagnostics.sqlite
+    volumes:
+      - 8mb-data:/app/data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.8mb.rule: "Host(`8mb.localhost`)"
+      traefik.http.routers.8mb.entrypoints: web
+      traefik.http.services.8mb.loadbalancer.server.port: "5188"
+    networks:
+      - web
+
   pool:
     build:
       context: .
@@ -257,12 +297,38 @@ services:
     networks:
       - web
 
+  ref-dev-auth:
+    image: node:26-alpine
+    command: ["node", "/app/dev-auth.mjs"]
+    environment:
+      HARRHY_DEV_AUTH_BIND: 0.0.0.0
+      HARRHY_DEV_AUTH_ORIGIN: http://ref-auth.localhost:8786
+      HARRHY_DEV_AUTH_CALLBACK: http://ref.localhost/auth/callback
+    volumes:
+      - ./packages/dev-auth/server.mjs:/app/dev-auth.mjs:ro
+      - ./packages/dev-auth/apps.json:/app/apps.json:ro
+    ports:
+      - "127.0.0.1:8786:8786"
+    read_only: true
+    networks:
+      web:
+        aliases:
+          - ref-auth.localhost
+
   ref:
     build:
       context: .
       dockerfile: apps/ref/Dockerfile
+    depends_on:
+      - ref-dev-auth
     environment:
-      CELLD_VAR_REF_PASSWORD: ${REF_PASSWORD:-tea-ref-local-password}
+      CELLD_VAR_AUTH_ISSUER: ${REF_AUTH_ISSUER:-http://ref-auth.localhost:8786}
+      CELLD_VAR_AUTH_CLIENT_ID: ${REF_AUTH_CLIENT_ID:-ref-local-browser}
+      CELLD_VAR_AUTH_PROJECT_ID: ${REF_AUTH_PROJECT_ID:-ref-local-project}
+      CELLD_VAR_AUTH_ORGANIZATION_ID: ${REF_AUTH_ORGANIZATION_ID:-ref-local-org}
+      CELLD_VAR_AUTH_PUBLIC_ORIGIN: ${REF_AUTH_PUBLIC_ORIGIN:-http://ref.localhost}
+      CELLD_VAR_AUTH_INTROSPECTION_CLIENT_ID: ${REF_AUTH_INTROSPECTION_CLIENT_ID:-ref-local-resource}
+      CELLD_VAR_AUTH_INTROSPECTION_SECRET: ${REF_AUTH_INTROSPECTION_SECRET:-ref-local-resource-secret}
     volumes:
       - ref-data:/app/.celld
     labels:
@@ -294,10 +360,10 @@ services:
     networks:
       - web
 
-  maps:
+  worldview:
     build:
       context: .
-      dockerfile: apps/maps/Dockerfile
+      dockerfile: apps/worldview/Dockerfile
     environment:
       CELLD_VAR_MAPS_SERVICE_ORIGIN: http://maps-service:8792
       CELLD_VAR_MAPS_COLLABORATION_ORIGIN: http://maps-collaboration:44100
@@ -310,9 +376,9 @@ services:
       - maps-collaboration
     labels:
       traefik.enable: "true"
-      traefik.http.routers.maps.rule: "Host(`maps.localhost`)"
-      traefik.http.routers.maps.entrypoints: web
-      traefik.http.services.maps.loadbalancer.server.port: "8790"
+      traefik.http.routers.worldview.rule: "Host(`worldview.localhost`)"
+      traefik.http.routers.worldview.entrypoints: web
+      traefik.http.services.worldview.loadbalancer.server.port: "8790"
     networks:
       - web
 
@@ -399,6 +465,7 @@ services:
       - gurgur-data:/app/data
 
 volumes:
+  8mb-data:
   artbin-data:
   artbin-uploads:
   artbin-tmp:

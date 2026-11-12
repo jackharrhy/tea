@@ -36,7 +36,7 @@ jobs:
           bun-version: 1.4.4
           no-cache: true
       - run: npm ci
-      - run: npm run check --workspace @tea/lists
+      - run: npm run check --workspace @harrhy/lists
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
           cache-binary: false
@@ -52,12 +52,12 @@ jobs:
           file: apps/lists/Dockerfile
           push: true
           tags: |
-            ghcr.io/jackharrhy/tea-lists:latest
-            ghcr.io/jackharrhy/tea-lists:sha-${{ github.sha }}
+            ghcr.io/jackharrhy/lists:latest
+            ghcr.io/jackharrhy/lists:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/jackharrhy/tea
+            org.opencontainers.image.source=https://github.com/jackharrhy/harrhy
             org.opencontainers.image.revision=${{ github.sha }}
       - name: Show deployable image
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: echo "ghcr.io/jackharrhy/tea-lists@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "ghcr.io/jackharrhy/lists@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
