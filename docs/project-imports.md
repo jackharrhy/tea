@@ -1,12 +1,12 @@
-# Bringing projects into Tea
+# Bringing projects into Harrhy
 
-Tea contains the former standalone Ref, Radio, Maps, Marky, Letters to Steve, Artbin, and Garden projects. Each deployable app owns its routes, UI, storage, and runtime settings. Packages contain only shared or embeddable code. The [root README](../README.md) lists the workspaces and the [Maps app guide](../apps/maps/README.md) documents its current viewer and editor.
+Harrhy contains the former standalone Ref, Radio, Worldview, Marky, Letters to Steve, Artbin, and Garden projects. Each deployable app owns its routes, UI, storage, and runtime settings. Packages contain only shared or embeddable code. The [root README](../README.md) lists the workspaces and the [Worldview app guide](../apps/worldview/README.md) documents its current viewer and editor.
 
-## Maps
+## Worldview
 
-Maps serves `maps.jackharrhy.dev`. Its Remix app is in `apps/maps/`; the hosted service, collaboration Worker, and local compiler are separate apps. The renderer, editor core, and protocol are packages. Maps owns its public routes, file formats, OAuth scope, browser storage, and Celld Worker identity. The former standalone repository and npm renderer package have been retired.
+Worldview serves `worldview.harrhy.xyz`. Its Remix app is in `apps/worldview/`; the hosted service, collaboration Worker, and local compiler are separate apps. The renderer, editor core, and protocol are packages. Worldview owns its public routes, file formats, OAuth scope, browser storage, and Celld Worker identity. The former standalone repository and npm renderer package have been retired.
 
-The viewer and editor use the same Tea renderer and map document model. Artbin uses the renderer for BSP previews. Current workspace checks cover the packages and app boundaries; `npm run test:hosted --workspace @tea/maps`, `npm run test:gpu --workspace @tea/maps`, and `npm run test:embed --workspace @tea/maps` cover browser integration when those paths change.
+The viewer and editor use the same renderer and map document model. Artbin uses the renderer for BSP previews. Current workspace checks cover the packages and app boundaries; `npm run test:hosted --workspace @harrhy/worldview`, `npm run test:gpu --workspace @harrhy/worldview`, and `npm run test:embed --workspace @harrhy/worldview` cover browser integration when those paths change.
 
 ## Garden import and production rollover
 

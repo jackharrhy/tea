@@ -62,7 +62,7 @@ export default defineConfig({
       "apps/cms/data/**",
       "apps/ref/dist/**",
       "apps/radio/dist/**",
-      "apps/maps/dist/**",
+      "apps/worldview/dist/**",
       "apps/maps-compiler/dist/**",
       "apps/maps-service/dist/**",
       "apps/gurgur/third_party/lintalker/wintalker.js",

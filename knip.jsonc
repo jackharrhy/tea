@@ -58,7 +58,7 @@
       // A type-only JSDoc reference left in the upstream bundled picoCAD viewer.
       "ignoreUnresolved": ["^\\./model-data-parser$"],
     },
-    "apps/maps": {
+    "apps/worldview": {
       "entry": [
         "app/assets/entry.ts",
         "app/assets/editor.ts",
