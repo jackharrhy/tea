@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+const accept = (dialog) => dialog.accept();
 
 async function editCodeMirror(page, form, name, text) {
   const textarea = form.locator(`textarea[name="${name}"]`);
@@ -300,9 +301,13 @@ export async function embeddedGuestbookWorkflow(page, origin, username) {
     "",
   );
   assert.equal((await ids()).length, before.length + 1);
-  page.once("dialog", (dialog) => dialog.accept());
-  await added.getByRole("button", { name: "x", exact: true }).click();
-  await added.waitFor({ state: "detached" });
+  page.on("dialog", accept);
+  try {
+    await added.getByRole("button", { name: "x", exact: true }).click();
+    await added.waitFor({ state: "detached" });
+  } finally {
+    page.off("dialog", accept);
+  }
   assert.deepEqual(await ids(), before);
   return {
     embedded: true,

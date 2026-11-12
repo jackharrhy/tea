@@ -1,3 +1,4 @@
+import { usernameReserved } from "./media-moves.ts";
 import { CommunityError } from "./community.ts";
 import type { Database, Member, Row } from "./community.ts";
 
@@ -216,7 +217,10 @@ export function createEnrollments(
           "SELECT id FROM users WHERE username=?",
           username,
         )[0];
-        if (collision && collision.id !== existing?.id)
+        if (
+          usernameReserved(db, username) ||
+          (collision && collision.id !== existing?.id)
+        )
           throw conflict("This username already belongs to another member");
         db.all(
           "UPDATE auth_enrollments SET subject=?,username=?,display_name=? WHERE id=?",
@@ -253,6 +257,8 @@ export function createEnrollments(
           );
           return actor;
         }
+        if (usernameReserved(db, String(row.username)))
+          throw conflict("This username is reserved by a pending rename");
         const invite = db.all(
           "UPDATE invites SET uses_count=uses_count+1,used_at=CURRENT_TIMESTAMP WHERE id=? AND disabled=0 AND uses_count<max_uses RETURNING *",
           row.invite_id,

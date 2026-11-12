@@ -1,3 +1,4 @@
+import { mediaMoveSchema, createMediaMoves } from "./media-moves.ts";
 import { createSettings } from "./settings.ts";
 import { pageContent } from "./page-content.ts";
 import { schema, coreTables } from "./schema.ts";
@@ -51,6 +52,7 @@ function format(value: unknown) {
 
 export function createCommunity(db: Database) {
   db.all(schema);
+  mediaMoveSchema(db);
   const pageBodies = pageContent(db);
   db.all(`CREATE TABLE IF NOT EXISTS browser_sessions (
     token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
@@ -160,6 +162,7 @@ export function createCommunity(db: Database) {
     ...createSettings(db, member),
     ...createEnrollments(db, member),
     ...createMedia(db, member),
+    ...createMediaMoves(db, member),
     ...createWidgets(db, member),
     member,
     acceptTrust(actorId: number) {

@@ -89,7 +89,12 @@ export function LayoutSelect(handle: Handle<{ value?: string }>) {
   );
 }
 export function MediaPicker(
-  handle: Handle<{ items: Row[]; editor: string; format?: string }>,
+  handle: Handle<{
+    items: Row[];
+    editor: string;
+    format?: string;
+    selected?: string;
+  }>,
 ) {
   return () => (
     <div
@@ -108,6 +113,9 @@ export function MediaPicker(
                 {handle.props.items.map((item) => (
                   <option
                     value={String(item.storage_path)}
+                    selected={
+                      String(item.storage_path) === handle.props.selected
+                    }
                     data-mime={String(item.mime_type ?? "")}
                     data-alt={String(item.alt_text ?? "")}
                   >
