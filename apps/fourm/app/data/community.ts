@@ -185,7 +185,7 @@ export function createCommunity(
     ...createAdmin(db, admin, pageBodies),
     ...createEnrollments(db, member),
     ...createMedia(db, member),
-    ...createMediaMoves(db, member),
+    ...createMediaMoves(db, member, admin),
     ...createWidgets(db, member),
     ...createPushDevices(db, member),
     member,

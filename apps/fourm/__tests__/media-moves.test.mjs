@@ -444,3 +444,79 @@ for (const staleHead of [false, true]) {
     f.close();
   });
 }
+
+test("admin rename retains disabled member identity, timestamp and media through recovery", async () => {
+  const f = fixture(true);
+  try {
+    f.sqlite
+      .prepare("UPDATE users SET updated_at='2020-01-02 03:04:05' WHERE id=72")
+      .run();
+    const original = f.community.profile("sam");
+    expect(() =>
+      f.community.beginAdminUsernameRename(72, 41, "new-jane", ""),
+    ).toThrow("Admin access required");
+    f.sqlite.prepare("UPDATE users SET is_disabled=1 WHERE id=72").run();
+    expect(() =>
+      f.community.beginAdminUsernameRename(72, 41, "new-jane", ""),
+    ).toThrow("Membership is unavailable");
+    expect(() => f.community.beginUsernameRename(72, "new-sam")).toThrow(
+      "Membership is unavailable",
+    );
+    expect(() =>
+      f.community.beginAdminUsernameRename(41, 72, "bad name", "Do not save"),
+    ).toThrow("username must");
+    expect(f.community.profile("sam").display_name).toBe(original.display_name);
+    const move = f.community.beginAdminUsernameRename(
+      41,
+      72,
+      " NEW-SAM ",
+      " Updated name ",
+    );
+    expect(move.preserve_updated_at).toBe(1);
+    f.failPut();
+    await expect(
+      processMediaMove(f.community, f.media, Number(move.id)),
+    ).rejects.toThrow("connection lost");
+    const recovered = f.reopen();
+    expect(recovered.beginAdminUsernameRename(41, 72, "new-sam", "").id).toBe(
+      move.id,
+    );
+    await processMediaMove(recovered, f.media, Number(move.id));
+    expect(recovered.profile("new-sam")).toMatchObject({
+      id: 72,
+      display_name: "Updated name",
+      updated_at: original.updated_at,
+    });
+    expect(
+      f.sqlite.prepare("SELECT is_disabled FROM users WHERE id=72").get()
+        .is_disabled,
+    ).toBe(1);
+    expect(f.objects.has("sam/song.mp3")).toBe(false);
+    expect(f.objects.has("new-sam/song.mp3")).toBe(true);
+    expect(
+      f.sqlite.prepare("SELECT storage_path FROM media WHERE id=13").get()
+        .storage_path,
+    ).toBe("new-sam/song.mp3");
+    expect(f.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  } finally {
+    f.close();
+  }
+});
+
+test("an existing pending move upgrades its operational schema and resumes", async () => {
+  const f = fixture();
+  try {
+    const move = f.community.beginUsernameRename(41, "legacy-jane");
+    f.sqlite.exec("ALTER TABLE media_moves DROP COLUMN preserve_updated_at");
+    const upgraded = f.open();
+    const pending = upgraded.pendingMediaMoves()[0];
+    expect(pending.id).toBe(move.id);
+    expect(pending.preserve_updated_at).toBe(0);
+    await processMediaMove(upgraded, f.media, Number(move.id));
+    expect(upgraded.profile("legacy-jane").id).toBe(41);
+    expect(f.objects.has("legacy-jane/song.mp3")).toBe(true);
+    expect(upgraded.pendingMediaMoves()).toEqual([]);
+  } finally {
+    f.close();
+  }
+});

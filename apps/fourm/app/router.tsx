@@ -1,3 +1,4 @@
+import { AdminUsers } from "./admin-users.tsx";
 import { AdminEditors } from "./admin-editors.tsx";
 import { adminRoutes, adminController } from "./admin-controller.tsx";
 import { AdminBanner } from "./admin-banner.tsx";
@@ -211,7 +212,7 @@ export function createAppRouter(
     return store.call("resolveIdentity", env.AUTH_ISSUER, principal.subject);
   }
   const router = createRouter();
-  router.map(adminRoutes, adminController(store, viewer));
+  router.map(adminRoutes, adminController(store, viewer, env));
   router.map(pushRoutes, pushController(store, viewer));
   router.map(settingsRoutes, settingsController(store, viewer, page));
   router.map(mediaRoutes, mediaController(env, store, viewer, page));
@@ -231,42 +232,7 @@ export function createAppRouter(
             <>
               <h1>admin</h1>
               <AdminBanner banner={snapshot.banner} />
-              <h2>Members</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Member</th>
-                    <th>Role</th>
-                    <th>Access</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => (
-                    <tr>
-                      <td>
-                        {user.display_name} (@{user.username})
-                      </td>
-                      <td>{user.is_admin ? "admin" : "member"}</td>
-                      <td>
-                        <form
-                          method="post"
-                          action={`/admin/users/${user.id}/disabled`}
-                        >
-                          <input
-                            type="hidden"
-                            name="disabled"
-                            value={user.is_disabled ? "0" : "1"}
-                          />
-                          <button>
-                            {user.is_disabled ? "Enable" : "Disable"}{" "}
-                            {user.username}
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <AdminUsers users={users} storage={snapshot.storage} />
               <AdminEditors
                 users={users}
                 cards={snapshot.cards}

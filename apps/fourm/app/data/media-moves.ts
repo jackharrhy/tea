@@ -8,7 +8,8 @@ export function mediaMoveSchema(db: Database) {
     user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
     kind TEXT NOT NULL CHECK(kind IN ('file','username')),
     target TEXT NOT NULL,
-    state TEXT NOT NULL CHECK(state IN ('copying','cleanup'))
+    state TEXT NOT NULL CHECK(state IN ('copying','cleanup')),
+    preserve_updated_at INTEGER NOT NULL DEFAULT 0 CHECK(preserve_updated_at IN (0,1))
   );
   CREATE UNIQUE INDEX IF NOT EXISTS media_move_username ON media_moves(target) WHERE kind='username';
   CREATE TABLE IF NOT EXISTS media_move_files (
@@ -20,6 +21,14 @@ export function mediaMoveSchema(db: Database) {
     copied INTEGER NOT NULL DEFAULT 0 CHECK(copied IN (0,1)),
     PRIMARY KEY(move_id,media_id)
   );`);
+  if (
+    !db
+      .all("PRAGMA table_info(media_moves)")
+      .some((column) => column.name === "preserve_updated_at")
+  )
+    db.all(
+      "ALTER TABLE media_moves ADD COLUMN preserve_updated_at INTEGER NOT NULL DEFAULT 0 CHECK(preserve_updated_at IN (0,1))",
+    );
 }
 
 export function requireIdleMedia(db: Database, actorId: number) {
@@ -67,12 +76,26 @@ export function availableMediaPath(
   return path;
 }
 
-export function createMediaMoves(db: Database, member: (id: number) => Member) {
+function usernameValue(input: string) {
+  const username = input.trim().toLowerCase();
+  if (!/^[a-z0-9_-]{3,32}$/.test(username))
+    throw new CommunityError(
+      422,
+      "username must be 3-32 chars, lowercase letters, numbers, hyphens, or underscores",
+    );
+  return username;
+}
+export function createMediaMoves(
+  db: Database,
+  member: (id: number) => Member,
+  admin: (id: number) => Member,
+) {
   function begin(
     actorId: number,
     kind: "file" | "username",
     target: string,
     items: Row[],
+    preserveUpdatedAt = false,
   ) {
     const current = db.all(
       "SELECT * FROM media_moves WHERE user_id=?",
@@ -95,12 +118,15 @@ export function createMediaMoves(db: Database, member: (id: number) => Member) {
         409,
         "Wait for your uploads or deletions to finish before renaming.",
       );
-    const actor = member(actorId);
+    const owner = db.all("SELECT username FROM users WHERE id=?", actorId)[0];
+    if (!owner) throw new CommunityError(404, "Member not found");
+    const actor = { username: String(owner.username) };
     const move = db.all(
-      "INSERT INTO media_moves(user_id,kind,target,state) VALUES(?,?,?,'copying') RETURNING *",
+      "INSERT INTO media_moves(user_id,kind,target,state,preserve_updated_at) VALUES(?,?,?,'copying',?) RETURNING *",
       actorId,
       kind,
       target,
+      preserveUpdatedAt ? 1 : 0,
     )[0];
     for (const item of items) {
       const filename =
@@ -122,6 +148,41 @@ export function createMediaMoves(db: Database, member: (id: number) => Member) {
       );
     }
     return move;
+  }
+  function beginUsernameMove(
+    actorId: number,
+    previousUsername: string,
+    username: string,
+    preserveUpdatedAt: boolean,
+  ) {
+    return db.transaction(() => {
+      const current = db.all(
+        "SELECT * FROM media_moves WHERE user_id=?",
+        actorId,
+      )[0];
+      if (current)
+        return begin(actorId, "username", username, [], preserveUpdatedAt);
+      if (username === previousUsername) return null;
+      if (
+        db.all("SELECT id FROM users WHERE username=?", username).length ||
+        usernameReserved(db, username)
+      )
+        throw new CommunityError(409, "That username is already taken");
+      if (
+        db.all(
+          "SELECT id FROM auth_enrollments WHERE username=? AND consumed_at IS NULL AND expires_at>?",
+          username,
+          Math.floor(Date.now() / 1000),
+        ).length
+      )
+        throw new CommunityError(409, "That username is already taken");
+      const items = db
+        .all("SELECT * FROM media WHERE user_id=? ORDER BY id", actorId)
+        .filter((item) =>
+          String(item.storage_path).startsWith(previousUsername + "/"),
+        );
+      return begin(actorId, "username", username, items, preserveUpdatedAt);
+    });
   }
   return {
     beginMediaRename(actorId: number, id: number, filename: string) {
@@ -154,40 +215,31 @@ export function createMediaMoves(db: Database, member: (id: number) => Member) {
       });
     },
     beginUsernameRename(actorId: number, input: string) {
-      const actor = member(actorId),
-        username = input.trim().toLowerCase();
-      if (!/^[a-z0-9_-]{3,32}$/.test(username))
-        throw new CommunityError(
-          422,
-          "username must be 3-32 chars, lowercase letters, numbers, hyphens, or underscores",
+      const actor = member(actorId);
+      return beginUsernameMove(
+        actorId,
+        actor.username,
+        usernameValue(input),
+        false,
+      );
+    },
+    beginAdminUsernameRename(
+      actorId: number,
+      userId: number,
+      input: string,
+      displayName: string,
+    ) {
+      admin(actorId);
+      const username = usernameValue(input);
+      const user = db.all("SELECT username FROM users WHERE id=?", userId)[0];
+      if (!user) throw new CommunityError(404, "Member not found");
+      if (displayName.trim())
+        db.all(
+          "UPDATE users SET display_name=? WHERE id=?",
+          displayName.trim(),
+          userId,
         );
-      return db.transaction(() => {
-        const current = db.all(
-          "SELECT * FROM media_moves WHERE user_id=?",
-          actorId,
-        )[0];
-        if (current) return begin(actorId, "username", username, []);
-        if (username === actor.username) return null;
-        if (
-          db.all("SELECT id FROM users WHERE username=?", username).length ||
-          usernameReserved(db, username)
-        )
-          throw new CommunityError(409, "That username is already taken");
-        if (
-          db.all(
-            "SELECT id FROM auth_enrollments WHERE username=? AND consumed_at IS NULL AND expires_at>?",
-            username,
-            Math.floor(Date.now() / 1000),
-          ).length
-        )
-          throw new CommunityError(409, "That username is already taken");
-        const items = db
-          .all("SELECT * FROM media WHERE user_id=? ORDER BY id", actorId)
-          .filter((item) =>
-            String(item.storage_path).startsWith(actor.username + "/"),
-          );
-        return begin(actorId, "username", username, items);
-      });
+      return beginUsernameMove(userId, String(user.username), username, true);
     },
     pendingMediaMoves() {
       return db.all("SELECT * FROM media_moves ORDER BY id");
@@ -277,8 +329,9 @@ export function createMediaMoves(db: Database, member: (id: number) => Member) {
         }
         if (move.kind === "username")
           db.all(
-            "UPDATE users SET username=?,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+            "UPDATE users SET username=?,updated_at=CASE WHEN ? THEN updated_at ELSE CURRENT_TIMESTAMP END WHERE id=?",
             move.target,
+            move.preserve_updated_at,
             move.user_id,
           );
         db.all("UPDATE media_moves SET state='cleanup' WHERE id=?", id);

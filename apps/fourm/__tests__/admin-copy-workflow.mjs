@@ -1,3 +1,4 @@
+import { exerciseAdminAccounts } from "./admin-accounts-workflow.mjs";
 import { exerciseAdminEditors } from "./admin-editors-workflow.mjs";
 import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
@@ -5,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 export async function exerciseAdminCopies({
+  workflow,
   output,
   oracleRoot,
   authPath,
@@ -18,6 +20,8 @@ export async function exerciseAdminCopies({
       ["oracle", "http://127.0.0.1:18964"],
       ["native", "http://127.0.0.1:18974"],
     ]) {
+      if (process.env.FOURM_COPY_ONLY === "native" && name !== "native")
+        continue;
       const context = await browser.newContext({
         viewport: { width: 1280, height: 900 },
         serviceWorkers: "block",
@@ -80,6 +84,21 @@ export async function exerciseAdminCopies({
           );
         }
 
+        if (workflow === "accounts") {
+          await exerciseAdminAccounts({
+            page,
+            context,
+            origin,
+            name,
+            output,
+            oracleRoot,
+            authPath,
+            restart,
+          });
+          assert.equal(errors.length, 0);
+          results.push({ name, accountControls: true, browserErrors: 0 });
+          continue;
+        }
         await page.goto(origin + "/admin");
         const initial = {
           enabled: await page.locator('[name="banner_enabled"]').isChecked(),

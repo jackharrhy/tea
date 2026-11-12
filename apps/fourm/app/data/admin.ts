@@ -27,7 +27,70 @@ export function createAdmin(
       id,
     );
   }
+  function userRow(id: number) {
+    const user = db.all(
+      "SELECT id,username,display_name,is_admin,is_disabled,in_webring,created_at FROM users WHERE id=?",
+      id,
+    )[0];
+    if (!user) throw new CommunityError(404, "Not found");
+    return {
+      user,
+      stats: db.all(
+        "SELECT count(id) AS file_count,coalesce(sum(size_bytes),0) AS total_bytes FROM media WHERE user_id=?",
+        id,
+      )[0],
+    };
+  }
   return {
+    adminUserRow(actorId: number | null, userId: number) {
+      requireAdmin(actorId);
+      return userRow(userId);
+    },
+    adminToggleAccount(
+      actorId: number | null,
+      userId: number,
+      field: "is_admin" | "is_disabled",
+    ) {
+      requireAdmin(actorId);
+      if (field !== "is_admin" && field !== "is_disabled")
+        throw new CommunityError(422, "Invalid account action");
+      return db.transaction(() => {
+        userRow(userId);
+        db.all(`UPDATE users SET ${field}=1-${field} WHERE id=?`, userId);
+        return userRow(userId);
+      });
+    },
+    adminSetWebring(actorId: number | null, userId: number, enabled: boolean) {
+      requireAdmin(actorId);
+      userRow(userId);
+      db.all(
+        "UPDATE users SET in_webring=? WHERE id=?",
+        enabled ? 1 : 0,
+        userId,
+      );
+      return userRow(userId);
+    },
+    adminIdentitySubject(
+      actorId: number | null,
+      userId: number,
+      issuer: string,
+    ) {
+      requireAdmin(actorId);
+      userRow(userId);
+      const links = db.all(
+        "SELECT subject FROM external_identities WHERE user_id=? AND issuer=?",
+        userId,
+        issuer,
+      );
+      if (links.length !== 1)
+        throw new CommunityError(
+          409,
+          links.length
+            ? "This account has ambiguous central identity links"
+            : "This account has no central identity link",
+        );
+      return String(links[0].subject);
+    },
     adminSnapshot(actorId: number | null) {
       requireAdmin(actorId);
       return {
@@ -35,6 +98,9 @@ export function createAdmin(
           "SELECT id,username,display_name,is_admin,is_disabled,in_webring,created_at FROM users ORDER BY created_at",
         ),
         banner: db.all("SELECT * FROM site_settings WHERE id=1")[0] ?? null,
+        storage: db.all(
+          "SELECT u.id,count(m.id) AS file_count,coalesce(sum(m.size_bytes),0) AS total_bytes FROM users u LEFT JOIN media m ON m.user_id=u.id GROUP BY u.id",
+        ),
         cards: db.all("SELECT * FROM profile_cards ORDER BY user_id"),
         pages: db
           .all(
