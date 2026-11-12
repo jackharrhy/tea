@@ -499,3 +499,33 @@ it("archive replay and metadata updates retain local administrator and disabled-
   ).toThrow("unavailable");
   sqlite.close();
 });
+
+it("keeps source browser page fields independent of API limits", () => {
+  const { community } = fixture();
+  const longSlug = "page-" + "x".repeat(90);
+  const longTitle = "A title " + "x".repeat(150);
+  const created = community.createSettingsPage(41, longSlug, {
+    title: longTitle,
+    content: "Original",
+    content_format: "markdown",
+  });
+  expect(created.title).toBe(longTitle);
+  expect(community.page(41, longSlug, 41).content).toBe("Original");
+  expect(() => community.savePage(41, longSlug, { title: "API" })).toThrow();
+  expect(() => community.savePage(41, "api", { title: longTitle })).toThrow();
+  const edited = community.editSettingsPage(41, longSlug, {
+    new_slug: "  renamed.html  ",
+    title: "   ",
+    content: "Saved",
+    content_format: "html",
+    is_public: 0,
+  });
+  expect(edited.id).toBe(created.id);
+  expect(edited.title).toBe("");
+  expect(edited.slug).toBe("renamed.html");
+  expect(community.pages(41, null)).toEqual([]);
+  expect(community.page(41, "renamed.html", 41).content).toBe("Saved");
+  expect(() =>
+    community.editSettingsPage(72, "renamed.html", { title: "Taken" }),
+  ).toThrow();
+});
