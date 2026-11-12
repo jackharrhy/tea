@@ -5,7 +5,7 @@ import { createRouter, type RouterContext } from "remix/router";
 import controller from "./actions/controller.tsx";
 import apiController from "./actions/api/controller.ts";
 import apiCliController from "./actions/api/cli/controller.ts";
-import authController from "./actions/auth/controller.ts";
+import authController from "./actions/auth/controller.tsx";
 import settingsController from "./actions/settings/controller.tsx";
 import folderController from "./actions/folder/controller.tsx";
 import adminController from "./actions/admin/controller.tsx";

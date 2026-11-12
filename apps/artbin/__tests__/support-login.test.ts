@@ -2,13 +2,15 @@ import { generateKeyPairSync, sign } from "node:crypto";
 
 import { afterEach, expect, test } from "vitest";
 
-import { users } from "#db";
+import { router } from "../app/router.ts";
+import { sessions, users } from "#db";
 import { setDbForTesting } from "#db/connection.server";
 import { getUserFromRequest } from "#lib/auth.server";
 import {
   beginSupportLogin,
   completeSupportLogin,
   exitSupportLogin,
+  supportRecoveryToken,
 } from "#lib/support-login.server";
 
 import { applyMigrations, createTestDatabase, type TestDatabase } from "./db";
@@ -273,4 +275,78 @@ test("wrong support client is rejected after one redemption and cannot enter the
     1,
   );
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+});
+
+test("stale support cookie blocks actor fallback until explicit CSRF-protected exit", async () => {
+  const db = setup();
+  await db.insert(users).values({
+    id: "local-actor",
+    username: "actor-user",
+    authSubject: "actor",
+    isAdmin: true,
+  });
+  await db.insert(sessions).values({
+    id: "ordinary-session",
+    userId: "local-actor",
+    expiresAt: new Date(Date.now() + 300_000),
+  });
+  const supportCookie = `artbin_support=${"z".repeat(43)}`;
+  const actorCookie = "artbin_session=ordinary-session";
+  const staleHeaders = { Cookie: `${supportCookie}; ${actorCookie}` };
+  delete process.env.ARTBIN_SUPPORT_LOGIN_ENABLED;
+
+  await expect(
+    getUserFromRequest(
+      new Request(`${artbin}/folders`, { headers: staleHeaders }),
+    ),
+  ).rejects.toMatchObject({ status: 401 });
+  const csrf = supportRecoveryToken(
+    new Request(`${artbin}/auth/support/recover`, { headers: staleHeaders }),
+  );
+  expect(csrf).toMatch(/^[a-f0-9]{64}$/);
+  const recovery = await router.fetch(
+    new Request(`${artbin}/auth/support/recover`, { headers: staleHeaders }),
+  );
+  expect(recovery.status).toBe(200);
+  const recoveryPage = await recovery.text();
+  expect(recoveryPage).toContain("Exit support session");
+  expect(recoveryPage).toContain(`value="${csrf}"`);
+  const exit = (token: string) =>
+    exitSupportLogin(
+      new Request(`${artbin}/auth/support/exit`, {
+        method: "POST",
+        headers: {
+          ...staleHeaders,
+          Origin: artbin,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ csrf: token }),
+      }),
+    );
+  expect((await exit("wrong")).status).toBe(403);
+  expect(
+    (
+      await exitSupportLogin(
+        new Request(`${artbin}/auth/support/exit`, {
+          method: "POST",
+          headers: {
+            ...staleHeaders,
+            Origin: "https://elsewhere.test",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({ csrf: csrf! }),
+        }),
+      )
+    ).status,
+  ).toBe(403);
+  const cleared = await exit(csrf!);
+  expect(cleared.status).toBe(303);
+  expect(cleared.headers.get("Set-Cookie")).toContain("artbin_support=;");
+  expect(
+    (
+      await getUserFromRequest(
+        new Request(`${artbin}/folders`, { headers: { Cookie: actorCookie } }),
+      )
+    )?.id,
+  ).toBe("local-actor");
 });

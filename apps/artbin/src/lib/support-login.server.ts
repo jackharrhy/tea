@@ -416,16 +416,14 @@ async function resolveSupportUser(
   const sessionId = cookie(request, SESSION_COOKIE);
   if (!sessionId) return null;
   const settings = config();
-  if (!settings)
-    throw new Response("Support login unavailable", { status: 503 });
+  if (!settings) throw endedSupportResponse();
   pruneExpired();
   if (!supportSessionAllowedPath(new URL(request.url).pathname))
     throw new Response("Support session cannot authorize this route", {
       status: 403,
     });
   const session = sessions.get(digest(sessionId));
-  if (!session || session.expiresAt <= Date.now())
-    throw new Response("Support session has ended", { status: 401 });
+  if (!session || session.expiresAt <= Date.now()) throw endedSupportResponse();
   try {
     const [active, principal] = await Promise.all([
       statusActive(settings, session),
@@ -444,7 +442,7 @@ async function resolveSupportUser(
       principal.expiresAt * 1000 < session.expiresAt
     ) {
       sessions.delete(digest(sessionId));
-      throw new Response("Support session has ended", { status: 401 });
+      throw endedSupportResponse();
     }
     const local = await targetUser(session.targetSubject);
     if (!local || local.id !== session.targetUserId) {
@@ -501,6 +499,26 @@ function sameSecret(received: string, expected: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+function endedSupportResponse(): Response {
+  return new Response(
+    '<!doctype html><html lang="en"><meta charset="utf-8"><title>Support session ended</title><main><h1>Support session ended</h1><p>This support session is no longer available.</p><a href="/auth/support/recover">Exit support session</a></main></html>',
+    {
+      status: 401,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Referrer-Policy": "no-referrer",
+      },
+    },
+  );
+}
+
+export function supportRecoveryToken(request: Request): string | null {
+  const sessionId = cookie(request, SESSION_COOKIE);
+  if (!sessionId) return null;
+  return sessions.get(digest(sessionId))?.csrfToken ?? digest(sessionId);
+}
+
 async function endRemote(
   settings: SupportConfig,
   session: Pick<SupportSession, "supportId" | "endSecret">,
@@ -535,17 +553,24 @@ function retryEnd(
 }
 
 export async function exitSupportLogin(request: Request): Promise<Response> {
-  const settings = config();
   const headers = new Headers({
     Location: "/",
     "Set-Cookie": supportCookie(SESSION_COOKIE, "", 0),
     "Cache-Control": "no-store",
   });
-  if (!settings) return new Response(null, { status: 303, headers });
-  if (request.headers.get("Origin") !== new URL(settings.publicOrigin).origin)
+  const origin = process.env.ARTBIN_URL;
+  if (!origin) return new Response("Forbidden", { status: 403 });
+  let expectedOrigin: string;
+  try {
+    expectedOrigin = new URL(origin).origin;
+  } catch {
+    return new Response("Forbidden", { status: 403 });
+  }
+  if (request.headers.get("Origin") !== expectedOrigin)
     return new Response("Forbidden", { status: 403 });
   const sessionId = cookie(request, SESSION_COOKIE);
   const session = sessionId ? sessions.get(digest(sessionId)) : undefined;
+  const csrf = supportRecoveryToken(request);
   if (
     request.headers.get("Content-Type")?.split(";", 1)[0] !==
     "application/x-www-form-urlencoded"
@@ -557,14 +582,22 @@ export async function exitSupportLogin(request: Request): Promise<Response> {
   });
   if (!body.ok) return new Response("Invalid support exit", { status: 400 });
   const form = new URLSearchParams(Buffer.from(body.bytes).toString("utf8"));
-  if (session && !sameSecret(form.get("csrf") ?? "", session.csrfToken))
+  if (!csrf || !sameSecret(form.get("csrf") ?? "", csrf))
     return new Response("Forbidden", { status: 403 });
   if (sessionId) sessions.delete(digest(sessionId));
   if (session) {
+    let settings: SupportConfig | null;
     try {
-      await endRemote(settings, session);
+      settings = config();
     } catch {
-      retryEnd(settings, session);
+      settings = null;
+    }
+    if (settings) {
+      try {
+        await endRemote(settings, session);
+      } catch {
+        retryEnd(settings, session);
+      }
     }
   }
   return new Response(null, { status: 303, headers });

@@ -20,6 +20,7 @@ export const routes = route({
     callback: get("/callback"),
     supportStart: get("/support/start"),
     supportCallback: get("/support/callback"),
+    supportRecover: get("/support/recover"),
     supportExit: post("/support/exit"),
     cliAuthorize: get("/cli/authorize"),
     cliCallback: get("/cli/callback"),
