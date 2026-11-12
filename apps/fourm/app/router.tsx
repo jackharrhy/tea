@@ -1,3 +1,4 @@
+import { AdminEditors } from "./admin-editors.tsx";
 import { adminRoutes, adminController } from "./admin-controller.tsx";
 import { AdminBanner } from "./admin-banner.tsx";
 import { exportUserSite, exportFullSite } from "./site-export.ts";
@@ -266,6 +267,11 @@ export function createAppRouter(
                   ))}
                 </tbody>
               </table>
+              <AdminEditors
+                users={users}
+                cards={snapshot.cards}
+                pages={snapshot.pages}
+              />
               <form method="post" action="/admin/enrollment-completions/retry">
                 <button>Retry pending enrollment delivery</button>
               </form>
