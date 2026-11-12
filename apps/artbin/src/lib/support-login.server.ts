@@ -240,6 +240,45 @@ async function targetUser(subject: string): Promise<User | null> {
   );
 }
 
+export async function supportTargetEligibility(
+  request: Request,
+): Promise<Response> {
+  const settings = supportConfig();
+  if (!settings) return new Response("Not Found", { status: 404 });
+  const headers = { "Cache-Control": "no-store" };
+  const authorization = request.headers.get("Authorization") ?? "";
+  if (!sameSecret(authorization, basic(settings)))
+    return new Response("Unauthorized", { status: 401, headers });
+  if (
+    request.headers.get("Content-Type")?.split(";", 1)[0] !== "application/json"
+  )
+    return new Response("Invalid support target", { status: 400, headers });
+  const body = await readRequestBody(request, {
+    maxBytes: 1024,
+    timeoutMs: 2_000,
+  });
+  if (!body.ok)
+    return new Response("Invalid support target", { status: 400, headers });
+  let input: unknown;
+  try {
+    input = JSON.parse(Buffer.from(body.bytes).toString("utf8"));
+  } catch {
+    return new Response("Invalid support target", { status: 400, headers });
+  }
+  if (
+    !input ||
+    typeof input !== "object" ||
+    Array.isArray(input) ||
+    Object.keys(input).length !== 1 ||
+    !("targetSubject" in input) ||
+    typeof input.targetSubject !== "string" ||
+    !/^[A-Za-z0-9_-]{1,200}$/.test(input.targetSubject)
+  )
+    return new Response("Invalid support target", { status: 400, headers });
+  const linked = Boolean(await targetUser(input.targetSubject));
+  return Response.json({ linked }, { headers });
+}
+
 function supportSessionAllowedPath(pathname: string): boolean {
   return (
     !pathname.startsWith("/api/cli/") &&
@@ -304,6 +343,7 @@ export async function completeSupportLogin(
   const headers = new Headers({
     "Set-Cookie": stateCookie("", 0),
     "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
   });
   if (!state || !cookieState || state !== cookieState)
     return new Response("Invalid support callback", { status: 400, headers });
@@ -311,6 +351,8 @@ export async function completeSupportLogin(
   pending.delete(digest(state));
   if (!transaction || transaction.expiresAt <= Date.now() || !code)
     return new Response("Invalid support callback", { status: 400, headers });
+  let failure: "account" | "general" = "general";
+  let stage = "redeem";
   let cleanup: Pick<
     SupportSession,
     "supportId" | "endSecret" | "expiresAt"
@@ -333,10 +375,12 @@ export async function completeSupportLogin(
     const token = requiredString(redeemed, "access_token");
     if (redeemed.token_type !== "Bearer")
       throw new Error("Invalid support token type");
+    stage = "signed-token";
     const proof =
       await createIdentityClient(identityConfig()).verifyActedAccessToken(
         token,
       );
+    stage = "introspection";
     const principal = await createIdentityClient(identityConfig()).introspect(
       token,
       {
@@ -346,6 +390,7 @@ export async function completeSupportLogin(
     );
     const actorSubject = requiredString(support, "actorSubject");
     const targetSubject = requiredString(support, "targetSubject");
+    stage = "identity";
     if (
       support.nonce !== transaction.nonce ||
       proof.actor.subject !== actorSubject ||
@@ -356,9 +401,15 @@ export async function completeSupportLogin(
       principal.clientId !== settings.clientId
     )
       throw new Error("Support identity mismatch");
+    stage = "local-target";
     const local = await targetUser(targetSubject);
-    if (!local) throw new Error("Target user is not linked in Artbin");
+    if (!local) {
+      failure = "account";
+      throw new Error("Target user is not linked in Artbin");
+    }
+    stage = "role";
     const role = browserRole(proof, principal, local);
+    stage = "expiry";
     const expiresAt = Date.parse(requiredString(support, "expiresAt"));
     if (
       !Number.isFinite(expiresAt) ||
@@ -368,6 +419,7 @@ export async function completeSupportLogin(
       expiresAt > principal.expiresAt * 1000
     )
       throw new Error("Support expiry is invalid");
+    stage = "session";
     const sessionId = random();
     sessions.set(digest(sessionId), {
       token,
@@ -391,14 +443,25 @@ export async function completeSupportLogin(
     headers.set("Location", "/folders");
     return new Response(null, { status: 303, headers });
   } catch {
+    let cleanupOutcome = "not-issued";
     if (cleanup) {
       try {
         await endRemote(settings, cleanup);
+        cleanupOutcome = "ended";
       } catch {
+        cleanupOutcome = "pending";
         if (Number.isFinite(cleanup.expiresAt)) retryEnd(settings, cleanup);
       }
     }
-    return new Response("Support sign-in failed", { status: 403, headers });
+    console.warn(
+      JSON.stringify({
+        event: "artbin_support_callback_failed",
+        stage,
+        cleanupOutcome,
+      }),
+    );
+    headers.set("Location", `/auth/support/problem?reason=${failure}`);
+    return new Response(null, { status: 303, headers });
   }
 }
 
@@ -424,7 +487,7 @@ async function resolveSupportUser(
   const sessionId = cookie(request, SESSION_COOKIE);
   if (!sessionId) return null;
   const settings = supportConfig();
-  if (!settings) throw endedSupportResponse();
+  if (!settings) throw endedSupportResponse(request);
   pruneExpired();
   if (!supportSessionAllowedPath(new URL(request.url).pathname))
     throw new Response("Support session cannot authorize this route", {
@@ -432,7 +495,8 @@ async function resolveSupportUser(
     });
   const sessionKey = digest(sessionId);
   const session = sessions.get(sessionKey);
-  if (!session || session.expiresAt <= Date.now()) throw endedSupportResponse();
+  if (!session || session.expiresAt <= Date.now())
+    throw endedSupportResponse(request);
   try {
     const [active, principal] = await Promise.all([
       statusActive(settings, session),
@@ -451,7 +515,7 @@ async function resolveSupportUser(
       principal.expiresAt * 1000 < session.expiresAt
     ) {
       sessions.delete(sessionKey);
-      throw endedSupportResponse();
+      throw endedSupportResponse(request);
     }
     const local = await targetUser(session.targetSubject);
     if (!local || local.id !== session.targetUserId) {
@@ -478,7 +542,7 @@ async function resolveSupportUser(
       session.expiresAt <= Date.now()
     ) {
       if (sessions.get(sessionKey) === session) sessions.delete(sessionKey);
-      throw endedSupportResponse();
+      throw endedSupportResponse(request);
     }
     return {
       ...local,
@@ -514,7 +578,20 @@ function sameSecret(received: string, expected: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-function endedSupportResponse(): Response {
+function endedSupportResponse(request: Request): Response {
+  if (
+    request.method === "GET" &&
+    request.headers.get("Accept")?.includes("text/html")
+  ) {
+    return new Response(null, {
+      status: 303,
+      headers: {
+        Location: "/auth/support/recover",
+        "Cache-Control": "no-store",
+        "Referrer-Policy": "no-referrer",
+      },
+    });
+  }
   return new Response(
     '<!doctype html><html lang="en"><meta charset="utf-8"><title>Support session ended</title><main><h1>Support session ended</h1><p>This support session is no longer available.</p><a href="/auth/support/recover">Exit support session</a></main></html>',
     {

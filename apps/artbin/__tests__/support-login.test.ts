@@ -1,6 +1,6 @@
 import { generateKeyPairSync, sign } from "node:crypto";
 
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { projectAudienceScope } from "@harrhy/identity";
 
 import { router } from "../app/router.ts";
@@ -70,6 +70,7 @@ const originalEnv = Object.fromEntries(
 );
 
 afterEach(() => {
+  vi.restoreAllMocks();
   currentDb?.close();
   currentDb = undefined;
   globalThis.fetch = originalFetch;
@@ -171,6 +172,38 @@ function mockProvider(input: {
     throw new Error(`Unexpected test URL ${url}`);
   }) as typeof fetch;
 }
+
+function lookup(targetSubject: string, authorization?: string) {
+  return router.fetch(
+    new Request(`${artbin}/auth/support/target`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authorization ? { Authorization: authorization } : {}),
+      },
+      body: JSON.stringify({ targetSubject }),
+    }),
+  );
+}
+
+test("support target lookup requires the transport credential and an existing local subject", async () => {
+  const db = setup();
+  await db.insert(users).values({
+    id: "local-target",
+    username: "target-user",
+    authSubject: "target",
+    isAdmin: false,
+  });
+  const credential = `Basic ${Buffer.from("artbin:support-transport-secret").toString("base64")}`;
+  expect((await lookup("target")).status).toBe(401);
+  expect((await lookup("target", "Basic invalid")).status).toBe(401);
+  const linked = await lookup("target", credential);
+  expect(linked.status).toBe(200);
+  expect(await linked.json()).toEqual({ linked: true });
+  const missing = await lookup("unlinked", credential);
+  expect(missing.status).toBe(200);
+  expect(await missing.json()).toEqual({ linked: false });
+});
 
 test("support handoff uses an existing target and exit rejects in-flight verification", async () => {
   const db = setup();
@@ -292,9 +325,18 @@ test("wrong support client is rejected after one redemption and cannot enter the
   });
   const callbackUrl = `${artbin}/auth/support/callback?code=${"d".repeat(43)}&state=${handoff.searchParams.get("state")}`;
   const headers = { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] };
-  expect(
-    (await completeSupportLogin(new Request(callbackUrl, { headers }))).status,
-  ).toBe(403);
+  const warnings: string[] = [];
+  vi.spyOn(console, "warn").mockImplementation((message) => {
+    warnings.push(String(message));
+  });
+  const rejected = await completeSupportLogin(
+    new Request(callbackUrl, { headers }),
+  );
+  expect(rejected.status).toBe(303);
+  expect(rejected.headers.get("Location")).toBe(
+    "/auth/support/problem?reason=general",
+  );
+  expect(rejected.headers.get("Referrer-Policy")).toBe("no-referrer");
   expect(
     (await completeSupportLogin(new Request(callbackUrl, { headers }))).status,
   ).toBe(400);
@@ -302,6 +344,13 @@ test("wrong support client is rejected after one redemption and cannot enter the
     1,
   );
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+  expect(warnings).toEqual([
+    JSON.stringify({
+      event: "artbin_support_callback_failed",
+      stage: "identity",
+      cleanupOutcome: "ended",
+    }),
+  ]);
 });
 
 test("signed target role cannot replace browser scopes missing from native introspection", async () => {
@@ -329,8 +378,48 @@ test("signed target role cannot replace browser scopes missing from native intro
       { headers: { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] } },
     ),
   );
-  expect(callback.status).toBe(403);
+  expect(callback.status).toBe(303);
+  expect(callback.headers.get("Location")).toBe(
+    "/auth/support/problem?reason=general",
+  );
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+});
+
+test("unlinked support target ends the redeemed token and shows a clean actionable error", async () => {
+  setup();
+  const calls: string[] = [];
+  const start = await beginSupportLogin(
+    new Request(`${artbin}/auth/support/start?request=${"g".repeat(43)}`),
+  );
+  const handoff = new URL(start.headers.get("Location")!);
+  mockProvider({
+    targetToken: signedTargetToken(),
+    nonce: handoff.searchParams.get("nonce")!,
+    calls,
+  });
+  const callback = await completeSupportLogin(
+    new Request(
+      `${artbin}/auth/support/callback?code=${"h".repeat(43)}&state=${handoff.searchParams.get("state")}`,
+      { headers: { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] } },
+    ),
+  );
+  expect(callback.status).toBe(303);
+  expect(callback.headers.get("Location")).toBe(
+    "/auth/support/problem?reason=account",
+  );
+  expect(callback.headers.get("Referrer-Policy")).toBe("no-referrer");
+  expect(callback.headers.getSetCookie()).not.toContainEqual(
+    expect.stringMatching(/^artbin_support=/),
+  );
+  expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+  const problem = await router.fetch(
+    new Request(`${artbin}/auth/support/problem?reason=account`),
+  );
+  expect(problem.status).toBe(403);
+  expect(problem.headers.get("Referrer-Policy")).toBe("no-referrer");
+  const page = await problem.text();
+  expect(page).toContain("does not have an Artbin account");
+  expect(page).toContain("Return to Jack Auth");
 });
 
 test("stale support cookie blocks actor fallback until explicit CSRF-protected exit", async () => {
@@ -356,6 +445,16 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
       new Request(`${artbin}/folders`, { headers: staleHeaders }),
     ),
   ).rejects.toMatchObject({ status: 401 });
+  const staleDocument = await getUserFromRequest(
+    new Request(`${artbin}/folders`, {
+      headers: { ...staleHeaders, Accept: "text/html" },
+    }),
+  ).catch((error: unknown) => error as Response);
+  expect(staleDocument).toBeInstanceOf(Response);
+  expect((staleDocument as Response).status).toBe(303);
+  expect((staleDocument as Response).headers.get("Location")).toBe(
+    "/auth/support/recover",
+  );
   const csrf = supportRecoveryToken(
     new Request(`${artbin}/auth/support/recover`, { headers: staleHeaders }),
   );
@@ -366,7 +465,7 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
   expect(recovery.status).toBe(200);
   expect(recovery.headers.get("Referrer-Policy")).toBe("same-origin");
   const recoveryPage = await recovery.text();
-  expect(recoveryPage).toContain("Exit support session");
+  expect(recoveryPage).toContain("Clear support session");
   expect(recoveryPage).toContain(`value="${csrf}"`);
   const exit = (token: string) =>
     exitSupportLogin(
