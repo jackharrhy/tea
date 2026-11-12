@@ -179,7 +179,7 @@ try {
   assert.ok(asset, "production page must reference its built client entry");
   assert.equal((await request(asset)).status, 200);
   result.checks.push(
-    "public lobby, Central gate, signed session, room creation, SSR and built asset",
+    "public lobby, Jack Auth gate, signed test session, room creation, SSR and built asset",
   );
 
   const uploadStarted = Date.now();

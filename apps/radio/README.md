@@ -14,12 +14,12 @@ cp apps/radio/.dev.vars.example apps/radio/.dev.vars
 npm run radio:dev
 ```
 
-Set the six values in `.dev.vars`: a registered HTTPS Central Auth issuer,
+Set the six values in `.dev.vars`: a registered HTTPS Jack Auth issuer,
 client, project, organization, public origin, and a random session secret.
 The login callback must be registered for the public origin. The default local
 Compose values only render the public lobby; their client ID is deliberately
-unregistered. `npm run test:celld --workspace @tea/radio` exercises rooms,
-WebSockets, media, and recovery with a signed disposable session.
+unregistered. `npm run test:celld --workspace @harrhy/radio` exercises rooms,
+WebSockets, media, and recovery with a signed disposable session. It does not claim a real Jack Auth callback; the production OAuth flow has separate acceptance.
 
 Use `npm run dev:celld` for a compatibility run on Celld, serving
 <http://127.0.0.1:9876> with disposable local state under `apps/radio/.celld/dev/`. Use the Celld fork
@@ -100,7 +100,7 @@ SQLite backups, use a consistent SQLite backup or stop the runtime and preserve 
 with its WAL; copying a live main database file alone is insufficient. Never remove
 `object-store/` when clearing the replica cache.
 
-The default `wrangler.jsonc` uses the separate `tea-radio` Worker and `tea-radio-tracks` logical bucket. A copy of the original Celld object store cannot expose its rooms through those new names: the room directory belongs to the original Worker identity, and its audio is under `radio-tracks`. Set `RADIO_CELLD_DEPLOY_CONFIG=wrangler.celld-cutover.jsonc` to run Tea's code with the original `radio` Worker and `radio-tracks` names. The normal startup script accepts only this explicit config or the default. Mug uses this setting with a copied production store; preserve it for future upgrades.
+The default `wrangler.jsonc` uses the separate `tea-radio` Worker and `tea-radio-tracks` logical bucket. These are persistent local storage identities, not product branding. A copy of the original Celld object store cannot expose its rooms through those new names: the room directory belongs to the original Worker identity, and its audio is under `radio-tracks`. Set `RADIO_CELLD_DEPLOY_CONFIG=wrangler.celld-cutover.jsonc` to run Radio with the original `radio` Worker and `radio-tracks` names. The normal startup script accepts only this explicit config or the default. Mug uses this setting with a copied production store; preserve it for future upgrades.
 
 ### Upgrading an existing Celld store
 

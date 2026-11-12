@@ -210,7 +210,7 @@ describe("Worker HTTP boundary", () => {
     ).toBe(401);
   });
 
-  it("requires Central sign-in and accepts a subject-bound signed session", async () => {
+  it("requires Jack Auth sign-in and accepts a subject-bound signed session", async () => {
     let rejected = await request("/join", {
       method: "POST",
       body: new URLSearchParams({
@@ -273,7 +273,7 @@ describe("Worker HTTP boundary", () => {
     let rootHtml = await root.text();
     expect(rootHtml).toContain('aria-label="Rooms"');
     expect(rootHtml).toContain('name="room" value="cozy"');
-    expect(rootHtml).toContain("Sign in with Central Auth");
+    expect(rootHtml).toContain("Sign in with Jack Auth");
     expect(rootHtml).not.toContain('placeholder="password"');
     expect(rootHtml).not.toContain('type="radio"');
     expect(rootHtml).toContain('aria-label="Breadcrumb"');

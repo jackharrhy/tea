@@ -11,7 +11,7 @@ import {
 } from "../access.ts";
 import { RadioSessionCookie } from "../session-cookie.ts";
 
-it("central mode accepts only an unexpired subject-bound session", async () => {
+it("accepts only an unexpired subject-bound Jack Auth session", async () => {
   const config: RadioAccessConfig = {
     identity: {
       issuer: "https://auth.example.test",

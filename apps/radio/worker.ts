@@ -15,7 +15,7 @@ export default {
         !env.AUTH_ORGANIZATION_ID ||
         !env.AUTH_PUBLIC_ORIGIN
       )
-        throw new Error("Central Auth configuration is incomplete");
+        throw new Error("Jack Auth configuration is incomplete");
       let router = createAppRouter(createRadioRuntime(env), {
         identity: {
           issuer: env.AUTH_ISSUER,

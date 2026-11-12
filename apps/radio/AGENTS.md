@@ -4,7 +4,7 @@ Radio is a multi-room synchronized audio player built with Remix 3 and Celld. Ke
 server-rendered route correct first, then layer the hydrated WebSocket and Web Audio behavior on
 top. Each room is one named Durable Object/cell.
 
-Read Tea's root AGENTS.md and this workspace's README before editing. Keep tests in adjacent `__tests__/` directories and Worker integration tests in `apps/radio/__tests__/worker/`.
+Read Harrhy's root AGENTS.md and this workspace's README before editing. Keep tests in adjacent `__tests__/` directories and Worker integration tests in `apps/radio/__tests__/worker/`.
 
 ## Commands
 
@@ -23,7 +23,7 @@ npm run typecheck
 
 ## Remix Version Alignment
 
-- Follow Tea's `.agents/skills/remix/SKILL.md` when changing routes, middleware, assets, UI, or tests. Radio uses Tea's stable Remix 3 release.
+- Follow the root `.agents/skills/remix/SKILL.md` when changing routes, middleware, assets, UI, or tests. Radio uses the repository's Remix 3 release.
 
 ## Beatsync Reference
 
@@ -47,7 +47,7 @@ Keep an inspection-only clone at `./.upstream/beatsync`. That directory is ignor
 - `app/data/radio-room-store.ts` owns the per-room SQLite schema and persistence operations.
 - `app/data/room-directory-cell.ts` owns the persistent public room directory.
 - `app/data/` owns the shared protocol, room identity, and timing policy.
-- `app/middleware/access.ts` owns the subject-bound Central session and access boundaries.
+- `app/middleware/access.ts` owns the subject-bound Jack Auth session and access boundaries.
 - `app/ui/` owns shared server UI and cross-route visual primitives.
 
 Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` only when a nested route map needs its own actions or middleware. Do not create generic `app/lib/` or `app/components/` buckets.
