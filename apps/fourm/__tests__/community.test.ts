@@ -884,3 +884,43 @@ it("preserves admin banner/profile/card/page write contracts and rejects non-adm
     }),
   ).toThrow("Admin access required");
 });
+
+it("keeps admin account toggles local, reports storage, and resolves only exact identity links", () => {
+  const { community, sqlite } = fixture();
+  expect(() => community.adminToggleAccount(72, 41, "is_admin")).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.adminSetWebring(null, 72, true)).toThrow(
+    "Admin access required",
+  );
+  const row = community.adminToggleAccount(41, 72, "is_admin");
+  expect(row.user.is_admin).toBe(1);
+  expect(row.stats.file_count).toBe(0);
+  expect(community.adminToggleAccount(41, 72, "is_admin").user.is_admin).toBe(
+    0,
+  );
+  expect(
+    community.adminToggleAccount(41, 72, "is_disabled").user.is_disabled,
+  ).toBe(1);
+  expect(
+    community.adminToggleAccount(41, 72, "is_disabled").user.is_disabled,
+  ).toBe(0);
+  expect(community.adminSetWebring(41, 72, true).user.in_webring).toBe(1);
+  expect(community.adminSetWebring(41, 72, false).user.in_webring).toBe(0);
+  expect(() => community.adminUserRow(41, 9999)).toThrow("Not found");
+  expect(
+    community.adminIdentitySubject(41, 41, "https://fixture.example"),
+  ).toBe("subject-jane");
+  expect(() =>
+    community.adminIdentitySubject(41, 41, "https://other.example"),
+  ).toThrow("no central identity link");
+  sqlite
+    .prepare(
+      "INSERT INTO external_identities(user_id,issuer,subject) VALUES(41,'https://fixture.example','second-subject')",
+    )
+    .run();
+  expect(() =>
+    community.adminIdentitySubject(41, 41, "https://fixture.example"),
+  ).toThrow("ambiguous central identity links");
+  expect(community.adminSnapshot(41).storage).toHaveLength(2);
+});

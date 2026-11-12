@@ -1,10 +1,18 @@
+import type { Row } from "./data/community.ts";
+import { renderToString } from "remix/component/server";
+import { AdminUserRow } from "./admin-users.tsx";
 import { CommunityError } from "./data/community.ts";
 import { createController } from "remix/router";
 import { route, post } from "remix/routes";
-import type { Runtime, Viewer } from "./runtime.ts";
+import type { Runtime, Viewer, Bindings } from "./runtime.ts";
 import { formFields, saved } from "./settings-controller.tsx";
 export const adminRoutes = route({
   banner: post("/admin/site-banner"),
+  rename: post("/admin/users/:id/rename"),
+  toggleAdmin: post("/admin/users/:id/toggle-admin"),
+  toggleDisabled: post("/admin/users/:id/toggle-disabled"),
+  webring: post("/admin/users/:id/toggle-webring"),
+  identity: post("/admin/users/:id/identity"),
   profile: post("/admin/users/:id/profile"),
   card: post("/admin/users/:id/card"),
   page: post("/admin/pages/:id"),
@@ -16,10 +24,108 @@ function integer(value: string) {
     throw new CommunityError(422, "Invalid ID");
   return Number(value);
 }
-export function adminController(store: Runtime, viewer: Viewer) {
+async function rowResponse(request: Request, row: { user: Row; stats: Row }) {
+  return request.headers.get("HX-Request") === "true"
+    ? new Response(await renderToString(<AdminUserRow {...row} open />), {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      })
+    : redirect();
+}
+export function adminController(store: Runtime, viewer: Viewer, env: Bindings) {
   const id = viewer.member?.id ?? null;
   return createController(adminRoutes, {
     actions: {
+      async rename({ request, params }) {
+        const fields = await formFields(request);
+        const userId = integer(params.id);
+        if (id === null) throw new CommunityError(403, "Admin access required");
+        await store.call("adminUserRow", id, userId);
+        try {
+          await store.adminRenameUsername(
+            id,
+            userId,
+            String(fields.new_username ?? ""),
+            String(fields.new_display_name ?? ""),
+          );
+        } catch (error) {
+          if (
+            !(error instanceof CommunityError) ||
+            ![422, 409].includes(error.status)
+          )
+            throw error;
+          if (error.status === 409 && !error.message.includes("already taken"))
+            throw error;
+          return request.headers.get("HX-Request") === "true"
+            ? new Response(
+                `<tr><td colspan="8" class="error">${error.status === 422 ? "invalid username" : "username taken"}</td></tr>`,
+                {
+                  status: 400,
+                  headers: { "Content-Type": "text/html; charset=utf-8" },
+                },
+              )
+            : redirect();
+        }
+        return rowResponse(
+          request,
+          await store.call("adminUserRow", id, userId),
+        );
+      },
+      async toggleAdmin({ request, params }) {
+        return rowResponse(
+          request,
+          await store.call(
+            "adminToggleAccount",
+            id,
+            integer(params.id),
+            "is_admin",
+          ),
+        );
+      },
+      async toggleDisabled({ request, params }) {
+        return rowResponse(
+          request,
+          await store.call(
+            "adminToggleAccount",
+            id,
+            integer(params.id),
+            "is_disabled",
+          ),
+        );
+      },
+      async webring({ request, params }) {
+        const fields = await formFields(request);
+        return rowResponse(
+          request,
+          await store.call(
+            "adminSetWebring",
+            id,
+            integer(params.id),
+            fields.in_webring === "on",
+          ),
+        );
+      },
+      async identity({ request, params }) {
+        const subject = await store.call(
+          "adminIdentitySubject",
+          id,
+          integer(params.id),
+          env.AUTH_ISSUER,
+        );
+        const destination =
+          env.AUTH_ISSUER +
+          "/manage/users/" +
+          encodeURIComponent(subject).replace(
+            /[!'()*]/g,
+            (character) =>
+              "%" + character.charCodeAt(0).toString(16).toUpperCase(),
+          );
+        return request.headers.get("HX-Request") === "true"
+          ? new Response(null, { headers: { "HX-Redirect": destination } })
+          : new Response(null, {
+              status: 303,
+              headers: { Location: destination },
+            });
+      },
       async banner({ request }) {
         await store.call("adminSaveBanner", id, await formFields(request));
         return redirect();

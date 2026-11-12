@@ -82,6 +82,21 @@ export class CommunityCell extends DurableObject<Env> {
       this.community.beginMediaRename(actorId, mediaId, filename),
     );
   }
+  async adminRenameUsername(
+    actorId: number,
+    userId: number,
+    username: string,
+    displayName: string,
+  ) {
+    return this.performMove(() =>
+      this.community.beginAdminUsernameRename(
+        actorId,
+        userId,
+        username,
+        displayName,
+      ),
+    );
+  }
   async renameUsername(actorId: number, username: string) {
     return this.performMove(() =>
       this.community.beginUsernameRename(actorId, username),

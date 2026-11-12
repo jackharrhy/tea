@@ -19,3 +19,14 @@ export function initAdminBanner() {
   css.addEventListener("input", update);
   update();
 }
+
+const observedLabels = new WeakSet<HTMLElement>();
+export function initAdminRows() {
+  for (const label of document.querySelectorAll<HTMLElement>(
+    ".fourm-admin-row > summary > label",
+  )) {
+    if (observedLabels.has(label)) continue;
+    label.addEventListener("click", (event) => event.stopPropagation());
+    observedLabels.add(label);
+  }
+}
