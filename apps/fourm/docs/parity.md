@@ -53,9 +53,16 @@ and restores existing values. Evidence stays outside Git in the private parity
 root. The native readiness fingerprint must match both its supervisor receipt and
 the current app sources; a stale worker cannot satisfy the comparison.
 
+Media delivery now supports bounded/suffix/open-ended ranges, merged and multipart
+ranges, HEAD, conditional requests and If-Range. A running-app comparison checks
+actual imported audio/video/image bytes against Python. Celld deliberately frames
+GET streams as chunked and drops their Content-Length; HEAD retains representation
+length. R2 supplies its own opaque ETag and upload-time Last-Modified; preserving
+original filesystem modification metadata through transfer remains follow-up work.
+
 ## Still required
 
-Username/media relocation, full media serving and management, notifications and
+Username/media relocation, original media metadata and management, notifications and
 watch behavior, source admin/export workflows, forum quotes/pagination, chat,
 and every original widget rendering/configuration path remain implementation and
 verification work. Source validation/error paths and JSON contracts need the same
