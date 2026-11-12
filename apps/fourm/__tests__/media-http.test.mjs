@@ -3,13 +3,14 @@ import { expect, test } from "vitest";
 import { readMedia } from "../app/media.ts";
 import { mediaRanges } from "../app/media-range.ts";
 
-function fixture() {
+function fixture(customMetadata = {}) {
   const content = new TextEncoder().encode("0123456789");
   const object = {
     size: content.length,
     etag: "example",
     httpEtag: '"example"',
     uploaded: new Date("2026-11-12T00:00:00Z"),
+    customMetadata,
   };
   let reads = 0;
   const env = {
@@ -107,4 +108,19 @@ test("media sizes keep the source's decimal half-even formatting", () => {
     "1.8 KB",
     "2.2 KB",
   ]);
+});
+
+test("imported filesystem validators remain authoritative while bucket reads use the physical object version", async () => {
+  const f = fixture({
+    fourm_etag: '"source-validator"',
+    fourm_last_modified: "Wed, 01 Jan 2020 00:00:00 GMT",
+  });
+  let r = await f.request({}, "HEAD");
+  expect(r.headers.get("ETag")).toBe('"source-validator"');
+  expect(r.headers.get("Last-Modified")).toBe("Wed, 01 Jan 2020 00:00:00 GMT");
+  r = await f.request({ "If-None-Match": '"source-validator"' });
+  expect(r.status).toBe(304);
+  r = await f.request({ Range: "bytes=0-2", "If-Range": '"source-validator"' });
+  expect(r.status).toBe(206);
+  expect(await r.text()).toBe("012");
 });

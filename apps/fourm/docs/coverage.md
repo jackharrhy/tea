@@ -18,8 +18,9 @@ See [the private comparison workflow](parity.md).
   old paths remain reserved until cleanup, with alarm recovery after restart.
   Upload markers prevent abandoned-upload cleanup deleting unrelated R2 objects.
 - Media ranges, HEAD, conditional requests and streaming delivery. Celld uses
-  chunked framing for GET; HEAD retains representation length. Original filesystem
-  modification metadata still needs carrying through snapshot transfer.
+  chunked framing for GET; HEAD retains representation length. Filename MIME types
+  match the production Python registry. Archives preserve filesystem times, ETags
+  and nanosecond timestamps through restore and cold reopen.
 - Forum/chat and local admin primitives, invite/trust/profile completion and
   durable post-commit companion-delivery receipts.
 - Core content/identity archive transfer, checksums, FK validation and replay;
@@ -43,7 +44,7 @@ pins the real issuer, so a fake-provider sign-in is not claimed as CLI acceptanc
   the visitor cooldown still uses a browser token instead of source IP.
 - Full admin maintenance and per-member ZIP export.
 - More real-content layout coverage, complete row/field/exclusion accounting,
-  preserved media filesystem metadata, final archive/replay/cold recovery and
+  adoption of the corrected final snapshot, final end-to-end recovery and
   released CLI-contract verification.
 - Preserve the old preview's review data and add explicit private access protection
   before exposing the real-content cohort through the existing Tailnet routes.

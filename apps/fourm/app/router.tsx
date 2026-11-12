@@ -34,7 +34,11 @@ import { Settings, InvitesSettings, PagesList } from "./settings-view.tsx";
 import { settingsRoutes, settingsController } from "./settings-controller.tsx";
 import { Home } from "./home.tsx";
 import { widgetRoutes, widgetController } from "./widgets-controller.tsx";
-import { archiveObject, restoreArchive } from "./archive.ts";
+import {
+  archiveObject,
+  restoreArchive,
+  archiveMediaMetadata,
+} from "./archive.ts";
 import { Document, Forum, NewThread, Thread, Chat } from "./views.tsx";
 
 const routes = route({
@@ -563,9 +567,11 @@ export function createAppRouter(
         },
         async exportArchive({ request }) {
           const actor = await apiMember(request, "archive-read");
+          const tables = await store.call("exportArchive", actor.id);
           return Response.json({
             version: 1,
-            tables: await store.call("exportArchive", actor.id),
+            tables,
+            objects: await archiveMediaMetadata(env, tables.media),
           });
         },
         bytes({ request, params }) {
