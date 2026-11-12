@@ -12,7 +12,12 @@ import { resolve, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { createHash } from "node:crypto";
 import { exerciseChatCopies } from "./chat-copy-workflow.mjs";
+import { exercisePushCopies } from "./push-copy-workflow.mjs";
 process.umask(0o077);
+const workflow = process.env.FOURM_COPY_WORKFLOW ?? "chat";
+assert.ok(["chat", "push"].includes(workflow));
+const exerciseCopies =
+  workflow === "push" ? exercisePushCopies : exerciseChatCopies;
 const repo = process.cwd();
 assert.equal(repo, "/home/jack/repos/personal/harrhy-fourm-celld");
 const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
@@ -20,7 +25,7 @@ const canonical = resolve("apps/fourm/.review/parity-local");
 const oracle = join(root, "python-oracle");
 const output = join(
   root,
-  "chat-copy-" + new Date().toISOString().replace(/[:.]/g, ""),
+  workflow + "-copy-" + new Date().toISOString().replace(/[:.]/g, ""),
 );
 await mkdir(output, { mode: 0o700 });
 const target = join(output, "native"),
@@ -325,7 +330,7 @@ try {
   await startNative(target);
   phase = "exercise-copies";
   await checkpoint();
-  await exerciseChatCopies({
+  await exerciseCopies({
     output,
     oracleRoot: source,
     authPath: join(root, "parity-cohort-20261112/review-auth.json"),
