@@ -74,7 +74,14 @@ export async function restoreArchive(
     const descriptor = body.objects?.find(
       (object) => object.storage_path === media.storage_path,
     );
-    const object = await env.MEDIA.head(String(media.storage_path));
+    const object = await env.MEDIA.head(String(media.storage_path)).catch(
+      () => {
+        throw new CommunityError(
+          503,
+          "Staged media verification could not finish",
+        );
+      },
+    );
     if (
       !descriptor ||
       !object ||

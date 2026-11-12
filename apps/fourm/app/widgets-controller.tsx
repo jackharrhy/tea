@@ -161,12 +161,15 @@ export function widgetController(
         return redirect("/settings/widgets");
       },
       async guestbook({ params }) {
-        return page(
-          "Guestbook",
-          <Guestbook
-            {...await store.call("guestbook", params.username)}
-            member={viewer.member}
-          />,
+        return new Response(
+          "<!doctype html>" +
+            (await renderToString(
+              <Guestbook
+                {...await store.call("guestbook", params.username)}
+                member={viewer.member}
+              />,
+            )),
+          { headers: { "Content-Type": "text/html; charset=utf-8" } },
         );
       },
       async signGuestbook({ request, params }) {
