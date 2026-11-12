@@ -32,6 +32,7 @@ export class CommunityCell extends DurableObject<Env> {
           ok: false as const,
           status: error.status,
           error: error.message,
+          retryAfter: error.retryAfter,
         };
       throw error;
     }

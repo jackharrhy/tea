@@ -3,32 +3,35 @@ import { describe, expect, it } from "vitest";
 import { createCommunity } from "../app/data/community.ts";
 import type { Row } from "../app/data/community.ts";
 
-function fixture() {
+function fixture(forumRateLimit = false) {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec("PRAGMA foreign_keys=ON");
-  const community = createCommunity({
-    all(sql, ...values) {
-      if (!values.length && sql.includes(";")) {
-        sqlite.exec(sql);
-        return [];
-      }
-      const statement = sqlite.prepare(sql);
-      return statement.columns().length
-        ? (statement.all(...values) as Row[])
-        : (statement.run(...values), []);
+  const community = createCommunity(
+    {
+      all(sql, ...values) {
+        if (!values.length && sql.includes(";")) {
+          sqlite.exec(sql);
+          return [];
+        }
+        const statement = sqlite.prepare(sql);
+        return statement.columns().length
+          ? (statement.all(...values) as Row[])
+          : (statement.run(...values), []);
+      },
+      transaction(operation) {
+        sqlite.exec("BEGIN");
+        try {
+          const result = operation();
+          sqlite.exec("COMMIT");
+          return result;
+        } catch (error) {
+          sqlite.exec("ROLLBACK");
+          throw error;
+        }
+      },
     },
-    transaction(operation) {
-      sqlite.exec("BEGIN");
-      try {
-        const result = operation();
-        sqlite.exec("COMMIT");
-        return result;
-      } catch (error) {
-        sqlite.exec("ROLLBACK");
-        throw error;
-      }
-    },
-  });
+    { forumRateLimit },
+  );
   community.restore({
     users: [
       {
@@ -629,4 +632,24 @@ it("deletes an owned post without inventing thread deletion or last-reply rewrit
   community.deletePost(41, Number(first.id));
   expect(community.thread(thread).posts).toEqual([]);
   expect(community.thread(thread).thread.title).toBe("Discussion");
+});
+
+it("enforces forum posting pace atomically across threads with source rounding", () => {
+  const { community, sqlite } = fixture(true);
+  const id = community.createThread(41, "First", "Body", "bbcode");
+  expect(() =>
+    community.createThread(41, "Too soon", "Body", "bbcode"),
+  ).toThrow("please wait before posting again");
+  expect(() => community.reply(41, id, "Too soon", "bbcode")).toThrow();
+  expect(community.thread(id).total_posts).toBe(1);
+  expect(community.forumIndex().total).toBe(1);
+  sqlite
+    .prepare(
+      "UPDATE forum_posts SET created_at=strftime('%Y-%m-%d %H:%M:%f','now','-9.5 seconds') WHERE author_id=41",
+    )
+    .run();
+  community.reply(41, id, "Allowed by source truncation", "bbcode");
+  expect(community.thread(id).total_posts).toBe(2);
+  community.reply(72, id, "Different member", "bbcode");
+  expect(community.thread(id).total_posts).toBe(3);
 });
