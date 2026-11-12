@@ -454,17 +454,37 @@ export function createCommunity(db: Database) {
         total_pages: Math.max(1, Math.ceil(total / 25)),
       };
     },
-    thread(id: number) {
+    thread(id: number, page = 1, actorId: number | null = null) {
       const thread = db.all(
-        "SELECT t.*,u.username FROM forum_threads t JOIN users u ON u.id=t.author_id WHERE t.id=?",
+        "SELECT t.*,u.username,u.display_name,u.username AS author_username,u.display_name AS author_display_name FROM forum_threads t JOIN users u ON u.id=t.author_id WHERE t.id=?",
         id,
       )[0];
       if (!thread) throw missing();
+      const current = Math.max(1, page);
+      const total = Number(
+        db.all(
+          "SELECT count(*) AS count FROM forum_posts WHERE thread_id=?",
+          id,
+        )[0].count,
+      );
       return {
         thread,
+        total_posts: total,
+        page: current,
+        total_pages: Math.max(1, Math.ceil(total / 50)),
+        watching:
+          actorId !== null &&
+          Boolean(
+            db.all(
+              "SELECT 1 FROM thread_watchers WHERE user_id=? AND thread_id=?",
+              actorId,
+              id,
+            ).length,
+          ),
         posts: db.all(
-          "SELECT p.*,u.username,u.display_name,u.forum_signature FROM forum_posts p JOIN users u ON u.id=p.author_id WHERE thread_id=? ORDER BY p.id LIMIT 500",
+          "SELECT p.*,u.username,u.display_name,u.forum_signature,u.username AS author_username,u.display_name AS author_display_name,u.forum_signature AS author_signature FROM forum_posts p JOIN users u ON u.id=p.author_id WHERE thread_id=? ORDER BY p.created_at ASC LIMIT 50 OFFSET ?",
           id,
+          (current - 1) * 50,
         ),
       };
     },
@@ -492,7 +512,36 @@ export function createCommunity(db: Database) {
           content,
           contentFormat,
         );
+        db.all(
+          "INSERT OR IGNORE INTO thread_watchers(user_id,thread_id) VALUES(?,?)",
+          actorId,
+          thread.id,
+        );
         return Number(thread.id);
+      });
+    },
+    toggleThreadWatch(actorId: number, threadId: number) {
+      member(actorId);
+      this.thread(threadId);
+      return db.transaction(() => {
+        const existing = db.all(
+          "SELECT 1 FROM thread_watchers WHERE user_id=? AND thread_id=?",
+          actorId,
+          threadId,
+        ).length;
+        if (existing)
+          db.all(
+            "DELETE FROM thread_watchers WHERE user_id=? AND thread_id=?",
+            actorId,
+            threadId,
+          );
+        else
+          db.all(
+            "INSERT INTO thread_watchers(user_id,thread_id) VALUES(?,?)",
+            actorId,
+            threadId,
+          );
+        return !existing;
       });
     },
     reply(
@@ -500,20 +549,34 @@ export function createCommunity(db: Database) {
       threadId: number,
       content: string,
       contentFormat: string,
+      quote: Row = {},
     ) {
-      const actor = member(actorId);
+      member(actorId);
       required(content, 500000, "Reply");
       format(contentFormat);
       return db.transaction(() => {
         const { thread } = this.thread(threadId);
-        if (thread.is_locked && !actor.is_admin)
+        if (thread.is_locked)
           throw new CommunityError(403, "This thread is locked");
+        const quotedId = quote.quoted_post_id
+          ? Number(quote.quoted_post_id)
+          : null;
+        const quoted = quotedId
+          ? db.all(
+              "SELECT content_format FROM forum_posts WHERE id=?",
+              quotedId,
+            )[0]
+          : null;
         const post = db.all(
-          "INSERT INTO forum_posts(thread_id,author_id,content,content_format) VALUES(?,?,?,?) RETURNING id",
+          "INSERT INTO forum_posts(thread_id,author_id,content,content_format,quoted_post_id,quoted_content,quoted_content_format,quoted_author) VALUES(?,?,?,?,?,?,?,?) RETURNING id",
           threadId,
           actorId,
           content,
           contentFormat,
+          quotedId,
+          quote.quoted_content || null,
+          quoted?.content_format ?? null,
+          quote.quoted_author || null,
         )[0];
         db.all(
           "UPDATE forum_threads SET reply_count=reply_count+1,last_reply_at=CURRENT_TIMESTAMP,last_reply_by_id=? WHERE id=?",
@@ -542,6 +605,31 @@ export function createCommunity(db: Database) {
         content,
         contentFormat,
         postId,
+      );
+    },
+    deleteThread(actorId: number, threadId: number) {
+      const actor = member(actorId);
+      const found = db.all(
+        "SELECT author_id FROM forum_threads WHERE id=?",
+        threadId,
+      )[0];
+      if (!found || (Number(found.author_id) !== actorId && !actor.is_admin))
+        throw missing();
+      db.all("DELETE FROM forum_threads WHERE id=?", threadId);
+    },
+    threadForEdit(actorId: number, threadId: number) {
+      const { thread } = this.thread(threadId);
+      owned(actorId, Number(thread.author_id));
+      return thread;
+    },
+    editThread(actorId: number, threadId: number, input: Row) {
+      this.threadForEdit(actorId, threadId);
+      db.all(
+        "UPDATE forum_threads SET title=?,custom_css=?,custom_html=? WHERE id=?",
+        String(input.title ?? "").trim(),
+        String(input.custom_css ?? ""),
+        String(input.custom_html ?? ""),
+        threadId,
       );
     },
     moderate(actorId: number, threadId: number, action: string) {
