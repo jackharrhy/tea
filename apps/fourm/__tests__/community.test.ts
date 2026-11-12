@@ -783,3 +783,17 @@ it("exports only public pages for the owner or administrator", () => {
   );
   expect(() => community.userSiteExport(41, "absent")).toThrow("Not found");
 });
+
+it("restricts the full static export to enabled administrators and excludes identity secrets", () => {
+  const { community, sqlite } = fixture();
+  expect(() => community.fullSiteExport(null)).toThrow("Admin access required");
+  expect(() => community.fullSiteExport(72)).toThrow("Admin access required");
+  const result = community.fullSiteExport(41);
+  expect(result.users).toHaveLength(2);
+  expect(result.users[0].profile).not.toHaveProperty("password_hash");
+  expect(result).not.toHaveProperty("external_identities");
+  sqlite.prepare("UPDATE users SET is_disabled=1 WHERE id=41").run();
+  expect(() => community.fullSiteExport(41)).toThrow(
+    "Membership is unavailable",
+  );
+});
