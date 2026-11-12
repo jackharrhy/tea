@@ -23,6 +23,7 @@ export class CommunityError extends Error {
   constructor(
     public status: number,
     message: string,
+    public retryAfter?: number,
   ) {
     super(message);
   }
@@ -50,7 +51,7 @@ function format(value: unknown) {
   return String(value);
 }
 
-export function createCommunity(db: Database) {
+export function createCommunity(db: Database, { forumRateLimit = true } = {}) {
   db.all(schema);
   mediaMoveSchema(db);
   const pageBodies = pageContent(db);
@@ -63,6 +64,22 @@ export function createCommunity(db: Database) {
   db.all(
     "CREATE TABLE IF NOT EXISTS archive_receipts (digest TEXT PRIMARY KEY, receipt TEXT NOT NULL);",
   );
+
+  function enforceForumRate(actorId: number) {
+    if (!forumRateLimit) return;
+    const latest = db.all(
+      "SELECT created_at FROM forum_posts WHERE author_id=? ORDER BY created_at DESC LIMIT 1",
+      actorId,
+    )[0];
+    if (!latest) return;
+    const input = String(latest.created_at).replace(" ", "T");
+    const last = new Date(
+      /(?:Z|[+-]\d\d:\d\d)$/.test(input) ? input : input + "Z",
+    ).getTime();
+    const wait = Math.trunc(10 - (Date.now() - last) / 1000);
+    if (wait > 0)
+      throw new CommunityError(429, "please wait before posting again", wait);
+  }
 
   function member(id: number): Member {
     const found = db.all(
@@ -500,6 +517,7 @@ export function createCommunity(db: Database) {
       required(content, 500000, "Post");
       format(contentFormat);
       return db.transaction(() => {
+        enforceForumRate(actorId);
         const thread = db.all(
           "INSERT INTO forum_threads(author_id,title,last_reply_by_id,custom_css,custom_html) VALUES(?,?,?,?,?) RETURNING id",
           actorId,
@@ -558,6 +576,7 @@ export function createCommunity(db: Database) {
       required(content, 500000, "Reply");
       format(contentFormat);
       return db.transaction(() => {
+        enforceForumRate(actorId);
         const { thread } = this.thread(threadId);
         if (thread.is_locked)
           throw new CommunityError(403, "This thread is locked");

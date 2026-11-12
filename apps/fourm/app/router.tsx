@@ -151,6 +151,43 @@ export function createAppRouter(
       { headers: { "Content-Type": "text/html; charset=utf-8" } },
     );
   }
+  async function forumPost(request: Request, write: () => Promise<number>) {
+    try {
+      return await write();
+    } catch (error) {
+      if (
+        !(error instanceof CommunityError) ||
+        error.status !== 429 ||
+        !error.retryAfter
+      )
+        throw error;
+      if (wantsJSON(request))
+        return Response.json({ ok: false, error: error.message });
+      if (request.headers.get("HX-Request") === "true")
+        return new Response(
+          `<p class="error">please wait ${error.retryAfter} seconds before posting again</p>`,
+          {
+            status: 429,
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          },
+        );
+      const response = await page(
+        "4orm · 429",
+        <section class="panel">
+          <h1>429</h1>
+          <p>{error.message}</p>
+          <p>
+            <a href="/">← back to home</a>
+          </p>
+        </section>,
+      );
+      return new Response(response.body, {
+        status: 429,
+        headers: response.headers,
+      });
+    }
+  }
+
   async function apiMember(request: Request, permission?: string) {
     const principal = await bearer(request, env, permission);
     return store.call("resolveIdentity", env.AUTH_ISSUER, principal.subject);
@@ -442,14 +479,17 @@ export function createAppRouter(
         },
         async createThread({ request }) {
           const body = await fields(request);
-          const id = await store.call(
-            "createThread",
-            member().id,
-            String(body.title ?? ""),
-            String(body.content ?? ""),
-            String(body.content_format ?? "bbcode"),
-            body,
+          const id = await forumPost(request, () =>
+            store.call(
+              "createThread",
+              member().id,
+              String(body.title ?? ""),
+              String(body.content ?? ""),
+              String(body.content_format ?? "bbcode"),
+              body,
+            ),
           );
+          if (id instanceof Response) return id;
           if (wantsJSON(request))
             return Response.json({
               ok: true,
@@ -490,14 +530,17 @@ export function createAppRouter(
           const body = await fields(request);
           if (body.quoted_post_id && !/^\d+$/.test(String(body.quoted_post_id)))
             throw new CommunityError(422, "Invalid quoted post ID");
-          const id = await store.call(
-            "reply",
-            member().id,
-            Number(params.id),
-            String(body.content ?? ""),
-            String(body.content_format ?? "bbcode"),
-            body,
+          const id = await forumPost(request, () =>
+            store.call(
+              "reply",
+              member().id,
+              Number(params.id),
+              String(body.content ?? ""),
+              String(body.content_format ?? "bbcode"),
+              body,
+            ),
           );
+          if (id instanceof Response) return id;
           const detail = await store.call("thread", Number(params.id));
           const target = `/forum/${params.id}?page=${detail.total_pages}`;
           if (wantsJSON(request))

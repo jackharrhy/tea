@@ -31,6 +31,8 @@ See [the private comparison workflow](parity.md).
   customization in its original container. Paired temporary-thread browser flows
   create, quote/reply, edit/reopen and delete at both widths, preserving quote
   snapshots and restoring the imported thread lists and core data.
+- Forum posting pace checked inside the write transaction, preserving Python
+  rounding and distinct JSON, HTMX and ordinary-form rejection responses.
 - Forum/chat and local admin primitives, invite/trust/profile completion and
   durable post-commit companion-delivery receipts.
 - Core content/identity archive transfer, checksums, FK validation and replay;
@@ -48,7 +50,7 @@ pins the real issuer, so a fake-provider sign-in is not claimed as CLI acceptanc
 
 ## Still required
 
-- Notifications/devices/push, forum rate limiting, full moderation browser checks,
+- Notifications/devices/push, full moderation browser checks,
   original chat composition, and Python Markdown attribute-list behavior.
 - Original counter/status/player/webring renderers and remaining widget workflows;
   the visitor cooldown still uses a browser token instead of source IP.
