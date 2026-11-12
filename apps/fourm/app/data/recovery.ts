@@ -34,7 +34,10 @@ export interface RecoveryState {
   sequences: { name: string; seq: number }[];
   exclusions: string[];
 }
-function validate(snapshot: RecoveryState, columns: Record<string, string[]>) {
+export function validateRecoveryState(
+  snapshot: RecoveryState,
+  columns: Record<string, string[]>,
+) {
   if (
     !snapshot ||
     snapshot.version !== 1 ||
@@ -143,14 +146,14 @@ export function createRecovery(db: Database, admin: (id: number) => Member) {
       admin(actorId);
       return db.transaction(() => {
         const snapshot = capture();
-        validate(snapshot, snapshot.columns);
+        validateRecoveryState(snapshot, snapshot.columns);
         return snapshot;
       });
     },
     restoreRecovery(snapshot: RecoveryState) {
       return db.transaction(() => {
         const current = capture();
-        validate(snapshot, current.columns);
+        validateRecoveryState(snapshot, current.columns);
         if (
           db.all("SELECT name FROM backup_runs WHERE state='pending' LIMIT 1")
             .length
