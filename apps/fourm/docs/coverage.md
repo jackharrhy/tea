@@ -27,6 +27,10 @@ See [the private comparison workflow](parity.md).
   creator auto-watch and watch toggles, local author/admin controls, and locked
   replies denied for all members. Imported post/quote/signature rendering matches
   all 131 source posts; the selected thread has identical desktop/mobile screenshots.
+- Canonical new/edit post forms, media format selection, preview and thread
+  customization in its original container. Paired temporary-thread browser flows
+  create, quote/reply, edit/reopen and delete at both widths, preserving quote
+  snapshots and restoring the imported thread lists and core data.
 - Forum/chat and local admin primitives, invite/trust/profile completion and
   durable post-commit companion-delivery receipts.
 - Core content/identity archive transfer, checksums, FK validation and replay;
@@ -44,8 +48,8 @@ pins the real issuer, so a fake-provider sign-in is not claimed as CLI acceptanc
 
 ## Still required
 
-- Notifications/devices/push, thread watching, original forum/chat composition,
-  full thread edit/reply/moderation workflows, and Python Markdown attribute-list behavior.
+- Notifications/devices/push, forum rate limiting, full moderation browser checks,
+  original chat composition, and Python Markdown attribute-list behavior.
 - Original counter/status/player/webring renderers and remaining widget workflows;
   the visitor cooldown still uses a browser token instead of source IP.
 - Full admin maintenance and per-member ZIP export.

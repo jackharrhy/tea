@@ -40,7 +40,8 @@ import {
   restoreArchive,
   archiveMediaMetadata,
 } from "./archive.ts";
-import { Document, Forum, NewThread, Thread, Chat } from "./views.tsx";
+import { ForumEditor } from "./forum-editor.tsx";
+import { Document, Forum, ThreadHeader, Thread, Chat } from "./views.tsx";
 
 const routes = route({
   home: get("/"),
@@ -61,7 +62,7 @@ const routes = route({
   forum: get("/forum"),
   newThread: get("/forum/new"),
   previewPost: post("/forum/preview"),
-  createThread: post("/forum"),
+  createThread: post("/forum/new"),
   thread: get("/forum/:id"),
   reply: post("/forum/:id/reply"),
   watchThread: post("/forum/:id/watch"),
@@ -227,46 +228,11 @@ export function createAppRouter(
             Number(params.id),
           );
           return page(
-            "Edit post",
-            <>
-              <h1>Edit post</h1>
-              <form method="post">
-                <label htmlFor="content">Content</label>
-                <textarea
-                  id="content"
-                  name="content"
-                  required
-                  defaultValue={String(item.content)}
-                />
-                <label>
-                  Format
-                  <select name="content_format" aria-label="Format">
-                    <option
-                      value="bbcode"
-                      selected={item.content_format === "bbcode"}
-                    >
-                      BBCode
-                    </option>
-                    <option
-                      value="markdown"
-                      selected={item.content_format === "markdown"}
-                    >
-                      Markdown
-                    </option>
-                    <option
-                      value="html"
-                      selected={item.content_format === "html"}
-                    >
-                      HTML
-                    </option>
-                  </select>
-                </label>
-                <button>Save post</button>
-              </form>
-              <form method="post" action={`/forum/posts/${item.id}/delete`}>
-                <button>Delete post</button>
-              </form>
-            </>,
+            "4orm · edit post",
+            <ForumEditor
+              post={item}
+              media={(await store.call("media", member().id)).items}
+            />,
           );
         },
         async savePost({ request, params }) {
@@ -283,14 +249,20 @@ export function createAppRouter(
             String(body.content ?? ""),
             String(body.content_format ?? "bbcode"),
           );
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "post updated" });
           return redirect(`/forum/${item.thread_id}`);
         },
-        async deletePost({ params }) {
+        async deletePost({ request, params }) {
           const thread = await store.call(
             "deletePost",
             member().id,
             Number(params.id),
           );
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "post deleted" });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response("");
           return redirect(thread ? `/forum/${thread}` : "/forum");
         },
         howTo() {
@@ -460,9 +432,13 @@ export function createAppRouter(
             { headers: { "Content-Type": "text/html; charset=utf-8" } },
           );
         },
-        newThread() {
-          member();
-          return page("New thread", <NewThread />);
+        async newThread() {
+          return page(
+            "4orm · new thread",
+            <ForumEditor
+              media={(await store.call("media", member().id)).items}
+            />,
+          );
         },
         async createThread({ request }) {
           const body = await fields(request);
@@ -472,7 +448,16 @@ export function createAppRouter(
             String(body.title ?? ""),
             String(body.content ?? ""),
             String(body.content_format ?? "bbcode"),
+            body,
           );
+          if (wantsJSON(request))
+            return Response.json({
+              ok: true,
+              id,
+              slug: null,
+              code: null,
+              redirect: `/forum/${id}`,
+            });
           return redirect(`/forum/${id}`);
         },
         async thread({ request, params }) {
@@ -486,18 +471,20 @@ export function createAppRouter(
             viewer.member?.id ?? null,
           );
           if (wantsJSON(request)) return Response.json(threadJSON(result));
-          return page(
-            String(result.thread.title),
-            <Thread
-              {...result}
-              member={viewer.member}
-              media={
-                viewer.member
-                  ? (await store.call("media", viewer.member.id)).items
-                  : []
-              }
-            />,
-          );
+          const props = {
+            ...result,
+            member: viewer.member,
+            media: viewer.member
+              ? (await store.call("media", viewer.member.id)).items
+              : [],
+          };
+          const html =
+            (await renderToString(<ThreadHeader {...props} />)) +
+            "\n" +
+            String(result.thread.custom_html ?? "") +
+            "\n" +
+            (await renderToString(<Thread {...props} />));
+          return page("4orm · " + result.thread.title, null, html);
         },
         async reply({ request, params }) {
           const body = await fields(request);
