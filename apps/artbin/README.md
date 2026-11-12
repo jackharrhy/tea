@@ -56,7 +56,10 @@ Support sessions are held in this Node process for at most ten minutes. Each
 support request checks both Jack Auth support status and native introspection
 again; an unavailable check denies access. Restarting Artbin invalidates every
 support session. A surviving support cookie blocks ordinary-session fallback;
-`/auth/support/recover` offers an explicit CSRF-protected exit after restart.
+browser navigation goes to `/auth/support/recover` for an explicit
+CSRF-protected exit after restart. A rejected callback clears its transaction
+cookie and redirects to a code-free problem page; an unlinked local target is
+identified there without creating an account.
 The banner names the actor and target, and its exit button ends only the
 support session. Normal actor login remains separate. The Auth
 service owns durable expiry and native token revocation if Artbin restarts or an

@@ -24,6 +24,7 @@ import {
 
 import { routes } from "../../routes.ts";
 import { Document } from "../document.tsx";
+import { Button, ButtonLink } from "../../ui/primitives.tsx";
 
 const SESSION_MAX_AGE = 60 * 60;
 const CLI_HANDOFF_MAX_AGE_MS = 2 * 60 * 1_000;
@@ -43,6 +44,37 @@ export default createController(routes.auth, {
       return completeSupportLogin(context.request);
     },
 
+    supportProblem(context) {
+      const missingAccount =
+        context.url.searchParams.get("reason") === "account";
+      const directory = new URL(
+        "/manage/people",
+        process.env.AUTH_SUPPORT_ORIGIN ?? "https://auth.jackharrhy.dev",
+      ).href;
+      return context.render(
+        <Document title="Artbin support login could not open">
+          <main mix={recoveryStyle}>
+            <h1>Couldn’t open Artbin support</h1>
+            <p>
+              {missingAccount
+                ? "This person does not have an Artbin account. Choose someone who has already signed in to Artbin."
+                : "The support sign-in could not be verified. Start again from Jack Auth."}
+            </p>
+            <ButtonLink href={directory} document variant="primary">
+              Return to Jack Auth
+            </ButtonLink>
+          </main>
+        </Document>,
+        {
+          status: 403,
+          headers: {
+            "Cache-Control": "no-store",
+            "Referrer-Policy": "no-referrer",
+          },
+        },
+      );
+    },
+
     supportRecover(context) {
       const csrf = supportRecoveryToken(context.request);
       if (!csrf) return redirectWithHeaders("/", {});
@@ -50,10 +82,15 @@ export default createController(routes.auth, {
         <Document title="Exit Artbin support session">
           <main mix={recoveryStyle}>
             <h1>Support session ended</h1>
-            <p>Exit support to return to your own Artbin session.</p>
+            <p>
+              Clear this support session to continue as yourself. You may need
+              to sign in to Artbin again.
+            </p>
             <form method="post" action={routes.auth.supportExit.href()}>
               <input type="hidden" name="csrf" value={csrf} />
-              <button type="submit">Exit support session</button>
+              <Button type="submit" variant="primary">
+                Clear support session
+              </Button>
             </form>
           </main>
         </Document>,

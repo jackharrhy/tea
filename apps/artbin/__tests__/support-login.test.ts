@@ -292,9 +292,14 @@ test("wrong support client is rejected after one redemption and cannot enter the
   });
   const callbackUrl = `${artbin}/auth/support/callback?code=${"d".repeat(43)}&state=${handoff.searchParams.get("state")}`;
   const headers = { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] };
-  expect(
-    (await completeSupportLogin(new Request(callbackUrl, { headers }))).status,
-  ).toBe(403);
+  const rejected = await completeSupportLogin(
+    new Request(callbackUrl, { headers }),
+  );
+  expect(rejected.status).toBe(303);
+  expect(rejected.headers.get("Location")).toBe(
+    "/auth/support/problem?reason=general",
+  );
+  expect(rejected.headers.get("Referrer-Policy")).toBe("no-referrer");
   expect(
     (await completeSupportLogin(new Request(callbackUrl, { headers }))).status,
   ).toBe(400);
@@ -329,8 +334,48 @@ test("signed target role cannot replace browser scopes missing from native intro
       { headers: { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] } },
     ),
   );
-  expect(callback.status).toBe(403);
+  expect(callback.status).toBe(303);
+  expect(callback.headers.get("Location")).toBe(
+    "/auth/support/problem?reason=general",
+  );
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+});
+
+test("unlinked support target ends the redeemed token and shows a clean actionable error", async () => {
+  setup();
+  const calls: string[] = [];
+  const start = await beginSupportLogin(
+    new Request(`${artbin}/auth/support/start?request=${"g".repeat(43)}`),
+  );
+  const handoff = new URL(start.headers.get("Location")!);
+  mockProvider({
+    targetToken: signedTargetToken(),
+    nonce: handoff.searchParams.get("nonce")!,
+    calls,
+  });
+  const callback = await completeSupportLogin(
+    new Request(
+      `${artbin}/auth/support/callback?code=${"h".repeat(43)}&state=${handoff.searchParams.get("state")}`,
+      { headers: { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] } },
+    ),
+  );
+  expect(callback.status).toBe(303);
+  expect(callback.headers.get("Location")).toBe(
+    "/auth/support/problem?reason=account",
+  );
+  expect(callback.headers.get("Referrer-Policy")).toBe("no-referrer");
+  expect(callback.headers.getSetCookie()).not.toContainEqual(
+    expect.stringMatching(/^artbin_support=/),
+  );
+  expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+  const problem = await router.fetch(
+    new Request(`${artbin}/auth/support/problem?reason=account`),
+  );
+  expect(problem.status).toBe(403);
+  expect(problem.headers.get("Referrer-Policy")).toBe("no-referrer");
+  const page = await problem.text();
+  expect(page).toContain("does not have an Artbin account");
+  expect(page).toContain("Return to Jack Auth");
 });
 
 test("stale support cookie blocks actor fallback until explicit CSRF-protected exit", async () => {
@@ -356,6 +401,16 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
       new Request(`${artbin}/folders`, { headers: staleHeaders }),
     ),
   ).rejects.toMatchObject({ status: 401 });
+  const staleDocument = await getUserFromRequest(
+    new Request(`${artbin}/folders`, {
+      headers: { ...staleHeaders, Accept: "text/html" },
+    }),
+  ).catch((error: unknown) => error as Response);
+  expect(staleDocument).toBeInstanceOf(Response);
+  expect((staleDocument as Response).status).toBe(303);
+  expect((staleDocument as Response).headers.get("Location")).toBe(
+    "/auth/support/recover",
+  );
   const csrf = supportRecoveryToken(
     new Request(`${artbin}/auth/support/recover`, { headers: staleHeaders }),
   );
@@ -366,7 +421,7 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
   expect(recovery.status).toBe(200);
   expect(recovery.headers.get("Referrer-Policy")).toBe("same-origin");
   const recoveryPage = await recovery.text();
-  expect(recoveryPage).toContain("Exit support session");
+  expect(recoveryPage).toContain("Clear support session");
   expect(recoveryPage).toContain(`value="${csrf}"`);
   const exit = (token: string) =>
     exitSupportLogin(
