@@ -2,6 +2,7 @@ import { unsafeHTML } from "remix/component";
 import type { Handle, RemixNode } from "remix/component";
 import type { Member, Row } from "./data/community.ts";
 import { postContent } from "./rendering.ts";
+import { LocalTime } from "./time.tsx";
 
 // Keep the source banner element intact: saved banner CSS can target its children.
 const bannerAttributes: Record<string, string> = { role: "status" };
@@ -124,41 +125,76 @@ export function Format(handle: Handle<{ value?: string; bbcode?: boolean }>) {
   );
 }
 export function Forum(
-  handle: Handle<{ threads: Row[]; member: Member | null }>,
+  handle: Handle<{
+    threads: Row[];
+    member: Member | null;
+    page: number;
+    total_pages: number;
+  }>,
 ) {
   return () => (
     <>
-      <h1>Forum</h1>
+      <h1>forum</h1>
       {handle.props.member ? (
-        <a href="/forum/new">New thread</a>
-      ) : (
         <p>
-          <a href="/auth/start">Sign in</a> to join the conversation.
+          <a href="/forum/new">
+            <button type="button">new thread</button>
+          </a>
         </p>
+      ) : null}
+      {handle.props.threads.length ? (
+        <div class="table-wrap">
+          <table class="forum-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>thread</th>
+                <th>author</th>
+                <th>replies</th>
+                <th>last reply</th>
+              </tr>
+            </thead>
+            <tbody>
+              {handle.props.threads.map((thread) => (
+                <tr>
+                  <td>
+                    {thread.is_pinned ? "📌" : ""}
+                    {thread.is_locked ? "🔒" : ""}
+                  </td>
+                  <td>
+                    <a href={`/forum/${thread.id}`}>{thread.title}</a>
+                  </td>
+                  <td>
+                    <a href={`/u/${thread.author_username}`}>
+                      {thread.author_display_name || thread.author_username}
+                    </a>
+                  </td>
+                  <td>{thread.reply_count}</td>
+                  <td class="muted">
+                    <LocalTime value={thread.last_reply_at} format="relative" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p class="muted">no threads yet. be the first!</p>
       )}
-      <table>
-        <thead>
-          <tr>
-            <th>Thread</th>
-            <th>Started by</th>
-            <th>Replies</th>
-          </tr>
-        </thead>
-        <tbody>
-          {handle.props.threads.map((thread) => (
-            <tr>
-              <td>
-                <a href={`/forum/${thread.id}`}>{thread.title}</a>
-                {thread.is_locked ? " · locked" : ""}
-                {thread.is_pinned ? " · pinned" : ""}
-              </td>
-              <td>{thread.display_name}</td>
-              <td>{thread.reply_count}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {!handle.props.threads.length ? <p>No threads yet.</p> : null}
+      {handle.props.total_pages > 1 ? (
+        <nav class="pagination">
+          {Array.from(
+            { length: handle.props.total_pages },
+            (_, index) => index + 1,
+          ).map((page) =>
+            page === handle.props.page ? (
+              <strong>{page}</strong>
+            ) : (
+              <a href={`/forum?page=${page}`}>{page}</a>
+            ),
+          )}
+        </nav>
+      ) : null}
     </>
   );
 }

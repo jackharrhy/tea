@@ -21,6 +21,8 @@ See [the private comparison workflow](parity.md).
   chunked framing for GET; HEAD retains representation length. Filename MIME types
   match the production Python registry. Archives preserve filesystem times, ETags
   and nanosecond timestamps through restore and cold reopen.
+- Original forum index table, pin/lock indicators, reply dates and 25-thread
+  pagination, with matching HTML composition and JSON responses.
 - Forum/chat and local admin primitives, invite/trust/profile completion and
   durable post-commit companion-delivery receipts.
 - Core content/identity archive transfer, checksums, FK validation and replay;
