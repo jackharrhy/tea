@@ -14,6 +14,7 @@ WORKDIR /app
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node tsconfig.base.json ./tsconfig.base.json
 COPY --chown=node:node apps/letters-to-steve ./apps/letters-to-steve
+COPY --from=build --chown=node:node /app/apps/letters-to-steve/node_modules ./apps/letters-to-steve/node_modules
 COPY --chown=node:node packages/identity ./packages/identity
 RUN mkdir -p /app/data/uploads && chown -R node:node /app/data
 WORKDIR /app/apps/letters-to-steve
