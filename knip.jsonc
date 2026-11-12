@@ -120,6 +120,11 @@
         "app/assets/inspector.ts",
         "public/assets/thumb-worker.js",
       ],
+      // The dev script starts this package as a separate OAuth process.
+      "ignoreDependencies": ["@harrhy/dev-auth"],
+    },
+    "packages/dev-auth": {
+      "entry": ["token.mjs"],
     },
     "packages/pool": {
       // The physical cabinet and gameplay table share the same measured bounds.
