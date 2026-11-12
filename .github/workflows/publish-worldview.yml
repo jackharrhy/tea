@@ -1,14 +1,14 @@
-name: Publish Maps
+name: Publish Worldview
 on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-maps.yml
+      - .github/workflows/publish-worldview.yml
       - .dockerignore
       - .nvmrc
       - package.json
       - package-lock.json
-      - apps/maps/**
+      - apps/worldview/**
       - apps/maps-service/**
       - apps/maps-collaboration/**
       - apps/maps-compiler/**
@@ -19,7 +19,7 @@ on:
       - packages/identity/**
   workflow_dispatch:
 concurrency:
-  group: publish-maps
+  group: publish-worldview
   cancel-in-progress: false
 permissions: {}
 jobs:
@@ -45,7 +45,7 @@ jobs:
           import os
           import subprocess
 
-          apps = ["maps", "maps-service", "maps-collaboration", "maps-compiler"]
+          apps = ["worldview", "maps-service", "maps-collaboration", "maps-compiler"]
           before = os.environ.get("BEFORE", "")
           if os.environ["EVENT"] == "workflow_dispatch" or not before or set(before) == {"0"}:
               selected = apps
@@ -97,7 +97,7 @@ jobs:
           APP: ${{ matrix.app }}
         run: |
           case "$APP" in
-            maps) name=worldview ;;
+            worldview) name=worldview ;;
             maps-service) name=worldview-service ;;
             maps-collaboration) name=worldview-collaboration ;;
             maps-compiler) name=worldview-compiler ;;

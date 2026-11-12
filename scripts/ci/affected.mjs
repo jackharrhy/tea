@@ -164,7 +164,7 @@ if (
   }
   console.log(`Affected checks: ${JSON.stringify(checks)}`);
   const mapsHosted = [
-    "@harrhy/maps",
+    "@harrhy/worldview",
     "@harrhy/maps-service",
     "@harrhy/maps-collaboration",
     "@harrhy/maps-editor",

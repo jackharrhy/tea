@@ -11,7 +11,7 @@ RUN npm ci \
   && npm run build --workspace @harrhy/worldview-renderer \
   && npm run build --workspace @harrhy/maps-editor \
   && npm run build --workspace @harrhy/maps-protocol \
-  && npm run build:client --workspace @harrhy/maps
+  && npm run build:client --workspace @harrhy/worldview
 
 FROM node:26-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
@@ -21,15 +21,15 @@ ENV CELLD_INTERNAL_ADDR=127.0.0.1:8791
 ENV CELLD_BUCKET=sqlite:///app/.celld/object-store/objects.sqlite3
 ENV CELLD_DURABILITY=bucket
 ENV CELLD_WATCH=/app/.celld/state
-WORKDIR /app/apps/maps
+WORKDIR /app/apps/worldview
 COPY --from=celld /usr/local/bin/celld /usr/local/bin/celld
 COPY --from=build /app /app
 RUN mkdir -p /app/.celld \
-  && chmod +x /app/apps/maps/scripts/start-celld.sh \
+  && chmod +x /app/apps/worldview/scripts/start-celld.sh \
   && chown -R node:node /app/.celld
 USER node
 EXPOSE 8790
 STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:8790/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
-CMD ["/app/apps/maps/scripts/start-celld.sh"]
+CMD ["/app/apps/worldview/scripts/start-celld.sh"]

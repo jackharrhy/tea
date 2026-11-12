@@ -59,7 +59,7 @@ Presets:
 The script prompts for the Steam login name when STEAM_ACCOUNT is unset. SteamCMD then prompts for
 the password and Steam Guard code; neither secret is accepted on the command line. Existing
 standard Steam-library installs are reused. Downloads and extracted BSPs stay under the ignored
-apps/maps/local directory by default.
+apps/worldview/local directory by default.
 
 Environment overrides:
   STEAMCMD_BIN, STEAM_ACCOUNT, MAPS_STEAM_LIBRARY,

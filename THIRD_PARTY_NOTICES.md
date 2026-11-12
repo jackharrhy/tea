@@ -1,6 +1,6 @@
 # Third-party notices
 
-These notices cover the Tea Maps renderer and editor. Runtime code is under `packages/maps-renderer/` and `packages/maps-editor/`; the browser app is under `apps/maps/`.
+These notices cover the Worldview renderer and editor. Runtime code is under `packages/maps-renderer/` and `packages/maps-editor/`; the browser app is under `apps/worldview/`.
 
 ## jsdiff
 

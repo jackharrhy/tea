@@ -23,8 +23,8 @@ apps/marky/content/
 apps/marky/tmp/
 apps/marky/.coverage/
 apps/maps-service/data/
-apps/maps/local/*
-!apps/maps/local/.gitkeep
+apps/worldview/local/*
+!apps/worldview/local/.gitkeep
 **/*.db
 **/*.db-*
 **/*.sqlite*

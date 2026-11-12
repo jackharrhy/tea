@@ -330,10 +330,10 @@ services:
     networks:
       - web
 
-  maps:
+  worldview:
     build:
       context: .
-      dockerfile: apps/maps/Dockerfile
+      dockerfile: apps/worldview/Dockerfile
     environment:
       CELLD_VAR_MAPS_SERVICE_ORIGIN: http://maps-service:8792
       CELLD_VAR_MAPS_COLLABORATION_ORIGIN: http://maps-collaboration:44100
@@ -346,9 +346,9 @@ services:
       - maps-collaboration
     labels:
       traefik.enable: "true"
-      traefik.http.routers.maps.rule: "Host(`maps.localhost`)"
-      traefik.http.routers.maps.entrypoints: web
-      traefik.http.services.maps.loadbalancer.server.port: "8790"
+      traefik.http.routers.worldview.rule: "Host(`worldview.localhost`)"
+      traefik.http.routers.worldview.entrypoints: web
+      traefik.http.services.worldview.loadbalancer.server.port: "8790"
     networks:
       - web
 

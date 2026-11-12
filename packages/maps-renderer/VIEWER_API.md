@@ -206,7 +206,7 @@ The standalone module registers the element for pages without a build step:
 <tea-map-view game-base-url="/games/id1/" src="maps/start.bsp"></tea-map-view>
 ```
 
-Run `npm run test:embed --workspace @harrhy/maps` in this repository for browser checks, including the
+Run `npm run test:embed --workspace @harrhy/worldview` in this repository for browser checks, including the
 packaged element's shadow-root pointer lock and gesture-activated audio. These tests use generated
 maps and WAVs to measure camera movement, nonzero audio output, and recovery from suspended audio
 without requiring game files or speakers.

@@ -60,7 +60,7 @@ jobs:
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.pool == 'true'
         run: npm exec --workspace @harrhy/pool-app -- playwright install --only-shell chromium
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
-        run: npm exec --workspace @harrhy/maps -- playwright install --only-shell chromium
+        run: npm exec --workspace @harrhy/worldview -- playwright install --only-shell chromium
       - if: steps.select.outputs.any == 'true'
         env:
           SELECTED_CHECKS: ${{ steps.select.outputs.selected }}
@@ -129,8 +129,8 @@ jobs:
           chmod +x "$RUNNER_TEMP/ref-celld"
           CELLD_BIN="$RUNNER_TEMP/ref-celld" npm run test:celld --workspace @harrhy/ref -- --output "$RUNNER_TEMP/ref-celld-smoke.json"
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
-        run: npm run test:hosted --workspace @harrhy/maps -- --output "$RUNNER_TEMP/maps-hosted-smoke.json"
+        run: npm run test:hosted --workspace @harrhy/worldview -- --output "$RUNNER_TEMP/maps-hosted-smoke.json"
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
-        run: npm run test:gpu --workspace @harrhy/maps
+        run: npm run test:gpu --workspace @harrhy/worldview
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.maps_hosted == 'true'
-        run: npm run test:embed --workspace @harrhy/maps
+        run: npm run test:embed --workspace @harrhy/worldview

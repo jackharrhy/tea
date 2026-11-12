@@ -21,7 +21,7 @@ A Remix 3 monorepo for personal apps and packages.
 | [`@harrhy/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server (migration in progress) | [README](apps/gurgur/README.md) |
 | [`@harrhy/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
 | [`@harrhy/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail (migration in progress) | [README](apps/lists/README.md) |
-| [`@harrhy/maps`](apps/maps/) | Worldview BSP viewer and map editor | [README](apps/maps/README.md) |
+| [`@harrhy/worldview`](apps/worldview/) | Worldview BSP viewer and map editor | [README](apps/worldview/README.md) |
 | [`@harrhy/marky`](apps/marky/) | Collaborative Markdown editor with Discord access | [README](apps/marky/README.md) |
 | [`@harrhy/pool-app`](apps/pool/) | Remix pool hall and authoritative Bun game server | [README](apps/pool/README.md) |
 | [`@harrhy/maps-collaboration`](apps/maps-collaboration/) | Live map sessions and SQLite map cells | [README](apps/maps-collaboration/README.md) |
@@ -63,7 +63,7 @@ Use Node.js 26 LTS (`.nvmrc` and `mise.toml`; minimum 26.13.0) for monorepo deve
 npm ci
 ```
 
-Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @harrhy/cms` starts CMS. Run `npm run` for root scripts, including `npm run artbin:check`, `npm run cms:check`, `npm run letters-to-steve:check`, `npm run ref:check`, `npm run radio:check`, and `npm run maps:check`. Each workspace README has its own setup and checks.
+Run workspace scripts with `npm run <script> --workspace <name>`. For example, `npm run dev --workspace @harrhy/cms` starts CMS. Run `npm run` for root scripts, including `npm run artbin:check`, `npm run cms:check`, `npm run letters-to-steve:check`, `npm run ref:check`, `npm run radio:check`, and `npm run worldview:check`. Each workspace README has its own setup and checks.
 
 Vite+ runs Oxfmt and Oxlint from [`vite.config.ts`](vite.config.ts). `npm run tooling:check` builds the three importable Maps packages, generates missing Worker types, then checks formatting and type-aware lint through tsrslint. `npm run format` formats files. `npm run knip:check` runs the full unused-code audit in CI. The [Knip config](knip.jsonc) lists browser, Worker, public package, and other entry points that are not visible through imports. Review Knip findings before deleting code.
 
