@@ -1,3 +1,5 @@
+import { adminRoutes, adminController } from "./admin-controller.tsx";
+import { AdminBanner } from "./admin-banner.tsx";
 import { exportUserSite, exportFullSite } from "./site-export.ts";
 import { pushRoutes, pushController } from "./push-controller.tsx";
 import { mediaRoutes, mediaController } from "./media-controller.tsx";
@@ -140,14 +142,19 @@ export function createAppRouter(
     if (!viewer.member) throw new CommunityError(401, "Sign in to continue");
     return viewer.member;
   }
-  async function page(title: string, body: RemixNode, html?: string) {
+  async function page(
+    title: string,
+    body: RemixNode,
+    html?: string,
+    banner: Row | null = null,
+  ) {
     return new Response(
       "<!doctype html>" +
         (await renderToString(
           <Document
             title={title}
             member={viewer.member}
-            banner={await store.call("siteBanner")}
+            banner={banner}
             html={html}
           >
             {body}
@@ -203,6 +210,7 @@ export function createAppRouter(
     return store.call("resolveIdentity", env.AUTH_ISSUER, principal.subject);
   }
   const router = createRouter();
+  router.map(adminRoutes, adminController(store, viewer));
   router.map(pushRoutes, pushController(store, viewer));
   router.map(settingsRoutes, settingsController(store, viewer, page));
   router.map(mediaRoutes, mediaController(env, store, viewer, page));
@@ -212,11 +220,16 @@ export function createAppRouter(
     createController(routes, {
       actions: {
         async admin() {
-          const users = await store.call("adminMembers", member().id);
+          const snapshot = await store.call(
+            "adminSnapshot",
+            viewer.member?.id ?? null,
+          );
+          const users = snapshot.users;
           return page(
             "Admin",
             <>
-              <h1>Admin</h1>
+              <h1>admin</h1>
+              <AdminBanner banner={snapshot.banner} />
               <h2>Members</h2>
               <table>
                 <thead>
@@ -345,7 +358,12 @@ export function createAppRouter(
         async home({ request }) {
           const home = await store.call("home");
           if (wantsJSON(request)) return Response.json(homeJSON(home));
-          return page("4orm · home", <Home {...home} />);
+          return page(
+            "4orm · home",
+            <Home {...home} />,
+            undefined,
+            await store.call("siteBanner"),
+          );
         },
         login({ request }) {
           return startLogin(
@@ -433,6 +451,8 @@ export function createAppRouter(
               newInvite={query.get("new_invite") ?? undefined}
               error={query.get("error") ?? undefined}
             />,
+            undefined,
+            await store.call("siteBanner"),
           );
         },
         async saveSettings({ request }) {
@@ -465,6 +485,8 @@ export function createAppRouter(
           return page(
             "4orm · forum",
             <Forum {...index} member={viewer.member} />,
+            undefined,
+            await store.call("siteBanner"),
           );
         },
         async previewPost({ request }) {

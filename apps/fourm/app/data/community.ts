@@ -1,3 +1,4 @@
+import { createAdmin } from "./admin.ts";
 import { createPushDevices } from "./push.ts";
 import { createChatRoom } from "./chat-room.ts";
 import { mediaMoveSchema, createMediaMoves } from "./media-moves.ts";
@@ -181,6 +182,7 @@ export function createCommunity(
       return db.all("SELECT * FROM site_settings WHERE id=1")[0] ?? null;
     },
     ...createSettings(db, member),
+    ...createAdmin(db, admin, pageBodies),
     ...createEnrollments(db, member),
     ...createMedia(db, member),
     ...createMediaMoves(db, member),

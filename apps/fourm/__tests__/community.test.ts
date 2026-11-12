@@ -797,3 +797,90 @@ it("restricts the full static export to enabled administrators and excludes iden
     "Membership is unavailable",
   );
 });
+
+it("preserves admin banner/profile/card/page write contracts and rejects non-admin writes", () => {
+  const { community, sqlite } = fixture();
+  expect(() =>
+    community.adminSaveBanner(null, { banner_enabled: "on" }),
+  ).toThrow("Admin access required");
+  expect(() =>
+    community.adminSaveProfile(72, 41, { display_name: "changed" }),
+  ).toThrow("Admin access required");
+  community.adminSaveBanner(41, {
+    banner_enabled: "on",
+    banner_html: "<b>Notice</b>",
+    banner_css: "b{color:purple}",
+  });
+  expect(community.siteBanner()).toMatchObject({
+    id: 1,
+    banner_enabled: 1,
+    banner_html: "<b>Notice</b>",
+  });
+  community.adminSaveBanner(41, {});
+  expect(community.siteBanner()).toMatchObject({
+    id: 1,
+    banner_enabled: 0,
+    banner_html: "",
+    banner_css: "",
+  });
+  community.adminSaveProfile(41, 72, {
+    display_name: "Updated",
+    content: "<p>profile</p>",
+    content_format: "html",
+    layout: "raw",
+    is_admin: 1,
+  });
+  expect(community.profile("sam")).toMatchObject({
+    display_name: "Updated",
+    content: "<p>profile</p>",
+    layout: "raw",
+    custom_css: "",
+  });
+  expect(
+    community.adminSnapshot(41).users.find((u) => u.id === 72)?.is_admin,
+  ).toBe(0);
+  expect(() => community.adminSaveProfile(41, 9999, {})).toThrow("Not found");
+  expect(() => community.adminSaveCard(41, 9999, {})).toThrow("Not found");
+  community.saveCard(72, { headline: "old", content: "old" });
+  community.adminSaveCard(41, 72, { headline: "new" });
+  expect(
+    sqlite
+      .prepare(
+        "SELECT headline,content,content_format,accent_color FROM profile_cards WHERE user_id=72",
+      )
+      .get(),
+  ).toMatchObject({
+    headline: "new",
+    content: "",
+    content_format: "markdown",
+    accent_color: "#00ffff",
+  });
+  community.savePage(72, "initial", {
+    title: "Old",
+    content: "old",
+    content_format: "html",
+    is_public: 1,
+  });
+  const page = sqlite.prepare("SELECT id FROM pages WHERE user_id=72").get();
+  const content = "🧭".repeat(270000);
+  community.adminSavePage(41, Number(page?.id), {
+    slug: " renamed ",
+    title: " New ",
+    content,
+    content_format: "html",
+  });
+  expect(community.page(72, "renamed", 72)).toMatchObject({
+    title: "New",
+    content,
+    is_public: 0,
+  });
+  expect(
+    sqlite.prepare("SELECT content FROM pages WHERE user_id=72").get()?.content,
+  ).toBe("");
+  expect(() =>
+    community.adminSavePage(72, Number(page?.id), {
+      slug: "wrong",
+      title: "wrong",
+    }),
+  ).toThrow("Admin access required");
+});
