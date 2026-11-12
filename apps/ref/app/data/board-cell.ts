@@ -24,6 +24,7 @@ interface ItemRow extends Record<string, SqlStorageValue> {
   link_title: string | null;
   link_description: string | null;
   link_image_url: string | null;
+  link_video_url: string | null;
   link_site_name: string | null;
 }
 
@@ -43,6 +44,7 @@ const OPERATION_RETENTION = 10_000;
 const OPERATION_PRUNE_INTERVAL = 100;
 const ITEM_QUERY = `SELECT items.*, links.url AS link_url, links.title AS link_title,
   links.description AS link_description, links.image_url AS link_image_url,
+  links.video_url AS link_video_url,
   links.site_name AS link_site_name FROM items
   LEFT JOIN links ON links.asset_id = items.asset_id`;
 
@@ -69,6 +71,7 @@ export class BoardCell extends DurableObject<Env> {
           title TEXT NOT NULL,
           description TEXT NOT NULL,
           image_url TEXT,
+          video_url TEXT,
           site_name TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS items (
@@ -99,6 +102,11 @@ export class BoardCell extends DurableObject<Env> {
           object_key TEXT PRIMARY KEY
         );
       `);
+      const linkColumns = ctx.storage.sql
+        .exec<{ name: string }>("PRAGMA table_info(links)")
+        .toArray();
+      if (!linkColumns.some((column) => column.name === "video_url"))
+        ctx.storage.sql.exec("ALTER TABLE links ADD COLUMN video_url TEXT");
     });
   }
 
@@ -565,6 +573,7 @@ function toItem(row: ItemRow): BoardItem {
             title: row.link_title ?? row.filename,
             description: row.link_description ?? "",
             imageUrl: row.link_image_url,
+            videoUrl: row.link_video_url,
             siteName: row.link_site_name ?? "",
           },
         }

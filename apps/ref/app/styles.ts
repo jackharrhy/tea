@@ -546,6 +546,13 @@ export const refStyles = css({
     "pointer-events": "none",
     "box-shadow": "0 4px 16px #00000019",
   },
+  "& .link-card-video": {
+    display: "block",
+    width: "100%",
+    height: "100%",
+    "object-fit": "contain",
+    background: "#161816",
+  },
   "& .link-item.selected": {
     "border-color": "transparent",
   },
@@ -616,6 +623,12 @@ export const refStyles = css({
     "max-height": "55vh",
     "object-fit": "contain",
     margin: "0 0 14px",
+  },
+  "& .link-inspector-video": {
+    display: "block",
+    width: "100%",
+    "max-height": "55vh",
+    background: "#161816",
   },
   "& .open-original": {
     display: "inline-block",

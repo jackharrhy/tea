@@ -6,6 +6,7 @@ interface LinkRow extends Record<string, SqlStorageValue> {
   title: string;
   description: string;
   image_url: string | null;
+  video_url: string | null;
   site_name: string;
 }
 
@@ -111,14 +112,16 @@ export class BoardAssets {
       existing.preview.title !== preview.title ||
       existing.preview.description !== preview.description ||
       existing.preview.imageUrl !== preview.imageUrl ||
+      existing.preview.videoUrl !== (preview.videoUrl ?? null) ||
       existing.preview.siteName !== preview.siteName;
     if (!changed) return { ...existing, changed: false };
     this.ctx.storage.transactionSync(() => {
       this.ctx.storage.sql.exec(
-        "UPDATE links SET title = ?, description = ?, image_url = ?, site_name = ? WHERE asset_id = ?",
+        "UPDATE links SET title = ?, description = ?, image_url = ?, video_url = ?, site_name = ? WHERE asset_id = ?",
         preview.title,
         preview.description,
         preview.imageUrl,
+        preview.videoUrl ?? null,
         preview.siteName,
         assetId,
       );
@@ -153,6 +156,7 @@ export class BoardAssets {
         existing.title === preview.title &&
         existing.description === preview.description &&
         existing.image_url === preview.imageUrl &&
+        existing.video_url === (preview.videoUrl ?? null) &&
         existing.site_name === preview.siteName
       );
     }
@@ -261,12 +265,13 @@ export class BoardAssets {
         Date.now(),
       );
       this.ctx.storage.sql.exec(
-        "INSERT INTO links VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO links (asset_id, url, title, description, image_url, video_url, site_name) VALUES (?, ?, ?, ?, ?, ?, ?)",
         assetId,
         preview.url,
         preview.title,
         preview.description,
         preview.imageUrl,
+        preview.videoUrl ?? null,
         preview.siteName,
       );
     });
@@ -286,6 +291,7 @@ function toPreview(row: LinkRow): LinkPreview {
     title: row.title,
     description: row.description,
     imageUrl: row.image_url,
+    videoUrl: row.video_url,
     siteName: row.site_name,
   };
 }

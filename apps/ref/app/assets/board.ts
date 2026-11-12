@@ -340,7 +340,28 @@ function removeElement(id: string) {
 function linkCard(itemId: string, link: LinkPreview): HTMLElement {
   const card = document.createElement("div");
   card.className = "link-card";
-  if (link.imageUrl) {
+  if (link.videoUrl) {
+    const video = document.createElement("video");
+    video.className = "link-card-video";
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "none";
+    video.src = link.videoUrl;
+    if (link.imageUrl) video.poster = link.imageUrl;
+    video.setAttribute("aria-label", `${displaySiteName(link)} video`);
+    video.addEventListener("error", () => {
+      video.remove();
+      if (link.imageUrl) {
+        const image = document.createElement("img");
+        image.className = "link-card-image";
+        image.src = link.imageUrl;
+        image.alt = `${displaySiteName(link)} video unavailable`;
+        image.referrerPolicy = "no-referrer";
+        card.appendChild(image);
+      } else card.appendChild(linkFallback(link));
+    });
+    card.appendChild(video);
+  } else if (link.imageUrl) {
     const image = document.createElement("img");
     image.className = "link-card-image";
     image.alt = displaySiteName(link);
@@ -595,7 +616,7 @@ function placeItem(width: number, height: number, point?: Point): Point {
 function handlePointerDown(event: PointerEvent) {
   if (event.button !== 0 && event.button !== 1) return;
   const target = event.target as HTMLElement;
-  if (target.closest("a, button, input, summary")) return;
+  if (target.closest("a, button, input, summary, video")) return;
   const element = target.closest<HTMLElement>(".board-item");
   const item = element ? items.get(element.dataset.itemId!) : null;
   const start = screenPoint(event);

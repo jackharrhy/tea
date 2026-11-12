@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   isGenericSocialPreview,
   normalizeLinkUrl,
+  normalizeXVideoUrl,
   previewLink,
 } from "../link-preview.ts";
+import { parseArchivedPreview } from "../archive.ts";
 
 it("recognizes social landing-page metadata without discarding post metadata", () => {
   const preview = {
@@ -27,6 +29,74 @@ it("recognizes social landing-page metadata without discarding post metadata", (
       title: "X on X",
     }),
   ).toBe(true);
+});
+
+describe("X video previews", () => {
+  const url = "https://x.com/re_skob/status/2120511820561576258";
+  const poster =
+    "https://pbs.twimg.com/amplify_video_thumb/2120511774440976384/img/1z5C06JhzNNg70mW.jpg";
+  const video =
+    "https://video.twimg.com/amplify_video/2120511774440976384/vid/avc1/640x360/xgGEMc6vwlKHG1bD.mp4?tag=29";
+
+  it("keeps a playable MP4 separate from its poster through archive validation", async () => {
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) =>
+        String(input).startsWith("https://api.fxtwitter.com/")
+          ? new Response(
+              JSON.stringify({
+                tweet: {
+                  id: "2120511820561576258",
+                  media: {
+                    all: [
+                      {
+                        type: "video",
+                        thumbnail_url: poster,
+                        variants: [
+                          {
+                            url: "https://video.twimg.com/stream.m3u8",
+                            bitrate: 0,
+                            content_type: "application/x-mpegURL",
+                          },
+                          {
+                            url: video,
+                            bitrate: 832000,
+                            content_type: "video/mp4",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              }),
+              { headers: { "Content-Type": "application/json" } },
+            )
+          : new Response(
+              `<meta property="og:title" content="A video"><meta property="og:image" content="${poster}">`,
+              {
+                headers: { "Content-Type": "text/html" },
+              },
+            ),
+      );
+    try {
+      const preview = await previewLink(url);
+      expect(preview).toMatchObject({ url, imageUrl: poster, videoUrl: video });
+      expect(
+        parseArchivedPreview(preview, "00000000-0000-0000-0000-000000000001")
+          ?.videoUrl,
+      ).toBe(video);
+    } finally {
+      fetch.mockRestore();
+    }
+  });
+
+  it("rejects non-MP4 and non-Twitter media hosts", () => {
+    expect(normalizeXVideoUrl(video)).toBe(video);
+    expect(normalizeXVideoUrl("https://example.com/video.mp4")).toBeNull();
+    expect(
+      normalizeXVideoUrl("https://video.twimg.com/stream.m3u8"),
+    ).toBeNull();
+  });
 });
 
 describe("link URL boundary", () => {

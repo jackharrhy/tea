@@ -1,6 +1,6 @@
 import type { BoardRecord } from "./directory-cell.ts";
 import type { LinkPreview } from "./protocol.ts";
-import { normalizeLinkUrl } from "./link-preview.ts";
+import { normalizeLinkUrl, normalizeXVideoUrl } from "./link-preview.ts";
 
 export const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 export const HASH_PATTERN = /^[0-9a-f]{64}$/;
@@ -34,7 +34,7 @@ export function parseArchivedPreview(
   boardId: string,
 ): LinkPreview | null {
   if (!isRecord(value)) return null;
-  const { url, title, description, imageUrl, siteName } = value;
+  const { url, title, description, imageUrl, videoUrl, siteName } = value;
   if (
     typeof url !== "string" ||
     normalizeLinkUrl(url) !== url ||
@@ -48,7 +48,13 @@ export function parseArchivedPreview(
     (imageUrl !== null &&
       (typeof imageUrl !== "string" ||
         (normalizeLinkUrl(imageUrl) !== imageUrl &&
-          !new RegExp(`^/previews/${boardId}/[0-9a-f]{64}$`).test(imageUrl))))
+          !new RegExp(`^/previews/${boardId}/[0-9a-f]{64}$`).test(
+            imageUrl,
+          )))) ||
+    (videoUrl !== undefined &&
+      videoUrl !== null &&
+      (typeof videoUrl !== "string" ||
+        normalizeXVideoUrl(videoUrl) !== videoUrl))
   )
     return null;
   return {
@@ -56,6 +62,7 @@ export function parseArchivedPreview(
     title,
     description,
     imageUrl: imageUrl as string | null,
+    videoUrl: (videoUrl ?? null) as string | null,
     siteName,
   };
 }
