@@ -691,6 +691,14 @@ test("backup run identity survives authority reopen and terminal receipts are im
     expect(status.last.name).toBe(next.name);
     expect(status.backups).toHaveLength(1);
     expect(status.backups[0].name).toBe(pending.name);
+    expect(() => recovered.backupRetentionPlan(72)).toThrow(
+      "Admin access required",
+    );
+    expect(recovered.backupRetentionPlan(41)).toEqual({
+      keep: [pending.name],
+      remove: [],
+    });
+
     expect(recovered.members().map((member) => member.id)).toEqual([41, 72]);
     expect(recovered.media(41).items).toHaveLength(2);
     expect(f.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
