@@ -1,3 +1,4 @@
+import { planBackupRetention } from "../backup-retention.ts";
 import { CommunityError } from "./community.ts";
 import type { Database, Member } from "./community.ts";
 
@@ -96,6 +97,17 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
       if (typeof error !== "string" || !error.trim() || error.length > 256)
         throw new CommunityError(422, "Invalid backup failure");
       return finish(name, "failed", null, null, error);
+    },
+    backupRetentionPlan(actorId: number | null) {
+      authorize(actorId);
+      return planBackupRetention(
+        db
+          .all("SELECT name,started_at FROM backup_runs WHERE state='complete'")
+          .map((row) => ({
+            name: String(row.name),
+            startedAt: Number(row.started_at),
+          })),
+      );
     },
     backupStatus(actorId: number | null) {
       authorize(actorId);
