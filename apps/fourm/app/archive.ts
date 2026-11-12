@@ -1,13 +1,19 @@
+import { sourceMediaMetadata, mediaContentType } from "./media-headers.ts";
 import { bearer } from "./auth.ts";
 import { CommunityError } from "./data/community.ts";
 import type { Row } from "./data/community.ts";
 import type { Bindings, Runtime } from "./runtime.ts";
-import { hash } from "./runtime.ts";
+import { hash, runtime } from "./runtime.ts";
 
 export async function archiveRestoreAuthority(request: Request, env: Bindings) {
   const principal = await bearer(request, env, "archive-restore");
   if (!principal.roles.has("admin"))
     throw new CommunityError(403, "Explicit archive admin grant required");
+  await runtime(env).call(
+    "assertArchiveRestoreAuthority",
+    env.AUTH_ISSUER,
+    principal.subject,
+  );
 }
 export async function archiveObject(
   request: Request,
@@ -36,21 +42,52 @@ export async function archiveObject(
     .join("");
   if (expected !== actual)
     throw new CommunityError(422, "Archive object checksum mismatch");
+  const sourceMetadata = sourceMediaMetadata({
+    last_modified: request.headers.get("X-Source-Last-Modified") ?? undefined,
+    etag: request.headers.get("X-Source-ETag") ?? undefined,
+    mtime_ns: request.headers.get("X-Source-Mtime-Ns") ?? undefined,
+  });
   const existing = await env.MEDIA.head(path);
-  if (existing) {
-    if (existing.customMetadata?.archive_sha256 !== actual)
-      throw new CommunityError(
-        409,
-        "An unrelated object already occupies this path",
-      );
-  } else
-    await env.MEDIA.put(path, bytes, {
+  if (existing && existing.customMetadata?.archive_sha256 !== actual)
+    throw new CommunityError(
+      409,
+      "An unrelated object already occupies this path",
+    );
+  if (
+    !existing ||
+    Object.entries(sourceMetadata).some(
+      ([key, value]) => existing.customMetadata?.[key] !== value,
+    )
+  ) {
+    const written = await env.MEDIA.put(path, bytes, {
+      onlyIf: existing
+        ? { etagMatches: existing.etag }
+        : { etagDoesNotMatch: "*" },
       httpMetadata: {
+        ...existing?.httpMetadata,
         contentType:
           request.headers.get("Content-Type") ?? "application/octet-stream",
       },
-      customMetadata: { archive_sha256: actual },
+      customMetadata: {
+        ...existing?.customMetadata,
+        archive_sha256: actual,
+        ...sourceMetadata,
+      },
     });
+    if (!written) {
+      const observed = await env.MEDIA.head(path);
+      if (
+        observed?.customMetadata?.archive_sha256 !== actual ||
+        Object.entries(sourceMetadata).some(
+          ([key, value]) => observed.customMetadata?.[key] !== value,
+        )
+      )
+        throw new CommunityError(
+          409,
+          "Archive object changed during staging; retry the verified archive",
+        );
+    }
+  }
   return Response.json({ ok: true, sha256: actual });
 }
 export async function restoreArchive(
@@ -61,7 +98,14 @@ export async function restoreArchive(
   await archiveRestoreAuthority(request, env);
   const body = (await request.json()) as {
     tables?: Record<string, Row[]>;
-    objects?: { storage_path: string; sha256: string; size_bytes: number }[];
+    objects?: {
+      storage_path: string;
+      sha256: string;
+      size_bytes: number;
+      last_modified?: string;
+      etag?: string;
+      mtime_ns?: string;
+    }[];
   };
   if (
     !body.tables ||
@@ -87,7 +131,10 @@ export async function restoreArchive(
       !object ||
       object.size !== media.size_bytes ||
       descriptor.size_bytes !== media.size_bytes ||
-      object.customMetadata?.archive_sha256 !== descriptor.sha256
+      object.customMetadata?.archive_sha256 !== descriptor.sha256 ||
+      Object.entries(sourceMediaMetadata(descriptor)).some(
+        ([key, value]) => object.customMetadata?.[key] !== value,
+      )
     )
       throw new CommunityError(
         409,
@@ -101,4 +148,29 @@ export async function restoreArchive(
       await hash(JSON.stringify(body.tables)),
     ),
   );
+}
+
+export async function archiveMediaMetadata(env: Bindings, items: Row[]) {
+  const result = [];
+  for (const item of items) {
+    const path = String(item.storage_path),
+      object = await env.MEDIA.head(path);
+    if (!object)
+      throw new CommunityError(
+        409,
+        "Media disappeared while preparing the archive",
+      );
+    result.push({
+      storage_path: path,
+      last_modified: new Date(
+        object.customMetadata?.fourm_last_modified ?? object.uploaded,
+      ).toUTCString(),
+      etag: object.customMetadata?.fourm_etag ?? object.httpEtag,
+      ...(object.customMetadata?.fourm_mtime_ns
+        ? { mtime_ns: object.customMetadata.fourm_mtime_ns }
+        : {}),
+      content_type: mediaContentType(path),
+    });
+  }
+  return result;
 }

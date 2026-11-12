@@ -13,7 +13,8 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "jsxImportSource": "remix/component",
-    "noEmit": true
+    "noEmit": true,
+    "resolveJsonModule": true
   },
   "exclude": ["dist", "app/browser", "app/client.ts"]
 }

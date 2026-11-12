@@ -62,8 +62,12 @@ Media delivery now supports bounded/suffix/open-ended ranges, merged and multipa
 ranges, HEAD, conditional requests and If-Range. A running-app comparison checks
 actual imported audio/video/image bytes against Python. Celld deliberately frames
 GET streams as chunked and drops their Content-Length; HEAD retains representation
-length. R2 supplies its own opaque ETag and upload-time Last-Modified; preserving
-original filesystem modification metadata through transfer remains follow-up work.
+length. The filename-based MIME registry is captured from the production Python
+runtime, rather than the oracle host's larger OS registry. All 146 assets match
+production's MIME, size, Last-Modified and ETag through read-only HEAD checks.
+Archives preserve original modification times, opaque validators and nanosecond
+precision. Real-content backup, fresh restore, replay and cache-free authority
+reopen verify those fields. Public media retains the source cache policy.
 
 The source media-library composition and upload/rename/alt/delete forms are ported,
 including quick upload and original filename/extension rules. Username moves keep
@@ -84,10 +88,20 @@ foreign destination protection, and late upload completion after cleanup claims 
 
 ## Still required
 
-Original filesystem media metadata transfer, notifications and
+Final corrected snapshot adoption, notifications and
 watch behavior, source admin/export workflows, forum quotes/pagination, chat,
 and every original widget rendering/configuration path remain implementation and
 verification work. Source validation/error paths and JSON contracts need the same
 care as positive browser flows. Recheck all real layouts and perform full
 real-content authority reopen, import/replay and recovery before review readiness.
 The earlier POC browser runner is not proof of the corrected workflow threshold.
+
+The snapshot builder now retains completed enrollment/profile history and records
+excluded row counts. Unconsumed enrollment state, production push endpoints and
+credentials remain excluded. The corrected cohort retains one completed enrollment
+and excludes two unconsumed continuations; adopting it in both final review stores
+is still required. Files are independent copies with preserved stat metadata.
+
+Offline source export uses installed Python's standard library for source-compatible
+filesystem metadata; the native Worker has no Python or network dependency at startup.
+`FOURM_MIGRATION_PYTHON` selects that offline tool when needed.

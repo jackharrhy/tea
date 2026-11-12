@@ -66,12 +66,21 @@ export async function transferArchive({ mode, directory, origin, token }) {
         storage_path: item.storage_path,
         sha256,
         size_bytes: bytes.length,
+        ...before.objects?.find(
+          (object) => object.storage_path === item.storage_path,
+        ),
         mime_type: item.mime_type,
+        content_type: response.headers.get("Content-Type"),
+        last_modified: response.headers.get("Last-Modified"),
+        etag: response.headers.get("ETag"),
         file,
       });
     }
     const after = await (await request("/api/archive")).json();
-    if (metadata(before.tables) !== metadata(after.tables))
+    if (
+      metadata(before.tables) !== metadata(after.tables) ||
+      JSON.stringify(before.objects) !== JSON.stringify(after.objects)
+    )
       throw new Error(
         "Community changed during backup; retry into a fresh directory",
       );
@@ -120,6 +129,11 @@ export async function transferArchive({ mode, directory, origin, token }) {
         headers: {
           "Content-Type": item.mime_type,
           "X-Content-SHA256": item.sha256,
+          ...(item.last_modified
+            ? { "X-Source-Last-Modified": item.last_modified }
+            : {}),
+          ...(item.etag ? { "X-Source-ETag": item.etag } : {}),
+          ...(item.mtime_ns ? { "X-Source-Mtime-Ns": item.mtime_ns } : {}),
         },
         body: bytes,
       },
@@ -140,6 +154,13 @@ export async function transferArchive({ mode, directory, origin, token }) {
     );
     if (digest(Buffer.from(await response.arrayBuffer())) !== item.sha256)
       throw new Error("Restored object readback differs");
+    for (const [field, header] of [
+      ["last_modified", "Last-Modified"],
+      ["etag", "ETag"],
+      ["content_type", "Content-Type"],
+    ])
+      if (item[field] && item[field] !== response.headers.get(header))
+        throw new Error("Restored object response metadata differs");
   }
   return {
     status: "PASS",

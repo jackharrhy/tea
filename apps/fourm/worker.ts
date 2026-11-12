@@ -81,7 +81,8 @@ export default {
       const secured = new Response(response.body, response);
       secured.headers.set("X-Content-Type-Options", "nosniff");
       secured.headers.set("Referrer-Policy", "same-origin");
-      secured.headers.set("Cache-Control", "no-store");
+      if (!url.pathname.startsWith("/uploads/"))
+        secured.headers.set("Cache-Control", "no-store");
       return secured;
     } catch (error) {
       const status =
