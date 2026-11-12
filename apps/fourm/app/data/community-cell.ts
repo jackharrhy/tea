@@ -1,4 +1,8 @@
-import { processMediaMove, cleanupMediaTransfer } from "../media-move.ts";
+import {
+  processMediaMove,
+  cleanupMediaTransfer,
+  cleanupAccountMedia,
+} from "../media-move.ts";
 import { DurableObject } from "cloudflare:workers";
 import { createCommunity, CommunityError } from "./community.ts";
 import type { Row } from "./community.ts";
@@ -38,7 +42,11 @@ export class CommunityCell extends DurableObject<Env> {
     }
   }
   private async scheduleMediaWork() {
-    if (this.community.hasMediaTransfers() || this.community.hasMediaMoves()) {
+    if (
+      this.community.hasMediaTransfers() ||
+      this.community.hasMediaMoves() ||
+      this.community.hasAccountCleanup()
+    ) {
       const current = await this.ctx.storage.getAlarm();
       if (current === null || current > Date.now() + 30000)
         await this.ctx.storage.setAlarm(Date.now() + 30000);
@@ -122,6 +130,26 @@ export class CommunityCell extends DurableObject<Env> {
       };
     }
   }
+  async deleteAccount(actorId: number | null, userId: number, mode: string) {
+    try {
+      const count = this.community.beginAccountDelete(actorId, userId, mode);
+      await this.scheduleMediaWork();
+      await cleanupAccountMedia(this.community, this.env.MEDIA);
+      await this.scheduleMediaWork();
+      return { ok: true as const, count };
+    } catch (error) {
+      if (!(error instanceof CommunityError))
+        console.error("Account cleanup interrupted");
+      return {
+        ok: false as const,
+        status: error instanceof CommunityError ? error.status : 503,
+        error:
+          error instanceof CommunityError
+            ? error.message
+            : "Account deletion is committed; media cleanup will retry. Reload the admin page.",
+      };
+    }
+  }
   async alarm() {
     let failure: unknown;
     try {
@@ -131,6 +159,11 @@ export class CommunityCell extends DurableObject<Env> {
         } catch (error) {
           failure ??= error;
         }
+      }
+      try {
+        await cleanupAccountMedia(this.community, this.env.MEDIA);
+      } catch (error) {
+        failure ??= error;
       }
       for (const item of this.community.pendingMediaDeletes()) {
         try {

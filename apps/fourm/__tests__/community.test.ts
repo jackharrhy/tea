@@ -924,3 +924,88 @@ it("keeps admin account toggles local, reports storage, and resolves only exact 
   ).toThrow("ambiguous central identity links");
   expect(community.adminSnapshot(41).storage).toHaveLength(2);
 });
+
+it("reparents survivors and cascades account content without orphaning completed enrollment proofs", () => {
+  const { community, sqlite } = fixture();
+  sqlite.prepare("UPDATE users SET invited_by_user_id=41 WHERE id=72").run();
+  sqlite
+    .prepare(
+      "INSERT INTO invites(id,code,created_by_user_id,max_uses) VALUES(70,'local-delete-invite',72,2)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO users(id,username,display_name,password_hash,invited_by_user_id,invite_id) VALUES(99,'child','Child','',72,70)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO auth_enrollments(id,invite_id,expires_at,user_id,consumed_at,subject) VALUES('completed-child',70,1,99,1,'child-sub')",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO enrollment_completions(request_id,issuer,delivered_at) VALUES('completed-child','https://fixture.example',1)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO enrollment_grants(request_id,application_id,attempt_id,outcome) VALUES('completed-child','maps','local-attempt','preserved')",
+    )
+    .run();
+  community.createSession("local-session", 72, Date.now() + 60000);
+  community.signGuestbook(72, "jane", "Local entry");
+  community.savePage(72, "owned", {
+    title: "Owned",
+    content: "text",
+    content_format: "html",
+    is_public: 1,
+  });
+  expect(() => community.beginAccountDelete(null, 72, "reparent")).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.beginAccountDelete(72, 99, "prune")).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.beginAccountDelete(41, 41, "reparent")).toThrow(
+    "Cannot delete your own account",
+  );
+  expect(community.beginAccountDelete(41, 72, "reparent")).toBe(1);
+  expect(community.profile("child").id).toBe(99);
+  expect(
+    sqlite
+      .prepare("SELECT invited_by_user_id,invite_id FROM users WHERE id=99")
+      .get(),
+  ).toMatchObject({ invited_by_user_id: 41, invite_id: null });
+  expect(community.session("local-session")).toBe(null);
+  expect(community.guestbook("jane").entries).toEqual([]);
+  expect(
+    sqlite.prepare("SELECT count(*) AS n FROM pages WHERE user_id=72").get()?.n,
+  ).toBe(0);
+  expect(
+    sqlite.prepare("SELECT count(*) AS n FROM enrollment_grants").get()?.n,
+  ).toBe(0);
+  expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+});
+it("prunes descendant accounts atomically and blocks active media work", () => {
+  const { community, sqlite } = fixture();
+  sqlite
+    .prepare(
+      "INSERT INTO users(id,username,display_name,password_hash,invited_by_user_id) VALUES(99,'child','Child','',72),(100,'grandchild','Grandchild','',99)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO media_transfers(storage_path,user_id,mime_type,size_bytes,state,expires_at) VALUES('child/pending.png',99,'image/png',1,'uploading',9999999999999)",
+    )
+    .run();
+  expect(() => community.beginAccountDelete(41, 72, "prune")).toThrow(
+    "Wait for media transfers",
+  );
+  expect(community.profile("sam").id).toBe(72);
+  expect(community.hasAccountCleanup()).toBe(false);
+  sqlite.prepare("DELETE FROM media_transfers WHERE user_id=99").run();
+  expect(community.beginAccountDelete(41, 72, "prune")).toBe(3);
+  expect(community.members().map((u) => u.id)).toEqual([41]);
+  expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+});

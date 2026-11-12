@@ -5,7 +5,11 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { expect, test } from "vitest";
 import { createCommunity } from "../app/data/community.ts";
-import { processMediaMove, cleanupMediaTransfer } from "../app/media-move.ts";
+import {
+  processMediaMove,
+  cleanupMediaTransfer,
+  cleanupAccountMedia,
+} from "../app/media-move.ts";
 import { chosenFilename } from "../app/media-filename.ts";
 
 function fixture(persistent = false) {
@@ -516,6 +520,38 @@ test("an existing pending move upgrades its operational schema and resumes", asy
     expect(upgraded.profile("legacy-jane").id).toBe(41);
     expect(f.objects.has("legacy-jane/song.mp3")).toBe(true);
     expect(upgraded.pendingMediaMoves()).toEqual([]);
+  } finally {
+    f.close();
+  }
+});
+
+test("account object cleanup survives lost acknowledgment and holds names until removal finishes", async () => {
+  const f = fixture(true);
+  try {
+    expect(f.community.beginAccountDelete(41, 72, "reparent")).toBe(1);
+    expect(f.community.hasAccountCleanup()).toBe(true);
+    expect(f.objects.has("sam/song.mp3")).toBe(true);
+    expect(() => f.community.beginUsernameRename(41, "sam")).toThrow(
+      "already taken",
+    );
+    expect(() =>
+      f.community.assertArchiveRestoreAuthority(
+        "https://fixture.invalid",
+        "fixture-jane",
+      ),
+    ).toThrow("cleanup must finish");
+    f.failDelete();
+    await expect(cleanupAccountMedia(f.community, f.media)).rejects.toThrow(
+      "connection lost",
+    );
+    expect(f.community.hasAccountCleanup()).toBe(true);
+    const recovered = f.reopen();
+    await cleanupAccountMedia(recovered, f.media);
+    expect(recovered.hasAccountCleanup()).toBe(false);
+    expect(f.objects.has("sam/song.mp3")).toBe(false);
+    expect(f.objects.has("jane/song.mp3")).toBe(true);
+    expect(f.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(recovered.beginUsernameRename(41, "sam")).not.toBe(null);
   } finally {
     f.close();
   }

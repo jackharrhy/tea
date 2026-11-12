@@ -22,6 +22,11 @@ export function runtime(env: Bindings) {
     env.COMMUNITIES.idFromName("fourm-community-v1"),
   );
   return {
+    async deleteAccount(actorId: number | null, userId: number, mode: string) {
+      const result = await cell.deleteAccount(actorId, userId, mode);
+      if (!result.ok) throw new CommunityError(result.status, result.error);
+      return result.count;
+    },
     async removeMedia(actorId: number, mediaId: number) {
       const result = await cell.removeMedia(actorId, mediaId);
       if (!result.ok) throw new CommunityError(result.status, result.error);

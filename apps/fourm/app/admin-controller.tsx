@@ -8,6 +8,7 @@ import type { Runtime, Viewer, Bindings } from "./runtime.ts";
 import { formFields, saved } from "./settings-controller.tsx";
 export const adminRoutes = route({
   banner: post("/admin/site-banner"),
+  deleteAccount: post("/admin/users/:id/delete"),
   rename: post("/admin/users/:id/rename"),
   toggleAdmin: post("/admin/users/:id/toggle-admin"),
   toggleDisabled: post("/admin/users/:id/toggle-disabled"),
@@ -35,6 +36,20 @@ export function adminController(store: Runtime, viewer: Viewer, env: Bindings) {
   const id = viewer.member?.id ?? null;
   return createController(adminRoutes, {
     actions: {
+      async deleteAccount({ request, params }) {
+        const fields = await formFields(request);
+        const count = await store.deleteAccount(
+          id,
+          integer(params.id),
+          String(fields.mode ?? "reparent"),
+        );
+        return request.headers.get("HX-Request") === "true"
+          ? new Response(
+              `<tr><td colspan='8'>deleted ${count} user(s)</td></tr>`,
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            )
+          : redirect();
+      },
       async rename({ request, params }) {
         const fields = await formFields(request);
         const userId = integer(params.id);
