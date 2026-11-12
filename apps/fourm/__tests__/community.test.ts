@@ -399,3 +399,66 @@ it("preserves existing multi-megabyte Unicode pages within native SQL value limi
     sqlite.prepare("SELECT count(*) AS n FROM page_content_chunks").get()?.n,
   ).toBe(0);
 });
+
+it("saves the source settings sections without crossing account or role boundaries", () => {
+  const { community, sqlite } = fixture();
+  community.saveSettingsSection(72, "guestbook", {
+    guestbook_css: ".gb-entry{color:blue}",
+    guestbook_html: "<footer>saved</footer>",
+    is_admin: 1,
+  });
+  const owner = community.guestbook("sam").owner;
+  expect(owner.guestbook_css).toBe(".gb-entry{color:blue}");
+  expect(owner.guestbook_html).toBe("<footer>saved</footer>");
+  expect(community.member(72).is_admin).toBe(0);
+  sqlite
+    .prepare("UPDATE users SET updated_at='2000-01-01 00:00:00' WHERE id=72")
+    .run();
+  community.saveSettingsSection(72, "notifications", {
+    notifications_enabled: "on",
+  });
+  const preferences = community.profile("sam");
+  expect(preferences.notifications_enabled).toBe(1);
+  expect(preferences.watch_all_threads).toBe(0);
+  expect(preferences.updated_at).toBe("2000-01-01 00:00:00");
+  community.saveSettingsSection(72, "status", {
+    status_emoji: "🌍".repeat(11),
+    status_text: "x".repeat(141),
+  });
+  expect(community.profile("sam").status_emoji).toBe("🌍".repeat(10));
+  community.setDisabled(41, 72, true);
+  expect(() =>
+    community.saveSettingsSection(72, "css", { custom_css: "body{}" }),
+  ).toThrow("Membership is unavailable");
+});
+it("canonical page editing preserves IDs through slug changes and rejects duplicate creation", () => {
+  const { community } = fixture();
+  const original = community.createSettingsPage(41, "before.html", {
+    title: "Before",
+    content: "Original",
+    content_format: "html",
+  });
+  expect(() =>
+    community.createSettingsPage(41, "before.html", {
+      title: "Overwrite",
+      content: "wrong",
+    }),
+  ).toThrow("already exists");
+  const edited = community.editSettingsPage(41, "before.html", {
+    new_slug: "after.html",
+    title: "After",
+    content: "Updated",
+    content_format: "markdown",
+    is_public: 0,
+  });
+  expect(edited.id).toBe(original.id);
+  expect(edited.content).toBe("Updated");
+  expect(edited.is_public).toBe(0);
+  expect(() => community.page(41, "before.html", 41)).toThrow("Not found");
+  expect(() =>
+    community.editSettingsPage(72, "after.html", {
+      new_slug: "stolen",
+      title: "No",
+    }),
+  ).toThrow("Not found");
+});

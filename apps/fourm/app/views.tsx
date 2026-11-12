@@ -1,12 +1,17 @@
 import { unsafeHTML } from "remix/component";
 import type { Handle, RemixNode } from "remix/component";
 import type { Member, Row } from "./data/community.ts";
-import { content, postContent } from "./rendering.ts";
+import { postContent } from "./rendering.ts";
+
+// Keep the source banner element intact: saved banner CSS can target its children.
+const bannerAttributes: Record<string, string> = { role: "status" };
 
 export function Document(
   handle: Handle<{
     title: string;
     member: Member | null;
+    banner?: Row | null;
+    html?: string;
     children?: RemixNode;
   }>,
 ) {
@@ -15,10 +20,23 @@ export function Document(
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>{handle.props.title} · 4orm</title>
+        <title>{handle.props.title}</title>
+        <link
+          rel="icon"
+          href={
+            "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>"
+          }
+        />
         <link rel="stylesheet" href="/static/style.css" />
+        <link rel="manifest" href="/static/manifest.json" />
+        <meta name="theme-color" content="#00ccff" />
+        <script src="/static/htmx.min.js" />
       </head>
-      <body class="fourm-shell">
+      <body
+        class="fourm-shell"
+        data-vapid-key=""
+        data-logged-in={handle.props.member ? "true" : "false"}
+      >
         <header class="topbar">
           <a href="/" class="logo">
             4orm
@@ -45,86 +63,35 @@ export function Document(
             )}
           </nav>
         </header>
-        <main class="wrap">{handle.props.children}</main>
+        {handle.props.banner?.banner_enabled ? (
+          <>
+            <style
+              innerHTML={unsafeHTML(
+                String(handle.props.banner.banner_css ?? ""),
+              )}
+            />
+            <aside
+              class="site-banner"
+              {...bannerAttributes}
+              innerHTML={unsafeHTML(
+                String(handle.props.banner.banner_html ?? ""),
+              )}
+            />
+          </>
+        ) : null}
+        <main
+          class="wrap"
+          innerHTML={
+            handle.props.html === undefined
+              ? undefined
+              : unsafeHTML(handle.props.html)
+          }
+        >
+          {handle.props.children}
+        </main>
+        <script src="/static/app.js" />
       </body>
     </html>
-  );
-}
-export function Members(handle: Handle<{ members: Row[] }>) {
-  return () => (
-    <>
-      <h1>Welcome to 4orm</h1>
-      <p>A place for our pages, conversations, and whatever we're making.</p>
-      <h2>Members</h2>
-      <ul>
-        {handle.props.members.map((member) => (
-          <li>
-            <a href={`/u/${member.username}`}>{member.display_name}</a>{" "}
-            <small>@{member.username}</small>
-            {member.status_text ? (
-              <>
-                {" "}
-                · {member.status_emoji} {member.status_text}
-              </>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-export function Profile(handle: Handle<{ profile: Row; pages: Row[] }>) {
-  return () => (
-    <>
-      <section class="panel h-card">
-        <h1 class="p-name">{handle.props.profile.display_name}</h1>
-        <a
-          class="u-url"
-          href={`/u/${handle.props.profile.username}`}
-          rel="me"
-          hidden
-        />
-        <div
-          class="e-note"
-          innerHTML={unsafeHTML(
-            content(
-              String(handle.props.profile.content ?? ""),
-              String(handle.props.profile.content_format),
-            ),
-          )}
-        />
-        <p>
-          <a href={`/lineage#user-${handle.props.profile.username}`}>
-            view lineage
-          </a>
-        </p>
-      </section>
-      <style
-        innerHTML={unsafeHTML(String(handle.props.profile.custom_css ?? ""))}
-      />
-      <div
-        innerHTML={unsafeHTML(String(handle.props.profile.custom_html ?? ""))}
-      />
-      <section class="panel h-feed">
-        <h2>pages</h2>
-        <ul>
-          {handle.props.pages.length ? (
-            handle.props.pages.map((page) => (
-              <li class="h-entry">
-                <a
-                  class="u-url p-name"
-                  href={`/u/${handle.props.profile.username}/page/${page.slug}`}
-                >
-                  {page.title}
-                </a>
-              </li>
-            ))
-          ) : (
-            <li>no pages yet.</li>
-          )}
-        </ul>
-      </section>
-    </>
   );
 }
 export function Format(handle: Handle<{ value?: string; bbcode?: boolean }>) {
@@ -153,126 +120,6 @@ export function Format(handle: Handle<{ value?: string; bbcode?: boolean }>) {
           </option>
         ) : null}
       </select>
-    </>
-  );
-}
-export function Settings(
-  handle: Handle<{ member: Member; profile: Row; pages: Row[] }>,
-) {
-  return () => (
-    <>
-      <h1>Settings</h1>
-      <p>
-        Signed in as {handle.props.member.display_name}. Your identity is linked
-        through Jack Auth.
-      </p>
-      <form method="post" action="/settings">
-        <label>
-          Display name
-          <input
-            name="display_name"
-            required
-            maxLength={80}
-            value={String(handle.props.profile.display_name)}
-          />
-        </label>
-        <label htmlFor="content">Page content</label>
-        <textarea
-          id="content"
-          name="content"
-          defaultValue={String(handle.props.profile.content ?? "")}
-        />
-        <Format value={String(handle.props.profile.content_format ?? "html")} />
-        <label htmlFor="custom_css">Custom CSS</label>
-        <textarea
-          id="custom_css"
-          name="custom_css"
-          defaultValue={String(handle.props.profile.custom_css ?? "")}
-        />
-        <label htmlFor="custom_html">Custom HTML</label>
-        <textarea
-          id="custom_html"
-          name="custom_html"
-          defaultValue={String(handle.props.profile.custom_html ?? "")}
-        />
-        <label>
-          Forum signature
-          <input
-            name="forum_signature"
-            value={String(handle.props.profile.forum_signature ?? "")}
-          />
-        </label>
-        <button>Save profile</button>
-      </form>
-      <h2>Your pages</h2>
-      <ul>
-        {handle.props.pages.map((page) => (
-          <li class="row">
-            <a href={`/u/${handle.props.member.username}/page/${page.slug}`}>
-              {page.title}
-            </a>
-            <a href={`/settings/pages/${page.slug}`}>edit</a>
-            <form method="post" action={`/settings/pages/${page.slug}/delete`}>
-              <button>Delete {page.title}</button>
-            </form>
-          </li>
-        ))}
-      </ul>
-      <p>
-        <a href="/settings/pages/new">Create a page</a> ·{" "}
-        <a href="/settings/media">Media library</a> ·{" "}
-        <a href="/settings/invites">Invites</a> ·{" "}
-        <a href="/settings/widgets">Widgets and profile card</a>
-      </p>
-    </>
-  );
-}
-export function PageEditor(handle: Handle<{ page?: Row }>) {
-  return () => (
-    <>
-      <h1>{handle.props.page ? "Edit page" : "Create a page"}</h1>
-      <form method="post">
-        <label>
-          Slug
-          <input
-            name="slug"
-            required
-            pattern="[^/]{1,80}"
-            maxLength={80}
-            value={String(handle.props.page?.slug ?? "")}
-          />
-        </label>
-        <label>
-          Title
-          <input
-            name="title"
-            required
-            maxLength={140}
-            value={String(handle.props.page?.title ?? "")}
-          />
-        </label>
-        <label htmlFor="content">Content</label>
-        <textarea
-          id="content"
-          name="content"
-          defaultValue={String(handle.props.page?.content ?? "")}
-        />
-        <Format value={String(handle.props.page?.content_format ?? "html")} />
-        <label>
-          <span>
-            <input
-              type="checkbox"
-              name="is_public"
-              value="1"
-              checked={
-                handle.props.page ? Boolean(handle.props.page.is_public) : true
-              }
-            />{" "}
-            Public
-          </span>
-        </label>
-        <button>Save page</button>
-      </form>
     </>
   );
 }
@@ -467,48 +314,6 @@ export function Media(
     </>
   );
 }
-export function Invites(handle: Handle<{ invites: Row[]; origin: string }>) {
-  return () => (
-    <>
-      <h1>Invites</h1>
-      <form method="post" action="/settings/invites">
-        <label>
-          Maximum uses
-          <input
-            type="number"
-            name="max_uses"
-            min={1}
-            max={100}
-            value="1"
-            required
-          />
-        </label>
-        <button>Create invite</button>
-      </form>
-      <ul>
-        {handle.props.invites.map((invite) => (
-          <li>
-            <a href={`/register?invite=${invite.code}`}>
-              {handle.props.origin}/register?invite={invite.code}
-            </a>
-            <p>
-              {invite.uses_count} of {invite.max_uses} used
-              {invite.disabled ? " · disabled" : ""}
-            </p>
-            {!invite.disabled ? (
-              <form
-                method="post"
-                action={`/settings/invites/${invite.id}/disable`}
-              >
-                <button>Disable invite {invite.id}</button>
-              </form>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
 
 export function BareDocument(
   handle: Handle<{ title: string; children?: RemixNode }>,
@@ -524,11 +329,4 @@ export function BareDocument(
       <body>{handle.props.children}</body>
     </html>
   );
-}
-export function rawPage(record: Row, profile: Row) {
-  const data = JSON.stringify({
-    username: profile.username,
-    display_name: profile.display_name,
-  }).replace(/</g, "\\u003c");
-  return `${content(String(record.content ?? ""), String(record.content_format))}\n<script>window.__4ORM=${data};</script><style>${profile.custom_css ?? ""}</style>${profile.custom_html ?? ""}`;
 }

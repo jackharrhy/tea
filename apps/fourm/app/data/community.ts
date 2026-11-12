@@ -1,3 +1,4 @@
+import { createSettings } from "./settings.ts";
 import { pageContent } from "./page-content.ts";
 import { schema, coreTables } from "./schema.ts";
 import { createEnrollments } from "./enrollment.ts";
@@ -81,7 +82,82 @@ export function createCommunity(db: Database) {
       throw new CommunityError(403, "This belongs to another member");
   }
 
+  function writePage(actorId: number, pageSlug: string, input: Row) {
+    member(actorId);
+    slug(pageSlug);
+    const title = required(input.title, 140, "Title");
+    const content = String(input.content ?? "");
+    const parts = pageBodies.chunks(content);
+    db.all(
+      `INSERT INTO pages(user_id,slug,title,content,content_format,layout,is_public)
+    VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id,slug) DO UPDATE SET
+    title=excluded.title,content=excluded.content,content_format=excluded.content_format,
+    layout=excluded.layout,is_public=excluded.is_public,updated_at=CURRENT_TIMESTAMP`,
+      actorId,
+      pageSlug,
+      title,
+      parts.length ? "" : content,
+      format(input.content_format ?? "html"),
+      String(input.layout ?? "default"),
+      input.is_public ? 1 : 0,
+    );
+    const id = db.all(
+      "SELECT id FROM pages WHERE user_id=? AND slug=?",
+      actorId,
+      pageSlug,
+    )[0].id;
+    pageBodies.write(Number(id), parts);
+    return pageBodies.read(
+      db.all(
+        "SELECT * FROM pages WHERE user_id=? AND slug=?",
+        actorId,
+        pageSlug,
+      )[0],
+    );
+  }
+
   return {
+    settingsSnapshot(actorId: number) {
+      const user = member(actorId);
+      return {
+        profile: this.profile(user.username),
+        pages: db.all(
+          "SELECT slug,title,is_public,updated_at FROM pages WHERE user_id=? ORDER BY updated_at DESC",
+          actorId,
+        ),
+        card: this.profileCard(actorId),
+        media: this.media(actorId).items,
+        tracks: this.playlist(user.username),
+        invites: this.invites(actorId),
+      };
+    },
+    publicProfile(username: string) {
+      const profile = this.profile(username);
+      return {
+        profile,
+        pages: db.all(
+          "SELECT slug,title FROM pages WHERE user_id=? AND is_public=1 ORDER BY updated_at DESC",
+          profile.id,
+        ),
+      };
+    },
+    home() {
+      return {
+        cards:
+          db.all(`SELECT u.username,c.headline,c.content,c.content_format,c.accent_color,c.border_style,c.card_css
+          FROM users u JOIN profile_cards c ON u.id=c.user_id
+          LEFT JOIN (SELECT user_id,MAX(updated_at) latest_page_at FROM pages GROUP BY user_id) p ON p.user_id=u.id
+          ORDER BY MAX(u.updated_at,c.updated_at,COALESCE(p.latest_page_at,u.created_at)) DESC`),
+        recent:
+          db.all(`SELECT p.*,t.title thread_title,u.username author_username,u.display_name author_display_name
+          FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id JOIN users u ON u.id=p.author_id
+          WHERE p.created_at>=datetime('now','-2 hours') ORDER BY p.created_at DESC LIMIT 5`),
+      };
+    },
+    siteBanner() {
+      return db.all("SELECT * FROM site_settings WHERE id=1")[0] ?? null;
+    },
+    ...createSettings(db, member),
     ...createEnrollments(db, member),
     ...createMedia(db, member),
     ...createWidgets(db, member),
@@ -231,7 +307,11 @@ export function createCommunity(db: Database) {
     },
     profile(username: string) {
       const user = db.all(
-        "SELECT u.id,u.username,u.display_name,u.content,u.content_format,u.custom_css,u.custom_html,u.layout,u.status_emoji,u.status_text,u.forum_signature,u.avatar_media_id,m.storage_path AS avatar_path FROM users u LEFT JOIN media m ON m.id=u.avatar_media_id WHERE u.username=? AND u.is_disabled=0",
+        `SELECT u.id,u.username,u.display_name,u.content,u.content_format,u.custom_css,u.custom_html,u.layout,
+        u.status_emoji,u.status_text,u.status_updated_at,u.forum_signature,u.avatar_media_id,
+        u.guestbook_css,u.guestbook_html,u.counter_css,u.counter_html,u.status_css,u.status_html,
+        u.player_css,u.player_html,u.in_webring,u.notifications_enabled,u.watch_all_threads,u.created_at,u.updated_at,
+        m.storage_path AS avatar_path FROM users u LEFT JOIN media m ON m.id=u.avatar_media_id WHERE u.username=?`,
         username,
       )[0];
       if (!user) throw missing();
@@ -240,7 +320,7 @@ export function createCommunity(db: Database) {
     pages(userId: number, actorId: number | null) {
       return db
         .all(
-          "SELECT * FROM pages WHERE user_id=? AND (is_public=1 OR user_id=?) ORDER BY slug",
+          "SELECT * FROM pages WHERE user_id=? AND (is_public=1 OR user_id=?) ORDER BY updated_at DESC",
           userId,
           actorId,
         )
@@ -257,33 +337,37 @@ export function createCommunity(db: Database) {
       return pageBodies.read(page);
     },
     savePage(actorId: number, pageSlug: string, input: Row) {
+      return db.transaction(() => writePage(actorId, pageSlug, input));
+    },
+    createSettingsPage(actorId: number, pageSlug: string, input: Row) {
       member(actorId);
-      slug(pageSlug);
-      const title = required(input.title, 140, "Title");
-      const content = String(input.content ?? "");
-      const parts = pageBodies.chunks(content);
-      db.transaction(() => {
+      if (
         db.all(
-          `INSERT INTO pages(user_id,slug,title,content,content_format,layout,is_public)
-        VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id,slug) DO UPDATE SET
-        title=excluded.title,content=excluded.content,content_format=excluded.content_format,
-        layout=excluded.layout,is_public=excluded.is_public,updated_at=CURRENT_TIMESTAMP`,
-          actorId,
-          pageSlug,
-          title,
-          parts.length ? "" : content,
-          format(input.content_format ?? "html"),
-          String(input.layout ?? "default"),
-          input.is_public ? 1 : 0,
-        );
-        const id = db.all(
           "SELECT id FROM pages WHERE user_id=? AND slug=?",
           actorId,
           pageSlug,
-        )[0].id;
-        pageBodies.write(Number(id), parts);
+        ).length
+      )
+        throw new CommunityError(409, "a page with that slug already exists");
+      return this.savePage(actorId, pageSlug, { ...input, is_public: 1 });
+    },
+    editSettingsPage(actorId: number, oldSlug: string, input: Row) {
+      member(actorId);
+      const existing = this.page(actorId, oldSlug, actorId);
+      const newSlug = slug(String(input.new_slug ?? ""));
+      if (
+        db.all(
+          "SELECT id FROM pages WHERE user_id=? AND slug=? AND id<>?",
+          actorId,
+          newSlug,
+          existing.id,
+        ).length
+      )
+        throw new CommunityError(409, "a page with that slug already exists");
+      return db.transaction(() => {
+        db.all("UPDATE pages SET slug=? WHERE id=?", newSlug, existing.id);
+        return writePage(actorId, newSlug, input);
       });
-      return this.page(actorId, pageSlug, actorId);
     },
     deletePage(actorId: number, pageSlug: string) {
       member(actorId);
