@@ -199,38 +199,18 @@ export function Forum(
     </>
   );
 }
-export function NewThread() {
-  return () => (
-    <>
-      <h1>New thread</h1>
-      <form method="post" action="/forum">
-        <label>
-          Title
-          <input name="title" required maxLength={200} />
-        </label>
-        <label>
-          Post
-          <textarea name="content" required />
-        </label>
-        <Format bbcode value="bbcode" />
-        <button>Create thread</button>
-      </form>
-    </>
-  );
+interface ThreadProps {
+  thread: Row;
+  posts: Row[];
+  member: Member | null;
+  page: number;
+  total_pages: number;
+  watching: boolean;
+  media: Row[];
 }
-export function Thread(
-  handle: Handle<{
-    thread: Row;
-    posts: Row[];
-    member: Member | null;
-    page: number;
-    total_pages: number;
-    watching: boolean;
-    media: Row[];
-  }>,
-) {
+export function ThreadHeader(handle: Handle<ThreadProps>) {
   return () => {
-    const { thread, posts, member, page, total_pages, watching } = handle.props;
+    const { thread, member, watching } = handle.props;
     return (
       <>
         {thread.custom_css ? (
@@ -301,9 +281,15 @@ export function Thread(
             </form>
           ) : null}
         </div>
-        {thread.custom_html ? (
-          <div innerHTML={unsafeHTML(String(thread.custom_html))} />
-        ) : null}
+      </>
+    );
+  };
+}
+export function Thread(handle: Handle<ThreadProps>) {
+  return () => {
+    const { thread, posts, member, page, total_pages } = handle.props;
+    return (
+      <>
         <div id="forum-posts">
           {posts.map((post) => (
             <div class="forum-post" id={`post-${post.id}`}>
