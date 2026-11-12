@@ -201,6 +201,32 @@ try {
       const c = await context(origin, width),
         p = await c.newPage(),
         pages = {};
+      const browserLog = [];
+      p.on("console", (message) =>
+        browserLog.push({
+          kind: "console",
+          type: message.type(),
+          phase,
+          text: message.text(),
+          location: message.location(),
+        }),
+      );
+      p.on("pageerror", (error) =>
+        browserLog.push({
+          kind: "pageerror",
+          phase,
+          name: error.name,
+          message: error.message,
+        }),
+      );
+      p.on("requestfailed", (request) =>
+        browserLog.push({
+          kind: "requestfailed",
+          phase,
+          url: request.url(),
+          failure: request.failure(),
+        }),
+      );
       for (const [kind, path] of [
         ["home", "/"],
         ["profile", "/u/" + selection.username],
@@ -254,6 +280,28 @@ try {
       pages.homeJSON = await homeApi.json();
       capture[name] = pages;
       await c.close();
+      await writeFile(
+        output + `/${name}-browser-log-${width}.json`,
+        JSON.stringify(browserLog, null, 2),
+        { mode: 0o600 },
+      );
+      assert.equal(
+        browserLog.filter((event) => event.kind === "pageerror").length,
+        0,
+        "Unexpected browser script exception; inspect the protected browser log",
+      );
+      assert.equal(
+        browserLog.filter(
+          (event) =>
+            event.kind === "requestfailed" &&
+            [oracle, native, "http://127.0.0.1:18975"].includes(
+              new URL(event.url).origin,
+            ) &&
+            event.failure?.errorText !== "net::ERR_ABORTED",
+        ).length,
+        0,
+        "Unexpected local request failure; inspect the protected browser log",
+      );
     }
     await writeFile(
       output + `/observations-${width}.json`,

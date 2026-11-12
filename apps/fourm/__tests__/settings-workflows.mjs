@@ -289,6 +289,9 @@ export async function embeddedGuestbookWorkflow(page, origin, username) {
     frame
       .locator(".gb-entry")
       .evaluateAll((entries) => entries.map((entry) => entry.id));
+  const timeOrigin = await frame
+    .locator("body")
+    .evaluate(() => performance.timeOrigin);
   const before = await ids(),
     message = "Isolated embedded guestbook check " + Date.now();
   await frame.locator('textarea[name="message"]').fill(message);
@@ -309,7 +312,13 @@ export async function embeddedGuestbookWorkflow(page, origin, username) {
     page.off("dialog", accept);
   }
   assert.deepEqual(await ids(), before);
+  assert.equal(
+    await frame.locator("body").evaluate(() => performance.timeOrigin),
+    timeOrigin,
+    "Enhanced guestbook actions must not reload the iframe",
+  );
   return {
+    enhancedWithoutIframeReload: true,
     embedded: true,
     parentNavigationPreserved: true,
     signAndReset: true,
