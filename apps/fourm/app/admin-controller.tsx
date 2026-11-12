@@ -9,6 +9,8 @@ import { route, post, get } from "remix/routes";
 import type { Runtime, Viewer, Bindings } from "./runtime.ts";
 import { formFields, saved } from "./settings-controller.tsx";
 export const adminRoutes = route({
+  cleanupFiles: post("/admin/cleanup/files"),
+  cleanupRecords: post("/admin/cleanup/records"),
   orphans: get("/admin/orphans"),
   banner: post("/admin/site-banner"),
   randomize: post("/admin/cards/randomize-default-colors"),
@@ -36,10 +38,33 @@ async function rowResponse(request: Request, row: { user: Row; stats: Row }) {
       })
     : redirect();
 }
+function cleanupResponse(
+  request: Request,
+  count: number,
+  kind: "files" | "records",
+) {
+  return request.headers.get("HX-Request") === "true"
+    ? new Response(
+        `<p class="ok">deleted ${count} orphaned ${kind === "files" ? "file(s)" : "record(s)"}.</p>`,
+        { headers: { "Content-Type": "text/html; charset=utf-8" } },
+      )
+    : new Response(null, {
+        status: 303,
+        headers: { Location: `/admin?cleaned_${kind}=${count}` },
+      });
+}
 export function adminController(store: Runtime, viewer: Viewer, env: Bindings) {
   const id = viewer.member?.id ?? null;
   return createController(adminRoutes, {
     actions: {
+      async cleanupFiles({ request }) {
+        const count = await store.cleanupOrphanFiles(id);
+        return cleanupResponse(request, count, "files");
+      },
+      async cleanupRecords({ request }) {
+        const count = await store.cleanupMissingMediaRecords(id);
+        return cleanupResponse(request, count, "records");
+      },
       async orphans() {
         const result = await scanStorage(env.MEDIA, () =>
           store.call("adminMediaInventory", id),

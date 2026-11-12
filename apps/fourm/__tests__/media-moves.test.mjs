@@ -1,3 +1,4 @@
+import { cleanupOrphanMedia } from "../app/storage-health.ts";
 import { uploadMedia } from "../app/media.ts";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -552,6 +553,91 @@ test("account object cleanup survives lost acknowledgment and holds names until 
     expect(f.objects.has("jane/song.mp3")).toBe(true);
     expect(f.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     expect(recovered.beginUsernameRename(41, "sam")).not.toBe(null);
+  } finally {
+    f.close();
+  }
+});
+
+test("orphan cleanup reserves paths across lost deletion acknowledgment and authority reopen", async () => {
+  const f = fixture(true);
+  try {
+    expect(() =>
+      f.community.beginOrphanCleanup(null, "jane/orphan.txt"),
+    ).toThrow("Admin access required");
+    expect(() => f.community.beginOrphanCleanup(72, "jane/orphan.txt")).toThrow(
+      "Admin access required",
+    );
+    expect(() => f.community.beginOrphanCleanup(41, "jane/.hidden")).toThrow(
+      "Invalid member media path",
+    );
+    expect(f.community.beginOrphanCleanup(41, "jane/song.mp3")).toBe(false);
+    f.community.reserveUpload(41, "jane/upload.txt", "text/plain", 3);
+    expect(f.community.beginOrphanCleanup(41, "jane/upload.txt")).toBe(false);
+    const move = f.community.beginMediaRename(72, 13, "renamed.mp3");
+    expect(f.community.beginOrphanCleanup(41, "sam/renamed.mp3")).toBe(false);
+    expect(f.community.beginOrphanCleanup(41, "sam/song.mp3")).toBe(false);
+    expect(f.community.beginOrphanCleanup(41, "jane/orphan.txt")).toBe(true);
+    expect(f.community.beginOrphanCleanup(41, "jane/orphan.txt")).toBe(false);
+    expect(() => f.community.reserveArchiveObject("jane/orphan.txt")).toThrow(
+      "reserved for orphan cleanup",
+    );
+    f.community.reserveArchiveObject("jane/staged.txt");
+    expect(f.community.beginOrphanCleanup(41, "jane/staged.txt")).toBe(false);
+    f.objects.set("jane/orphan.txt", {
+      bytes: new Uint8Array([1, 2, 3]),
+      size: 3,
+    });
+    const reserved = f.community.reserveNamedUpload(
+      41,
+      "orphan.txt",
+      "text/plain",
+      3,
+    );
+    expect(reserved.storage_path).not.toBe("jane/orphan.txt");
+    expect(() =>
+      f.community.reserveUpload(41, "jane/orphan.txt", "text/plain", 3),
+    ).toThrow("reserved for orphan cleanup");
+    expect(() => f.community.restore({})).toThrow("Orphan cleanup must finish");
+    f.failDelete();
+    await expect(cleanupOrphanMedia(f.community, f.media)).rejects.toThrow(
+      "connection lost",
+    );
+    expect(f.community.hasOrphanCleanup()).toBe(true);
+    const reopened = f.reopen();
+    expect(reopened.hasOrphanCleanup()).toBe(true);
+    expect(await cleanupOrphanMedia(reopened, f.media)).toBe(1);
+    expect(reopened.hasOrphanCleanup()).toBe(false);
+    expect(f.objects.has("jane/orphan.txt")).toBe(false);
+    expect(f.objects.has("jane/song.mp3")).toBe(true);
+    expect(f.objects.has("sam/song.mp3")).toBe(true);
+    expect(reopened.pendingMediaMoves()[0].id).toBe(move.id);
+    expect(f.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  } finally {
+    f.close();
+  }
+});
+
+test("missing-record cleanup rechecks exact identity, path and transfer reservations", () => {
+  const f = fixture();
+  try {
+    expect(() => f.community.adminMediaRecords(72)).toThrow(
+      "Admin access required",
+    );
+    expect(
+      f.community.removeMissingMediaRecord(41, 11, "jane/not-the-same-path"),
+    ).toBe(false);
+    f.community.beginMediaRename(41, 11, "new.mp3");
+    expect(f.community.removeMissingMediaRecord(41, 11, "jane/song.mp3")).toBe(
+      false,
+    );
+    expect(f.community.removeMissingMediaRecord(41, 13, "sam/song.mp3")).toBe(
+      true,
+    );
+    expect(f.community.removeMissingMediaRecord(41, 13, "sam/song.mp3")).toBe(
+      false,
+    );
+    expect(f.community.adminMediaRecords(41)).toHaveLength(2);
+    expect(f.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
   } finally {
     f.close();
   }

@@ -25,6 +25,29 @@ export function AdminStorage() {
     </details>
   );
 }
+function CleanupForm(
+  handle: Handle<{ kind: "files" | "records"; count: number }>,
+) {
+  return () => {
+    const { kind, count } = handle.props;
+    const label = kind === "files" ? "file(s)" : "record(s)";
+    return (
+      <form
+        method="post"
+        action={`/admin/cleanup/${kind}`}
+        class="inline fourm-space-md"
+        hx-post={`/admin/cleanup/${kind}`}
+        hx-target="#orphan-results"
+        hx-swap="innerHTML"
+        hx-confirm={`Delete ${count} orphaned ${label} from ${kind === "files" ? "disk" : "database"}?`}
+      >
+        <button type="submit">
+          delete {count} orphaned {label}
+        </button>
+      </form>
+    );
+  };
+}
 export function StorageHealthView(handle: Handle<StorageHealth>) {
   return () => (
     <>
@@ -52,6 +75,9 @@ export function StorageHealthView(handle: Handle<StorageHealth>) {
       ) : (
         <p>none found.</p>
       )}
+      {handle.props.orphanedFiles.length ? (
+        <CleanupForm kind="files" count={handle.props.orphanedFiles.length} />
+      ) : null}
       <h3>orphaned records</h3>
       <p class="muted">database records whose files are missing from disk</p>
       {handle.props.orphanedRecords.length ? (
@@ -65,6 +91,12 @@ export function StorageHealthView(handle: Handle<StorageHealth>) {
       ) : (
         <p>none found.</p>
       )}
+      {handle.props.orphanedRecords.length ? (
+        <CleanupForm
+          kind="records"
+          count={handle.props.orphanedRecords.length}
+        />
+      ) : null}
     </>
   );
 }

@@ -1,3 +1,5 @@
+import { CommunityError } from "./data/community.ts";
+import type { Community } from "./data/community.ts";
 export interface MediaInventory {
   paths: string[];
   reserved: string[];
@@ -49,4 +51,23 @@ export async function scanStorage(
       .filter((path) => currentPaths.has(path) && !reserved.has(path))
       .toSorted(),
   };
+}
+
+export async function cleanupOrphanMedia(
+  community: Pick<Community, "pendingOrphanCleanup" | "finishOrphanCleanup">,
+  bucket: Pick<R2Bucket, "delete" | "head">,
+) {
+  let removed = 0;
+  for (const item of community.pendingOrphanCleanup()) {
+    const path = String(item.storage_path);
+    await bucket.delete(path);
+    if (await bucket.head(path))
+      throw new CommunityError(
+        503,
+        "Orphan media cleanup is still recovering. Try again shortly.",
+      );
+    community.finishOrphanCleanup(path);
+    removed++;
+  }
+  return removed;
 }

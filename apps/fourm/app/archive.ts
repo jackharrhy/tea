@@ -47,6 +47,7 @@ export async function archiveObject(
     etag: request.headers.get("X-Source-ETag") ?? undefined,
     mtime_ns: request.headers.get("X-Source-Mtime-Ns") ?? undefined,
   });
+  await runtime(env).call("reserveArchiveObject", path);
   const existing = await env.MEDIA.head(path);
   if (existing && existing.customMetadata?.archive_sha256 !== actual)
     throw new CommunityError(
@@ -88,6 +89,7 @@ export async function archiveObject(
         );
     }
   }
+  await runtime(env).call("releasePublishedArchiveObject", path);
   return Response.json({ ok: true, sha256: actual });
 }
 export async function restoreArchive(
