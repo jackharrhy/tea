@@ -6,7 +6,7 @@ import { createRequestLogger } from "evlog";
 
 import { db } from "#db/connection.server";
 import { cliLoginHandoffs, sessions, users, type User } from "#db";
-import { getSessionCookie } from "#lib/auth.server";
+import { getSessionCookie, getUserFromRequest } from "#lib/auth.server";
 import {
   identityClient,
   createLoginTransaction,
@@ -76,7 +76,7 @@ export default createController(routes.auth, {
       );
     },
 
-    supportTarget(context) {
+    supportEligibility(context) {
       return supportTargetEligibility(context.request);
     },
 
@@ -108,8 +108,13 @@ export default createController(routes.auth, {
       );
     },
 
-    supportExit(context) {
-      return exitSupportLogin(context.request);
+    async supportExit(context) {
+      const response = await exitSupportLogin(context.request);
+      if (response.status !== 303) return response;
+      const ownUser = await getUserFromRequest(context.request);
+      return ownUser
+        ? response
+        : redirectWithHeaders(routes.auth.login.href(), response.headers, 303);
     },
 
     async login() {
