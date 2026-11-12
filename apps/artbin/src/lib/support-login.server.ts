@@ -70,7 +70,7 @@ const random = () => randomBytes(32).toString("base64url");
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 
-function config(): SupportConfig | null {
+function supportConfig(): SupportConfig | null {
   if (process.env.ARTBIN_SUPPORT_LOGIN_ENABLED !== "1") return null;
   const identity = identityConfig();
   const publicOrigin = process.env.ARTBIN_URL ?? "";
@@ -176,7 +176,7 @@ async function responseJson(
   return parsed as Record<string, unknown>;
 }
 
-function value(record: Record<string, unknown>, key: string): string {
+function requiredString(record: Record<string, unknown>, key: string): string {
   const entry = record[key];
   if (typeof entry !== "string" || !entry || entry.length > 32_768)
     throw new Error("Invalid support response");
@@ -245,7 +245,7 @@ export function hasSupportCookie(request: Request): boolean {
 }
 
 export async function beginSupportLogin(request: Request): Promise<Response> {
-  const settings = config();
+  const settings = supportConfig();
   if (!settings) return new Response("Not Found", { status: 404 });
   pruneExpired();
   if (pending.size >= 1_000 || sessions.size >= 1_000)
@@ -285,7 +285,7 @@ export async function beginSupportLogin(request: Request): Promise<Response> {
 export async function completeSupportLogin(
   request: Request,
 ): Promise<Response> {
-  const settings = config();
+  const settings = supportConfig();
   if (!settings) return new Response("Not Found", { status: 404 });
   const url = new URL(request.url);
   const state = url.searchParams.get("state");
@@ -316,11 +316,11 @@ export async function completeSupportLogin(
     const redeemed = await responseJson(response);
     const support = supportRecord(redeemed);
     cleanup = {
-      supportId: value(support, "id"),
-      endSecret: value(support, "endSecret"),
-      expiresAt: Date.parse(value(support, "expiresAt")),
+      supportId: requiredString(support, "id"),
+      endSecret: requiredString(support, "endSecret"),
+      expiresAt: Date.parse(requiredString(support, "expiresAt")),
     };
-    const token = value(redeemed, "access_token");
+    const token = requiredString(redeemed, "access_token");
     if (redeemed.token_type !== "Bearer")
       throw new Error("Invalid support token type");
     const proof =
@@ -334,8 +334,8 @@ export async function completeSupportLogin(
         clientSecret: settings.resourceSecret,
       },
     );
-    const actorSubject = value(support, "actorSubject");
-    const targetSubject = value(support, "targetSubject");
+    const actorSubject = requiredString(support, "actorSubject");
+    const targetSubject = requiredString(support, "targetSubject");
     if (
       support.nonce !== transaction.nonce ||
       proof.actor.subject !== actorSubject ||
@@ -349,7 +349,7 @@ export async function completeSupportLogin(
     const local = await targetUser(targetSubject);
     if (!local) throw new Error("Target user is not linked in Artbin");
     const role = browserRole(proof, principal, local);
-    const expiresAt = Date.parse(value(support, "expiresAt"));
+    const expiresAt = Date.parse(requiredString(support, "expiresAt"));
     if (
       !Number.isFinite(expiresAt) ||
       expiresAt <= Date.now() ||
@@ -413,7 +413,7 @@ async function resolveSupportUser(
 ): Promise<SupportUser | null> {
   const sessionId = cookie(request, SESSION_COOKIE);
   if (!sessionId) return null;
-  const settings = config();
+  const settings = supportConfig();
   if (!settings) throw endedSupportResponse();
   pruneExpired();
   if (!supportSessionAllowedPath(new URL(request.url).pathname))
@@ -585,7 +585,7 @@ export async function exitSupportLogin(request: Request): Promise<Response> {
   if (session) {
     let settings: SupportConfig | null;
     try {
-      settings = config();
+      settings = supportConfig();
     } catch {
       settings = null;
     }
