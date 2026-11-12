@@ -112,26 +112,3 @@ export async function guestbookDocument(props: {
     html.slice(end)
   );
 }
-export function Player(handle: Handle<{ tracks: Row[] }>) {
-  return () => (
-    <>
-      <h1>Playlist</h1>
-      {handle.props.tracks.length ? (
-        <ol>
-          {handle.props.tracks.map((track) => (
-            <li>
-              <p>{track.title || track.storage_path}</p>
-              <audio
-                controls
-                preload="none"
-                src={`/uploads/${track.storage_path}`}
-              />
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p>No tracks yet.</p>
-      )}
-    </>
-  );
-}

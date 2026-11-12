@@ -1,3 +1,4 @@
+import { playerJSON, playerDocument } from "./player-widget.ts";
 import { webringJSON, webringDocument } from "./webring-widget.ts";
 import { statusJSON, statusDocument } from "./status-widget.ts";
 import { wantsJSON } from "./http.ts";
@@ -10,7 +11,7 @@ import { renderToString } from "remix/component/server";
 import { CommunityError } from "./data/community.ts";
 import type { Bindings, Runtime, Viewer } from "./runtime.ts";
 import { cookie, readCookie, hash, token } from "./runtime.ts";
-import { guestbookDocument, GuestbookEntries, Player } from "./widgets.tsx";
+import { guestbookDocument, GuestbookEntries } from "./widgets.tsx";
 import { BareDocument } from "./views.tsx";
 
 export const widgetRoutes = route({
@@ -255,11 +256,14 @@ export function widgetController(
           headers: { "Content-Type": "text/html; charset=utf-8" },
         });
       },
-      async player({ params }) {
-        return embed(
-          "Playlist",
-          <Player tracks={await store.call("playlist", params.username)} />,
-        );
+      async player({ request, params }) {
+        const owner = await store.call("status", params.username);
+        const tracks = await store.call("playlist", params.username);
+        if (wantsJSON(request))
+          return Response.json(playerJSON(params.username, tracks));
+        return new Response(playerDocument(owner, tracks), {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
       },
       async webring({ request, params }) {
         await store.call("status", params.username);
