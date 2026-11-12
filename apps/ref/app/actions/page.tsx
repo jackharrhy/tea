@@ -1,5 +1,10 @@
 import type { Handle, RemixNode } from "remix/component";
-import { uiControlStyles, uiPrimaryActionStyles } from "@harrhy/ui";
+import {
+  uiActionStyles,
+  uiControlStyles,
+  uiPrimaryActionStyles,
+  uiSecondaryActionStyles,
+} from "@harrhy/ui";
 import type { BoardRecord } from "../data/directory-cell.ts";
 import { browserAssets } from "../assets/build-manifest.ts";
 import { refStyles, refThemeStyles } from "../styles.ts";
@@ -30,7 +35,11 @@ export function AuthPage(handle: Handle<{ error?: string }>) {
           <div class="auth-intro">
             <h1>A shared board for images and links.</h1>
             <p>Collect visual references and arrange them together.</p>
-            <a class="auth-link" href="/auth/login" mix={uiPrimaryActionStyles}>
+            <a
+              class="auth-link"
+              href="/auth/login"
+              mix={[uiActionStyles, uiPrimaryActionStyles]}
+            >
               Sign in with Jack Auth
             </a>
           </div>
@@ -76,7 +85,7 @@ export function HomePage(
               required
               maxLength={100}
             />
-            <button type="submit" mix={uiPrimaryActionStyles}>
+            <button type="submit" mix={[uiActionStyles, uiPrimaryActionStyles]}>
               Create
             </button>
           </form>
@@ -133,12 +142,14 @@ export function BoardPage(
             id="tool-add"
             class="header-add"
             type="button"
-            mix={uiPrimaryActionStyles}
+            mix={[uiActionStyles, uiPrimaryActionStyles]}
           >
             Add images
           </button>
           <details id="link-menu" class="add-link-menu">
-            <summary>Add link</summary>
+            <summary mix={[uiActionStyles, uiSecondaryActionStyles]}>
+              Add link
+            </summary>
             <form id="link-form">
               <input
                 id="link-url"

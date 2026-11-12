@@ -1,6 +1,6 @@
 # Shared UI direction
 
-`@harrhy/ui` begins with control styles used by Ref. It gives apps a common baseline for inputs, buttons, disabled states, keyboard focus, and a primary action. The app provides the palette and radius through CSS variables; typography, layout, surfaces, icons, and product-specific interactions remain with the app.
+`@harrhy/ui` begins with control styles used by Ref. It gives apps a common baseline for inputs, disabled states, keyboard focus, and primary or secondary actions with the same target geometry for native links and buttons. The app provides the palette and radius through CSS variables; typography, layout, surfaces, icons, and product-specific interactions remain with the app.
 
 Ref is the first proving ground because its signed-out page, board list, and board toolbar use simple native controls. Its freeform canvas, gestures, inspector, and image cards remain Ref code. Before moving another app to the package, compare its rendered controls and keyboard behavior to Ref and choose its own theme variables. Avoid replacing Radio's compact desktop, Pool's hall, or Worldview's editor with Ref's appearance.
 

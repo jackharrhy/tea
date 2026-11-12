@@ -71,7 +71,6 @@ export const refStyles = css({
   "& .auth-link": {
     "min-height": "46px",
     padding: "10px 18px",
-    "border-radius": "5px",
     "font-size": "14px",
   },
   "& .home-page": {
@@ -444,13 +443,7 @@ export const refStyles = css({
   },
   "& .add-link-menu summary": {
     "list-style": "none",
-    cursor: "pointer",
-    border: "1px solid #c9cbc5",
-    "border-radius": "5px",
-    background: "#fff",
-    padding: "8px 12px",
     "font-size": "12px",
-    "white-space": "nowrap",
   },
   "& .add-link-menu summary::-webkit-details-marker": {
     display: "none",

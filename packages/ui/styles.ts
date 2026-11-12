@@ -63,17 +63,36 @@ export const uiControlStyles = css({
     },
 });
 
-export const uiPrimaryActionStyles = css({
+export const uiActionStyles = css({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
+  minHeight: "40px",
+  padding: "9px 14px",
+  border: "1px solid var(--ui-line)",
+  borderRadius: "var(--ui-control-radius, 5px)",
+  font: "inherit",
+  fontWeight: "600",
+  lineHeight: "1.2",
+  whiteSpace: "nowrap",
+  textDecoration: "none",
+  cursor: "pointer",
+});
+
+export const uiPrimaryActionStyles = css({
   background: "var(--ui-action-surface)",
   borderColor: "var(--ui-action-surface)",
   color: "var(--ui-action-ink)",
-  fontWeight: "600",
-  textDecoration: "none",
   "&:hover": {
     background: "var(--ui-action-hover)",
     borderColor: "var(--ui-action-hover)",
+  },
+});
+
+export const uiSecondaryActionStyles = css({
+  background: "var(--ui-control-surface)",
+  color: "var(--ui-ink)",
+  "&:hover": {
+    background: "var(--ui-control-hover)",
   },
 });
