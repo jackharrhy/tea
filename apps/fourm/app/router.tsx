@@ -1,6 +1,6 @@
 import { mediaRoutes, mediaController } from "./media-controller.tsx";
 import { wantsJSON } from "./http.ts";
-import { settingsJSON, homeJSON } from "./view-json.ts";
+import { forumJSON, settingsJSON, homeJSON } from "./view-json.ts";
 import howToHTML from "./help/how_to.ts";
 import cliHTML from "./help/cli.ts";
 import designHTML from "./help/design.ts";
@@ -428,13 +428,15 @@ export function createAppRouter(
             );
           return redirect("/settings");
         },
-        async forum() {
+        async forum({ request }) {
+          const raw = new URL(request.url).searchParams.get("page") ?? "1";
+          if (!/^[+-]?\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)))
+            throw new CommunityError(422, "Invalid page number");
+          const index = await store.call("forumIndex", Number(raw));
+          if (wantsJSON(request)) return Response.json(forumJSON(index));
           return page(
-            "Forum",
-            <Forum
-              threads={await store.call("threads")}
-              member={viewer.member}
-            />,
+            "4orm · forum",
+            <Forum {...index} member={viewer.member} />,
           );
         },
         newThread() {

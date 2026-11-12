@@ -436,6 +436,24 @@ export function createCommunity(db: Database) {
       return db.all(`SELECT t.*,u.username,u.display_name FROM forum_threads t JOIN users u ON u.id=t.author_id
         ORDER BY t.is_pinned DESC,t.last_reply_at DESC,t.id DESC LIMIT 100`);
     },
+    forumIndex(page = 1) {
+      const current = Math.max(1, page);
+      const total = Number(
+        db.all("SELECT count(*) AS count FROM forum_threads")[0].count,
+      );
+      return {
+        threads: db.all(
+          `SELECT t.*,u.username AS author_username,
+          u.display_name AS author_display_name FROM forum_threads t
+          JOIN users u ON u.id=t.author_id
+          ORDER BY t.is_pinned DESC,t.last_reply_at DESC LIMIT 25 OFFSET ?`,
+          (current - 1) * 25,
+        ),
+        total,
+        page: current,
+        total_pages: Math.max(1, Math.ceil(total / 25)),
+      };
+    },
     thread(id: number) {
       const thread = db.all(
         "SELECT t.*,u.username FROM forum_threads t JOIN users u ON u.id=t.author_id WHERE t.id=?",
