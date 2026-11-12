@@ -11,6 +11,11 @@ const services: Service[] = [
   { id: "radarr", name: "Radarr", url: "https://radarr.rotund.org/" },
   { id: "prowlarr", name: "Prowlarr", url: "https://prowlarr.rotund.org/" },
   {
+    id: "cleanuparr",
+    name: "Cleanuparr",
+    url: "https://cleanuparr.rotund.org/",
+  },
+  {
     id: "qbittorrent",
     name: "qBittorrent",
     url: "https://qbittorrent.rotund.org/",
@@ -22,6 +27,19 @@ function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 const existingIds = ["jellyfin", "sonarr", "radarr", "prowlarr", "qbittorrent"];
+const mediaAdminIds = ["sonarr", "radarr", "prowlarr", "qbittorrent"];
+
+function sameAccess(a: Binding, b: Binding): boolean {
+  const rolesA = a.requiredAnyRole.toSorted();
+  const rolesB = b.requiredAnyRole.toSorted();
+  return (
+    a.projectId === b.projectId &&
+    a.allowedSubject === b.allowedSubject &&
+    rolesA.length === rolesB.length &&
+    rolesA.every((role, index) => role === rolesB[index])
+  );
+}
+
 export function parseBindings(value: string): Binding[] {
   let parsed: unknown;
   try {
@@ -33,6 +51,8 @@ export function parseBindings(value: string): Binding[] {
     throw new Error("Invalid service entitlement bindings");
   const bindings = parsed as Binding[];
   const ids = new Set(bindings.map((binding) => binding?.id));
+  const cleanuparr = bindings.find((binding) => binding?.id === "cleanuparr");
+  const mediaAdmin = bindings.find((binding) => binding?.id === "sonarr");
   if (
     ids.size !== bindings.length ||
     !existingIds.every((id) => ids.has(id)) ||
@@ -51,7 +71,14 @@ export function parseBindings(value: string): Binding[] {
           (typeof binding.allowedSubject !== "string" ||
             !binding.allowedSubject)) ||
         (binding.id === "seerr" && !binding.allowedSubject),
-    )
+    ) ||
+    (cleanuparr &&
+      (!mediaAdmin ||
+        !mediaAdminIds.every((id) => {
+          const binding = bindings.find((candidate) => candidate?.id === id);
+          return binding && sameAccess(binding, mediaAdmin);
+        }) ||
+        !sameAccess(cleanuparr, mediaAdmin)))
   )
     throw new Error("Invalid service entitlement bindings");
   return bindings;

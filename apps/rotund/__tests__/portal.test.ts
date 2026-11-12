@@ -134,7 +134,78 @@ test("optional catalogue bindings preserve existing config and require exact sub
   );
 });
 
-function fixture() {
+test("Cleanuparr is optional and shares only the existing media-admin entitlement", async () => {
+  assert.equal(
+    visibleServices(roles("fixture-admin", "admin"), bindings, org).some(
+      (service) => service.id === "cleanuparr",
+    ),
+    false,
+  );
+  const cleanuparr = {
+    id: "cleanuparr",
+    projectId: "fixture-admin",
+    requiredAnyRole: ["admin"],
+  };
+  const configured = parseBindings(JSON.stringify([...bindings, cleanuparr]));
+  const link = visibleServices(
+    roles("fixture-admin", "admin"),
+    configured,
+    org,
+  ).find((service) => service.id === "cleanuparr");
+  assert.deepEqual(link, {
+    id: "cleanuparr",
+    name: "Cleanuparr",
+    url: "https://cleanuparr.rotund.org/",
+  });
+  for (const claims of [
+    roles("fixture-jellyfin", "member"),
+    roles("fixture-admin", "member"),
+    roles("fixture-admin", "admin", "wrong-org"),
+    roles("wrong-project", "admin"),
+  ]) {
+    assert.equal(
+      visibleServices(claims, configured, org).some(
+        (service) => service.id === "cleanuparr",
+      ),
+      false,
+    );
+  }
+  for (const replacement of [
+    { ...cleanuparr, projectId: "fixture-jellyfin" },
+    { ...cleanuparr, requiredAnyRole: ["member"] },
+    { ...cleanuparr, allowedSubject: "unreviewed-subject" },
+  ]) {
+    assert.throws(() =>
+      parseBindings(JSON.stringify([...bindings, replacement])),
+    );
+  }
+  assert.throws(() =>
+    parseBindings(
+      JSON.stringify([
+        ...bindings.map((binding) =>
+          binding.id === "radarr"
+            ? { ...binding, requiredAnyRole: ["member"] }
+            : binding,
+        ),
+        cleanuparr,
+      ]),
+    ),
+  );
+
+  const f = fixture(configured);
+  const signed = await signIn(f.app);
+  assert.match(
+    await (await f.app.fetch(request("/", signed))).text(),
+    /https:\/\/cleanuparr\.rotund\.org\//,
+  );
+  f.setClaims(roles("fixture-jellyfin", "member"));
+  assert.doesNotMatch(
+    await (await f.app.fetch(request("/", signed))).text(),
+    /cleanuparr\.rotund\.org/,
+  );
+});
+
+function fixture(serviceBindings = bindings) {
   let liveClaims: Record<string, unknown> = {
     sub: "fixture-owner",
     ...roles("fixture-admin", "admin"),
@@ -159,7 +230,7 @@ function fixture() {
     issuerOrigin: "https://issuer.test",
     sessionSecret: "fixture-secret-long-enough-for-tests-only",
     organizationId: org,
-    bindings,
+    bindings: serviceBindings,
     identity,
     publicDir: new URL("../public/", import.meta.url).pathname,
   });
