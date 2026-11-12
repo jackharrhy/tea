@@ -1,0 +1,290 @@
+import { DatabaseSync } from "node:sqlite";
+import { createHash } from "node:crypto";
+import { expect, it } from "vitest";
+import { createCommunity } from "../app/data/community.ts";
+import type { Row } from "../app/data/community.ts";
+import { canonicalTables } from "../app/canonical-tables.ts";
+import {
+  captureNativeBackup,
+  readNativeBackup,
+  restoreNativeBackup,
+} from "../app/native-backup.ts";
+function authority() {
+  const db = new DatabaseSync(":memory:");
+  db.exec("PRAGMA foreign_keys=ON");
+  const community = createCommunity({
+    all(sql, ...values) {
+      if (!values.length && sql.includes(";")) {
+        db.exec(sql);
+        return [];
+      }
+      const query = db.prepare(sql);
+      return query.columns().length
+        ? (query.all(...values) as Row[])
+        : (query.run(...values), []);
+    },
+    transaction(fn) {
+      db.exec("BEGIN");
+      try {
+        const result = fn();
+        db.exec("COMMIT");
+        return result;
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
+  });
+  return { db, community };
+}
+interface ObjectValue {
+  bytes: Uint8Array;
+  customMetadata: Record<string, string>;
+  httpMetadata: R2HTTPMetadata;
+  uploaded: Date;
+}
+function bucket() {
+  const objects = new Map<string, ObjectValue>();
+  let lostAck = false;
+  const info = (key: string) => {
+    const file = objects.get(key);
+    if (!file) return null;
+    const etag = createHash("sha256").update(file.bytes).digest("hex");
+    return {
+      key,
+      size: file.bytes.length,
+      etag,
+      httpEtag: `"${etag}"`,
+      uploaded: file.uploaded,
+      customMetadata: file.customMetadata,
+      httpMetadata: file.httpMetadata,
+    };
+  };
+  const storage = {
+    async head(key: string) {
+      return info(key);
+    },
+    async get(key: string) {
+      const value = objects.get(key);
+      return value
+        ? { ...info(key), arrayBuffer: async () => value.bytes.slice().buffer }
+        : null;
+    },
+    async put(key: string, body: ArrayBuffer, options: R2PutOptions) {
+      if (objects.has(key)) return null;
+      objects.set(key, {
+        bytes: new Uint8Array(body).slice(),
+        customMetadata: options.customMetadata ?? {},
+        httpMetadata: (options.httpMetadata as R2HTTPMetadata) ?? {},
+        uploaded: new Date("2026-11-13T00:00:00Z"),
+      });
+      if (lostAck && key.startsWith(".backups/native/")) {
+        lostAck = false;
+        throw Error("Manifest acknowledgment lost");
+      }
+      return info(key);
+    },
+    async list(options?: R2ListOptions) {
+      const keys = [...objects.keys()].toSorted(),
+        start = Number(options?.cursor ?? 0),
+        next = start + 2;
+      return {
+        objects: keys.slice(start, next).map((key) => info(key)),
+        truncated: next < keys.length,
+        ...(next < keys.length ? { cursor: String(next) } : {}),
+      };
+    },
+  } as Pick<R2Bucket, "get" | "head" | "put" | "list">;
+  function add(
+    key: string,
+    text: string,
+    customMetadata: Record<string, string> = {},
+  ) {
+    objects.set(key, {
+      bytes: new TextEncoder().encode(text),
+      customMetadata,
+      httpMetadata: {
+        contentType: "text/plain",
+        cacheExpiry: new Date("2030-01-01T00:00:00Z"),
+      },
+      uploaded: new Date("2026-11-12T01:00:00Z"),
+    });
+  }
+  return {
+    storage,
+    objects,
+    add,
+    loseAck: () => {
+      lostAck = true;
+    },
+  };
+}
+function seed(source: ReturnType<typeof authority>) {
+  source.community.restore({
+    users: [
+      {
+        id: 41,
+        username: "fixture",
+        display_name: "Fixture",
+        password_hash: "",
+        is_admin: 1,
+      },
+    ],
+    media: [
+      {
+        id: 1,
+        user_id: 41,
+        storage_path: "fixture/kept.txt",
+        size_bytes: 4,
+        mime_type: "text/plain",
+      },
+      {
+        id: 2,
+        user_id: 41,
+        storage_path: "fixture/already-missing.txt",
+        size_bytes: 3,
+        mime_type: "text/plain",
+      },
+    ],
+  });
+  source.community.createSession("synthetic-session", 41, Date.now() + 60000);
+  source.community.reserveArchiveObject("fixture/staged.txt");
+}
+it("captures SQL state, unreferenced/staged files and absence, then restores into an empty authority", async () => {
+  const source = authority(),
+    target = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/kept.txt", "kept");
+    r2.add("fixture/orphan.txt", "unreferenced");
+    r2.add("fixture/staged.txt", "staged", {
+      archive_sha256: "fixture-marker",
+    });
+    r2.add(".private/member-note", "extra");
+    const captured = await captureNativeBackup(
+      r2.storage,
+      "full-one",
+      async () => source.community.exportRecovery(41),
+    );
+    expect(captured.files).toHaveLength(4);
+    expect(captured.recovery.tables.media).toHaveLength(2);
+    expect(captured.recovery.tables.browser_sessions).toHaveLength(1);
+    expect(
+      captured.files.some((file) => file.key === "fixture/already-missing.txt"),
+    ).toBe(false);
+    // Replay against unchanged live storage must not rewrite original metadata.
+    await restoreNativeBackup(r2.storage, "full-one", async () => ({
+      preserved: true,
+    }));
+    for (const key of r2.objects.keys())
+      if (!key.startsWith(".backups/")) r2.objects.delete(key);
+    const restored = await restoreNativeBackup(
+      r2.storage,
+      "full-one",
+      async (state) => target.community.restoreRecovery(state),
+    );
+    expect(restored.files).toBe(4);
+    expect(restored.state).toMatchObject({ members: 1, tables: 30 });
+    expect(canonicalTables(target.community.exportRecovery(41).tables)).toBe(
+      canonicalTables(captured.recovery.tables),
+    );
+    expect(r2.objects.get("fixture/orphan.txt")?.bytes).toEqual(
+      new TextEncoder().encode("unreferenced"),
+    );
+    expect(
+      r2.objects.get("fixture/staged.txt")?.customMetadata.archive_sha256,
+    ).toBe("fixture-marker");
+    expect(
+      r2.objects.get("fixture/kept.txt")?.customMetadata.fourm_last_modified,
+    ).toBe("Thu, 12 Nov 2026 01:00:00 GMT");
+    expect(
+      (
+        await restoreNativeBackup(r2.storage, "full-one", async (state) =>
+          target.community.restoreRecovery(state),
+        )
+      ).state.preserved,
+    ).toBe(true);
+  } finally {
+    source.db.close();
+    target.db.close();
+  }
+});
+it("recovers a lost manifest acknowledgment and refuses to overwrite unrelated target files", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/kept.txt", "kept");
+    r2.loseAck();
+    await expect(
+      captureNativeBackup(r2.storage, "retry", async () =>
+        source.community.exportRecovery(41),
+      ),
+    ).rejects.toThrow("acknowledgment lost");
+    source.db
+      .prepare("UPDATE users SET display_name='Later' WHERE id=41")
+      .run();
+    const original = await captureNativeBackup(r2.storage, "retry", async () =>
+      source.community.exportRecovery(41),
+    );
+    expect(original.recovery.tables.users[0].display_name).not.toBe("Later");
+    r2.add("fixture/unique.txt", "must survive");
+    let called = false;
+    await expect(
+      restoreNativeBackup(r2.storage, "retry", async () => {
+        called = true;
+      }),
+    ).rejects.toThrow("unrelated files");
+    expect(called).toBe(false);
+    expect(r2.objects.has("fixture/unique.txt")).toBe(true);
+    r2.objects.delete("fixture/unique.txt");
+    const uniqueBytes = new TextEncoder().encode("different live content");
+    r2.objects.get("fixture/kept.txt")!.bytes = uniqueBytes;
+    await expect(
+      restoreNativeBackup(r2.storage, "retry", async () => {
+        called = true;
+      }),
+    ).rejects.toThrow("file differs from snapshot");
+    expect(called).toBe(false);
+    expect(r2.objects.get("fixture/kept.txt")!.bytes).toEqual(uniqueBytes);
+  } finally {
+    source.db.close();
+  }
+});
+it("does not publish changed state and rejects corrupt stored file bytes before restoring SQL", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/kept.txt", "kept");
+    let reads = 0;
+    await expect(
+      captureNativeBackup(r2.storage, "changed", async () => {
+        if (reads++)
+          source.db
+            .prepare("UPDATE users SET display_name='Changed' WHERE id=41")
+            .run();
+        return source.community.exportRecovery(41);
+      }),
+    ).rejects.toThrow("Application state changed");
+    expect(r2.objects.has(".backups/native/changed.json")).toBe(false);
+    const saved = await captureNativeBackup(r2.storage, "corrupt", async () =>
+      source.community.exportRecovery(41),
+    );
+    r2.objects.get(".backups/objects/" + saved.files[0].sha256)!.bytes =
+      new Uint8Array([9]);
+    await expect(readNativeBackup(r2.storage, "corrupt")).rejects.toThrow(
+      "file verification failed",
+    );
+    let called = false;
+    await expect(
+      restoreNativeBackup(r2.storage, "corrupt", async () => {
+        called = true;
+      }),
+    ).rejects.toThrow("file verification failed");
+    expect(called).toBe(false);
+  } finally {
+    source.db.close();
+  }
+});
