@@ -1,5 +1,9 @@
-import type { Box3DModule } from "box3d.js";
+import type { Box3DModule, b3AABB, b3Vec3 } from "box3d.js";
 import type { PhysicsDebugDraw, PhysicsDebugPrimitive, Vec3 } from "./types";
+
+function fromB3Vec(value: b3Vec3): Vec3 {
+  return { x: value[0], y: value[1], z: value[2] };
+}
 
 export function drawPhysicsDebug(
   box3d: Box3DModule,
@@ -14,23 +18,24 @@ export function drawPhysicsDebug(
     else truncated = true;
   };
   box3d.b3World_Draw(world, {
-    // In box3d.js@0.0.2 the drawBounds callback also enables bound drawing.
-    drawBounds: (
-      bounds: { lowerBound: Vec3; upperBound: Vec3 },
-      color: number,
-    ) =>
+    drawBounds: (bounds: b3AABB, color: number) =>
       append({
         kind: "bounds",
-        lower: { ...bounds.lowerBound },
-        upper: { ...bounds.upperBound },
+        lower: { x: bounds[0], y: bounds[1], z: bounds[2] },
+        upper: { x: bounds[3], y: bounds[4], z: bounds[5] },
         color,
       }),
     drawJoints: true,
     drawContacts: true,
-    drawSegment: (from: Vec3, to: Vec3, color: number) =>
-      append({ kind: "segment", from: { ...from }, to: { ...to }, color }),
-    drawPoint: (position: Vec3, size: number, color: number) =>
-      append({ kind: "point", position: { ...position }, size, color }),
+    drawSegment: (from: b3Vec3, to: b3Vec3, color: number) =>
+      append({
+        kind: "segment",
+        from: fromB3Vec(from),
+        to: fromB3Vec(to),
+        color,
+      }),
+    drawPoint: (position: b3Vec3, size: number, color: number) =>
+      append({ kind: "point", position: fromB3Vec(position), size, color }),
   });
   return { primitives, truncated };
 }

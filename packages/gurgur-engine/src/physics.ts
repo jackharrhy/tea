@@ -8,6 +8,9 @@ import createBox3D, {
   type b3PrismaticJointDef,
   type b3RevoluteJointDef,
   type b3ShapeId,
+  type b3Vec3,
+  type b3Quat,
+  type b3Transform,
   type Box3DModule,
   type BodyMoveEvent,
   type ContactHitEvent,
@@ -83,7 +86,7 @@ export class PhysicsWorld {
     this.#box3d = box3d;
     this.#gravity = { ...gravity };
     const definition = box3d.b3DefaultWorldDef();
-    definition.gravity = this.#gravity;
+    definition.gravity = toB3Vec(this.#gravity);
     this.#world = box3d.b3CreateWorld(definition);
     this.#groundBody = box3d.b3CreateBody(
       this.#world,
@@ -120,16 +123,9 @@ export class PhysicsWorld {
     this.#assertLive();
     const definition = this.#box3d.b3DefaultBodyDef();
     definition.type = this.#bodyType(options.type);
-    definition.position = options.position;
+    definition.position = toB3Vec(options.position);
     if (options.rotation) {
-      definition.rotation = {
-        v: {
-          x: options.rotation.x,
-          y: options.rotation.y,
-          z: options.rotation.z,
-        },
-        s: options.rotation.w,
-      };
+      definition.rotation = toB3Quat(options.rotation);
     }
 
     const body = this.#box3d.b3CreateBody(this.#world, definition);
@@ -162,16 +158,9 @@ export class PhysicsWorld {
       throw new Error("a convex hull requires at least four vertices");
     const definition = this.#box3d.b3DefaultBodyDef();
     definition.type = this.#bodyType(options.type);
-    definition.position = options.position;
+    definition.position = toB3Vec(options.position);
     if (options.rotation) {
-      definition.rotation = {
-        v: {
-          x: options.rotation.x,
-          y: options.rotation.y,
-          z: options.rotation.z,
-        },
-        s: options.rotation.w,
-      };
+      definition.rotation = toB3Quat(options.rotation);
     }
     const body = this.#box3d.b3CreateBody(this.#world, definition);
     const hull = this.#box3d.b3CreateHull(
@@ -215,16 +204,8 @@ export class PhysicsWorld {
     }
     const definition = this.#box3d.b3DefaultBodyDef();
     definition.type = this.#bodyType(options.type);
-    definition.position = options.position;
-    if (options.rotation)
-      definition.rotation = {
-        v: {
-          x: options.rotation.x,
-          y: options.rotation.y,
-          z: options.rotation.z,
-        },
-        s: options.rotation.w,
-      };
+    definition.position = toB3Vec(options.position);
+    if (options.rotation) definition.rotation = toB3Quat(options.rotation);
     const body = this.#box3d.b3CreateBody(this.#world, definition);
     const shapes: b3ShapeId[] = [];
     try {
@@ -261,7 +242,7 @@ export class PhysicsWorld {
     this.#assertLive();
     const definition = this.#box3d.b3DefaultBodyDef();
     definition.type = this.#bodyType("kinematic");
-    definition.position = position;
+    definition.position = toB3Vec(position);
     const body = this.#box3d.b3CreateBody(this.#world, definition);
     const shape = this.#box3d.b3DefaultShapeDef();
     shape.isSensor = false;
@@ -269,8 +250,8 @@ export class PhysicsWorld {
     shape.filter.categoryBits = PLAYER_PROXY_CATEGORY;
     shape.filter.maskBits = TRIGGER_CATEGORY;
     const shapeId = this.#box3d.b3CreateCapsuleShape(body, shape, {
-      center1: { x: 0, y: -capsule.halfSegment, z: 0 },
-      center2: { x: 0, y: capsule.halfSegment, z: 0 },
+      center1: [0, -capsule.halfSegment, 0],
+      center2: [0, capsule.halfSegment, 0],
       radius: capsule.radius,
     });
     return this.#track(body, { shapes: [shapeId] });
@@ -301,16 +282,8 @@ export class PhysicsWorld {
       throw new Error("sensor hull bodies require one or more convex hulls");
     const definition = this.#box3d.b3DefaultBodyDef();
     definition.type = this.#bodyType("static");
-    definition.position = options.position;
-    if (options.rotation)
-      definition.rotation = {
-        v: {
-          x: options.rotation.x,
-          y: options.rotation.y,
-          z: options.rotation.z,
-        },
-        s: options.rotation.w,
-      };
+    definition.position = toB3Vec(options.position);
+    if (options.rotation) definition.rotation = toB3Quat(options.rotation);
     const body = this.#box3d.b3CreateBody(this.#world, definition);
     const shapes: b3ShapeId[] = [];
     try {
@@ -372,11 +345,7 @@ export class PhysicsWorld {
         body,
         this.#box3d.b3DefaultShapeDef(),
         mesh,
-        {
-          x: 1,
-          y: 1,
-          z: 1,
-        },
+        [1, 1, 1],
       );
       return this.#track(body, { meshes: [mesh], shapes: [shapeId] });
     } catch (error) {
@@ -429,13 +398,8 @@ export class PhysicsWorld {
       hulls: options.boxes.map((box, index) => ({
         hull: childHulls[index],
         transform: {
-          p: box.position,
-          q: box.rotation
-            ? {
-                v: { x: box.rotation.x, y: box.rotation.y, z: box.rotation.z },
-                s: box.rotation.w,
-              }
-            : { v: { x: 0, y: 0, z: 0 }, s: 1 },
+          position: toB3Vec(box.position),
+          quaternion: box.rotation ? toB3Quat(box.rotation) : [0, 0, 0, 1],
         },
       })),
     });
@@ -489,7 +453,7 @@ export class PhysicsWorld {
       new Float32Array(options.heights),
       options.countX,
       options.countZ,
-      options.scale,
+      toB3Vec(options.scale),
     );
     if (!heightField) {
       this.#box3d.b3DestroyBody(body);
@@ -526,8 +490,11 @@ export class PhysicsWorld {
       halfExtents: options.halfExtents,
     });
     const body = this.#resolve(id);
-    this.#box3d.b3Body_SetLinearVelocity(body, options.linearVelocity);
-    this.#box3d.b3Body_SetAngularVelocity(body, options.angularVelocity);
+    this.#box3d.b3Body_SetLinearVelocity(body, toB3Vec(options.linearVelocity));
+    this.#box3d.b3Body_SetAngularVelocity(
+      body,
+      toB3Vec(options.angularVelocity),
+    );
     return id;
   }
 
@@ -545,8 +512,11 @@ export class PhysicsWorld {
   }): RuntimeId {
     const id = this.createHull(options);
     const body = this.#resolve(id);
-    this.#box3d.b3Body_SetLinearVelocity(body, options.linearVelocity);
-    this.#box3d.b3Body_SetAngularVelocity(body, options.angularVelocity);
+    this.#box3d.b3Body_SetLinearVelocity(body, toB3Vec(options.linearVelocity));
+    this.#box3d.b3Body_SetAngularVelocity(
+      body,
+      toB3Vec(options.angularVelocity),
+    );
     if (options.awake !== undefined)
       this.#box3d.b3Body_SetAwake(body, options.awake);
     return id;
@@ -582,7 +552,7 @@ export class PhysicsWorld {
       this.#freeSlots.push(index);
     this.#pendingDestroy.clear();
     const definition = this.#box3d.b3DefaultWorldDef();
-    definition.gravity = this.#gravity;
+    definition.gravity = toB3Vec(this.#gravity);
     this.#world = this.#box3d.b3CreateWorld(definition);
     this.#groundBody = this.#box3d.b3CreateBody(
       this.#world,
@@ -604,10 +574,11 @@ export class PhysicsWorld {
 
   setBodyTransform(id: RuntimeId, position: Vec3, rotation: Quat): void {
     const body = this.#resolve(id);
-    this.#box3d.b3Body_SetTransform(body, position, {
-      v: { x: rotation.x, y: rotation.y, z: rotation.z },
-      s: rotation.w,
-    });
+    this.#box3d.b3Body_SetTransform(
+      body,
+      toB3Vec(position),
+      toB3Quat(rotation),
+    );
   }
 
   setKinematicTarget(id: RuntimeId, position: Vec3, seconds: number): void {
@@ -629,13 +600,7 @@ export class PhysicsWorld {
       throw new Error("kinematic target duration must be positive");
     this.#box3d.b3Body_SetTargetTransform(
       this.#resolve(id),
-      {
-        p: position,
-        q: {
-          v: { x: rotation.x, y: rotation.y, z: rotation.z },
-          s: rotation.w,
-        },
-      },
+      { position: toB3Vec(position), quaternion: toB3Quat(rotation) },
       seconds,
       true,
     );
@@ -647,8 +612,8 @@ export class PhysicsWorld {
     angularVelocity: Vec3,
   ): void {
     const body = this.#resolve(id);
-    this.#box3d.b3Body_SetLinearVelocity(body, linearVelocity);
-    this.#box3d.b3Body_SetAngularVelocity(body, angularVelocity);
+    this.#box3d.b3Body_SetLinearVelocity(body, toB3Vec(linearVelocity));
+    this.#box3d.b3Body_SetAngularVelocity(body, toB3Vec(angularVelocity));
   }
 
   setBodyType(id: RuntimeId, type: BodyKind): void {
@@ -677,7 +642,7 @@ export class PhysicsWorld {
     const slot = this.#slot(id);
     for (const shape of slot.shapes) {
       const material = this.#box3d.b3Shape_GetSurfaceMaterial(shape);
-      material.tangentVelocity = { ...velocity };
+      material.tangentVelocity = toB3Vec(velocity);
       this.#box3d.b3Shape_SetSurfaceMaterial(shape, material);
     }
     slot.surfaceVelocity = { ...velocity };
@@ -687,9 +652,9 @@ export class PhysicsWorld {
   pointVelocity(id: RuntimeId, point: Vec3): Vec3 {
     const body = this.#resolve(id);
     const surface = this.#slot(id).surfaceVelocity;
-    const linear = this.#box3d.b3Body_GetLinearVelocity(body);
-    const angular = this.#box3d.b3Body_GetAngularVelocity(body);
-    const center = this.#box3d.b3Body_GetPosition(body);
+    const linear = this.#linearVelocity(body);
+    const angular = this.#angularVelocity(body);
+    const center = this.#position(body);
     const offset = subtract(point, center);
     return {
       x: linear.x + angular.y * offset.z - angular.z * offset.y + surface.x,
@@ -704,7 +669,7 @@ export class PhysicsWorld {
       this.#box3d.b3Body_GetType(body) !== this.#box3d.b3BodyType.b3_dynamicBody
     )
       return false;
-    this.#box3d.b3Body_ApplyLinearImpulseToCenter(body, impulse, true);
+    this.#box3d.b3Body_ApplyLinearImpulseToCenter(body, toB3Vec(impulse), true);
     return true;
   }
 
@@ -760,13 +725,13 @@ export class PhysicsWorld {
 
     const positionError = subtract(
       options.targetPosition,
-      this.#box3d.b3Body_GetPosition(body),
+      this.#position(body),
     );
     const desiredLinear = limitVector(
       multiply(positionError, options.linearGain),
       options.maxLinearSpeed,
     );
-    const linearVelocity = this.#box3d.b3Body_GetLinearVelocity(body);
+    const linearVelocity = this.#linearVelocity(body);
     const linearDelta = limitVector(
       subtract(desiredLinear, linearVelocity),
       options.maxLinearAcceleration * options.seconds,
@@ -774,7 +739,7 @@ export class PhysicsWorld {
     const mass = this.#box3d.b3Body_GetMass(body);
     this.#box3d.b3Body_ApplyLinearImpulseToCenter(
       body,
-      multiply(linearDelta, mass),
+      toB3Vec(multiply(linearDelta, mass)),
       true,
     );
 
@@ -784,7 +749,7 @@ export class PhysicsWorld {
       multiply(rotationError.axis, rotationError.angle * options.angularGain),
       options.maxAngularSpeed,
     );
-    const angularVelocity = this.#box3d.b3Body_GetAngularVelocity(body);
+    const angularVelocity = this.#angularVelocity(body);
     const nextAngular = add(
       angularVelocity,
       limitVector(
@@ -792,7 +757,7 @@ export class PhysicsWorld {
         options.maxAngularAcceleration * options.seconds,
       ),
     );
-    this.#box3d.b3Body_SetAngularVelocity(body, nextAngular);
+    this.#box3d.b3Body_SetAngularVelocity(body, toB3Vec(nextAngular));
     this.#box3d.b3Body_SetAwake(body, true);
     return true;
   }
@@ -837,7 +802,7 @@ export class PhysicsWorld {
 
     const targetDefinition = this.#box3d.b3DefaultBodyDef();
     targetDefinition.type = this.#box3d.b3BodyType.b3_kinematicBody;
-    targetDefinition.position = { ...options.targetPosition };
+    targetDefinition.position = toB3Vec(options.targetPosition);
     targetDefinition.rotation = boxRotation(options.targetRotation);
     const helperBody = this.#box3d.b3CreateBody(this.#world, targetDefinition);
     const definition = this.#box3d.b3DefaultMotorJointDef();
@@ -879,7 +844,7 @@ export class PhysicsWorld {
       throw new Error("control target pose must be finite");
     this.#box3d.b3Body_SetTransform(
       slot.helperBody,
-      position,
+      toB3Vec(position),
       boxRotation(rotation),
     );
     this.#box3d.b3Body_SetAwake(this.#resolve(slot.bodyA), true);
@@ -900,13 +865,15 @@ export class PhysicsWorld {
     const definition = this.#box3d.b3DefaultDistanceJointDef();
     definition.base.bodyIdA = bodyA;
     definition.base.bodyIdB = bodyB;
-    definition.base.localFrameA.p = this.#box3d.b3Body_GetLocalPoint(
+    definition.base.localFrameA.position = this.#box3d.b3Body_GetLocalPoint(
+      [0, 0, 0],
       bodyA,
-      options.worldAnchorA,
+      toB3Vec(options.worldAnchorA),
     );
-    definition.base.localFrameB.p = this.#box3d.b3Body_GetLocalPoint(
+    definition.base.localFrameB.position = this.#box3d.b3Body_GetLocalPoint(
+      [0, 0, 0],
       bodyB,
-      options.worldAnchorB,
+      toB3Vec(options.worldAnchorB),
     );
     definition.length = Math.max(0.05, options.length);
     definition.enableSpring = true;
@@ -1152,8 +1119,8 @@ export class PhysicsWorld {
   ): Vec3 {
     this.#assertLive();
     const capsule = {
-      center1: { x: 0, y: -capsuleShape.halfSegment, z: 0 },
-      center2: { x: 0, y: capsuleShape.halfSegment, z: 0 },
+      center1: [0, -capsuleShape.halfSegment, 0] as b3Vec3,
+      center2: [0, capsuleShape.halfSegment, 0] as b3Vec3,
       radius: capsuleShape.radius,
     };
     const filter = this.#queryFilter();
@@ -1163,14 +1130,14 @@ export class PhysicsWorld {
 
     for (let iteration = 0; iteration < 5; iteration += 1) {
       const planes: Array<{
-        plane: { normal: Vec3; offset: number };
+        plane: { normal: b3Vec3; offset: number };
         pushLimit: number;
         push: number;
         clipVelocity: boolean;
       }> = [];
       this.#box3d.b3World_CollideMover(
         this.#world,
-        origin,
+        toB3Vec(origin),
         capsule,
         filter,
         (_shape: unknown, buffer: PlaneResultBuffer) => {
@@ -1182,7 +1149,7 @@ export class PhysicsWorld {
             this.#box3d.getPlaneResultAt(planeResult, buffer, index);
             planes.push({
               plane: {
-                normal: { ...planeResult.plane.normal },
+                normal: [...planeResult.plane.normal],
                 offset: planeResult.plane.offset,
               },
               pushLimit: 10,
@@ -1195,18 +1162,18 @@ export class PhysicsWorld {
       );
 
       const solved = this.#box3d.b3SolvePlanes(
-        subtract(target, origin),
+        toB3Vec(subtract(target, origin)),
         planes,
       );
       const fraction = this.#box3d.b3World_CastMover(
         this.#world,
-        origin,
+        toB3Vec(origin),
         capsule,
         solved.delta,
         filter,
         () => true,
       );
-      const delta = multiply(solved.delta, fraction);
+      const delta = multiply(fromB3Vec(solved.delta), fraction);
       origin = add(origin, delta);
       if (Math.hypot(delta.x, delta.y, delta.z) < 0.01) break;
     }
@@ -1223,13 +1190,13 @@ export class PhysicsWorld {
     const filter = this.#queryFilter();
     const fraction = this.#box3d.b3World_CastMover(
       this.#world,
-      start,
+      toB3Vec(start),
       {
-        center1: { x: 0, y: -capsule.halfSegment, z: 0 },
-        center2: { x: 0, y: capsule.halfSegment, z: 0 },
+        center1: [0, -capsule.halfSegment, 0],
+        center2: [0, capsule.halfSegment, 0],
         radius: capsule.radius,
       },
-      desired,
+      toB3Vec(desired),
       filter,
       () => true,
     );
@@ -1246,10 +1213,10 @@ export class PhysicsWorld {
     const plane = this.#box3d.createPlaneResult();
     this.#box3d.b3World_CollideMover(
       this.#world,
-      center,
+      toB3Vec(center),
       {
-        center1: { x: 0, y: -capsule.halfSegment, z: 0 },
-        center2: { x: 0, y: capsule.halfSegment, z: 0 },
+        center1: [0, -capsule.halfSegment, 0],
+        center2: [0, capsule.halfSegment, 0],
         radius: capsule.radius,
       },
       filter,
@@ -1260,7 +1227,7 @@ export class PhysicsWorld {
           index += 1
         ) {
           this.#box3d.getPlaneResultAt(plane, buffer, index);
-          if (plane.plane.normal.y < 0.5) {
+          if (plane.plane.normal[1] < 0.5) {
             overlaps = true;
             break;
           }
@@ -1291,10 +1258,10 @@ export class PhysicsWorld {
       } | null = null;
       this.#box3d.b3World_CastRay(
         this.#world,
-        origin,
-        translation,
+        toB3Vec(origin),
+        toB3Vec(translation),
         filter,
-        (shape: b3ShapeId, point: Vec3, normal: Vec3, fraction: number) => {
+        (shape: b3ShapeId, point: b3Vec3, normal: b3Vec3, fraction: number) => {
           const body = this.#runtimeIdForBody(
             this.#box3d.b3Shape_GetBody(shape),
           );
@@ -1304,8 +1271,8 @@ export class PhysicsWorld {
           )
             return true;
           closest = {
-            point: { ...point },
-            normal: { ...normal },
+            point: fromB3Vec(point),
+            normal: fromB3Vec(normal),
             fraction,
             body,
           };
@@ -1316,14 +1283,14 @@ export class PhysicsWorld {
     }
     const result = this.#box3d.b3World_CastRayClosest(
       this.#world,
-      origin,
-      translation,
+      toB3Vec(origin),
+      toB3Vec(translation),
       filter,
     );
     return result.hit
       ? {
-          point: { ...result.point },
-          normal: { ...result.normal },
+          point: fromB3Vec(result.point),
+          normal: fromB3Vec(result.normal),
           fraction: result.fraction,
           body: this.#runtimeIdForBody(
             this.#box3d.b3Shape_GetBody(result.shapeId),
@@ -1340,12 +1307,10 @@ export class PhysicsWorld {
       if (!slot?.body) continue;
       bodies.push({
         id: { index, generation: slot.generation },
-        position: { ...this.#box3d.b3Body_GetPosition(slot.body) },
+        position: this.#position(slot.body),
         rotation: this.#rotation(slot.body),
-        linearVelocity: { ...this.#box3d.b3Body_GetLinearVelocity(slot.body) },
-        angularVelocity: {
-          ...this.#box3d.b3Body_GetAngularVelocity(slot.body),
-        },
+        linearVelocity: this.#linearVelocity(slot.body),
+        angularVelocity: this.#angularVelocity(slot.body),
       });
     }
     return bodies;
@@ -1355,10 +1320,10 @@ export class PhysicsWorld {
     const body = this.#resolve(id);
     return {
       id: { ...id },
-      position: { ...this.#box3d.b3Body_GetPosition(body) },
+      position: this.#position(body),
       rotation: this.#rotation(body),
-      linearVelocity: { ...this.#box3d.b3Body_GetLinearVelocity(body) },
-      angularVelocity: { ...this.#box3d.b3Body_GetAngularVelocity(body) },
+      linearVelocity: this.#linearVelocity(body),
+      angularVelocity: this.#angularVelocity(body),
       awake: this.#box3d.b3Body_IsAwake(body),
     };
   }
@@ -1503,8 +1468,8 @@ export class PhysicsWorld {
       this.#stepEvents.contactHit.push({
         a,
         b,
-        point: { ...this.#contactHitEvent.point },
-        normal: { ...this.#contactHitEvent.normal },
+        point: fromB3Vec(this.#contactHitEvent.point),
+        normal: fromB3Vec(this.#contactHitEvent.normal),
         approachSpeed: this.#contactHitEvent.approachSpeed,
       });
     }
@@ -1521,16 +1486,27 @@ export class PhysicsWorld {
       if (!body) continue;
       this.#stepEvents.moved.push({
         body,
-        position: { ...this.#bodyMoveEvent.position },
-        rotation: { ...this.#bodyMoveEvent.rotation },
+        position: fromB3Vec(this.#bodyMoveEvent.position),
+        rotation: fromB3Quat(this.#bodyMoveEvent.rotation),
         fellAsleep: this.#bodyMoveEvent.fellAsleep,
       });
     }
   }
 
   #rotation(body: b3BodyId): Quat {
-    const rotation = this.#box3d.b3Body_GetRotation(body);
-    return { x: rotation.v.x, y: rotation.v.y, z: rotation.v.z, w: rotation.s };
+    return fromB3Quat(this.#box3d.b3Body_GetRotation([0, 0, 0, 1], body));
+  }
+
+  #position(body: b3BodyId): Vec3 {
+    return fromB3Vec(this.#box3d.b3Body_GetPosition([0, 0, 0], body));
+  }
+
+  #linearVelocity(body: b3BodyId): Vec3 {
+    return fromB3Vec(this.#box3d.b3Body_GetLinearVelocity([0, 0, 0], body));
+  }
+
+  #angularVelocity(body: b3BodyId): Vec3 {
+    return fromB3Vec(this.#box3d.b3Body_GetAngularVelocity([0, 0, 0], body));
   }
 
   #queryFilter(includePlayerProxies = false) {
@@ -1688,6 +1664,22 @@ function add(a: Vec3, b: Vec3): Vec3 {
   return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
 }
 
+function toB3Vec(value: Vec3): b3Vec3 {
+  return [value.x, value.y, value.z];
+}
+
+function fromB3Vec(value: b3Vec3): Vec3 {
+  return { x: value[0], y: value[1], z: value[2] };
+}
+
+function toB3Quat(value: Quat): b3Quat {
+  return [value.x, value.y, value.z, value.w];
+}
+
+function fromB3Quat(value: b3Quat): Quat {
+  return { x: value[0], y: value[1], z: value[2], w: value[3] };
+}
+
 function subtract(a: Vec3, b: Vec3): Vec3 {
   return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
 }
@@ -1742,7 +1734,7 @@ function multiply(value: Vec3, amount: number): Vec3 {
   return { x: value.x * amount, y: value.y * amount, z: value.z * amount };
 }
 
-function jointTransform(frame: JointFrame) {
+function jointTransform(frame: JointFrame): b3Transform {
   if (!Object.values(frame.position).every(Number.isFinite))
     throw new Error("joint frame position must be finite");
   const rotationLength = Math.hypot(
@@ -1754,30 +1746,26 @@ function jointTransform(frame: JointFrame) {
   if (!Number.isFinite(rotationLength) || rotationLength <= Number.EPSILON)
     throw new Error("joint frame rotation must be finite and nonzero");
   return {
-    p: { ...frame.position },
-    q: {
-      v: {
-        x: frame.rotation.x / rotationLength,
-        y: frame.rotation.y / rotationLength,
-        z: frame.rotation.z / rotationLength,
-      },
-      s: frame.rotation.w / rotationLength,
-    },
+    position: toB3Vec(frame.position),
+    quaternion: [
+      frame.rotation.x / rotationLength,
+      frame.rotation.y / rotationLength,
+      frame.rotation.z / rotationLength,
+      frame.rotation.w / rotationLength,
+    ],
   };
 }
 
-function boxRotation(rotation: Quat) {
+function boxRotation(rotation: Quat): b3Quat {
   const length = Math.hypot(rotation.x, rotation.y, rotation.z, rotation.w);
   if (!Number.isFinite(length) || length <= Number.EPSILON)
     throw new Error("rotation must be finite and nonzero");
-  return {
-    v: {
-      x: rotation.x / length,
-      y: rotation.y / length,
-      z: rotation.z / length,
-    },
-    s: rotation.w / length,
-  };
+  return [
+    rotation.x / length,
+    rotation.y / length,
+    rotation.z / length,
+    rotation.w / length,
+  ];
 }
 
 function validateRevoluteMotor(motor: RevoluteMotor): void {
