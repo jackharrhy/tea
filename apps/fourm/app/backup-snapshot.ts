@@ -1,3 +1,4 @@
+import { sha256, objectKey, storeImmutable } from "./backup-objects.ts";
 import { canonicalTables } from "./canonical-tables.ts";
 export { canonicalTables } from "./canonical-tables.ts";
 import { CommunityError } from "./data/community.ts";
@@ -25,22 +26,10 @@ export interface BackupSnapshot {
   objects: SnapshotObject[];
 }
 
-async function sha256(bytes: ArrayBuffer) {
-  return Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
-  )
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
 function manifestKey(name: string) {
   if (!/^[A-Za-z0-9-]{1,128}$/.test(name))
     throw new CommunityError(422, "Invalid backup name");
   return `.backups/manifests/${name}.json`;
-}
-function objectKey(sha: string) {
-  if (!/^[a-f0-9]{64}$/.test(sha))
-    throw new CommunityError(409, "Invalid backup object checksum");
-  return `.backups/objects/${sha}`;
 }
 function metadata(object: R2Object, path: string) {
   return {
@@ -53,27 +42,6 @@ function metadata(object: R2Object, path: string) {
       ? { mtime_ns: object.customMetadata.fourm_mtime_ns }
       : {}),
   };
-}
-async function storeImmutable(
-  bucket: Bucket,
-  key: string,
-  bytes: ArrayBuffer,
-  sha: string,
-  type: string,
-) {
-  if (!(await bucket.head(key)))
-    await bucket.put(key, bytes, {
-      onlyIf: { etagDoesNotMatch: "*" },
-      httpMetadata: { contentType: type },
-      customMetadata: { backup_sha256: sha },
-    });
-  const stored = await bucket.get(key);
-  if (
-    !stored ||
-    stored.customMetadata?.backup_sha256 !== sha ||
-    (await sha256(await stored.arrayBuffer())) !== sha
-  )
-    throw new CommunityError(503, "Backup storage verification failed");
 }
 export async function readBackupSnapshot(
   bucket: Bucket,
