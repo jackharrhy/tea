@@ -142,11 +142,13 @@ describe("HTTP integration tests", () => {
   });
 
   describe("public pages", () => {
-    test("/login returns 200 and shows central login button", async () => {
+    test("/login keeps the sign-in page focused on one action", async () => {
       const res = await fetch(`${BASE}/login`);
       expect(res.status).toBe(200);
       const body = await res.text();
-      expect(body).toContain("Sign in with Jack Auth");
+      expect(body).toContain("artbin</h1>");
+      expect(body).toContain("Sign in</a>");
+      expect(body).not.toContain("Uploading with the CLI");
     });
 
     test("/ returns 200", async () => {
