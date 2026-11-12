@@ -21,16 +21,16 @@
     "@ffmpeg/ffmpeg": "0.12.15",
     "@harrhy/request-body": "0.1.0",
     "@mediabunny/aac-encoder": "1.65.2",
-    "hast-util-from-html": "^2.0.0",
-    "hast-util-to-jsx-runtime": "^2.3.0",
-    "lucide": "1.70.0",
+    "hast-util-from-html": "^2.1.0",
+    "hast-util-to-jsx-runtime": "^2.3.7",
+    "lucide": "1.72.0",
     "mediabunny": "1.65.2",
     "remix": "3.2.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "postcss": "^8.5.0",
-    "tsrs": "0.23.0-ts7.1.0-beta",
-    "vite": "8.3.7"
+    "postcss": "^8.5.32",
+    "tsrs": "0.25.0-ts7.1.0-beta",
+    "vite": "8.3.8"
   }
 }

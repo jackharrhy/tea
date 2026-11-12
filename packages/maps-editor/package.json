@@ -34,9 +34,9 @@
   "devDependencies": {
     "@fast-check/vitest": "^0.5.0",
     "@types/node": "^26.6.6",
-    "@webgpu/types": "^0.1.72",
+    "@webgpu/types": "^0.1.74",
     "unplugin-typegpu": "0.12.8",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   }
 }

@@ -10,7 +10,11 @@ const isHmr = Boolean(isDevelopment && process.env.REMIX_NODE_HMR);
 export const assets = createAssetServer({
   basePath: "/assets",
   rootDir,
-  mounts: { app: "apps/letters-to-steve/app", npm: "node_modules" },
+  mounts: {
+    app: "apps/letters-to-steve/app",
+    npm: "node_modules",
+    lettersNpm: "apps/letters-to-steve/node_modules",
+  },
 
   allowFiles: [
     "apps/letters-to-steve/app/routes.ts",

@@ -20,7 +20,7 @@
     "@harrhy/pool-protocol": "0.1.0",
     "@harrhy/pool-simulation": "0.1.0",
     "drizzle-orm": "0.45.4",
-    "jose": "6.2.13",
+    "jose": "6.2.17",
     "math": "0.1.0",
     "remix": "3.2.0",
     "three": "0.187.0",
@@ -31,6 +31,6 @@
     "@types/bun": "1.4.4",
     "@types/node": "^26.6.6",
     "@types/three": "0.187.0",
-    "vite": "^8.3.7"
+    "vite": "^8.3.8"
   }
 }
