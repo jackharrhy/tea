@@ -99,7 +99,7 @@ describe("room cells", () => {
     client.close();
   });
 
-  it("stops room controls when a Central session expires", async () => {
+  it("stops room controls when a Jack Auth session expires", async () => {
     const room = env.RADIO_ROOMS.getByName("expiring-session-room");
     const expiresAt = Date.now() + 1000;
     const response = await room.fetch("https://cell.test/websocket", {
