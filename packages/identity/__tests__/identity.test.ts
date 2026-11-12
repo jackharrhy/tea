@@ -243,6 +243,51 @@ test("API tokens need active proof, exact issuer, project audience, scoped roles
   }
 });
 
+test("support access token keeps signed actor and target roles separate from delegated role scopes", async () => {
+  const scope = `openid profile ${projectAudienceScope(config.projectId)} ${PROJECT_ROLES_SCOPE}`;
+  const accessToken = await new SignJWT({
+    act: { iss: config.issuer, sub: "support-actor" },
+    scope,
+    ...granted,
+  })
+    .setProtectedHeader({ alg: "RS256", kid: "signing-key" })
+    .setIssuer(config.issuer)
+    .setSubject("central-id")
+    .setAudience(config.projectId)
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(pair.privateKey);
+  const fetcher = (async (input) =>
+    Response.json(
+      String(input).endsWith("openid-configuration")
+        ? discovery
+        : { keys: [jwk] },
+    )) as typeof fetch;
+  const client = createIdentityClient(config, fetcher);
+  const verified = await client.verifyActedAccessToken(accessToken);
+  assert.equal(verified.subject, "central-id");
+  assert.equal(verified.actor.subject, "support-actor");
+  assert.ok(verified.roles.has("admin"));
+  assert.deepEqual([...verified.scopes], scope.split(" "));
+  assert.ok(!verified.scopes.has(roleScope("admin")));
+
+  const tampered = await new SignJWT({
+    act: { iss: "https://wrong.example", sub: "support-actor" },
+    scope,
+    ...granted,
+  })
+    .setProtectedHeader({ alg: "RS256", kid: "signing-key" })
+    .setIssuer(config.issuer)
+    .setSubject("central-id")
+    .setAudience(config.projectId)
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(pair.privateKey);
+  await assert.rejects(client.verifyActedAccessToken(tampered), {
+    status: 401,
+  });
+});
+
 test("resource permission requires both its granted role and explicitly requested scope", () => {
   const principal = {
     subject: "user",

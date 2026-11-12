@@ -1,6 +1,11 @@
 import { db } from "#db/connection.server";
 import { users, sessions } from "#db";
 import { eq } from "drizzle-orm";
+import {
+  hasSupportCookie,
+  supportUserForRequest,
+  type SupportUser,
+} from "./support-login.server.ts";
 
 const SESSION_COOKIE = "artbin_session";
 const SESSION_MAX_AGE = 60 * 60;
@@ -67,6 +72,12 @@ export async function getUserFromSession(sessionId: string | undefined) {
 }
 
 export async function getUserFromRequest(request: Request) {
+  const pathname = new URL(request.url).pathname;
+  if (pathname.startsWith("/auth/support/")) {
+    const sessionId = parseSessionCookie(request.headers.get("Cookie"));
+    return (await getUserFromSession(sessionId)) ?? null;
+  }
+  if (hasSupportCookie(request)) return supportUserForRequest(request);
   if (isDevelopmentAuthEnabled()) {
     return getDevelopmentUser();
   }
@@ -74,6 +85,8 @@ export async function getUserFromRequest(request: Request) {
   const sessionId = parseSessionCookie(request.headers.get("Cookie"));
   return (await getUserFromSession(sessionId)) ?? null;
 }
+
+export type RequestUser = SupportUser;
 
 export function getSessionCookie(sessionId: string): string {
   return `${SESSION_COOKIE}=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE}${secureSuffix}`;

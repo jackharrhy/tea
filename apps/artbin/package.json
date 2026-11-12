@@ -24,6 +24,7 @@
   "dependencies": {
     "@harrhy/worldview-renderer": "0.2.0",
     "@harrhy/artbin-core": "0.0.1",
+    "@harrhy/request-body": "0.1.0",
     "@tus/file-store": "2.1.2",
     "@tus/server": "2.4.7",
     "7zip-bin-full": "^26.6.0",

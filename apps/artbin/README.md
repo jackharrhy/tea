@@ -38,3 +38,30 @@ service has only those two roles. MCP requires a human administrator, the `admin
 role scope and the mapped local administrator record. Protected-resource metadata
 advertises the central issuer and full required scopes. `@harrhy/identity` verifies
 tokens; local sessions, user records and authorization remain in this app.
+
+## Support login
+
+Artbin contains a separate, disabled-by-default support login adapter. The
+`/auth/support/start` and `/auth/support/callback` routes use Jack Auth's
+one-use, PKCE-bound support handoff; they never create or update an Artbin user.
+The target must already have an exact `users.auth_subject` row. The support
+token must be a signed native token with the human actor in `act`, an active
+resource introspection result for the same target and dedicated support client,
+the Artbin project audience, ordinary browser scopes and the target's
+organization-qualified `member` or `admin` role claim. This browser check does
+not change CLI, machine API or MCP role-scope rules.
+
+Support sessions are held in this Node process for at most ten minutes. Each
+support request checks both Jack Auth support status and native introspection
+again; an unavailable check denies access. Restarting Artbin invalidates every
+support session. The banner names the actor and target, and its exit button
+ends only the support session. Normal actor login remains separate. The Auth
+service owns durable expiry and native token revocation if Artbin restarts or an
+exit request cannot reach it. Mutation logs include actor and target references.
+Initial acceptance must make no content changes.
+
+Keep `ARTBIN_SUPPORT_LOGIN_ENABLED=0` until the matching Jack Auth support
+endpoints, dedicated confidential client, transport credential, native policy
+and isolated consumer acceptance are ready. The private production configuration
+will need `AUTH_SUPPORT_CLIENT_ID` and a distinct
+`AUTH_SUPPORT_TRANSPORT_SECRET`; do not reuse the resource introspection secret.

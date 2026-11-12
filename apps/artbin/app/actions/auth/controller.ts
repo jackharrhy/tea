@@ -14,6 +14,11 @@ import {
   getCliRedirectUri,
   type LoginTransaction,
 } from "#lib/oauth.server";
+import {
+  beginSupportLogin,
+  completeSupportLogin,
+  exitSupportLogin,
+} from "#lib/support-login.server";
 
 import { routes } from "../../routes.ts";
 
@@ -22,6 +27,18 @@ const CLI_HANDOFF_MAX_AGE_MS = 2 * 60 * 1_000;
 
 export default createController(routes.auth, {
   actions: {
+    supportStart(context) {
+      return beginSupportLogin(context.request);
+    },
+
+    supportCallback(context) {
+      return completeSupportLogin(context.request);
+    },
+
+    supportExit(context) {
+      return exitSupportLogin(context.request);
+    },
+
     async login() {
       const transaction = createLoginTransaction();
       return redirectWithHeaders(
