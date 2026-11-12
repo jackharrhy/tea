@@ -1,0 +1,482 @@
+import { schema, coreTables } from "./schema.ts";
+import { createEnrollments } from "./enrollment.ts";
+import { createMedia } from "./media.ts";
+import { createWidgets } from "./widgets.ts";
+
+export type Row = Record<string, string | number | null>;
+export interface Database {
+  all(sql: string, ...values: (string | number | null)[]): Row[];
+  transaction<T>(operation: () => T): T;
+}
+export interface Member {
+  id: number;
+  username: string;
+  display_name: string;
+  is_admin: number;
+  is_disabled: number;
+  has_accepted_trust: number;
+}
+export class CommunityError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+const memberColumns =
+  "id, username, display_name, is_admin, is_disabled, has_accepted_trust";
+const missing = () => new CommunityError(404, "Not found");
+
+function required(value: unknown, max: number, label: string): string {
+  if (typeof value !== "string" || !value.trim() || value.length > max)
+    throw new CommunityError(
+      422,
+      `${label} is required (up to ${max} characters)`,
+    );
+  return value;
+}
+function slug(value: string) {
+  if (!/^[^/]{1,80}$/.test(value) || value === "." || value === "..")
+    throw new CommunityError(422, "Invalid page slug");
+  return value;
+}
+function format(value: unknown) {
+  if (!["html", "markdown", "bbcode"].includes(String(value)))
+    throw new CommunityError(422, "Choose HTML, Markdown or BBCode");
+  return String(value);
+}
+
+export function createCommunity(db: Database) {
+  db.all(schema);
+  db.all(`CREATE TABLE IF NOT EXISTS browser_sessions (
+    token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
+    expires_at INTEGER NOT NULL
+  ); CREATE TABLE IF NOT EXISTS login_transactions (
+    state_hash TEXT PRIMARY KEY, body TEXT NOT NULL, expires_at INTEGER NOT NULL
+  );`);
+  db.all(
+    "CREATE TABLE IF NOT EXISTS archive_receipts (digest TEXT PRIMARY KEY, receipt TEXT NOT NULL);",
+  );
+
+  function member(id: number): Member {
+    const found = db.all(
+      `SELECT ${memberColumns} FROM users WHERE id=?`,
+      id,
+    )[0];
+    if (!found || found.is_disabled)
+      throw new CommunityError(403, "Membership is unavailable");
+    return found as unknown as Member;
+  }
+  function admin(id: number) {
+    const actor = member(id);
+    if (!actor.is_admin) throw new CommunityError(403, "Admin access required");
+    return actor;
+  }
+  function owned(actorId: number, ownerId: number) {
+    const actor = member(actorId);
+    if (actor.id !== ownerId && !actor.is_admin)
+      throw new CommunityError(403, "This belongs to another member");
+  }
+
+  return {
+    ...createEnrollments(db, member),
+    ...createMedia(db, member),
+    ...createWidgets(db, member),
+    member,
+    acceptTrust(actorId: number) {
+      member(actorId);
+      db.all("UPDATE users SET has_accepted_trust=1 WHERE id=?", actorId);
+    },
+    exportArchive(actorId: number) {
+      admin(actorId);
+      return db.transaction(() =>
+        Object.fromEntries(
+          coreTables.map((table) => [
+            table,
+            db.all(`SELECT * FROM "${table}"`),
+          ]),
+        ),
+      );
+    },
+    restore(tables: Record<string, Row[]>, digest?: string) {
+      if (digest) {
+        const previous = db.all(
+          "SELECT receipt FROM archive_receipts WHERE digest=?",
+          digest,
+        )[0];
+        if (previous)
+          return JSON.parse(String(previous.receipt)) as { members: number };
+      }
+      if (db.all("SELECT id FROM users LIMIT 1").length)
+        throw new CommunityError(409, "Restore requires an empty community");
+      const allowed = coreTables;
+      if (Object.keys(tables).some((table) => !allowed.includes(table)))
+        throw new CommunityError(422, "Archive contains an unknown table");
+      for (const row of tables.users ?? []) {
+        if (row.password_hash !== "")
+          throw new CommunityError(
+            422,
+            "Local password credentials must not be imported",
+          );
+      }
+      db.transaction(() => {
+        db.all("PRAGMA defer_foreign_keys=ON");
+        for (const [table, rows] of Object.entries(tables)) {
+          const columns = new Set(
+            db
+              .all(`PRAGMA table_info("${table}")`)
+              .map((row) => String(row.name)),
+          );
+          for (const row of rows) {
+            const keys = Object.keys(row);
+            if (!keys.length || keys.some((key) => !columns.has(key)))
+              throw new CommunityError(422, "Archive contains unknown columns");
+            db.all(
+              `INSERT INTO "${table}" (${keys.map((key) => `"${key}"`).join(",")}) VALUES(${keys.map(() => "?").join(",")})`,
+              ...keys.map((key) => row[key]),
+            );
+          }
+        }
+        if (db.all("PRAGMA foreign_key_check").length)
+          throw new CommunityError(
+            422,
+            "Archive has broken ownership references",
+          );
+        if (digest)
+          db.all(
+            "INSERT INTO archive_receipts VALUES(?,?)",
+            digest,
+            JSON.stringify({
+              members: db.all("SELECT count(*) AS count FROM users")[0].count,
+            }),
+          );
+      });
+      return {
+        members: db.all("SELECT count(*) AS count FROM users")[0].count,
+      };
+    },
+    resolveIdentity(issuer: string, subject: string) {
+      const link = db.all(
+        "SELECT user_id FROM external_identities WHERE issuer=? AND subject=?",
+        issuer,
+        subject,
+      )[0];
+      if (!link)
+        throw new CommunityError(
+          403,
+          "This identity is not linked to a member",
+        );
+      return member(Number(link.user_id));
+    },
+    session(hash: string) {
+      const row = db.all(
+        "SELECT user_id FROM browser_sessions WHERE token_hash=? AND expires_at>?",
+        hash,
+        Date.now(),
+      )[0];
+      if (!row) return null;
+      try {
+        return member(Number(row.user_id));
+      } catch {
+        return null;
+      }
+    },
+    createSession(hash: string, userId: number, expiresAt: number) {
+      member(userId);
+      db.all(
+        "INSERT INTO browser_sessions VALUES (?,?,?)",
+        hash,
+        userId,
+        Math.min(expiresAt, Date.now() + 3600000),
+      );
+    },
+    endSession(hash: string) {
+      db.all("DELETE FROM browser_sessions WHERE token_hash=?", hash);
+    },
+    saveLogin(hash: string, body: string) {
+      db.all("DELETE FROM login_transactions WHERE expires_at<=?", Date.now());
+      db.all(
+        "INSERT INTO login_transactions VALUES (?,?,?)",
+        hash,
+        body,
+        Date.now() + 600000,
+      );
+    },
+    consumeLogin(hash: string) {
+      return db.transaction(() => {
+        const row = db.all(
+          "SELECT body FROM login_transactions WHERE state_hash=? AND expires_at>?",
+          hash,
+          Date.now(),
+        )[0];
+        db.all("DELETE FROM login_transactions WHERE state_hash=?", hash);
+        return row ? String(row.body) : null;
+      });
+    },
+    members() {
+      return db.all(
+        "SELECT id,username,display_name,status_emoji,status_text FROM users WHERE is_disabled=0 ORDER BY username",
+      );
+    },
+    profile(username: string) {
+      const user = db.all(
+        "SELECT u.id,u.username,u.display_name,u.content,u.content_format,u.custom_css,u.custom_html,u.layout,u.status_emoji,u.status_text,u.forum_signature,u.avatar_media_id,m.storage_path AS avatar_path FROM users u LEFT JOIN media m ON m.id=u.avatar_media_id WHERE u.username=? AND u.is_disabled=0",
+        username,
+      )[0];
+      if (!user) throw missing();
+      return user;
+    },
+    pages(userId: number, actorId: number | null) {
+      return db.all(
+        "SELECT * FROM pages WHERE user_id=? AND (is_public=1 OR user_id=?) ORDER BY slug",
+        userId,
+        actorId,
+      );
+    },
+    page(userId: number, pageSlug: string, actorId: number | null) {
+      const page = db.all(
+        "SELECT * FROM pages WHERE user_id=? AND slug=? AND (is_public=1 OR user_id=?)",
+        userId,
+        pageSlug,
+        actorId,
+      )[0];
+      if (!page) throw missing();
+      return page;
+    },
+    savePage(actorId: number, pageSlug: string, input: Row) {
+      member(actorId);
+      slug(pageSlug);
+      const title = required(input.title, 140, "Title");
+      const content = String(input.content ?? "");
+      if (content.length > 500000)
+        throw new CommunityError(413, "Page is too large");
+      db.all(
+        `INSERT INTO pages(user_id,slug,title,content,content_format,layout,is_public)
+        VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id,slug) DO UPDATE SET
+        title=excluded.title,content=excluded.content,content_format=excluded.content_format,
+        layout=excluded.layout,is_public=excluded.is_public,updated_at=CURRENT_TIMESTAMP`,
+        actorId,
+        pageSlug,
+        title,
+        content,
+        format(input.content_format ?? "html"),
+        String(input.layout ?? "default"),
+        input.is_public ? 1 : 0,
+      );
+      return this.page(actorId, pageSlug, actorId);
+    },
+    deletePage(actorId: number, pageSlug: string) {
+      member(actorId);
+      this.page(actorId, pageSlug, actorId);
+      db.all("DELETE FROM pages WHERE user_id=? AND slug=?", actorId, pageSlug);
+    },
+    saveProfile(actorId: number, input: Row) {
+      member(actorId);
+      const display = required(input.display_name, 80, "Display name");
+      const allowed = [
+        "content",
+        "content_format",
+        "custom_css",
+        "custom_html",
+        "layout",
+        "forum_signature",
+        "status_text",
+        "status_emoji",
+      ];
+      if (input.content_format !== undefined) format(input.content_format);
+      if (
+        String(input.status_text ?? "").length > 140 ||
+        String(input.status_emoji ?? "").length > 10
+      )
+        throw new CommunityError(422, "Status is too long");
+      db.transaction(() => {
+        db.all(
+          "UPDATE users SET display_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+          display,
+          actorId,
+        );
+        for (const key of allowed)
+          if (input[key] !== undefined) {
+            if (String(input[key]).length > 500000)
+              throw new CommunityError(413, "Profile is too large");
+            db.all(`UPDATE users SET ${key}=? WHERE id=?`, input[key], actorId);
+          }
+      });
+    },
+    threads() {
+      return db.all(`SELECT t.*,u.username,u.display_name FROM forum_threads t JOIN users u ON u.id=t.author_id
+        ORDER BY t.is_pinned DESC,t.last_reply_at DESC,t.id DESC LIMIT 100`);
+    },
+    thread(id: number) {
+      const thread = db.all(
+        "SELECT t.*,u.username FROM forum_threads t JOIN users u ON u.id=t.author_id WHERE t.id=?",
+        id,
+      )[0];
+      if (!thread) throw missing();
+      return {
+        thread,
+        posts: db.all(
+          "SELECT p.*,u.username,u.display_name,u.forum_signature FROM forum_posts p JOIN users u ON u.id=p.author_id WHERE thread_id=? ORDER BY p.id LIMIT 500",
+          id,
+        ),
+      };
+    },
+    createThread(
+      actorId: number,
+      title: string,
+      content: string,
+      contentFormat: string,
+    ) {
+      member(actorId);
+      required(title, 200, "Title");
+      required(content, 500000, "Post");
+      format(contentFormat);
+      return db.transaction(() => {
+        const thread = db.all(
+          "INSERT INTO forum_threads(author_id,title,last_reply_by_id) VALUES(?,?,?) RETURNING id",
+          actorId,
+          title,
+          actorId,
+        )[0];
+        db.all(
+          "INSERT INTO forum_posts(thread_id,author_id,content,content_format) VALUES(?,?,?,?)",
+          thread.id,
+          actorId,
+          content,
+          contentFormat,
+        );
+        return Number(thread.id);
+      });
+    },
+    reply(
+      actorId: number,
+      threadId: number,
+      content: string,
+      contentFormat: string,
+    ) {
+      const actor = member(actorId);
+      required(content, 500000, "Reply");
+      format(contentFormat);
+      return db.transaction(() => {
+        const { thread } = this.thread(threadId);
+        if (thread.is_locked && !actor.is_admin)
+          throw new CommunityError(403, "This thread is locked");
+        const post = db.all(
+          "INSERT INTO forum_posts(thread_id,author_id,content,content_format) VALUES(?,?,?,?) RETURNING id",
+          threadId,
+          actorId,
+          content,
+          contentFormat,
+        )[0];
+        db.all(
+          "UPDATE forum_threads SET reply_count=reply_count+1,last_reply_at=CURRENT_TIMESTAMP,last_reply_by_id=? WHERE id=?",
+          actorId,
+          threadId,
+        );
+        return Number(post.id);
+      });
+    },
+    editPost(
+      actorId: number,
+      postId: number,
+      content: string,
+      contentFormat: string,
+    ) {
+      const row = db.all(
+        "SELECT author_id FROM forum_posts WHERE id=?",
+        postId,
+      )[0];
+      if (!row) throw missing();
+      owned(actorId, Number(row.author_id));
+      required(content, 500000, "Post");
+      format(contentFormat);
+      db.all(
+        "UPDATE forum_posts SET content=?,content_format=?,is_edited=1,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+        content,
+        contentFormat,
+        postId,
+      );
+    },
+    moderate(actorId: number, threadId: number, action: string) {
+      admin(actorId);
+      this.thread(threadId);
+      if (action === "delete")
+        db.all("DELETE FROM forum_threads WHERE id=?", threadId);
+      else if (action === "lock" || action === "pin") {
+        const key = action === "lock" ? "is_locked" : "is_pinned";
+        db.all(`UPDATE forum_threads SET ${key}=1-${key} WHERE id=?`, threadId);
+      } else throw new CommunityError(422, "Unknown moderation action");
+    },
+    recentChat(actorId: number) {
+      member(actorId);
+      return db.all(
+        "SELECT c.*,u.username,u.display_name FROM (SELECT * FROM chat_messages ORDER BY id DESC LIMIT 100) c JOIN users u ON u.id=c.author_id ORDER BY c.id",
+      );
+    },
+    chat(actorId: number, after: number) {
+      member(actorId);
+      return db.all(
+        "SELECT c.*,u.username,u.display_name FROM chat_messages c JOIN users u ON u.id=c.author_id WHERE c.id>? ORDER BY c.id LIMIT 200",
+        after,
+      );
+    },
+    sendChat(actorId: number, message: string) {
+      member(actorId);
+      required(message, 500, "Message");
+      return db.all(
+        "INSERT INTO chat_messages(author_id,message) VALUES(?,?) RETURNING id",
+        actorId,
+        message,
+      )[0];
+    },
+    adminMembers(actorId: number) {
+      admin(actorId);
+      return db.all(`SELECT ${memberColumns} FROM users ORDER BY username`);
+    },
+    postForEdit(actorId: number, postId: number) {
+      const post = db.all("SELECT * FROM forum_posts WHERE id=?", postId)[0];
+      if (!post) throw missing();
+      owned(actorId, Number(post.author_id));
+      return post;
+    },
+    deletePost(actorId: number, postId: number) {
+      return db.transaction(() => {
+        const post = this.postForEdit(actorId, postId);
+        db.all("DELETE FROM forum_posts WHERE id=?", postId);
+        const latest = db.all(
+          "SELECT author_id,created_at FROM forum_posts WHERE thread_id=? ORDER BY id DESC LIMIT 1",
+          post.thread_id,
+        )[0];
+        if (!latest) {
+          db.all("DELETE FROM forum_threads WHERE id=?", post.thread_id);
+          return null;
+        }
+        db.all(
+          "UPDATE forum_threads SET reply_count=(SELECT count(*)-1 FROM forum_posts WHERE thread_id=?),last_reply_by_id=?,last_reply_at=? WHERE id=?",
+          post.thread_id,
+          latest.author_id,
+          latest.created_at,
+          post.thread_id,
+        );
+        return Number(post.thread_id);
+      });
+    },
+    setDisabled(actorId: number, userId: number, disabled: boolean) {
+      admin(actorId);
+      if (!db.all("SELECT id FROM users WHERE id=?", userId).length)
+        throw missing();
+      if (actorId === userId && disabled)
+        throw new CommunityError(409, "You cannot disable yourself");
+      db.all(
+        "UPDATE users SET is_disabled=? WHERE id=?",
+        disabled ? 1 : 0,
+        userId,
+      );
+      if (disabled)
+        db.all("DELETE FROM browser_sessions WHERE user_id=?", userId);
+    },
+  };
+}
+
+export type Community = ReturnType<typeof createCommunity>;

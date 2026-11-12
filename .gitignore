@@ -37,3 +37,7 @@ apps/artbin/public/uploads/
 apps/artbin/tmp/
 apps/artbin/.coverage/
 apps/artbin-cli/dist-ui/
+
+apps/fourm/worker-configuration.d.ts
+apps/fourm/.review/
+apps/fourm/.review-*.jsonc
