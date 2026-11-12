@@ -30,6 +30,20 @@ export function runtime(env: Bindings) {
       const result = await cell.renameMedia(actorId, mediaId, filename);
       if (!result.ok) throw new CommunityError(result.status, result.error);
     },
+    async adminRenameUsername(
+      actorId: number,
+      userId: number,
+      username: string,
+      displayName: string,
+    ) {
+      const result = await cell.adminRenameUsername(
+        actorId,
+        userId,
+        username,
+        displayName,
+      );
+      if (!result.ok) throw new CommunityError(result.status, result.error);
+    },
     async renameUsername(actorId: number, username: string) {
       const result = await cell.renameUsername(actorId, username);
       if (!result.ok) throw new CommunityError(result.status, result.error);

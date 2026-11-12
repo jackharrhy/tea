@@ -16,13 +16,12 @@ import { exercisePushCopies } from "./push-copy-workflow.mjs";
 import { exerciseAdminCopies } from "./admin-copy-workflow.mjs";
 process.umask(0o077);
 const workflow = process.env.FOURM_COPY_WORKFLOW ?? "chat";
-assert.ok(["chat", "push", "admin"].includes(workflow));
-const exerciseCopies =
-  workflow === "admin"
-    ? exerciseAdminCopies
-    : workflow === "push"
-      ? exercisePushCopies
-      : exerciseChatCopies;
+assert.ok(["chat", "push", "admin", "accounts"].includes(workflow));
+const exerciseCopies = ["admin", "accounts"].includes(workflow)
+  ? exerciseAdminCopies
+  : workflow === "push"
+    ? exercisePushCopies
+    : exerciseChatCopies;
 const repo = process.cwd();
 assert.equal(repo, "/home/jack/repos/personal/harrhy-fourm-celld");
 const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
@@ -336,6 +335,7 @@ try {
   phase = "exercise-copies";
   await checkpoint();
   await exerciseCopies({
+    workflow,
     output,
     oracleRoot: source,
     authPath: join(root, "parity-cohort-20261112/review-auth.json"),
@@ -375,7 +375,11 @@ try {
 } catch (error) {
   await writeFile(
     join(output, "failure.json"),
-    JSON.stringify({ status: "FAIL", phase, message: error.message }, null, 2),
+    JSON.stringify(
+      { status: "FAIL", phase, message: error.message, stack: error.stack },
+      null,
+      2,
+    ),
   );
   process.exitCode = 1;
 } finally {
