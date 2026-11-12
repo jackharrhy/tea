@@ -1,3 +1,4 @@
+import { initAdminBanner } from "./lib/admin.ts";
 import { initHtmxErrorHandler } from "./lib/csrf.ts";
 import { initTimeConversion } from "./lib/time.ts";
 import { initPushSubscription } from "./lib/push.ts";
@@ -12,6 +13,7 @@ initHtmxErrorHandler();
 initTimeConversion();
 initPushSubscription();
 initChat();
+initAdminBanner();
 
 // Server-rendered editor controls use delegated native events, including fragments.
 document.addEventListener("change", (event) => {

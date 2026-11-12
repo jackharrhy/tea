@@ -13,11 +13,16 @@ import { setTimeout as delay } from "node:timers/promises";
 import { createHash } from "node:crypto";
 import { exerciseChatCopies } from "./chat-copy-workflow.mjs";
 import { exercisePushCopies } from "./push-copy-workflow.mjs";
+import { exerciseAdminCopies } from "./admin-copy-workflow.mjs";
 process.umask(0o077);
 const workflow = process.env.FOURM_COPY_WORKFLOW ?? "chat";
-assert.ok(["chat", "push"].includes(workflow));
+assert.ok(["chat", "push", "admin"].includes(workflow));
 const exerciseCopies =
-  workflow === "push" ? exercisePushCopies : exerciseChatCopies;
+  workflow === "admin"
+    ? exerciseAdminCopies
+    : workflow === "push"
+      ? exercisePushCopies
+      : exerciseChatCopies;
 const repo = process.cwd();
 assert.equal(repo, "/home/jack/repos/personal/harrhy-fourm-celld");
 const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
