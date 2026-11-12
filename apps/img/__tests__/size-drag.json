@@ -1,0 +1,12 @@
+{
+  "events": [
+    {
+      "t": 0.1,
+      "type": "drag",
+      "key": "spatial-resize",
+      "dx": -70,
+      "dy": -45,
+      "dur": 0.6
+    }
+  ]
+}

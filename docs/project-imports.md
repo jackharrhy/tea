@@ -47,3 +47,18 @@ Artbin's web app, CLI, and two shared packages were copied from the standalone c
 On 2026-10-08, Tea published `ghcr.io/jackharrhy/tea-artbin@sha256:b32cd9c2450edeea787ee942edde87a4244d306204b0c4b0bcb5f4e8254a8c4d`. A private container served a copy of the production database and uploads, and rendered a copied BSP overview with walkability data and no renderer warnings. At 1440 pixels wide, its login screenshot was pixel identical to the original production page, and the full kitchen sink differed by 20 pixels across a 1440×3753 image.
 
 The original Newport service was stopped for a final checksum-aware sync of its data, uploads, and temporary upload directories into `/mnt/terrabud/docker-data/newport/artbin_tea_data`. The two stopped SQLite databases had the same SHA-256 hash and passed `PRAGMA integrity_check`; the upload sync verified 89,469 files and transferred no changed upload bytes. Both copies had 70,141 file records, 1,100 folders, and 36 users. Only the Artbin Compose service changed image and mount destinations, from `/app/apps/web` to `/app/apps/artbin`. The public login and kitchen sink returned 200 without browser errors, the root redirected to login, and the OAuth start still used client `artbin` and `https://artbin.jackharrhy.dev/auth/4orm/callback`. The CLI whoami endpoint returned its expected unauthenticated 401 and the browser entry asset returned 200. The live database passed integrity check after startup with the same record counts. The retired source directories, image archive, and local checkout were removed after the Tea cutover was confirmed. Three open Artbin feature issues were transferred to Tea before the standalone GitHub repository was retired.
+
+## Img source import
+
+Img was copied from `jackharrhy/img` commit
+`b1bfe860e59221b04bf96932bc7a42fe931f9cb1` into `apps/img` on 2026-11-10.
+This is a source snapshot, not a Git history merge or repository retirement.
+The original repository and local checkout remain intact. Native Rust/Rune
+behavior, Cargo dependencies, fonts, and sample attribution are retained.
+Integration tests moved into `__tests__/` with explicit Cargo targets. Harrhy
+registers `@harrhy/img` for its workspace selector and supplies Linux build
+prerequisites in CI. Build output and local screenshots are not imported.
+
+Ref remains its existing image/link board. Shared image recipes, a WASM
+processing API, and texture-bundle export are proposed follow-up work, not
+features of this source import.

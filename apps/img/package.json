@@ -1,0 +1,12 @@
+{
+  "name": "@harrhy/img",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cargo run --locked --release --",
+    "build": "cargo build --locked --release",
+    "test": "cargo test --locked --release",
+    "check": "cargo fmt --check && cargo test --locked --release && cargo clippy --locked --release --all-targets -- -D warnings"
+  }
+}

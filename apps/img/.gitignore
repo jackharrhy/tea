@@ -1,0 +1,4 @@
+/target/
+/.tmp/
+/artifacts/
+.DS_Store

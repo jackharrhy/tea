@@ -1,0 +1,5 @@
+{
+  "events": [
+    { "t": 0.1, "type": "drag", "key": "drag-1", "dy": 108, "dur": 0.4 }
+  ]
+}
