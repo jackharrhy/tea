@@ -102,14 +102,14 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
 - Preserve all room and media APIs and the full 1 GiB upload limit. A backend change must preserve
   room IDs, track keys, queue/playback state, audio bytes, attributes, and range/HEAD behavior.
 - Mug serves the Tea image from a copied Celld store. Its production image, volume, and routing are managed in the infrastructure repository; use `hosts/mug/radio/README.md` there for deployment and rollback.
-- Keep `wrangler.jsonc` on Tea's isolated logical names. Mug uses `wrangler.celld-cutover.jsonc` and `RADIO_CELLD_DEPLOY_CONFIG` to retain the original logical Worker and audio bucket names on its copied production store.
+- Keep `wrangler.jsonc` on Radio's isolated logical names. Mug uses `wrangler.celld-cutover.jsonc` and `RADIO_CELLD_DEPLOY_CONFIG` to retain the original logical Worker and audio bucket names on its copied production store.
 
 ## Verification
 
 - Use Remix route/server tests for rendering and real Worker tests for HTTP and coordination behavior.
 - Use component tests only for DOM-specific behavior.
 - Add regression coverage for lifecycle, reconnect, synchronization, and persistence bugs.
-- Run `npm run radio:check` from Tea's root; the original repository's CI also runs `npm run test:celld` against the fork
+- Run `npm run radio:check` from Harrhy's root; the original repository's CI also runs `npm run test:celld` against the fork
   image selected by `Dockerfile`. The smoke test uses only its own rooms and storage; it must
   preserve acknowledged queue changes and audio after SIGKILL with an empty replica directory.
 - Use the optional full 1 GiB container smoke when investigating storage or resource-limit
