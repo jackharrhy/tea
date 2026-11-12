@@ -12,7 +12,7 @@ import { FileRoutePage } from "./file-page.tsx";
 import { loadMyUploadsPage } from "../data/my-uploads-page.ts";
 import { MyUploadsPage } from "./my-uploads-page.tsx";
 import { Alert, ButtonLink } from "../ui/primitives.tsx";
-import { mutedTextStyle, theme } from "../ui/styles.ts";
+import { theme } from "../ui/styles.ts";
 import { serveFolderPreview, serveMediaFile } from "./media.ts";
 import { CliPage } from "./cli-page.tsx";
 
@@ -24,13 +24,8 @@ const loginPageStyle = css({
   padding: "2rem",
 });
 const loginTitleStyle = css({
-  fontSize: "1.25rem",
-  margin: "0 0 1.5rem",
-  textAlign: "center",
-});
-const loginNoteStyle = css({
-  fontSize: "0.875rem",
-  margin: "1rem 0 0",
+  fontSize: "2.75rem",
+  margin: "0 0 2rem",
   textAlign: "center",
 });
 
@@ -80,9 +75,9 @@ export default createController(routes, {
             : null;
 
       return context.render(
-        <Document title="Login - artbin">
+        <Document title="Sign in - artbin">
           <main mix={loginPageStyle}>
-            <h1 mix={loginTitleStyle}>Login</h1>
+            <h1 mix={loginTitleStyle}>artbin</h1>
             {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
             <ButtonLink
               href={routes.auth.login.href()}
@@ -90,15 +85,8 @@ export default createController(routes, {
               block
               document
             >
-              Sign in with Jack Auth
+              Sign in
             </ButtonLink>
-            <p mix={[loginNoteStyle, mutedTextStyle]}>
-              Use your Jack Auth account.
-            </p>
-            <p mix={loginNoteStyle}>
-              Uploading with the CLI?{" "}
-              <a href={routes.cli.href()}>Read the guide</a>.
-            </p>
           </main>
         </Document>,
       );
