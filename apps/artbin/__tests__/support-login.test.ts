@@ -172,6 +172,36 @@ function mockProvider(input: {
   }) as typeof fetch;
 }
 
+test("support target lookup requires the transport credential and an existing local subject", async () => {
+  const db = setup();
+  await db.insert(users).values({
+    id: "local-target",
+    username: "target-user",
+    authSubject: "target",
+    isAdmin: false,
+  });
+  const lookup = (targetSubject: string, authorization?: string) =>
+    router.fetch(
+      new Request(`${artbin}/auth/support/target`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authorization ? { Authorization: authorization } : {}),
+        },
+        body: JSON.stringify({ targetSubject }),
+      }),
+    );
+  const credential = `Basic ${Buffer.from("artbin:support-transport-secret").toString("base64")}`;
+  expect((await lookup("target")).status).toBe(401);
+  expect((await lookup("target", "Basic invalid")).status).toBe(401);
+  const linked = await lookup("target", credential);
+  expect(linked.status).toBe(200);
+  expect(await linked.json()).toEqual({ linked: true });
+  const missing = await lookup("unlinked", credential);
+  expect(missing.status).toBe(200);
+  expect(await missing.json()).toEqual({ linked: false });
+});
+
 test("support handoff uses an existing target and exit rejects in-flight verification", async () => {
   const db = setup();
   await db.insert(users).values({

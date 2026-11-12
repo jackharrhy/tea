@@ -20,6 +20,7 @@ import {
   completeSupportLogin,
   exitSupportLogin,
   supportRecoveryToken,
+  supportTargetEligibility,
 } from "#lib/support-login.server";
 
 import { routes } from "../../routes.ts";
@@ -73,6 +74,10 @@ export default createController(routes.auth, {
           },
         },
       );
+    },
+
+    supportTarget(context) {
+      return supportTargetEligibility(context.request);
     },
 
     supportRecover(context) {

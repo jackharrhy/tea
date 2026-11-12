@@ -240,6 +240,45 @@ async function targetUser(subject: string): Promise<User | null> {
   );
 }
 
+export async function supportTargetEligibility(
+  request: Request,
+): Promise<Response> {
+  const settings = supportConfig();
+  if (!settings) return new Response("Not Found", { status: 404 });
+  const headers = { "Cache-Control": "no-store" };
+  const authorization = request.headers.get("Authorization") ?? "";
+  if (!sameSecret(authorization, basic(settings)))
+    return new Response("Unauthorized", { status: 401, headers });
+  if (
+    request.headers.get("Content-Type")?.split(";", 1)[0] !== "application/json"
+  )
+    return new Response("Invalid support target", { status: 400, headers });
+  const body = await readRequestBody(request, {
+    maxBytes: 1024,
+    timeoutMs: 2_000,
+  });
+  if (!body.ok)
+    return new Response("Invalid support target", { status: 400, headers });
+  let input: unknown;
+  try {
+    input = JSON.parse(Buffer.from(body.bytes).toString("utf8"));
+  } catch {
+    return new Response("Invalid support target", { status: 400, headers });
+  }
+  if (
+    !input ||
+    typeof input !== "object" ||
+    Array.isArray(input) ||
+    Object.keys(input).length !== 1 ||
+    !("targetSubject" in input) ||
+    typeof input.targetSubject !== "string" ||
+    !/^[A-Za-z0-9_-]{1,200}$/.test(input.targetSubject)
+  )
+    return new Response("Invalid support target", { status: 400, headers });
+  const linked = Boolean(await targetUser(input.targetSubject));
+  return Response.json({ linked }, { headers });
+}
+
 function supportSessionAllowedPath(pathname: string): boolean {
   return (
     !pathname.startsWith("/api/cli/") &&

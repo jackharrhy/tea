@@ -21,6 +21,7 @@ export const routes = route({
     supportStart: get("/support/start"),
     supportCallback: get("/support/callback"),
     supportProblem: get("/support/problem"),
+    supportTarget: post("/support/target"),
     supportRecover: get("/support/recover"),
     supportExit: post("/support/exit"),
     cliAuthorize: get("/cli/authorize"),

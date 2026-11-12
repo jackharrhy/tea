@@ -59,7 +59,10 @@ support session. A surviving support cookie blocks ordinary-session fallback;
 browser navigation goes to `/auth/support/recover` for an explicit
 CSRF-protected exit after restart. A rejected callback clears its transaction
 cookie and redirects to a code-free problem page; an unlinked local target is
-identified there without creating an account.
+identified there without creating an account. Jack Auth can call the
+transport-credential-protected `/auth/support/target` endpoint before starting a
+handoff to check whether the target's immutable subject has a local Artbin row;
+lookup failure must deny the start.
 The banner names the actor and target, and its exit button ends only the
 support session. Normal actor login remains separate. The Auth
 service owns durable expiry and native token revocation if Artbin restarts or an
