@@ -60,7 +60,7 @@ export default createController(routes.auth, {
         {
           headers: {
             "Cache-Control": "no-store",
-            "Referrer-Policy": "no-referrer",
+            "Referrer-Policy": "same-origin",
           },
         },
       );

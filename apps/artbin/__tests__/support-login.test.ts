@@ -343,6 +343,7 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
     new Request(`${artbin}/auth/support/recover`, { headers: staleHeaders }),
   );
   expect(recovery.status).toBe(200);
+  expect(recovery.headers.get("Referrer-Policy")).toBe("same-origin");
   const recoveryPage = await recovery.text();
   expect(recoveryPage).toContain("Exit support session");
   expect(recoveryPage).toContain(`value="${csrf}"`);
