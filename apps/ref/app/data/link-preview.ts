@@ -39,11 +39,13 @@ export async function previewLink(url: string): Promise<LinkPreview> {
   const host = new URL(url).hostname.replace(/^www\./, "");
   const selectedPhoto = xPhotoSelection(url);
   const selectedImage = selectedPhoto ? await xPhotoImage(selectedPhoto) : null;
+  const video = selectedPhoto ? null : await xVideo(url);
   const fallback: LinkPreview = {
     url,
     title: host,
     description: "",
-    imageUrl: selectedImage,
+    imageUrl: selectedImage ?? video?.imageUrl ?? null,
+    videoUrl: video?.videoUrl ?? null,
     siteName: host,
   };
   const youtube = await youtubePreview(url);
@@ -84,6 +86,7 @@ export async function previewLink(url: string): Promise<LinkPreview> {
       };
       if (!isGenericSocialPreview(preview)) {
         if (selectedPhoto) preview.imageUrl = selectedImage;
+        if (video) preview.imageUrl = video.imageUrl;
         return preview;
       }
     } catch {
@@ -91,6 +94,91 @@ export async function previewLink(url: string): Promise<LinkPreview> {
     }
   }
   return fallback;
+}
+
+export function normalizeXVideoUrl(value: string): string | null {
+  const normalized = normalizeLinkUrl(value);
+  if (!normalized) return null;
+  const url = new URL(normalized);
+  return url.protocol === "https:" &&
+    url.hostname === "video.twimg.com" &&
+    url.pathname.endsWith(".mp4")
+    ? normalized
+    : null;
+}
+
+async function xVideo(
+  value: string,
+): Promise<{ imageUrl: string | null; videoUrl: string } | null> {
+  const parsed = new URL(value);
+  if (
+    !["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(
+      parsed.hostname,
+    )
+  )
+    return null;
+  const post = /^\/([^/]+)\/status\/(\d+)(?:\/|$)/.exec(parsed.pathname);
+  if (!post) return null;
+  try {
+    const response = await fetch(
+      `https://api.fxtwitter.com/${encodeURIComponent(post[1])}/status/${post[2]}`,
+      {
+        signal: AbortSignal.timeout(8_000),
+        redirect: "manual",
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Ref/1.0 (+link-preview)",
+        },
+      },
+    );
+    if (
+      !response.ok ||
+      !response.headers.get("Content-Type")?.includes("application/json")
+    ) {
+      await response.body?.cancel();
+      return null;
+    }
+    const bytes = await readPrefix(response.body, 64 * 1024 + 1);
+    if (bytes.length > 64 * 1024) return null;
+    const result: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    if (!result || typeof result !== "object") return null;
+    const tweet = (result as { tweet?: unknown }).tweet;
+    if (!tweet || typeof tweet !== "object") return null;
+    const data = tweet as { id?: unknown; media?: { all?: unknown } };
+    if (data.id !== post[2] || !Array.isArray(data.media?.all)) return null;
+    const media = data.media.all.find((item) => item?.type === "video") as
+      | { thumbnail_url?: unknown; variants?: unknown }
+      | undefined;
+    if (!media || !Array.isArray(media.variants)) return null;
+    const variants = media.variants
+      .filter(
+        (
+          item,
+        ): item is { url: string; bitrate: number; content_type: string } =>
+          item &&
+          typeof item.url === "string" &&
+          typeof item.bitrate === "number" &&
+          item.content_type === "video/mp4" &&
+          item.bitrate <= 3_000_000 &&
+          normalizeXVideoUrl(item.url) !== null,
+      )
+      .toSorted((a, b) => b.bitrate - a.bitrate);
+    const videoUrl = variants[0] ? normalizeXVideoUrl(variants[0].url) : null;
+    if (!videoUrl) return null;
+    const imageUrl =
+      typeof media.thumbnail_url === "string"
+        ? normalizeLinkUrl(media.thumbnail_url)
+        : null;
+    return {
+      videoUrl,
+      imageUrl:
+        imageUrl && new URL(imageUrl).hostname === "pbs.twimg.com"
+          ? imageUrl
+          : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function xPhotoSelection(
@@ -120,8 +208,11 @@ async function xPhotoImage(photo: {
       `https://api.fxtwitter.com/${encodeURIComponent(photo.user)}/status/${photo.id}`,
       {
         signal: AbortSignal.timeout(8_000),
-        redirect: "error",
-        headers: { Accept: "application/json" },
+        redirect: "manual",
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Ref/1.0 (+link-preview)",
+        },
       },
     );
     if (

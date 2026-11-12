@@ -20,6 +20,7 @@ export interface LinkPreview {
   title: string;
   description: string;
   imageUrl: string | null;
+  videoUrl?: string | null;
   siteName: string;
 }
 
