@@ -1,0 +1,289 @@
+export default `
+  <h1>how-to</h1>
+
+  <section class="panel" id="tutorials">
+    <h2><a href="#tutorials">tutorials</a></h2>
+    <p>
+      New to building web pages? These MDN tutorials walk you through the
+      fundamentals:
+    </p>
+    <ul>
+      <li>
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Your_first_website/Creating_the_content"
+          target="_blank"
+          >Creating the content</a
+        >
+        -- learn HTML, the language for structuring your pages
+      </li>
+      <li>
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Your_first_website/Styling_the_content"
+          target="_blank"
+          >Styling the content</a
+        >
+        -- learn CSS, the language for making things look good
+      </li>
+      <li>
+        <a
+          href="https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/"
+          target="_blank"
+          >An interactive guide to flexbox</a
+        >
+        -- a great visual guide to CSS flexbox layout
+      </li>
+      <li>
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Your_first_website/Adding_interactivity"
+          target="_blank"
+          >Adding interactivity</a
+        >
+        -- learn JavaScript, the language for making things do stuff
+      </li>
+    </ul>
+    <p>
+      Everything you learn there applies directly to 4orm. Write HTML in the
+      content editor, add CSS in the CSS section, and add scripts in the custom
+      HTML section.
+    </p>
+  </section>
+
+  <section class="panel" id="markdown">
+    <h2><a href="#markdown">markdown</a></h2>
+    <p>
+      Any content field (profile, pages, cards) can be switched to Markdown
+      using the toggle above the editor. Markdown is a simpler alternative to
+      HTML for writing formatted text.
+    </p>
+    <p>
+      See the
+      <a href="https://www.markdownguide.org/cheat-sheet/" target="_blank"
+        >Markdown cheat sheet</a
+      >
+      for the full syntax reference.
+    </p>
+  </section>
+
+  <section class="panel" id="layouts">
+    <h2><a href="#layouts">layouts</a></h2>
+    <p>Each page and your profile can use one of four layouts:</p>
+    <ul>
+      <li>
+        <strong>default</strong> -- the standard 4orm look with topbar, panels,
+        and structure.
+      </li>
+      <li>
+        <strong>simple</strong> -- just the topbar and your content, no panels.
+      </li>
+      <li>
+        <strong>raw</strong> -- you provide the <em>entire</em> HTML document.
+        No topbar, no wrapper, nothing. Full control.
+      </li>
+      <li>
+        <strong>cssonly</strong> -- keeps the default topbar and CSS, but leaves
+        the content area blank.
+      </li>
+    </ul>
+    <p>
+      In raw mode on your profile, <code>window.__4ORM</code> is available in
+      the <code>&lt;head&gt;</code> with your username, pages list, and lineage
+      URL so your scripts can reference them:
+    </p>
+    <pre><code>// window.__4ORM looks like:
+{
+  "username": "yourname",
+  "display_name": "Your Name",
+  "pages": [
+    { "slug": "about", "title": "About Me" }
+  ],
+  "lineage_url": "/lineage#user-yourname"
+}</code></pre>
+  </section>
+
+  <section class="panel" id="css-html">
+    <h2><a href="#css-html">custom CSS &amp; HTML</a></h2>
+    <p>In <a href="/settings">settings</a>, you can add:</p>
+    <ul>
+      <li>
+        <strong>CSS</strong> -- applied to your profile and all your pages.
+        Style anything on the page.
+      </li>
+      <li>
+        <strong>Custom HTML</strong> -- injected into your profile and pages.
+        Supports <code>&lt;script&gt;</code> tags for interactivity (click
+        sounds, animations, etc).
+      </li>
+    </ul>
+  </section>
+
+  <section class="panel" id="media">
+    <h2><a href="#media">media</a></h2>
+    <p>
+      Upload images, videos, audio, and other files in the
+      <a href="/settings/media">media library</a>. Each user gets
+      <strong>500 MB</strong> of storage. Use the snippet picker on the
+      create/edit page forms to insert media into your content.
+    </p>
+  </section>
+
+  <section class="panel" id="guestbook">
+    <h2><a href="#guestbook">guestbook</a></h2>
+    <p>
+      Every user has a guestbook that other logged-in users can sign. View yours
+      at <code>/u/yourname/guestbook</code>.
+    </p>
+    <p>To embed it on your profile or a page, add this to your content:</p>
+    <pre><code>&lt;iframe
+  src="/u/yourname/guestbook"
+  style="width:100%; height:400px; border:2px inset #ccc; background:#ffffee;"
+&gt;&lt;/iframe&gt;</code></pre>
+    <p>
+      The guestbook runs inside an iframe so it won't interfere with your page's
+      CSS. Visitors can sign it without leaving your page. As the owner, you can
+      delete entries.
+    </p>
+  </section>
+
+  <section class="panel" id="profile-cards">
+    <h2><a href="#profile-cards">profile cards</a></h2>
+    <p>
+      Your profile card appears on the <a href="/">homepage</a>. It has a
+      headline, freeform content (HTML or Markdown), and visual settings (accent
+      color, border style, card CSS).
+    </p>
+    <p>
+      Cards render in sandboxed iframes. Your card CSS uses
+      <code>@layer</code>, so any rules you write will always override the base
+      card styles without needing <code>!important</code>.
+    </p>
+  </section>
+
+  <section class="panel" id="forum">
+    <h2><a href="#forum">forum</a></h2>
+    <p>
+      The <a href="/forum">forum</a> is a shared space for discussion. Create
+      threads, reply to others, and customize your threads with CSS and HTML.
+    </p>
+
+    <h3 id="bbcode"><a href="#bbcode">BBCode</a></h3>
+    <p>
+      Forum posts support
+      <a href="https://www.phpbb.com/community/help/bbcode" target="_blank"
+        >BBCode</a
+      >
+      (a classic formatting language) or Markdown. BBCode basics:
+    </p>
+    <pre><code>[b]bold[/b]
+[i]italic[/i]
+[u]underline[/u]
+[s]strikethrough[/s]
+[url=https://example.com]link text[/url]
+[img]/uploads/yourname/image.png[/img]
+[video]/uploads/yourname/clip.mp4[/video]
+[audio]/uploads/yourname/song.mp3[/audio]
+[quote]quoted text[/quote]
+[code]code here[/code]
+[color=red]colored text[/color]
+[size=20]bigger text[/size]</code></pre>
+
+    <h3 id="images-and-gifs">
+      <a href="#images-and-gifs">posting images and gifs</a>
+    </h3>
+    <p>To post an image or gif in the forum:</p>
+    <ol>
+      <li>Upload it to your <a href="/settings/media">media library</a></li>
+      <li>
+        When writing a post, use the media picker dropdown below the text area
+        to insert it
+      </li>
+      <li>
+        Or type the BBCode manually:
+        <code>[img]/uploads/yourname/funny.gif[/img]</code>
+      </li>
+    </ol>
+    <p>
+      The <code>[img]</code> tag works with any image format: .png, .jpg, .gif,
+      .webp, etc. You can also link to external images without uploading them
+      first: <code>[img]https://example.com/image.gif[/img]</code>
+    </p>
+
+    <h3 id="quoting"><a href="#quoting">quoting</a></h3>
+    <p>
+      Click the "quote" button on any post to include it in your reply. The
+      quoted text is a snapshot -- it won't change if the original is edited.
+    </p>
+
+    <h3 id="thread-customization">
+      <a href="#thread-customization">thread customization</a>
+    </h3>
+    <p>
+      Thread creators can add custom CSS and HTML to their threads, similar to
+      personal pages. This lets you theme discussions with custom backgrounds,
+      fonts, etc.
+    </p>
+
+    <h3 id="forum-signature"><a href="#forum-signature">forum signature</a></h3>
+    <p>
+      Set your signature in <a href="/settings">settings</a>. It uses
+      <a href="https://www.phpbb.com/community/help/bbcode" target="_blank"
+        >BBCode</a
+      >
+      and appears below all your forum posts. Max 200 characters.
+    </p>
+  </section>
+
+  <section class="panel" id="webring">
+    <h2><a href="#webring">webring</a></h2>
+    <p>
+      The 4orm webring connects members' sites. Join via
+      <a href="/settings">settings</a> and embed the navigation bar on your
+      page:
+    </p>
+    <pre><code>&lt;iframe src="/u/yourname/webring" style="width:100%;height:32px;border:none;"&gt;&lt;/iframe&gt;</code></pre>
+    <p>
+      Visitors can navigate to the previous or next member, or click the center
+      link for a random member's profile.
+    </p>
+  </section>
+
+  <section class="panel" id="status">
+    <h2><a href="#status">status / mood</a></h2>
+    <p>
+      Set a status in <a href="/settings">settings</a> to show what you're up
+      to. Embed the badge on your page:
+    </p>
+    <pre><code>&lt;iframe src="/u/yourname/status" style="width:300px;height:32px;border:none;"&gt;&lt;/iframe&gt;</code></pre>
+    <p>Shows your emoji, text, and when it was last updated.</p>
+  </section>
+
+  <section class="panel" id="music-player">
+    <h2><a href="#music-player">music player</a></h2>
+    <p>
+      Build a playlist from your uploaded audio files in
+      <a href="/settings">settings</a>. Embed the player on your page:
+    </p>
+    <pre><code>&lt;iframe src="/u/yourname/player" style="width:300px;height:200px;border:2px inset #ccc;"&gt;&lt;/iframe&gt;</code></pre>
+    <p>
+      Visitors can browse your tracks and listen while browsing your page.
+      Customize the player's look with CSS in settings.
+    </p>
+  </section>
+
+  <section class="panel" id="rss">
+    <h2><a href="#rss">RSS</a></h2>
+    <p>4orm has RSS feeds for staying up to date:</p>
+    <ul>
+      <li>
+        <a href="/feed.xml"><code>/feed.xml</code></a> -- all recent public page
+        updates
+      </li>
+      <li>
+        <code>/u/yourname/feed.xml</code> -- a specific user's page updates
+      </li>
+      <li>
+        <a href="/forum/feed.xml"><code>/forum/feed.xml</code></a> -- forum
+        posts and replies
+      </li>
+    </ul>
+  </section>
+`;

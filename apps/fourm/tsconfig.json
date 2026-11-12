@@ -15,5 +15,5 @@
     "jsxImportSource": "remix/component",
     "noEmit": true
   },
-  "exclude": ["dist"]
+  "exclude": ["dist", "app/browser", "app/client.ts"]
 }

@@ -1,8 +1,23 @@
 import { CommunityError } from "./community.ts";
-import type { Database, Member } from "./community.ts";
+import type { Database, Member, Row } from "./community.ts";
 
 const now = () => Math.floor(Date.now() / 1000);
 const conflict = (message: string) => new CommunityError(409, message);
+function inviteState(invite: Row, pending: number) {
+  if (invite.disabled) return "disabled";
+  if (invite.expires_at) {
+    const date = String(invite.expires_at).replace(" ", "T");
+    if (
+      Date.parse(/(?:Z|[+-]\d\d:\d\d)$/.test(date) ? date : date + "Z") <=
+      Date.now()
+    )
+      return "expired";
+  }
+  if (Number(invite.uses_count) >= Number(invite.max_uses)) return "exhausted";
+  if (Number(invite.uses_count) + pending >= Number(invite.max_uses))
+    return "reserved";
+  return "active";
+}
 export function createEnrollments(
   db: Database,
   member: (id: number) => Member,
@@ -74,10 +89,30 @@ export function createEnrollments(
   return {
     invites(actorId: number) {
       member(actorId);
-      return db.all(
-        "SELECT * FROM invites WHERE created_by_user_id=? ORDER BY id DESC",
-        actorId,
-      );
+      return db
+        .all(
+          `SELECT i.*,(SELECT count(*) FROM auth_enrollments e WHERE e.invite_id=i.id AND e.expires_at>? AND e.consumed_at IS NULL) pending_reservations
+        FROM invites i WHERE i.created_by_user_id=? ORDER BY i.created_at DESC`,
+          now(),
+          actorId,
+        )
+        .map((row) => {
+          const reservationCount = Number(row.pending_reservations);
+          const status = inviteState(row, reservationCount);
+          return {
+            ...row,
+            id: Number(row.id),
+            code: String(row.code),
+            uses_count: Number(row.uses_count),
+            max_uses: Number(row.max_uses),
+            status,
+            pending_reservations: reservationCount,
+            redeemed_by: db.all(
+              "SELECT username,display_name FROM users WHERE invite_id=?",
+              row.id,
+            ),
+          };
+        });
     },
     createInvite(actorId: number, code: string, maxUses: number) {
       member(actorId);
@@ -91,12 +126,22 @@ export function createEnrollments(
       )[0];
     },
     disableInvite(actorId: number, id: number) {
-      const actor = member(actorId);
-      const row = db.all("SELECT * FROM invites WHERE id=?", id)[0];
-      if (!row) throw new CommunityError(404, "Invite not found");
-      if (row.created_by_user_id !== actorId && !actor.is_admin)
-        throw new CommunityError(403, "This invite belongs to another member");
-      db.all("UPDATE invites SET disabled=1 WHERE id=?", id);
+      member(actorId);
+      db.all(
+        "UPDATE invites SET disabled=1 WHERE id=? AND created_by_user_id=?",
+        id,
+        actorId,
+      );
+    },
+    deleteInvite(actorId: number, id: number) {
+      member(actorId);
+      db.all(
+        `DELETE FROM invites WHERE id=? AND created_by_user_id=? AND uses_count=0
+        AND NOT EXISTS(SELECT 1 FROM auth_enrollments e WHERE e.invite_id=invites.id AND e.expires_at>? AND e.consumed_at IS NULL)`,
+        id,
+        actorId,
+        now(),
+      );
     },
     reserveEnrollment(
       code: string,

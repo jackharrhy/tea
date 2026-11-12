@@ -1,7 +1,12 @@
+import { wantsJSON } from "./http.ts";
+import { settingsJSON, homeJSON } from "./view-json.ts";
+import howToHTML from "./help/how_to.ts";
+import cliHTML from "./help/cli.ts";
+import designHTML from "./help/design.ts";
+import { profileBody, pageBody, rawMemberPage } from "./member-pages.tsx";
 import { createRouter, createController } from "remix/router";
 import { get, post, put, del, route } from "remix/routes";
 import { renderToString } from "remix/component/server";
-import { unsafeHTML } from "remix/component";
 import type { RemixNode } from "remix/component";
 import {
   PROJECT_ROLES_SCOPE,
@@ -23,29 +28,20 @@ import {
   serviceBody,
 } from "./enrollment.ts";
 import { readCookie } from "./runtime.ts";
-import { content } from "./rendering.ts";
 import { chatStream } from "./chat.ts";
-import { PublicCards } from "./widgets.tsx";
+import { Settings, InvitesSettings, PagesList } from "./settings-view.tsx";
+import { settingsRoutes, settingsController } from "./settings-controller.tsx";
+import { Home } from "./home.tsx";
 import { widgetRoutes, widgetController } from "./widgets-controller.tsx";
 import { archiveObject, restoreArchive } from "./archive.ts";
-import {
-  Document,
-  BareDocument,
-  rawPage,
-  Members,
-  Profile,
-  Settings,
-  PageEditor,
-  Forum,
-  NewThread,
-  Thread,
-  Chat,
-  Media,
-  Invites,
-} from "./views.tsx";
+import { Document, Forum, NewThread, Thread, Chat, Media } from "./views.tsx";
 
 const routes = route({
   home: get("/"),
+  howTo: get("/how-to"),
+  cli: get("/cli"),
+  design: get("/design"),
+  download: get("/cli/download/:target"),
   login: get("/auth/start"),
   loginAlias: get("/login"),
   callback: get("/auth/callback"),
@@ -55,10 +51,6 @@ const routes = route({
   shortPage: get("/u/:username/p/*slug"),
   settings: get("/settings"),
   saveSettings: post("/settings"),
-  newPage: get("/settings/pages/new"),
-  editPage: get("/settings/pages/*slug"),
-  createPage: post("/settings/pages/new"),
-  savePage: post("/settings/pages/*slug"),
   deletePage: post("/settings/pages/*slug/delete"),
   forum: get("/forum"),
   newThread: get("/forum/new"),
@@ -89,6 +81,7 @@ const routes = route({
   invites: get("/settings/invites"),
   createInvite: post("/settings/invites"),
   disableInvite: post("/settings/invites/:id/disable"),
+  deleteInvite: post("/settings/invites/:id/delete"),
   register: get("/register"),
   enroll: post("/auth/register"),
   pendingEnrollment: get("/internal/auth/enrollments/:id"),
@@ -131,49 +124,28 @@ export function createAppRouter(
     if (!viewer.member) throw new CommunityError(401, "Sign in to continue");
     return viewer.member;
   }
-  async function page(title: string, body: RemixNode) {
+  async function page(title: string, body: RemixNode, html?: string) {
     return new Response(
       "<!doctype html>" +
         (await renderToString(
-          <Document title={title} member={viewer.member}>
+          <Document
+            title={title}
+            member={viewer.member}
+            banner={await store.call("siteBanner")}
+            html={html}
+          >
             {body}
           </Document>,
         )),
       { headers: { "Content-Type": "text/html; charset=utf-8" } },
     );
   }
-  async function memberPage(
-    title: string,
-    record: Row,
-    profile: Row,
-    body: RemixNode,
-  ) {
-    if (record.layout === "raw")
-      return new Response(rawPage(record, profile), {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
-    if (record.layout === "cssonly")
-      return new Response(
-        "<!doctype html>" +
-          (await renderToString(
-            <BareDocument title={title}>{body}</BareDocument>,
-          )),
-        { headers: { "Content-Type": "text/html; charset=utf-8" } },
-      );
-    return page(title, body);
-  }
-
   async function apiMember(request: Request, permission?: string) {
     const principal = await bearer(request, env, permission);
     return store.call("resolveIdentity", env.AUTH_ISSUER, principal.subject);
   }
-  async function savePage(request: Request) {
-    const actor = member();
-    const body = await fields(request);
-    await store.call("savePage", actor.id, String(body.slug), body);
-    return redirect("/settings");
-  }
   const router = createRouter();
+  router.map(settingsRoutes, settingsController(store, viewer, page));
   router.map(widgetRoutes, widgetController(env, store, viewer, page));
   router.map(
     routes,
@@ -310,14 +282,39 @@ export function createAppRouter(
           );
           return redirect(thread ? `/forum/${thread}` : "/forum");
         },
-        async home() {
-          return page(
-            "Home",
-            <>
-              <Members members={await store.call("members")} />
-              <PublicCards cards={await store.call("publicCards")} />
-            </>,
-          );
+        howTo() {
+          return page("how-to", null, howToHTML);
+        },
+        cli() {
+          return page("4orm cli", null, cliHTML);
+        },
+        design() {
+          return page("design - 4orm", null, designHTML);
+        },
+        download({ params }) {
+          const targets: Record<string, string> = {
+            "macos-arm64": "4orm-darwin-arm64.tar.gz",
+            "macos-amd64": "4orm-darwin-amd64.tar.gz",
+            "linux-arm64": "4orm-linux-arm64.tar.gz",
+            "linux-amd64": "4orm-linux-amd64.tar.gz",
+            "windows-arm64": "4orm-windows-arm64.zip",
+            "windows-amd64": "4orm-windows-amd64.zip",
+          };
+          if (!Object.hasOwn(targets, params.target))
+            throw new CommunityError(404, "Not found");
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location:
+                "https://github.com/jackharrhy/4orm/releases/latest/download/" +
+                targets[params.target],
+            },
+          });
+        },
+        async home({ request }) {
+          const home = await store.call("home");
+          if (wantsJSON(request)) return Response.json(homeJSON(home));
+          return page("4orm · home", <Home {...home} />);
         },
         login({ request }) {
           return startLogin(
@@ -348,41 +345,45 @@ export function createAppRouter(
           });
         },
         async profile({ params }) {
-          const profile = await store.call("profile", params.username);
-          return memberPage(
+          const { profile, pages } = await store.call(
+            "publicProfile",
+            params.username,
+          );
+          if (profile.layout === "raw")
+            return new Response(
+              rawMemberPage(profile, profile, {
+                username: profile.username,
+                display_name: profile.display_name,
+                pages: pages.map((item) => ({
+                  slug: item.slug,
+                  title: item.title,
+                })),
+                lineage_url: `/lineage#user-${profile.username}`,
+              }),
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            );
+          return page(
             String(profile.display_name),
-            profile,
-            profile,
-            <Profile
-              profile={profile}
-              pages={await store.call(
-                "pages",
-                Number(profile.id),
-                viewer.member?.id ?? null,
-              )}
-            />,
+            null,
+            await profileBody(profile, pages),
           );
         },
         async page({ params }) {
-          const profile = await store.call("profile", params.username);
-          const item = await store.call(
-            "page",
-            Number(profile.id),
-            params.slug,
-            viewer.member?.id ?? null,
-          );
-          return memberPage(
-            String(item.title),
-            item,
-            profile,
-            <>
-              <h1>{item.title}</h1>
-              <article
-                innerHTML={unsafeHTML(
-                  content(String(item.content), String(item.content_format)),
-                )}
-              />
-            </>,
+          const profile = await store.call("profile", params.username),
+            record = await store.call(
+              "page",
+              Number(profile.id),
+              params.slug,
+              null,
+            );
+          if (record.layout === "raw")
+            return new Response(rawMemberPage(record, profile), {
+              headers: { "Content-Type": "text/html; charset=utf-8" },
+            });
+          return page(
+            String(record.title),
+            null,
+            await pageBody(record, profile),
           );
         },
         shortPage({ params }) {
@@ -390,14 +391,16 @@ export function createAppRouter(
             `/u/${encodeURIComponent(params.username)}/page/${encodeURIComponent(params.slug)}`,
           );
         },
-        async settings() {
-          const actor = member();
+        async settings({ request }) {
+          const snapshot = await store.call("settingsSnapshot", member().id);
+          if (wantsJSON(request)) return Response.json(settingsJSON(snapshot));
+          const query = new URL(request.url).searchParams;
           return page(
-            "Settings",
+            "settings",
             <Settings
-              member={actor}
-              profile={await store.call("profile", actor.username)}
-              pages={await store.call("pages", actor.id, actor.id)}
+              {...snapshot}
+              newInvite={query.get("new_invite") ?? undefined}
+              error={query.get("error") ?? undefined}
             />,
           );
         },
@@ -405,27 +408,21 @@ export function createAppRouter(
           await store.call("saveProfile", member().id, await fields(request));
           return redirect("/settings");
         },
-        newPage() {
-          member();
-          return page("Create a page", <PageEditor />);
-        },
-        async editPage({ params }) {
-          const actor = member();
-          return page(
-            "Edit page",
-            <PageEditor
-              page={await store.call("page", actor.id, params.slug, actor.id)}
-            />,
-          );
-        },
-        createPage({ request }) {
-          return savePage(request);
-        },
-        savePage({ request }) {
-          return savePage(request);
-        },
-        async deletePage({ params }) {
-          await store.call("deletePage", member().id, params.slug);
+        async deletePage({ request, params }) {
+          const user = member();
+          await store.call("deletePage", user.id, params.slug);
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "page deleted" });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response(
+              await renderToString(
+                <PagesList
+                  pages={await store.call("pages", user.id, user.id)}
+                  username={user.username}
+                />,
+              ),
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            );
           return redirect("/settings");
         },
         async forum() {
@@ -491,8 +488,7 @@ export function createAppRouter(
         async sendChat({ request }) {
           const body = await fields(request);
           await store.call("sendChat", member().id, String(body.message ?? ""));
-          if (request.headers.get("Accept")?.includes("application/json"))
-            return Response.json({ ok: true });
+          if (wantsJSON(request)) return Response.json({ ok: true });
           return redirect("/chat");
         },
         chatStream({ request }) {
@@ -612,28 +608,73 @@ export function createAppRouter(
           );
           return Response.json({ ok: true, message: "media deleted" });
         },
-        async invites() {
-          return page(
-            "Invites",
-            <Invites
-              invites={await store.call("invites", member().id)}
-              origin={env.AUTH_PUBLIC_ORIGIN}
-            />,
-          );
+        invites() {
+          return redirect("/settings");
         },
         async createInvite({ request }) {
-          const body = await fields(request);
+          const user = member(),
+            body = await fields(request),
+            code = btoa(
+              String.fromCharCode(
+                ...crypto.getRandomValues(new Uint8Array(12)),
+              ),
+            )
+              .replaceAll("+", "-")
+              .replaceAll("/", "_");
           await store.call(
             "createInvite",
-            member().id,
-            crypto.randomUUID().replace(/-/g, ""),
-            Number(body.max_uses),
+            user.id,
+            code,
+            Math.max(1, Math.min(50, Number(body.max_uses ?? 1))),
           );
-          return redirect("/settings/invites");
+          if (wantsJSON(request))
+            return Response.json({
+              ok: true,
+              id: null,
+              slug: null,
+              code,
+              redirect: null,
+            });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response(
+              await renderToString(
+                <InvitesSettings
+                  invites={await store.call("invites", user.id)}
+                />,
+              ),
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            );
+          return redirect(`/settings?new_invite=${encodeURIComponent(code)}`);
         },
-        async disableInvite({ params }) {
+        async disableInvite({ request, params }) {
           await store.call("disableInvite", member().id, Number(params.id));
-          return redirect("/settings/invites");
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "invite disabled" });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response(
+              await renderToString(
+                <InvitesSettings
+                  invites={await store.call("invites", member().id)}
+                />,
+              ),
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            );
+          return redirect("/settings");
+        },
+        async deleteInvite({ request, params }) {
+          await store.call("deleteInvite", member().id, Number(params.id));
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "invite deleted" });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response(
+              await renderToString(
+                <InvitesSettings
+                  invites={await store.call("invites", member().id)}
+                />,
+              ),
+              { headers: { "Content-Type": "text/html; charset=utf-8" } },
+            );
+          return redirect("/settings");
         },
         register({ request }) {
           return page(

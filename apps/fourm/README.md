@@ -47,16 +47,14 @@ Set `FOURM_REVIEW_STATE`, `FOURM_REVIEW_PORT`, `FOURM_REVIEW_ISSUER_PORT`,
 for an independent instance or existing private HTTPS proxy. Each instance needs
 unique ports and state. No route or domain is created by the runner.
 
-```sh
-CELLD_BIN=/absolute/path/to/celld npm run test:celld
-```
+The earlier `test:celld` suite covers the POC's authority/recovery mechanics,
+but its browser selectors still target the superseded interface. It must be
+updated to the source workflows before it can count as current acceptance.
+Released CLI API smoke is separate from an interactive CLI sign-in test.
 
-The smoke starts isolated authorities, drives desktop/mobile Chromium, removes
-its replica cache, reopens durable content, restores an archive to an empty
-store, and completes an invite through the signed fixture provider. Set
-`FOURM_CLI_BINARY` to a released 4orm binary to include its real API smoke.
-Evidence stays in `.review/evidence/`; successful temporary authorities are
-removed. Failed ones remain for diagnosis.
+The same-content oracle comparison is `npm run test:parity`; it requires the
+private prepared cohort and owned loopback listeners described in
+[the parity work log](docs/parity.md). It does not fetch production data.
 
 See [coverage and gaps](docs/coverage.md) and [migration/recovery](docs/migration.md).
 This candidate is not an approved production replacement.
