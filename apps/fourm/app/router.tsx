@@ -152,6 +152,24 @@ export function createAppRouter(
       { headers: { "Content-Type": "text/html; charset=utf-8" } },
     );
   }
+  async function httpError(request: Request, status: number, message: string) {
+    if (wantsJSON(request))
+      return Response.json(
+        { ok: false, error: message, status_code: status },
+        { status },
+      );
+    const response = await page(
+      `4orm · ${status}`,
+      <section class="panel">
+        <h1>{status}</h1>
+        <p>{message}</p>
+        <p>
+          <a href="/">← back to home</a>
+        </p>
+      </section>,
+    );
+    return new Response(response.body, { status, headers: response.headers });
+  }
   async function forumPost(request: Request, write: () => Promise<number>) {
     try {
       return await write();
@@ -172,20 +190,7 @@ export function createAppRouter(
             headers: { "Content-Type": "text/html; charset=utf-8" },
           },
         );
-      const response = await page(
-        "4orm · 429",
-        <section class="panel">
-          <h1>429</h1>
-          <p>{error.message}</p>
-          <p>
-            <a href="/">← back to home</a>
-          </p>
-        </section>,
-      );
-      return new Response(response.body, {
-        status: 429,
-        headers: response.headers,
-      });
+      return httpError(request, 429, error.message);
     }
   }
 
@@ -678,7 +683,12 @@ export function createAppRouter(
         },
         async sendChat({ request }) {
           const body = await fields(request);
-          if (!viewer.member) throw new CommunityError(403, "Forbidden");
+          if (!viewer.member)
+            return httpError(
+              request,
+              403,
+              "you don't have permission to access this.",
+            );
           const outcome = await store.call(
             "sendChat",
             viewer.member.id,
@@ -687,7 +697,7 @@ export function createAppRouter(
           if (request.headers.get("HX-Request") === "true")
             return new Response("");
           if (outcome.status === "timed_out")
-            throw new CommunityError(429, "Too Many Requests");
+            return httpError(request, 429, "Too Many Requests");
           return redirect("/chat");
         },
         chatStream({ request }) {
