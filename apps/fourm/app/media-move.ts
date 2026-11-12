@@ -111,3 +111,18 @@ export async function cleanupMediaTransfer(
     await media.delete(path);
   community.finishMediaDelete(path);
 }
+
+export async function cleanupAccountMedia(
+  community: Community,
+  media: R2Bucket,
+) {
+  for (const item of community.pendingAccountCleanup()) {
+    await media.delete(String(item.storage_path));
+    if (await media.head(String(item.storage_path)))
+      throw new CommunityError(
+        503,
+        "Deleted account media is still present; cleanup will retry",
+      );
+    community.finishAccountCleanup(String(item.storage_path));
+  }
+}

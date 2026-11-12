@@ -1,3 +1,7 @@
+import {
+  accountCleanupSchema,
+  createAccountDeletion,
+} from "./account-deletion.ts";
 import { createAdmin } from "./admin.ts";
 import { createPushDevices } from "./push.ts";
 import { createChatRoom } from "./chat-room.ts";
@@ -60,6 +64,7 @@ export function createCommunity(
 ) {
   db.all(schema);
   mediaMoveSchema(db);
+  accountCleanupSchema(db);
   const pageBodies = pageContent(db);
   db.all(`CREATE TABLE IF NOT EXISTS browser_sessions (
     token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
@@ -183,6 +188,7 @@ export function createCommunity(
     },
     ...createSettings(db, member),
     ...createAdmin(db, admin, pageBodies),
+    ...createAccountDeletion(db, admin),
     ...createEnrollments(db, member),
     ...createMedia(db, member),
     ...createMediaMoves(db, member, admin),
@@ -194,6 +200,11 @@ export function createCommunity(
       db.all("UPDATE users SET has_accepted_trust=1 WHERE id=?", actorId);
     },
     assertArchiveRestoreAuthority(issuer: string, subject: string) {
+      if (db.all("SELECT username FROM account_cleanup_users LIMIT 1").length)
+        throw new CommunityError(
+          409,
+          "Account media cleanup must finish before restoring an archive",
+        );
       if (!Number(db.all("SELECT count(*) AS count FROM users")[0].count))
         return;
       const link = db.all(
@@ -222,6 +233,11 @@ export function createCommunity(
       );
     },
     restore(tables: Record<string, Row[]>, digest?: string) {
+      if (db.all("SELECT username FROM account_cleanup_users LIMIT 1").length)
+        throw new CommunityError(
+          409,
+          "Account media cleanup must finish before restoring an archive",
+        );
       if (digest) {
         const previous = db.all(
           "SELECT receipt FROM archive_receipts WHERE digest=?",

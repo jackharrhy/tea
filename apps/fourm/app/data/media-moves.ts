@@ -42,7 +42,8 @@ export function requireIdleMedia(db: Database, actorId: number) {
 export function usernameReserved(db: Database, username: string) {
   return (
     db.all(
-      "SELECT id FROM media_moves WHERE kind='username' AND target=?",
+      "SELECT id FROM media_moves WHERE kind='username' AND target=? UNION ALL SELECT user_id FROM account_cleanup_users WHERE username=? LIMIT 1",
+      username,
       username,
     ).length > 0
   );
@@ -61,7 +62,9 @@ export function availableMediaPath(
       db.all(
         `SELECT storage_path FROM media WHERE storage_path=?
       UNION ALL SELECT storage_path FROM media_transfers WHERE storage_path=?
-      UNION ALL SELECT old_path FROM media_move_files WHERE old_path=? OR new_path=? LIMIT 1`,
+      UNION ALL SELECT old_path FROM media_move_files WHERE old_path=? OR new_path=?
+      UNION ALL SELECT storage_path FROM account_cleanup_objects WHERE storage_path=? LIMIT 1`,
+        path,
         path,
         path,
         path,
