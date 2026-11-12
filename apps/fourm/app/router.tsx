@@ -1,4 +1,4 @@
-import { exportUserSite } from "./site-export.ts";
+import { exportUserSite, exportFullSite } from "./site-export.ts";
 import { pushRoutes, pushController } from "./push-controller.tsx";
 import { mediaRoutes, mediaController } from "./media-controller.tsx";
 import { wantsJSON } from "./http.ts";
@@ -57,6 +57,7 @@ const routes = route({
   logout: post("/logout"),
   profile: get("/u/:username"),
   exportSite: get("/u/:username/export"),
+  exportFullSite: get("/admin/export"),
   page: get("/u/:username/page/*slug"),
   shortPage: get("/u/:username/p/*slug"),
   settings: get("/settings"),
@@ -783,6 +784,9 @@ export function createAppRouter(
         },
         restoreObject({ request, params }) {
           return archiveObject(request, env, params.path);
+        },
+        exportFullSite({ request }) {
+          return exportFullSite(request, env, store, viewer.member?.id ?? null);
         },
         exportSite({ request, params }) {
           return exportUserSite(

@@ -345,6 +345,22 @@ export function createCommunity(
         "SELECT id,username,display_name,status_emoji,status_text FROM users WHERE is_disabled=0 ORDER BY username",
       );
     },
+    fullSiteExport(actorId: number | null) {
+      if (actorId === null)
+        throw new CommunityError(403, "Admin access required");
+      admin(actorId);
+      return db.transaction(() => ({
+        users: db
+          .all("SELECT username FROM users ORDER BY created_at")
+          .map((row) => this.userSiteExport(actorId, String(row.username))),
+        threads: db.all(
+          "SELECT t.*,u.username AS author_username,u.display_name AS author_display_name FROM forum_threads t JOIN users u ON u.id=t.author_id ORDER BY t.created_at",
+        ),
+        posts: db.all(
+          "SELECT p.*,u.username AS author_username,u.display_name AS author_display_name,u.forum_signature AS author_signature FROM forum_posts p JOIN users u ON u.id=p.author_id ORDER BY p.created_at",
+        ),
+      }));
+    },
     userSiteExport(actorId: number | null, username: string) {
       const profile = this.profile(username);
       if (actorId === null)
