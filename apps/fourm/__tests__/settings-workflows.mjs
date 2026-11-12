@@ -176,14 +176,15 @@ export async function settingsWorkflows(page, origin) {
       assert.deepEqual(await order(), before);
       report.playlistAddMoveRemove = true;
     }
-    const slug = "isolated-parity-" + Date.now();
+    const slug = "isolated-parity-" + Date.now() + "-" + "x".repeat(81),
+      longTitle = "Isolated source-form title " + "x".repeat(150);
     const created = await page
       .context()
       .request.post(origin + "/settings/pages", {
         headers: { Origin: origin },
         form: {
           slug,
-          title: "Isolated parity workflow",
+          title: longTitle,
           content: "<p>Local copy only.</p>",
           content_format: "html",
           layout: "default",
@@ -209,6 +210,7 @@ export async function settingsWorkflows(page, origin) {
       error: "a page with that slug already exists",
     });
     await page.goto(origin + `/settings/pages/${slug}/edit`);
+    assert.equal(await page.locator('[name="title"]').inputValue(), longTitle);
     await page.locator('[name="title"]').fill("Isolated parity edit");
     await page
       .getByRole("button", { name: "save changes", exact: true })
@@ -238,6 +240,7 @@ export async function settingsWorkflows(page, origin) {
       404,
     );
     report.pageCreateEditReopenDelete = true;
+    report.browserFieldsBeyondApiLimits = true;
   } finally {
     for (const [path, form] of [
       ["css", { custom_css: original.custom_css }],
