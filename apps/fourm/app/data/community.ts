@@ -345,6 +345,27 @@ export function createCommunity(
         "SELECT id,username,display_name,status_emoji,status_text FROM users WHERE is_disabled=0 ORDER BY username",
       );
     },
+    userSiteExport(actorId: number | null, username: string) {
+      const profile = this.profile(username);
+      if (actorId === null)
+        throw new CommunityError(403, "Export permission required");
+      const actor = member(actorId);
+      if (actor.id !== Number(profile.id) && !actor.is_admin)
+        throw new CommunityError(403, "Export permission required");
+      return {
+        profile,
+        pages: db
+          .all(
+            "SELECT * FROM pages WHERE user_id=? AND is_public=1 ORDER BY created_at",
+            profile.id,
+          )
+          .map(pageBodies.read),
+        media: db.all(
+          "SELECT storage_path FROM media WHERE user_id=?",
+          profile.id,
+        ),
+      };
+    },
     profile(username: string) {
       const user = db.all(
         `SELECT u.id,u.username,u.display_name,u.content,u.content_format,u.custom_css,u.custom_html,u.layout,
