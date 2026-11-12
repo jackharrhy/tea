@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { createController } from "remix/router";
+import { css } from "remix/component";
 import { and, eq, gt } from "drizzle-orm";
 import { createRequestLogger } from "evlog";
 
@@ -14,14 +15,61 @@ import {
   getCliRedirectUri,
   type LoginTransaction,
 } from "#lib/oauth.server";
+import {
+  beginSupportLogin,
+  completeSupportLogin,
+  exitSupportLogin,
+  supportRecoveryToken,
+} from "#lib/support-login.server";
 
 import { routes } from "../../routes.ts";
+import { Document } from "../document.tsx";
 
 const SESSION_MAX_AGE = 60 * 60;
 const CLI_HANDOFF_MAX_AGE_MS = 2 * 60 * 1_000;
+const recoveryStyle = css({
+  margin: "4rem auto",
+  maxWidth: "32rem",
+  padding: "1rem",
+});
 
 export default createController(routes.auth, {
   actions: {
+    supportStart(context) {
+      return beginSupportLogin(context.request);
+    },
+
+    supportCallback(context) {
+      return completeSupportLogin(context.request);
+    },
+
+    supportRecover(context) {
+      const csrf = supportRecoveryToken(context.request);
+      if (!csrf) return redirectWithHeaders("/", {});
+      return context.render(
+        <Document title="Exit Artbin support session">
+          <main mix={recoveryStyle}>
+            <h1>Support session ended</h1>
+            <p>Exit support to return to your own Artbin session.</p>
+            <form method="post" action={routes.auth.supportExit.href()}>
+              <input type="hidden" name="csrf" value={csrf} />
+              <button type="submit">Exit support session</button>
+            </form>
+          </main>
+        </Document>,
+        {
+          headers: {
+            "Cache-Control": "no-store",
+            "Referrer-Policy": "same-origin",
+          },
+        },
+      );
+    },
+
+    supportExit(context) {
+      return exitSupportLogin(context.request);
+    },
+
     async login() {
       const transaction = createLoginTransaction();
       return redirectWithHeaders(

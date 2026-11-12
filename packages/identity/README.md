@@ -11,6 +11,13 @@ resource server's own credentials and validates issuer, project audience, expiry
 and the centrally asserted human/service principal type. Callers still enforce
 their required role and scopes before using a principal.
 
+`verifyActedAccessToken` verifies a signed target token's issuer, project
+audience, expiry, actor (`act`) and project role claims. Signature verification
+does not establish that the token is still active or what scopes it carries.
+Introspect the same token with resource credentials, compare its
+`TokenPrincipal.actor` and target to the signed claims, then enforce the
+consumer's client, role, scope and local-account policy.
+
 Provide issuer, client ID, project ID and organization ID in `IdentityConfig`.
 Create and store a `LoginTransaction`, redirect with `authorizationUrl`, validate
 browser state with `validLoginTransaction`, and consume the transaction once

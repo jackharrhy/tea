@@ -1,26 +1,30 @@
 import { createContextKey, type Middleware } from "remix/router";
 import { redirect } from "remix/response/redirect";
 
-import type { User } from "#db";
-import { getUserFromRequest } from "#lib/auth.server";
+import { getUserFromRequest, type RequestUser } from "#lib/auth.server";
+import { auditSupportMutation } from "#lib/support-login.server";
 
 import { routes } from "../routes.ts";
 
-export const userContext = createContextKey<User | null>();
+export const userContext = createContextKey<RequestUser | null>();
 const userProperty = { property: "user" } as const;
 
 export function loadUser(): Middleware<{
   key: typeof userContext;
-  value: User | null;
+  value: RequestUser | null;
   property: "user";
 }> {
   return async (context, next) => {
-    context.set(
-      userContext,
-      await getUserFromRequest(context.request),
-      userProperty,
-    );
-    return next();
+    const user = await getUserFromRequest(context.request);
+    context.set(userContext, user, userProperty);
+    let status = 500;
+    try {
+      const response = await next();
+      status = response.status;
+      return response;
+    } finally {
+      auditSupportMutation(context.request, user, status);
+    }
   };
 }
 

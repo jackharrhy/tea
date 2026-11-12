@@ -47,7 +47,14 @@ export default createController(routes.settings, {
                 <DetailList>
                   <Detail label="Username">@{user.username}</Detail>
                 </DetailList>
-                {developmentAuth ? (
+                {user.support ? (
+                  <div mix={topMarginStyle}>
+                    <Alert tone="info">
+                      Exit the support session from the banner to return to your
+                      own account.
+                    </Alert>
+                  </div>
+                ) : developmentAuth ? (
                   <div mix={topMarginStyle}>
                     <Alert tone="info">
                       Local development mode is active. Authentication is
@@ -88,6 +95,8 @@ export default createController(routes.settings, {
     },
 
     async action(context) {
+      if (context.user?.support)
+        return new Response("Exit support from the banner", { status: 403 });
       const formData = await context.request.formData();
       if (formData.get("intent") !== "logout") {
         return new Response("Unknown settings action", { status: 400 });

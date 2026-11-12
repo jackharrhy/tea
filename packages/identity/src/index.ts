@@ -27,6 +27,14 @@ export interface TokenPrincipal {
   readonly roles: ReadonlySet<string>;
   readonly audiences: ReadonlySet<string>;
   readonly expiresAt: number;
+  readonly actor?: { readonly issuer: string; readonly subject: string };
+}
+export interface ActedAccessToken {
+  readonly subject: string;
+  readonly actor: { readonly issuer: string; readonly subject: string };
+  readonly roles: ReadonlySet<string>;
+  readonly audiences: ReadonlySet<string>;
+  readonly expiresAt: number;
 }
 export type IdentityFetch = (
   ...args: Parameters<typeof fetch>
@@ -197,6 +205,14 @@ export function createIdentityClient(
     if (!response.ok) throw invalid();
     return json(response);
   }
+  async function signingKeys() {
+    const document = await discovery();
+    keys ??= createRemoteJWKSet(new URL(String(document.jwks_uri)), {
+      [customFetch]: (url, options) => request(url, options),
+      timeoutDuration: 5000,
+    });
+    return keys;
+  }
   return {
     async authorizationUrl(transaction: LoginTransaction, redirectUri: string) {
       const document = await discovery();
@@ -256,14 +272,10 @@ export function createIdentityClient(
         token.expires_in <= 0
       )
         throw invalid();
-      keys ??= createRemoteJWKSet(new URL(String(document.jwks_uri)), {
-        [customFetch]: (url, options) => request(url, options),
-        timeoutDuration: 5000,
-      });
       let claims;
       try {
         claims = (
-          await jwtVerify(token.id_token, keys, {
+          await jwtVerify(token.id_token, await signingKeys(), {
             issuer: config.issuer,
             audience: config.clientId,
             algorithms: ["RS256"],
@@ -306,6 +318,44 @@ export function createIdentityClient(
         ),
       };
     },
+    async verifyActedAccessToken(token: string): Promise<ActedAccessToken> {
+      if (!token || token.length > 32768) throw invalid();
+      let claims;
+      try {
+        claims = (
+          await jwtVerify(token, await signingKeys(), {
+            issuer: config.issuer,
+            audience: config.projectId,
+            algorithms: ["RS256"],
+            requiredClaims: ["sub", "exp", "iat", "act"],
+            maxTokenAge: "10m",
+            clockTolerance: 5,
+          })
+        ).payload;
+      } catch {
+        throw invalid();
+      }
+      const actor = record(claims.act);
+      const audiences =
+        typeof claims.aud === "string" ? [claims.aud] : claims.aud;
+      if (
+        !text(claims.sub) ||
+        actor.iss !== config.issuer ||
+        !text(actor.sub) ||
+        !Array.isArray(audiences) ||
+        !audiences.every(text) ||
+        !audiences.includes(config.projectId) ||
+        !future(claims.exp)
+      )
+        throw invalid();
+      return {
+        subject: claims.sub,
+        actor: { issuer: config.issuer, subject: actor.sub },
+        roles: roles(claims),
+        audiences: new Set(audiences),
+        expiresAt: claims.exp,
+      };
+    },
     async introspect(
       token: string,
       credentials: { clientId: string; clientSecret: string },
@@ -339,7 +389,10 @@ export function createIdentityClient(
         !audiences.every(text) ||
         !audiences.includes(config.projectId) ||
         (payload.jack_auth_principal_type !== "user" &&
-          payload.jack_auth_principal_type !== "service")
+          payload.jack_auth_principal_type !== "service") ||
+        (payload.act !== undefined &&
+          (record(payload.act).iss !== config.issuer ||
+            !text(record(payload.act).sub)))
       )
         throw invalid();
       return {
@@ -350,6 +403,13 @@ export function createIdentityClient(
         roles: roles(payload),
         audiences: new Set(audiences),
         expiresAt: payload.exp,
+        actor:
+          payload.act === undefined
+            ? undefined
+            : {
+                issuer: config.issuer,
+                subject: record(payload.act).sub as string,
+              },
       };
     },
   };
