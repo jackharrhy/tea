@@ -473,7 +473,10 @@ async function resolveSupportUser(
       sessions.delete(sessionKey);
       throw new Response("Support target role changed", { status: 403 });
     }
-    if (sessions.get(sessionKey) !== session || session.expiresAt <= Date.now()) {
+    if (
+      sessions.get(sessionKey) !== session ||
+      session.expiresAt <= Date.now()
+    ) {
       if (sessions.get(sessionKey) === session) sessions.delete(sessionKey);
       throw endedSupportResponse();
     }
