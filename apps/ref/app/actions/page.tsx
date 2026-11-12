@@ -19,48 +19,21 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
   );
 }
 
-export function AuthPage(
-  handle: Handle<{ error?: string; central?: boolean }>,
-) {
+export function AuthPage(handle: Handle<{ error?: string }>) {
   return () => (
     <Document title="Unlock">
       <main class="auth-page">
-        <div
-          class={
-            handle.props.central ? "auth-form auth-form-central" : "auth-form"
-          }
-        >
+        <div class="auth-form">
           <a class="wordmark" href="/">
             ref
           </a>
-          {handle.props.central ? (
-            <div class="auth-intro">
-              <h1>A shared board for images and links.</h1>
-              <p>Collect visual references and arrange them together.</p>
-              <a
-                class="auth-link"
-                href="/auth/login"
-                mix={uiPrimaryActionStyles}
-              >
-                Sign in with Jack Auth
-              </a>
-            </div>
-          ) : (
-            <form method="post" action="/login">
-              <label for="password">Password</label>
-              <div class="auth-row">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  autoFocus
-                  required
-                />
-                <button type="submit">Enter</button>
-              </div>
-            </form>
-          )}
+          <div class="auth-intro">
+            <h1>A shared board for images and links.</h1>
+            <p>Collect visual references and arrange them together.</p>
+            <a class="auth-link" href="/auth/login" mix={uiPrimaryActionStyles}>
+              Sign in with Jack Auth
+            </a>
+          </div>
           {handle.props.error && (
             <p class="error" role="alert">
               {handle.props.error}

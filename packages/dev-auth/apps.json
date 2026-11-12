@@ -1,0 +1,16 @@
+{
+  "applications": [
+    {
+      "clientId": "ref-local-browser",
+      "callback": "http://127.0.0.1:8787/auth/callback",
+      "projectId": "ref-local-project",
+      "organizationId": "ref-local-org",
+      "subject": "local-jack",
+      "username": "local-jack",
+      "displayName": "Local Jack",
+      "roles": ["admin", "archive-read", "archive-restore"],
+      "resourceClientId": "ref-local-resource",
+      "resourceSecret": "ref-local-resource-secret"
+    }
+  ]
+}

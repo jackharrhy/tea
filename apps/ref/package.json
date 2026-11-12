@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "dev": "npm run build && wrangler dev --port 8787",
+    "dev": "node scripts/dev.mjs",
+    "dev:auth": "node ../../packages/dev-auth/server.mjs",
     "dev:celld": "npm run build && celld dev --no-watch",
     "deploy:celld": "npm run build && celld deploy .",
     "typecheck": "tsrs --noEmit",
@@ -24,6 +25,7 @@
     "remix": "3.2.0"
   },
   "devDependencies": {
+    "@harrhy/dev-auth": "0.1.0",
     "@playwright/test": "^1.65.0",
     "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",

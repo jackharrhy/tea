@@ -47,16 +47,12 @@ export const refStyles = css({
     padding: "24px",
   },
   "& .auth-form": {
-    width: "min(100%, 320px)",
-  },
-  "& .auth-form-central": {
     width: "min(100%, 420px)",
+    "text-align": "center",
   },
   "& .auth-form .wordmark": {
     display: "inline-block",
-    "margin-bottom": "72px",
-  },
-  "& .auth-form-central .wordmark": {
+    "font-size": "clamp(52px, 12vw, 72px)",
     "margin-bottom": "52px",
   },
   "& .auth-intro h1": {
@@ -78,26 +74,6 @@ export const refStyles = css({
     "border-radius": "5px",
     "font-size": "14px",
   },
-  "& .auth-form label": {
-    display: "block",
-    "font-size": "13px",
-    "font-weight": "600",
-    "margin-bottom": "9px",
-  },
-  "& .auth-row": {
-    display: "flex",
-    gap: "8px",
-  },
-  "& .auth-row input": {
-    flex: "1",
-    width: "100%",
-  },
-  "& .auth-row button": {
-    background: "#292d29",
-    color: "#fff",
-    "border-color": "#292d29",
-  },
-  "& .auth-row button:hover": { background: "#424842" },
   "& .home-page": {
     "min-height": "100dvh",
   },

@@ -297,12 +297,38 @@ services:
     networks:
       - web
 
+  ref-dev-auth:
+    image: node:26-alpine
+    command: ["node", "/app/dev-auth.mjs"]
+    environment:
+      HARRHY_DEV_AUTH_BIND: 0.0.0.0
+      HARRHY_DEV_AUTH_ORIGIN: http://ref-auth.localhost:8786
+      HARRHY_DEV_AUTH_CALLBACK: http://ref.localhost/auth/callback
+    volumes:
+      - ./packages/dev-auth/server.mjs:/app/dev-auth.mjs:ro
+      - ./packages/dev-auth/apps.json:/app/apps.json:ro
+    ports:
+      - "127.0.0.1:8786:8786"
+    read_only: true
+    networks:
+      web:
+        aliases:
+          - ref-auth.localhost
+
   ref:
     build:
       context: .
       dockerfile: apps/ref/Dockerfile
+    depends_on:
+      - ref-dev-auth
     environment:
-      CELLD_VAR_REF_PASSWORD: ${REF_PASSWORD:-tea-ref-local-password}
+      CELLD_VAR_AUTH_ISSUER: ${REF_AUTH_ISSUER:-http://ref-auth.localhost:8786}
+      CELLD_VAR_AUTH_CLIENT_ID: ${REF_AUTH_CLIENT_ID:-ref-local-browser}
+      CELLD_VAR_AUTH_PROJECT_ID: ${REF_AUTH_PROJECT_ID:-ref-local-project}
+      CELLD_VAR_AUTH_ORGANIZATION_ID: ${REF_AUTH_ORGANIZATION_ID:-ref-local-org}
+      CELLD_VAR_AUTH_PUBLIC_ORIGIN: ${REF_AUTH_PUBLIC_ORIGIN:-http://ref.localhost}
+      CELLD_VAR_AUTH_INTROSPECTION_CLIENT_ID: ${REF_AUTH_INTROSPECTION_CLIENT_ID:-ref-local-resource}
+      CELLD_VAR_AUTH_INTROSPECTION_SECRET: ${REF_AUTH_INTROSPECTION_SECRET:-ref-local-resource-secret}
     volumes:
       - ref-data:/app/.celld
     labels:

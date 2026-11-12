@@ -14,14 +14,13 @@ import { digest, imageTypes, validateArchive } from "./archive-format.mjs";
 const command = process.argv[2];
 const directory = process.argv[3] ? resolve(process.argv[3]) : null;
 const base = new URL(process.env.REF_URL ?? "http://localhost:8787");
-const password = process.env.REF_PASSWORD;
-const accessToken = process.env.REF_ACCESS_TOKEN;
+const accessToken =
+  process.env.REF_ACCESS_TOKEN ??
+  (process.env.REF_ACCESS_TOKEN_FILE
+    ? (await readFile(process.env.REF_ACCESS_TOKEN_FILE, "utf8")).trim()
+    : null);
 
-if (
-  !["backup", "restore"].includes(command) ||
-  !directory ||
-  (!password && !accessToken)
-) {
+if (!["backup", "restore"].includes(command) || !directory || !accessToken) {
   throw new Error(
     "Usage: REF_URL=https://host REF_ACCESS_TOKEN=... npm run backup|restore -- /archive/directory",
   );
@@ -35,26 +34,9 @@ if (
   throw new Error("Use HTTPS for a remote REF_URL");
 }
 
-const authorization = accessToken
-  ? { Authorization: `Bearer ${accessToken}` }
-  : { Cookie: await login() };
+const authorization = { Authorization: `Bearer ${accessToken}` };
 if (command === "backup") await backup();
 else await restore();
-
-async function login() {
-  const response = await fetch(new URL("/login", base), {
-    method: "POST",
-    body: new URLSearchParams({ password }),
-    redirect: "manual",
-  });
-  const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
-  if (response.status !== 303 || !cookie) throw new Error("Login failed");
-  const check = await fetch(new URL("/api/archive/boards", base), {
-    headers: { Cookie: cookie },
-  });
-  if (!check.ok) throw new Error("Login failed");
-  return cookie;
-}
 
 async function request(path, init = {}) {
   const headers = new Headers(init.headers);

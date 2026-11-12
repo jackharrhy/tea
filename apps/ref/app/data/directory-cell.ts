@@ -15,10 +15,6 @@ interface BoardRow extends Record<string, SqlStorageValue> {
   updated_at: number;
 }
 
-const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
-const LOGIN_WINDOW = 10 * 60 * 1000;
-const MAX_LOGIN_ATTEMPTS = 10;
-
 export class DirectoryCell extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -27,7 +23,6 @@ export class DirectoryCell extends DurableObject<Env> {
         CREATE TABLE IF NOT EXISTS solo_sessions (
           token_hash TEXT PRIMARY KEY,
           expires_at INTEGER NOT NULL,
-          password_version TEXT NOT NULL DEFAULT '',
           auth_subject TEXT NOT NULL DEFAULT ''
         );
         CREATE TABLE IF NOT EXISTS solo_boards (
@@ -36,23 +31,10 @@ export class DirectoryCell extends DurableObject<Env> {
           created_at INTEGER NOT NULL,
           updated_at INTEGER NOT NULL
         );
-        CREATE TABLE IF NOT EXISTS login_attempts (
-          client_hash TEXT PRIMARY KEY,
-          attempts INTEGER NOT NULL,
-          reset_at INTEGER NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS login_attempts_reset_at ON login_attempts(reset_at);
       `);
       const sessionColumns = ctx.storage.sql
         .exec<{ name: string }>("PRAGMA table_info(solo_sessions)")
         .toArray();
-      if (
-        !sessionColumns.some((column) => column.name === "password_version")
-      ) {
-        ctx.storage.sql.exec(
-          "ALTER TABLE solo_sessions ADD COLUMN password_version TEXT NOT NULL DEFAULT ''",
-        );
-      }
       if (!sessionColumns.some((column) => column.name === "auth_subject")) {
         ctx.storage.sql.exec(
           "ALTER TABLE solo_sessions ADD COLUMN auth_subject TEXT NOT NULL DEFAULT ''",
@@ -72,17 +54,6 @@ export class DirectoryCell extends DurableObject<Env> {
     });
   }
 
-  async createSession(): Promise<string> {
-    const token = newToken();
-    this.ctx.storage.sql.exec(
-      "INSERT INTO solo_sessions (token_hash, expires_at, password_version) VALUES (?, ?, ?)",
-      await tokenHash(token),
-      Date.now() + SESSION_DURATION,
-      await tokenHash(this.env.REF_PASSWORD),
-    );
-    return token;
-  }
-
   async createCentralSession(
     subject: string,
     expiresAt: number,
@@ -95,39 +66,6 @@ export class DirectoryCell extends DurableObject<Env> {
       subject,
     );
     return token;
-  }
-
-  consumeLoginAttempt(clientHash: string): number {
-    const now = Date.now();
-    return this.ctx.storage.transactionSync(() => {
-      this.ctx.storage.sql.exec(
-        "DELETE FROM login_attempts WHERE reset_at <= ?",
-        now,
-      );
-      const previous = this.ctx.storage.sql
-        .exec<{ attempts: number; reset_at: number }>(
-          "SELECT attempts, reset_at FROM login_attempts WHERE client_hash = ?",
-          clientHash,
-        )
-        .toArray()[0];
-      if (previous && previous.attempts >= MAX_LOGIN_ATTEMPTS)
-        return Math.ceil((previous.reset_at - now) / 1000);
-      this.ctx.storage.sql.exec(
-        `INSERT INTO login_attempts VALUES (?, ?, ?)
-         ON CONFLICT(client_hash) DO UPDATE SET attempts = excluded.attempts, reset_at = excluded.reset_at`,
-        clientHash,
-        (previous?.attempts ?? 0) + 1,
-        previous?.reset_at ?? now + LOGIN_WINDOW,
-      );
-      return 0;
-    });
-  }
-
-  clearLoginAttempts(clientHash: string): void {
-    this.ctx.storage.sql.exec(
-      "DELETE FROM login_attempts WHERE client_hash = ?",
-      clientHash,
-    );
   }
 
   async session(token: string): Promise<boolean> {
@@ -217,22 +155,11 @@ export class DirectoryCell extends DurableObject<Env> {
   }
 
   private async sessionExpiry(sessionHash: string): Promise<number | null> {
-    if (this.env.AUTH_ISSUER) {
-      const row = this.ctx.storage.sql
-        .exec<{ expires_at: number }>(
-          "SELECT expires_at FROM solo_sessions WHERE token_hash = ? AND expires_at > ? AND auth_subject <> ''",
-          sessionHash,
-          Date.now(),
-        )
-        .toArray()[0];
-      return row?.expires_at ?? null;
-    }
     const row = this.ctx.storage.sql
       .exec<{ expires_at: number }>(
-        "SELECT expires_at FROM solo_sessions WHERE token_hash = ? AND expires_at > ? AND password_version = ?",
+        "SELECT expires_at FROM solo_sessions WHERE token_hash = ? AND expires_at > ? AND auth_subject <> ''",
         sessionHash,
         Date.now(),
-        await tokenHash(this.env.REF_PASSWORD),
       )
       .toArray()[0];
     return row?.expires_at ?? null;
