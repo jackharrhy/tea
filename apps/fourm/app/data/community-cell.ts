@@ -1,3 +1,4 @@
+import { scanStorage, cleanupOrphanMedia } from "../storage-health.ts";
 import {
   processMediaMove,
   cleanupMediaTransfer,
@@ -10,6 +11,7 @@ import type { Row } from "./community.ts";
 export class CommunityCell extends DurableObject<Env> {
   private community;
   private moves = new Map<number, Promise<void>>();
+  private orphanCleanup: Promise<number> | undefined;
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.community = createCommunity({
@@ -45,7 +47,8 @@ export class CommunityCell extends DurableObject<Env> {
     if (
       this.community.hasMediaTransfers() ||
       this.community.hasMediaMoves() ||
-      this.community.hasAccountCleanup()
+      this.community.hasAccountCleanup() ||
+      this.community.hasOrphanCleanup()
     ) {
       const current = await this.ctx.storage.getAlarm();
       if (current === null || current > Date.now() + 30000)
@@ -150,6 +153,68 @@ export class CommunityCell extends DurableObject<Env> {
       };
     }
   }
+  private async runOrphanCleanup() {
+    let running = this.orphanCleanup;
+    if (!running) {
+      running = cleanupOrphanMedia(this.community, this.env.MEDIA);
+      this.orphanCleanup = running;
+    }
+    try {
+      return await running;
+    } finally {
+      if (this.orphanCleanup === running) this.orphanCleanup = undefined;
+    }
+  }
+  private storageFailure(error: unknown) {
+    if (!(error instanceof CommunityError))
+      console.error("Storage maintenance interrupted");
+    return {
+      ok: false as const,
+      status: error instanceof CommunityError ? error.status : 503,
+      error:
+        error instanceof CommunityError
+          ? error.message
+          : "Storage maintenance interrupted. Pending cleanup will retry.",
+    };
+  }
+  async cleanupOrphanFiles(actorId: number | null) {
+    try {
+      const scan = await scanStorage(this.env.MEDIA, async () =>
+        this.community.adminMediaInventory(actorId),
+      );
+      for (const file of scan.orphanedFiles)
+        this.community.beginOrphanCleanup(actorId, file.path);
+      await this.scheduleMediaWork();
+      let count = 0;
+      while (this.community.hasOrphanCleanup())
+        count += await this.runOrphanCleanup();
+      return { ok: true as const, count };
+    } catch (error) {
+      return this.storageFailure(error);
+    } finally {
+      await this.scheduleMediaWork();
+    }
+  }
+  async cleanupMissingMediaRecords(actorId: number | null) {
+    try {
+      let count = 0;
+      for (const record of this.community.adminMediaRecords(actorId)) {
+        const path = String(record.storage_path);
+        if (
+          !(await this.env.MEDIA.head(path)) &&
+          this.community.removeMissingMediaRecord(
+            actorId,
+            Number(record.id),
+            path,
+          )
+        )
+          count++;
+      }
+      return { ok: true as const, count };
+    } catch (error) {
+      return this.storageFailure(error);
+    }
+  }
   async alarm() {
     let failure: unknown;
     try {
@@ -162,6 +227,11 @@ export class CommunityCell extends DurableObject<Env> {
       }
       try {
         await cleanupAccountMedia(this.community, this.env.MEDIA);
+      } catch (error) {
+        failure ??= error;
+      }
+      try {
+        await this.runOrphanCleanup();
       } catch (error) {
         failure ??= error;
       }

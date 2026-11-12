@@ -19,6 +19,16 @@ export function createMedia(db: Database, member: (id: number) => Member) {
   function reserve(actorId: number, path: string, mime: string, size: number) {
     member(actorId);
     requireIdleMedia(db, actorId);
+    if (
+      db.all(
+        "SELECT storage_path FROM orphan_cleanup_objects WHERE storage_path=?",
+        path,
+      ).length
+    )
+      throw new CommunityError(
+        409,
+        "This storage path is reserved for orphan cleanup",
+      );
     if (!Number.isSafeInteger(size) || size < 0 || size > uploadLimit)
       throw new CommunityError(413, "Files must be 10 MB or smaller");
 

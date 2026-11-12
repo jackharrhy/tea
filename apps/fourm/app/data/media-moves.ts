@@ -60,10 +60,14 @@ export function availableMediaPath(
     return (
       blocked.has(path) ||
       db.all(
-        `SELECT storage_path FROM media WHERE storage_path=?
-      UNION ALL SELECT storage_path FROM media_transfers WHERE storage_path=?
-      UNION ALL SELECT old_path FROM media_move_files WHERE old_path=? OR new_path=?
-      UNION ALL SELECT storage_path FROM account_cleanup_objects WHERE storage_path=? LIMIT 1`,
+        `SELECT 1 AS occupied WHERE EXISTS(SELECT 1 FROM media WHERE storage_path=?)
+        OR EXISTS(SELECT 1 FROM media_transfers WHERE storage_path=?)
+        OR EXISTS(SELECT 1 FROM media_move_files WHERE old_path=? OR new_path=?)
+        OR EXISTS(SELECT 1 FROM account_cleanup_objects WHERE storage_path=?)
+        OR EXISTS(SELECT 1 FROM orphan_cleanup_objects WHERE storage_path=?)
+        OR EXISTS(SELECT 1 FROM archive_staging_objects WHERE storage_path=?)`,
+        path,
+        path,
         path,
         path,
         path,

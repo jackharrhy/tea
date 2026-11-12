@@ -83,11 +83,9 @@ export async function exerciseAdminForum({
   }
   assert.equal(await page.locator('a[href="/admin/export"]').count(), 1);
   await page.setViewportSize({ width: 1280, height: 900 });
-  const storagePanel = page
-    .locator("details.panel")
-    .filter({
-      has: page.locator("summary h2").filter({ hasText: /^storage health$/ }),
-    });
+  const storagePanel = page.locator("details.panel").filter({
+    has: page.locator("summary h2").filter({ hasText: /^storage health$/ }),
+  });
   await storagePanel.locator("summary").click();
   await storagePanel
     .getByRole("button", { name: "scan for orphans", exact: true })
@@ -102,6 +100,20 @@ export async function exerciseAdminForum({
     await storagePanel.getByText("none found.", { exact: true }).count(),
     2,
   );
+  for (const [kind, label] of [
+    ["files", "file(s)"],
+    ["records", "record(s)"],
+  ]) {
+    const response = await context.request.post(
+      origin + `/admin/cleanup/${kind}`,
+      { headers: { Origin: origin, "HX-Request": "true" } },
+    );
+    assert.equal(response.status(), 200);
+    assert.equal(
+      await response.text(),
+      `<p class="ok">deleted 0 orphaned ${label}.</p>`,
+    );
+  }
   await storagePanel.screenshot({
     path: `${output}/${name}-storage-health.png`,
   });

@@ -1,3 +1,4 @@
+import { orphanCleanupSchema, createOrphanCleanup } from "./orphan-cleanup.ts";
 import {
   accountCleanupSchema,
   createAccountDeletion,
@@ -65,6 +66,7 @@ export function createCommunity(
   db.all(schema);
   mediaMoveSchema(db);
   accountCleanupSchema(db);
+  orphanCleanupSchema(db);
   const pageBodies = pageContent(db);
   db.all(`CREATE TABLE IF NOT EXISTS browser_sessions (
     token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
@@ -188,6 +190,7 @@ export function createCommunity(
     },
     ...createSettings(db, member),
     ...createAdmin(db, admin, pageBodies),
+    ...createOrphanCleanup(db, admin),
     ...createAccountDeletion(db, admin),
     ...createEnrollments(db, member),
     ...createMedia(db, member),
@@ -200,6 +203,13 @@ export function createCommunity(
       db.all("UPDATE users SET has_accepted_trust=1 WHERE id=?", actorId);
     },
     assertArchiveRestoreAuthority(issuer: string, subject: string) {
+      if (
+        db.all("SELECT storage_path FROM orphan_cleanup_objects LIMIT 1").length
+      )
+        throw new CommunityError(
+          409,
+          "Orphan cleanup must finish before restoring an archive",
+        );
       if (db.all("SELECT username FROM account_cleanup_users LIMIT 1").length)
         throw new CommunityError(
           409,
@@ -233,6 +243,13 @@ export function createCommunity(
       );
     },
     restore(tables: Record<string, Row[]>, digest?: string) {
+      if (
+        db.all("SELECT storage_path FROM orphan_cleanup_objects LIMIT 1").length
+      )
+        throw new CommunityError(
+          409,
+          "Orphan cleanup must finish before restoring an archive",
+        );
       if (db.all("SELECT username FROM account_cleanup_users LIMIT 1").length)
         throw new CommunityError(
           409,
@@ -282,6 +299,9 @@ export function createCommunity(
             if (table === "pages") pageBodies.write(Number(row.id), parts);
           }
         }
+        db.all(
+          "DELETE FROM archive_staging_objects WHERE storage_path IN (SELECT storage_path FROM media)",
+        );
         if (db.all("PRAGMA foreign_key_check").length)
           throw new CommunityError(
             422,
