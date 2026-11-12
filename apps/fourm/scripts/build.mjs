@@ -16,6 +16,10 @@ await copyFile(
   new URL(import.meta.resolve("htmx.org/dist/htmx.min.js")),
   "dist/client/static/htmx.min.js",
 );
+await copyFile(
+  new URL(import.meta.resolve("htmx-ext-sse/sse.js")),
+  "dist/client/static/htmx-sse.js",
+);
 await build({
   entryPoints: ["app/browser/app.ts"],
   outfile: "dist/client/static/app.js",

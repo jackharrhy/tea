@@ -14,6 +14,15 @@ function sendPresence(active: boolean): void {
 export function initChat(): void {
   const chatEl = document.getElementById("chat-messages");
   if (!chatEl) return;
+  document.addEventListener("htmx:afterRequest", (event) => {
+    const detail = (event as CustomEvent<{ successful: boolean }>).detail;
+    if (
+      detail?.successful &&
+      event.target instanceof HTMLFormElement &&
+      event.target.matches(".chat-input")
+    )
+      event.target.reset();
+  });
   let attention: Attention = document.hasFocus()
     ? { status: "focused" }
     : { status: "unfocused", unread: 0, flash: false };

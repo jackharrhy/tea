@@ -2,6 +2,7 @@ import { unsafeHTML } from "remix/component";
 import type { Handle, RemixNode } from "remix/component";
 import type { Member, Row } from "./data/community.ts";
 import { postContent } from "./rendering.ts";
+import { chatMessageHTML } from "./chat-html.ts";
 import { MediaPicker } from "./settings-view.tsx";
 import { LocalTime } from "./time.tsx";
 
@@ -499,36 +500,50 @@ export function Thread(handle: Handle<ThreadProps>) {
     );
   };
 }
-export function Chat(handle: Handle<{ messages: Row[] }>) {
+export function Chat(
+  handle: Handle<{ messages: Row[]; member: Member | null }>,
+) {
   return () => (
     <>
-      <h1>Chat</h1>
-      <div
-        role="log"
-        aria-label="Messages"
-        data-chat-log=""
-        data-cursor={String(handle.props.messages.at(-1)?.id ?? 0)}
-      >
-        {handle.props.messages.map((message) => (
-          <p>
-            <a href={`/u/${message.username}`}>{message.display_name}</a>:{" "}
-            {message.message}
+      <div class="chat-room" hx-ext="sse" sse-connect="/chat/stream">
+        <div id="chat-presence" sse-swap="presence" hx-swap="innerHTML"></div>
+        <div
+          id="chat-messages"
+          sse-swap="message"
+          hx-swap="beforeend scroll:bottom"
+          innerHTML={unsafeHTML(
+            handle.props.messages
+              .map((message, index) =>
+                chatMessageHTML(message, index, handle.props.messages.length),
+              )
+              .join("\n"),
+          )}
+        />
+        {handle.props.member ? (
+          <form
+            class="chat-input"
+            method="post"
+            action="/chat"
+            hx-post="/chat"
+            hx-swap="none"
+          >
+            <input
+              type="text"
+              name="message"
+              maxLength={500}
+              placeholder="say something..."
+              required
+              autoComplete="off"
+            />
+            <button type="submit">send</button>
+          </form>
+        ) : (
+          <p class="muted fourm-chat-empty">
+            <a href="/login">sign in</a> to chat
           </p>
-        ))}
+        )}
       </div>
-      <p role="status" data-chat-status="">
-        Connecting…
-      </p>
-      <p data-chat-presence="">Checking who's here…</p>
-      <form method="post" action="/chat" data-chat-form="">
-        <label>
-          Message
-          <input name="message" required maxLength={500} />
-        </label>
-        <button>Send</button>
-      </form>
-      <a href="/chat">Refresh messages</a>
-      <script type="module" src="/assets/community.js" />
+      <script src="/static/htmx-sse.js" />
     </>
   );
 }
