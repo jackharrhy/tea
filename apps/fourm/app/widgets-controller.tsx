@@ -1,3 +1,4 @@
+import { webringJSON, webringDocument } from "./webring-widget.ts";
 import { statusJSON, statusDocument } from "./status-widget.ts";
 import { wantsJSON } from "./http.ts";
 import { saved } from "./settings-controller.tsx";
@@ -260,32 +261,25 @@ export function widgetController(
           <Player tracks={await store.call("playlist", params.username)} />,
         );
       },
-      async webring({ params }) {
+      async webring({ request, params }) {
+        await store.call("status", params.username);
         const ring = await store.call("webring", params.username);
-        return embed(
-          "Webring",
-          <nav aria-label="Webring">
-            {ring.previous ? (
-              <a href={`/u/${ring.previous.username}`}>
-                Previous: {ring.previous.display_name}
-              </a>
-            ) : null}{" "}
-            · <a href="/webring/random">Random</a> ·{" "}
-            {ring.next ? (
-              <a href={`/u/${ring.next.username}`}>
-                Next: {ring.next.display_name}
-              </a>
-            ) : null}
-          </nav>,
-        );
+        if (wantsJSON(request))
+          return Response.json(webringJSON(params.username, ring));
+        return new Response(webringDocument(ring), {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
       },
       async random() {
         const ring = await store.call("webring", "");
         if (!ring.members.length)
           throw new CommunityError(404, "No webring members yet");
-        return redirect(
-          `/u/${ring.members[Math.floor(Math.random() * ring.members.length)].username}`,
-        );
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: `/u/${ring.members[Math.floor(Math.random() * ring.members.length)].username}`,
+          },
+        });
       },
       async lineage() {
         const members = await store.call("lineage");
