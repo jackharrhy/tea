@@ -1,3 +1,5 @@
+import { AdminStorage } from "./admin-storage.tsx";
+import { AdminForum } from "./admin-forum.tsx";
 import { AdminUsers } from "./admin-users.tsx";
 import { AdminEditors } from "./admin-editors.tsx";
 import { adminRoutes, adminController } from "./admin-controller.tsx";
@@ -221,16 +223,35 @@ export function createAppRouter(
     routes,
     createController(routes, {
       actions: {
-        async admin() {
+        async admin({ request }) {
           const snapshot = await store.call(
             "adminSnapshot",
             viewer.member?.id ?? null,
           );
           const users = snapshot.users;
+          const notice = new URL(request.url).searchParams;
           return page(
-            "Admin",
+            "admin",
             <>
               <h1>admin</h1>
+              {notice.get("cleaned_files") ? (
+                <p class="ok">
+                  removed {notice.get("cleaned_files")} orphaned file(s) from
+                  disk.
+                </p>
+              ) : null}
+              {notice.get("cleaned_records") ? (
+                <p class="ok">
+                  removed {notice.get("cleaned_records")} orphaned record(s)
+                  from database.
+                </p>
+              ) : null}
+              {notice.get("randomized_cards") ? (
+                <p class="ok">
+                  randomized colors for {notice.get("randomized_cards")} default
+                  card(s).
+                </p>
+              ) : null}
               <AdminBanner banner={snapshot.banner} />
               <AdminUsers users={users} storage={snapshot.storage} />
               <AdminEditors
@@ -238,6 +259,8 @@ export function createAppRouter(
                 cards={snapshot.cards}
                 pages={snapshot.pages}
               />
+              <AdminForum threads={snapshot.threads} posts={snapshot.posts} />
+              <AdminStorage />
               <form method="post" action="/admin/enrollment-completions/retry">
                 <button>Retry pending enrollment delivery</button>
               </form>
