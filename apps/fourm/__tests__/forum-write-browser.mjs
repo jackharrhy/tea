@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+import { reviewSourceFingerprint } from "../scripts/review-source.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
@@ -12,6 +14,14 @@ const auth = JSON.parse(
 const output =
   root + "/forum-write-" + new Date().toISOString().replace(/[:.]/g, "");
 await mkdir(output, { mode: 0o700 });
+const runtime = JSON.parse(
+  await readFile("apps/fourm/.review/parity-local/runtime.json", "utf8"),
+);
+assert.equal(
+  runtime.sourceFingerprint,
+  await reviewSourceFingerprint(resolve("apps/fourm")),
+  "Refresh the owned candidate before browser verification",
+);
 const browser = await chromium.launch();
 const results = [];
 let phase = "start";
@@ -122,6 +132,56 @@ try {
           created.custom_html,
           '<aside data-parity-intro="yes">Temporary intro</aside>',
         );
+        for (const mode of ["json", "htmx", "form"]) {
+          const headers = {
+            Origin: origin,
+            ...(mode === "json"
+              ? { Accept: "application/json" }
+              : mode === "htmx"
+                ? { "HX-Request": "true", Accept: "text/html" }
+                : {}),
+          };
+          const blocked = await context.request.post(
+            origin + `/forum/${threadId}/reply`,
+            {
+              headers,
+              form: {
+                content: "Rate blocked; must not persist",
+                content_format: "bbcode",
+              },
+              maxRedirects: 0,
+            },
+          );
+          assert.equal(blocked.status(), mode === "json" ? 200 : 429);
+          if (mode === "json")
+            assert.deepEqual(await blocked.json(), {
+              ok: false,
+              error: "please wait before posting again",
+            });
+          else if (mode === "htmx")
+            assert.match(
+              await blocked.text(),
+              /^<p class="error">please wait \d+ seconds before posting again<\/p>$/,
+            );
+          else {
+            assert.ok(blocked.headers()["content-type"].includes("text/html"));
+            const text = await blocked.text();
+            const body = await page.evaluate(
+              (html) =>
+                new DOMParser()
+                  .parseFromString(html, "text/html")
+                  .querySelector("main")
+                  .textContent.replace(/\s+/g, " ")
+                  .trim(),
+              text,
+            );
+            assert.equal(
+              body.replace(/\s+/g, ""),
+              "429pleasewaitbeforepostingagain←backtohome",
+            );
+          }
+        }
+        assert.equal((await detail()).posts.length, 1);
         const originalId = created.posts[0].id;
         await page
           .locator(".forum-post")
@@ -189,6 +249,7 @@ try {
           create: true,
           stylingStored: true,
           quotedReply: true,
+          rateLimitModes: true,
           editReopen: true,
           quoteSnapshotPreserved: true,
           deletePost: true,

@@ -39,7 +39,12 @@ export function runtime(env: Bindings) {
       ...args: Parameters<Community[K]>
     ): Promise<ReturnType<Community[K]>> {
       const result = await cell.call(method, args);
-      if (!result.ok) throw new CommunityError(result.status, result.error);
+      if (!result.ok)
+        throw new CommunityError(
+          result.status,
+          result.error,
+          result.retryAfter,
+        );
       return result.value as ReturnType<Community[K]>;
     },
   };
