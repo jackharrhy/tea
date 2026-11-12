@@ -1,3 +1,4 @@
+import { exportUserSite } from "./site-export.ts";
 import { pushRoutes, pushController } from "./push-controller.tsx";
 import { mediaRoutes, mediaController } from "./media-controller.tsx";
 import { wantsJSON } from "./http.ts";
@@ -55,6 +56,7 @@ const routes = route({
   callback: get("/auth/callback"),
   logout: post("/logout"),
   profile: get("/u/:username"),
+  exportSite: get("/u/:username/export"),
   page: get("/u/:username/page/*slug"),
   shortPage: get("/u/:username/p/*slug"),
   settings: get("/settings"),
@@ -781,6 +783,15 @@ export function createAppRouter(
         },
         restoreObject({ request, params }) {
           return archiveObject(request, env, params.path);
+        },
+        exportSite({ request, params }) {
+          return exportUserSite(
+            request,
+            env,
+            store,
+            viewer.member?.id ?? null,
+            params.username,
+          );
         },
         async exportArchive({ request }) {
           const actor = await apiMember(request, "archive-read");

@@ -756,3 +756,30 @@ it("keeps device upserts stable, hides credentials and scopes deletion to the me
   community.deletePushDevice(41, Number(original.id));
   expect(community.pushDevices(41)).toEqual([]);
 });
+
+it("exports only public pages for the owner or administrator", () => {
+  const { community } = fixture();
+  community.savePage(72, "public", {
+    title: "Visible",
+    content: "hello",
+    content_format: "html",
+    is_public: 1,
+  });
+  community.savePage(72, "private", {
+    title: "Hidden",
+    content: "secret",
+    content_format: "html",
+    is_public: 0,
+  });
+  expect(community.userSiteExport(72, "sam").pages.map((p) => p.slug)).toEqual([
+    "public",
+  ]);
+  expect(community.userSiteExport(41, "sam").profile.id).toBe(72);
+  expect(() => community.userSiteExport(null, "sam")).toThrow(
+    "Export permission required",
+  );
+  expect(() => community.userSiteExport(72, "jane")).toThrow(
+    "Export permission required",
+  );
+  expect(() => community.userSiteExport(41, "absent")).toThrow("Not found");
+});
