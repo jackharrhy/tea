@@ -57,7 +57,8 @@ support request checks both Jack Auth support status and native introspection
 again; an unavailable check denies access. Restarting Artbin invalidates every
 support session. A surviving support cookie blocks ordinary-session fallback;
 browser navigation goes to `/auth/support/recover` for an explicit
-CSRF-protected exit after restart. A rejected callback clears its transaction
+CSRF-protected exit after restart. Exit returns to an existing Artbin session or
+starts Jack Auth sign-in when none exists. A rejected callback clears its transaction
 cookie and redirects to a code-free problem page; an unlinked local target is
 identified there without creating an account. Jack Auth can call the
 transport-credential-protected `/auth/support/eligibility` endpoint before starting a

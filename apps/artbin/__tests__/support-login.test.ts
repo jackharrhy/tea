@@ -481,7 +481,7 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
   expect(recoveryPage).toContain("Clear support session");
   expect(recoveryPage).toContain(`value="${csrf}"`);
   const exit = (token: string) =>
-    exitSupportLogin(
+    router.fetch(
       new Request(`${artbin}/auth/support/exit`, {
         method: "POST",
         headers: {
@@ -510,7 +510,24 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
   ).toBe(403);
   const cleared = await exit(csrf!);
   expect(cleared.status).toBe(303);
+  expect(cleared.headers.get("Location")).toBe("/");
   expect(cleared.headers.get("Set-Cookie")).toContain("artbin_support=;");
+  const withoutOwnSession = await router.fetch(
+    new Request(`${artbin}/auth/support/exit`, {
+      method: "POST",
+      headers: {
+        Cookie: supportCookie,
+        Origin: artbin,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ csrf: csrf! }),
+    }),
+  );
+  expect(withoutOwnSession.status).toBe(303);
+  expect(withoutOwnSession.headers.get("Location")).toBe("/auth/login");
+  expect(withoutOwnSession.headers.get("Set-Cookie")).toContain(
+    "artbin_support=;",
+  );
   expect(
     (
       await getUserFromRequest(
