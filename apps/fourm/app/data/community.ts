@@ -1,3 +1,4 @@
+import { createChatRoom } from "./chat-room.ts";
 import { mediaMoveSchema, createMediaMoves } from "./media-moves.ts";
 import { createSettings } from "./settings.ts";
 import { pageContent } from "./page-content.ts";
@@ -51,7 +52,10 @@ function format(value: unknown) {
   return String(value);
 }
 
-export function createCommunity(db: Database, { forumRateLimit = true } = {}) {
+export function createCommunity(
+  db: Database,
+  { forumRateLimit = true, chatFloodLimit = true } = {},
+) {
   db.all(schema);
   mediaMoveSchema(db);
   const pageBodies = pageContent(db);
@@ -664,27 +668,13 @@ export function createCommunity(db: Database, { forumRateLimit = true } = {}) {
         db.all(`UPDATE forum_threads SET ${key}=1-${key} WHERE id=?`, threadId);
       } else throw new CommunityError(422, "Unknown moderation action");
     },
-    recentChat(actorId: number) {
-      member(actorId);
-      return db.all(
-        "SELECT c.*,u.username,u.display_name FROM (SELECT * FROM chat_messages ORDER BY id DESC LIMIT 100) c JOIN users u ON u.id=c.author_id ORDER BY c.id",
-      );
-    },
+    ...createChatRoom(db, member, chatFloodLimit),
     chat(actorId: number, after: number) {
       member(actorId);
       return db.all(
         "SELECT c.*,u.username,u.display_name FROM chat_messages c JOIN users u ON u.id=c.author_id WHERE c.id>? ORDER BY c.id LIMIT 200",
         after,
       );
-    },
-    sendChat(actorId: number, message: string) {
-      member(actorId);
-      required(message, 500, "Message");
-      return db.all(
-        "INSERT INTO chat_messages(author_id,message) VALUES(?,?) RETURNING id",
-        actorId,
-        message,
-      )[0];
     },
     adminMembers(actorId: number) {
       admin(actorId);

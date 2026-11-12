@@ -33,6 +33,10 @@ See [the private comparison workflow](parity.md).
   snapshots and restoring the imported thread lists and core data.
 - Forum posting pace checked inside the write transaction, preserving Python
   rounding and distinct JSON, HTMX and ordinary-form rejection responses.
+- Original public chat room/history/fading and HTML SSE presence, with identical
+  desktop/mobile screenshots. Backend tests cover connection presence, bounded
+  live events, message escaping and flood timeout/recovery; actual send/reconnect
+  and restart acceptance remains pending.
 - Forum/chat and local admin primitives, invite/trust/profile completion and
   durable post-commit companion-delivery receipts.
 - Core content/identity archive transfer, checksums, FK validation and replay;
@@ -51,7 +55,8 @@ pins the real issuer, so a fake-provider sign-in is not claimed as CLI acceptanc
 ## Still required
 
 - Notifications/devices/push, full moderation browser checks,
-  original chat composition, and Python Markdown attribute-list behavior.
+  chat send/reconnect/flood/restart browser acceptance, and Python Markdown
+  attribute-list behavior.
 - Original counter/status/player/webring renderers and remaining widget workflows;
   the visitor cooldown still uses a browser token instead of source IP.
 - Full admin maintenance and per-member ZIP export.

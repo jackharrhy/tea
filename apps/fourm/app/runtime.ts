@@ -37,7 +37,7 @@ export function runtime(env: Bindings) {
     async call<K extends keyof Community>(
       method: K,
       ...args: Parameters<Community[K]>
-    ): Promise<ReturnType<Community[K]>> {
+    ): Promise<Awaited<ReturnType<Community[K]>>> {
       const result = await cell.call(method, args);
       if (!result.ok)
         throw new CommunityError(
@@ -45,7 +45,7 @@ export function runtime(env: Bindings) {
           result.error,
           result.retryAfter,
         );
-      return result.value as ReturnType<Community[K]>;
+      return result.value as Awaited<ReturnType<Community[K]>>;
     },
   };
 }

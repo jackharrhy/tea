@@ -1,9 +1,9 @@
 import { DatabaseSync } from "node:sqlite";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createCommunity } from "../app/data/community.ts";
 import type { Row } from "../app/data/community.ts";
 
-function fixture(forumRateLimit = false) {
+function fixture(forumRateLimit = false, chatFloodLimit = false) {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec("PRAGMA foreign_keys=ON");
   const community = createCommunity(
@@ -30,7 +30,7 @@ function fixture(forumRateLimit = false) {
         }
       },
     },
-    { forumRateLimit },
+    { forumRateLimit, chatFloodLimit },
   );
   community.restore({
     users: [
@@ -361,11 +361,11 @@ describe("community persistence and authority", () => {
     community.setWebring(41, true);
     community.setWebring(72, true);
     expect(community.webring("jane").next?.username).toBe("sam");
-    community.presence(41);
-    expect(community.presence(72)).toHaveLength(2);
-    expect(community.presence(72)).toHaveLength(2);
+    community.openChat(41, "jane-browser");
+    expect(community.openChat(72, "sam-browser").presence).toHaveLength(2);
+    expect(community.openChat(72, "sam-browser").presence).toHaveLength(2);
     community.setDisabled(41, 72, true);
-    expect(community.presence(41)).toHaveLength(1);
+    expect(community.pollChat(41, "jane-browser", 0).presence).toHaveLength(1);
     expect(community.webring("jane").members).toHaveLength(1);
     expect(community.members()).toHaveLength(1);
   });
@@ -652,4 +652,71 @@ it("enforces forum posting pace atomically across threads with source rounding",
   expect(community.thread(id).total_posts).toBe(2);
   community.reply(72, id, "Different member", "bbcode");
   expect(community.thread(id).total_posts).toBe(3);
+});
+
+it("keeps chat history public, live delivery bounded and connection presence explicit", async () => {
+  const { community } = fixture();
+  community.sendChat(41, "Stored before opening");
+  const opened = community.openChat(null, "anonymous");
+  expect(opened.presence).toEqual([]);
+  community.openChat(41, "tab-a");
+  community.openChat(41, "tab-b");
+  community.updateChatPresence(41, false);
+  expect(community.pollChat(null, "anonymous", opened.cursor).presence).toEqual(
+    [{ username: "jane", state: "idle" }],
+  );
+  const notification = community.waitChat(opened.cursor);
+  community.sendChat(41, "  New live message  ");
+  await notification;
+  const live = community.pollChat(null, "anonymous", opened.cursor);
+  expect(live.events.map((e) => e.message)).toEqual(["New live message"]);
+  expect(live.presence[0].state).toBe("active");
+  community.closeChat(41, "tab-a");
+  expect(
+    community.pollChat(null, "anonymous", live.cursor).presence,
+  ).toHaveLength(1);
+  community.closeChat(41, "tab-b");
+  expect(community.pollChat(null, "anonymous", live.cursor).presence).toEqual(
+    [],
+  );
+  expect(community.chatHistory()).toHaveLength(2);
+  for (let i = 0; i < 205; i++) community.sendChat(41, `Buffered ${i}`);
+  const evicted = community.pollChat(null, "anonymous", 0);
+  expect(evicted.events).toHaveLength(200);
+  expect(evicted.cursor).toBeGreaterThan(200);
+  expect(community.chatHistory()).toHaveLength(100);
+});
+
+it("times out chat flooding, expires presence leases and never persists system notices", () => {
+  const clock = vi.spyOn(Date, "now").mockReturnValue(100000);
+  try {
+    const { community, sqlite } = fixture(false, true);
+    community.openChat(41, "tab");
+    community.sendChat(41, "😀".repeat(501));
+    expect(Array.from(String(community.chatHistory()[0].message))).toHaveLength(
+      500,
+    );
+    for (let i = 1; i < 20; i++)
+      expect(community.sendChat(41, `Message ${i}`).status).toBe("sent");
+    expect(community.sendChat(41, "Flooded").status).toBe("timed_out");
+    expect(community.sendChat(41, "Still timed out").status).toBe("timed_out");
+    expect(
+      sqlite.prepare("SELECT count(*) AS count FROM chat_messages").get()
+        ?.count,
+    ).toBe(20);
+    expect(
+      community.pollChat(null, "anonymous", 0).events.at(-1)?.username,
+    ).toBe("system");
+    clock.mockReturnValue(131000);
+    expect(community.sendChat(41, "Timeout outlasts flood window").status).toBe(
+      "timed_out",
+    );
+    clock.mockReturnValue(160001);
+    expect(community.pollChat(null, "anonymous", 0).presence).toEqual([]);
+    expect(community.sendChat(41, "Recovered").status).toBe("sent");
+    expect(community.chatHistory()).toHaveLength(21);
+    expect(() => community.sendChat(41, "  ")).toThrow("empty message");
+  } finally {
+    clock.mockRestore();
+  }
 });

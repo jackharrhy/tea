@@ -76,6 +76,7 @@ const routes = route({
   sendChat: post("/chat"),
   chatMessages: get("/chat/messages"),
   chatStream: get("/chat/stream"),
+  chatPresence: post("/chat/presence"),
   config: get("/api/v1/auth-config"),
   me: get("/api/v1/me"),
   pages: get("/api/v1/pages"),
@@ -668,18 +669,38 @@ export function createAppRouter(
         },
         async chat() {
           return page(
-            "Chat",
-            <Chat messages={await store.call("recentChat", member().id)} />,
+            "4orm · chat",
+            <Chat
+              messages={await store.call("chatHistory")}
+              member={viewer.member}
+            />,
           );
         },
         async sendChat({ request }) {
           const body = await fields(request);
-          await store.call("sendChat", member().id, String(body.message ?? ""));
-          if (wantsJSON(request)) return Response.json({ ok: true });
+          if (!viewer.member) throw new CommunityError(403, "Forbidden");
+          const outcome = await store.call(
+            "sendChat",
+            viewer.member.id,
+            String(body.message ?? ""),
+          );
+          if (request.headers.get("HX-Request") === "true")
+            return new Response("");
+          if (outcome.status === "timed_out")
+            throw new CommunityError(429, "Too Many Requests");
           return redirect("/chat");
         },
         chatStream({ request }) {
-          return chatStream(request, store, member().id);
+          return chatStream(request, store, viewer.member?.id ?? null);
+        },
+        async chatPresence({ request }) {
+          const body = (await request.json()) as { active?: unknown };
+          await store.call(
+            "updateChatPresence",
+            viewer.member?.id ?? null,
+            body.active === undefined ? true : Boolean(body.active),
+          );
+          return new Response("");
         },
         async chatMessages({ request }) {
           const after = Number(
