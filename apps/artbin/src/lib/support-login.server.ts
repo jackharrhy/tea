@@ -336,23 +336,42 @@ export async function beginSupportLogin(request: Request): Promise<Response> {
 export async function completeSupportLogin(
   request: Request,
 ): Promise<Response> {
-  const settings = supportConfig();
-  if (!settings) return new Response("Not Found", { status: 404 });
-  const url = new URL(request.url);
-  const state = url.searchParams.get("state");
-  const code = url.searchParams.get("code");
-  const cookieState = cookie(request, STATE_COOKIE);
   const headers = new Headers({
     "Set-Cookie": stateCookie("", 0),
     "Cache-Control": "no-store",
     "Referrer-Policy": "no-referrer",
   });
-  if (!state || !cookieState || state !== cookieState)
-    return new Response("Invalid support callback", { status: 400, headers });
+  const problem = (
+    stage: string,
+    cleanupOutcome = "not-issued",
+    reason: "account" | "general" = "general",
+  ) => {
+    console.warn(
+      JSON.stringify({
+        event: "artbin_support_callback_failed",
+        stage,
+        cleanupOutcome,
+      }),
+    );
+    headers.set("Location", `/auth/support/problem?reason=${reason}`);
+    return new Response(null, { status: 303, headers });
+  };
+  let settings: SupportConfig | null;
+  try {
+    settings = supportConfig();
+  } catch {
+    return problem("configuration");
+  }
+  if (!settings) return problem("disabled");
+  const url = new URL(request.url);
+  const state = url.searchParams.get("state");
+  const code = url.searchParams.get("code");
+  const cookieState = cookie(request, STATE_COOKIE);
+  if (!state || !cookieState || state !== cookieState) return problem("state");
   const transaction = pending.get(digest(state));
   pending.delete(digest(state));
   if (!transaction || transaction.expiresAt <= Date.now() || !code)
-    return new Response("Invalid support callback", { status: 400, headers });
+    return problem("transaction");
   let failure: "account" | "general" = "general";
   let stage = "redeem";
   let cleanup: Pick<
@@ -449,21 +468,13 @@ export async function completeSupportLogin(
     if (cleanup) {
       try {
         await endRemote(settings, cleanup);
-        cleanupOutcome = "ended";
+        cleanupOutcome = "end-accepted";
       } catch {
-        cleanupOutcome = "pending";
+        cleanupOutcome = "end-unconfirmed";
         if (Number.isFinite(cleanup.expiresAt)) retryEnd(settings, cleanup);
       }
     }
-    console.warn(
-      JSON.stringify({
-        event: "artbin_support_callback_failed",
-        stage,
-        cleanupOutcome,
-      }),
-    );
-    headers.set("Location", `/auth/support/problem?reason=${failure}`);
-    return new Response(null, { status: 303, headers });
+    return problem(stage, cleanupOutcome, failure);
   }
 }
 

@@ -350,9 +350,14 @@ test("wrong support client is rejected after one redemption and cannot enter the
     "/auth/support/problem?reason=general",
   );
   expect(rejected.headers.get("Referrer-Policy")).toBe("no-referrer");
-  expect(
-    (await completeSupportLogin(new Request(callbackUrl, { headers }))).status,
-  ).toBe(400);
+  const replay = await completeSupportLogin(
+    new Request(callbackUrl, { headers }),
+  );
+  expect(replay.status).toBe(303);
+  expect(replay.headers.get("Location")).toBe(
+    "/auth/support/problem?reason=general",
+  );
+  expect(replay.headers.get("Set-Cookie")).toContain("artbin_support_state=;");
   expect(calls.filter((call) => call.endsWith("/support/redeem"))).toHaveLength(
     1,
   );
@@ -361,9 +366,48 @@ test("wrong support client is rejected after one redemption and cannot enter the
     JSON.stringify({
       event: "artbin_support_callback_failed",
       stage: "identity",
-      cleanupOutcome: "ended",
+      cleanupOutcome: "end-accepted",
+    }),
+    JSON.stringify({
+      event: "artbin_support_callback_failed",
+      stage: "transaction",
+      cleanupOutcome: "not-issued",
     }),
   ]);
+});
+
+test("early support callback failures clear the query and transaction cookie", async () => {
+  setup();
+  const start = await beginSupportLogin(
+    new Request(`${artbin}/auth/support/start?request=${"i".repeat(43)}`),
+  );
+  const handoff = new URL(start.headers.get("Location")!);
+  const state = handoff.searchParams.get("state")!;
+  const cookieHeader = start.headers.get("Set-Cookie")!.split(";")[0];
+  const callback = (query: string, cookie = cookieHeader) =>
+    completeSupportLogin(
+      new Request(`${artbin}/auth/support/callback?${query}`, {
+        headers: { Cookie: cookie },
+      }),
+    );
+  const code = "j".repeat(43);
+  for (const response of [
+    await callback(`code=${code}&state=${state}`, ""),
+    await callback(`code=${code}&state=${state}wrong`),
+    await callback(`state=${state}`),
+    await callback(`code=${code}&state=${state}`),
+  ]) {
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe(
+      "/auth/support/problem?reason=general",
+    );
+    expect(response.headers.get("Referrer-Policy")).toBe("no-referrer");
+    expect(response.headers.get("Set-Cookie")).toContain(
+      "artbin_support_state=;",
+    );
+  }
+  process.env.ARTBIN_SUPPORT_LOGIN_ENABLED = "0";
+  expect((await callback(`code=${code}&state=${state}`)).status).toBe(303);
 });
 
 test("signed target role cannot replace browser scopes missing from native introspection", async () => {
