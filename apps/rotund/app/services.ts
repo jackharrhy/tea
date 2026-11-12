@@ -30,8 +30,8 @@ const existingIds = ["jellyfin", "sonarr", "radarr", "prowlarr", "qbittorrent"];
 const mediaAdminIds = ["sonarr", "radarr", "prowlarr", "qbittorrent"];
 
 function sameAccess(a: Binding, b: Binding): boolean {
-  const rolesA = [...a.requiredAnyRole].sort();
-  const rolesB = [...b.requiredAnyRole].sort();
+  const rolesA = a.requiredAnyRole.toSorted();
+  const rolesB = b.requiredAnyRole.toSorted();
   return (
     a.projectId === b.projectId &&
     a.allowedSubject === b.allowedSubject &&
