@@ -122,6 +122,53 @@ export async function mediaWorkflows(page, origin) {
     report.altSaveReopen = true;
     report.renameRetainsIdAndBytes = true;
     report.deleteRemovesOnlyFixture = true;
+    await page.goto(origin + "/settings");
+    const createPage = page
+      .locator("details")
+      .filter({ has: page.locator("#media-picker-create_content") });
+    await createPage.locator("summary").click();
+    const picker = page.locator("#media-picker-create_content");
+    await picker.locator('input[type="file"]').setInputFiles({
+      name: marker + "-quick.png",
+      mimeType: "image/png",
+      buffer: png,
+    });
+    await picker.getByRole("button", { name: "upload", exact: true }).click();
+    await picker
+      .locator('[role="status"]')
+      .getByText("Uploaded.", { exact: true })
+      .waitFor();
+    const quick = (await media(page, origin)).items.find((candidate) =>
+      candidate.storage_path.endsWith(marker + "-quick.png"),
+    );
+    assert.ok(quick);
+    created.add(quick.id);
+    assert.equal(
+      await picker.locator("select").inputValue(),
+      quick.storage_path,
+    );
+    assert.equal(
+      await picker
+        .getByRole("button", { name: "upload", exact: true })
+        .isDisabled(),
+      false,
+    );
+    await picker.getByRole("button", { name: "img", exact: true }).click();
+    assert.ok(
+      (await page.locator("#create_content").inputValue()).includes(
+        `/uploads/${quick.storage_path}`,
+      ),
+    );
+    const removed = await page
+      .context()
+      .request.post(origin + `/settings/media/${quick.id}/delete`, {
+        headers: { ...jsonHeaders, Origin: origin },
+      });
+    assert.equal(removed.status(), 200);
+    assert.deepEqual(await removed.json(), { ok: true, message: "deleted" });
+    created.delete(quick.id);
+    assert.deepEqual((await media(page, origin)).items, baseline.items);
+    report.quickUploadSelectAndInsert = true;
     const username = "parity-" + Date.now();
     await renameUsername(page, origin, username);
     const renamed = await settings(page, origin);
