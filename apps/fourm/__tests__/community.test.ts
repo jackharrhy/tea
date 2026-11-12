@@ -529,3 +529,24 @@ it("keeps source browser page fields independent of API limits", () => {
     community.editSettingsPage(72, "renamed.html", { title: "Taken" }),
   ).toThrow();
 });
+
+it("pages forum threads with source pin and last-reply ordering", () => {
+  const { community, sqlite } = fixture();
+  for (let i = 1; i <= 27; i++) {
+    sqlite
+      .prepare(
+        "INSERT INTO forum_threads(id,author_id,title,last_reply_at) VALUES(?,41,?,?)",
+      )
+      .run(i, `Thread ${i}`, `2026-01-${String(i).padStart(2, "0")} 00:00:00`);
+  }
+  sqlite.prepare("UPDATE forum_threads SET is_pinned=1 WHERE id=1").run();
+  const first = community.forumIndex();
+  expect(first.total).toBe(27);
+  expect(first.total_pages).toBe(2);
+  expect(first.threads).toHaveLength(25);
+  expect(first.threads.slice(0, 2).map((t) => t.id)).toEqual([1, 27]);
+  expect(first.threads[0].author_username).toBe("jane");
+  expect(community.forumIndex(2).threads.map((t) => t.id)).toEqual([3, 2]);
+  expect(community.forumIndex(0)).toEqual(first);
+  expect(community.forumIndex(3).threads).toEqual([]);
+});

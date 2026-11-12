@@ -87,3 +87,20 @@ export function homeJSON(home: ReturnType<Community["home"]>) {
     })),
   };
 }
+
+export function forumJSON(index: ReturnType<Community["forumIndex"]>) {
+  return {
+    ...index,
+    threads: index.threads.map((thread) => ({
+      id: thread.id,
+      title: thread.title,
+      author_username: thread.author_username,
+      author_display_name: thread.author_display_name ?? "",
+      reply_count: thread.reply_count ?? 0,
+      is_pinned: Boolean(thread.is_pinned),
+      is_locked: Boolean(thread.is_locked),
+      last_reply_at: apiDate(thread.last_reply_at),
+      created_at: apiDate(thread.created_at),
+    })),
+  };
+}
