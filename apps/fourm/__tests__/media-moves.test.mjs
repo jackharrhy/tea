@@ -642,3 +642,59 @@ test("missing-record cleanup rechecks exact identity, path and transfer reservat
     f.close();
   }
 });
+
+test("backup run identity survives authority reopen and terminal receipts are immutable", () => {
+  const f = fixture(true);
+  try {
+    expect(() => f.community.beginBackup(null)).toThrow(
+      "Admin access required",
+    );
+    expect(() => f.community.beginBackup(72)).toThrow("Admin access required");
+    expect(() => f.community.backupStatus(72)).toThrow("Admin access required");
+    const pending = f.community.beginBackup(41);
+    expect(pending.state).toBe("pending");
+    expect(f.community.beginBackup(41)).toEqual(pending);
+    expect(f.community.backupStatus(41).backups).toEqual([]);
+    expect(() =>
+      f.sqlite
+        .prepare(
+          "UPDATE backup_runs SET state='complete',finished_at=1 WHERE name=?",
+        )
+        .run(pending.name),
+    ).toThrow();
+    const recovered = f.reopen();
+    expect(recovered.beginBackup(41)).toEqual(pending);
+    expect(() => recovered.completeBackup(pending.name, -1, 3)).toThrow(
+      "Invalid backup inventory",
+    );
+    const completed = recovered.completeBackup(pending.name, 1024, 3);
+    expect(completed.state).toBe("complete");
+    expect(recovered.completeBackup(pending.name, 1024, 3)).toEqual(completed);
+    expect(() => recovered.completeBackup(pending.name, 2048, 3)).toThrow(
+      "different terminal result",
+    );
+    expect(() =>
+      recovered.failBackup(pending.name, "Storage unavailable"),
+    ).toThrow("different terminal result");
+    const next = recovered.beginBackup(41);
+    expect(next.name).not.toBe(pending.name);
+    const failure = recovered.failBackup(next.name, "Storage unavailable");
+    expect(failure.state).toBe("failed");
+    expect(recovered.failBackup(next.name, "Storage unavailable")).toEqual(
+      failure,
+    );
+    expect(() => recovered.completeBackup(next.name, 1024, 3)).toThrow(
+      "different terminal result",
+    );
+    const status = recovered.backupStatus(41);
+    expect(status.pending).toBeNull();
+    expect(status.last.name).toBe(next.name);
+    expect(status.backups).toHaveLength(1);
+    expect(status.backups[0].name).toBe(pending.name);
+    expect(recovered.members().map((member) => member.id)).toEqual([41, 72]);
+    expect(recovered.media(41).items).toHaveLength(2);
+    expect(f.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  } finally {
+    f.close();
+  }
+});

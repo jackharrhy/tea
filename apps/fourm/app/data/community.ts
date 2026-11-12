@@ -1,3 +1,4 @@
+import { backupSchema, createBackups } from "./backups.ts";
 import { orphanCleanupSchema, createOrphanCleanup } from "./orphan-cleanup.ts";
 import {
   accountCleanupSchema,
@@ -67,6 +68,7 @@ export function createCommunity(
   mediaMoveSchema(db);
   accountCleanupSchema(db);
   orphanCleanupSchema(db);
+  backupSchema(db);
   const pageBodies = pageContent(db);
   db.all(`CREATE TABLE IF NOT EXISTS browser_sessions (
     token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
@@ -190,6 +192,7 @@ export function createCommunity(
     },
     ...createSettings(db, member),
     ...createAdmin(db, admin, pageBodies),
+    ...createBackups(db, admin),
     ...createOrphanCleanup(db, admin),
     ...createAccountDeletion(db, admin),
     ...createEnrollments(db, member),
