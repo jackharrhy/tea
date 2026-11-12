@@ -29,7 +29,11 @@ export default {
       const url = new URL(request.url);
       if (url.pathname === "/health")
         return Response.json({ ok: true, app: "fourm" });
-      if (url.pathname.startsWith("/assets/")) return env.ASSETS.fetch(request);
+      if (
+        url.pathname.startsWith("/assets/") ||
+        url.pathname.startsWith("/static/")
+      )
+        return env.ASSETS.fetch(request);
       const canonical = new URL(env.AUTH_PUBLIC_ORIGIN);
       if (
         canonical.origin !== env.AUTH_PUBLIC_ORIGIN ||

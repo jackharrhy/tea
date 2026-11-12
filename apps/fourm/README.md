@@ -1,5 +1,8 @@
 # 4orm on Celld
 
+Status: faithful-parity rework in progress. Earlier fixture preview and tests are
+POC evidence, not migration acceptance. See `docs/parity.md`.
+
 An isolated native port of the Python community app. Remix owns HTTP routes and
 server-rendered UI; SQLite Durable Objects own members, content, invitations and
 sessions; the `MEDIA` R2 binding owns upload bytes. No request is forwarded to the

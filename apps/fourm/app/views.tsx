@@ -1,87 +1,7 @@
-import { css, unsafeHTML } from "remix/component";
+import { unsafeHTML } from "remix/component";
 import type { Handle, RemixNode } from "remix/component";
 import type { Member, Row } from "./data/community.ts";
 import { content, postContent } from "./rendering.ts";
-
-const styles = css({
-  fontFamily: "Arial, sans-serif",
-  color: "#111",
-  backgroundColor: "#efefef",
-  lineHeight: 1.5,
-  "& *": { boxSizing: "border-box" },
-  "& body": { margin: 0 },
-  "& header": {
-    backgroundColor: "#00c4e8",
-    borderBottom: "3px solid #00859c",
-    padding: "12px 20px",
-    display: "flex",
-    gap: "24px",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  "& nav": {
-    display: "flex",
-    gap: "16px",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  "& main": { maxWidth: "1000px", padding: "20px", margin: "0 auto" },
-  "& h1": { fontSize: "2rem", lineHeight: 1.2 },
-  "& a": { color: "#002d9c", textUnderlineOffset: "3px" },
-  "& a:focus-visible,& button:focus-visible,& input:focus-visible,& textarea:focus-visible,& select:focus-visible":
-    { outline: "3px solid #006381", outlineOffset: "3px" },
-  "& form": {
-    display: "grid",
-    gap: "12px",
-    maxWidth: "760px",
-    marginBlock: "16px",
-  },
-  "& header form": { display: "block", margin: 0 },
-  "& label": { display: "grid", gap: "4px" },
-  "& input,& textarea,& select,& button": {
-    font: "inherit",
-    padding: "8px",
-    maxWidth: "100%",
-    minWidth: 0,
-  },
-  "& textarea": { minHeight: "160px", width: "100%" },
-  "& button": {
-    width: "fit-content",
-    cursor: "pointer",
-    backgroundColor: "white",
-    border: "2px outset #aaa",
-  },
-  "& article": {
-    paddingBlock: "16px",
-    borderBottom: "1px solid #aaa",
-    overflowWrap: "anywhere",
-  },
-  "& table": { width: "100%", borderCollapse: "collapse" },
-  "& td,& th": {
-    textAlign: "left",
-    padding: "10px 6px",
-    borderBottom: "1px solid #bbb",
-  },
-  "& pre": {
-    whiteSpace: "pre-wrap",
-    overflowWrap: "anywhere",
-    font: "inherit",
-  },
-  "& img,& video,& audio": { maxWidth: "100%" },
-  "& small": { color: "#444" },
-  "& .row": {
-    display: "flex",
-    gap: "12px",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  "& .row form": { display: "inline-block", margin: 0 },
-  "@media(max-width:600px)": {
-    "& main": { padding: "12px" },
-    "& header": { padding: "10px 12px", gap: "10px" },
-    "& h1": { fontSize: "1.65rem" },
-  },
-});
 
 export function Document(
   handle: Handle<{
@@ -91,16 +11,17 @@ export function Document(
   }>,
 ) {
   return () => (
-    <html lang="en" mix={styles}>
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <title>{handle.props.title} · 4orm</title>
+        <link rel="stylesheet" href="/static/style.css" />
       </head>
-      <body>
-        <header>
-          <a href="/">
-            <strong>4orm</strong>
+      <body class="fourm-shell">
+        <header class="topbar">
+          <a href="/" class="logo">
+            4orm
           </a>
           <nav aria-label="Main">
             <a href="/forum">forum</a>
@@ -112,16 +33,19 @@ export function Document(
                 {handle.props.member.is_admin ? (
                   <a href="/admin">admin</a>
                 ) : null}
-                <form method="post" action="/logout">
+                <form method="post" action="/logout" class="inline">
                   <button>logout</button>
                 </form>
               </>
             ) : (
-              <a href="/auth/start">sign in</a>
+              <>
+                <a href="/login">login</a>
+                <a href="/register">register</a>
+              </>
             )}
           </nav>
         </header>
-        <main>{handle.props.children}</main>
+        <main class="wrap">{handle.props.children}</main>
       </body>
     </html>
   );
@@ -152,50 +76,54 @@ export function Members(handle: Handle<{ members: Row[] }>) {
 export function Profile(handle: Handle<{ profile: Row; pages: Row[] }>) {
   return () => (
     <>
-      <h1>{handle.props.profile.display_name}</h1>
-      {handle.props.profile.avatar_path ? (
-        <img
-          src={`/uploads/${handle.props.profile.avatar_path}`}
-          alt={`${handle.props.profile.display_name}'s avatar`}
-          width={96}
-          height={96}
+      <section class="panel h-card">
+        <h1 class="p-name">{handle.props.profile.display_name}</h1>
+        <a
+          class="u-url"
+          href={`/u/${handle.props.profile.username}`}
+          rel="me"
+          hidden
         />
-      ) : null}
-      <p>
-        @{handle.props.profile.username} · {handle.props.profile.status_emoji}{" "}
-        {handle.props.profile.status_text}
-      </p>
-      <article
-        innerHTML={unsafeHTML(
-          content(
-            String(handle.props.profile.content ?? ""),
-            String(handle.props.profile.content_format),
-          ),
-        )}
-      />
+        <div
+          class="e-note"
+          innerHTML={unsafeHTML(
+            content(
+              String(handle.props.profile.content ?? ""),
+              String(handle.props.profile.content_format),
+            ),
+          )}
+        />
+        <p>
+          <a href={`/lineage#user-${handle.props.profile.username}`}>
+            view lineage
+          </a>
+        </p>
+      </section>
       <style
         innerHTML={unsafeHTML(String(handle.props.profile.custom_css ?? ""))}
       />
       <div
         innerHTML={unsafeHTML(String(handle.props.profile.custom_html ?? ""))}
       />
-      <h2>Pages</h2>
-      <p>
-        <a href={`/u/${handle.props.profile.username}/guestbook`}>Guestbook</a>{" "}
-        · <a href={`/u/${handle.props.profile.username}/player`}>Playlist</a> ·{" "}
-        <a href={`/u/${handle.props.profile.username}/webring`}>Webring</a> ·{" "}
-        <a href="/lineage">Invite tree</a>
-      </p>
-      <ul>
-        {handle.props.pages.map((page) => (
-          <li>
-            <a href={`/u/${handle.props.profile.username}/page/${page.slug}`}>
-              {page.title}
-            </a>
-            {page.is_public ? null : " (private)"}
-          </li>
-        ))}
-      </ul>
+      <section class="panel h-feed">
+        <h2>pages</h2>
+        <ul>
+          {handle.props.pages.length ? (
+            handle.props.pages.map((page) => (
+              <li class="h-entry">
+                <a
+                  class="u-url p-name"
+                  href={`/u/${handle.props.profile.username}/page/${page.slug}`}
+                >
+                  {page.title}
+                </a>
+              </li>
+            ))
+          ) : (
+            <li>no pages yet.</li>
+          )}
+        </ul>
+      </section>
     </>
   );
 }
@@ -586,11 +514,12 @@ export function BareDocument(
   handle: Handle<{ title: string; children?: RemixNode }>,
 ) {
   return () => (
-    <html lang="en" mix={styles}>
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <title>{handle.props.title} · 4orm</title>
+        <link rel="stylesheet" href="/static/style.css" />
       </head>
       <body>{handle.props.children}</body>
     </html>

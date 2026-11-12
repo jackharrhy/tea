@@ -1,3 +1,4 @@
+import { pageContent } from "./page-content.ts";
 import { schema, coreTables } from "./schema.ts";
 import { createEnrollments } from "./enrollment.ts";
 import { createMedia } from "./media.ts";
@@ -49,6 +50,7 @@ function format(value: unknown) {
 
 export function createCommunity(db: Database) {
   db.all(schema);
+  const pageBodies = pageContent(db);
   db.all(`CREATE TABLE IF NOT EXISTS browser_sessions (
     token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
     expires_at INTEGER NOT NULL
@@ -94,7 +96,9 @@ export function createCommunity(db: Database) {
         Object.fromEntries(
           coreTables.map((table) => [
             table,
-            db.all(`SELECT * FROM "${table}"`),
+            db
+              .all(`SELECT * FROM "${table}"`)
+              .map((row) => (table === "pages" ? pageBodies.read(row) : row)),
           ]),
         ),
       );
@@ -132,10 +136,16 @@ export function createCommunity(db: Database) {
             const keys = Object.keys(row);
             if (!keys.length || keys.some((key) => !columns.has(key)))
               throw new CommunityError(422, "Archive contains unknown columns");
+            const parts =
+              table === "pages"
+                ? pageBodies.chunks(String(row.content ?? ""))
+                : [];
+            const stored = parts.length ? { ...row, content: "" } : row;
             db.all(
               `INSERT INTO "${table}" (${keys.map((key) => `"${key}"`).join(",")}) VALUES(${keys.map(() => "?").join(",")})`,
-              ...keys.map((key) => row[key]),
+              ...keys.map((key) => stored[key]),
             );
+            if (table === "pages") pageBodies.write(Number(row.id), parts);
           }
         }
         if (db.all("PRAGMA foreign_key_check").length)
@@ -228,11 +238,13 @@ export function createCommunity(db: Database) {
       return user;
     },
     pages(userId: number, actorId: number | null) {
-      return db.all(
-        "SELECT * FROM pages WHERE user_id=? AND (is_public=1 OR user_id=?) ORDER BY slug",
-        userId,
-        actorId,
-      );
+      return db
+        .all(
+          "SELECT * FROM pages WHERE user_id=? AND (is_public=1 OR user_id=?) ORDER BY slug",
+          userId,
+          actorId,
+        )
+        .map(pageBodies.read);
     },
     page(userId: number, pageSlug: string, actorId: number | null) {
       const page = db.all(
@@ -242,28 +254,35 @@ export function createCommunity(db: Database) {
         actorId,
       )[0];
       if (!page) throw missing();
-      return page;
+      return pageBodies.read(page);
     },
     savePage(actorId: number, pageSlug: string, input: Row) {
       member(actorId);
       slug(pageSlug);
       const title = required(input.title, 140, "Title");
       const content = String(input.content ?? "");
-      if (content.length > 500000)
-        throw new CommunityError(413, "Page is too large");
-      db.all(
-        `INSERT INTO pages(user_id,slug,title,content,content_format,layout,is_public)
+      const parts = pageBodies.chunks(content);
+      db.transaction(() => {
+        db.all(
+          `INSERT INTO pages(user_id,slug,title,content,content_format,layout,is_public)
         VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id,slug) DO UPDATE SET
         title=excluded.title,content=excluded.content,content_format=excluded.content_format,
         layout=excluded.layout,is_public=excluded.is_public,updated_at=CURRENT_TIMESTAMP`,
-        actorId,
-        pageSlug,
-        title,
-        content,
-        format(input.content_format ?? "html"),
-        String(input.layout ?? "default"),
-        input.is_public ? 1 : 0,
-      );
+          actorId,
+          pageSlug,
+          title,
+          parts.length ? "" : content,
+          format(input.content_format ?? "html"),
+          String(input.layout ?? "default"),
+          input.is_public ? 1 : 0,
+        );
+        const id = db.all(
+          "SELECT id FROM pages WHERE user_id=? AND slug=?",
+          actorId,
+          pageSlug,
+        )[0].id;
+        pageBodies.write(Number(id), parts);
+      });
       return this.page(actorId, pageSlug, actorId);
     },
     deletePage(actorId: number, pageSlug: string) {

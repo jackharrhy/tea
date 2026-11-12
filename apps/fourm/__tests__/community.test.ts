@@ -367,3 +367,35 @@ describe("community persistence and authority", () => {
     expect(community.members()).toHaveLength(1);
   });
 });
+
+it("preserves existing multi-megabyte Unicode pages within native SQL value limits", () => {
+  const { community, sqlite } = fixture();
+  const content = "🌍漢字".repeat(300_000);
+  const page = community.savePage(41, "large.html", {
+    title: "Large existing page",
+    content,
+    content_format: "html",
+    is_public: 1,
+  });
+  expect(page.content).toBe(content);
+  const largest = sqlite
+    .prepare(
+      "SELECT MAX(length(cast(content AS BLOB))) AS bytes FROM page_content_chunks",
+    )
+    .get();
+  expect(Number(largest?.bytes)).toBeLessThan(1_000_000);
+  expect(
+    community.exportArchive(41).pages.find((row) => row.id === page.id)
+      ?.content,
+  ).toBe(content);
+  community.savePage(41, "large.html", {
+    title: "Edited",
+    content: "small",
+    content_format: "html",
+    is_public: 1,
+  });
+  expect(community.page(41, "large.html", 41).content).toBe("small");
+  expect(
+    sqlite.prepare("SELECT count(*) AS n FROM page_content_chunks").get()?.n,
+  ).toBe(0);
+});
