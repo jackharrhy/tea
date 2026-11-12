@@ -720,3 +720,39 @@ it("times out chat flooding, expires presence leases and never persists system n
     clock.mockRestore();
   }
 });
+
+it("keeps device upserts stable, hides credentials and scopes deletion to the member", () => {
+  const { community, sqlite } = fixture();
+  const sub = {
+    endpoint: "https://push.invalid/one",
+    device_id: "same-device",
+    device_name: "laptop",
+    keys: { p256dh: "private-fixture-key", auth: "private-fixture-auth" },
+  };
+  community.subscribePush(41, sub);
+  community.subscribePush(72, sub);
+  const original = community.pushDevices(41)[0];
+  community.subscribePush(41, {
+    ...sub,
+    endpoint: "https://push.invalid/two",
+    device_name: "renamed",
+  });
+  expect(community.pushDevices(41)).toEqual([
+    { ...original, device_name: "renamed" },
+  ]);
+  expect(community.pushDevices(41)[0]).not.toHaveProperty("auth_key");
+  community.deletePushDevice(72, Number(original.id));
+  expect(community.pushDevices(41)).toHaveLength(1);
+  community.unsubscribePush(72, "same-device");
+  expect(community.pushDevices(72)).toHaveLength(0);
+  expect(community.pushDevices(41)).toHaveLength(1);
+  expect(() => community.subscribePush(41, { ...sub, keys: {} })).toThrow(
+    "invalid subscription",
+  );
+  sqlite.prepare("UPDATE users SET is_disabled=1 WHERE id=72").run();
+  expect(() => community.subscribePush(72, sub)).toThrow(
+    "Membership is unavailable",
+  );
+  community.deletePushDevice(41, Number(original.id));
+  expect(community.pushDevices(41)).toEqual([]);
+});

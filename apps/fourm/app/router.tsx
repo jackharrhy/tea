@@ -1,3 +1,4 @@
+import { pushRoutes, pushController } from "./push-controller.tsx";
 import { mediaRoutes, mediaController } from "./media-controller.tsx";
 import { wantsJSON } from "./http.ts";
 import { threadJSON, forumJSON, settingsJSON, homeJSON } from "./view-json.ts";
@@ -199,6 +200,7 @@ export function createAppRouter(
     return store.call("resolveIdentity", env.AUTH_ISSUER, principal.subject);
   }
   const router = createRouter();
+  router.map(pushRoutes, pushController(store, viewer));
   router.map(settingsRoutes, settingsController(store, viewer, page));
   router.map(mediaRoutes, mediaController(env, store, viewer, page));
   router.map(widgetRoutes, widgetController(env, store, viewer, page));
