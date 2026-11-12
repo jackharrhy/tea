@@ -173,6 +173,19 @@ function mockProvider(input: {
   }) as typeof fetch;
 }
 
+function lookup(targetSubject: string, authorization?: string) {
+  return router.fetch(
+    new Request(`${artbin}/auth/support/target`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authorization ? { Authorization: authorization } : {}),
+      },
+      body: JSON.stringify({ targetSubject }),
+    }),
+  );
+}
+
 test("support target lookup requires the transport credential and an existing local subject", async () => {
   const db = setup();
   await db.insert(users).values({
@@ -181,17 +194,6 @@ test("support target lookup requires the transport credential and an existing lo
     authSubject: "target",
     isAdmin: false,
   });
-  const lookup = (targetSubject: string, authorization?: string) =>
-    router.fetch(
-      new Request(`${artbin}/auth/support/target`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(authorization ? { Authorization: authorization } : {}),
-        },
-        body: JSON.stringify({ targetSubject }),
-      }),
-    );
   const credential = `Basic ${Buffer.from("artbin:support-transport-secret").toString("base64")}`;
   expect((await lookup("target")).status).toBe(401);
   expect((await lookup("target", "Basic invalid")).status).toBe(401);
