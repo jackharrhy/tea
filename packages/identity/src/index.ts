@@ -32,7 +32,6 @@ export interface TokenPrincipal {
 export interface ActedAccessToken {
   readonly subject: string;
   readonly actor: { readonly issuer: string; readonly subject: string };
-  readonly scopes: ReadonlySet<string>;
   readonly roles: ReadonlySet<string>;
   readonly audiences: ReadonlySet<string>;
   readonly expiresAt: number;
@@ -343,7 +342,6 @@ export function createIdentityClient(
         !text(claims.sub) ||
         actor.iss !== config.issuer ||
         !text(actor.sub) ||
-        typeof claims.scope !== "string" ||
         !Array.isArray(audiences) ||
         !audiences.every(text) ||
         !audiences.includes(config.projectId) ||
@@ -353,7 +351,6 @@ export function createIdentityClient(
       return {
         subject: claims.sub,
         actor: { issuer: config.issuer, subject: actor.sub },
-        scopes: new Set(claims.scope.split(/\s+/).filter(Boolean)),
         roles: roles(claims),
         audiences: new Set(audiences),
         expiresAt: claims.exp,

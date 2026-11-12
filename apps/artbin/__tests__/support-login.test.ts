@@ -1,6 +1,7 @@
 import { generateKeyPairSync, sign } from "node:crypto";
 
 import { afterEach, expect, test } from "vitest";
+import { projectAudienceScope } from "@harrhy/identity";
 
 import { router } from "../app/router.ts";
 import { sessions, users } from "#db";
@@ -43,7 +44,6 @@ function signedTargetToken(actor = "actor", target = "target") {
     iat: now,
     exp: now + 300,
     act: { iss: issuer, sub: actor },
-    scope: scopes,
     ...grant,
   })}`;
   return `${unsigned}.${sign("RSA-SHA256", Buffer.from(unsigned), keys.privateKey).toString("base64url")}`;
@@ -101,6 +101,7 @@ function mockProvider(input: {
   readonly targetToken: string;
   readonly nonce: string;
   readonly introspectionClientId?: string;
+  readonly introspectionScopes?: string;
   readonly statusActive?: () => boolean;
   readonly calls: string[];
 }) {
@@ -147,7 +148,7 @@ function mockProvider(input: {
         token_type: "Bearer",
         exp: Math.floor(Date.now() / 1000) + 300,
         aud: [project],
-        scope: scopes,
+        scope: input.introspectionScopes ?? scopes,
         ...grant,
       });
     if (url.endsWith("/support/session"))
@@ -274,6 +275,35 @@ test("wrong support client is rejected after one redemption and cannot enter the
   expect(calls.filter((call) => call.endsWith("/support/redeem"))).toHaveLength(
     1,
   );
+  expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+});
+
+test("signed target role cannot replace browser scopes missing from native introspection", async () => {
+  const db = setup();
+  await db.insert(users).values({
+    id: "local-target-scope",
+    username: "target-scope",
+    authSubject: "target",
+    isAdmin: false,
+  });
+  const calls: string[] = [];
+  const start = await beginSupportLogin(
+    new Request(`${artbin}/auth/support/start?request=${"e".repeat(43)}`),
+  );
+  const handoff = new URL(start.headers.get("Location")!);
+  mockProvider({
+    targetToken: signedTargetToken(),
+    nonce: handoff.searchParams.get("nonce")!,
+    introspectionScopes: `openid profile ${projectAudienceScope(project)}`,
+    calls,
+  });
+  const callback = await completeSupportLogin(
+    new Request(
+      `${artbin}/auth/support/callback?code=${"f".repeat(43)}&state=${handoff.searchParams.get("state")}`,
+      { headers: { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] } },
+    ),
+  );
+  expect(callback.status).toBe(403);
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
 });
 

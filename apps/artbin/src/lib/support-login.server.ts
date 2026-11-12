@@ -204,9 +204,7 @@ function browserRole(
     PROJECT_ROLES_SCOPE,
   ];
   if (
-    required.some(
-      (scope) => !jwt.scopes.has(scope) || !introspection.scopes.has(scope),
-    ) ||
+    required.some((scope) => !introspection.scopes.has(scope)) ||
     jwt.subject !== introspection.subject ||
     jwt.actor.subject !== introspection.actor?.subject ||
     jwt.actor.issuer !== introspection.actor.issuer ||
@@ -454,7 +452,6 @@ async function resolveSupportUser(
         subject: session.targetSubject,
         actor: { issuer: settings.issuer, subject: session.actorSubject },
         audiences: principal.audiences,
-        scopes: principal.scopes,
         roles: principal.roles,
         expiresAt: principal.expiresAt,
       },

@@ -47,8 +47,9 @@ one-use, PKCE-bound support handoff; they never create or update an Artbin user.
 The target must already have an exact `users.auth_subject` row. The support
 token must be a signed native token with the human actor in `act`, an active
 resource introspection result for the same target and dedicated support client,
-the Artbin project audience, ordinary browser scopes and the target's
-organization-qualified `member` or `admin` role claim. This browser check does
+the Artbin project audience and the target's organization-qualified `member` or
+`admin` role claim. Native acted JWTs omit `scope`; ordinary browser scopes are
+checked on the same token's resource introspection result. This browser check does
 not change CLI, machine API or MCP role-scope rules.
 
 Support sessions are held in this Node process for at most ten minutes. Each

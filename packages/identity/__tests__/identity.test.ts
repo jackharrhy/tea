@@ -243,11 +243,9 @@ test("API tokens need active proof, exact issuer, project audience, scoped roles
   }
 });
 
-test("support access token keeps signed actor and target roles separate from delegated role scopes", async () => {
-  const scope = `openid profile ${projectAudienceScope(config.projectId)} ${PROJECT_ROLES_SCOPE}`;
+test("native acted access token verifies signed actor and target roles without a scope claim", async () => {
   const accessToken = await new SignJWT({
     act: { iss: config.issuer, sub: "support-actor" },
-    scope,
     ...granted,
   })
     .setProtectedHeader({ alg: "RS256", kid: "signing-key" })
@@ -268,12 +266,10 @@ test("support access token keeps signed actor and target roles separate from del
   assert.equal(verified.subject, "central-id");
   assert.equal(verified.actor.subject, "support-actor");
   assert.ok(verified.roles.has("admin"));
-  assert.deepEqual([...verified.scopes], scope.split(" "));
-  assert.ok(!verified.scopes.has(roleScope("admin")));
+  assert.ok(!("scopes" in verified));
 
   const tampered = await new SignJWT({
     act: { iss: "https://wrong.example", sub: "support-actor" },
-    scope,
     ...granted,
   })
     .setProtectedHeader({ alg: "RS256", kid: "signing-key" })
