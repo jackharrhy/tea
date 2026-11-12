@@ -1,0 +1,12 @@
+{
+  "name": "harrhy-fourm-public-peer",
+  "main": "worker.ts",
+  "compatibility_date": "2026-11-12",
+  "services": [
+    {
+      "binding": "COMMUNITY_PUBLIC",
+      "service": "harrhy-fourm-candidate",
+      "entrypoint": "CommunityPublicDirectory",
+    },
+  ],
+}
