@@ -1,6 +1,13 @@
 import { it, expect } from "vitest";
 import { DatabaseSync } from "node:sqlite";
-import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  writeFile,
+  rm,
+  utimes,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -16,6 +23,11 @@ it("exports a read-only source copy and restores numeric ownership without legac
     await mkdir(join(uploads, "jane"), { recursive: true });
     const bytes = Buffer.from("source fixture media");
     await writeFile(join(uploads, "jane/photo.txt"), bytes);
+    await utimes(
+      join(uploads, "jane/photo.txt"),
+      new Date("2020-01-01T00:00:00Z"),
+      new Date("2020-01-01T00:00:00Z"),
+    );
     const source = new DatabaseSync(file);
     source.exec(schema);
     source.exec(
@@ -44,6 +56,15 @@ it("exports a read-only source copy and restores numeric ownership without legac
         .digest("hex"),
     ).toBe(before);
     const archive = JSON.parse(text);
+    expect(archive.objects[0]).toMatchObject({
+      last_modified: "Wed, 01 Jan 2020 00:00:00 GMT",
+      mtime_ns: "1577836800000000000",
+      content_type: "text/plain; charset=utf-8",
+      etag:
+        '"' +
+        createHash("md5").update(`1577836800.0-${bytes.length}`).digest("hex") +
+        '"',
+    });
     const target = new DatabaseSync(":memory:");
     target.exec("PRAGMA foreign_keys=ON");
     const community = createCommunity({

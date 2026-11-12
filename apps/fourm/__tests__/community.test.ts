@@ -462,3 +462,40 @@ it("canonical page editing preserves IDs through slug changes and rejects duplic
     }),
   ).toThrow("Not found");
 });
+
+it("archive replay and metadata updates retain local administrator and disabled-member authority", () => {
+  const { community, sqlite } = fixture();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-jane",
+    ),
+  ).not.toThrow();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-sam",
+    ),
+  ).toThrow("Admin access");
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://other.example",
+      "subject-jane",
+    ),
+  ).toThrow("not linked");
+  sqlite.prepare("UPDATE users SET is_admin=0 WHERE id=41").run();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-jane",
+    ),
+  ).toThrow("Admin access");
+  sqlite.prepare("UPDATE users SET is_admin=1,is_disabled=1 WHERE id=41").run();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-jane",
+    ),
+  ).toThrow("unavailable");
+  sqlite.close();
+});

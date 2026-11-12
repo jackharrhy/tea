@@ -169,6 +169,21 @@ export function createCommunity(db: Database) {
       member(actorId);
       db.all("UPDATE users SET has_accepted_trust=1 WHERE id=?", actorId);
     },
+    assertArchiveRestoreAuthority(issuer: string, subject: string) {
+      if (!Number(db.all("SELECT count(*) AS count FROM users")[0].count))
+        return;
+      const link = db.all(
+        "SELECT user_id FROM external_identities WHERE issuer=? AND subject=?",
+        issuer,
+        subject,
+      )[0];
+      if (!link)
+        throw new CommunityError(
+          403,
+          "Archive administrator is not linked to a local member",
+        );
+      admin(Number(link.user_id));
+    },
     exportArchive(actorId: number) {
       admin(actorId);
       return db.transaction(() =>

@@ -1,3 +1,4 @@
+import { mediaContentType } from "./media-headers.ts";
 import { chosenFilename } from "./media-filename.ts";
 import type { Bindings, Runtime } from "./runtime.ts";
 import type { Member } from "./data/community.ts";
@@ -63,26 +64,25 @@ export async function readMedia(
   store: Runtime,
   path: string,
 ) {
-  const record = await store.call("publishedMedia", path);
+  await store.call("publishedMedia", path);
   const object = await env.MEDIA.head(path);
   if (!object) throw new CommunityError(404, "Media bytes are unavailable");
   const modified = new Date(
     object.customMetadata?.fourm_last_modified ?? object.uploaded,
   ).toUTCString();
   const headers = new Headers({
-    "Content-Type": String(record.mime_type),
+    "Content-Type": mediaContentType(path),
     "X-Content-Type-Options": "nosniff",
     "Accept-Ranges": "bytes",
     "Content-Length": String(object.size),
-    ETag: object.httpEtag,
+    ETag: object.customMetadata?.fourm_etag ?? object.httpEtag,
     "Last-Modified": modified,
   });
+  const etag = headers.get("ETag")!;
   const etags = request.headers.get("If-None-Match");
   const notModified = etags
     ? etags.trim() === "*" ||
-      etags
-        .split(",")
-        .some((tag) => tag.trim().replace(/^W\//, "") === object.httpEtag)
+      etags.split(",").some((tag) => tag.trim().replace(/^W\//, "") === etag)
     : Date.parse(request.headers.get("If-Modified-Since") ?? "") >=
       Date.parse(modified);
   if (notModified) {
@@ -92,10 +92,7 @@ export async function readMedia(
   let ranges: ByteRange[] = [];
   const range = request.headers.get("Range"),
     ifRange = request.headers.get("If-Range");
-  if (
-    range &&
-    (!ifRange || ifRange === object.httpEtag || ifRange === modified)
-  ) {
+  if (range && (!ifRange || ifRange === etag || ifRange === modified)) {
     try {
       ranges = mediaRanges(range, object.size);
     } catch (error) {
@@ -135,7 +132,7 @@ export async function readMedia(
   const boundary = crypto.randomUUID().replaceAll("-", "");
   const prefix = (part: ByteRange) =>
     encoder.encode(
-      `--${boundary}\r\nContent-Type: ${record.mime_type}\r\nContent-Range: bytes ${part.start}-${part.end - 1}/${object.size}\r\n\r\n`,
+      `--${boundary}\r\nContent-Type: ${mediaContentType(path)}\r\nContent-Range: bytes ${part.start}-${part.end - 1}/${object.size}\r\n\r\n`,
     );
   const ending = encoder.encode(`--${boundary}--`);
   const newline = encoder.encode("\r\n");

@@ -68,6 +68,7 @@ export async function processMediaMove(
           customMetadata: {
             ...source.customMetadata,
             archive_sha256: sha256,
+            fourm_etag: source.customMetadata?.fourm_etag ?? source.httpEtag,
             fourm_last_modified:
               source.customMetadata?.fourm_last_modified ??
               source.uploaded.toISOString(),

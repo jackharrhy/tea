@@ -1,3 +1,5 @@
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile, realpath } from "node:fs/promises";
@@ -5,6 +7,21 @@ import { resolve, join, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { coreTables } from "../app/data/schema.ts";
 
+function sourceStats(paths) {
+  const metadata = spawnSync(
+    process.env.FOURM_MIGRATION_PYTHON ?? "python3",
+    ["-B", fileURLToPath(new URL("./parity/media_stat.py", import.meta.url))],
+    {
+      input: JSON.stringify(paths),
+      encoding: "utf8",
+      maxBuffer: 16 * 1024 * 1024,
+      timeout: 30000,
+    },
+  );
+  if (metadata.status !== 0)
+    throw new Error("Source file metadata inspection failed");
+  return JSON.parse(metadata.stdout);
+}
 export const tableNames = coreTables;
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 export async function exportSource({ database, uploads, output }) {
@@ -31,7 +48,8 @@ export async function exportSource({ database, uploads, output }) {
   } finally {
     sqlite.close();
   }
-  const objects = [];
+  const objects = [],
+    paths = [];
   for (const media of tables.media) {
     const name = media.storage_path;
     if (
@@ -40,11 +58,20 @@ export async function exportSource({ database, uploads, output }) {
       name.split(/[\\/]/).some((part) => !part || part === "." || part === "..")
     )
       throw new Error("Unsafe source media path");
-    const source = await realpath(resolve(root, name));
-    if (!source.startsWith(root + sep))
+    const path = await realpath(resolve(root, name));
+    if (!path.startsWith(root + sep))
       throw new Error("Source media escapes its upload directory");
+    paths.push(path);
+  }
+  const stats = sourceStats(paths);
+  for (const [index, media] of tables.media.entries()) {
+    const name = media.storage_path,
+      source = paths[index];
     const bytes = await readFile(source);
-    if (bytes.length !== media.size_bytes)
+    if (
+      bytes.length !== media.size_bytes ||
+      stats[index].size_bytes !== bytes.length
+    )
       throw new Error("Source media size differs from metadata");
     const sha256 = digest(bytes),
       file = `objects/${sha256}`;
@@ -54,9 +81,14 @@ export async function exportSource({ database, uploads, output }) {
       sha256,
       size_bytes: bytes.length,
       mime_type: media.mime_type,
+      ...stats[index],
       file,
     });
   }
+  if (JSON.stringify(sourceStats(paths)) !== JSON.stringify(stats))
+    throw new Error(
+      "Source file metadata changed during export; retry a consistent copy",
+    );
   const archive = { version: 1, tables, objects };
   await writeFile(join(directory, "archive.json"), JSON.stringify(archive), {
     mode: 0o600,
