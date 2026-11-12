@@ -18,7 +18,9 @@ import { parseArgs } from "node:util";
 import { CelldSmokeProcess } from "./celld-smoke-process.mjs";
 
 import { chromium } from "playwright";
+import { createCookieSessionStorage } from "remix/session-storage/cookie";
 import { routes } from "../app/routes.ts";
+import { RadioSessionCookie } from "../app/middleware/session-cookie.ts";
 
 const { values } = parseArgs({
   options: {
@@ -66,7 +68,7 @@ const state = await mkdtemp(join(tmpdir(), "radio-celld-smoke-"));
 const roomSlug = `smoke-${randomBytes(6).toString("hex")}`;
 const port = await availablePort();
 const origin = `http://127.0.0.1:${port}`;
-const password = randomBytes(24).toString("hex");
+const sessionSecret = randomBytes(32).toString("hex");
 const bucket =
   values.backend === "sqlite"
     ? `sqlite://${join(state, "objects.sqlite3")}`
@@ -85,8 +87,12 @@ Object.assign(environment, {
   CELLD_BUCKET: bucket,
   CELLD_DURABILITY: "bucket",
   CELLD_WATCH: join(state, "replica"),
-  CELLD_VAR_RADIO_PASSWORD: password,
-  CELLD_VAR_RADIO_SESSION_SECRET: randomBytes(32).toString("hex"),
+  CELLD_VAR_AUTH_ISSUER: "https://auth.example.test",
+  CELLD_VAR_AUTH_CLIENT_ID: "radio-smoke-web",
+  CELLD_VAR_AUTH_PROJECT_ID: "radio-smoke-project",
+  CELLD_VAR_AUTH_ORGANIZATION_ID: "radio-smoke-org",
+  CELLD_VAR_AUTH_PUBLIC_ORIGIN: "https://radio.example.test",
+  CELLD_VAR_RADIO_SESSION_SECRET: sessionSecret,
   CELLD_ADDR: `127.0.0.1:${port}`,
   CELLD_INTERNAL_ADDR: "127.0.0.1:0",
 });
@@ -129,18 +135,37 @@ try {
     ).status,
     303,
   );
-  const login = await request(routes.join.href(), {
+  const gated = await request(routes.join.href(), {
     method: "POST",
     body: new URLSearchParams({
       name: "Smoke listener",
-      password,
       roomSlug: "cozy",
     }),
     redirect: "manual",
   });
-  assert.equal(login.status, 303);
-  cookie = login.headers.get("Set-Cookie")?.split(";", 1)[0];
-  assert.ok(cookie, "login must issue a signed cookie");
+  assert.equal(gated.status, 303);
+  assert.equal(gated.headers.get("Location"), routes.auth.login.href());
+  const storage = createCookieSessionStorage();
+  const session = await storage.read(null);
+  session.set("authenticated", true);
+  session.set("name", "Smoke listener");
+  session.set("authenticatedAt", Date.now());
+  session.set("subject", "radio-smoke-member");
+  session.set("expiresAt", Date.now() + 3600000);
+  const saved = await storage.save(session);
+  const signer = new RadioSessionCookie("radio_session", sessionSecret, {
+    httpOnly: true,
+    sameSite: "Lax",
+    secure: false,
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
+  });
+  cookie = (
+    await signer.serialize(
+      JSON.stringify({ value: saved, expires: Date.now() + 3600000 }),
+    )
+  ).split(";", 1)[0];
+  assert.ok(cookie, "signed subject-bound smoke session");
   const created = await request(routes.rooms.create.href(), {
     method: "POST",
     body: new URLSearchParams({ name: "Smoke room", slug: roomSlug }),
@@ -154,7 +179,7 @@ try {
   assert.ok(asset, "production page must reference its built client entry");
   assert.equal((await request(asset)).status, 200);
   result.checks.push(
-    "public lobby, signed login, room creation, SSR and built asset",
+    "public lobby, Jack Auth gate, signed test session, room creation, SSR and built asset",
   );
 
   const uploadStarted = Date.now();

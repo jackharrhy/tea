@@ -15,8 +15,6 @@
     "test:remix": "cd ../.. && NODE_ENV=test remix test \"apps/radio/app/**/__tests__/**/*.test{,.browser}.{ts,tsx}\" --type server --type browser",
     "test:worker": "vitest run --config vitest.config.ts",
     "test:celld": "NODE_ENV=production npm run build && node scripts/test-celld.mjs",
-    "test:source-cutover": "node __tests__/source-cutover-smoke.mjs",
-    "compare:instances": "node scripts/compare-instances.mjs",
     "typecheck": "tsrs --noEmit",
     "types:worker": "wrangler types worker-configuration.d.ts --env-file .dev.vars.example"
   },

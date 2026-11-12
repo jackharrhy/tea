@@ -11,17 +11,16 @@ import type { IdentityConfig } from "@harrhy/identity";
 export type RadioIdentity = {
   name: string;
   authenticatedAt: number;
-  subject?: string;
-  expiresAt?: number;
+  subject: string;
+  expiresAt: number;
 };
 
 export type RadioAccessConfig = {
   sessionSecret: string;
   secureCookies: boolean;
-} & (
-  | { mode: "password"; password: string }
-  | { mode: "central"; identity: IdentityConfig; publicOrigin: string }
-);
+  identity: IdentityConfig;
+  publicOrigin: string;
+};
 
 export const RadioAccess = createContextKey<RadioIdentity | null>();
 export const AccessConfig = createContextKey<RadioAccessConfig>();
@@ -52,15 +51,15 @@ export function access(config: RadioAccessConfig): Middleware {
       authenticated &&
         typeof name === "string" &&
         typeof authenticatedAt === "number" &&
-        (config.mode === "password" ||
-          (typeof subject === "string" &&
-            subject.length > 0 &&
-            typeof expiresAt === "number" &&
-            expiresAt > Date.now()))
+        typeof subject === "string" &&
+        subject.length > 0 &&
+        typeof expiresAt === "number" &&
+        expiresAt > Date.now()
         ? {
             name,
             authenticatedAt,
-            ...(config.mode === "central" ? { subject, expiresAt } : {}),
+            subject,
+            expiresAt,
           }
         : null,
     );
@@ -85,30 +84,10 @@ export function requireResourceAccess(): Middleware {
       : new Response("Unauthorized", { status: 401 });
 }
 
-export async function passwordMatches(
-  actual: string,
-  expected: string,
-): Promise<boolean> {
-  let encoder = new TextEncoder();
-  let [actualHash, expectedHash] = await Promise.all([
-    crypto.subtle.digest("SHA-256", encoder.encode(actual)),
-    crypto.subtle.digest("SHA-256", encoder.encode(expected)),
-  ]);
-  let left = new Uint8Array(actualHash);
-  let right = new Uint8Array(expectedHash);
-  let difference = left.length ^ right.length;
-  for (let index = 0; index < left.length; index++)
-    difference |= left[index]! ^ right[index]!;
-  return difference === 0;
-}
-
 function requireConfig(config: RadioAccessConfig): void {
-  if (config.mode === "password" && !config.password)
-    throw new Error("RADIO_PASSWORD is required");
   if (
-    config.mode === "central" &&
-    (new URL(config.publicOrigin).protocol !== "https:" ||
-      new URL(config.publicOrigin).origin !== config.publicOrigin)
+    new URL(config.publicOrigin).protocol !== "https:" ||
+    new URL(config.publicOrigin).origin !== config.publicOrigin
   )
     throw new Error("AUTH_PUBLIC_ORIGIN must be an HTTPS origin");
   if (config.sessionSecret.length < 32) {

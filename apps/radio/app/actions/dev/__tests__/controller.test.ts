@@ -24,8 +24,13 @@ it("renders the development kitchen sink with representative radio states", asyn
         ),
     },
     {
-      mode: "password",
-      password: "test-password",
+      identity: {
+        issuer: "https://auth.example.test",
+        clientId: "radio-web",
+        projectId: "radio-project",
+        organizationId: "radio-org",
+      },
+      publicOrigin: "https://radio.example.test",
       sessionSecret: "test-session-secret-that-is-at-least-32-characters",
       secureCookies: false,
     },
@@ -40,9 +45,8 @@ it("renders the development kitchen sink with representative radio states", asyn
   assert.match(html, /signed out/);
   assert.match(html, /aria-label="Rooms"/);
   assert.match(html, /name="room" value="cozy"[^>]*data-selected="true"/);
-  assert.match(html, /placeholder="username"/);
-  assert.match(html, /placeholder="password"/);
-  assert.match(html, />join<\/button>/);
+  assert.match(html, /Sign in with Jack Auth/);
+  assert.doesNotMatch(html, /placeholder="password"/);
   assert.doesNotMatch(html, /Choose a room and enter a name/);
   assert.doesNotMatch(html, /type="radio"/);
   assert.match(html, /aria-label="Breadcrumb"/);

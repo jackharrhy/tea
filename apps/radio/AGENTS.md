@@ -4,7 +4,7 @@ Radio is a multi-room synchronized audio player built with Remix 3 and Celld. Ke
 server-rendered route correct first, then layer the hydrated WebSocket and Web Audio behavior on
 top. Each room is one named Durable Object/cell.
 
-Read Tea's root AGENTS.md and this workspace's README before editing. Keep tests in adjacent `__tests__/` directories and Worker integration tests in `apps/radio/__tests__/worker/`.
+Read Harrhy's root AGENTS.md and this workspace's README before editing. Keep tests in adjacent `__tests__/` directories and Worker integration tests in `apps/radio/__tests__/worker/`.
 
 ## Commands
 
@@ -23,7 +23,7 @@ npm run typecheck
 
 ## Remix Version Alignment
 
-- Follow Tea's `.agents/skills/remix/SKILL.md` when changing routes, middleware, assets, UI, or tests. Radio uses Tea's stable Remix 3 release.
+- Follow the root `.agents/skills/remix/SKILL.md` when changing routes, middleware, assets, UI, or tests. Radio uses the repository's Remix 3 release.
 
 ## Beatsync Reference
 
@@ -47,7 +47,7 @@ Keep an inspection-only clone at `./.upstream/beatsync`. That directory is ignor
 - `app/data/radio-room-store.ts` owns the per-room SQLite schema and persistence operations.
 - `app/data/room-directory-cell.ts` owns the persistent public room directory.
 - `app/data/` owns the shared protocol, room identity, and timing policy.
-- `app/middleware/access.ts` owns the shared-password session and access boundaries.
+- `app/middleware/access.ts` owns the subject-bound Jack Auth session and access boundaries.
 - `app/ui/` owns shared server UI and cross-route visual primitives.
 
 Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` only when a nested route map needs its own actions or middleware. Do not create generic `app/lib/` or `app/components/` buckets.
@@ -76,12 +76,11 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
 - `dist/client/` contains ignored, generated browser assets.
 - Each room has isolated SQLite state and hibernatable WebSockets in one named cell.
 - Uploaded audio lives in the `TRACKS` R2-compatible binding, not a filesystem.
-- The public lobby lists rooms. A signed 30-day application session protects room pages,
+- The public lobby lists rooms. A signed application session lasting at most one hour protects room pages,
   WebSockets, uploads, and room mutations. Listener names come from that trusted session rather
   than WebSocket messages.
-- Production authentication uses Jack Auth and an explicit Radio member grant. Local password mode
-  remains available for isolated development. There are no room owners or room-level permissions;
-  every admitted member can create and mutate every room.
+- Jack Auth admits eligible members through an explicit first Join. There are no room owners or
+  room-level permissions; every admitted member can create and mutate every room.
 - The approved production boundary is one Celld runtime behind Traefik TLS with rate limiting on the
   native `/join` action. Expose only Celld's public Worker listener; keep its internal
   peer/operator listener private.
@@ -103,14 +102,14 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
 - Preserve all room and media APIs and the full 1 GiB upload limit. A backend change must preserve
   room IDs, track keys, queue/playback state, audio bytes, attributes, and range/HEAD behavior.
 - Mug serves the Tea image from a copied Celld store. Its production image, volume, and routing are managed in the infrastructure repository; use `hosts/mug/radio/README.md` there for deployment and rollback.
-- Keep `wrangler.jsonc` on Tea's isolated logical names. Mug uses `wrangler.celld-cutover.jsonc` and `RADIO_CELLD_DEPLOY_CONFIG` to retain the original logical Worker and audio bucket names on its copied production store.
+- Keep `wrangler.jsonc` on Radio's isolated logical names. Mug uses `wrangler.celld-cutover.jsonc` and `RADIO_CELLD_DEPLOY_CONFIG` to retain the original logical Worker and audio bucket names on its copied production store.
 
 ## Verification
 
 - Use Remix route/server tests for rendering and real Worker tests for HTTP and coordination behavior.
 - Use component tests only for DOM-specific behavior.
 - Add regression coverage for lifecycle, reconnect, synchronization, and persistence bugs.
-- Run `npm run radio:check` from Tea's root; the original repository's CI also runs `npm run test:celld` against the fork
+- Run `npm run radio:check` from Harrhy's root; the original repository's CI also runs `npm run test:celld` against the fork
   image selected by `Dockerfile`. The smoke test uses only its own rooms and storage; it must
   preserve acknowledged queue changes and audio after SIGKILL with an empty replica directory.
 - Use the optional full 1 GiB container smoke when investigating storage or resource-limit

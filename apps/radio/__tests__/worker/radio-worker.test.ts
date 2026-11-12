@@ -1,6 +1,9 @@
 import { env, exports } from "cloudflare:workers";
 import { evictDurableObject, runDurableObjectAlarm } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { createCookieSessionStorage } from "remix/session-storage/cookie";
+
+import { RadioSessionCookie } from "../../app/middleware/session-cookie.ts";
 
 import {
   parseServerMessage,
@@ -96,7 +99,7 @@ describe("room cells", () => {
     client.close();
   });
 
-  it("stops room controls when a Central session expires", async () => {
+  it("stops room controls when a Jack Auth session expires", async () => {
     const room = env.RADIO_ROOMS.getByName("expiring-session-room");
     const expiresAt = Date.now() + 1000;
     const response = await room.fetch("https://cell.test/websocket", {
@@ -207,18 +210,17 @@ describe("Worker HTTP boundary", () => {
     ).toBe(401);
   });
 
-  it("rejects a wrong password and accepts a signed session", async () => {
+  it("requires Jack Auth sign-in and accepts a subject-bound signed session", async () => {
     let rejected = await request("/join", {
       method: "POST",
       body: new URLSearchParams({
         name: "Ada",
-        password: "wrong",
         roomSlug: "cozy",
       }),
       redirect: "manual",
     });
     expect(rejected.status).toBe(303);
-    expect(rejected.headers.get("Location")).toBe("/?room=cozy");
+    expect(rejected.headers.get("Location")).toBe("/auth/login");
 
     let accepted = await login("Ada");
     let page = await request("/rooms/cozy", { headers: { Cookie: accepted } });
@@ -259,7 +261,6 @@ describe("Worker HTTP boundary", () => {
       headers: { Origin: "https://attacker.test" },
       body: new URLSearchParams({
         name: "Ada",
-        password: "test-password",
         roomSlug: "cozy",
       }),
     });
@@ -272,9 +273,8 @@ describe("Worker HTTP boundary", () => {
     let rootHtml = await root.text();
     expect(rootHtml).toContain('aria-label="Rooms"');
     expect(rootHtml).toContain('name="room" value="cozy"');
-    expect(rootHtml).toContain('placeholder="username"');
-    expect(rootHtml).toContain('placeholder="password"');
-    expect(rootHtml).toContain(">join</button>");
+    expect(rootHtml).toContain("Sign in with Jack Auth");
+    expect(rootHtml).not.toContain('placeholder="password"');
     expect(rootHtml).not.toContain('type="radio"');
     expect(rootHtml).toContain('aria-label="Breadcrumb"');
 
@@ -461,20 +461,30 @@ async function authorizedRequest(
 }
 
 async function login(name: string): Promise<string> {
-  let body = new URLSearchParams({
-    name,
-    password: "test-password",
-    roomSlug: "cozy",
-  });
-  let response = await request("/join", {
-    method: "POST",
-    body,
-    redirect: "manual",
-  });
-  expect(response.status).toBe(303);
-  let cookie = response.headers.get("Set-Cookie")?.split(";", 1)[0];
-  expect(cookie).toBeTruthy();
-  return cookie!;
+  const storage = createCookieSessionStorage();
+  const session = await storage.read(null);
+  session.set("authenticated", true);
+  session.set("name", name);
+  session.set("authenticatedAt", Date.now());
+  session.set("subject", "radio-test-member");
+  session.set("expiresAt", Date.now() + 3600000);
+  const saved = await storage.save(session);
+  const cookie = new RadioSessionCookie(
+    "radio_session",
+    "test-session-secret-that-is-at-least-32-characters",
+    {
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: true,
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    },
+  );
+  return (
+    await cookie.serialize(
+      JSON.stringify({ value: saved, expires: Date.now() + 3600000 }),
+    )
+  ).split(";", 1)[0]!;
 }
 
 async function ensureRoom(slug: string, name: string): Promise<void> {

@@ -14,10 +14,17 @@ cp apps/radio/.dev.vars.example apps/radio/.dev.vars
 npm run radio:dev
 ```
 
+Set the six values in `.dev.vars`: a registered HTTPS Jack Auth issuer,
+client, project, organization, public origin, and a random session secret.
+The login callback must be registered for the public origin. The default local
+Compose values only render the public lobby; their client ID is deliberately
+unregistered. `npm run test:celld --workspace @harrhy/radio` exercises rooms,
+WebSockets, media, and recovery with a signed disposable session. It does not claim a real Jack Auth callback; the production OAuth flow has separate acceptance.
+
 Use `npm run dev:celld` for a compatibility run on Celld, serving
 <http://127.0.0.1:9876> with disposable local state under `apps/radio/.celld/dev/`. Use the Celld fork
-selected in `Dockerfile` for this run and expose `CELLD_VAR_RADIO_PASSWORD` and
-`CELLD_VAR_RADIO_SESSION_SECRET`. Production uses the ordinary Celld runtime and public SQLite
+selected in `Dockerfile` for this run and expose the five `CELLD_VAR_AUTH_*`
+fields and `CELLD_VAR_RADIO_SESSION_SECRET`. Production uses the ordinary Celld runtime and public SQLite
 bucket configuration described below. The public lobby seeds `cozy` automatically, and
 authenticated listeners can create additional persistent rooms.
 
@@ -53,27 +60,28 @@ Object SQLite schemas. Replica files can be rebuilt from the object store.
 This backend runs one Radio runtime per local store. It has no host-loss failover or multi-host
 shared-disk mode. The fork rejects a second runtime using the same store. The public Worker
 listener is `0.0.0.0:44100`; its internal listener stays on loopback. Traefik terminates TLS and
-should rate-limit `/join`. Radio owns its signed application session; production access uses Jack Auth, while isolated local development can use a shared password.
+should rate-limit `/join`. Radio uses Jack Auth and a signed local session
+that expires within one hour.
 
-Jack Auth mode sets `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
+Set `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
 `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, and
 `AUTH_PUBLIC_ORIGIN=https://radio.jackharrhy.dev` together. It uses a dedicated
 public PKCE browser client with the exact callback
 `https://radio.jackharrhy.dev/auth/callback`. An app member/admin grant opens
-the existing shared rooms. Eligible Jack Auth users explicitly join Radio to receive a member grant; there is no automatic cohort grant.
-Each session keeps the immutable Central subject; display names remain cosmetic. Central sign-in
+the existing shared rooms. Eligible Jack Auth users explicitly Join Radio to
+receive a member grant; there is no automatic cohort grant.
+Each session keeps the immutable Jack Auth subject; display names remain cosmetic. Sign-in
 reuses the signed local cookie but checks its subject and one-hour expiry on
 every request. An open WebSocket rejects further commands after that expiry with
 application close code `4008`.
-The old shared-password cookie cannot authorize Jack Auth mode.
-`RADIO_SESSION_SECRET` stays required. Production uses the reviewed Jack Auth client; keep a separate local password only for isolated development.
+Old shared-password cookies cannot authorize the app. `RADIO_SESSION_SECRET`
+stays required; changing it signs out current listeners.
 
-Set `CELLD_VAR_RADIO_PASSWORD` and a random 32-character-or-longer
+Set the five `CELLD_VAR_AUTH_*` fields and a random 32-character-or-longer
 `CELLD_VAR_RADIO_SESSION_SECRET`. When enabling `CELLD_TRUST_FORWARDED_HEADERS=1`, configure
 Traefik to replace forwarded host/protocol headers. Only the public listener should be exposed.
 The application has no persistent user profiles or room-level authorization:
-every signed-in Central member can see, create, and mutate every room. In the
-old mode, every holder of the shared password has that access. The upload limit remains **1 GiB**
+every signed-in Radio member can see, create, and mutate every room. The upload limit remains **1 GiB**
 (1,073,741,824 bytes) per track.
 
 Azure remains available for baseline comparisons and migration. Set `CELLD_BUCKET=az://CONTAINER`
@@ -92,17 +100,7 @@ SQLite backups, use a consistent SQLite backup or stop the runtime and preserve 
 with its WAL; copying a live main database file alone is insufficient. Never remove
 `object-store/` when clearing the replica cache.
 
-The default `wrangler.jsonc` uses the separate `tea-radio` Worker and `tea-radio-tracks` logical bucket. A copy of the original Celld object store cannot expose its rooms through those new names: the room directory belongs to the original Worker identity, and its audio is under `radio-tracks`. Set `RADIO_CELLD_DEPLOY_CONFIG=wrangler.celld-cutover.jsonc` to run Tea's code with the original `radio` Worker and `radio-tracks` names. The normal startup script accepts only this explicit config or the default. Mug uses this setting with a copied production store; preserve it for future upgrades.
-
-To check that path with disposable source data, run the archived Radio checkout's `test:celld` with `--keep-state --output /tmp/radio-source-smoke.json`, then from Tea run:
-
-```sh
-npm run test:source-cutover --workspace @harrhy/radio -- /tmp/radio-source-smoke.json
-```
-
-This optional check requires Celld, SQLite's `sqlite3` CLI, and Playwright Chromium. It makes a consistent SQLite snapshot of the stopped source smoke store, starts Tea Radio with the cutover config and fresh credentials, and verifies the original room, track ID, queue title, volume, paused position, audio hash, and suffix range. Tea then renames the copied track and changes its volume, kills Celld, removes its replica cache, and verifies those edits and the audio from the copied authoritative store. It reads but does not change the source store. The production transfer used a cold source copy and a separate audit of the live playing room; see the project import guide.
-
-For a full read-only comparison of two running instances, set `RADIO_SOURCE_URL`, `RADIO_SOURCE_PASSWORD`, `RADIO_TEA_URL`, and `RADIO_TEA_PASSWORD` privately, then run `npm run compare:instances --workspace @harrhy/radio -- --output /safe/place/radio-comparison.json`. Use distinct origins and pause every room before the comparison; playing positions change with time and are rejected. Keep both datasets free of other writes until it finishes. The command compares the complete room directory, ordered track metadata, paused position, volume, and every track's streamed SHA-256, byte count, content type, and suffix range. It only joins rooms as a temporary listener. The optional report is created with private file permissions and fails if its path already exists. A match is evidence for the copied dataset at that moment; preserve the source backup and perform the separate routing cutover only after reviewing it. The command does not compare listener presence or edit history.
+The default `wrangler.jsonc` uses the separate `tea-radio` Worker and `tea-radio-tracks` logical bucket. These are persistent local storage identities, not product branding. A copy of the original Celld object store cannot expose its rooms through those new names: the room directory belongs to the original Worker identity, and its audio is under `radio-tracks`. Set `RADIO_CELLD_DEPLOY_CONFIG=wrangler.celld-cutover.jsonc` to run Radio with the original `radio` Worker and `radio-tracks` names. The normal startup script accepts only this explicit config or the default. Mug uses this setting with a copied production store; preserve it for future upgrades.
 
 ### Upgrading an existing Celld store
 
