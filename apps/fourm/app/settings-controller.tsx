@@ -1,3 +1,4 @@
+import { renderToString } from "remix/component/server";
 import { wantsJSON } from "./http.ts";
 import { createController } from "remix/router";
 import { get, post, route } from "remix/routes";
@@ -9,6 +10,7 @@ import { ContentEditor, LayoutSelect, MediaPicker } from "./settings-view.tsx";
 
 export const settingsRoutes = route({
   profile: post("/settings/profile"),
+  username: post("/settings/username"),
   css: post("/settings/css"),
   html: post("/settings/html"),
   guestbook: post("/settings/guestbook"),
@@ -56,6 +58,47 @@ export function settingsController(
   return createController(settingsRoutes, {
     actions: {
       profile: ({ request }) => section("profile", request),
+      async username({ request }) {
+        if (!viewer.member)
+          return new Response(null, {
+            status: 303,
+            headers: { Location: "/login" },
+          });
+        const fields = await formFields(request),
+          username = String(fields.username ?? "")
+            .trim()
+            .toLowerCase();
+        try {
+          await store.renameUsername(viewer.member.id, username);
+        } catch (error) {
+          if (
+            !(error instanceof CommunityError) ||
+            ![422, 409].includes(error.status) ||
+            (error.status === 409 && !error.message.includes("already taken"))
+          )
+            throw error;
+          if (request.headers.get("HX-Request") === "true")
+            return new Response(
+              await renderToString(<p class="error">{error.message}</p>),
+              {
+                status: 400,
+                headers: { "Content-Type": "text/html; charset=utf-8" },
+              },
+            );
+          return new Response(null, {
+            status: 303,
+            headers: {
+              Location: `/settings?error=${error.status === 422 ? "invalid_username" : "username_taken"}`,
+            },
+          });
+        }
+        return saved(
+          request,
+          username === viewer.member.username
+            ? "/settings"
+            : "/settings?saved=username",
+        );
+      },
       css: ({ request }) => section("css", request),
       html: ({ request }) => section("html", request),
       guestbook: ({ request }) => section("guestbook", request),

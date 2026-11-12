@@ -60,9 +60,26 @@ GET streams as chunked and drops their Content-Length; HEAD retains representati
 length. R2 supplies its own opaque ETag and upload-time Last-Modified; preserving
 original filesystem modification metadata through transfer remains follow-up work.
 
+The source media-library composition and upload/rename/alt/delete forms are ported,
+including quick upload and original filename/extension rules. Username moves keep
+member, media and identity-link IDs, move only the source username's owned prefix,
+and leave saved content URLs untouched, as Python does. Durable media moves have
+two phases: copy destinations while retaining original metadata, then atomically
+commit paths/username and clean up old keys. SQLite reserves source/destination
+paths and the new username until cleanup completes. Conflicting uploads, deletes
+and enrollment claims cannot race the move. Alarms resume persisted work after a
+restart; bounded per-file reads precede writes on the same local R2 authority.
+
+Paired desktop/mobile browser workflows exercise upload, alt text, file rename,
+delete and username save/reopen, then restore original paths/settings. An actual
+interrupted 33-file move recovered through the durable alarm after cold start;
+all 146 original asset hashes were checked after restoring the original username.
+Persistence tests also cover an uncertain object write, cleanup interruption,
+foreign destination protection, and late upload completion after cleanup claims it.
+
 ## Still required
 
-Username/media relocation, original media metadata and management, notifications and
+Original filesystem media metadata transfer, notifications and
 watch behavior, source admin/export workflows, forum quotes/pagination, chat,
 and every original widget rendering/configuration path remain implementation and
 verification work. Source validation/error paths and JSON contracts need the same

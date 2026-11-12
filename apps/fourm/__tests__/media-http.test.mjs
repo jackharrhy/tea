@@ -1,3 +1,4 @@
+import { humanBytes } from "../app/media-view.tsx";
 import { expect, test } from "vitest";
 import { readMedia } from "../app/media.ts";
 import { mediaRanges } from "../app/media-range.ts";
@@ -95,4 +96,15 @@ test("range validation matches source limits and merging without reading unreque
   expect(mediaRanges("bytes=" + Array(101).fill("0-1").join(","), 10)).toEqual(
     [],
   );
+});
+
+test("media sizes keep the source's decimal half-even formatting", () => {
+  expect([0, 1024, 1280, 1536, 1792, 2304].map(humanBytes)).toEqual([
+    "0 B",
+    "1.0 KB",
+    "1.2 KB",
+    "1.5 KB",
+    "1.8 KB",
+    "2.2 KB",
+  ]);
 });

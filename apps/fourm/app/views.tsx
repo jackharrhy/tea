@@ -278,43 +278,6 @@ export function Chat(handle: Handle<{ messages: Row[] }>) {
     </>
   );
 }
-export function Media(
-  handle: Handle<{ items: Row[]; storage_used: number; storage_limit: number }>,
-) {
-  return () => (
-    <>
-      <h1>Media library</h1>
-      <p>
-        {Math.ceil(handle.props.storage_used / 1024)} KB used of{" "}
-        {handle.props.storage_limit / 1024 / 1024} MB.
-      </p>
-      <form
-        method="post"
-        action="/settings/media/upload"
-        encType="multipart/form-data"
-      >
-        <label>
-          File
-          <input type="file" name="file" required />
-        </label>
-        <button>Upload</button>
-        <small>Up to 10 MB per file.</small>
-      </form>
-      <ul>
-        {handle.props.items.map((item) => (
-          <li class="row">
-            <a href={`/uploads/${item.storage_path}`}>{item.storage_path}</a>
-            <span>{item.size_bytes} bytes</span>
-            <form method="post" action={`/settings/media/${item.id}/delete`}>
-              <button>Delete file {item.id}</button>
-            </form>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
 export function BareDocument(
   handle: Handle<{ title: string; children?: RemixNode }>,
 ) {

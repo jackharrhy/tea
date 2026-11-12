@@ -1,62 +1,60 @@
 # Candidate coverage and boundaries
 
+The fixture POC is superseded by the faithful-parity pass. Python is the oracle;
+unported behavior below is implementation work, not an accepted exclusion.
+See [the private comparison workflow](parity.md).
+
 ## Implemented
 
-- Exact issuer/subject identity links, signed OIDC callback with state/nonce/S256,
-  one-use transactions, host-only hashed browser sessions and local disabled checks.
-- Profiles, trusted member HTML/CSS/JS, Markdown, public/private pages, canonical
-  member page URLs and CLI-compatible page/media JSON APIs.
-- Forum threads/replies, own-post editing, admin pin/lock/moderation; chat with
-  persistent messages, bounded cursor batches, SSE reconnect and presence leases.
-- Invite reservations, verified subject claims, trust agreement and committed new
-  profiles with empty password hashes. Post-commit companion delivery uses durable
-  CAS receipts, terminal outcomes and explicit blocked/retry states.
-- Media ownership/quota reservations, R2 bytes, durable deletion cleanup; avatars,
-  status, profile cards, guestbooks, counters, playlists, webring, feeds and lineage.
-- Local admin disable/enable, preserving numeric IDs and ownership.
-- Offline source export, native archive transfer, checksum/FK checks, idempotent
-  restore, and cold reopen from object authority after replica-cache removal.
+- Exact issuer/subject links, signed OIDC state/nonce/S256, one-use transactions,
+  hashed browser sessions and authoritative local disabled/admin checks.
+- Original home cards, profile/page layouts, customization placement, expandable
+  settings, CodeMirror helpers and the guestbook in its stored iframe context.
+- Canonical page management, playlist ordering, widget preferences and original
+  home/settings JSON contracts.
+- Original media library, filename/extension/collision behavior, previews,
+  upload/quick-upload, rename, alt text, delete, quotas and ownership checks.
+- Durable username/media relocation: copies precede an atomic metadata commit;
+  old paths remain reserved until cleanup, with alarm recovery after restart.
+  Upload markers prevent abandoned-upload cleanup deleting unrelated R2 objects.
+- Media ranges, HEAD, conditional requests and streaming delivery. Celld uses
+  chunked framing for GET; HEAD retains representation length. Original filesystem
+  modification metadata still needs carrying through snapshot transfer.
+- Forum/chat and local admin primitives, invite/trust/profile completion and
+  durable post-commit companion-delivery receipts.
+- Core content/identity archive transfer, checksums, FK validation and replay;
+  the earlier POC proves authority reopen/cache removal and isolated restore.
 
-The tests use a signed disposable provider, not production accounts or grant
-writes. The released Go CLI exercises real scoped API calls. Its interactive
-login intentionally pins the production issuer: a new login against this fake
-issuer is not claimed or enabled. Production central integration still needs its
-own approved client/callback/resource wiring and acceptance.
+Paired desktop/mobile checks use the same private real-content cohort. Current
+coverage includes home/profile/guestbook/settings/media composition, settings
+save/reopen, playlist/page operations, media management and username relocation.
+Actual interrupted relocation recovered after cold start, followed by verification
+of all original asset hashes. Full final recovery acceptance remains outstanding.
 
-## Known gaps before production parity
+All authentication uses explicitly isolated review identities, not production SSO.
+Released CLI API smoke is separate from interactive CLI login: the released login
+pins the real issuer, so a fake-provider sign-in is not claimed as CLI acceptance.
 
-Username changes and media relocation, push dispatch/device preferences,
-thread-watch/notification UI, per-user ZIP export and the full legacy admin
-maintenance screens are not ported. Stored columns remain in the core archive.
-Forum quote snapshots are preserved but the quote editor/display parity and
-pagination are unfinished. Python Markdown attribute-list extensions are not
-implemented. Widget custom HTML/CSS and theme fields are preserved but not all
-original settings/render paths are exposed. Default/simple layouts share the
-candidate chrome; raw/css-only pages retain their distinct rendering behavior.
-Media HTTP Range requests are not implemented. Playlist ownership/order has model
-coverage; audio playback has not been exercised in a browser.
+## Still required
 
-Visitor cooldown uses an opaque per-browser token rather than source IP. Guestbook
-text over 500 characters is rejected rather than silently truncated. These are
-visible differences to review. The UI follows 4orm's existing cyan/plain HTML
-style; exact source visual parity is not claimed.
+- Notifications/devices/push, thread watching, original forum/chat composition,
+  quotes, pagination, and Python Markdown attribute-list behavior.
+- Original counter/status/player/webring renderers and remaining widget workflows;
+  the visitor cooldown still uses a browser token instead of source IP.
+- Full admin maintenance and per-member ZIP export.
+- More real-content layout coverage, complete row/field/exclusion accounting,
+  preserved media filesystem metadata, final archive/replay/cold recovery and
+  released CLI-contract verification.
+- Preserve the old preview's review data and add explicit private access protection
+  before exposing the real-content cohort through the existing Tailnet routes.
 
 ## Shared Celld proof
 
-One Celld 0.6.2 instance hosts three deployed workers: 4orm, a public-directory
-peer, and a review gateway. Only 4orm owns its SQLite Durable Object and R2.
-The peer receives only `CommunityPublicDirectory.listPublicMembers`, excluding
-local IDs, roles, private content and sessions. The gateway strips cookies and
-Authorization before forwarding public-directory requests. Peer writes fail.
+One Celld instance hosts 4orm and two synthetic helpers: a public-directory peer
+and a review gateway. They are not migrated Harrhy apps. Only 4orm owns its DO/R2;
+the peer receives a narrow public directory, and the gateway strips credentials
+before forwarding to it. This proves application capability separation, not
+hostile-tenant isolation. Private variables must not use global overrides.
 
-The host/operator and gateway remain trusted. This is explicit application
-capability separation, not a claim of hostile-tenant host isolation. Private
-variables live in each deployment manifest; global `CELLD_VAR_*` overrides would
-apply to co-hosted workers and must not be used for app secrets.
-
-Future world interactions can consume public cards through this capability.
-Private interactions need a separate opted-in binding and actor/permission
-contract; shared runtime does not share roles or identity authority. No 3D product,
-other app migration, production deployment, or domain decision is included.
-The proposed `harry.xyz` spelling remains unresolved against `harrhy.xyz`;
-Rotund and existing domains are unchanged.
+Production Python/Auth, domains and the Harrhy owner's checkout remain untouched.
+Broader world integration and domain choices remain outside this candidate.
