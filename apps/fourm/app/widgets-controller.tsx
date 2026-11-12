@@ -1,3 +1,4 @@
+import { statusJSON, statusDocument } from "./status-widget.ts";
 import { wantsJSON } from "./http.ts";
 import { saved } from "./settings-controller.tsx";
 import { PlaylistSettings } from "./settings-view.tsx";
@@ -246,14 +247,12 @@ export function widgetController(
         );
         return response;
       },
-      async status({ params }) {
-        const member = await store.call("status", params.username);
-        return embed(
-          "Status",
-          <p>
-            {member.status_emoji} {member.status_text}
-          </p>,
-        );
+      async status({ request, params }) {
+        const owner = await store.call("status", params.username);
+        if (wantsJSON(request)) return Response.json(statusJSON(owner));
+        return new Response(statusDocument(owner), {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
       },
       async player({ params }) {
         return embed(
