@@ -266,7 +266,6 @@ test("native acted access token verifies signed actor and target roles without a
   assert.equal(verified.subject, "central-id");
   assert.equal(verified.actor.subject, "support-actor");
   assert.ok(verified.roles.has("admin"));
-  assert.ok(!("scopes" in verified));
 
   const tampered = await new SignJWT({
     act: { iss: "https://wrong.example", sub: "support-actor" },

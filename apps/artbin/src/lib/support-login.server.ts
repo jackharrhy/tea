@@ -430,7 +430,8 @@ async function resolveSupportUser(
     throw new Response("Support session cannot authorize this route", {
       status: 403,
     });
-  const session = sessions.get(digest(sessionId));
+  const sessionKey = digest(sessionId);
+  const session = sessions.get(sessionKey);
   if (!session || session.expiresAt <= Date.now()) throw endedSupportResponse();
   try {
     const [active, principal] = await Promise.all([
@@ -449,12 +450,12 @@ async function resolveSupportUser(
       principal.actor.issuer !== settings.issuer ||
       principal.expiresAt * 1000 < session.expiresAt
     ) {
-      sessions.delete(digest(sessionId));
+      sessions.delete(sessionKey);
       throw endedSupportResponse();
     }
     const local = await targetUser(session.targetSubject);
     if (!local || local.id !== session.targetUserId) {
-      sessions.delete(digest(sessionId));
+      sessions.delete(sessionKey);
       throw new Response("Support target is unavailable", { status: 403 });
     }
     const role = browserRole(
@@ -469,8 +470,12 @@ async function resolveSupportUser(
       local,
     );
     if (role !== session.role) {
-      sessions.delete(digest(sessionId));
+      sessions.delete(sessionKey);
       throw new Response("Support target role changed", { status: 403 });
+    }
+    if (sessions.get(sessionKey) !== session || session.expiresAt <= Date.now()) {
+      if (sessions.get(sessionKey) === session) sessions.delete(sessionKey);
+      throw endedSupportResponse();
     }
     return {
       ...local,

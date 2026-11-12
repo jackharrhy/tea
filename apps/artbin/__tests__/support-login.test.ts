@@ -172,7 +172,7 @@ function mockProvider(input: {
   }) as typeof fetch;
 }
 
-test("support handoff enters an existing target without mutating their account, then exits only support", async () => {
+test("support handoff uses an existing target and exit rejects in-flight verification", async () => {
   const db = setup();
   await db.insert(users).values({
     id: "local-target",
@@ -224,6 +224,26 @@ test("support handoff enters an existing target without mutating their account, 
     ),
   ).rejects.toMatchObject({ status: 403 });
   const csrf = user!.support!.csrfToken;
+  const providerFetch = globalThis.fetch;
+  let releaseStatus!: () => void;
+  let statusEntered!: () => void;
+  const statusGate = new Promise<void>((resolve) => {
+    releaseStatus = resolve;
+  });
+  const statusStarted = new Promise<void>((resolve) => {
+    statusEntered = resolve;
+  });
+  globalThis.fetch = (async (input, options) => {
+    if (String(input).endsWith("/support/session")) {
+      statusEntered();
+      await statusGate;
+    }
+    return providerFetch(input, options);
+  }) as typeof fetch;
+  const inFlight = getUserFromRequest(
+    new Request(`${artbin}/folders`, { headers: { Cookie: sessionCookie } }),
+  );
+  await statusStarted;
   const exited = await exitSupportLogin(
     new Request(`${artbin}/auth/support/exit`, {
       method: "POST",
@@ -236,8 +256,9 @@ test("support handoff enters an existing target without mutating their account, 
     }),
   );
   expect(exited.status).toBe(303);
+  releaseStatus();
+  await expect(inFlight).rejects.toMatchObject({ status: 401 });
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
-  expect(calls).toContain(`${supportOrigin}/support/end`);
   await expect(
     getUserFromRequest(
       new Request(`${artbin}/folders`, {
