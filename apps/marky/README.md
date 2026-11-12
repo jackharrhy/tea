@@ -12,7 +12,7 @@ Run `npm run check --workspace @harrhy/marky` for typecheck and server tests. `n
 
 ## Runtime and deployment
 
-The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git installed for optional commit and push. `MARKY_CONTENT_DIR=/app/data/content` and `MARKY_SESSION_DIR=/app/data/sessions` should use a persistent, writable volume. The image listens on port 44100. This repository publishes `ghcr.io/jackharrhy/tea-marky` from `main`; production routing and secrets live in the infra repo.
+The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git installed for optional commit and push. `MARKY_CONTENT_DIR=/app/data/content` and `MARKY_SESSION_DIR=/app/data/sessions` should use a persistent, writable volume. The image listens on port 44100. This repository publishes `ghcr.io/jackharrhy/marky` from `main`; production routing and secrets live in the infra repo.
 
 Production at <https://md.jackharrhy.dev> uses `MARKY_AUTH=central`. It requires `AUTH_ISSUER`,
 `AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, the existing

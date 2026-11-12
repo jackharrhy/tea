@@ -48,6 +48,7 @@ The CLI's local `scripts/publish.mjs` still supports an interactive release
 when an npm maintainer has authenticated locally. It refuses a non-main or
 dirty release and verifies the packed CLI before publishing.
 
-Container image names remain `ghcr.io/jackharrhy/tea-*` until their separate
-host configuration and rollback references are migrated. A GitHub repository
-rename does not rename npm packages or container images.
+Container images now publish under short product names such as
+`ghcr.io/jackharrhy/ref` and `ghcr.io/jackharrhy/worldview`. The individual
+publisher workflows define each image name; npm package names are independent
+of those container tags.

@@ -1,11 +1,12 @@
 import type { Handle, RemixNode } from "remix/component";
+import { uiControlStyles, uiPrimaryActionStyles } from "@harrhy/ui";
 import type { BoardRecord } from "../data/directory-cell.ts";
 import { browserAssets } from "../assets/build-manifest.ts";
-import { refStyles } from "../styles.ts";
+import { refStyles, refThemeStyles } from "../styles.ts";
 
 function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
   return () => (
-    <html lang="en" mix={refStyles}>
+    <html lang="en" mix={[refThemeStyles, uiControlStyles, refStyles]}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -36,7 +37,11 @@ export function AuthPage(
             <div class="auth-intro">
               <h1>A shared board for images and links.</h1>
               <p>Collect visual references and arrange them together.</p>
-              <a class="auth-link" href="/auth/login">
+              <a
+                class="auth-link"
+                href="/auth/login"
+                mix={uiPrimaryActionStyles}
+              >
                 Sign in with Jack Auth
               </a>
             </div>
@@ -98,15 +103,23 @@ export function HomePage(
               required
               maxLength={100}
             />
-            <button type="submit">Create</button>
+            <button type="submit" mix={uiPrimaryActionStyles}>
+              Create
+            </button>
           </form>
           <div class="board-list">
-            {handle.props.boards.map((board) => (
-              <a class="board-row" href={`/boards/${board.id}`}>
-                <span>{board.title}</span>
-                <time>{new Date(board.updatedAt).toLocaleDateString()}</time>
-              </a>
-            ))}
+            {handle.props.boards.length === 0 ? (
+              <p class="board-list-empty">
+                No boards yet. Create one to start collecting references.
+              </p>
+            ) : (
+              handle.props.boards.map((board) => (
+                <a class="board-row" href={`/boards/${board.id}`}>
+                  <span>{board.title}</span>
+                  <time>{new Date(board.updatedAt).toLocaleDateString()}</time>
+                </a>
+              ))
+            )}
           </div>
         </section>
       </main>
@@ -143,7 +156,12 @@ export function BoardPage(
             <span class="connection-dot"></span>
             <span class="connection-text">Connecting</span>
           </div>
-          <button id="tool-add" class="header-add" type="button">
+          <button
+            id="tool-add"
+            class="header-add"
+            type="button"
+            mix={uiPrimaryActionStyles}
+          >
             Add images
           </button>
           <details id="link-menu" class="add-link-menu">

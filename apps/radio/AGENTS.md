@@ -79,8 +79,9 @@ Put code in the narrowest owner. Add `app/actions/<route-key>/controller.tsx` on
 - The public lobby lists rooms. A signed 30-day application session protects room pages,
   WebSockets, uploads, and room mutations. Listener names come from that trusted session rather
   than WebSocket messages.
-- Authentication currently uses one shared application password. There are no individual users,
-  room owners, or room-level permissions; every password holder can create and mutate every room.
+- Production authentication uses Jack Auth and an explicit Radio member grant. Local password mode
+  remains available for isolated development. There are no room owners or room-level permissions;
+  every admitted member can create and mutate every room.
 - The approved production boundary is one Celld runtime behind Traefik TLS with rate limiting on the
   native `/join` action. Expose only Celld's public Worker listener; keep its internal
   peer/operator listener private.

@@ -2,13 +2,7 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   // Celld is a host/container tool; Wrangler is provided by app workspaces in CI.
   "ignoreBinaries": ["celld", "wrangler"],
-  // cloudflare:workers is a runtime module, not an npm package.
-  "ignoreDependencies": ["cloudflare"],
   "workspaces": {
-    ".": {
-      // Root tsconfig.base.json uses Remix's HMR types.
-      "ignoreDependencies": ["remix"],
-    },
     "apps/8mb": {
       "entry": ["public/sw.js", "scripts/import-styles.mjs"],
       // The build copies these FFmpeg cores as browser-loadable JavaScript and WASM.
@@ -16,7 +10,6 @@
     },
     "apps/cms": {
       "entry": [
-        "__tests__/server.ts",
         "app/actions/public/entry.ts",
         "sites/*/public/site.js",
         "public/**/*.js",
@@ -52,7 +45,6 @@
       "entry": [
         "app/ui/public/entry.js",
         "app/ui/public/debug.js",
-        "__tests__/parity.ts",
         "scripts/import-styles.mjs",
       ],
       // A type-only JSDoc reference left in the upstream bundled picoCAD viewer.
@@ -129,25 +121,11 @@
         "public/assets/thumb-worker.js",
       ],
     },
-    "packages/maps-renderer": {
-      "entry": [
-        "src/index.ts",
-        "src/core/index.ts",
-        "src/walkability/index.ts",
-        "src/standalone.ts",
-        "src/runtime/index.ts",
-        "src/element/index.ts",
-      ],
-      // GPU types are selected by tsconfig, not imported from source.
-      "ignoreDependencies": ["@webgpu/types"],
-    },
     "packages/pool": {
       // The physical cabinet and gameplay table share the same measured bounds.
       "ignoreIssues": { "src/physical-table.ts": ["duplicates"] },
     },
     "packages/maps-editor": {
-      "entry": ["src/index.ts", "src/core/index.ts", "src/render/index.ts"],
-      "ignoreDependencies": ["@webgpu/types"],
       // BrushId is a branded PrimitiveId and intentionally shares its parser.
       "ignoreIssues": { "src/core/runtime-schemas.ts": ["duplicates"] },
     },

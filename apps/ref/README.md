@@ -1,6 +1,6 @@
 # @harrhy/ref
 
-A small, private board for images and links. It presents itself as Ref while retaining Ref's board format and storage contract. This app was adapted from the former standalone Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. Every approved member sees the same boards; there are no per-user spaces. The Newport production deployment runs this workspace's container image.
+A small, private board for images and links. It presents itself as Ref while retaining Ref's board format and storage contract. This app was adapted from the former standalone Ref repository and was inspired by [metalfinger/refboard](https://github.com/metalfinger/refboard). It uses Remix 3, a Worker, SQLite Durable Objects, native WebSockets, and R2-compatible image storage. Every approved member sees the same boards; there are no per-user spaces. The Newport production deployment runs this workspace's container image. Shared control styles come from [`@harrhy/ui`](../../packages/ui/README.md); Ref supplies its palette, board layout, and canvas presentation in `app/styles.ts`.
 
 Jack Auth production sign-in uses `AUTH_ISSUER`, `AUTH_CLIENT_ID`,
 `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, and
@@ -16,7 +16,7 @@ a delegated resource token in Jack Auth mode.
 
 ## Run locally
 
-Requires Node.js 26 LTS (26.13.0+) and npm. From the Tea root:
+Requires Node.js 26 LTS (26.13.0+) and npm. From the Harrhy root:
 
 ```sh
 npm ci
@@ -39,7 +39,7 @@ On Cloudflare, sign-in pauses after ten password attempts from the same client i
 - `MEDIA` stores uploaded images and cached link preview images. Reads and uploads require a valid session.
 - `app/assets/board.ts` is the browser editor. It uses DOM APIs, pan and zoom, uploads, optimistic edits, reconnect, and revision checks. No React, Express, or Socket.IO.
 
-Images may be PNG, JPEG, GIF, or WebP, up to 20 MB each. Link previews are best effort: blocked sites still save as URL cards, and Twitter, YouTube, or Instagram embeds depend on those services remaining available. Numbered X photo links use FxTwitter's post metadata to select the linked image; if that lookup fails, Ref leaves the card image empty rather than showing a different photo. X video links use a validated remote MP4 with a cached poster and native playback controls; Ref does not copy the video. Ref stores the title, description, and cached preview image, but not a full page archive. Select a link and use **Refresh preview** to update an older thumbnail-only card or retry a stale preview; the existing card stays in place if Ref cannot obtain usable replacement media. See [the Karakeep workflow notes](docs/karakeep-notes.md) for what this first version covers. The password grants access to all boards, so keep it private.
+Images may be PNG, JPEG, GIF, or WebP, up to 20 MB each. Link previews are best effort: blocked sites still save as URL cards, and Twitter, YouTube, or Instagram embeds depend on those services remaining available. Numbered X photo links use FxTwitter's post metadata to select the linked image; if that lookup fails, Ref leaves the card image empty rather than showing a different photo. X video links use a validated remote MP4 with a cached poster and native playback controls; Ref does not copy the video. Ref stores the title, description, and cached preview image, but not a full page archive. Select a link and use **Refresh preview** to update an older thumbnail-only card or retry a stale preview; the existing card stays in place if Ref cannot obtain usable replacement media. See [the Karakeep workflow notes](docs/karakeep-notes.md) for what this first version covers.
 
 ## Checks
 
@@ -56,7 +56,7 @@ cd ../..
 REF_SMOKE_PASSWORD='the-value-in-.dev.vars' npm run smoke --workspace @harrhy/ref
 ```
 
-Tea CI runs this smoke against a temporary Wrangler store and generated password when Ref is affected on a ready PR or `main`.
+Harrhy CI runs this smoke against a temporary Wrangler store and generated password when Ref is affected on a ready PR or `main`.
 
 Ref also runs a production-style Celld check using an isolated SQLite object store and random password. It runs the browser smoke, kills Celld, removes its replica cache, then verifies the board, links, and WebSocket from the authoritative store. CI extracts the Celld binary from the image selected by this app's Dockerfile. To run the same check locally:
 
@@ -94,6 +94,6 @@ For a self-hosted runtime, [Celld](https://celld.dev/docs/) accepts this Wrangle
 
 ### Local container and production
 
-Tea's root `compose.yml` builds `apps/ref/Dockerfile` and serves `ref.localhost` with a separate `ref-data` volume. It uses `REF_PASSWORD` from the Compose environment, or a local development password if unset. Celld stores its authoritative SQLite object store under `/app/.celld/object-store/` and replicas under `/app/.celld/state/`; preserve the entire mount for backups. Tea's `publish-ref` workflow builds and checks the app when Ref or its build inputs change on `main`, then publishes `ghcr.io/jackharrhy/tea-ref:latest` and a commit tag. Newport uses `:latest` and Watchtower to deploy new main builds. See the infrastructure repository's `hosts/newport/ref/README.md` for its store and deployment path.
+The root `compose.yml` builds `apps/ref/Dockerfile` and serves `ref.localhost` with a separate `ref-data` volume. It uses `REF_PASSWORD` from the Compose environment, or a local development password if unset. Celld stores its authoritative SQLite object store under `/app/.celld/object-store/` and replicas under `/app/.celld/state/`; preserve the entire mount for backups. The `publish-ref` workflow builds and checks the app when Ref or its build inputs change on `main`, then publishes `ghcr.io/jackharrhy/ref:latest` and a commit tag. Newport uses `:latest` and Watchtower to deploy new main builds. See the infrastructure repository's `hosts/newport/ref/README.md` for its store and deployment path.
 
 The Dockerfile pins the fork's Celld 0.6.2 image by digest. Its published binary matches the release binary used for Ref's browser and cold-restore smoke. Pass `--build-arg CELLD_IMAGE=<image>` to rehearse another runtime on an isolated store.
