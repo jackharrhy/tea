@@ -2,7 +2,6 @@ import { get, post, route } from "remix/routes";
 
 export const routes = route({
   home: get("/"),
-  login: post("/login"),
   logout: post("/logout"),
   auth: route("auth", {
     login: get("/login"),

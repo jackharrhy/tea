@@ -12,7 +12,6 @@ export interface AppRuntimeService {
 export const AppRuntime = createContextKey<AppRuntimeService>();
 export const Authenticated = createContextKey<boolean>();
 export const CurrentSessionToken = createContextKey<string | null>();
-export const AppPassword = createContextKey<string>();
 export const AppIdentity = createContextKey<{
   config: IdentityConfig;
   origin: string;

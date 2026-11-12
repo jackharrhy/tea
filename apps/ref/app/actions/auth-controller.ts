@@ -67,12 +67,14 @@ export default createController(routes.auth, {
           status: 400,
           headers: { "Set-Cookie": cleared },
         });
+      let stage = "exchange";
       try {
         const profile = await createIdentityClient(central.config).exchange(
           code,
           transaction,
           `${central.origin}${routes.auth.callback.href()}`,
         );
+        stage = "session";
         const token = await context
           .get(AppRuntime)!
           .directory.createCentralSession(profile.subject, profile.expiresAt);
@@ -93,6 +95,14 @@ export default createController(routes.auth, {
           typeof error.status === "number"
             ? error.status
             : 503;
+        console.error(
+          JSON.stringify({
+            event: "auth_callback_failed",
+            stage,
+            status,
+            type: error instanceof Error ? error.name : "Unknown",
+          }),
+        );
         return new Response("Sign-in could not be completed", {
           status,
           headers: { "Set-Cookie": cleared },

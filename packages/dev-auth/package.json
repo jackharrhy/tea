@@ -1,0 +1,13 @@
+{
+  "name": "@harrhy/dev-auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check token.mjs && node --test __tests__/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=26.13.0 <27"
+  }
+}

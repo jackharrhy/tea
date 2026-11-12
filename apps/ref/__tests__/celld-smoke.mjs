@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { randomBytes } from "node:crypto";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -18,7 +17,6 @@ const { values } = parseArgs({
 });
 const root = fileURLToPath(new URL("..", import.meta.url));
 const state = await mkdtemp(join(tmpdir(), "tea-ref-celld-smoke-"));
-const password = randomBytes(32).toString("hex");
 const port = await new Promise((resolve, reject) => {
   const server = createServer();
   server.once("error", reject);
@@ -28,6 +26,15 @@ const port = await new Promise((resolve, reject) => {
   });
 });
 const origin = `http://127.0.0.1:${port}`;
+const authPort = await new Promise((resolve, reject) => {
+  const server = createServer();
+  server.once("error", reject);
+  server.listen(0, "127.0.0.1", () => {
+    const address = server.address();
+    server.close(() => resolve(address.port));
+  });
+});
+const authOrigin = `http://127.0.0.1:${authPort}`;
 const binary = process.env.CELLD_BIN ?? "celld";
 const environment = {
   ...Object.fromEntries(
@@ -38,11 +45,18 @@ const environment = {
   CELLD_ADDR: `127.0.0.1:${port}`,
   CELLD_INTERNAL_ADDR: "127.0.0.1:0",
   CELLD_DURABILITY: "bucket",
-  CELLD_VAR_REF_PASSWORD: password,
+  CELLD_VAR_AUTH_ISSUER: authOrigin,
+  CELLD_VAR_AUTH_CLIENT_ID: "ref-local-browser",
+  CELLD_VAR_AUTH_PROJECT_ID: "ref-local-project",
+  CELLD_VAR_AUTH_ORGANIZATION_ID: "ref-local-org",
+  CELLD_VAR_AUTH_PUBLIC_ORIGIN: origin,
+  CELLD_VAR_AUTH_INTROSPECTION_CLIENT_ID: "ref-local-resource",
+  CELLD_VAR_AUTH_INTROSPECTION_SECRET: "ref-local-resource-secret",
   CELLD_ESBUILD: join(root, "..", "..", "node_modules", ".bin", "esbuild"),
 };
 const result = { status: "running", state, checks: [] };
 let runtime;
+let auth;
 let runtimeLogs = "";
 let browser;
 
@@ -89,14 +103,10 @@ async function start() {
         `Celld exited during startup\n${runtimeLogs.slice(-12000)}`,
       );
     try {
-      const response = await fetch(`${origin}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ password }),
-        redirect: "manual",
+      const response = await fetch(`${origin}/ready`, {
         signal: AbortSignal.timeout(2_000),
       });
-      if (response.status === 303 && response.headers.has("set-cookie")) return;
+      if (response.ok) return;
     } catch {}
     await delay(200);
   }
@@ -127,6 +137,24 @@ async function stop(signal) {
 }
 
 try {
+  auth = spawn(process.execPath, ["../../packages/dev-auth/server.mjs"], {
+    cwd: root,
+    env: {
+      ...process.env,
+      HARRHY_DEV_AUTH_PORT: String(authPort),
+      HARRHY_DEV_AUTH_ORIGIN: authOrigin,
+      HARRHY_DEV_AUTH_CALLBACK: `${origin}/auth/callback`,
+    },
+    stdio: "ignore",
+  });
+  for (let attempt = 0; attempt < 50; attempt++) {
+    try {
+      if ((await fetch(`${authOrigin}/.well-known/openid-configuration`)).ok)
+        break;
+    } catch {}
+    if (attempt === 49) throw new Error("Local Jack Auth did not start");
+    await delay(100);
+  }
   result.version = (await command([binary, "--version"])).trim();
   await command([
     binary,
@@ -139,7 +167,6 @@ try {
   await start();
   const smoke = await command([process.execPath, "scripts/smoke.mjs"], {
     REF_SMOKE_URL: origin,
-    REF_SMOKE_PASSWORD: password,
   });
   const first = JSON.parse(smoke.trim().split("\n").at(-1));
   assert.equal(first.ok, true);
@@ -158,8 +185,8 @@ try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   await page.goto(origin);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Enter" }).click();
+  await page.getByRole("link", { name: "Sign in with Jack Auth" }).click();
+  await page.getByRole("button", { name: "Continue as local user" }).click();
   await page.getByText("Renamed board").waitFor();
   await page.goto(`${origin}/boards/${first.boardId}`);
   await page.locator("#connection.online").waitFor();
@@ -175,6 +202,7 @@ try {
   process.exitCode = 1;
 } finally {
   await browser?.close();
+  auth?.kill();
   try {
     await stop("SIGKILL");
   } catch (error) {

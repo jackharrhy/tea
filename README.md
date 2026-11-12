@@ -3,8 +3,10 @@
 A Remix 3 monorepo for personal apps and packages.
 
 [WORLD_IDEA.md](WORLD_IDEA.md) records the direction for a future shared world built from Burger, Gurgur, Pool, and Worldview.
+[WORLD_CINEMA_IDEA.md](WORLD_CINEMA_IDEA.md) explores an access-controlled cinema room within that world.
 
 [npm publication](docs/npm-publication.md) describes the two public `@harrhy` packages and their release boundary.
+[Shared UI direction](docs/ui.md) explains the small control foundation being proven in Ref.
 
 ### Apps
 
@@ -18,11 +20,11 @@ A Remix 3 monorepo for personal apps and packages.
 | [`@harrhy/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
 | [`@harrhy/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
 | [`@harrhy/garden`](apps/garden/) | Obsidian-backed personal website and publishing tools | [README](apps/garden/README.md) |
-| [`@harrhy/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server (migration in progress) | [README](apps/gurgur/README.md) |
+| [`@harrhy/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server | [README](apps/gurgur/README.md) |
 | [`@harrhy/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |
-| [`@harrhy/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail (migration in progress) | [README](apps/lists/README.md) |
+| [`@harrhy/lists`](apps/lists/) | Mailing lists, campaigns, delivery, and inbound mail | [README](apps/lists/README.md) |
 | [`@harrhy/worldview`](apps/worldview/) | Worldview BSP viewer and map editor | [README](apps/worldview/README.md) |
-| [`@harrhy/marky`](apps/marky/) | Collaborative Markdown editor with Discord access | [README](apps/marky/README.md) |
+| [`@harrhy/marky`](apps/marky/) | Collaborative Markdown editor with Jack Auth access | [README](apps/marky/README.md) |
 | [`@harrhy/pool-app`](apps/pool/) | Remix pool hall and authoritative Bun game server | [README](apps/pool/README.md) |
 | [`@harrhy/maps-collaboration`](apps/maps-collaboration/) | Live map sessions and SQLite map cells | [README](apps/maps-collaboration/README.md) |
 | [`@harrhy/maps-compiler`](apps/maps-compiler/) | Local native map compiler helper | [README](apps/maps-compiler/README.md) |
@@ -39,6 +41,7 @@ A Remix 3 monorepo for personal apps and packages.
 | [`@harrhy/artbin-core`](packages/artbin-core/) | Asset scanning, detection, and upload primitives | [README](packages/artbin-core/README.md) |
 | [`@harrhy/artbin-ui`](packages/artbin-ui/) | CLI scan interface components | [README](packages/artbin-ui/README.md) |
 | [`@harrhy/burger-core`](packages/burger-core/) | Shared Burger ECS, physics, and wire constants | [README](packages/burger-core/README.md) |
+| [`@harrhy/dev-auth`](packages/dev-auth/) | Disposable local Jack Auth protocol issuer for app development | [README](packages/dev-auth/README.md) |
 | [`@harrhy/identity`](packages/identity/) | Jack Auth OIDC and API identity verification | [README](packages/identity/README.md) |
 | [`@harrhy/gurgur-engine`](packages/gurgur-engine/) | Gurgur Box3D physics, protocol and world format | [README](packages/gurgur-engine/README.md) |
 | [`@harrhy/gurgur-game`](packages/gurgur-game/) | Gurgur controllers, simulation and map compiler | [README](packages/gurgur-game/README.md) |
@@ -54,6 +57,7 @@ A Remix 3 monorepo for personal apps and packages.
 | [`@harrhy/request-body`](packages/request-body/) | Bounded Web request-body reading | [README](packages/request-body/README.md) |
 | [`@harrhy/result`](packages/result/) | Success and failure values and helpers | [README](packages/result/README.md) |
 | [`@harrhy/rich-text`](packages/rich-text/) | Inline document format and rich text editor | [README](packages/rich-text/README.md) |
+| [`@harrhy/ui`](packages/ui/) | Themeable Remix control styles, starting with Ref | [README](packages/ui/README.md) |
 
 ## Working in the repo
 

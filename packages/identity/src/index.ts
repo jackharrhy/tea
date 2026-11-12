@@ -116,7 +116,12 @@ export function createIdentityClient(
 ) {
   const issuer = new URL(config.issuer);
   if (
-    issuer.protocol !== "https:" ||
+    (issuer.protocol !== "https:" &&
+      !(
+        issuer.protocol === "http:" &&
+        (["localhost", "127.0.0.1", "[::1]"].includes(issuer.hostname) ||
+          issuer.hostname.endsWith(".localhost"))
+      )) ||
     issuer.username ||
     issuer.password ||
     issuer.search ||
@@ -135,7 +140,7 @@ export function createIdentityClient(
     try {
       return await fetcher(url, {
         ...options,
-        redirect: "error",
+        redirect: "manual",
         signal: AbortSignal.timeout(5000),
       });
     } catch {

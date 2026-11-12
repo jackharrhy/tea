@@ -75,14 +75,15 @@ jobs:
         run: |
           set -eu
           ref_smoke_dir=$(mktemp -d "$RUNNER_TEMP/tea-ref-smoke.XXXXXX")
-          ref_smoke_password=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
-          printf 'REF_PASSWORD=%s\n' "$ref_smoke_password" > "$ref_smoke_dir/secrets.env"
+          sed 's#127.0.0.1:8787#127.0.0.1:8788#g' apps/ref/.dev.vars.example > "$ref_smoke_dir/secrets.env"
+          HARRHY_DEV_AUTH_CALLBACK=http://127.0.0.1:8788/auth/callback node packages/dev-auth/server.mjs > "$ref_smoke_dir/auth.log" 2>&1 &
+          ref_auth_pid=$!
           (
             cd apps/ref
             ../../node_modules/.bin/wrangler dev --port 8788 --persist-to "$ref_smoke_dir/state" --env-file "$ref_smoke_dir/secrets.env"
           ) > "$ref_smoke_dir/wrangler.log" 2>&1 &
           ref_server_pid=$!
-          trap 'kill "$ref_server_pid" 2>/dev/null || true; wait "$ref_server_pid" 2>/dev/null || true; rm -rf "$ref_smoke_dir"' EXIT
+          trap 'kill "$ref_server_pid" "$ref_auth_pid" 2>/dev/null || true; wait "$ref_server_pid" "$ref_auth_pid" 2>/dev/null || true; rm -rf "$ref_smoke_dir"' EXIT
           ref_ready=false
           for ((attempt = 0; attempt < 60; attempt++)); do
             if curl --fail --silent http://127.0.0.1:8788/health > /dev/null; then
@@ -96,7 +97,7 @@ jobs:
             cat "$ref_smoke_dir/wrangler.log"
             exit 1
           fi
-          REF_SMOKE_URL=http://127.0.0.1:8788 REF_SMOKE_PASSWORD="$ref_smoke_password" npm run smoke --workspace @harrhy/ref || {
+          REF_SMOKE_URL=http://127.0.0.1:8788 npm run smoke --workspace @harrhy/ref || {
             cat "$ref_smoke_dir/wrangler.log"
             exit 1
           }

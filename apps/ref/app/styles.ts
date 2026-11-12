@@ -1,4 +1,17 @@
 import { css } from "remix/component";
+import { createUiTheme } from "@harrhy/ui";
+
+export const refThemeStyles = createUiTheme({
+  ink: "#222321",
+  line: "#c9cbc5",
+  controlSurface: "#fff",
+  controlHover: "#efefec",
+  muted: "#6a6e67",
+  focus: "#3767d6",
+  actionSurface: "#292d29",
+  actionHover: "#424842",
+  actionInk: "#fff",
+});
 
 export const refStyles = css({
   "font-family":
@@ -12,45 +25,15 @@ export const refStyles = css({
   "& body": {
     margin: "0",
   },
-  "& button, & input": {
-    font: "inherit",
-  },
-  "& button": {
-    cursor: "pointer",
-    border: "1px solid #c9cbc5",
-    "border-radius": "5px",
-    background: "#fff",
-    color: "#222321",
-    padding: "9px 14px",
-  },
   "& a": {
     color: "inherit",
     "text-decoration": "none",
   },
-  "& button:focus-visible, & input:focus-visible, & a:focus-visible, & summary:focus-visible":
-    {
-      outline: "2px solid #3767d6",
-      "outline-offset": "2px",
-    },
   "& .wordmark": {
     "font-size": "23px",
     "font-weight": "700",
     "letter-spacing": "-0.04em",
     "line-height": "1",
-  },
-  "& button:hover": {
-    background: "#efefec",
-  },
-  "& input": {
-    border: "1px solid #c9cbc5",
-    "border-radius": "5px",
-    background: "#fff",
-    color: "#222321",
-    padding: "10px 12px",
-    "min-width": "0",
-  },
-  "& input::placeholder": {
-    color: "#8a8d87",
   },
   "& .error": {
     color: "#a33333",
@@ -64,16 +47,12 @@ export const refStyles = css({
     padding: "24px",
   },
   "& .auth-form": {
-    width: "min(100%, 320px)",
-  },
-  "& .auth-form-central": {
     width: "min(100%, 420px)",
+    "text-align": "center",
   },
   "& .auth-form .wordmark": {
     display: "inline-block",
-    "margin-bottom": "72px",
-  },
-  "& .auth-form-central .wordmark": {
+    "font-size": "clamp(52px, 12vw, 72px)",
     "margin-bottom": "52px",
   },
   "& .auth-intro h1": {
@@ -90,43 +69,11 @@ export const refStyles = css({
     "line-height": "1.55",
   },
   "& .auth-link": {
-    display: "inline-flex",
-    "align-items": "center",
-    "justify-content": "center",
     "min-height": "46px",
     padding: "10px 18px",
     "border-radius": "5px",
-    background: "#292d29",
-    color: "#fff",
     "font-size": "14px",
-    "font-weight": "600",
   },
-  "& .auth-link:hover": {
-    background: "#424842",
-  },
-  "& .auth-form label": {
-    display: "block",
-    "font-size": "13px",
-    "font-weight": "600",
-    "margin-bottom": "9px",
-  },
-  "& .auth-row": {
-    display: "flex",
-    gap: "8px",
-  },
-  "& .auth-row input": {
-    flex: "1",
-    width: "100%",
-  },
-  "& .auth-row button, & .new-board-form button, & .header-add": {
-    background: "#292d29",
-    color: "#fff",
-    "border-color": "#292d29",
-  },
-  "& .auth-row button:hover, & .new-board-form button:hover, & .header-add:hover":
-    {
-      background: "#424842",
-    },
   "& .home-page": {
     "min-height": "100dvh",
   },
@@ -164,6 +111,13 @@ export const refStyles = css({
   },
   "& .board-list": {
     "border-top": "1px solid #dfe0da",
+  },
+  "& .board-list-empty": {
+    margin: "0",
+    padding: "24px 3px",
+    color: "#565b55",
+    "font-size": "14px",
+    "line-height": "1.5",
   },
   "& .board-row": {
     "min-height": "64px",

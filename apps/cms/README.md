@@ -68,4 +68,4 @@ duplicate subjects within a database, missing schema migrations, and missing
 database files. It reports counts only. A retry with the same manifest is
 idempotent. Keep the existing SQLite backup until production acceptance.
 
-The [CMS publish workflow](../../.github/workflows/publish-cms.yml) runs on `main` changes to this app or its shared dependencies. It checks the CMS and publishes `ghcr.io/jackharrhy/tea-cms:latest` plus a commit tag. It can also be started manually. Mug follows `latest` with Watchtower; the commit tag supports rollback.
+The [CMS publish workflow](../../.github/workflows/publish-cms.yml) runs on `main` changes to this app or its shared dependencies. It checks the CMS and publishes `ghcr.io/jackharrhy/teacms:latest` plus a commit tag. It can also be started manually. Mug follows `latest` with Watchtower; the commit tag supports rollback.
