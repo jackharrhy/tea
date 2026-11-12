@@ -35,6 +35,12 @@ export function createAdmin(
           "SELECT id,username,display_name,is_admin,is_disabled,in_webring,created_at FROM users ORDER BY created_at",
         ),
         banner: db.all("SELECT * FROM site_settings WHERE id=1")[0] ?? null,
+        cards: db.all("SELECT * FROM profile_cards ORDER BY user_id"),
+        pages: db
+          .all(
+            "SELECT p.*,u.username FROM pages p JOIN users u ON u.id=p.user_id ORDER BY p.updated_at DESC",
+          )
+          .map(pageBodies.read),
       };
     },
     adminSaveBanner(actorId: number | null, input: Row) {
