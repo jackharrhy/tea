@@ -43,6 +43,11 @@ local review identities acting on copies, not production SSO.
 
 The source's browser helpers and CodeMirror editor are built in this workspace.
 HTMX is the same pinned version, served locally for the isolated comparison.
+Only the private oracle's base and bare-guestbook template copies replace the CDN
+URL with that byte-identical local file. The embedded workflow asserts no iframe
+reload, so fallback form navigation cannot masquerade as the enhanced behavior.
+Browser logs retain blocked remote requests and normal media cancellations;
+script exceptions and unexpected local transport failures fail the comparison.
 The five-minute chat badge uses the source's seeded choices. Raw profile metadata
 is inserted before member scripts; simple/css-only layouts retain their original
 composition. More real-content layout coverage is still required.
