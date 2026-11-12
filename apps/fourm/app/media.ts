@@ -1,3 +1,4 @@
+import { chosenFilename } from "./media-filename.ts";
 import type { Bindings, Runtime } from "./runtime.ts";
 import type { Member } from "./data/community.ts";
 import { CommunityError } from "./data/community.ts";
@@ -17,24 +18,43 @@ export async function uploadMedia(
     throw new CommunityError(422, "Choose a file to upload");
   if (file.size > uploadLimit)
     throw new CommunityError(413, "Files must be 10 MB or smaller");
-  const filename =
-    file.name.replace(/[^a-zA-Z0-9_.-]/g, "_").slice(-120) || "file";
-  const path = `${actor.username}/${crypto.randomUUID()}-${filename}`;
-  await store.call(
-    "reserveUpload",
-    actor.id,
-    path,
-    file.type || "application/octet-stream",
-    file.size,
+  const filename = chosenFilename(
+    String(form.get("filename") ?? ""),
+    file.name,
   );
-  try {
-    await env.MEDIA.put(path, file.stream(), {
-      httpMetadata: { contentType: file.type || "application/octet-stream" },
-    });
-    return await store.call("finishUpload", actor.id, path);
-  } catch (error) {
-    await store.call("abandonUpload", actor.id, path);
-    throw error;
+  const unavailable: string[] = [];
+  while (true) {
+    const reservation = await store.call(
+      "reserveNamedUpload",
+      actor.id,
+      filename,
+      file.type || "application/octet-stream",
+      file.size,
+      unavailable,
+    );
+    const path = String(reservation.storage_path),
+      uploadId = String(reservation.upload_id);
+    try {
+      if (await env.MEDIA.head(path)) {
+        await store.call("releaseUnwrittenUpload", actor.id, path, uploadId);
+        unavailable.push(path);
+        continue;
+      }
+      const object = await env.MEDIA.put(path, file.stream(), {
+        onlyIf: { etagDoesNotMatch: "*" },
+        httpMetadata: { contentType: file.type || "application/octet-stream" },
+        customMetadata: { fourm_upload: uploadId },
+      });
+      if (!object) {
+        await store.call("releaseUnwrittenUpload", actor.id, path, uploadId);
+        unavailable.push(path);
+        continue;
+      }
+      return await store.call("finishUpload", actor.id, path);
+    } catch (error) {
+      await store.call("abandonUpload", actor.id, path);
+      throw error;
+    }
   }
 }
 export async function readMedia(
@@ -46,7 +66,9 @@ export async function readMedia(
   const record = await store.call("publishedMedia", path);
   const object = await env.MEDIA.head(path);
   if (!object) throw new CommunityError(404, "Media bytes are unavailable");
-  const modified = object.uploaded.toUTCString();
+  const modified = new Date(
+    object.customMetadata?.fourm_last_modified ?? object.uploaded,
+  ).toUTCString();
   const headers = new Headers({
     "Content-Type": String(record.mime_type),
     "X-Content-Type-Options": "nosniff",

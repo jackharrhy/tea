@@ -22,6 +22,18 @@ export function runtime(env: Bindings) {
     env.COMMUNITIES.idFromName("fourm-community-v1"),
   );
   return {
+    async removeMedia(actorId: number, mediaId: number) {
+      const result = await cell.removeMedia(actorId, mediaId);
+      if (!result.ok) throw new CommunityError(result.status, result.error);
+    },
+    async renameMedia(actorId: number, mediaId: number, filename: string) {
+      const result = await cell.renameMedia(actorId, mediaId, filename);
+      if (!result.ok) throw new CommunityError(result.status, result.error);
+    },
+    async renameUsername(actorId: number, username: string) {
+      const result = await cell.renameUsername(actorId, username);
+      if (!result.ok) throw new CommunityError(result.status, result.error);
+    },
     async call<K extends keyof Community>(
       method: K,
       ...args: Parameters<Community[K]>

@@ -1,3 +1,4 @@
+import { mediaRoutes, mediaController } from "./media-controller.tsx";
 import { wantsJSON } from "./http.ts";
 import { settingsJSON, homeJSON } from "./view-json.ts";
 import howToHTML from "./help/how_to.ts";
@@ -34,7 +35,7 @@ import { settingsRoutes, settingsController } from "./settings-controller.tsx";
 import { Home } from "./home.tsx";
 import { widgetRoutes, widgetController } from "./widgets-controller.tsx";
 import { archiveObject, restoreArchive } from "./archive.ts";
-import { Document, Forum, NewThread, Thread, Chat, Media } from "./views.tsx";
+import { Document, Forum, NewThread, Thread, Chat } from "./views.tsx";
 
 const routes = route({
   home: get("/"),
@@ -71,9 +72,6 @@ const routes = route({
   restore: post("/api/archive"),
   exportArchive: get("/api/archive"),
   restoreObject: put("/api/archive/media/*path"),
-  media: get("/settings/media"),
-  upload: post("/settings/media/upload"),
-  deleteMedia: post("/settings/media/:id/delete"),
   bytes: get("/uploads/:username/*filename"),
   apiMedia: get("/api/v1/media"),
   apiUpload: post("/api/v1/media"),
@@ -146,6 +144,7 @@ export function createAppRouter(
   }
   const router = createRouter();
   router.map(settingsRoutes, settingsController(store, viewer, page));
+  router.map(mediaRoutes, mediaController(env, store, viewer, page));
   router.map(widgetRoutes, widgetController(env, store, viewer, page));
   router.map(
     routes,
@@ -569,20 +568,6 @@ export function createAppRouter(
             tables: await store.call("exportArchive", actor.id),
           });
         },
-        async media() {
-          return page(
-            "Media library",
-            <Media {...await store.call("media", member().id)} />,
-          );
-        },
-        async upload({ request }) {
-          await uploadMedia(request, env, store, member());
-          return redirect("/settings/media");
-        },
-        async deleteMedia({ params }) {
-          await store.call("deleteMedia", member().id, Number(params.id));
-          return redirect("/settings/media");
-        },
         bytes({ request, params }) {
           return readMedia(
             request,
@@ -606,8 +591,7 @@ export function createAppRouter(
           );
         },
         async apiDeleteMedia({ request, params }) {
-          await store.call(
-            "deleteMedia",
+          await store.removeMedia(
             (await apiMember(request, "media-write")).id,
             Number(params.id),
           );

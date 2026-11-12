@@ -1,3 +1,4 @@
+import { mediaWorkflows } from "./media-workflows.mjs";
 import { reviewSourceFingerprint } from "../scripts/review-source.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import {
@@ -82,7 +83,7 @@ function observe() {
       ?.textContent?.replace(/\s+/g, " ")
       .trim(),
     headings: [...document.querySelectorAll("main h1,main h2,summary")].map(
-      (el) => el.textContent.trim(),
+      (el) => el.textContent.replace(/\s+/g, " ").trim(),
     ),
     forms: [...document.querySelectorAll("main form")].map((form) => ({
       action: form.getAttribute("action"),
@@ -121,6 +122,31 @@ function observe() {
       author: el.querySelector(".gb-meta a")?.textContent.trim(),
       date: el.querySelector("time")?.getAttribute("datetime"),
       message: el.querySelector(".gb-message")?.textContent,
+    })),
+    mediaGeometry: [...document.querySelectorAll(".media-item summary")].map(
+      (el) => {
+        const rect = el.getBoundingClientRect(),
+          code = el.querySelector("code").getBoundingClientRect();
+        return {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          codeX: code.x,
+        };
+      },
+    ),
+    mediaSummaries: [...document.querySelectorAll(".media-item summary")].map(
+      (el) => el.textContent.replace(/\s+/g, " ").trim(),
+    ),
+    mediaPreviews: [
+      ...document.querySelectorAll(
+        ".media-item img,.media-item audio,.media-item video",
+      ),
+    ].map((el) => ({
+      tag: el.tagName,
+      src: el.getAttribute("src"),
+      alt: el.getAttribute("alt"),
     })),
     overflow: document.documentElement.scrollWidth > innerWidth,
   };
@@ -180,6 +206,7 @@ try {
         ["profile", "/u/" + selection.username],
         ["guestbook", "/u/" + selection.username + "/guestbook"],
         ["settings", "/settings"],
+        ["media", "/settings/media"],
       ]) {
         phase = `${name}-${kind}-${width}`;
         const r = await p.goto(origin + path, { waitUntil: "networkidle" });
@@ -200,6 +227,8 @@ try {
           origin,
           selection.username,
         );
+        phase = `${name}-media-workflows-${width}`;
+        workflow.media = await mediaWorkflows(p, origin);
         pages.workflow = workflow;
         await writeFile(
           output + `/${name}-settings-workflows-${width}.json`,
@@ -246,6 +275,31 @@ try {
       capture.native.guestbook.entries,
       capture.oracle.guestbook.entries,
       "Guestbook content/order mismatch",
+    );
+    assert.deepEqual(
+      capture.native.media.mediaGeometry,
+      capture.oracle.media.mediaGeometry,
+      "Media row layout mismatch",
+    );
+    assert.deepEqual(
+      capture.native.media.mediaSummaries,
+      capture.oracle.media.mediaSummaries,
+      "Media names/types/sizes mismatch",
+    );
+    assert.deepEqual(
+      capture.native.media.mediaPreviews,
+      capture.oracle.media.mediaPreviews,
+      "Media previews mismatch",
+    );
+    assert.deepEqual(
+      capture.native.media.forms,
+      capture.oracle.media.forms,
+      "Media forms and saved values mismatch",
+    );
+    assert.deepEqual(
+      capture.native.media.headings,
+      capture.oracle.media.headings,
+      "Media composition mismatch",
     );
     assert.deepEqual(
       capture.native.settings.headings,
