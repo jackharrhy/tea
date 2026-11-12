@@ -1,3 +1,4 @@
+import { exerciseAdminEditors } from "./admin-editors-workflow.mjs";
 import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 import { spawnSync } from "node:child_process";
@@ -160,6 +161,15 @@ export async function exerciseAdminCopies({
           await page.locator('[name="banner_enabled"]').isChecked(),
           initial.enabled,
         );
+        await exerciseAdminEditors({
+          page,
+          context,
+          origin,
+          userId: auth.userId,
+          name,
+          output,
+          restart,
+        });
         assert.equal(errors.length, 0);
         results.push({
           name,
