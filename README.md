@@ -3,6 +3,7 @@
 A Remix 3 monorepo for personal apps and packages.
 
 [WORLD_IDEA.md](WORLD_IDEA.md) records the direction for a future shared world built from Burger, Gurgur, Pool, and Worldview.
+[WORLD_CINEMA_IDEA.md](WORLD_CINEMA_IDEA.md) explores an access-controlled cinema room within that world.
 
 [npm publication](docs/npm-publication.md) describes the two public `@harrhy` packages and their release boundary.
 
