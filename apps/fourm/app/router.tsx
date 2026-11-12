@@ -1,6 +1,6 @@
 import { mediaRoutes, mediaController } from "./media-controller.tsx";
 import { wantsJSON } from "./http.ts";
-import { forumJSON, settingsJSON, homeJSON } from "./view-json.ts";
+import { threadJSON, forumJSON, settingsJSON, homeJSON } from "./view-json.ts";
 import howToHTML from "./help/how_to.ts";
 import cliHTML from "./help/cli.ts";
 import designHTML from "./help/design.ts";
@@ -29,6 +29,7 @@ import {
   serviceBody,
 } from "./enrollment.ts";
 import { readCookie } from "./runtime.ts";
+import { postContent } from "./rendering.ts";
 import { chatStream } from "./chat.ts";
 import { Settings, InvitesSettings, PagesList } from "./settings-view.tsx";
 import { settingsRoutes, settingsController } from "./settings-controller.tsx";
@@ -59,9 +60,16 @@ const routes = route({
   deletePage: post("/settings/pages/*slug/delete"),
   forum: get("/forum"),
   newThread: get("/forum/new"),
+  previewPost: post("/forum/preview"),
   createThread: post("/forum"),
   thread: get("/forum/:id"),
   reply: post("/forum/:id/reply"),
+  watchThread: post("/forum/:id/watch"),
+  editThread: get("/forum/:id/edit"),
+  saveThread: post("/forum/:id/edit"),
+  pinThread: post("/forum/:id/pin"),
+  lockThread: post("/forum/:id/lock"),
+  deleteThread: post("/forum/:id/delete"),
   moderate: post("/forum/:id/moderate"),
   chat: get("/chat"),
   sendChat: post("/chat"),
@@ -439,6 +447,19 @@ export function createAppRouter(
             <Forum {...index} member={viewer.member} />,
           );
         },
+        async previewPost({ request }) {
+          const body = await fields(request);
+          const rendered = postContent(
+            String(body.content ?? ""),
+            String(body.content_format ?? "bbcode"),
+          );
+          return new Response(
+            rendered.trim()
+              ? `<div class="forum-post-content">${rendered}</div>`
+              : '<p class="muted">nothing to preview</p>',
+            { headers: { "Content-Type": "text/html; charset=utf-8" } },
+          );
+        },
         newThread() {
           member();
           return page("New thread", <NewThread />);
@@ -454,22 +475,153 @@ export function createAppRouter(
           );
           return redirect(`/forum/${id}`);
         },
-        async thread({ params }) {
-          const result = await store.call("thread", Number(params.id));
+        async thread({ request, params }) {
+          const raw = new URL(request.url).searchParams.get("page") ?? "1";
+          if (!/^[+-]?\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)))
+            throw new CommunityError(422, "Invalid page number");
+          const result = await store.call(
+            "thread",
+            Number(params.id),
+            Number(raw),
+            viewer.member?.id ?? null,
+          );
+          if (wantsJSON(request)) return Response.json(threadJSON(result));
           return page(
             String(result.thread.title),
-            <Thread {...result} member={viewer.member} />,
+            <Thread
+              {...result}
+              member={viewer.member}
+              media={
+                viewer.member
+                  ? (await store.call("media", viewer.member.id)).items
+                  : []
+              }
+            />,
           );
         },
         async reply({ request, params }) {
           const body = await fields(request);
-          await store.call(
+          if (body.quoted_post_id && !/^\d+$/.test(String(body.quoted_post_id)))
+            throw new CommunityError(422, "Invalid quoted post ID");
+          const id = await store.call(
             "reply",
             member().id,
             Number(params.id),
             String(body.content ?? ""),
             String(body.content_format ?? "bbcode"),
+            body,
           );
+          const detail = await store.call("thread", Number(params.id));
+          const target = `/forum/${params.id}?page=${detail.total_pages}`;
+          if (wantsJSON(request))
+            return Response.json({
+              ok: true,
+              id,
+              slug: null,
+              code: null,
+              redirect: target,
+            });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response("", { headers: { "HX-Redirect": target } });
+          return redirect(target);
+        },
+        async editThread({ params }) {
+          const thread = await store.call(
+            "threadForEdit",
+            member().id,
+            Number(params.id),
+          );
+          return page(
+            "4orm · edit thread",
+            <>
+              <h1>edit thread</h1>
+              <form
+                method="post"
+                action={`/forum/${thread.id}/edit`}
+                class="stack"
+              >
+                <label>
+                  title
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    maxLength={200}
+                    value={String(thread.title)}
+                  />
+                </label>
+                <label>
+                  custom CSS
+                  <textarea
+                    name="custom_css"
+                    rows={4}
+                    value={String(thread.custom_css ?? "")}
+                  />
+                </label>
+                <label>
+                  custom HTML
+                  <textarea
+                    name="custom_html"
+                    rows={4}
+                    value={String(thread.custom_html ?? "")}
+                  />
+                </label>
+                <button type="submit">save</button>
+              </form>
+              <p class="fourm-space-sm">
+                <a href={`/forum/${thread.id}`}>back to thread</a>
+              </p>
+            </>,
+          );
+        },
+        async saveThread({ request, params }) {
+          await store.call(
+            "editThread",
+            member().id,
+            Number(params.id),
+            await fields(request),
+          );
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "thread updated" });
+          return redirect(`/forum/${params.id}`);
+        },
+        async pinThread({ request, params }) {
+          await store.call("moderate", member().id, Number(params.id), "pin");
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "pin toggled" });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response("", { headers: { "HX-Refresh": "true" } });
+          return redirect("/forum");
+        },
+        async lockThread({ request, params }) {
+          await store.call("moderate", member().id, Number(params.id), "lock");
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "lock toggled" });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response("", { headers: { "HX-Refresh": "true" } });
+          return redirect(`/forum/${params.id}`);
+        },
+        async deleteThread({ request, params }) {
+          await store.call("deleteThread", member().id, Number(params.id));
+          if (wantsJSON(request))
+            return Response.json({ ok: true, message: "thread deleted" });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response("", { headers: { "HX-Redirect": "/forum" } });
+          return redirect("/forum");
+        },
+        async watchThread({ request, params }) {
+          const watching = await store.call(
+            "toggleThreadWatch",
+            member().id,
+            Number(params.id),
+          );
+          if (wantsJSON(request))
+            return Response.json({
+              ok: true,
+              message: watching ? "watching" : "unwatched",
+            });
+          if (request.headers.get("HX-Request") === "true")
+            return new Response("", { headers: { "HX-Refresh": "true" } });
           return redirect(`/forum/${params.id}`);
         },
         async moderate({ request, params }) {

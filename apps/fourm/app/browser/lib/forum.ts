@@ -111,3 +111,24 @@ export function clearQuote(): void {
 window.previewPost = previewPost;
 window.quotePost = quotePost;
 window.clearQuote = clearQuote;
+
+document.addEventListener("click", (event) => {
+  const button =
+    event.target instanceof Element ? event.target.closest("button") : null;
+  if (!button || button.hasAttribute("onclick")) return;
+  if (button.matches(".forum-post [data-post-id]")) {
+    quotePost(
+      button.dataset.postId ?? "",
+      button.dataset.author ?? "",
+      button.dataset.content ?? "",
+    );
+  } else if (button.closest("#quote-preview")) {
+    clearQuote();
+  } else if (button.matches(".forum-quote-toggle")) {
+    button.previousElementSibling?.classList.toggle("forum-quote-collapsed");
+    button.textContent =
+      button.textContent?.trim() === "show more" ? "show less" : "show more";
+  } else if (button.dataset.previewEditor) {
+    previewPost(button.dataset.previewEditor);
+  }
+});

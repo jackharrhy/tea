@@ -550,3 +550,60 @@ it("pages forum threads with source pin and last-reply ordering", () => {
   expect(community.forumIndex(0)).toEqual(first);
   expect(community.forumIndex(3).threads).toEqual([]);
 });
+
+it("paginates thread posts by source date and preserves quote snapshots and watching", () => {
+  const { community, sqlite } = fixture();
+  const thread = community.createThread(41, "Discussion", "First", "bbcode");
+  const first = community.thread(thread).posts[0];
+  expect(community.thread(thread, 1, 41).watching).toBe(true);
+  for (let i = 0; i < 51; i++)
+    community.reply(72, thread, `Reply ${i}`, "markdown");
+  const quoted = community.reply(72, thread, "Quoted reply", "markdown", {
+    quoted_post_id: first.id,
+    quoted_content: "Original snapshot",
+    quoted_author: "jane",
+  });
+  community.editPost(41, Number(first.id), "Changed after quote", "markdown");
+  const last = community.thread(thread, 2, 72);
+  expect(last.total_posts).toBe(53);
+  expect(last.total_pages).toBe(2);
+  expect(last.posts).toHaveLength(3);
+  const snapshot = sqlite
+    .prepare("SELECT * FROM forum_posts WHERE id=?")
+    .get(quoted);
+  expect(snapshot?.quoted_content).toBe("Original snapshot");
+  expect(snapshot?.quoted_content_format).toBe("bbcode");
+  expect(community.toggleThreadWatch(72, thread)).toBe(true);
+  expect(community.thread(thread, 1, 72).watching).toBe(true);
+  expect(community.toggleThreadWatch(72, thread)).toBe(false);
+  community.setDisabled(41, 72, true);
+  expect(() => community.toggleThreadWatch(72, thread)).toThrow();
+  community.moderate(41, thread, "lock");
+  expect(() =>
+    community.reply(41, thread, "Admin also blocked", "bbcode"),
+  ).toThrow();
+});
+
+it("allows only the thread author or local admin to edit and delete threads", () => {
+  const { community } = fixture();
+  const thread = community.createThread(72, "Member thread", "First", "bbcode");
+  community.editThread(72, thread, {
+    title: " Edited ",
+    custom_css: "p{color:red}",
+    custom_html: "<p>Header</p>",
+  });
+  expect(community.thread(thread).thread.title).toBe("Edited");
+  expect(() => community.moderate(72, thread, "pin")).toThrow();
+  const adminThread = community.createThread(
+    41,
+    "Admin thread",
+    "First",
+    "bbcode",
+  );
+  expect(() =>
+    community.editThread(72, adminThread, { title: "Taken" }),
+  ).toThrow();
+  expect(() => community.deleteThread(72, adminThread)).toThrow();
+  community.deleteThread(72, thread);
+  expect(() => community.thread(thread)).toThrow();
+});
