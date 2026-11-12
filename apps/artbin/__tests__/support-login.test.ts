@@ -1,6 +1,6 @@
 import { generateKeyPairSync, sign } from "node:crypto";
 
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { projectAudienceScope } from "@harrhy/identity";
 
 import { router } from "../app/router.ts";
@@ -70,6 +70,7 @@ const originalEnv = Object.fromEntries(
 );
 
 afterEach(() => {
+  vi.restoreAllMocks();
   currentDb?.close();
   currentDb = undefined;
   globalThis.fetch = originalFetch;
@@ -322,6 +323,10 @@ test("wrong support client is rejected after one redemption and cannot enter the
   });
   const callbackUrl = `${artbin}/auth/support/callback?code=${"d".repeat(43)}&state=${handoff.searchParams.get("state")}`;
   const headers = { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] };
+  const warnings: string[] = [];
+  vi.spyOn(console, "warn").mockImplementation((message) => {
+    warnings.push(String(message));
+  });
   const rejected = await completeSupportLogin(
     new Request(callbackUrl, { headers }),
   );
@@ -337,6 +342,13 @@ test("wrong support client is rejected after one redemption and cannot enter the
     1,
   );
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+  expect(warnings).toEqual([
+    JSON.stringify({
+      event: "artbin_support_callback_failed",
+      stage: "identity",
+      cleanupOutcome: "ended",
+    }),
+  ]);
 });
 
 test("signed target role cannot replace browser scopes missing from native introspection", async () => {

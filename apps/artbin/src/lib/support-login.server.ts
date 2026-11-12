@@ -352,6 +352,7 @@ export async function completeSupportLogin(
   if (!transaction || transaction.expiresAt <= Date.now() || !code)
     return new Response("Invalid support callback", { status: 400, headers });
   let failure: "account" | "general" = "general";
+  let stage = "redeem";
   let cleanup: Pick<
     SupportSession,
     "supportId" | "endSecret" | "expiresAt"
@@ -374,10 +375,12 @@ export async function completeSupportLogin(
     const token = requiredString(redeemed, "access_token");
     if (redeemed.token_type !== "Bearer")
       throw new Error("Invalid support token type");
+    stage = "signed-token";
     const proof =
       await createIdentityClient(identityConfig()).verifyActedAccessToken(
         token,
       );
+    stage = "introspection";
     const principal = await createIdentityClient(identityConfig()).introspect(
       token,
       {
@@ -387,6 +390,7 @@ export async function completeSupportLogin(
     );
     const actorSubject = requiredString(support, "actorSubject");
     const targetSubject = requiredString(support, "targetSubject");
+    stage = "identity";
     if (
       support.nonce !== transaction.nonce ||
       proof.actor.subject !== actorSubject ||
@@ -397,12 +401,15 @@ export async function completeSupportLogin(
       principal.clientId !== settings.clientId
     )
       throw new Error("Support identity mismatch");
+    stage = "local-target";
     const local = await targetUser(targetSubject);
     if (!local) {
       failure = "account";
       throw new Error("Target user is not linked in Artbin");
     }
+    stage = "role";
     const role = browserRole(proof, principal, local);
+    stage = "expiry";
     const expiresAt = Date.parse(requiredString(support, "expiresAt"));
     if (
       !Number.isFinite(expiresAt) ||
@@ -412,6 +419,7 @@ export async function completeSupportLogin(
       expiresAt > principal.expiresAt * 1000
     )
       throw new Error("Support expiry is invalid");
+    stage = "session";
     const sessionId = random();
     sessions.set(digest(sessionId), {
       token,
@@ -435,13 +443,23 @@ export async function completeSupportLogin(
     headers.set("Location", "/folders");
     return new Response(null, { status: 303, headers });
   } catch {
+    let cleanupOutcome = "not-issued";
     if (cleanup) {
       try {
         await endRemote(settings, cleanup);
+        cleanupOutcome = "ended";
       } catch {
+        cleanupOutcome = "pending";
         if (Number.isFinite(cleanup.expiresAt)) retryEnd(settings, cleanup);
       }
     }
+    console.warn(
+      JSON.stringify({
+        event: "artbin_support_callback_failed",
+        stage,
+        cleanupOutcome,
+      }),
+    );
     headers.set("Location", `/auth/support/problem?reason=${failure}`);
     return new Response(null, { status: 303, headers });
   }

@@ -63,6 +63,8 @@ identified there without creating an account. Jack Auth can call the
 transport-credential-protected `/auth/support/target` endpoint before starting a
 handoff to check whether the target's immutable subject has a local Artbin row;
 lookup failure must deny the start.
+Callback failures log only the failed verification stage and cleanup state,
+without codes, tokens, subjects, callback URLs, or provider response bodies.
 The banner names the actor and target, and its exit button ends only the
 support session. Normal actor login remains separate. The Auth
 service owns durable expiry and native token revocation if Artbin restarts or an
