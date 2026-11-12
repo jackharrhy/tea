@@ -1,3 +1,4 @@
+import { exerciseAdminDeletion } from "./admin-deletion-workflow.mjs";
 import { exerciseAdminAccounts } from "./admin-accounts-workflow.mjs";
 import { exerciseAdminEditors } from "./admin-editors-workflow.mjs";
 import assert from "node:assert/strict";
@@ -84,6 +85,21 @@ export async function exerciseAdminCopies({
           );
         }
 
+        if (workflow === "delete") {
+          await exerciseAdminDeletion({
+            page,
+            context,
+            origin,
+            name,
+            output,
+            oracleRoot,
+            authPath,
+            restart,
+          });
+          assert.equal(errors.length, 0);
+          results.push({ name, deletion: true, browserErrors: 0 });
+          continue;
+        }
         if (workflow === "accounts") {
           await exerciseAdminAccounts({
             page,
