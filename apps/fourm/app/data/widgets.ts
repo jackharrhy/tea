@@ -6,7 +6,7 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     CREATE TABLE IF NOT EXISTS chat_presence(user_id INTEGER PRIMARY KEY REFERENCES users(id),expires_at INTEGER NOT NULL);`);
   function owner(username: string) {
     const row = db.all(
-      "SELECT id,username,display_name,status_emoji,status_text,status_updated_at FROM users WHERE username=? AND is_disabled=0",
+      "SELECT id,username,display_name,status_emoji,status_text,status_updated_at,guestbook_css,guestbook_html,counter_css,counter_html,status_css,status_html,player_css,player_html,in_webring FROM users WHERE username=?",
       username,
     )[0];
     if (!row) throw new CommunityError(404, "Member not found");
@@ -30,7 +30,7 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
       return {
         owner: user,
         entries: db.all(
-          "SELECT g.*,u.username,u.display_name FROM guestbook_entries g JOIN users u ON u.id=g.author_id WHERE g.user_id=? ORDER BY g.id DESC LIMIT 200",
+          "SELECT g.*,u.username,u.display_name FROM guestbook_entries g JOIN users u ON u.id=g.author_id WHERE g.user_id=? ORDER BY g.created_at DESC",
           user.id,
         ),
       };
@@ -38,8 +38,8 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     signGuestbook(actorId: number, username: string, message: string) {
       member(actorId);
       const user = owner(username);
-      if (!message.trim() || message.length > 500)
-        throw new CommunityError(422, "Write a message up to 500 characters");
+      if (!message) throw new CommunityError(422, "Write a message");
+      message = Array.from(message).slice(0, 500).join("");
       db.all(
         "INSERT INTO guestbook_entries(user_id,author_id,message) VALUES(?,?,?)",
         user.id,
@@ -107,7 +107,7 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     setWebring(actorId: number, enabled: boolean) {
       member(actorId);
       db.all(
-        "UPDATE users SET in_webring=? WHERE id=?",
+        "UPDATE users SET in_webring=?,updated_at=CURRENT_TIMESTAMP WHERE id=?",
         enabled ? 1 : 0,
         actorId,
       );
@@ -199,18 +199,16 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     },
     saveCard(actorId: number, input: Row) {
       member(actorId);
-      const headline = String(input.headline ?? "").slice(0, 120),
+      const headline = String(input.headline ?? ""),
         text = String(input.content ?? "");
-      if (text.length > 100000)
-        throw new CommunityError(413, "Card content is too large");
       db.all(
         "INSERT INTO profile_cards(user_id,headline,content,content_format,accent_color,border_style,card_css) VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET headline=excluded.headline,content=excluded.content,content_format=excluded.content_format,accent_color=excluded.accent_color,border_style=excluded.border_style,card_css=excluded.card_css,updated_at=CURRENT_TIMESTAMP",
         actorId,
         headline,
         text,
         String(input.content_format ?? "html"),
-        String(input.accent_color ?? "#00ffff").slice(0, 20),
-        String(input.border_style ?? "outset").slice(0, 20),
+        String(input.accent_color ?? "#00ffff"),
+        String(input.border_style ?? "outset"),
         String(input.card_css ?? ""),
       );
     },

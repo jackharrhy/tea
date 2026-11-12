@@ -1,3 +1,5 @@
+import { reviewSourceFingerprint } from "./review-source.mjs";
+import { createServer } from "node:net";
 import { parse } from "jsonc-parser";
 import { spawn } from "node:child_process";
 import { randomBytes, createHash } from "node:crypto";
@@ -25,7 +27,27 @@ if (!/^[a-z]{3,20}$/.test(user))
 const subject = `fourm-fixture-${user}`;
 const binary = process.env.CELLD_BIN;
 if (!binary) throw new Error("Set CELLD_BIN to the reviewed Celld fork binary");
+if (
+  ![port, issuerPort, providerPort].every(
+    (value) => Number.isSafeInteger(value) && value > 0 && value < 65536,
+  ) ||
+  new Set([port, issuerPort, providerPort]).size !== 3
+)
+  throw new Error("Choose three distinct valid review ports");
+await Promise.all(
+  [port, issuerPort, providerPort].map(
+    (value) =>
+      new Promise((accept, reject) => {
+        const probe = createServer();
+        probe.once("error", () =>
+          reject(new Error(`Review port ${value} is already occupied`)),
+        );
+        probe.listen(value, "127.0.0.1", () => probe.close(accept));
+      }),
+  ),
+);
 await mkdir(state, { recursive: true, mode: 0o700 });
+const fingerprint = await reviewSourceFingerprint(root);
 let enrollmentKey;
 try {
   enrollmentKey = await readFile(join(state, "enrollment-key"), "utf8");
@@ -56,6 +78,7 @@ const environment = {
   CELLD_ESBUILD: join(repo, "node_modules/.bin/esbuild"),
 };
 const children = [];
+const services = [];
 const logs = [];
 function start(args, extra = {}) {
   const child = spawn(args[0], args.slice(1), {
@@ -70,6 +93,20 @@ function start(args, extra = {}) {
   child.on("error", () => logs.push("Child process failed to start"));
   return child;
 }
+function service(args, extra = {}) {
+  const child = start(args, extra);
+  services.push(child);
+  return child;
+}
+function checkServices() {
+  if (
+    services.length !== 3 ||
+    services.some(
+      (child) => child.exitCode !== null || child.signalCode !== null,
+    )
+  )
+    throw new Error("Review service failed during startup");
+}
 async function command(args, extra = {}) {
   const child = start(args, extra);
   const code = await new Promise((accept, reject) => {
@@ -82,7 +119,10 @@ async function ready(url) {
   const until = Date.now() + 60000;
   while (Date.now() < until) {
     try {
-      if ((await fetch(url, { signal: AbortSignal.timeout(2000) })).ok) return;
+      if ((await fetch(url, { signal: AbortSignal.timeout(2000) })).ok) {
+        checkServices();
+        return;
+      }
     } catch {}
     if (
       children.some((child) => child.exitCode !== null && child.exitCode !== 0)
@@ -165,6 +205,7 @@ try {
   const worker = parse(await readFile(join(root, "wrangler.jsonc"), "utf8"));
   worker.main = "worker.ts";
   worker.vars = {
+    REVIEW_SOURCE_FINGERPRINT: fingerprint,
     AUTH_ISSUER: issuer,
     AUTH_CLIENT_ID: "fourm-local-browser",
     AUTH_PROJECT_ID: "fourm-local-project",
@@ -183,12 +224,12 @@ try {
   await command([binary, "deploy", workerConfig]);
   await command([binary, "deploy", join(root, "review-peer")]);
   await command([binary, "deploy", join(root, "review-gateway")]);
-  start([process.execPath, join(repo, "packages/dev-auth/server.mjs")], {
+  service([process.execPath, join(repo, "packages/dev-auth/server.mjs")], {
     HARRHY_DEV_AUTH_PORT: String(providerPort),
     HARRHY_DEV_AUTH_ORIGIN: issuer,
     HARRHY_DEV_AUTH_CONFIG: join(state, "issuer.json"),
   });
-  start([process.execPath, join(root, "__tests__/issuer.mjs")], {
+  service([process.execPath, join(root, "__tests__/issuer.mjs")], {
     FOURM_FIXTURE_ISSUER: issuer,
     FOURM_FIXTURE_PORT: String(issuerPort),
     FOURM_FIXTURE_UPSTREAM: `http://127.0.0.1:${providerPort}`,
@@ -197,7 +238,7 @@ try {
     FOURM_FIXTURE_SUBJECT: subject,
     FOURM_FIXTURE_USERNAME: user,
   });
-  start([binary, "--no-control-plane", "--trust-forwarded-headers"]);
+  service([binary, "--no-control-plane", "--trust-forwarded-headers"]);
   await ready(`${issuer}/.well-known/openid-configuration`);
   await ready(`http://127.0.0.1:${port}/ready`);
   if (process.env.FOURM_REVIEW_BOOTSTRAP !== "0") {
@@ -262,26 +303,25 @@ try {
       await rm(tokenPath, { force: true });
     }
   }
+  checkServices();
   const report = {
     status: "RUNNING",
     supervisorPid: process.pid,
+    sourceFingerprint: fingerprint,
     origin,
     issuer,
     state,
     worker: "harrhy-fourm-candidate",
     gateway: "harrhy-fourm-review-gateway",
     fixtureSubject: subject,
-    pids: children
-      .filter((child) => child.exitCode === null)
-      .map((child) => child.pid),
+    pids: services.map((child) => child.pid),
     productionTouched: false,
   };
   await writeFile(join(state, "runtime.json"), JSON.stringify(report, null, 2));
   await writeFile(join(state, "runtime.log"), logs.join(""));
   console.log(JSON.stringify(report));
   const unexpected = await new Promise((accept) => {
-    for (const child of children)
-      if (child.exitCode === null) child.once("exit", () => accept(child));
+    for (const child of services) child.once("exit", () => accept(child));
   });
   throw new Error(`Review child exited: ${unexpected.pid}`);
 } catch (error) {

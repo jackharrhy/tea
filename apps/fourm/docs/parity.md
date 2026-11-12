@@ -31,7 +31,34 @@ readiness. Before replacing it, preserve user-added review data, finish parity,
 and protect all real-content preview requests (including media) behind explicit
 private review access. Do not expose imported member content anonymously.
 
-Remaining work includes same-content comparisons and faithful home/settings,
-forum/chat, themes/widgets, notifications/preferences, media/admin/export and
-CLI workflows; original HTMX interactions, ordering, date formatting and recovery
-must be verified against the running oracle, not inferred from unit test counts.
+## Verified so far
+
+Paired desktop/mobile runs use the same imported member/content cohort. The home
+card order and content, profile guestbook placement, guestbook entries, settings
+sections, controls and saved values match the oracle. Actual browser workflows
+cover CSS and guestbook styling save/reopen, notification preferences, playlist
+add/move/remove, page create/edit/reopen/delete, and signing/deleting an entry
+inside the profile's guestbook iframe without navigating the parent. These are
+local review identities acting on copies, not production SSO.
+
+The source's browser helpers and CodeMirror editor are built in this workspace.
+HTMX is the same pinned version, served locally for the isolated comparison.
+The five-minute chat badge uses the source's seeded choices. Raw profile metadata
+is inserted before member scripts; simple/css-only layouts retain their original
+composition. More real-content layout coverage is still required.
+
+Run `npm run test:parity --workspace @harrhy/fourm` with the owned oracle and native
+listeners running. `FOURM_PARITY_WRITES=1` includes the controlled local-copy edits
+and restores existing values. Evidence stays outside Git in the private parity
+root. The native readiness fingerprint must match both its supervisor receipt and
+the current app sources; a stale worker cannot satisfy the comparison.
+
+## Still required
+
+Username/media relocation, full media serving and management, notifications and
+watch behavior, source admin/export workflows, forum quotes/pagination, chat,
+and every original widget rendering/configuration path remain implementation and
+verification work. Source validation/error paths and JSON contracts need the same
+care as positive browser flows. Recheck all real layouts and perform full
+real-content authority reopen, import/replay and recovery before review readiness.
+The earlier POC browser runner is not proof of the corrected workflow threshold.

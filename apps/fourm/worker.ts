@@ -29,6 +29,11 @@ export default {
       const url = new URL(request.url);
       if (url.pathname === "/health")
         return Response.json({ ok: true, app: "fourm" });
+      if (url.pathname === "/sw.js") {
+        const target = new URL(request.url);
+        target.pathname = "/static/sw.js";
+        return env.ASSETS.fetch(new Request(target, request));
+      }
       if (
         url.pathname.startsWith("/assets/") ||
         url.pathname.startsWith("/static/")
@@ -57,7 +62,12 @@ export default {
       const store = runtime(env);
       if (url.pathname === "/ready") {
         await store.call("members");
-        return Response.json({ ready: true });
+        return Response.json({
+          ready: true,
+          ...(env.REVIEW_SOURCE_FINGERPRINT
+            ? { sourceFingerprint: env.REVIEW_SOURCE_FINGERPRINT }
+            : {}),
+        });
       }
       const sessionHash =
         session && /^[0-9a-f]{64}$/.test(session) ? await hash(session) : null;
@@ -72,10 +82,6 @@ export default {
       secured.headers.set("X-Content-Type-Options", "nosniff");
       secured.headers.set("Referrer-Policy", "same-origin");
       secured.headers.set("Cache-Control", "no-store");
-      secured.headers.set(
-        "Content-Security-Policy",
-        "frame-ancestors 'self'; base-uri 'self'; object-src 'none'",
-      );
       return secured;
     } catch (error) {
       const status =

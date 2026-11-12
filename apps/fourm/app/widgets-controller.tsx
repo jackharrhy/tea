@@ -1,3 +1,6 @@
+import { wantsJSON } from "./http.ts";
+import { saved } from "./settings-controller.tsx";
+import { PlaylistSettings } from "./settings-view.tsx";
 import { createController } from "remix/router";
 import { get, post, route } from "remix/routes";
 import type { RemixNode } from "remix/component";
@@ -5,7 +8,7 @@ import { renderToString } from "remix/component/server";
 import { CommunityError } from "./data/community.ts";
 import type { Bindings, Runtime, Viewer } from "./runtime.ts";
 import { cookie, readCookie, hash, token } from "./runtime.ts";
-import { Guestbook, Player, WidgetSettings } from "./widgets.tsx";
+import { guestbookDocument, GuestbookEntries, Player } from "./widgets.tsx";
 import { BareDocument } from "./views.tsx";
 
 export const widgetRoutes = route({
@@ -65,6 +68,23 @@ export function widgetController(
     return viewer.member;
   }
 
+  async function playlistResponse(request: Request) {
+    if (wantsJSON(request))
+      return Response.json({ ok: true, message: "saved" });
+    if (request.headers.get("HX-Request") === "true") {
+      const user = actor();
+      return new Response(
+        await renderToString(
+          <PlaylistSettings
+            tracks={await store.call("playlist", user.username)}
+            media={(await store.call("media", user.id)).items}
+          />,
+        ),
+        { headers: { "Content-Type": "text/html; charset=utf-8" } },
+      );
+    }
+    return redirect("/settings");
+  }
   async function rss(username: string | null, forum = false) {
     const rows = forum
       ? await store.call("threads")
@@ -84,45 +104,25 @@ export function widgetController(
   }
   return createController(widgetRoutes, {
     actions: {
-      async settings() {
-        const member = actor();
-        const [profile, tracks, media, card, ring] = await Promise.all([
-          store.call("profile", member.username),
-          store.call("playlist", member.username),
-          store.call("media", member.id),
-          store.call("profileCard", member.id),
-          store.call("webring", member.username),
-        ]);
-        return page(
-          "Widgets",
-          <WidgetSettings
-            profile={profile}
-            tracks={tracks}
-            media={media.items}
-            card={card}
-            inWebring={ring.members.some(
-              (item) => item.username === member.username,
-            )}
-          />,
-        );
+      settings() {
+        return redirect("/settings");
       },
       async statusSave({ request }) {
-        const member = actor(),
-          body = await fields(request);
-        await store.call("saveProfile", member.id, {
-          display_name: member.display_name,
-          status_text: body.status_text ?? "",
-          status_emoji: body.status_emoji ?? "",
-        });
-        return redirect("/settings/widgets");
+        await store.call(
+          "saveSettingsSection",
+          actor().id,
+          "status",
+          await fields(request),
+        );
+        return saved(request);
       },
       async webringSave({ request }) {
         await store.call(
           "setWebring",
           actor().id,
-          (await fields(request)).enabled === "1",
+          (await fields(request)).in_webring === "on",
         );
-        return redirect("/settings/widgets");
+        return saved(request);
       },
       async avatarSave({ request }) {
         const body = await fields(request);
@@ -131,11 +131,11 @@ export function widgetController(
           actor().id,
           body.media_id ? Number(body.media_id) : null,
         );
-        return redirect("/settings/widgets");
+        return redirect("/settings");
       },
       async cardSave({ request }) {
         await store.call("saveCard", actor().id, await fields(request));
-        return redirect("/settings/widgets");
+        return saved(request);
       },
       async addTrack({ request }) {
         const body = await fields(request);
@@ -145,11 +145,11 @@ export function widgetController(
           Number(body.media_id),
           body.title ?? "",
         );
-        return redirect("/settings/widgets");
+        return playlistResponse(request);
       },
-      async removeTrack({ params }) {
+      async removeTrack({ request, params }) {
         await store.call("removeTrack", actor().id, Number(params.id));
-        return redirect("/settings/widgets");
+        return playlistResponse(request);
       },
       async moveTrack({ request, params }) {
         await store.call(
@@ -158,17 +158,14 @@ export function widgetController(
           Number(params.id),
           (await fields(request)).direction,
         );
-        return redirect("/settings/widgets");
+        return playlistResponse(request);
       },
       async guestbook({ params }) {
         return new Response(
-          "<!doctype html>" +
-            (await renderToString(
-              <Guestbook
-                {...await store.call("guestbook", params.username)}
-                member={viewer.member}
-              />,
-            )),
+          await guestbookDocument({
+            ...(await store.call("guestbook", params.username)),
+            member: viewer.member,
+          }),
           { headers: { "Content-Type": "text/html; charset=utf-8" } },
         );
       },
@@ -179,15 +176,39 @@ export function widgetController(
           params.username,
           (await fields(request)).message ?? "",
         );
+        if (wantsJSON(request))
+          return Response.json({ ok: true, message: "entry added" });
+        if (request.headers.get("HX-Request") === "true")
+          return new Response(
+            await renderToString(
+              <GuestbookEntries
+                {...await store.call("guestbook", params.username)}
+                member={viewer.member}
+              />,
+            ),
+            { headers: { "Content-Type": "text/html; charset=utf-8" } },
+          );
         return redirect(`/u/${encodeURIComponent(params.username)}/guestbook`);
       },
-      async deleteGuestbook({ params }) {
+      async deleteGuestbook({ request, params }) {
         await store.call(
           "deleteGuestbook",
           actor().id,
           params.username,
           Number(params.id),
         );
+        if (wantsJSON(request))
+          return Response.json({ ok: true, message: "entry deleted" });
+        if (request.headers.get("HX-Request") === "true")
+          return new Response(
+            await renderToString(
+              <GuestbookEntries
+                {...await store.call("guestbook", params.username)}
+                member={viewer.member}
+              />,
+            ),
+            { headers: { "Content-Type": "text/html; charset=utf-8" } },
+          );
         return redirect(`/u/${encodeURIComponent(params.username)}/guestbook`);
       },
       async universe() {

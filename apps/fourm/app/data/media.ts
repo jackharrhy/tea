@@ -13,7 +13,7 @@ export function createMedia(db: Database, member: (id: number) => Member) {
     media(actorId: number) {
       member(actorId);
       const items = db.all(
-        "SELECT id,storage_path,mime_type,size_bytes,alt_text FROM media WHERE user_id=? ORDER BY id DESC",
+        "SELECT id,storage_path,mime_type,size_bytes,alt_text FROM media WHERE user_id=? ORDER BY created_at DESC",
         actorId,
       );
       const storageUsed = items.reduce(
@@ -29,7 +29,7 @@ export function createMedia(db: Database, member: (id: number) => Member) {
     },
     publishedMedia(path: string) {
       const row = db.all(
-        "SELECT m.* FROM media m JOIN users u ON u.id=m.user_id WHERE storage_path=? AND u.is_disabled=0",
+        "SELECT m.* FROM media m JOIN users u ON u.id=m.user_id WHERE storage_path=?",
         path,
       )[0];
       if (!row) throw new CommunityError(404, "Media not found");
