@@ -1,13 +1,17 @@
+import { scanStorage } from "./storage-health.ts";
+import { StorageHealthView } from "./admin-storage.tsx";
 import type { Row } from "./data/community.ts";
 import { renderToString } from "remix/component/server";
 import { AdminUserRow } from "./admin-users.tsx";
 import { CommunityError } from "./data/community.ts";
 import { createController } from "remix/router";
-import { route, post } from "remix/routes";
+import { route, post, get } from "remix/routes";
 import type { Runtime, Viewer, Bindings } from "./runtime.ts";
 import { formFields, saved } from "./settings-controller.tsx";
 export const adminRoutes = route({
+  orphans: get("/admin/orphans"),
   banner: post("/admin/site-banner"),
+  randomize: post("/admin/cards/randomize-default-colors"),
   deleteAccount: post("/admin/users/:id/delete"),
   rename: post("/admin/users/:id/rename"),
   toggleAdmin: post("/admin/users/:id/toggle-admin"),
@@ -36,6 +40,22 @@ export function adminController(store: Runtime, viewer: Viewer, env: Bindings) {
   const id = viewer.member?.id ?? null;
   return createController(adminRoutes, {
     actions: {
+      async orphans() {
+        const result = await scanStorage(env.MEDIA, () =>
+          store.call("adminMediaInventory", id),
+        );
+        return new Response(
+          await renderToString(<StorageHealthView {...result} />),
+          { headers: { "Content-Type": "text/html; charset=utf-8" } },
+        );
+      },
+      async randomize() {
+        const count = await store.call("adminRandomizeCards", id);
+        return new Response(null, {
+          status: 303,
+          headers: { Location: `/admin?randomized_cards=${count}` },
+        });
+      },
       async deleteAccount({ request, params }) {
         const fields = await formFields(request);
         const count = await store.deleteAccount(

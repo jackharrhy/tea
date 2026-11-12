@@ -1009,3 +1009,72 @@ it("prunes descendant accounts atomically and blocks active media work", () => {
   expect(community.members().map((u) => u.id)).toEqual([41]);
   expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
 });
+
+it("randomizes only default cyan cards with distinct palette choices before cycling", () => {
+  const { community, sqlite } = fixture();
+  for (let id = 101; id <= 113; id++) {
+    sqlite
+      .prepare(
+        "INSERT INTO users(id,username,display_name,password_hash) VALUES(?,?,?,'')",
+      )
+      .run(id, "member-" + id, "Member");
+    community.saveCard(id, { accent_color: "#00ffff", headline: "retained" });
+  }
+  community.saveCard(41, { accent_color: "#123456", headline: "custom" });
+  community.saveCard(72, {
+    accent_color: "#00FFFF",
+    headline: "uppercase custom",
+  });
+  expect(() => community.adminRandomizeCards(72)).toThrow(
+    "Admin access required",
+  );
+  expect(community.adminRandomizeCards(41)).toBe(13);
+  const cards = sqlite
+    .prepare(
+      "SELECT accent_color,headline FROM profile_cards WHERE user_id>=101 ORDER BY user_id",
+    )
+    .all();
+  expect(new Set(cards.slice(0, 12).map((c) => c.accent_color)).size).toBe(12);
+  expect(cards[12].accent_color).toBe(cards[0].accent_color);
+  expect(
+    cards.every(
+      (c) => c.accent_color !== "#00ffff" && c.headline === "retained",
+    ),
+  ).toBe(true);
+  expect(
+    sqlite
+      .prepare("SELECT accent_color FROM profile_cards WHERE user_id=41")
+      .get()?.accent_color,
+  ).toBe("#123456");
+  expect(
+    sqlite
+      .prepare("SELECT accent_color FROM profile_cards WHERE user_id=72")
+      .get()?.accent_color,
+  ).toBe("#00FFFF");
+  expect(community.adminRandomizeCards(41)).toBe(0);
+});
+
+it("restricts storage inventory to admins and includes paths reserved by recovery", () => {
+  const { community, sqlite } = fixture();
+  community.reserveUpload(41, "jane/upload", "image/png", 10);
+  sqlite
+    .prepare(
+      "INSERT INTO account_cleanup_users(username,user_id) VALUES('retired',99)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO account_cleanup_objects(storage_path,username) VALUES('retired/pending','retired')",
+    )
+    .run();
+  expect(() => community.adminMediaInventory(null)).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.adminMediaInventory(72)).toThrow(
+    "Admin access required",
+  );
+  expect(community.adminMediaInventory(41)).toEqual({
+    paths: [],
+    reserved: ["jane/upload", "retired/pending"],
+  });
+});

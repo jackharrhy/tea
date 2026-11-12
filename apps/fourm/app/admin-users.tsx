@@ -180,6 +180,16 @@ export function AdminUsers(handle: Handle<{ users: Row[]; storage: Row[] }>) {
           stats={handle.props.storage.find((s) => s.id === user.id) ?? {}}
         />
       ))}
+      <form
+        method="post"
+        action="/admin/cards/randomize-default-colors"
+        class="fourm-space-md"
+      >
+        <button type="submit">randomize default card colors</button>{" "}
+        <span class="muted">
+          Only cards with a <code>#00ffff</code> background will change.
+        </span>
+      </form>
     </details>
   );
 }

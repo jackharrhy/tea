@@ -1,6 +1,34 @@
 import { CommunityError } from "./community.ts";
 import type { Database, Member, Row } from "./community.ts";
 import type { pageContent } from "./page-content.ts";
+const cardColors = [
+  "#ffd6a5",
+  "#fdffb6",
+  "#caffbf",
+  "#9bf6ff",
+  "#a0c4ff",
+  "#bdb2ff",
+  "#ffc6ff",
+  "#ffadad",
+  "#d0f4de",
+  "#fefae0",
+  "#fbc4ab",
+  "#cdeac0",
+];
+function shuffledCardColors() {
+  const colors = [...cardColors];
+  for (let index = colors.length - 1; index > 0; index--) {
+    const count = index + 1,
+      limit = 2 ** 32 - (2 ** 32 % count);
+    let random: number;
+    do {
+      random = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (random >= limit);
+    const selected = random % count;
+    [colors[index], colors[selected]] = [colors[selected], colors[index]];
+  }
+  return colors;
+}
 export function createAdmin(
   db: Database,
   admin: (id: number) => Member,
@@ -42,6 +70,37 @@ export function createAdmin(
     };
   }
   return {
+    adminMediaInventory(actorId: number | null) {
+      requireAdmin(actorId);
+      return db.transaction(() => ({
+        paths: db
+          .all("SELECT storage_path FROM media")
+          .map((row) => String(row.storage_path)),
+        reserved: db
+          .all(`SELECT storage_path AS path FROM media_transfers
+          UNION SELECT old_path FROM media_move_files
+          UNION SELECT new_path FROM media_move_files
+          UNION SELECT storage_path FROM account_cleanup_objects`)
+          .map((row) => String(row.path)),
+      }));
+    },
+    adminRandomizeCards(actorId: number | null) {
+      requireAdmin(actorId);
+      return db.transaction(() => {
+        const cards = db.all(
+          "SELECT user_id FROM profile_cards WHERE accent_color='#00ffff'",
+        );
+        const colors = shuffledCardColors();
+        cards.forEach((card, index) =>
+          db.all(
+            "UPDATE profile_cards SET accent_color=? WHERE user_id=?",
+            colors[index % colors.length],
+            card.user_id,
+          ),
+        );
+        return cards.length;
+      });
+    },
     adminUserRow(actorId: number | null, userId: number) {
       requireAdmin(actorId);
       return userRow(userId);
@@ -102,6 +161,12 @@ export function createAdmin(
           "SELECT u.id,count(m.id) AS file_count,coalesce(sum(m.size_bytes),0) AS total_bytes FROM users u LEFT JOIN media m ON m.user_id=u.id GROUP BY u.id",
         ),
         cards: db.all("SELECT * FROM profile_cards ORDER BY user_id"),
+        threads: db.all(
+          "SELECT t.id,t.title,t.is_pinned,t.is_locked,t.reply_count,t.created_at,u.username AS author_username FROM forum_threads t JOIN users u ON u.id=t.author_id ORDER BY t.created_at DESC",
+        ),
+        posts: db.all(
+          "SELECT p.id,p.thread_id,p.content,p.content_format,p.created_at,p.is_edited,u.username AS author_username,t.title AS thread_title FROM forum_posts p JOIN users u ON u.id=p.author_id JOIN forum_threads t ON t.id=p.thread_id ORDER BY p.created_at DESC LIMIT 100",
+        ),
         pages: db
           .all(
             "SELECT p.*,u.username FROM pages p JOIN users u ON u.id=p.user_id ORDER BY p.updated_at DESC",
