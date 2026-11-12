@@ -2,8 +2,9 @@ import { CommunityError } from "./community.ts";
 import type { Database, Member, Row } from "./community.ts";
 
 export function createWidgets(db: Database, member: (id: number) => Member) {
-  db.all(`CREATE TABLE IF NOT EXISTS counter_visits(user_id INTEGER NOT NULL,visitor_hash TEXT NOT NULL,expires_at INTEGER NOT NULL,PRIMARY KEY(user_id,visitor_hash));
-    CREATE TABLE IF NOT EXISTS chat_presence(user_id INTEGER PRIMARY KEY REFERENCES users(id),expires_at INTEGER NOT NULL);`);
+  db.all(
+    "CREATE TABLE IF NOT EXISTS counter_visits(user_id INTEGER NOT NULL,visitor_hash TEXT NOT NULL,expires_at INTEGER NOT NULL,PRIMARY KEY(user_id,visitor_hash));",
+  );
   function owner(username: string) {
     const row = db.all(
       "SELECT id,username,display_name,status_emoji,status_text,status_updated_at,guestbook_css,guestbook_html,counter_css,counter_html,status_css,status_html,player_css,player_html,in_webring FROM users WHERE username=?",
@@ -13,18 +14,6 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     return row;
   }
   return {
-    presence(actorId: number) {
-      member(actorId);
-      db.all("DELETE FROM chat_presence WHERE expires_at<=?", Date.now());
-      db.all(
-        "INSERT INTO chat_presence VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET expires_at=excluded.expires_at",
-        actorId,
-        Date.now() + 6000,
-      );
-      return db.all(
-        "SELECT u.username,u.display_name FROM chat_presence p JOIN users u ON u.id=p.user_id WHERE u.is_disabled=0 ORDER BY u.username",
-      );
-    },
     guestbook(username: string) {
       const user = owner(username);
       return {

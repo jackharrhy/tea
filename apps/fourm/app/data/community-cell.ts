@@ -23,7 +23,7 @@ export class CommunityCell extends DurableObject<Env> {
       const operation = this.community[method] as (
         ...args: unknown[]
       ) => unknown;
-      const value = operation.apply(this.community, args);
+      const value = await operation.apply(this.community, args);
       await this.scheduleMediaWork();
       return { ok: true as const, value };
     } catch (error) {

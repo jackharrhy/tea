@@ -81,7 +81,10 @@ export default {
       const secured = new Response(response.body, response);
       secured.headers.set("X-Content-Type-Options", "nosniff");
       secured.headers.set("Referrer-Policy", "same-origin");
-      if (!url.pathname.startsWith("/uploads/"))
+      if (
+        !url.pathname.startsWith("/uploads/") &&
+        url.pathname !== "/chat/stream"
+      )
         secured.headers.set("Cache-Control", "no-store");
       return secured;
     } catch (error) {
