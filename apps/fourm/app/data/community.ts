@@ -1,3 +1,4 @@
+import { createPushDevices } from "./push.ts";
 import { createChatRoom } from "./chat-room.ts";
 import { mediaMoveSchema, createMediaMoves } from "./media-moves.ts";
 import { createSettings } from "./settings.ts";
@@ -184,6 +185,7 @@ export function createCommunity(
     ...createMedia(db, member),
     ...createMediaMoves(db, member),
     ...createWidgets(db, member),
+    ...createPushDevices(db, member),
     member,
     acceptTrust(actorId: number) {
       member(actorId);
