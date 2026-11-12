@@ -48,3 +48,15 @@ document.addEventListener("click", (event) => {
       button.dataset.mediaFormat ?? "html",
     );
 });
+
+document.addEventListener("submit", (event) => {
+  const form = event.target;
+  if (
+    form instanceof HTMLFormElement &&
+    form.getAttribute("action") === "/admin/cards/randomize-default-colors" &&
+    !window.confirm(
+      "Randomize colors for cards still using the default cyan background?",
+    )
+  )
+    event.preventDefault();
+});

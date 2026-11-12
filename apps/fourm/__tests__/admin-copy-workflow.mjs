@@ -1,3 +1,4 @@
+import { exerciseAdminForum } from "./admin-forum-workflow.mjs";
 import { exerciseAdminDeletion } from "./admin-deletion-workflow.mjs";
 import { exerciseAdminAccounts } from "./admin-accounts-workflow.mjs";
 import { exerciseAdminEditors } from "./admin-editors-workflow.mjs";
@@ -85,6 +86,19 @@ export async function exerciseAdminCopies({
           );
         }
 
+        if (workflow === "forum-admin") {
+          await exerciseAdminForum({
+            page,
+            context,
+            origin,
+            name,
+            output,
+            restart,
+          });
+          assert.equal(errors.length, 0);
+          results.push({ name, forumAdmin: true, browserErrors: 0 });
+          continue;
+        }
         if (workflow === "delete") {
           await exerciseAdminDeletion({
             page,
