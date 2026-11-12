@@ -86,8 +86,7 @@ export function createCommunity(db: Database) {
 
   function writePage(actorId: number, pageSlug: string, input: Row) {
     member(actorId);
-    slug(pageSlug);
-    const title = required(input.title, 140, "Title");
+    const title = String(input.title ?? "");
     const content = String(input.content ?? "");
     const parts = pageBodies.chunks(content);
     db.all(
@@ -99,7 +98,7 @@ export function createCommunity(db: Database) {
       pageSlug,
       title,
       parts.length ? "" : content,
-      format(input.content_format ?? "html"),
+      String(input.content_format ?? "html"),
       String(input.layout ?? "default"),
       input.is_public ? 1 : 0,
     );
@@ -355,6 +354,9 @@ export function createCommunity(db: Database) {
       return pageBodies.read(page);
     },
     savePage(actorId: number, pageSlug: string, input: Row) {
+      slug(pageSlug);
+      required(input.title, 140, "Title");
+      format(input.content_format ?? "html");
       return db.transaction(() => writePage(actorId, pageSlug, input));
     },
     createSettingsPage(actorId: number, pageSlug: string, input: Row) {
@@ -367,12 +369,14 @@ export function createCommunity(db: Database) {
         ).length
       )
         throw new CommunityError(409, "a page with that slug already exists");
-      return this.savePage(actorId, pageSlug, { ...input, is_public: 1 });
+      return db.transaction(() =>
+        writePage(actorId, pageSlug, { ...input, is_public: 1 }),
+      );
     },
     editSettingsPage(actorId: number, oldSlug: string, input: Row) {
       member(actorId);
       const existing = this.page(actorId, oldSlug, actorId);
-      const newSlug = slug(String(input.new_slug ?? ""));
+      const newSlug = String(input.new_slug ?? "").trim();
       if (
         db.all(
           "SELECT id FROM pages WHERE user_id=? AND slug=? AND id<>?",
@@ -384,7 +388,10 @@ export function createCommunity(db: Database) {
         throw new CommunityError(409, "a page with that slug already exists");
       return db.transaction(() => {
         db.all("UPDATE pages SET slug=? WHERE id=?", newSlug, existing.id);
-        return writePage(actorId, newSlug, input);
+        return writePage(actorId, newSlug, {
+          ...input,
+          title: String(input.title ?? "").trim(),
+        });
       });
     },
     deletePage(actorId: number, pageSlug: string) {
