@@ -2,6 +2,7 @@ import { unsafeHTML } from "remix/component";
 import type { Handle, RemixNode } from "remix/component";
 import type { Member, Row } from "./data/community.ts";
 import { postContent } from "./rendering.ts";
+import { MediaPicker } from "./settings-view.tsx";
 import { LocalTime } from "./time.tsx";
 
 // Keep the source banner element intact: saved banner CSS can target its children.
@@ -218,68 +219,299 @@ export function NewThread() {
   );
 }
 export function Thread(
-  handle: Handle<{ thread: Row; posts: Row[]; member: Member | null }>,
+  handle: Handle<{
+    thread: Row;
+    posts: Row[];
+    member: Member | null;
+    page: number;
+    total_pages: number;
+    watching: boolean;
+    media: Row[];
+  }>,
 ) {
-  return () => (
-    <>
-      <h1>{handle.props.thread.title}</h1>
-      {handle.props.thread.is_locked ? <p>This thread is locked.</p> : null}
-      {handle.props.posts.map((post) => (
-        <article id={`post-${post.id}`}>
-          <p>
-            <a href={`/u/${post.username}`}>{post.display_name}</a>{" "}
-            <small>
-              {post.created_at}
-              {post.is_edited ? " · edited" : ""}
-            </small>
-          </p>
-          <div
-            innerHTML={unsafeHTML(
-              postContent(String(post.content), String(post.content_format)),
-            )}
-          />
-          {handle.props.member &&
-          (handle.props.member.id === post.author_id ||
-            handle.props.member.is_admin) ? (
-            <p>
-              <a href={`/forum/posts/${post.id}/edit`}>Edit post</a>
-            </p>
+  return () => {
+    const { thread, posts, member, page, total_pages, watching } = handle.props;
+    return (
+      <>
+        {thread.custom_css ? (
+          <style innerHTML={unsafeHTML(String(thread.custom_css))} />
+        ) : null}
+        <h1>{thread.title}</h1>
+        <p class="muted">
+          by{" "}
+          <a href={`/u/${thread.author_username}`}>
+            {thread.author_display_name || thread.author_username}
+          </a>
+          {" · "}
+          <LocalTime value={thread.created_at} format="full" />
+          {thread.is_pinned ? " · 📌 pinned" : ""}
+          {thread.is_locked ? " · 🔒 locked" : ""}
+        </p>
+        <div class="fourm-actions fourm-space-sm">
+          {member && (member.id === thread.author_id || member.is_admin) ? (
+            <a href={`/forum/${thread.id}/edit`} class="btn-sm">
+              edit thread
+            </a>
           ) : null}
-          {post.forum_signature ? (
-            <small
-              innerHTML={unsafeHTML(
-                postContent(String(post.forum_signature), "bbcode"),
-              )}
-            />
-          ) : null}
-        </article>
-      ))}
-      {handle.props.member &&
-      (!handle.props.thread.is_locked || handle.props.member.is_admin) ? (
-        <form method="post" action={`/forum/${handle.props.thread.id}/reply`}>
-          <label>
-            Reply
-            <textarea name="content" required />
-          </label>
-          <Format bbcode value="bbcode" />
-          <button>Post reply</button>
-        </form>
-      ) : null}
-      {handle.props.member?.is_admin ? (
-        <div class="row">
-          {["lock", "pin", "delete"].map((action) => (
+          {member && (member.id === thread.author_id || member.is_admin) ? (
             <form
               method="post"
-              action={`/forum/${handle.props.thread.id}/moderate`}
+              action={`/forum/${thread.id}/delete`}
+              class="fourm-inline-form"
+              hx-post={`/forum/${thread.id}/delete`}
+              hx-confirm="Delete this thread and all its posts?"
             >
-              <input type="hidden" name="action" value={action} />
-              <button>{action}</button>
+              <button class="btn-sm">delete thread</button>
             </form>
+          ) : null}
+          {member?.is_admin ? (
+            <>
+              <form
+                method="post"
+                action={`/forum/${thread.id}/pin`}
+                class="fourm-inline-form"
+                hx-post={`/forum/${thread.id}/pin`}
+              >
+                <button class="btn-sm">
+                  {thread.is_pinned ? "unpin" : "pin"}
+                </button>
+              </form>
+              <form
+                method="post"
+                action={`/forum/${thread.id}/lock`}
+                class="fourm-inline-form"
+                hx-post={`/forum/${thread.id}/lock`}
+              >
+                <button class="btn-sm">
+                  {thread.is_locked ? "unlock" : "lock"}
+                </button>
+              </form>
+            </>
+          ) : null}
+          {member ? (
+            <form
+              method="post"
+              action={`/forum/${thread.id}/watch`}
+              class="fourm-inline-form"
+              hx-post={`/forum/${thread.id}/watch`}
+            >
+              <button class="btn-sm">
+                {watching ? "👁 unwatch" : "👁 watch"}
+              </button>
+            </form>
+          ) : null}
+        </div>
+        {thread.custom_html ? (
+          <div innerHTML={unsafeHTML(String(thread.custom_html))} />
+        ) : null}
+        <div id="forum-posts">
+          {posts.map((post) => (
+            <div class="forum-post" id={`post-${post.id}`}>
+              <div class="forum-post-meta">
+                <a href={`/u/${post.author_username}`}>
+                  <strong>
+                    {post.author_display_name || post.author_username}
+                  </strong>
+                </a>
+                {" · "}
+                <LocalTime value={post.created_at} format="full" />
+                {post.is_edited ? (
+                  <>
+                    {" "}
+                    · <em>(edited)</em>
+                  </>
+                ) : null}
+                {member && !thread.is_locked ? (
+                  <button
+                    type="button"
+                    class="btn-sm"
+                    data-post-id={String(post.id)}
+                    data-author={String(post.author_username)}
+                    data-content={String(post.content)}
+                  >
+                    quote
+                  </button>
+                ) : null}
+                {member && (member.id === post.author_id || member.is_admin) ? (
+                  <>
+                    <a href={`/forum/posts/${post.id}/edit`}>
+                      <button type="button" class="btn-sm">
+                        edit
+                      </button>
+                    </a>
+                    <form
+                      method="post"
+                      action={`/forum/posts/${post.id}/delete`}
+                      class="fourm-inline-form"
+                      hx-post={`/forum/posts/${post.id}/delete`}
+                      hx-target={`#post-${post.id}`}
+                      hx-swap="outerHTML"
+                      hx-confirm="Delete this post?"
+                    >
+                      <button class="btn-sm">delete</button>
+                    </form>
+                  </>
+                ) : null}
+              </div>{" "}
+              {post.quoted_content ? (
+                <blockquote class="forum-quote" id={`quote-${post.id}`}>
+                  {post.quoted_author ? (
+                    <>
+                      <strong>
+                        <a href={`#post-${post.quoted_post_id}`}>
+                          {post.quoted_author} wrote:
+                        </a>
+                      </strong>
+                      <br />{" "}
+                    </>
+                  ) : null}
+                  <div
+                    class={
+                      "forum-quote-body" +
+                      (String(post.quoted_content).length > 300
+                        ? " forum-quote-collapsed"
+                        : "")
+                    }
+                    innerHTML={unsafeHTML(
+                      postContent(
+                        String(post.quoted_content),
+                        String(post.quoted_content_format || "bbcode"),
+                      ),
+                    )}
+                  />
+                  {String(post.quoted_content).length > 300 ? (
+                    <button type="button" class="btn-sm forum-quote-toggle">
+                      show more
+                    </button>
+                  ) : null}
+                </blockquote>
+              ) : null}{" "}
+              <div
+                class="forum-post-content"
+                innerHTML={unsafeHTML(
+                  postContent(
+                    String(post.content),
+                    String(post.content_format),
+                  ),
+                )}
+              />
+              {post.author_signature ? (
+                <div
+                  class="forum-signature"
+                  innerHTML={unsafeHTML(
+                    postContent(String(post.author_signature), "bbcode"),
+                  )}
+                />
+              ) : null}
+            </div>
           ))}
         </div>
-      ) : null}
-    </>
-  );
+        {total_pages > 1 ? (
+          <nav class="pagination">
+            {Array.from({ length: total_pages }, (_, i) => i + 1).map((n) =>
+              n === page ? (
+                <strong>{n}</strong>
+              ) : (
+                <a href={`/forum/${thread.id}?page=${n}`}>{n}</a>
+              ),
+            )}
+          </nav>
+        ) : null}
+        {!member ? (
+          <p class="muted fourm-space-md">
+            <a href="/login">log in</a> to reply
+          </p>
+        ) : thread.is_locked ? (
+          <p class="muted fourm-space-md">🔒 this thread is locked</p>
+        ) : (
+          <details class="panel fourm-space-lg" id="reply-details">
+            <summary>
+              <h2>reply</h2>
+            </summary>
+            <form
+              method="post"
+              action={`/forum/${thread.id}/reply`}
+              hx-post={`/forum/${thread.id}/reply`}
+              class="stack"
+            >
+              <input
+                type="hidden"
+                name="quoted_post_id"
+                id="quoted_post_id"
+                value=""
+              />
+              <input
+                type="hidden"
+                name="quoted_content"
+                id="quoted_content"
+                value=""
+              />
+              <input
+                type="hidden"
+                name="quoted_author"
+                id="quoted_author"
+                value=""
+              />
+              <div id="quote-preview" class="forum-quote fourm-hidden">
+                <div class="fourm-actions fourm-actions-spaced">
+                  <strong>
+                    quoting <span id="quote-preview-author"></span>:
+                  </strong>
+                  <button type="button" class="btn-sm">
+                    remove
+                  </button>
+                </div>
+                <p id="quote-preview-text" class="muted fourm-space-xs"></p>
+              </div>
+              <label>
+                format (
+                <a
+                  href="https://www.phpbb.com/community/help/bbcode"
+                  target="_blank"
+                >
+                  BBCode?
+                </a>
+                ):
+                <select name="content_format">
+                  <option value="bbcode" selected>
+                    BBCode
+                  </option>
+                  <option value="markdown">Markdown</option>
+                </select>
+              </label>
+              <textarea
+                name="content"
+                id="reply-content"
+                rows={6}
+                required
+                placeholder="write your reply..."
+              ></textarea>
+              <MediaPicker
+                items={handle.props.media}
+                editor="reply-content"
+                format="bbcode"
+              />
+              <div class="fourm-actions fourm-space-xs">
+                <button type="submit">post reply</button>
+                <button
+                  type="button"
+                  class="btn-sm"
+                  data-preview-editor="reply-content"
+                >
+                  preview
+                </button>
+              </div>
+              <div
+                id="preview-reply-content"
+                class="forum-preview fourm-hidden"
+                data-state="idle"
+              ></div>
+            </form>
+          </details>
+        )}
+      </>
+    );
+  };
 }
 export function Chat(handle: Handle<{ messages: Row[] }>) {
   return () => (

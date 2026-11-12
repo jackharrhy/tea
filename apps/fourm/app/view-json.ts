@@ -104,3 +104,50 @@ export function forumJSON(index: ReturnType<Community["forumIndex"]>) {
     })),
   };
 }
+
+export function threadJSON(detail: ReturnType<Community["thread"]>) {
+  const { thread } = detail;
+  return {
+    id: thread.id,
+    title: thread.title,
+    author_username: thread.author_username,
+    author_display_name: thread.author_display_name ?? "",
+    is_pinned: Boolean(thread.is_pinned),
+    is_locked: Boolean(thread.is_locked),
+    custom_css: thread.custom_css ?? "",
+    custom_html: thread.custom_html ?? "",
+    created_at: apiDate(thread.created_at),
+    total_posts: detail.total_posts,
+    page: detail.page,
+    total_pages: detail.total_pages,
+    watching: detail.watching,
+    posts: detail.posts.map((post) => ({
+      id: post.id,
+      thread_id: post.thread_id,
+      author_username: post.author_username,
+      author_display_name: post.author_display_name ?? "",
+      content: post.content,
+      content_format: post.content_format,
+      rendered_content: postContent(
+        String(post.content),
+        String(post.content_format),
+      ),
+      quoted_post_id: post.quoted_post_id,
+      quoted_content: post.quoted_content,
+      quoted_content_format: post.quoted_content_format,
+      quoted_author: post.quoted_author,
+      rendered_quoted_content: post.quoted_content
+        ? postContent(
+            String(post.quoted_content),
+            String(post.quoted_content_format || "bbcode"),
+          )
+        : "",
+      is_edited: Boolean(post.is_edited),
+      author_signature: post.author_signature,
+      rendered_signature: post.author_signature
+        ? postContent(String(post.author_signature), "bbcode")
+        : "",
+      created_at: apiDate(post.created_at),
+    })),
+  };
+}
