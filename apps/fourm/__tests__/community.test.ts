@@ -607,3 +607,26 @@ it("allows only the thread author or local admin to edit and delete threads", ()
   community.deleteThread(72, thread);
   expect(() => community.thread(thread)).toThrow();
 });
+
+it("persists thread creation styling without changing post ownership", () => {
+  const { community } = fixture();
+  const id = community.createThread(72, " Styled ", "First post", "markdown", {
+    custom_css: ".forum-post {color:purple}",
+    custom_html: "<aside>Thread intro</aside>",
+  });
+  const detail = community.thread(id, 1, 72);
+  expect(detail.thread.title).toBe("Styled");
+  expect(detail.thread.custom_css).toBe(".forum-post {color:purple}");
+  expect(detail.thread.custom_html).toBe("<aside>Thread intro</aside>");
+  expect(detail.posts[0].author_id).toBe(72);
+  expect(detail.watching).toBe(true);
+});
+
+it("deletes an owned post without inventing thread deletion or last-reply rewrites", () => {
+  const { community } = fixture();
+  const thread = community.createThread(41, "Discussion", "First", "bbcode");
+  const first = community.thread(thread).posts[0];
+  community.deletePost(41, Number(first.id));
+  expect(community.thread(thread).posts).toEqual([]);
+  expect(community.thread(thread).thread.title).toBe("Discussion");
+});

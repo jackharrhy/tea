@@ -132,3 +132,16 @@ document.addEventListener("click", (event) => {
     previewPost(button.dataset.previewEditor);
   }
 });
+
+document.addEventListener("change", (event) => {
+  if (
+    !(event.target instanceof HTMLSelectElement) ||
+    event.target.name !== "content_format"
+  )
+    return;
+  const editor = event.target
+    .closest("form")
+    ?.querySelector<HTMLTextAreaElement>("textarea[name=content]");
+  if (editor?.id && window["_mediaFormat"])
+    window["_mediaFormat"][editor.id] = event.target.value;
+});

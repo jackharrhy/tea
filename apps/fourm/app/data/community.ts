@@ -493,6 +493,7 @@ export function createCommunity(db: Database) {
       title: string,
       content: string,
       contentFormat: string,
+      customization: Row = {},
     ) {
       member(actorId);
       required(title, 200, "Title");
@@ -500,10 +501,12 @@ export function createCommunity(db: Database) {
       format(contentFormat);
       return db.transaction(() => {
         const thread = db.all(
-          "INSERT INTO forum_threads(author_id,title,last_reply_by_id) VALUES(?,?,?) RETURNING id",
+          "INSERT INTO forum_threads(author_id,title,last_reply_by_id,custom_css,custom_html) VALUES(?,?,?,?,?) RETURNING id",
           actorId,
-          title,
+          title.trim(),
           actorId,
+          String(customization.custom_css ?? ""),
+          String(customization.custom_html ?? ""),
         )[0];
         db.all(
           "INSERT INTO forum_posts(thread_id,author_id,content,content_format) VALUES(?,?,?,?)",
@@ -678,19 +681,8 @@ export function createCommunity(db: Database) {
       return db.transaction(() => {
         const post = this.postForEdit(actorId, postId);
         db.all("DELETE FROM forum_posts WHERE id=?", postId);
-        const latest = db.all(
-          "SELECT author_id,created_at FROM forum_posts WHERE thread_id=? ORDER BY id DESC LIMIT 1",
-          post.thread_id,
-        )[0];
-        if (!latest) {
-          db.all("DELETE FROM forum_threads WHERE id=?", post.thread_id);
-          return null;
-        }
         db.all(
-          "UPDATE forum_threads SET reply_count=(SELECT count(*)-1 FROM forum_posts WHERE thread_id=?),last_reply_by_id=?,last_reply_at=? WHERE id=?",
-          post.thread_id,
-          latest.author_id,
-          latest.created_at,
+          "UPDATE forum_threads SET reply_count=reply_count-1 WHERE id=?",
           post.thread_id,
         );
         return Number(post.thread_id);
