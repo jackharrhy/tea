@@ -55,6 +55,7 @@ interface SupportSession {
 
 interface SupportConfig {
   readonly issuer: string;
+  readonly supportOrigin: string;
   readonly publicOrigin: string;
   readonly clientId: string;
   readonly transportSecret: string;
@@ -70,23 +71,37 @@ const random = () => randomBytes(32).toString("base64url");
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 
+function serviceOrigin(input: string): string | null {
+  try {
+    const url = new URL(input);
+    const localHttp =
+      url.protocol === "http:" &&
+      ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+    if (
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash ||
+      url.username ||
+      url.password ||
+      (url.protocol !== "https:" && !localHttp) ||
+      (process.env.NODE_ENV === "production" && url.protocol !== "https:")
+    )
+      return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
 function supportConfig(): SupportConfig | null {
   if (process.env.ARTBIN_SUPPORT_LOGIN_ENABLED !== "1") return null;
   const identity = identityConfig();
-  const publicOrigin = process.env.ARTBIN_URL ?? "";
+  const publicOrigin = serviceOrigin(process.env.ARTBIN_URL ?? "");
+  const supportOrigin = serviceOrigin(process.env.AUTH_SUPPORT_ORIGIN ?? "");
   const clientId = process.env.AUTH_SUPPORT_CLIENT_ID ?? "";
   const transportSecret = process.env.AUTH_SUPPORT_TRANSPORT_SECRET ?? "";
   const resourceClientId = process.env.AUTH_INTROSPECTION_CLIENT_ID ?? "";
   const resourceSecret = process.env.AUTH_INTROSPECTION_SECRET ?? "";
-  let parsedOrigin: URL;
-  try {
-    parsedOrigin = new URL(publicOrigin);
-  } catch {
-    throw new Response("Support login unavailable", { status: 503 });
-  }
-  const localHttp =
-    parsedOrigin.protocol === "http:" &&
-    ["localhost", "127.0.0.1", "[::1]"].includes(parsedOrigin.hostname);
   if (
     !clientId ||
     !transportSecret ||
@@ -96,20 +111,15 @@ function supportConfig(): SupportConfig | null {
     !identity.projectId ||
     !identity.organizationId ||
     !publicOrigin ||
-    parsedOrigin.pathname !== "/" ||
-    parsedOrigin.search ||
-    parsedOrigin.hash ||
-    parsedOrigin.username ||
-    parsedOrigin.password ||
-    (parsedOrigin.protocol !== "https:" && !localHttp) ||
+    !supportOrigin ||
     (process.env.NODE_ENV === "production" &&
-      (parsedOrigin.protocol !== "https:" ||
-        !identity.issuer.startsWith("https://")))
+      !identity.issuer.startsWith("https://"))
   )
     throw new Response("Support login unavailable", { status: 503 });
   return {
     issuer: identity.issuer,
-    publicOrigin: publicOrigin.replace(/\/$/, ""),
+    supportOrigin,
+    publicOrigin,
     clientId,
     transportSecret,
     resourceClientId,
@@ -151,7 +161,7 @@ async function authPost(
   path: "/support/redeem" | "/support/session" | "/support/end",
   body: Record<string, string>,
 ): Promise<Response> {
-  return fetch(`${config.issuer}${path}`, {
+  return fetch(`${config.supportOrigin}${path}`, {
     method: "POST",
     redirect: "manual",
     signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
@@ -262,7 +272,7 @@ export async function beginSupportLogin(request: Request): Promise<Response> {
     expiresAt: Date.now() + START_TTL_MS,
   });
   const challenge = createHash("sha256").update(verifier).digest("base64url");
-  const url = new URL(`${settings.issuer}/support/handoff`);
+  const url = new URL(`${settings.supportOrigin}/support/handoff`);
   url.search = new URLSearchParams({
     request: requestRef,
     consumer_id: "artbin",

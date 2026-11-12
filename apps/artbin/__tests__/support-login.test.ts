@@ -17,6 +17,7 @@ import {
 import { applyMigrations, createTestDatabase, type TestDatabase } from "./db";
 
 const issuer = "https://auth.test";
+const supportOrigin = "https://support.test";
 const artbin = "https://artbin.test";
 const project = "artbin-project";
 const scopes =
@@ -60,6 +61,7 @@ const originalEnv = Object.fromEntries(
     "AUTH_INTROSPECTION_CLIENT_ID",
     "AUTH_INTROSPECTION_SECRET",
     "AUTH_SUPPORT_CLIENT_ID",
+    "AUTH_SUPPORT_ORIGIN",
     "AUTH_SUPPORT_TRANSPORT_SECRET",
     "ARTBIN_SUPPORT_LOGIN_ENABLED",
     "ARTBIN_URL",
@@ -89,6 +91,7 @@ function setup() {
     AUTH_INTROSPECTION_CLIENT_ID: "artbin-resource",
     AUTH_INTROSPECTION_SECRET: "resource-secret",
     AUTH_SUPPORT_CLIENT_ID: "artbin-support-client",
+    AUTH_SUPPORT_ORIGIN: supportOrigin,
     AUTH_SUPPORT_TRANSPORT_SECRET: "support-transport-secret",
     ARTBIN_SUPPORT_LOGIN_ENABLED: "1",
     ARTBIN_URL: artbin,
@@ -183,7 +186,7 @@ test("support handoff enters an existing target without mutating their account, 
   );
   expect(start.status).toBe(303);
   const handoff = new URL(start.headers.get("Location")!);
-  expect(handoff.origin).toBe(issuer);
+  expect(handoff.origin).toBe(supportOrigin);
   expect(handoff.searchParams.get("code_challenge_method")).toBe("S256");
   const nonce = handoff.searchParams.get("nonce")!;
   const state = handoff.searchParams.get("state")!;
@@ -196,6 +199,7 @@ test("support handoff enters an existing target without mutating their account, 
     ),
   );
   expect(callback.status).toBe(303);
+  expect(calls).toContain(`${supportOrigin}/support/redeem`);
   const sessionCookie = callback.headers
     .getSetCookie()
     .find((entry) => entry.startsWith("artbin_support="))!
@@ -233,6 +237,7 @@ test("support handoff enters an existing target without mutating their account, 
   );
   expect(exited.status).toBe(303);
   expect(calls.filter((call) => call.endsWith("/support/end"))).toHaveLength(1);
+  expect(calls).toContain(`${supportOrigin}/support/end`);
   await expect(
     getUserFromRequest(
       new Request(`${artbin}/folders`, {

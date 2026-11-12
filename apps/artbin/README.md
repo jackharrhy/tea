@@ -68,3 +68,5 @@ endpoints, dedicated confidential client, transport credential, native policy
 and isolated consumer acceptance are ready. The private production configuration
 will need `AUTH_SUPPORT_CLIENT_ID` and a distinct
 `AUTH_SUPPORT_TRANSPORT_SECRET`; do not reuse the resource introspection secret.
+Set `AUTH_SUPPORT_ORIGIN` to the Jack Auth support HTTP origin; the native
+`AUTH_ISSUER` remains the authority for signed tokens and introspection.
