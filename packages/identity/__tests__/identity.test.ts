@@ -192,7 +192,10 @@ test("HTTP issuer is limited to local development hosts", () => {
     createIdentityClient({ ...config, issuer: "http://127.0.0.1:8786" }),
   );
   assert.doesNotThrow(() =>
-    createIdentityClient({ ...config, issuer: "http://ref-auth.localhost:8786" }),
+    createIdentityClient({
+      ...config,
+      issuer: "http://ref-auth.localhost:8786",
+    }),
   );
   assert.throws(() =>
     createIdentityClient({ ...config, issuer: "http://auth.example" }),
