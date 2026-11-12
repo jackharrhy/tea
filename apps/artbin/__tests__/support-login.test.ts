@@ -175,7 +175,7 @@ function mockProvider(input: {
 
 function lookup(targetSubject: string, authorization?: string) {
   return router.fetch(
-    new Request(`${artbin}/auth/support/target`, {
+    new Request(`${artbin}/auth/support/eligibility`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -186,7 +186,7 @@ function lookup(targetSubject: string, authorization?: string) {
   );
 }
 
-test("support target lookup requires the transport credential and an existing local subject", async () => {
+test("support eligibility requires the dedicated client credential and an existing local subject", async () => {
   const db = setup();
   await db.insert(users).values({
     id: "local-target",
@@ -194,15 +194,26 @@ test("support target lookup requires the transport credential and an existing lo
     authSubject: "target",
     isAdmin: false,
   });
-  const credential = `Basic ${Buffer.from("artbin:support-transport-secret").toString("base64")}`;
+  const credential = `Basic ${Buffer.from("artbin-support-client:support-transport-secret").toString("base64")}`;
   expect((await lookup("target")).status).toBe(401);
   expect((await lookup("target", "Basic invalid")).status).toBe(401);
+  expect(
+    (
+      await lookup(
+        "target",
+        `Basic ${Buffer.from("artbin:support-transport-secret").toString("base64")}`,
+      )
+    ).status,
+  ).toBe(401);
   const linked = await lookup("target", credential);
   expect(linked.status).toBe(200);
-  expect(await linked.json()).toEqual({ linked: true });
+  expect(await linked.json()).toEqual({ version: 1, localProfileExists: true });
   const missing = await lookup("unlinked", credential);
   expect(missing.status).toBe(200);
-  expect(await missing.json()).toEqual({ linked: false });
+  expect(await missing.json()).toEqual({
+    version: 1,
+    localProfileExists: false,
+  });
 });
 
 test("support handoff uses an existing target and exit rejects in-flight verification", async () => {
@@ -228,7 +239,9 @@ test("support handoff uses an existing target and exit rejects in-flight verific
   const callback = await completeSupportLogin(
     new Request(
       `${artbin}/auth/support/callback?code=${"b".repeat(43)}&state=${state}`,
-      { headers: { Cookie: stateCookie } },
+      {
+        headers: { Cookie: stateCookie },
+      },
     ),
   );
   expect(callback.status).toBe(303);

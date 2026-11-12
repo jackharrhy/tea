@@ -60,7 +60,7 @@ browser navigation goes to `/auth/support/recover` for an explicit
 CSRF-protected exit after restart. A rejected callback clears its transaction
 cookie and redirects to a code-free problem page; an unlinked local target is
 identified there without creating an account. Jack Auth can call the
-transport-credential-protected `/auth/support/target` endpoint before starting a
+transport-credential-protected `/auth/support/eligibility` endpoint before starting a
 handoff to check whether the target's immutable subject has a local Artbin row;
 lookup failure must deny the start.
 Callback failures log only the failed verification stage and cleanup state,

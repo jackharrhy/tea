@@ -244,10 +244,12 @@ export async function supportTargetEligibility(
   request: Request,
 ): Promise<Response> {
   const settings = supportConfig();
-  if (!settings) return new Response("Not Found", { status: 404 });
   const headers = { "Cache-Control": "no-store" };
+  if (!settings)
+    return new Response("Support unavailable", { status: 503, headers });
   const authorization = request.headers.get("Authorization") ?? "";
-  if (!sameSecret(authorization, basic(settings)))
+  const expected = `Basic ${Buffer.from(`${encodeURIComponent(settings.clientId)}:${encodeURIComponent(settings.transportSecret)}`).toString("base64")}`;
+  if (!sameSecret(authorization, expected))
     return new Response("Unauthorized", { status: 401, headers });
   if (
     request.headers.get("Content-Type")?.split(";", 1)[0] !== "application/json"
@@ -276,7 +278,7 @@ export async function supportTargetEligibility(
   )
     return new Response("Invalid support target", { status: 400, headers });
   const linked = Boolean(await targetUser(input.targetSubject));
-  return Response.json({ linked }, { headers });
+  return Response.json({ version: 1, localProfileExists: linked }, { headers });
 }
 
 function supportSessionAllowedPath(pathname: string): boolean {

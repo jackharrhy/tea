@@ -76,7 +76,7 @@ export default createController(routes.auth, {
       );
     },
 
-    supportTarget(context) {
+    supportEligibility(context) {
       return supportTargetEligibility(context.request);
     },
 
