@@ -583,8 +583,13 @@ export function createAppRouter(
           await store.call("deleteMedia", member().id, Number(params.id));
           return redirect("/settings/media");
         },
-        bytes({ params }) {
-          return readMedia(env, store, `${params.username}/${params.filename}`);
+        bytes({ request, params }) {
+          return readMedia(
+            request,
+            env,
+            store,
+            `${params.username}/${params.filename}`,
+          );
         },
         async apiMedia({ request }) {
           const actor = await apiMember(request, "media-read");
