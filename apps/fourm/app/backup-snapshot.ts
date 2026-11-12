@@ -1,3 +1,5 @@
+import { canonicalTables } from "./canonical-tables.ts";
+export { canonicalTables } from "./canonical-tables.ts";
 import { CommunityError } from "./data/community.ts";
 import type { Row } from "./data/community.ts";
 import { coreTables } from "./data/schema.ts";
@@ -22,30 +24,7 @@ export interface BackupSnapshot {
   tables: Tables;
   objects: SnapshotObject[];
 }
-export function canonicalTables(tables: Tables) {
-  return JSON.stringify(
-    Object.fromEntries(
-      Object.entries(tables)
-        .toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-        .map(([table, rows]) => [
-          table,
-          rows
-            .map((row) =>
-              Object.fromEntries(
-                Object.entries(row).toSorted(([a], [b]) =>
-                  a < b ? -1 : a > b ? 1 : 0,
-                ),
-              ),
-            )
-            .toSorted((a, b) => {
-              const x = JSON.stringify(a),
-                y = JSON.stringify(b);
-              return x < y ? -1 : x > y ? 1 : 0;
-            }),
-        ]),
-    ),
-  );
-}
+
 async function sha256(bytes: ArrayBuffer) {
   return Array.from(
     new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
