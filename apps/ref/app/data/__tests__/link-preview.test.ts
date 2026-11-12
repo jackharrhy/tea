@@ -92,3 +92,63 @@ describe("link preview redirects", () => {
     }
   });
 });
+
+describe("X photo previews", () => {
+  const url = "https://x.com/HammyOrkestar/status/2120581190155403607/photo/2";
+  const first = "https://pbs.twimg.com/media/first.jpg";
+  const second = "https://pbs.twimg.com/media/second.jpg";
+
+  it("uses the selected photo instead of the post's first Open Graph image", async () => {
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) =>
+        String(input).startsWith("https://api.fxtwitter.com/")
+          ? new Response(
+              JSON.stringify({
+                tweet: {
+                  id: "2120581190155403607",
+                  media: {
+                    all: [
+                      { type: "photo", url: first },
+                      { type: "photo", url: second },
+                    ],
+                  },
+                },
+              }),
+              { headers: { "Content-Type": "application/json" } },
+            )
+          : new Response(
+              `<meta property="og:title" content="A post"><meta property="og:image" content="${first}">`,
+              { headers: { "Content-Type": "text/html" } },
+            ),
+      );
+    try {
+      expect(await previewLink(url)).toMatchObject({
+        url,
+        imageUrl: `${second}?name=large`,
+      });
+    } finally {
+      fetch.mockRestore();
+    }
+  });
+
+  it("does not display the first photo when the selected photo is unavailable", async () => {
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) =>
+        String(input).startsWith("https://api.fxtwitter.com/")
+          ? new Response("{}", {
+              headers: { "Content-Type": "application/json" },
+            })
+          : new Response(
+              `<meta property="og:title" content="A post"><meta property="og:image" content="${first}">`,
+              { headers: { "Content-Type": "text/html" } },
+            ),
+      );
+    try {
+      expect((await previewLink(url)).imageUrl).toBeNull();
+    } finally {
+      fetch.mockRestore();
+    }
+  });
+});
