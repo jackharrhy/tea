@@ -1,3 +1,4 @@
+import { createRecovery } from "./recovery.ts";
 import { backupSchema, createBackups } from "./backups.ts";
 import { orphanCleanupSchema, createOrphanCleanup } from "./orphan-cleanup.ts";
 import {
@@ -193,6 +194,7 @@ export function createCommunity(
     ...createSettings(db, member),
     ...createAdmin(db, admin, pageBodies),
     ...createBackups(db, admin),
+    ...createRecovery(db, admin),
     ...createOrphanCleanup(db, admin),
     ...createAccountDeletion(db, admin),
     ...createEnrollments(db, member),
