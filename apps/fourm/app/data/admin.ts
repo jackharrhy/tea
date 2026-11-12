@@ -76,12 +76,24 @@ export function createAdmin(
         paths: db
           .all("SELECT storage_path FROM media")
           .map((row) => String(row.storage_path)),
-        reserved: db
-          .all(`SELECT storage_path AS path FROM media_transfers
-          UNION SELECT old_path FROM media_move_files
-          UNION SELECT new_path FROM media_move_files
-          UNION SELECT storage_path FROM account_cleanup_objects`)
-          .map((row) => String(row.path)),
+        reserved: [
+          ...new Set(
+            [
+              ...db.all("SELECT storage_path AS path FROM media_transfers"),
+              ...db.all("SELECT old_path AS path FROM media_move_files"),
+              ...db.all("SELECT new_path AS path FROM media_move_files"),
+              ...db.all(
+                "SELECT storage_path AS path FROM account_cleanup_objects",
+              ),
+              ...db.all(
+                "SELECT storage_path AS path FROM orphan_cleanup_objects",
+              ),
+              ...db.all(
+                "SELECT storage_path AS path FROM archive_staging_objects",
+              ),
+            ].map((row) => String(row.path)),
+          ),
+        ],
       }));
     },
     adminRandomizeCards(actorId: number | null) {

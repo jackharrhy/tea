@@ -22,6 +22,16 @@ export function runtime(env: Bindings) {
     env.COMMUNITIES.idFromName("fourm-community-v1"),
   );
   return {
+    async cleanupOrphanFiles(actorId: number | null) {
+      const result = await cell.cleanupOrphanFiles(actorId);
+      if (!result.ok) throw new CommunityError(result.status, result.error);
+      return result.count;
+    },
+    async cleanupMissingMediaRecords(actorId: number | null) {
+      const result = await cell.cleanupMissingMediaRecords(actorId);
+      if (!result.ok) throw new CommunityError(result.status, result.error);
+      return result.count;
+    },
     async deleteAccount(actorId: number | null, userId: number, mode: string) {
       const result = await cell.deleteAccount(actorId, userId, mode);
       if (!result.ok) throw new CommunityError(result.status, result.error);

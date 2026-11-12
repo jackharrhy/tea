@@ -1,0 +1,277 @@
+import { chromium } from "@playwright/test";
+import assert from "node:assert/strict";
+import { createServer } from "node:net";
+import { spawn } from "node:child_process";
+import { mkdtemp, mkdir, writeFile, rm, cp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve as absolute, join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
+process.umask(0o077);
+assert.equal(process.cwd(), "/home/jack/repos/personal/harrhy-fourm-celld");
+const binary =
+  "/home/jack/.local/state/form-harrhy-integration/candidate/tools/celld";
+const state = await mkdtemp(join(tmpdir(), "fourm-orphan-celld-"));
+const output =
+  "/home/jack/.local/state/form-harrhy-integration/candidate/orphan-celld-" +
+  new Date().toISOString().replace(/[:.]/g, "");
+await mkdir(output, { mode: 0o700 });
+const port = await new Promise((resolve) => {
+  const s = createServer();
+  s.listen(0, "127.0.0.1", () => {
+    const p = s.address().port;
+    s.close(() => resolve(p));
+  });
+});
+const origin = `http://127.0.0.1:${port}`;
+let running,
+  logs = "";
+const children = [];
+const environment = {
+  ...Object.fromEntries(
+    Object.entries(process.env).filter(([k]) => !k.startsWith("CELLD_")),
+  ),
+  CELLD_BUCKET: `sqlite://${join(state, "objects.sqlite3")}`,
+  CELLD_WATCH: join(state, "replica"),
+  CELLD_DURABILITY: "bucket",
+  CELLD_ADDR: `127.0.0.1:${port}`,
+  CELLD_INTERNAL_ADDR: "127.0.0.1:0",
+  CELLD_ESBUILD: absolute("node_modules/.bin/esbuild"),
+};
+function run(args) {
+  const child = spawn(binary, args, {
+    cwd: state,
+    env: environment,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  children.push(child);
+  child.stdout.on("data", (p) => (logs += p));
+  child.stderr.on("data", (p) => (logs += p));
+  return child;
+}
+async function stop() {
+  if (!running || running.exitCode !== null || running.signalCode !== null)
+    return;
+  const child = running;
+  const exited = new Promise((done) => child.once("exit", done));
+  child.kill("SIGTERM");
+  const timer = setTimeout(() => {
+    if (child.exitCode === null && child.signalCode === null)
+      child.kill("SIGKILL");
+  }, 30000);
+  await exited;
+  clearTimeout(timer);
+  running = undefined;
+}
+async function start() {
+  running = run(["--no-control-plane"]);
+  for (let i = 0; i < 200; i++) {
+    assert.equal(running.exitCode, null);
+    try {
+      if ((await fetch(origin + "/health")).ok) return;
+    } catch {}
+    await delay(100);
+  }
+  throw Error("Native test readiness failed");
+}
+const request = (path, method = "GET", authenticated = true) =>
+  fetch(origin + path, {
+    method,
+    headers: {
+      Origin: origin,
+      ...(authenticated ? { "X-Fixture-Actor": "admin" } : {}),
+    },
+    redirect: "manual",
+    signal: AbortSignal.timeout(20000),
+  });
+try {
+  const worker = `import {CommunityCell} from ${JSON.stringify(absolute("apps/fourm/app/data/community-cell.ts"))};
+import {runtime} from ${JSON.stringify(absolute("apps/fourm/app/runtime.ts"))};
+import {createAppRouter} from ${JSON.stringify(absolute("apps/fourm/app/router.tsx"))};
+export {CommunityCell};
+export default {async fetch(request,env,context){const path=new URL(request.url).pathname;if(path==='/health')return new Response('ready');if(path.startsWith('/static/')||path.startsWith('/assets/'))return env.ASSETS.fetch(request);const store=runtime(env);if(path==='/seed'){await store.call('restore',{users:[{id:41,username:'fixture',display_name:'Fixture',password_hash:'',is_admin:1},{id:72,username:'member',display_name:'Member',password_hash:''}],media:[{id:1,user_id:41,storage_path:'fixture/kept.txt',mime_type:'text/plain',size_bytes:4},{id:2,user_id:41,storage_path:'fixture/missing.txt',mime_type:'text/plain',size_bytes:4}]});await env.MEDIA.put('fixture/kept.txt','kept');await env.MEDIA.put('fixture/orphan.txt','orphan');return new Response('seeded');}if(path==='/orphan-again'){await env.MEDIA.put('fixture/orphan.txt','orphan');return new Response('seeded');}if(path==='/claim'){return Response.json(await store.call('beginOrphanCleanup',41,'fixture/orphan.txt'));}if(path==='/inspect'){return Response.json({records:await store.call('adminMediaRecords',41),pending:await store.call('hasOrphanCleanup'),kept:await (await env.MEDIA.get('fixture/kept.txt'))?.text(),orphan:!!(await env.MEDIA.head('fixture/orphan.txt'))});}const viewer={member:request.headers.get('X-Fixture-Actor')?await store.call('member',41):null,sessionHash:null};try{return await createAppRouter(env,store,viewer,p=>context.waitUntil(p)).fetch(request);}catch(error){return new Response(error.message,{status:error.status||500});}}};`;
+  await writeFile(join(state, "worker.ts"), worker);
+  await cp(absolute("apps/fourm/dist/client"), join(state, "assets"), {
+    recursive: true,
+  });
+  const config = {
+    name: "fourm-orphan-test",
+    assets: {
+      directory: "assets",
+      binding: "ASSETS",
+      run_worker_first: true,
+    },
+    main: "worker.ts",
+    compatibility_date: "2026-11-12",
+    compatibility_flags: ["nodejs_compat"],
+    vars: {
+      AUTH_PUBLIC_ORIGIN: origin,
+      AUTH_ISSUER: "https://fixture.invalid",
+      AUTH_CLIENT_ID: "fixture",
+      AUTH_PROJECT_ID: "fixture",
+      AUTH_ORGANIZATION_ID: "fixture",
+    },
+    durable_objects: {
+      bindings: [{ name: "COMMUNITIES", class_name: "CommunityCell" }],
+    },
+    migrations: [{ tag: "v1", new_sqlite_classes: ["CommunityCell"] }],
+    r2_buckets: [{ binding: "MEDIA", bucket_name: "fourm-orphan-test" }],
+  };
+  await writeFile(join(state, "wrangler.jsonc"), JSON.stringify(config));
+  const deployed = run(["deploy", join(state, "wrangler.jsonc")]);
+  assert.equal(
+    await new Promise((resolve, reject) => {
+      deployed.once("error", reject);
+      deployed.once("exit", resolve);
+    }),
+    0,
+  );
+  await start();
+  assert.equal((await request("/seed", "POST")).status, 200);
+  for (const path of [
+    "/admin/orphans",
+    "/admin/cleanup/files",
+    "/admin/cleanup/records",
+  ])
+    assert.equal(
+      (await request(path, path.includes("cleanup") ? "POST" : "GET", false))
+        .status,
+      403,
+    );
+  const scan = await request("/admin/orphans");
+  await writeFile(
+    join(output, "scan-response.json"),
+    JSON.stringify({ status: scan.status, body: await scan.clone().text() }),
+  );
+  assert.equal(scan.status, 200);
+  const html = await scan.text();
+  assert.ok(
+    html.includes("fixture/orphan.txt") && html.includes("fixture/missing.txt"),
+  );
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext({
+      extraHTTPHeaders: { "X-Fixture-Actor": "admin" },
+      viewport: { width: 1280, height: 900 },
+      serviceWorkers: "block",
+    });
+    await context.route("**/*", (route) =>
+      new URL(route.request().url()).origin === origin
+        ? route.continue()
+        : route.abort(),
+    );
+    const page = await context.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    const openScan = async () => {
+      await page.goto(origin + "/admin");
+      const panel = page.locator("details.panel").filter({
+        has: page.locator("summary h2").filter({ hasText: /^storage health$/ }),
+      });
+      await panel.locator("summary").click();
+      await panel
+        .getByRole("button", { name: "scan for orphans", exact: true })
+        .click();
+      await panel
+        .getByRole("heading", { name: "orphaned records", exact: true })
+        .waitFor();
+      return panel;
+    };
+    const panel = await openScan();
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await panel.screenshot({
+        path: join(output, `native-positive-storage-${width}.png`),
+      });
+    }
+    for (const [kind, label] of [
+      ["files", "file(s)"],
+      ["records", "record(s)"],
+    ]) {
+      if (kind === "records") await openScan();
+      page.once("dialog", (dialog) => dialog.accept());
+      const response = page.waitForResponse(
+        (r) =>
+          r.url() === origin + `/admin/cleanup/${kind}` &&
+          r.request().method() === "POST",
+      );
+      await page
+        .getByRole("button", {
+          name: `delete 1 orphaned ${label}`,
+          exact: true,
+        })
+        .click();
+      assert.equal((await response).status(), 200);
+      await page
+        .getByText(`deleted 1 orphaned ${label}.`, { exact: true })
+        .waitFor();
+    }
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+  }
+  assert.equal((await request("/orphan-again", "POST")).status, 200);
+  assert.equal(await (await request("/claim", "POST")).json(), true);
+  await stop();
+  await rm(join(state, "replica"), { recursive: true, force: true });
+  await start();
+  assert.equal((await (await request("/inspect")).json()).pending, true);
+  const cleanup = await request("/admin/cleanup/files", "POST");
+  assert.equal(cleanup.status, 303);
+  assert.equal(cleanup.headers.get("location"), "/admin?cleaned_files=1");
+  const missing = await request("/admin/cleanup/records", "POST");
+  assert.equal(missing.status, 303);
+  assert.equal(missing.headers.get("location"), "/admin?cleaned_records=0");
+  const after = await (await request("/inspect")).json();
+  assert.deepEqual(after, {
+    records: [{ id: 1, storage_path: "fixture/kept.txt" }],
+    pending: false,
+    kept: "kept",
+    orphan: false,
+  });
+  assert.equal(
+    (await request("/admin/cleanup/files", "POST")).headers.get("location"),
+    "/admin?cleaned_files=0",
+  );
+  await writeFile(
+    join(output, "receipt.json"),
+    JSON.stringify(
+      {
+        status: "PASS",
+        scope:
+          "actual native Celld DO/R2, isolated synthetic fixture, actual admin routes; no real OAuth or real-content browser claim",
+        browserCleanupControls: true,
+        coldRestart: true,
+        replicaRemoved: true,
+        authorityRecovered: true,
+        orphanFilesDeleted: 1,
+        missingRecordsDeleted: 1,
+        keptBytesPreserved: true,
+        anonymousDenied: true,
+        replayRemoved: 0,
+        productionTouched: false,
+      },
+      null,
+      2,
+    ),
+  );
+} catch (error) {
+  await writeFile(join(output, "runtime.log"), logs);
+  await writeFile(
+    join(output, "failure.json"),
+    JSON.stringify(
+      { status: "FAIL", message: error.message, stack: error.stack },
+      null,
+      2,
+    ),
+  );
+  throw error;
+} finally {
+  await stop();
+  await writeFile(join(output, "runtime.log"), logs);
+  assert.ok(
+    children.every((c) => c.exitCode !== null || c.signalCode !== null),
+    "Owned test child remains running",
+  );
+  await rm(state, { recursive: true, force: true });
+  console.log(output);
+}
