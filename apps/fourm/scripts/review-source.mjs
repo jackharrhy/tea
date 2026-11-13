@@ -22,6 +22,7 @@ export async function reviewSourceFingerprint(root) {
     join(root, "scripts/review-source.mjs"),
     join(root, "__tests__/issuer.mjs"),
     join(repo, "package-lock.json"),
+    join(repo, "packages/dev-auth/server.mjs"),
   );
   const hash = createHash("sha256");
   for (const file of files.toSorted((a, b) => a.localeCompare(b)))
