@@ -393,6 +393,11 @@ try {
     grants.find((grant) => grant.id === "member-maps").roleKeys,
     ["member", "private-extra"],
   );
+  await page.goto(origin + "/manage/activity");
+  await page.getByRole("heading", { name: "Activity & cleanup" }).waitFor();
+  await page.getByRole("link", { name: /Prove one group assignment/ }).click();
+  await page.getByRole("heading", { name: "Access operation" }).waitFor();
+  await page.getByText("External cleanup", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Groups", exact: true }).first().click();
   await capture(page, "groups-desktop");
   await page.setViewportSize({ width: 390, height: 844 });

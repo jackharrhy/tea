@@ -25,6 +25,10 @@ export function createAccessRoutes({
   renderServiceList,
   renderServiceDetail,
   renderIntegrations,
+  renderPreviewAccount,
+  renderInactivePreview,
+  renderActivity,
+  renderOperation,
 }) {
   const people = async () =>
     (await searchAll(api, "/management/v1/users/_search")).filter(
@@ -100,9 +104,9 @@ export function createAccessRoutes({
         },
       };
       if (target.state !== "USER_STATE_ACTIVE")
-        send(views.inactivePreview(target, previewContext));
+        await sendRemix((nonce) => renderInactivePreview(target, previewContext, nonce));
       else if (preview[2] === "account")
-        send(views.previewAccount(target, previewContext));
+        await sendRemix((nonce) => renderPreviewAccount(target, previewContext, nonce));
       else {
         const items = directoryFor({
           services,
@@ -332,7 +336,7 @@ export function createAccessRoutes({
       return true;
     }
     if (request.method === "GET" && url.pathname === "/manage/activity") {
-      send(views.activity(access.operations(), context));
+      await sendRemix((nonce) => renderActivity(access.operations(), context, nonce));
       return true;
     }
     const operation = url.pathname.match(
@@ -342,7 +346,7 @@ export function createAccessRoutes({
       const value = access.operation(operation[1]);
       if (!value) throw fail(404, "Operation not found.");
       if (request.method === "GET") {
-        send(views.operation(value, context));
+        await sendRemix((nonce) => renderOperation(value, context, nonce));
         return true;
       }
       if (request.method === "POST" && operation[2] === "/reconcile") {
