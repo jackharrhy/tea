@@ -447,6 +447,118 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
   );
   for (const saved of periodicScheduled.backups)
     assert.ok(recoveredSchedule.backups.some((row) => row.name === saved.name));
+  const counterBrowser = await chromium.launch();
+  try {
+    const context = await counterBrowser.newContext({
+      extraHTTPHeaders: { "X-Fixture-Actor": "admin" },
+      serviceWorkers: "block",
+    });
+    await context.route("**/*", (route) =>
+      new URL(route.request().url()).origin === origin
+        ? route.continue()
+        : route.abort(),
+    );
+    const page = await context.newPage(),
+      errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    const css = ".counter-number { color: rgb(12, 34, 56); }",
+      counterMarkup =
+        '<aside id="counter-custom">custom counter footer</aside>';
+    const openCounter = async () => {
+      await page.goto(origin + "/settings");
+      const details = page.locator("details").filter({
+        has: page
+          .locator("summary strong")
+          .getByText("visitor counter", { exact: true }),
+      });
+      await details.locator("summary").click();
+      return details;
+    };
+    let details = await openCounter();
+    const form = details.locator('form[action="/settings/counter"]');
+    for (const [name, text] of [
+      ["counter_css", css],
+      ["counter_html", counterMarkup],
+    ]) {
+      const textarea = form.locator(`textarea[name="${name}"]`);
+      const editor = textarea
+        .locator("xpath=preceding-sibling::*[1]")
+        .locator(".cm-content");
+      await editor.click();
+      await page.keyboard.press("ControlOrMeta+A");
+      await page.keyboard.insertText(text);
+      assert.equal(await textarea.inputValue(), text);
+    }
+    await form
+      .getByRole("button", { name: "save counter", exact: true })
+      .click();
+    await form.locator("#counter-status .ok").waitFor();
+    details = await openCounter();
+    assert.equal(
+      await details.locator('[name="counter_css"]').inputValue(),
+      css,
+    );
+    assert.equal(
+      await details.locator('[name="counter_html"]').inputValue(),
+      counterMarkup,
+    );
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await details.screenshot({
+        path: join(output, `native-counter-settings-${width}.png`),
+      });
+    }
+    for (const width of [228, 390]) {
+      await page.setViewportSize({ width, height: 160 });
+      await page.goto(origin + "/u/fixture/counter");
+      await page.locator("#counter-custom").waitFor();
+      assert.equal(
+        await page
+          .locator(".counter-number")
+          .evaluate((el) => getComputedStyle(el).color),
+        "rgb(12, 34, 56)",
+      );
+      assert.equal(
+        await page.locator(".counter-label").innerText(),
+        "fixture visitors",
+      );
+      const response = await context.request.get(
+          origin + "/u/fixture/counter",
+          { headers: { Accept: "application/json" } },
+        ),
+        data = await response.json();
+      assert.equal(data.username, "fixture");
+      assert.equal(typeof data.total_views, "number");
+      assert.equal(
+        await page.locator(".counter-number").innerText(),
+        String(data.total_views),
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      await page.screenshot({
+        path: join(output, `native-counter-widget-${width}.png`),
+        fullPage: true,
+      });
+    }
+    await stop();
+    await rm(join(state, "replica"), { recursive: true, force: true });
+    await start();
+    await page.goto(origin + "/u/fixture/counter");
+    await page.locator("#counter-custom").waitFor();
+    assert.equal(
+      await page
+        .locator(".counter-number")
+        .evaluate((el) => getComputedStyle(el).color),
+      "rgb(12, 34, 56)",
+    );
+    assert.deepEqual(errors, []);
+  } finally {
+    await counterBrowser.close();
+  }
   await writeFile(
     join(output, "receipt.json"),
     JSON.stringify(
@@ -462,6 +574,14 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
         pruning,
         busyCapture,
         automaticCatalogue,
+        counterCustomization: {
+          saveReload: true,
+          css: true,
+          html: true,
+          json: true,
+          coldReplicaRecovery: true,
+          desktopMobile: true,
+        },
         scheduledBackups: {
           immediate: true,
           periodic: true,

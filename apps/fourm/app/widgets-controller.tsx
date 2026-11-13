@@ -1,3 +1,4 @@
+import { counterJSON, counterDocument } from "./counter-widget.ts";
 import { playerJSON, playerDocument } from "./player-widget.ts";
 import { webringJSON, webringDocument } from "./webring-widget.ts";
 import { statusJSON, statusDocument } from "./status-widget.ts";
@@ -12,7 +13,6 @@ import { CommunityError } from "./data/community.ts";
 import type { Bindings, Runtime, Viewer } from "./runtime.ts";
 import { cookie, readCookie, hash, token } from "./runtime.ts";
 import { guestbookDocument, GuestbookEntries } from "./widgets.tsx";
-import { BareDocument } from "./views.tsx";
 
 export const widgetRoutes = route({
   settings: get("/settings/widgets"),
@@ -50,13 +50,6 @@ async function fields(request: Request) {
     Array.from((await request.formData()).entries()).filter(
       (entry): entry is [string, string] => typeof entry[1] === "string",
     ),
-  );
-}
-async function embed(title: string, body: RemixNode) {
-  return new Response(
-    "<!doctype html>" +
-      (await renderToString(<BareDocument title={title}>{body}</BareDocument>)),
-    { headers: { "Content-Type": "text/html; charset=utf-8" } },
   );
 }
 
@@ -239,10 +232,11 @@ export function widgetController(
           params.username,
           await hash(visitor),
         );
-        const response = await embed(
-          "Visits",
-          <p>{result.total_views} visits</p>,
-        );
+        const response = wantsJSON(request)
+          ? Response.json(counterJSON(result.owner, result.total_views))
+          : new Response(counterDocument(result.owner, result.total_views), {
+              headers: { "Content-Type": "text/html; charset=utf-8" },
+            });
         response.headers.append(
           "Set-Cookie",
           cookie(env, "fourm_visitor", visitor, 365 * 24 * 3600),
