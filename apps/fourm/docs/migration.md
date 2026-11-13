@@ -1,8 +1,9 @@
 # Migration and recovery
 
-This candidate has not read or migrated production data. The Python service and
-its retained first/current backups remain the recovery authority. Do not boot an
-old issuer or restore pre-retirement credential state.
+The isolated candidate and Python oracle use the same sanitized production-content
+snapshot. Production has not been changed or cut over. The Python service and its
+retained first/current backups remain the production recovery authority. Do not
+boot an old issuer or restore pre-retirement credential state.
 
 ## Offline source export
 
