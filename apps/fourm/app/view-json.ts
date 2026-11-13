@@ -151,3 +151,20 @@ export function threadJSON(detail: ReturnType<Community["thread"]>) {
     })),
   };
 }
+
+export function guestbookJSON(
+  snapshot: ReturnType<Community["guestbook"]>,
+  canPost: boolean,
+) {
+  return {
+    owner_username: String(snapshot.owner.username),
+    entries: snapshot.entries.map((entry) => ({
+      id: Number(entry.id),
+      author_username: String(entry.username),
+      author_display_name: String(entry.display_name),
+      message: String(entry.message),
+      created_at: apiDate(entry.created_at),
+    })),
+    can_post: canPost,
+  };
+}
