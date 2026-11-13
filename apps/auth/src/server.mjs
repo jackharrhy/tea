@@ -18,6 +18,8 @@ import {
 import * as views from "./views.mjs";
 const { renderLogin } = await import("./login-page.tsx");
 const { renderAuthorization } = await import("./authorization-page.tsx");
+const { renderEmailForm, renderEmailResult } = await import("./email-page.tsx");
+const { renderAccount } = await import("./account-page.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
 import { createAccountActions } from "./accounts.mjs";
@@ -267,6 +269,14 @@ createServer(async (request, response) => {
     response.writeHead(303, { Location: path });
     response.end();
   };
+  const sendRemix = async (render, status = 200) => {
+    const nonce = randomToken();
+    response.setHeader(
+      "Content-Security-Policy",
+      contentSecurityPolicy(undefined, { styleNonce: nonce }),
+    );
+    send(await render(nonce), status);
+  };
   const login = async (returnTo, csrf, error, status = error ? 401 : 200) => {
     returnTo = localReturnTo(returnTo);
     const destination = new URL(returnTo, origin);
@@ -496,13 +506,14 @@ createServer(async (request, response) => {
       }
       if (!session[key])
         throw httpError(400, "Open the link in your email to continue.");
-      send(
-        views.emailForm(key === "emailVerification" ? "verify" : "reset", {
-          ...context,
-          ...(key === "passwordRecovery"
-            ? { passwordPolicy: await emailActions.passwordPolicy() }
-            : {}),
-        }),
+      const emailContext = {
+        ...context,
+        ...(key === "passwordRecovery"
+          ? { passwordPolicy: await emailActions.passwordPolicy() }
+          : {}),
+      };
+      await sendRemix((nonce) =>
+        renderEmailForm(key === "emailVerification" ? "verify" : "reset", emailContext, nonce),
       );
       return;
     }
@@ -519,28 +530,25 @@ createServer(async (request, response) => {
         );
       }
       delete session.emailVerification;
-      send(
-        views.emailResult(
-          "Email verified",
-          "Your email address is verified.",
-          context,
-        ),
+      await sendRemix((nonce) =>
+        renderEmailResult("Email verified", "Your email address is verified.", context, nonce),
       );
       return;
     }
     if (request.method === "GET" && url.pathname === "/forgot-password") {
-      send(views.emailForm("forgot", context));
+      await sendRemix((nonce) => renderEmailForm("forgot", context, nonce));
       return;
     }
     if (request.method === "POST" && url.pathname === "/forgot-password") {
       rateLimit(`recovery:${form.get("username")?.trim().toLowerCase()}`);
       rateLimit("recovery-total", 100);
       await emailActions.requestReset(form.get("username"));
-      send(
-        views.emailResult(
+      await sendRemix((nonce) =>
+        renderEmailResult(
           "Check your email",
           "If this account has a verified email address, we sent a recovery link.",
           context,
+          nonce,
         ),
       );
       return;
@@ -559,27 +567,21 @@ createServer(async (request, response) => {
         );
       } catch (error) {
         if (error.status !== 400) throw error;
-        send(
-          views.emailForm("reset", {
-            ...context,
-            passwordPolicy: await emailActions.passwordPolicy(),
-            error:
-              error.message === "Identity service rejected the request"
-                ? "The password could not be saved. Check the requirements below, or request a new recovery link if this one has expired."
-                : error.message,
-          }),
-          400,
-        );
+        const resetContext = {
+          ...context,
+          passwordPolicy: await emailActions.passwordPolicy(),
+          error:
+            error.message === "Identity service rejected the request"
+              ? "The password could not be saved. Check the requirements below, or request a new recovery link if this one has expired."
+              : error.message,
+        };
+        await sendRemix((nonce) => renderEmailForm("reset", resetContext, nonce), 400);
         return;
       }
       delete session.passwordRecovery;
       await endUserSessions(pending.userId);
-      send(
-        views.emailResult(
-          "Password updated",
-          "Sign in with your new password.",
-          { csrf: session.csrf },
-        ),
+      await sendRemix((nonce) =>
+        renderEmailResult("Password updated", "Sign in with your new password.", { csrf: session.csrf }, nonce),
       );
       return;
     }
@@ -816,12 +818,8 @@ createServer(async (request, response) => {
       rateLimit(`email:${session.userId}`);
       await accountActions.provePassword(session, form.get("currentPassword"));
       await emailActions.setEmail(session.userId, form.get("email")?.trim());
-      send(
-        views.emailResult(
-          "Check your email",
-          "Open the verification link to confirm your address.",
-          context,
-        ),
+      await sendRemix((nonce) =>
+        renderEmailResult("Check your email", "Open the verification link to confirm your address.", context, nonce),
       );
       return;
     }
@@ -839,12 +837,8 @@ createServer(async (request, response) => {
         "Set-Cookie",
         `${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`,
       );
-      send(
-        views.emailResult(
-          "Password updated",
-          "Sign in with your new password.",
-          {},
-        ),
+      await sendRemix((nonce) =>
+        renderEmailResult("Password updated", "Sign in with your new password.", {}, nonce),
       );
       return;
     }
@@ -860,28 +854,13 @@ createServer(async (request, response) => {
         );
       rateLimit(`email:${session.userId}`);
       await emailActions.resend(session.userId);
-      send(
-        views.emailResult(
-          "Check your email",
-          "We sent a new verification link.",
-          context,
-        ),
+      await sendRemix((nonce) =>
+        renderEmailResult("Check your email", "We sent a new verification link.", context, nonce),
       );
       return;
     }
     if (request.method === "GET" && url.pathname === "/account") {
-      const assigned = (await grants()).filter(
-        (grant) => grant.userId === session.userId,
-      );
-      send(
-        views.account(
-          profile,
-          context,
-          applications.filter((app) =>
-            assigned.some((grant) => grant.projectId === app.projectId),
-          ),
-        ),
-      );
+      await sendRemix((nonce) => renderAccount(profile, context, nonce));
       return;
     }
     if (

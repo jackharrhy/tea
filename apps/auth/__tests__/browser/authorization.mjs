@@ -32,9 +32,9 @@ let completions = 0,
   resetCalls = 0,
   silentSuccesses = 0,
   loginRequired = 0;
-let holdGrantSearch = false,
-  grantSearchEntered,
-  releaseGrantSearch;
+let holdProfileLookup = false,
+  profileLookupEntered,
+  releaseProfileLookup;
 const provider = createServer(async (request, response) => {
   let body = "";
   for await (const chunk of request) body += chunk;
@@ -136,7 +136,14 @@ const provider = createServer(async (request, response) => {
         expirationDate: new Date(Date.now() + 600_000).toISOString(),
       },
     };
-  else if (request.url === "/management/v1/users/fixture-user")
+  else if (request.url === "/management/v1/users/fixture-user") {
+    if (holdProfileLookup) {
+      holdProfileLookup = false;
+      profileLookupEntered();
+      await new Promise((resolve) => {
+        releaseProfileLookup = resolve;
+      });
+    }
     result = {
       user: {
         id: "fixture-user",
@@ -146,14 +153,8 @@ const provider = createServer(async (request, response) => {
         details: { resourceOwner: "fixture" },
       },
     };
+  }
   else if (request.url === "/management/v1/users/grants/_search") {
-    if (holdGrantSearch) {
-      holdGrantSearch = false;
-      grantSearchEntered();
-      await new Promise((resolve) => {
-        releaseGrantSearch = resolve;
-      });
-    }
     const projectId = json.queries?.find((query) => query.projectIdQuery)
       ?.projectIdQuery.projectId;
     result = {
@@ -665,12 +666,12 @@ try {
     signedInCookie,
   );
   assert.equal(credentialAttempts, beforeSignedInReject);
-  const waitingForGrant = new Promise((resolve) => {
-    grantSearchEntered = resolve;
+  const waitingForProfile = new Promise((resolve) => {
+    profileLookupEntered = resolve;
   });
-  holdGrantSearch = true;
+  holdProfileLookup = true;
   const slowAccount = staleContext.request.get(`${origin}/account`);
-  await waitingForGrant;
+  await waitingForProfile;
   await stalePage.locator("[name=username]").fill("fixture-user-artbin");
   await stalePage.locator("[name=password]").fill("fixture-password");
   await stalePage.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -679,7 +680,7 @@ try {
     (cookie) => cookie.name === "__Host-jack_auth",
   )?.value;
   assert(rotatedCookie && rotatedCookie !== signedInCookie);
-  releaseGrantSearch();
+  releaseProfileLookup();
   const delayedResponse = await slowAccount;
   assert.equal(delayedResponse.status(), 200);
   assert.equal(delayedResponse.headers()["set-cookie"], undefined);
