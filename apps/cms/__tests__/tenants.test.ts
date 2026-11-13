@@ -42,10 +42,20 @@ it("isolates host routing, sessions, writes, uploads, optional features and anal
       app.fetch(
         new Request(`http://${host}${path}`, { headers: { Cookie: cookie } }),
       );
-    const home = await (await get("one.example.test")).text();
+    const homeResponse = await get("one.example.test");
+    const home = await homeResponse.text();
     assert.match(home, /First fixture/);
     assert.match(home, /site-sidebar/);
     assert.ok(!home.includes("Second fixture"));
+    const nonce = homeResponse.headers
+      .get("Content-Security-Policy")
+      ?.match(/'nonce-([^']+)'/)?.[1];
+    assert.ok(nonce);
+    assert.ok(home.includes(`nonce="${nonce}"`));
+    assert.equal(
+      homeResponse.headers.get("Cache-Control"),
+      "private, no-store",
+    );
     const encodedHome = await app.fetch(
       new Request("http://one.example.test/", {
         headers: { "Accept-Encoding": "br, gzip" },
@@ -53,11 +63,18 @@ it("isolates host routing, sessions, writes, uploads, optional features and anal
     );
     assert.equal(encodedHome.headers.get("Content-Encoding"), "br");
     assert.match(encodedHome.headers.get("Vary") ?? "", /Accept-Encoding/i);
+    const compressedHtml = brotliDecompressSync(
+      Buffer.from(await encodedHome.arrayBuffer()),
+    ).toString();
+    const compressedNonce = encodedHome.headers
+      .get("Content-Security-Policy")
+      ?.match(/'nonce-([^']+)'/)?.[1];
+    assert.ok(compressedNonce);
+    assert.notEqual(compressedNonce, nonce);
+    assert.ok(compressedHtml.includes(`nonce="${compressedNonce}"`));
     assert.equal(
-      brotliDecompressSync(
-        Buffer.from(await encodedHome.arrayBuffer()),
-      ).toString(),
-      home,
+      compressedHtml.replaceAll(compressedNonce, "<nonce>"),
+      home.replaceAll(nonce, "<nonce>"),
     );
     const editorResponse = await app.fetch(
       new Request("http://one.example.test/tea/admin", {

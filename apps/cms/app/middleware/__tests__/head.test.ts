@@ -10,6 +10,15 @@ import { createTeaRouter } from "../../router.ts";
 import { routes } from "../../routes.ts";
 import { entryScript } from "../../assets.ts";
 
+function normalizeNonce(response: Response) {
+  return [...response.headers].map(([name, value]) => [
+    name,
+    name === "content-security-policy"
+      ? value.replace(/'nonce-[^']+'/g, "'nonce-<request>'")
+      : value,
+  ]);
+}
+
 it("matches GET status and headers for HEAD without bodies or weaker CMS protection", async () => {
   const database = await openDatabase(":memory:");
   try {
@@ -50,7 +59,7 @@ it("matches GET status and headers for HEAD without bodies or weaker CMS protect
       );
       assert.equal(get.status, status);
       assert.equal(head.status, status);
-      assert.deepEqual([...head.headers], [...get.headers]);
+      assert.deepEqual(normalizeNonce(head), normalizeNonce(get));
       assert.equal(head.body, null);
       assert.equal(await head.text(), "");
       await get.body?.cancel();

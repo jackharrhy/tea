@@ -10,6 +10,8 @@ The Node host opens a request record through [`@harrhy/logger`](../../packages/l
 
 Public HTML pages, including public pages on preview sites, support Brotli and gzip through Remix's response compression. Operator and editor routes, requests with cookies or authorization, and query variants are excluded. Pages still render from current published data on each request; this is not a page cache. Media and API responses retain their existing transport behavior.
 
+HTML responses use Remix request nonces for scripts and generated styles, including the operator, editors, and public pages. They are private and no-store; anonymous public pages can still be compressed. Public pages allow the site's video embeds and enabled Google Analytics, while preview and CMS pages continue to suppress analytics.
+
 ## Develop
 
 Use Node.js 26 LTS (minimum 26.13.0). From the repo root:

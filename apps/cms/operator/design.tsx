@@ -1,4 +1,6 @@
 import type { Handle } from "remix/component";
+import { getContext } from "remix/middleware/async-context";
+import { getCspNonce } from "remix/middleware/csp";
 import { AdminBrand } from "../app/ui/admin-brand.tsx";
 import { Document } from "../app/ui/document.tsx";
 import { designStyles } from "./design-styles.ts";
@@ -61,7 +63,11 @@ export function Design(_handle: Handle) {
       styles={[operatorStyles, designStyles]}
       head={
         <>
-          <script src="/design.js" defer></script>
+          <script
+            src="/design.js"
+            nonce={getCspNonce(getContext())}
+            defer
+          ></script>
         </>
       }
     >
