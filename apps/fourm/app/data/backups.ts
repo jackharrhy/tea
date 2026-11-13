@@ -152,25 +152,35 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
       return db.transaction(() => {
         let adopted = 0,
           preserved = 0;
-        const conflicts: string[] = [];
-        for (const record of records.toSorted(
-          (a, b) => a.started_at - b.started_at,
-        )) {
-          const existing = db.all(
-            "SELECT * FROM backup_runs WHERE name=?",
-            record.name,
-          )[0];
+        const entries = records
+          .toSorted((a, b) => a.started_at - b.started_at)
+          .map((record) => ({
+            record,
+            existing: db.all(
+              "SELECT * FROM backup_runs WHERE name=?",
+              record.name,
+            )[0],
+          }));
+        const conflicts = entries
+          .filter(
+            ({ record, existing }) =>
+              existing &&
+              (existing.started_at !== record.started_at ||
+                existing.state === "failed" ||
+                (existing.state === "complete" &&
+                  (existing.db_size !== record.db_size ||
+                    existing.file_count !== record.file_count))),
+          )
+          .map(({ record }) => record.name);
+        if (conflicts.length)
+          return {
+            state: "conflicted" as const,
+            adopted: 0,
+            preserved: 0,
+            conflicts,
+          };
+        for (const { record, existing } of entries) {
           if (existing) {
-            if (
-              existing.started_at !== record.started_at ||
-              existing.state === "failed" ||
-              (existing.state === "complete" &&
-                (existing.db_size !== record.db_size ||
-                  existing.file_count !== record.file_count))
-            ) {
-              conflicts.push(record.name);
-              continue;
-            }
             if (existing.state === "complete") {
               preserved++;
               continue;
@@ -194,9 +204,7 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
           adopted++;
         }
         return {
-          state: conflicts.length
-            ? ("conflicted" as const)
-            : ("complete" as const),
+          state: "complete" as const,
           adopted,
           preserved,
           conflicts,

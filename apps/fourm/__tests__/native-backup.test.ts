@@ -358,6 +358,14 @@ it("preserves terminal conflicts and protects manually named recovered snapshots
       conflicts: [job.name],
     });
     expect(source.community.backupStatus(41).last?.state).toBe("failed");
+    expect(
+      source.community.adoptVerifiedBackups(41, [
+        { ...facts, name: "new-manual-record", started_at: 0 },
+        facts,
+      ]).state,
+    ).toBe("conflicted");
+    expect(source.community.backupStatus(41).backups).toEqual([]);
+
     expect(() => source.community.adoptVerifiedBackups(null, [facts])).toThrow(
       "Admin access required",
     );
@@ -690,6 +698,69 @@ it("captures one consistent SQL snapshot while unrelated member activity continu
       canonicalTables(source.community.exportRecovery(41).tables),
     ).not.toBe(canonicalTables(initial.tables));
     expect(await readNativeBackup(r2.storage, "busy")).not.toBeNull();
+  } finally {
+    source.db.close();
+  }
+});
+
+it("reconciles a published pending run without creating a replacement snapshot", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    const job = source.community.beginBackup(41);
+    await captureNativeBackup(r2.storage, String(job.name), async () =>
+      source.community.exportRecovery(41),
+    );
+    const result = await runNativeBackup(source.community, r2.storage, 41);
+    expect(result.name).toBe(job.name);
+    expect(result.state).toBe("complete");
+    expect(source.community.backupStatus(41).backups).toHaveLength(1);
+  } finally {
+    source.db.close();
+  }
+});
+
+it("reconstructs an empty restored catalogue before a manual run and defers a scheduler run that is no longer due", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    const time = new Date().toISOString().replace(/[:.]/g, "");
+    const name = time + "-11111111-1111-4111-8111-111111111111";
+    await captureNativeBackup(r2.storage, name, async () =>
+      source.community.exportRecovery(41),
+    );
+    r2.objects.get(`.backups/native/${name}.json`)!.uploaded = new Date();
+    const scheduled = await runNativeBackup(
+      source.community,
+      r2.storage,
+      "scheduler",
+    );
+    expect(scheduled.name).toBe(name);
+    expect(scheduled.state).toBe("complete");
+    expect(source.community.backupStatus(41).backups).toHaveLength(1);
+    const manual = await runNativeBackup(source.community, r2.storage, 41);
+    expect(manual.name).not.toBe(name);
+    expect(source.community.backupStatus(41).backups).toHaveLength(2);
+  } finally {
+    source.db.close();
+  }
+});
+
+it("retains unrecognized catalogue evidence without starting a replacement run", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add(".backups/native/unknown.txt", "retain evidence");
+    await expect(
+      runNativeBackup(source.community, r2.storage, 41),
+    ).rejects.toMatchObject({ status: 409 });
+    const status = source.community.backupStatus(41);
+    expect(status.pending).toBeNull();
+    expect(status.backups).toEqual([]);
+    expect(r2.objects.has(".backups/native/unknown.txt")).toBe(true);
   } finally {
     source.db.close();
   }
