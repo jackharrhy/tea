@@ -64,6 +64,8 @@ export async function readMedia(
   store: Runtime,
   path: string,
 ) {
+  if (path === ".backups" || path.startsWith(".backups/"))
+    throw new CommunityError(404, "Media not found");
   await store.call("publishedMedia", path);
   const object = await env.MEDIA.head(path);
   if (!object) throw new CommunityError(404, "Media bytes are unavailable");
