@@ -37,9 +37,11 @@ async function fetch(request: Request) {
     "Cache-Control",
     path === "/8mb/api/diagnostics"
       ? "no-store"
-      : path.startsWith("/8mb/assets/")
-        ? "public, max-age=31536000, immutable"
-        : "no-cache",
+      : response.headers.get("Content-Type")?.startsWith("text/html")
+        ? "private, no-store"
+        : path.startsWith("/8mb/assets/")
+          ? "public, max-age=31536000, immutable"
+          : "no-cache",
   );
   return response;
 }
