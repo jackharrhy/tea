@@ -10,7 +10,7 @@ From the Harrhy root, run `npm ci`, then `npm run check --workspace @harrhy/auth
 
 ### Real local sign-in
 
-The opt-in profile in `local-real/` uses pinned ZITADEL 4.20.0 and PostgreSQL 17 images, this Auth UI, and the actual Artbin OAuth callback. It creates one synthetic organization user and an Artbin member grant. Its issuer and database are isolated from production; `@harrhy/dev-auth` remains the faster in-memory fixture for narrow checks. Docker is needed only for the provider and database. Node 26 and the repository dependencies run the two apps on loopback.
+The opt-in profile in `local-real/` uses pinned ZITADEL 4.20.0 and PostgreSQL 17 images, this Auth UI, and the actual Artbin OAuth callback. It creates one synthetic organization user and an Artbin member grant. Each worktree gets a separate Compose project and database, isolated from production; `@harrhy/dev-auth` remains the faster in-memory fixture for narrow checks. Docker is needed only for the provider and database. Node 26 and the repository dependencies run the two apps on loopback.
 
 ```sh
 npm run auth:real:init
@@ -18,7 +18,7 @@ npm run auth:real:up
 npm run auth:real:seed
 ```
 
-In separate foreground terminals, run `npm run auth:real:ui` and `npm run auth:real:artbin`. Then open <http://localhost:18892/login> or run `npm run auth:real:smoke` for a browser sign-in, native authorization code, Artbin callback, session, and reload check. Stop the app terminals with Ctrl-C and run `npm run auth:real:down` to stop the provider. `down` preserves its local database and credentials for the next start. The generated local sign-in password is in the ignored, mode 0600 `apps/auth/.local-real/seed.json`; do not paste it into issues or logs. The local Auth UI is <http://localhost:18888>, and the native issuer is bound to <http://localhost:18887> only. Ports 18887, 18888, and 18892 must be free before starting. No standard dev command or CI job starts this profile.
+In separate foreground terminals, run `npm run auth:real:ui` and `npm run auth:real:artbin`. Then open <http://localhost:18892/login> or run `npm run auth:real:smoke` for a browser sign-in, native authorization code, Artbin callback, session, and reload check. Stop the app terminals with Ctrl-C and run `npm run auth:real:down` to stop the provider. `down` preserves its local database and credentials for the next start. The generated local sign-in password is in the ignored, mode 0600 `apps/auth/.local-real/seed.json`; bootstrap PAT files are mode 0600 after seeding; do not paste it into issues or logs. The local Auth UI is <http://localhost:18888>, and the native issuer is bound to <http://localhost:18887> only. Ports 18887, 18888, and 18892 must be free before starting. No standard dev command or CI job starts this profile.
 
 The native setup writes only synthetic project/client IDs to local configuration. The operator PAT, login PAT, database password, master key, resource client secret, and local user password stay under ignored `apps/auth/.local-real/`. The committed production client IDs, callback URLs, role names, and issuer URLs in `config/` are public identifiers and policy, not credentials. Production keys, tokens, account records, and SQLite files are never copied into the local profile. The provider and Artbin share no database. `local-real/seed.mjs` checkpoints each native creation; if one fails with an uncertain outcome, it stops instead of creating a duplicate on retry.
 

@@ -1,4 +1,4 @@
-name: harrhy-auth-real
+name: ${AUTH_REAL_PROJECT:-harrhy-auth-real}
 
 services:
   postgres:
