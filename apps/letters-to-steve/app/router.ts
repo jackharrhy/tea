@@ -1,5 +1,7 @@
 import { createRouter, type MiddlewareContext } from "remix/router";
 import { render } from "remix/middleware/render";
+import { asyncContext } from "remix/middleware/async-context";
+import { csp } from "remix/middleware/csp";
 import { staticFiles } from "remix/middleware/static";
 
 import controller from "./actions/controller.tsx";
@@ -14,6 +16,30 @@ import { loadDatabase } from "./middleware/database.ts";
 import { routes } from "./routes.ts";
 
 const renderMiddleware = render({ assets });
+const asyncContextMiddleware = asyncContext();
+const htmlNoStore = async (
+  _context: unknown,
+  next: () => Promise<Response>,
+) => {
+  const response = await next();
+  if (response.headers.get("Content-Type")?.startsWith("text/html"))
+    response.headers.set("Cache-Control", "private, no-store");
+  return response;
+};
+const cspMiddleware = csp({
+  policy: ({ nonce }) => ({
+    defaultSrc: ["'none'"],
+    scriptSrc: ["'self'", `'nonce-${nonce}'`],
+    styleSrc: ["'self'", `'nonce-${nonce}'`],
+    fontSrc: ["'self'"],
+    imgSrc: ["'self'", "blob:", "data:"],
+    connectSrc: ["'self'"],
+    formAction: ["'self'"],
+    baseUri: ["'none'"],
+    objectSrc: ["'none'"],
+    frameAncestors: ["'none'"],
+  }),
+});
 
 export async function createAppRouter(
   options: { databasePath?: string; uploadDirectory?: string } = {},
@@ -36,8 +62,11 @@ export async function createAppRouter(
 
   let middleware = [
     staticMiddleware,
+    htmlNoStore,
+    asyncContextMiddleware,
     databaseMiddleware,
     attachmentStoreMiddleware,
+    cspMiddleware,
     renderMiddleware,
   ] as const;
 
@@ -55,8 +84,11 @@ export async function createAppRouter(
 type AppContext = MiddlewareContext<
   [
     ReturnType<typeof staticFiles>,
+    typeof htmlNoStore,
+    typeof asyncContextMiddleware,
     ReturnType<typeof loadDatabase>,
     ReturnType<typeof loadAttachmentStore>,
+    typeof cspMiddleware,
     typeof renderMiddleware,
   ]
 >;
