@@ -71,7 +71,14 @@ export class CommunityCell extends DurableObject<CommunityBindings> {
         this.community,
         this.env.MEDIA,
         actorId,
-      ));
+      ).then(async (result): Promise<Row> => {
+        const retention = await this.pruneBackupStorage(actorId);
+        return {
+          ...result,
+          pruned: retention.removed,
+          objects_removed: retention.objectsRemoved,
+        };
+      }));
       try {
         return { ok: true as const, result: await running };
       } finally {
@@ -96,14 +103,7 @@ export class CommunityCell extends DurableObject<CommunityBindings> {
           409,
           "A backup is in progress. Try again shortly.",
         );
-      const running = (this.pruning ??= pruneNativeBackups(
-        this.community,
-        this.env.MEDIA,
-        actorId,
-      ).then(async (result) => ({
-        ...result,
-        ...(await collectBackupObjects(this.env.MEDIA)),
-      })));
+      const running = (this.pruning ??= this.pruneBackupStorage(actorId));
       try {
         return { ok: true as const, result: await running };
       } finally {
@@ -119,6 +119,14 @@ export class CommunityCell extends DurableObject<CommunityBindings> {
             : "Backup retention interrupted. Retry to reconcile expired snapshots.",
       };
     }
+  }
+  private async pruneBackupStorage(actorId: BackupActor) {
+    const result = await pruneNativeBackups(
+      this.community,
+      this.env.MEDIA,
+      actorId,
+    );
+    return { ...result, ...(await collectBackupObjects(this.env.MEDIA)) };
   }
   private backupInterval() {
     const seconds = Number(this.env.BACKUP_INTERVAL_SECONDS);
@@ -343,11 +351,6 @@ export class CommunityCell extends DurableObject<CommunityBindings> {
         const result = await this.runBackup("scheduler");
         if (!result.ok)
           failure ??= new CommunityError(result.status, result.error);
-        else {
-          const retention = await this.pruneBackups("scheduler");
-          if (!retention.ok)
-            failure ??= new CommunityError(retention.status, retention.error);
-        }
       }
     } finally {
       await this.scheduleMediaWork();

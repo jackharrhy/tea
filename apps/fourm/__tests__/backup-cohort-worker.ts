@@ -1,8 +1,4 @@
-import {
-  captureNativeBackup,
-  readNativeBackup,
-  restoreNativeBackup,
-} from "../app/native-backup.ts";
+import { readNativeBackup, restoreNativeBackup } from "../app/native-backup.ts";
 import type { NativeBackup } from "../app/native-backup.ts";
 import { CommunityCell } from "../app/data/community-cell.ts";
 import { runtime } from "../app/runtime.ts";
@@ -107,24 +103,19 @@ export default {
       if (path === "/full/source-state")
         return Response.json(await store.call("exportRecovery", actor));
       if (path === "/full/capture") {
-        const job = await store.call("beginBackup", actor);
-        const captured = await captureNativeBackup(
-          env.MEDIA,
-          String(job.name),
-          () => store.call("exportRecovery", actor),
+        const cell = env.COMMUNITIES.get(
+          env.COMMUNITIES.idFromName("fourm-community-v1"),
         );
-        const receipt = await store.call(
-          "completeBackup",
-          String(job.name),
-          new TextEncoder().encode(JSON.stringify(captured.recovery))
-            .byteLength,
-          captured.files.length,
-        );
+        const result = await cell.runBackup(actor);
+        if (!result.ok) throw new CommunityError(result.status, result.error);
+        const capturedNative = await nativeSnapshot(env);
         return Response.json({
-          name: job.name,
-          state: receipt.state,
-          files: captured.files.length,
-          tables: Object.keys(captured.recovery.tables).length,
+          name: result.result.name,
+          state: result.result.state,
+          files: result.result.file_count,
+          tables: Object.keys(capturedNative.recovery.tables).length,
+          pruned: result.result.pruned,
+          objectsRemoved: result.result.objects_removed,
         });
       }
       if (path === "/full/manifest")
