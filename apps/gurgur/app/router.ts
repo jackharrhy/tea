@@ -34,7 +34,7 @@ const router = createRouter<AppContext>({
           imgSrc: ["'self'", "data:", "blob:"],
           mediaSrc: ["'self'", "blob:"],
           fontSrc: ["'self'"],
-          connectSrc: ["'self'", socketOrigin],
+          connectSrc: ["'self'", socketOrigin, "data:"],
           workerSrc: ["'self'"],
           formAction: ["'self'"],
           baseUri: ["'none'"],
