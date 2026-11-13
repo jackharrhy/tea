@@ -19,11 +19,14 @@ The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git inst
 Production at <https://md.jackharrhy.dev> uses `MARKY_AUTH=central`. It requires `AUTH_ISSUER`,
 `AUTH_CLIENT_ID`, `AUTH_PROJECT_ID`, `AUTH_ORGANIZATION_ID`, the existing
 `SESSION_SECRET`, and `MARKY_BASE_URL=https://md.jackharrhy.dev`. Register
-`https://md.jackharrhy.dev/auth/callback` for a public PKCE client. Central
+`https://md.jackharrhy.dev/auth/callback` for a public PKCE client. Jack Auth
 project member/admin grants control access; Jack holds the initial reviewed
 grant. Successful sign-in keeps Marky's local session and name/color presence,
 with at most a one-hour lifetime. Sessions from the retired login cannot
 authorize the editor or WebSockets. Anonymous mode is for local development;
 it allows anyone with access to edit all files.
+
+Each sign-in keeps its state and PKCE verifier in a separate short-lived signed
+cookie. Starting sign-in in another tab does not replace the earlier attempt.
 
 Set `MARKY_GIT_REPO` to a mounted Git checkout containing the content directory if edits should be committed. `MARKY_GIT_PUSH=true` additionally requires `MARKY_GIT_PAT`. Without Git configuration, Marky still writes Markdown files to disk. See `.env.example` for optional settings. Keep content, sessions, and credentials out of Git.
