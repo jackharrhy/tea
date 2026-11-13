@@ -1,3 +1,4 @@
+import { pruneNativeBackups } from "../backup-pruning.ts";
 import { runNativeBackup } from "../backup-runner.ts";
 import { scanStorage, cleanupOrphanMedia } from "../storage-health.ts";
 import {
@@ -12,6 +13,7 @@ import type { Row } from "./community.ts";
 export class CommunityCell extends DurableObject<Env> {
   private community;
   private backup: Promise<Row> | undefined;
+  private pruning: Promise<{ removed: number }> | undefined;
   private moves = new Map<number, Promise<void>>();
   private orphanCleanup: Promise<number> | undefined;
   constructor(ctx: DurableObjectState, env: Env) {
@@ -48,6 +50,11 @@ export class CommunityCell extends DurableObject<Env> {
   async runBackup(actorId: number | null) {
     try {
       this.community.backupStatus(actorId);
+      if (this.pruning)
+        throw new CommunityError(
+          409,
+          "Backup retention is in progress. Try again shortly.",
+        );
       const running = (this.backup ??= runNativeBackup(
         this.community,
         this.env.MEDIA,
@@ -66,6 +73,35 @@ export class CommunityCell extends DurableObject<Env> {
           error instanceof CommunityError
             ? error.message
             : "Backup response interrupted. Check the backup list before retrying.",
+      };
+    }
+  }
+  async pruneBackups(actorId: number | null) {
+    try {
+      this.community.backupStatus(actorId);
+      if (this.backup)
+        throw new CommunityError(
+          409,
+          "A backup is in progress. Try again shortly.",
+        );
+      const running = (this.pruning ??= pruneNativeBackups(
+        this.community,
+        this.env.MEDIA,
+        actorId,
+      ));
+      try {
+        return { ok: true as const, result: await running };
+      } finally {
+        if (this.pruning === running) this.pruning = undefined;
+      }
+    } catch (error) {
+      return {
+        ok: false as const,
+        status: error instanceof CommunityError ? error.status : 503,
+        error:
+          error instanceof CommunityError
+            ? error.message
+            : "Backup retention interrupted. Retry to reconcile expired snapshots.",
       };
     }
   }
