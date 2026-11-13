@@ -12,6 +12,7 @@ const bannerAttributes: Record<string, string> = { role: "status" };
 export function Document(
   handle: Handle<{
     title: string;
+    vapidKey?: string;
     member: Member | null;
     banner?: Row | null;
     html?: string;
@@ -37,7 +38,7 @@ export function Document(
       </head>
       <body
         class="fourm-shell"
-        data-vapid-key=""
+        data-vapid-key={handle.props.vapidKey ?? ""}
         data-logged-in={handle.props.member ? "true" : "false"}
       >
         <header class="topbar">
