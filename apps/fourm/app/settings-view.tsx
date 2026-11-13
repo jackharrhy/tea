@@ -715,7 +715,7 @@ export function Settings(
             button="save status"
           >
             <label>
-              emoji (max 10 chars)
+              emoji (max 10 chars){" "}
               <input
                 name="status_emoji"
                 value={String(handle.props.profile.status_emoji ?? "")}

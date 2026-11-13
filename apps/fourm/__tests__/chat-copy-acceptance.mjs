@@ -17,13 +17,23 @@ import { exerciseAdminCopies } from "./admin-copy-workflow.mjs";
 process.umask(0o077);
 const workflow = process.env.FOURM_COPY_WORKFLOW ?? "chat";
 assert.ok(
-  ["chat", "push", "admin", "accounts", "delete", "forum-admin"].includes(
-    workflow,
-  ),
+  [
+    "chat",
+    "push",
+    "admin",
+    "accounts",
+    "delete",
+    "forum-admin",
+    "widgets",
+  ].includes(workflow),
 );
-const exerciseCopies = ["admin", "accounts", "delete", "forum-admin"].includes(
-  workflow,
-)
+const exerciseCopies = [
+  "admin",
+  "accounts",
+  "delete",
+  "forum-admin",
+  "widgets",
+].includes(workflow)
   ? exerciseAdminCopies
   : workflow === "push"
     ? exercisePushCopies
