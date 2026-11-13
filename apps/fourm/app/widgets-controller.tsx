@@ -3,6 +3,7 @@ import { LineageTree } from "./lineage-view.tsx";
 import { pagesFeed, forumFeed } from "./feeds.ts";
 import { guestbookJSON } from "./view-json.ts";
 import { counterJSON, counterDocument } from "./counter-widget.ts";
+import { verifiedCounterPeer } from "./counter-peer.ts";
 import { deliverPush } from "./push-delivery.ts";
 import { playerJSON, playerDocument } from "./player-widget.ts";
 import { webringJSON, webringDocument } from "./webring-widget.ts";
@@ -224,21 +225,31 @@ export function widgetController(
         );
       },
       async counter({ request, params }) {
-        const visitor = readCookie(request, "fourm_visitor") ?? token();
+        const verified = env.COUNTER_PEER_KEY !== undefined;
+        const visitor =
+          env.COUNTER_PEER_KEY !== undefined
+            ? await verifiedCounterPeer(request, env.COUNTER_PEER_KEY)
+            : (readCookie(request, "fourm_visitor") ?? token());
+        if (visitor === null)
+          throw new CommunityError(
+            503,
+            "Trusted counter visitor context unavailable",
+          );
         const result = await store.call(
           "counter",
           params.username,
-          await hash(visitor),
+          await hash(verified ? `peer:${visitor}` : visitor),
         );
         const response = wantsJSON(request)
           ? Response.json(counterJSON(result.owner, result.total_views))
           : new Response(counterDocument(result.owner, result.total_views), {
               headers: { "Content-Type": "text/html; charset=utf-8" },
             });
-        response.headers.append(
-          "Set-Cookie",
-          cookie(env, "fourm_visitor", visitor, 365 * 24 * 3600),
-        );
+        if (!verified)
+          response.headers.append(
+            "Set-Cookie",
+            cookie(env, "fourm_visitor", visitor, 365 * 24 * 3600),
+          );
         return response;
       },
       async status({ request, params }) {

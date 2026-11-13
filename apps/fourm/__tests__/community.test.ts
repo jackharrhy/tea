@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it, vi } from "vitest";
 import { createCommunity } from "../app/data/community.ts";
+import { attestCounterPeer, counterPeerHeader } from "../app/counter-peer.ts";
 import { createAppRouter } from "../app/router.tsx";
 import type { Bindings, Runtime } from "../app/runtime.ts";
 import type { Row } from "../app/data/community.ts";
@@ -1175,6 +1176,70 @@ it("returns a committed guestbook entry while notification delivery is still pen
   } finally {
     pending.resolve([]);
     await Promise.all(jobs);
+    sqlite.close();
+  }
+});
+
+it("uses an authenticated ingress IP for counter cooldown and ignores changed browser cookies", async () => {
+  const { community, sqlite } = fixture();
+  const secret = "ab".repeat(32);
+  const store = {
+    call: async (method: keyof typeof community, ...args: unknown[]) =>
+      (community[method] as (...values: unknown[]) => unknown)(...args),
+  } as unknown as Runtime;
+  const router = createAppRouter(
+    { COUNTER_PEER_KEY: secret } as Bindings,
+    store,
+    { member: null, sessionHash: null },
+    () => {},
+  );
+  const path = "/u/jane/counter";
+  const visit = async (ip: string, cookie: string) => {
+    const proof = await attestCounterPeer(
+      { ip, method: "GET", path, at: Date.now() },
+      secret,
+    );
+    const response = await router.fetch(
+      new Request("https://review.invalid" + path, {
+        headers: {
+          Accept: "application/json",
+          Cookie: "fourm_visitor=" + cookie,
+          [counterPeerHeader]: proof,
+          "X-Forwarded-For": "192.0.2.200",
+        },
+      }),
+    );
+    expect(response.headers.get("Set-Cookie")).toBeNull();
+    return response.json() as Promise<{ total_views: number }>;
+  };
+  try {
+    const first = await visit("192.0.2.1", "first");
+    expect((await visit("192.0.2.1", "changed")).total_views).toBe(
+      first.total_views,
+    );
+    expect((await visit("192.0.2.2", "changed")).total_views).toBe(
+      first.total_views + 1,
+    );
+    await expect(
+      router.fetch(
+        new Request("https://review.invalid" + path, {
+          headers: {
+            "CF-Connecting-IP": "192.0.2.3",
+            "X-Forwarded-For": "192.0.2.3",
+          },
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 503 });
+    expect(
+      sqlite.prepare("SELECT count(*) AS n FROM counter_visits").get()?.n,
+    ).toBe(2);
+    expect(
+      sqlite
+        .prepare("SELECT visitor_hash FROM counter_visits")
+        .all()
+        .every((row) => /^[a-f0-9]{64}$/.test(String(row.visitor_hash))),
+    ).toBe(true);
+  } finally {
     sqlite.close();
   }
 });

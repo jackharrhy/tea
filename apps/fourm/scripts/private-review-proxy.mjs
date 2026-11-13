@@ -1,5 +1,7 @@
 import { createServer, request } from "node:http";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { isIP } from "node:net";
+import { attestCounterPeer, counterPeerHeader } from "../app/counter-peer.ts";
 import { readFile } from "node:fs/promises";
 const config = JSON.parse(await readFile(process.argv[2], "utf8"));
 const key = (await readFile(config.keyFile, "utf8")).trim();
@@ -10,6 +12,11 @@ const equal = (value) => {
   const b = createHash("sha256").update(key).digest();
   return timingSafeEqual(a, b);
 };
+const counterKey = config.counterPeerKeyFile
+  ? (await readFile(config.counterPeerKeyFile, "utf8")).trim()
+  : null;
+if (counterKey !== null && !/^[a-f0-9]{64}$/.test(counterKey))
+  throw new Error("Invalid private counter key");
 const servers = [];
 const sockets = new Set();
 for (const route of config.routes) {
@@ -89,6 +96,15 @@ for (const route of config.routes) {
     const forwardedHeaders = { ...req.headers };
     delete forwardedHeaders.cookie;
     delete forwardedHeaders.host;
+    delete forwardedHeaders[counterPeerHeader];
+    if (counterKey && /^\/u\/[^/]+\/counter\/?$/.test(url.pathname)) {
+      const peer = req.headers["x-forwarded-for"];
+      if (typeof peer === "string" && isIP(peer))
+        forwardedHeaders[counterPeerHeader] = await attestCounterPeer(
+          { ip: peer, method: req.method, path: url.pathname, at: Date.now() },
+          counterKey,
+        );
+    }
     const otherCookies = cookies.filter(
       (x) => !x.startsWith("fourm_review_access="),
     );
