@@ -12,6 +12,7 @@ const upstream = createServer((req, res) => {
   res.writeHead(req.url.startsWith("/static/") ? 200 : 401, {
     "Content-Type": "text/plain",
     ETag: '"bundled-asset"',
+    "Cache-Control": "public, max-age=0, must-revalidate",
   });
   res.end("App authorization still required");
 });

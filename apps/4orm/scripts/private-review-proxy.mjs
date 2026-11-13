@@ -142,6 +142,8 @@ for (const route of config.routes) {
               : "no-store",
           "Content-Security-Policy": csp,
         };
+        // Node preserves differently cased header keys; do not send two policies.
+        delete responseHeaders["cache-control"];
         if ((reply.headers["content-type"] ?? "").startsWith("text/html")) {
           const chunks = [];
           let size = 0;
