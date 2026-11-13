@@ -1,6 +1,8 @@
 import { readFileSync, statSync } from "node:fs";
-import { page } from "./views.mjs";
-import { escapeHtml as h, contentSecurityPolicy } from "./security.mjs";
+import { createRouter } from "remix/router";
+import { route } from "remix/routes";
+import { contentSecurityPolicy } from "./security.mjs";
+const { renderSupportPage } = await import("./support-page.tsx");
 import { createSupportStore } from "./support-store.mjs";
 import { createSupportLogin } from "./support-login.mjs";
 import { createSupportProvider } from "./support-provider.mjs";
@@ -107,72 +109,98 @@ export function createSupportRoutes({
     eligible,
     actorSubject: config.actorSubject,
   });
-  let sweeping = false;
-  const sweep = async () => {
-    if (sweeping) return;
-    sweeping = true;
-    try {
-      await login.sweep();
-    } catch {
-      console.error("support_cleanup_pending");
-    } finally {
-      sweeping = false;
-    }
+  let sweeping;
+  let closed = false;
+  const sweep = () => {
+    if (closed || sweeping) return sweeping;
+    sweeping = login
+      .sweep()
+      .catch(() => console.error("support_cleanup_pending"))
+      .finally(() => {
+        sweeping = undefined;
+      });
+    return sweeping;
   };
   const timer = setInterval(sweep, 15000);
   timer.unref();
   void sweep();
+  const apiRoutes = route({
+    redeem: "/support/redeem",
+    session: "/support/session",
+    end: "/support/end",
+  });
+  const api = createRouter();
+  const handleApi = async ({ request, url }) => {
+    try {
+      if (
+        request.method !== "POST" ||
+        request.headers.get("content-type")?.split(";")[0] !==
+          "application/json"
+      )
+        throw fail(400);
+      let size = 0;
+      const chunks = [];
+      for await (const chunk of request.body || []) {
+        size += chunk.byteLength;
+        if (size > 16384) throw fail(413);
+        chunks.push(chunk);
+      }
+      let input;
+      try {
+        input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      } catch {
+        throw fail(400);
+      }
+      if (!input || typeof input !== "object" || Array.isArray(input))
+        throw fail(400);
+      if (config.enabled !== true && url.pathname === "/support/redeem")
+        throw fail(403);
+      return Response.json(
+        await login.server(
+          url.pathname,
+          input,
+          request.headers.get("authorization"),
+        ),
+        {
+          headers: {
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+          },
+        },
+      );
+    } catch (error) {
+      return Response.json(
+        { error: "support_request_failed" },
+        {
+          status: [400, 401, 403, 409, 410, 413].includes(error.status)
+            ? error.status
+            : 502,
+          headers: {
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+          },
+        },
+      );
+    }
+  };
+  api.map(apiRoutes, {
+    actions: { redeem: handleApi, session: handleApi, end: handleApi },
+  });
   return {
+    api,
     preflight,
     enabled: config.enabled === true,
     enabledFor: (subject) =>
       config.enabled === true && subject === config.actorSubject,
-    async server(request, response, url) {
-      if (
-        !["/support/redeem", "/support/session", "/support/end"].includes(
-          url.pathname,
-        )
-      )
-        return false;
-      response.setHeader("Cache-Control", "no-store");
-      try {
-        if (
-          request.method !== "POST" ||
-          request.headers["content-type"]?.split(";")[0] !== "application/json"
-        )
-          throw fail(400);
-        let body = "";
-        for await (const chunk of request) {
-          body += chunk;
-          if (Buffer.byteLength(body) > 16384) throw fail(413);
-        }
-        let input;
-        try {
-          input = JSON.parse(body);
-        } catch {
-          throw fail(400);
-        }
-        if (!input || typeof input !== "object" || Array.isArray(input))
-          throw fail(400);
-        if (config.enabled !== true && url.pathname === "/support/redeem")
-          throw fail(403);
-        const result = await login.server(
-          url.pathname,
-          input,
-          request.headers.authorization,
-        );
-        response.writeHead(200, { "content-type": "application/json" });
-        response.end(JSON.stringify(result));
-      } catch (error) {
-        const status = [400, 401, 403, 409, 410, 413].includes(error.status)
-          ? error.status
-          : 502;
-        response.writeHead(status, { "content-type": "application/json" });
-        response.end(JSON.stringify({ error: "support_request_failed" }));
-      }
-      return true;
-    },
-    async browser({ request, url, form, context, redirect, send, setPolicy }) {
+    async browser({
+      request,
+      url,
+      form,
+      context,
+      redirect,
+      sendRemix,
+      setPolicy,
+    }) {
       if (
         config.enabled !== true &&
         (url.pathname.startsWith("/support/") ||
@@ -195,22 +223,24 @@ export function createSupportRoutes({
               profile === "missing"
                 ? "Needs first Artbin sign-in."
                 : "Artbin availability could not be checked. Try again later.";
-            send(
-              page(
-                "Support login",
-                `<section class="narrow"><h1>Support login</h1><p>${message}</p><a href="/manage/people/${h(start[1])}">Back</a></section>`,
-                context,
-              ),
+            await sendRemix(
+              (nonce) =>
+                renderSupportPage(context, start[1], nonce, { message }),
+              200,
+              [consumer.callback, config.issuer],
             );
             return true;
           }
           const actor = await accountActions.managedUser(context.user);
-          send(
-            page(
-              "Artbin",
-              `<section class="narrow"><h1>Artbin</h1><p>View as ${h(target.human?.profile?.displayName || target.userName)}.</p><p class="muted">You: ${h(actor.human?.profile?.displayName || actor.userName)} · Up to ten minutes. Your identity stays visible.</p><form method="post" class="form-stack"><input type="hidden" name="csrf" value="${h(context.csrf)}"><input type="hidden" name="consumer" value="artbin"><label>Reason<textarea name="reason" required minlength="3" maxlength="500"></textarea></label><button>Continue to Artbin</button></form><p><a href="/manage/people/${h(start[1])}">Back to person</a></p></section>`,
-              context,
-            ),
+          await sendRemix(
+            (nonce) =>
+              renderSupportPage(context, start[1], nonce, {
+                targetName:
+                  target.human?.profile?.displayName || target.userName,
+                actorName: actor.human?.profile?.displayName || actor.userName,
+              }),
+            200,
+            [consumer.callback, config.issuer],
           );
           return true;
         }
@@ -242,8 +272,10 @@ export function createSupportRoutes({
       );
       return true;
     },
-    close() {
+    async close() {
+      closed = true;
       clearInterval(timer);
+      await sweeping;
       store.close();
     },
   };

@@ -30,7 +30,10 @@ export function validPost(origin, expectedOrigin, suppliedToken, sessionToken) {
   return origin === expectedOrigin && equalToken(suppliedToken, sessionToken);
 }
 
-export function contentSecurityPolicy(callback, { scripts = false } = {}) {
+export function contentSecurityPolicy(
+  callback,
+  { scripts = false, styleNonce } = {},
+) {
   const origins = new Set();
   for (const value of Array.isArray(callback)
     ? callback
@@ -49,5 +52,7 @@ export function contentSecurityPolicy(callback, { scripts = false } = {}) {
   }
   const destination = [...origins].map((origin) => ` ${origin}`).join("");
   // Browsers apply form-action to the entire redirect chain after a form POST.
-  return `default-src 'none'; ${scripts ? "script-src 'self'; " : ""}style-src 'self'; font-src 'self'; form-action 'self'${destination}; base-uri 'none'; frame-ancestors 'none'`;
+  if (styleNonce && !/^[A-Za-z0-9_-]{16,}$/.test(styleNonce))
+    throw new Error("Invalid style nonce");
+  return `default-src 'none'; ${scripts ? "script-src 'self'; " : ""}style-src 'self'${styleNonce ? ` 'nonce-${styleNonce}'` : ""}; font-src 'self'; form-action 'self'${destination}; base-uri 'none'; frame-ancestors 'none'`;
 }

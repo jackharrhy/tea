@@ -10,6 +10,14 @@ const directory = await mkdtemp(`${tmpdir()}/radio-browser-`);
 await cp(new URL("../../src/", import.meta.url), `${directory}/src`, {
   recursive: true,
 });
+await cp(
+  new URL("../../tsconfig.json", import.meta.url),
+  `${directory}/tsconfig.json`,
+);
+await symlink(
+  new URL("../../../../node_modules/", import.meta.url).pathname,
+  `${directory}/node_modules`,
+);
 await symlink(
   new URL("../../public/", import.meta.url).pathname,
   `${directory}/public`,

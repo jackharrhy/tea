@@ -1,0 +1,108 @@
+import { css } from "remix/component";
+
+export const managementStyles = css({
+  "& .filters": {
+    display: "flex",
+    gap: "14px",
+    alignItems: "end",
+    marginBottom: "22px",
+  },
+  "& .filters label:first-child": { flex: 1, maxWidth: "430px" },
+  "& .filters label": { fontSize: "13px" },
+  "& .filters select": { minWidth: "180px" },
+  "& .result-count": {
+    fontSize: "12px",
+    color: "var(--muted)",
+    marginBottom: "12px",
+  },
+  "& .people-list": { borderTop: "1px solid var(--line)" },
+  "& .row-action": {
+    fontSize: "12px",
+    color: "var(--blue)",
+    textAlign: "right",
+  },
+  "& .row-meta": { fontSize: "12px", color: "var(--muted)" },
+  "& .status-label": {
+    display: "inline-block",
+    fontSize: "12px",
+    lineHeight: 1.5,
+    padding: "3px 8px",
+    background: "#e9edf0",
+    color: "#3c4d5b",
+    borderRadius: "4px",
+    fontWeight: 450,
+  },
+  "& .table-frame": { width: "100%", overflow: "auto" },
+  "& table": {
+    width: "100%",
+    borderCollapse: "collapse",
+    textAlign: "left",
+    lineHeight: 1.6,
+  },
+  "& th": {
+    fontWeight: 450,
+    fontSize: "12px",
+    color: "var(--muted)",
+    padding: "0 18px 12px 0",
+  },
+  "& td": {
+    borderTop: "1px solid var(--line)",
+    padding: "18px 18px 18px 0",
+    verticalAlign: "top",
+    fontSize: "13px",
+    maxWidth: "420px",
+  },
+  "& td:first-child": { minWidth: "140px" },
+  "& .table-subline": {
+    display: "block",
+    marginTop: "6px",
+    color: "var(--muted)",
+    fontSize: "12px",
+  },
+  "& .membership-row": {
+    padding: "18px 0",
+    borderBottom: "1px solid var(--line)",
+    display: "grid",
+    gridTemplateColumns: "220px minmax(0, 1fr)",
+    gap: "24px",
+  },
+  "& .membership-row > .form-stack": { maxWidth: "530px" },
+  "& .membership-row > a": { fontWeight: 600 },
+  "& .settings-row": {
+    display: "grid",
+    gridTemplateColumns: "minmax(180px, 0.8fr) minmax(0, 1.2fr)",
+    gap: "50px",
+    borderTop: "1px solid var(--line)",
+    padding: "30px 0",
+  },
+  "& .settings-row > div > p": {
+    color: "var(--muted)",
+    fontSize: "13px",
+  },
+  "& .check": {
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    fontWeight: 400,
+    margin: "10px 0",
+    overflowWrap: "anywhere",
+  },
+  "& .role-options": {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "20px 30px",
+  },
+  "& .role-options > div": {
+    padding: "15px 0",
+    borderTop: "1px solid var(--line)",
+  },
+  "& .compact-row": {
+    padding: "12px 0",
+    borderBottom: "1px solid var(--line)",
+  },
+  "& .cleanup-item": {
+    padding: "18px 0",
+    borderTop: "1px solid var(--line)",
+  },
+  "& .cleanup-item > .form-stack": { marginTop: "20px" },
+});

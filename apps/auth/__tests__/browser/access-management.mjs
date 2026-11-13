@@ -228,7 +228,7 @@ async function capture(page, name) {
     await mkdir(`${snapshots}/assets/fonts`, { recursive: true });
     await writeFile(
       `${snapshots}/assets/style.css`,
-      readFileSync(new URL("../../public/style.css", import.meta.url)),
+      readFileSync(new URL("../../src/styles.css", import.meta.url)),
     );
     await writeFile(
       `${snapshots}/assets/fonts/inter-variable.woff2`,
@@ -288,6 +288,19 @@ try {
     .getByRole("heading", { name: "Your tools", exact: true })
     .waitFor();
   await capture(page, "apps-desktop");
+  await page
+    .getByRole("link", { name: "Services", exact: true })
+    .first()
+    .click();
+  await page.getByRole("heading", { name: "Services", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Worldview", exact: true }).click();
+  await page.getByRole("heading", { name: "Worldview", exact: true }).waitFor();
+  await page
+    .getByRole("link", { name: "Services", exact: true })
+    .last()
+    .click();
+  await page.getByRole("link", { name: "Technical integrations" }).click();
+  await page.getByRole("heading", { name: "Technical integrations" }).waitFor();
   await page.getByRole("link", { name: "People", exact: true }).first().click();
   await page.getByRole("link", { name: /Sam Member/ }).click();
   await capture(page, "person-desktop");
@@ -386,6 +399,11 @@ try {
     grants.find((grant) => grant.id === "member-maps").roleKeys,
     ["member", "private-extra"],
   );
+  await page.goto(origin + "/manage/activity");
+  await page.getByRole("heading", { name: "Activity & cleanup" }).waitFor();
+  await page.getByRole("link", { name: /Prove one group assignment/ }).click();
+  await page.getByRole("heading", { name: "Access operation" }).waitFor();
+  await page.getByText("External cleanup", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Groups", exact: true }).first().click();
   await capture(page, "groups-desktop");
   await page.setViewportSize({ width: 390, height: 844 });

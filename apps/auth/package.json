@@ -12,12 +12,16 @@
     "start": "node src/server.mjs",
     "test": "node --test __tests__/*.test.mjs",
     "test:browser": "node __tests__/browser/authorization.mjs && node __tests__/browser/radio-enrollment.mjs && node __tests__/browser/access-management.mjs && node __tests__/browser/doodle-gallery.mjs",
-    "build": "tailwindcss -i ./src/styles.css -o ./public/style.css --minify",
-    "check": "npm test && npm run build && npm run test:browser"
+    "typecheck": "tsrs --noEmit",
+    "check": "npm run typecheck && npm test && npm run test:browser"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^26.6.6",
     "playwright": "^1.65.0",
-    "tailwindcss": "^4.3.3"
+    "tsrs": "^0.25.0-ts7.1.0-beta"
+  },
+  "dependencies": {
+    "@harrhy/ui": "^0.1.0",
+    "remix": "^3.2.0"
   }
 }

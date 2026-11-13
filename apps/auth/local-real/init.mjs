@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import {
   mkdirSync,
   openSync,
@@ -23,6 +23,7 @@ if (existsSync(resolve(state, "compose.env"))) {
 mkdirSync(resolve(state, "bootstrap"), { recursive: true, mode: 0o700 });
 const values = {
   AUTH_REAL_STATE: state,
+  AUTH_REAL_PROJECT: `harrhy-auth-real-${createHash("sha256").update(state).digest("hex").slice(0, 8)}`,
   AUTH_REAL_POSTGRES_PASSWORD: randomBytes(24).toString("hex"),
   AUTH_REAL_MASTERKEY: randomBytes(16).toString("hex"),
   AUTH_REAL_PAT_EXPIRY: new Date(Date.now() + 30 * 86400_000).toISOString(),

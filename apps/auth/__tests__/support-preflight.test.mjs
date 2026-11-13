@@ -1,10 +1,11 @@
+import "remix/node-tsx";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 import { createSupportRoutes } from "../src/support-routes.mjs";
-import { person } from "../src/access-views.mjs";
+const { renderPerson } = await import("../src/person-page.tsx");
 
 test("missing or unavailable local profile blocks form and POST before native issuance; native eligibility precedes lookup", async () => {
   const dir = mkdtempSync(tmpdir() + "/support-preflight-");
@@ -71,6 +72,27 @@ test("missing or unavailable local profile blocks form and POST before native is
     },
   });
   const context = { user: "actor", admin: true, csrf: "csrf" };
+  const apiUrl = "https://auth.test/support/session";
+  const getResponse = await routes.api.fetch(new Request(apiUrl));
+  assert.equal(getResponse.status, 400);
+  assert.equal(getResponse.headers.get("set-cookie"), null);
+  const oversized = await routes.api.fetch(
+    new Request(apiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "x".repeat(16385),
+    }),
+  );
+  assert.equal(oversized.status, 413);
+  const unauthorized = await routes.api.fetch(
+    new Request(apiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    }),
+  );
+  assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.headers.get("cache-control"), "no-store");
   const browser = async (method) => {
     let html;
     await routes.browser({
@@ -82,8 +104,8 @@ test("missing or unavailable local profile blocks form and POST before native is
         ["reason", "Read-only acceptance"],
       ]),
       setPolicy() {},
-      send(value) {
-        html = value;
+      async sendRemix(render) {
+        html = await render("test-nonce");
       },
       redirect() {
         assert.fail("Ineligible target must not get a handoff");
@@ -105,13 +127,13 @@ test("missing or unavailable local profile blocks form and POST before native is
     assert.equal(await routes.preflight("other-admin", "target"), "ineligible");
     assert.equal(lookups, count);
   } finally {
-    routes.close();
+    await routes.close();
     globalThis.fetch = original;
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test("View as appears only in eligible Artbin service context, never as a standalone person action", () => {
+test("View as appears only in eligible Artbin service context, never as a standalone person action", async () => {
   const user = {
     id: "target",
     userName: "target",
@@ -136,19 +158,28 @@ test("View as appears only in eligible Artbin service context, never as a standa
     },
   ];
   const render = (state) =>
-    person(user, model, apps, services, grants, {
-      user: "actor",
-      admin: true,
-      csrf: "csrf",
-      supportEnabled: true,
-      supportTarget: state,
-    });
+    renderPerson(
+      user,
+      model,
+      apps,
+      services,
+      grants,
+      {
+        user: "actor",
+        admin: true,
+        csrf: "csrf",
+        supportEnabled: true,
+        supportTarget: state,
+      },
+      undefined,
+      "test-nonce",
+    );
   assert.match(
-    render("ready"),
+    await render("ready"),
     /<strong>Artbin<\/strong><span class="table-subline"><a[^>]+>View as this person/,
   );
   for (const state of ["missing", "unavailable", "ineligible"])
-    assert.doesNotMatch(render(state), /View as this person|\/support"/);
-  assert.match(render("missing"), /Needs first Artbin sign-in/);
-  assert.doesNotMatch(render("ready"), /Support login in Artbin/);
+    assert.doesNotMatch(await render(state), /View as this person|\/support"/);
+  assert.match(await render("missing"), /Needs first Artbin sign-in/);
+  assert.doesNotMatch(await render("ready"), /Support login in Artbin/);
 });

@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync, chmodSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { setTimeout } from "node:timers/promises";
 
 process.umask(0o077);
 const state = resolve(
@@ -16,6 +17,8 @@ if (!existsSync(operatorPath) || !existsSync(loginPath))
   throw new Error(
     "Local ZITADEL is not ready; run npm run auth:real:up first.",
   );
+chmodSync(operatorPath, 0o600);
+chmodSync(loginPath, 0o600);
 const operator = readFileSync(operatorPath, "utf8").trim();
 const login = readFileSync(loginPath, "utf8").trim();
 const saved = existsSync(checkpoint)
@@ -52,8 +55,22 @@ async function api(
   });
   const value = await response.json().catch(() => ({}));
   if (!response.ok)
-    throw new Error(`Local ZITADEL ${path} returned ${response.status}`);
+    throw Object.assign(
+      new Error(`Local ZITADEL ${path} returned ${response.status}`),
+      { status: response.status },
+    );
   return value;
+}
+
+async function localOrganization() {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    try {
+      return await api("/management/v1/orgs/me");
+    } catch (error) {
+      if (error.status !== 503 || attempt === 29) throw error;
+      await setTimeout(1000);
+    }
+  }
 }
 
 async function once(name, create) {
@@ -73,7 +90,7 @@ async function once(name, create) {
 
 let organization = saved.steps.organization;
 if (!organization) {
-  const result = await api("/management/v1/orgs/me");
+  const result = await localOrganization();
   if (!result.org?.id) throw new Error("Local organization lookup failed");
   organization = { id: result.org.id };
   saved.steps.organization = organization;

@@ -1,20 +1,47 @@
 import { createServer } from "node:http";
+import "remix/node-tsx";
+import { createRequestListener } from "remix/node-fetch-server";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createSupportRoutes } from "./support-routes.mjs";
 import { createNativeAccess } from "./native-access.mjs";
 import { createAccessStore } from "./access-store.mjs";
 import { createAccessRoutes } from "./access-routes.mjs";
+import { createAccountRoutes } from "./account-routes.mjs";
+import { createOAuthBrowserRoutes } from "./oauth-browser-routes.mjs";
+import { createEmailRoutes } from "./email-routes.mjs";
+import { createLoginRoutes } from "./login-routes.mjs";
+import { createEnrollmentRoutes } from "./enrollment-routes.mjs";
 import { createZitadel } from "./zitadel.mjs";
 import {
   randomToken,
   localReturnTo,
   validPost,
   contentSecurityPolicy,
-  equalToken,
-  escapeHtml as h,
 } from "./security.mjs";
-import * as views from "./views.mjs";
+const { renderProblem } = await import("./problem-page.tsx");
+const { renderLogin } = await import("./login-page.tsx");
+const { renderAuthorization } = await import("./authorization-page.tsx");
+const { renderEmailForm, renderEmailResult } = await import("./email-page.tsx");
+const { renderAccount } = await import("./account-page.tsx");
+const { renderEnrollment, renderDevice, renderDeviceResult, renderDeviceCode } =
+  await import("./flow-page.tsx");
+const { renderDirectory, renderAppDetail } =
+  await import("./directory-page.tsx");
+const { renderSessions, renderPeople, renderNewPerson } =
+  await import("./simple-access-pages.tsx");
+const { renderServiceList, renderServiceDetail, renderIntegrations } =
+  await import("./service-pages.tsx");
+const {
+  renderPreviewAccount,
+  renderInactivePreview,
+  renderActivity,
+  renderOperation,
+} = await import("./activity-pages.tsx");
+const { renderGroups, renderGroupForm } = await import("./group-pages.tsx");
+const { renderAccessForm, renderChangePreview } =
+  await import("./access-pages.tsx");
+const { renderPerson } = await import("./person-page.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
 import { createAccountActions } from "./accounts.mjs";
@@ -22,7 +49,9 @@ import { createEnrollmentActions } from "./enrollment.mjs";
 import { createEnrollmentCompletion } from "./enrollment-completion.mjs";
 import { createRadioEnrollment } from "./radio-enrollment.mjs";
 import { createAuthorizationActions } from "./authorization.mjs";
-import { authorizationPolicy, isAuthorizationPath } from "./oidc-policy.mjs";
+import { createPublicRouter, isPublicRoute } from "./public-router.mjs";
+import { createApiRouter, isApiRoute } from "./api-router.mjs";
+import { createBrowserRouter } from "./browser-router.mjs";
 
 const origin = process.env.PUBLIC_ORIGIN || "https://auth.jackharrhy.dev";
 const organizationId = process.env.ORGANIZATION_ID;
@@ -94,6 +123,23 @@ const accessRoutes = createAccessRoutes({
   endUserSessions,
   rateLimit,
   supportPreflight: (actor, target) => supportRoutes?.preflight(actor, target),
+  renderDirectory,
+  renderAppDetail,
+  renderSessions,
+  renderPeople,
+  renderNewPerson,
+  renderServiceList,
+  renderServiceDetail,
+  renderIntegrations,
+  renderPreviewAccount,
+  renderInactivePreview,
+  renderActivity,
+  renderOperation,
+  renderGroups,
+  renderGroupForm,
+  renderAccessForm,
+  renderChangePreview,
+  renderPerson,
 });
 radioEnrollment = process.env.RADIO_ENROLLMENT_DB_FILE
   ? createRadioEnrollment({
@@ -147,7 +193,13 @@ const enrollmentCompletion =
         isBlocked: (subject, project) => accessStore.blocked(subject, project),
       })
     : null;
-const css = readFileSync(new URL("../public/style.css", import.meta.url));
+const apiRouter = createApiRouter({
+  enrollmentCompletion,
+  enrollmentKey,
+  applications,
+  origin,
+});
+const css = readFileSync(new URL("./styles.css", import.meta.url));
 const doodleAssets = new Map([
   [
     "/assets/doodle-motion.mjs",
@@ -165,6 +217,11 @@ const doodleAssets = new Map([
 const inter = readFileSync(
   new URL("../public/fonts/inter-variable.woff2", import.meta.url),
 );
+const publicRouter = createPublicRouter({
+  styles: css,
+  font: inter,
+  doodles: doodleAssets,
+});
 const sessions = new Map(),
   attempts = new Map();
 const cookieName = "__Host-jack_auth";
@@ -214,8 +271,8 @@ function rateLimit(key, limit = 15) {
 }
 async function formData(request) {
   let body = "";
-  for await (const chunk of request) {
-    body += chunk.toString();
+  for await (const chunk of request.body || []) {
+    body += Buffer.from(chunk).toString("utf8");
     if (Buffer.byteLength(body) > 16_384)
       throw httpError(413, "Request is too large.");
   }
@@ -246,23 +303,86 @@ async function endUserSessions(userId) {
     if (value.userId === userId) sessions.delete(id);
 }
 
-createServer(async (request, response) => {
-  response.setHeader("Cache-Control", "no-store");
-  response.setHeader("X-Content-Type-Options", "nosniff");
-  // no-referrer would make browsers send Origin: null on HTML form POSTs.
-  response.setHeader("Referrer-Policy", "same-origin");
-  const url = new URL(request.url, origin);
-  response.setHeader(
-    "Content-Security-Policy",
-    contentSecurityPolicy(undefined, { scripts: url.pathname === "/login" }),
-  );
+const enrollmentRoutes = createEnrollmentRoutes({
+  enrollment,
+  organizationId,
+  api,
+  rateLimit,
+  sessions,
+  newSession,
+  cookie,
+  renderEnrollment,
+});
+const accountRoutes = createAccountRoutes({
+  accountActions,
+  emailActions,
+  endUserSessions,
+  rateLimit,
+  renderAccount,
+  renderEmailResult,
+  cookieName,
+});
+
+const loginRoutes = createLoginRoutes({
+  api,
+  accountActions,
+  authorizationActions,
+  rateLimit,
+  localReturnTo,
+  newSession,
+  sessions,
+  cookie,
+  cookieName,
+});
+const emailRoutes = createEmailRoutes({
+  emailActions,
+  endUserSessions,
+  rateLimit,
+  renderEmailForm,
+  renderEmailResult,
+});
+const oauthRoutes = createOAuthBrowserRoutes({
+  api,
+  authorizationActions,
+  assertApplication,
+  grants,
+  accessStore,
+  contentSecurityPolicy,
+  randomToken,
+  renderAuthorization,
+  renderDevice,
+  renderDeviceCode,
+  renderDeviceResult,
+});
+const supportBrowserRoute = (input) => supportRoutes?.browser(input) ?? false;
+
+async function handleBrowser(request, routeAction, routePhase) {
+  const url = new URL(request.url);
+  const headers = new Headers({
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    // HTML forms need a same-origin referrer so browsers send their real Origin.
+    "Referrer-Policy": "same-origin",
+    "Content-Security-Policy": contentSecurityPolicy(undefined, {
+      scripts: url.pathname === "/login",
+    }),
+  });
+  let output;
   const send = (html, status = 200) => {
-    response.writeHead(status, { "Content-Type": "text/html; charset=utf-8" });
-    response.end(html);
+    headers.set("Content-Type", "text/html; charset=utf-8");
+    output = new Response(html, { status, headers: new Headers(headers) });
   };
   const redirect = (path) => {
-    response.writeHead(303, { Location: path });
-    response.end();
+    headers.set("Location", path);
+    output = new Response(null, { status: 303, headers: new Headers(headers) });
+  };
+  const sendRemix = async (render, status = 200, allowedOrigins) => {
+    const nonce = randomToken();
+    headers.set(
+      "Content-Security-Policy",
+      contentSecurityPolicy(allowedOrigins, { styleNonce: nonce }),
+    );
+    send(await render(nonce), status);
   };
   const login = async (returnTo, csrf, error, status = error ? 401 : 200) => {
     returnTo = localReturnTo(returnTo);
@@ -270,6 +390,7 @@ createServer(async (request, response) => {
     const id =
       destination.pathname === "/authorize" &&
       destination.searchParams.get("authRequest");
+    let callbackOrigin;
     if (id) {
       const { request: authRequest, callback } =
         await authorizationActions.begin(id, session);
@@ -277,744 +398,262 @@ createServer(async (request, response) => {
         redirect(callback);
         return;
       }
-      response.setHeader(
-        "Content-Security-Policy",
-        contentSecurityPolicy(authRequest.redirectUri, { scripts: true }),
-      );
+      callbackOrigin = authRequest.redirectUri;
     }
-    send(views.login({ csrf, returnTo, error }), status);
-  };
-  let session;
-  try {
-    if (supportRoutes && (await supportRoutes.server(request, response, url)))
-      return;
-    if (url.pathname === "/enroll/complete") {
-      try {
-        if (request.method !== "POST")
-          throw httpError(405, "POST is required.");
-        if (!enrollmentCompletion)
-          throw httpError(503, "Enrollment completion is unavailable.");
-        if (
-          !equalToken(request.headers.authorization, `Bearer ${enrollmentKey}`)
-        )
-          throw httpError(401, "Enrollment service authentication required.");
-        if (
-          request.headers["content-type"]?.split(";")[0].trim() !==
-          "application/json"
-        )
-          throw httpError(415, "JSON is required.");
-        let body = "";
-        for await (const chunk of request) {
-          body += chunk.toString();
-          if (Buffer.byteLength(body) > 4096)
-            throw httpError(413, "Request is too large.");
-        }
-        let input;
-        try {
-          input = JSON.parse(body);
-        } catch {
-          throw httpError(400, "Invalid JSON.");
-        }
-        const result = await enrollmentCompletion.complete(input);
-        response.writeHead(200, { "Content-Type": "application/json" });
-        response.end(JSON.stringify(result));
-      } catch (error) {
-        const status =
-          Number.isInteger(error.status) &&
-          error.status >= 400 &&
-          error.status < 600
-            ? error.status
-            : 502;
-        response.writeHead(status, {
-          "Content-Type": "application/json",
-          ...(status === 405 ? { Allow: "POST" } : {}),
-        });
-        response.end(
-          JSON.stringify({
-            error:
-              error.code === "enrollment_grant_ambiguous"
-                ? error.code
-                : "enrollment_completion_failed",
-          }),
-        );
-      }
-      return;
-    }
-    if (url.pathname === "/internal/oidc/authorize-policy") {
-      const uri = request.headers["x-forwarded-uri"];
-      const method = request.headers["x-forwarded-method"];
-      let body = new URLSearchParams();
-      let authorizationPath;
-      try {
-        authorizationPath = typeof uri === "string" && isAuthorizationPath(uri);
-      } catch {
-        throw httpError(400, "Invalid authorization request URI.");
-      }
-      if (authorizationPath && method === "POST") {
-        if (
-          !request.headers["content-type"]?.startsWith(
-            "application/x-www-form-urlencoded",
-          )
-        )
-          throw httpError(415, "Unsupported authorization form.");
-        body = await formData(request);
-      }
-      const policy = authorizationPolicy(uri, method, body, applications);
-      if (typeof uri === "string") {
-        const client =
-          new URL(uri, origin).searchParams.get("client_id") ||
-          body.get("client_id");
-        const minimum = applications
-          .map((app) => app.authRequestNotBefore?.[client])
-          .find(Boolean);
-        if (minimum) response.setHeader("X-Jack-Auth-Not-Before", minimum);
-      }
-      response.writeHead(policy.allowed ? 200 : 400, {
-        "Content-Type": "application/json",
-      });
-      response.end(JSON.stringify(policy));
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/healthz") {
-      response.end("ok");
-      return;
-    }
-    if (
-      request.method === "GET" &&
-      url.pathname === "/assets/fonts/inter-variable.woff2"
-    ) {
-      response.writeHead(200, {
-        "Content-Type": "font/woff2",
-        "Cache-Control": "public, max-age=86400",
-      });
-      response.end(inter);
-      return;
-    }
-    if (request.method === "GET" && doodleAssets.has(url.pathname)) {
-      response.writeHead(200, {
-        "Content-Type": "text/javascript; charset=utf-8",
-      });
-      response.end(doodleAssets.get(url.pathname));
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/assets/style.css") {
-      response.writeHead(200, { "Content-Type": "text/css" });
-      response.end(css);
-      return;
-    }
-    const cookieValue = request.headers.cookie
-      ?.split(";")
-      .map((item) => item.trim())
-      .find((item) => item.startsWith(`${cookieName}=`))
-      ?.slice(cookieName.length + 1);
-    session = sessions.get(cookieValue);
-    if (!session || session.expires < Date.now()) {
-      session = newSession();
-      response.setHeader("Set-Cookie", cookie(session));
-    }
-    let form;
-    if (request.method === "POST") {
-      if (
-        !request.headers["content-type"]?.startsWith(
-          "application/x-www-form-urlencoded",
-        )
-      )
-        throw httpError(415, "Unsupported form type.");
-      form = await formData(request);
-      if (
-        !validPost(
-          request.headers.origin,
-          origin,
-          form.get("csrf"),
-          session.csrf,
-        )
-      ) {
-        console.warn(
-          "form_rejected",
-          JSON.stringify({
-            originMatches: request.headers.origin === origin,
-            hasCookie: Boolean(cookieValue),
-            knownSession: Boolean(cookieValue && sessions.has(cookieValue)),
-            csrfMatches: validPost(
-              origin,
-              origin,
-              form.get("csrf"),
-              session.csrf,
-            ),
-          }),
-        );
-        if (request.headers.origin === origin && url.pathname === "/login") {
-          await login(
-            localReturnTo(form.get("returnTo")),
-            session.csrf,
-            "This form expired. Try signing in again.",
-            403,
-          );
-          return;
-        }
-        throw httpError(
-          403,
-          "This form expired. Open Sign in above to load a fresh form.",
-        );
-      }
-    }
-    const context = {
-      user: session.userId,
-      admin: accessStore.isAdministrator(session.userId),
-      csrf: session.csrf,
-      supportEnabled: supportRoutes?.enabledFor(session.userId) === true,
-      enrollment: Boolean(session.enrollmentTicket),
-    };
-    if (
-      request.method === "GET" &&
-      ["/verify-email", "/reset-password"].includes(url.pathname)
-    ) {
-      const key =
-        url.pathname === "/verify-email"
-          ? "emailVerification"
-          : "passwordRecovery";
-      if (url.searchParams.has("code")) {
-        const userId = url.searchParams.get("userID"),
-          code = url.searchParams.get("code");
-        if (
-          !/^[A-Za-z0-9-]{1,200}$/.test(userId || "") ||
-          !/^[A-Za-z0-9_-]{1,20}$/.test(code || "")
-        )
-          throw httpError(
-            400,
-            "This email link is invalid. Request a new one.",
-          );
-        session[key] = { userId, code };
-        redirect(url.pathname);
-        return;
-      }
-      if (!session[key])
-        throw httpError(400, "Open the link in your email to continue.");
-      send(
-        views.emailForm(key === "emailVerification" ? "verify" : "reset", {
-          ...context,
-          ...(key === "passwordRecovery"
-            ? { passwordPolicy: await emailActions.passwordPolicy() }
-            : {}),
-        }),
-      );
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/verify-email") {
-      const pending = session.emailVerification;
-      if (!pending) throw httpError(400, "Open the verification link again.");
-      rateLimit(`verify:${pending.userId}`);
-      try {
-        await emailActions.verify(pending.userId, pending.code);
-      } catch {
-        throw httpError(
-          400,
-          "This verification link has expired or was already used. Request a new one from your account.",
-        );
-      }
-      delete session.emailVerification;
-      send(
-        views.emailResult(
-          "Email verified",
-          "Your email address is verified.",
-          context,
-        ),
-      );
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/forgot-password") {
-      send(views.emailForm("forgot", context));
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/forgot-password") {
-      rateLimit(`recovery:${form.get("username")?.trim().toLowerCase()}`);
-      rateLimit("recovery-total", 100);
-      await emailActions.requestReset(form.get("username"));
-      send(
-        views.emailResult(
-          "Check your email",
-          "If this account has a verified email address, we sent a recovery link.",
-          context,
-        ),
-      );
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/reset-password") {
-      const pending = session.passwordRecovery;
-      if (!pending) throw httpError(400, "Open the recovery link again.");
-      rateLimit(`reset:${pending.userId}`);
-      try {
-        if (form.get("password") !== form.get("confirmation"))
-          throw httpError(400, "The passwords do not match.");
-        await emailActions.resetPassword(
-          pending.userId,
-          pending.code,
-          form.get("password"),
-        );
-      } catch (error) {
-        if (error.status !== 400) throw error;
-        send(
-          views.emailForm("reset", {
-            ...context,
-            passwordPolicy: await emailActions.passwordPolicy(),
-            error:
-              error.message === "Identity service rejected the request"
-                ? "The password could not be saved. Check the requirements below, or request a new recovery link if this one has expired."
-                : error.message,
-          }),
-          400,
-        );
-        return;
-      }
-      delete session.passwordRecovery;
-      await endUserSessions(pending.userId);
-      send(
-        views.emailResult(
-          "Password updated",
-          "Sign in with your new password.",
-          { csrf: session.csrf },
-        ),
-      );
-      return;
-    }
-    if (url.pathname === "/enroll") {
-      if (!enrollment)
-        throw httpError(
-          503,
-          "Registration is unavailable. Please try again later.",
-        );
-      if (request.method === "GET" && url.searchParams.has("ticket")) {
-        await enrollment.pending(url.searchParams.get("ticket"));
-        session.enrollmentTicket = url.searchParams.get("ticket");
-        redirect("/enroll");
-        return;
-      }
-      if (!session.enrollmentTicket)
-        throw httpError(400, "Open your 4orm invite link again.");
-      await enrollment.pending(session.enrollmentTicket);
-      if (!session.userId && request.method === "GET") {
-        send(views.enrollment(context));
-        return;
-      }
-      if (!session.userId && request.method === "POST") {
-        rateLimit("enrollment-total", 30);
-        if (form.get("password") !== form.get("confirmation"))
-          throw httpError(400, "The passwords do not match.");
-        const userId = await enrollment.createUser(
-          session.enrollmentTicket,
-          {
-            username: form.get("username")?.trim(),
-            email: form.get("email")?.trim(),
-            password: form.get("password"),
-          },
-          organizationId,
-        );
-        const result = await api("/v2/sessions", {
-          method: "POST",
-          body: {
-            checks: {
-              user: { userId },
-              password: { password: form.get("password") },
-            },
-            lifetime: "1800s",
-          },
-        });
-        const verified = (
-          await api(`/v2/sessions/${encodeURIComponent(result.sessionId)}`)
-        ).session;
-        if (
-          verified?.factors?.user?.id !== userId ||
-          !verified?.factors?.password?.verifiedAt
-        )
-          throw httpError(401, "Sign in to your account to continue.");
-        const enrollmentTicket = session.enrollmentTicket;
-        sessions.delete(session.id);
-        session = Object.assign(newSession(), {
-          userId,
-          sessionId: result.sessionId,
-          sessionToken: result.sessionToken,
-          enrollmentTicket,
-        });
-        response.setHeader("Set-Cookie", cookie(session));
-        redirect("/enroll");
-        return;
-      }
-    }
-    if (request.method === "GET" && url.pathname === "/login") {
-      const authRequest = url.searchParams.get("authRequest");
-      const returnTo = authRequest
-        ? `/authorize?authRequest=${encodeURIComponent(authRequest)}`
-        : localReturnTo(url.searchParams.get("returnTo"));
-      if (session.userId && authRequest) {
-        const { callback, requireLogin } = await authorizationActions.begin(
-          authRequest,
-          session,
-        );
-        if (callback) {
-          redirect(callback);
-          return;
-        }
-        if (!requireLogin) {
-          redirect(returnTo);
-          return;
-        }
-      }
-      await login(returnTo, session.csrf);
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/login") {
-      rateLimit(`user:${form.get("username")?.trim().toLowerCase()}`);
-      rateLimit("login-total", 300);
-      let result;
-      try {
-        const userCheck = await accountActions.loginUser(form.get("username"));
-        result = await api("/v2/sessions", {
-          method: "POST",
-          body: {
-            checks: {
-              user: userCheck,
-              password: { password: form.get("password") },
-            },
-            lifetime: "1800s",
-          },
-        });
-      } catch {
-        await login(
-          localReturnTo(form.get("returnTo")),
-          session.csrf,
-          "Sign-in failed. Check your username and password.",
-        );
-        return;
-      }
-      const verified = await api(
-        `/v2/sessions/${encodeURIComponent(result.sessionId)}`,
-      );
-      const userId = verified.session?.factors?.user?.id;
-      if (!userId || !verified.session?.factors?.password?.verifiedAt)
-        throw httpError(401, "Password verification was not completed.");
-      const enrollmentTicket = session.enrollmentTicket;
-      sessions.delete(session.id);
-      session = Object.assign(newSession(), {
-        userId,
-        sessionId: result.sessionId,
-        sessionToken: result.sessionToken,
-        enrollmentTicket,
-        authenticatedAt: Date.now(),
-      });
-      response.setHeader("Set-Cookie", cookie(session));
-      redirect(localReturnTo(form.get("returnTo")));
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/logout") {
-      if (session.sessionId)
-        await api(`/v2/sessions/${encodeURIComponent(session.sessionId)}`, {
-          method: "DELETE",
-          body: { sessionToken: session.sessionToken },
-        });
-      sessions.delete(session.id);
-      response.setHeader(
-        "Set-Cookie",
-        `${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`,
-      );
-      redirect("/login");
-      return;
-    }
-    if (!session.userId) {
-      redirect(
-        `/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`,
-      );
-      return;
-    }
-    let providerSession;
-    try {
-      providerSession = (
-        await api(`/v2/sessions/${encodeURIComponent(session.sessionId)}`)
-      ).session;
-    } catch (error) {
-      if (![401, 403, 404].includes(error.status)) throw error;
-      sessions.delete(session.id);
-      redirect(
-        `/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`,
-      );
-      return;
-    }
-    if (
-      providerSession?.factors?.user?.id !== session.userId ||
-      !providerSession?.factors?.password?.verifiedAt ||
-      !Number.isFinite(Date.parse(providerSession.expirationDate)) ||
-      Date.parse(providerSession.expirationDate) <= Date.now()
-    ) {
-      sessions.delete(session.id);
-      throw httpError(401, "Your session expired. Sign in again.");
-    }
-    const profile = (
-      await api(`/management/v1/users/${encodeURIComponent(session.userId)}`, {
-        management: true,
-      })
-    ).user;
-    if (
-      profile?.state !== "USER_STATE_ACTIVE" ||
-      !profile.human ||
-      profile.details?.resourceOwner !== organizationId
-    ) {
-      sessions.delete(session.id);
-      throw httpError(403, "This account is not active.");
-    }
-    if (
-      supportRoutes &&
-      (await supportRoutes.browser({
-        request,
-        url,
-        form,
-        context,
-        redirect,
-        send,
-        setPolicy: (value) =>
-          response.setHeader("Content-Security-Policy", value),
-      }))
-    )
-      return;
-    if (
-      await accessRoutes({
-        request,
-        url,
-        form,
-        session,
-        profile,
-        context,
-        send,
-        redirect,
-      })
-    )
-      return;
-    if (url.pathname === "/enroll" || url.pathname === "/enroll/continue") {
-      if (!enrollment || !session.enrollmentTicket)
-        throw httpError(400, "Open your 4orm invite link again.");
-      if (request.method === "POST" && url.pathname === "/enroll/continue") {
-        rateLimit(`enrollment:${session.userId}`);
-        const destination = await enrollment.continue(
-          session.enrollmentTicket,
-          profile,
-        );
-        delete session.enrollmentTicket;
-        redirect(destination);
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/enroll") {
-        await enrollment.pending(session.enrollmentTicket);
-        send(views.enrollment(context, profile));
-        return;
-      }
-    }
-    if (request.method === "POST" && url.pathname === "/account/email") {
-      rateLimit(`email:${session.userId}`);
-      await accountActions.provePassword(session, form.get("currentPassword"));
-      await emailActions.setEmail(session.userId, form.get("email")?.trim());
-      send(
-        views.emailResult(
-          "Check your email",
-          "Open the verification link to confirm your address.",
-          context,
-        ),
-      );
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/account/password") {
-      rateLimit(`password-change:${session.userId}`);
-      if (form.get("password") !== form.get("confirmation"))
-        throw httpError(400, "The passwords do not match.");
-      await accountActions.changePassword(
-        session.userId,
-        form.get("currentPassword"),
-        form.get("password"),
-      );
-      await endUserSessions(session.userId);
-      response.setHeader(
-        "Set-Cookie",
-        `${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`,
-      );
-      send(
-        views.emailResult(
-          "Password updated",
-          "Sign in with your new password.",
-          {},
-        ),
-      );
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/account/email/resend") {
-      if (
-        !profile.human?.email?.email ||
-        profile.human.email.email.endsWith(".invalid") ||
-        profile.human.email.isEmailVerified
-      )
-        throw httpError(
-          400,
-          "Add an unverified email address to your account first.",
-        );
-      rateLimit(`email:${session.userId}`);
-      await emailActions.resend(session.userId);
-      send(
-        views.emailResult(
-          "Check your email",
-          "We sent a new verification link.",
-          context,
-        ),
-      );
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/account") {
-      const assigned = (await grants()).filter(
-        (grant) => grant.userId === session.userId,
-      );
-      send(
-        views.account(
-          profile,
-          context,
-          applications.filter((app) =>
-            assigned.some((grant) => grant.projectId === app.projectId),
-          ),
-        ),
-      );
-      return;
-    }
-    if (
-      url.pathname === "/authorize" &&
-      ["GET", "POST"].includes(request.method)
-    ) {
-      const id =
-        request.method === "GET"
-          ? url.searchParams.get("authRequest")
-          : form.get("authRequest");
-      const { callback: silentCallback } = await authorizationActions.begin(
-        id,
-        session,
-      );
-      if (silentCallback) {
-        redirect(silentCallback);
-        return;
-      }
-      if (request.method === "GET") {
-        const intent = await authorizationActions.view(id, session);
-        if (intent.consent) {
-          response.setHeader(
-            "Content-Security-Policy",
-            contentSecurityPolicy(intent.request.redirectUri),
-          );
-          send(views.authorization(intent, id, context));
-          return;
-        }
-      }
-      const callback = await authorizationActions.complete(
-        id,
-        session,
-        request.method === "POST" ? form.get("decision") : "approve",
-        request.method === "GET",
-      );
-      redirect(callback);
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/device") {
-      const code = url.searchParams.get("user_code");
-      if (!code) {
-        send(views.deviceCode(session.csrf, context));
-        return;
-      }
-      if (!/^[A-Z0-9-]{4,30}$/.test(code))
-        throw httpError(400, "Invalid device code.");
-      const deviceRequest = (
-        await api(`/v2/oidc/device_authorization/${encodeURIComponent(code)}`)
-      ).deviceAuthorizationRequest;
-      assertApplication(deviceRequest);
-      send(views.device(deviceRequest, session.csrf, context, code));
-      return;
-    }
-    if (request.method === "POST" && url.pathname === "/device") {
-      const code = form.get("userCode");
-      if (!/^[A-Z0-9-]{4,30}$/.test(code || ""))
-        throw httpError(400, "Load the device request again.");
-      const approve = form.get("decision") === "approve";
-      session.deviceDecisions ||= new Map();
-      let decision = session.deviceDecisions.get(code);
-      if (decision?.expires < Date.now()) {
-        session.deviceDecisions.delete(code);
-        decision = undefined;
-      }
-      if (decision && decision.approve !== approve)
-        throw httpError(409, "This request has already been handled.");
-      if (!decision) {
-        const pending = (async () => {
-          const deviceRequest = (
-            await api(
-              `/v2/oidc/device_authorization/${encodeURIComponent(code)}`,
-            )
-          ).deviceAuthorizationRequest;
-          const application = assertApplication(deviceRequest);
-          if (
-            approve &&
-            (accessStore.blocked(session.userId, application.projectId) ||
-              !(await grants(application)).some(
-                (grant) =>
-                  grant.userId === session.userId &&
-                  grant.state === "USER_GRANT_STATE_ACTIVE",
-              ))
-          )
-            throw httpError(
-              403,
-              `You do not have access to ${application.name}.`,
-            );
-          await api(
-            `/v2/oidc/device_authorization/${encodeURIComponent(deviceRequest.id)}`,
-            {
-              method: "POST",
-              body: approve
-                ? {
-                    session: {
-                      sessionId: session.sessionId,
-                      sessionToken: session.sessionToken,
-                    },
-                  }
-                : { deny: {} },
-            },
-          );
-        })();
-        decision = { approve, pending, expires: Date.now() + 300_000 };
-        if (session.deviceDecisions.size >= 8)
-          session.deviceDecisions.delete(
-            session.deviceDecisions.keys().next().value,
-          );
-        session.deviceDecisions.set(code, decision);
-      }
-      try {
-        await decision.pending;
-      } catch (error) {
-        session.deviceDecisions.delete(code);
-        throw error;
-      }
-      send(views.deviceResult(approve, context));
-      return;
-    }
-    throw httpError(404, "Page not found.");
-  } catch (error) {
-    const expected = error.status && error.status < 500;
-    console.error(
-      "request_failed",
-      JSON.stringify({
-        path: url.pathname,
-        status: error.status || 500,
-        code: error.code,
+    const nonce = randomToken();
+    headers.set(
+      "Content-Security-Policy",
+      contentSecurityPolicy(callbackOrigin, {
+        scripts: true,
+        styleNonce: nonce,
       }),
     );
-    send(
-      views.page(
-        "Request failed",
-        `<section class="narrow"><h1>Request failed</h1><p>${h(expected ? error.message : "The identity service could not complete this request. Please try again.")}</p><a href="${session?.enrollmentTicket ? "/enroll" : "/account"}">${session?.enrollmentTicket ? "Back to signup" : "Back to account"}</a></section>`,
-      ),
-      expected ? error.status : 502,
-    );
+    send(await renderLogin({ csrf, returnTo, error }, nonce), status);
+  };
+  let session;
+  async function dispatch() {
+    try {
+      const cookieValue = request.headers
+        .get("cookie")
+        ?.split(";")
+        .map((item) => item.trim())
+        .find((item) => item.startsWith(`${cookieName}=`))
+        ?.slice(cookieName.length + 1);
+      session = sessions.get(cookieValue);
+      if (!session || session.expires < Date.now()) {
+        session = newSession();
+        headers.set("Set-Cookie", cookie(session));
+      }
+      let form;
+      if (request.method === "POST") {
+        if (
+          !request.headers
+            .get("content-type")
+            ?.startsWith("application/x-www-form-urlencoded")
+        )
+          throw httpError(415, "Unsupported form type.");
+        form = await formData(request);
+        if (
+          !validPost(
+            request.headers.get("origin"),
+            origin,
+            form.get("csrf"),
+            session.csrf,
+          )
+        ) {
+          console.warn(
+            "form_rejected",
+            JSON.stringify({
+              originMatches: request.headers.get("origin") === origin,
+              hasCookie: Boolean(cookieValue),
+              knownSession: Boolean(cookieValue && sessions.has(cookieValue)),
+              csrfMatches: validPost(
+                origin,
+                origin,
+                form.get("csrf"),
+                session.csrf,
+              ),
+            }),
+          );
+          if (
+            request.headers.get("origin") === origin &&
+            url.pathname === "/login"
+          ) {
+            await login(
+              localReturnTo(form.get("returnTo")),
+              session.csrf,
+              "This form expired. Try signing in again.",
+              403,
+            );
+            return;
+          }
+          throw httpError(
+            403,
+            "This form expired. Open Sign in above to load a fresh form.",
+          );
+        }
+      }
+      const context = {
+        user: session.userId,
+        admin: accessStore.isAdministrator(session.userId),
+        csrf: session.csrf,
+        supportEnabled: supportRoutes?.enabledFor(session.userId) === true,
+        enrollment: Boolean(session.enrollmentTicket),
+      };
+      if (routePhase === "public" && routeAction) {
+        await routeAction({
+          request,
+          url,
+          form,
+          session,
+          context,
+          headers,
+          send,
+          sendRemix,
+          redirect,
+          login,
+          setSession: (value) => {
+            session = value;
+          },
+        });
+        return;
+      }
+      if (
+        routePhase === "enrollment" &&
+        (await enrollmentRoutes.beforeAuth({
+          request,
+          url,
+          form,
+          session,
+          context,
+          headers,
+          sendRemix,
+          redirect,
+          setSession: (value) => {
+            session = value;
+          },
+        }))
+      )
+        return;
+      if (!session.userId) {
+        redirect(
+          `/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`,
+        );
+        return;
+      }
+      let providerSession;
+      try {
+        providerSession = (
+          await api(`/v2/sessions/${encodeURIComponent(session.sessionId)}`)
+        ).session;
+      } catch (error) {
+        if (![401, 403, 404].includes(error.status)) throw error;
+        sessions.delete(session.id);
+        redirect(
+          `/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`,
+        );
+        return;
+      }
+      if (
+        providerSession?.factors?.user?.id !== session.userId ||
+        !providerSession?.factors?.password?.verifiedAt ||
+        !Number.isFinite(Date.parse(providerSession.expirationDate)) ||
+        Date.parse(providerSession.expirationDate) <= Date.now()
+      ) {
+        sessions.delete(session.id);
+        throw httpError(401, "Your session expired. Sign in again.");
+      }
+      const profile = (
+        await api(
+          `/management/v1/users/${encodeURIComponent(session.userId)}`,
+          {
+            management: true,
+          },
+        )
+      ).user;
+      if (
+        profile?.state !== "USER_STATE_ACTIVE" ||
+        !profile.human ||
+        profile.details?.resourceOwner !== organizationId
+      ) {
+        sessions.delete(session.id);
+        throw httpError(403, "This account is not active.");
+      }
+      if (routeAction) {
+        const handled = await routeAction({
+          request,
+          url,
+          form,
+          session,
+          profile,
+          context,
+          headers,
+          send,
+          sendRemix,
+          redirect,
+          setPolicy: (value) => headers.set("Content-Security-Policy", value),
+        });
+        if (handled === false) throw httpError(404, "Page not found.");
+        return;
+      }
+      throw httpError(404, "Page not found.");
+    } catch (error) {
+      const expected = error.status && error.status < 500;
+      console.error(
+        "request_failed",
+        JSON.stringify({
+          path: url.pathname,
+          status: error.status || 500,
+          code: error.code,
+        }),
+      );
+      await sendRemix(
+        (nonce) =>
+          renderProblem(
+            expected
+              ? error.message
+              : "The identity service could not complete this request. Please try again.",
+            session?.enrollmentTicket ? "/enroll" : "/account",
+            !!session?.enrollmentTicket,
+            nonce,
+          ),
+        expected ? error.status : 502,
+      );
+    }
   }
-}).listen(
+  await dispatch();
+  return output ?? new Response("Request failed", { status: 500, headers });
+}
+
+const browserRouter = createBrowserRouter(handleBrowser, {
+  accountRoutes,
+  oauthRoutes,
+  emailRoutes,
+  accessRoutes,
+  supportRoutes: supportBrowserRoute,
+  loginRoutes,
+  enrollmentRoutes,
+});
+const fetchRequest = (request) => {
+  const path = new URL(request.url).pathname;
+  if (
+    ["/support/redeem", "/support/session", "/support/end"].includes(path) &&
+    supportRoutes
+  )
+    return supportRoutes.api.fetch(request);
+  if (isApiRoute(path)) return apiRouter.fetch(request);
+  if (request.method === "GET" && isPublicRoute(path))
+    return publicRouter.fetch(request);
+  return browserRouter.fetch(request);
+};
+
+const server = createServer(
+  createRequestListener(fetchRequest, {
+    host: new URL(origin).host,
+    protocol: new URL(origin).protocol,
+  }),
+);
+server.listen(
   Number(process.env.PORT || 3000),
   process.env.LISTEN_HOST || "0.0.0.0",
   () => console.info("auth listening"),
 );
+
+let stopping = false;
+async function stop() {
+  if (stopping) return;
+  stopping = true;
+  await new Promise((resolve, reject) =>
+    server.close((error) => (error ? reject(error) : resolve())),
+  );
+  await supportRoutes?.close();
+  radioEnrollment?.close();
+  accessStore.close();
+}
+for (const signal of ["SIGTERM", "SIGINT"])
+  process.once(signal, () => {
+    void stop().catch((error) => {
+      console.error("auth_shutdown_failed", error);
+      process.exitCode = 1;
+    });
+  });

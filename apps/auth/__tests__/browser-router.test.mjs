@@ -1,0 +1,61 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createBrowserRouter } from "../src/browser-router.mjs";
+
+test("account writes reach their route actions, while unrelated pages use the browser fallback", async () => {
+  const accountRoutes = Object.fromEntries(
+    ["account", "email", "password", "resendEmail"].map((name) => [
+      name,
+      () => name,
+    ]),
+  );
+  const router = createBrowserRouter(
+    (_request, action) => new Response(action?.() ?? "fallback"),
+    {
+      accountRoutes,
+      oauthRoutes: { authorize: () => "authorize", device: () => "device" },
+      emailRoutes: {
+        verifyEmail: () => "verifyEmail",
+        forgotPassword: () => "forgotPassword",
+        resetPassword: () => "resetPassword",
+      },
+      accessRoutes: () => "access",
+      supportRoutes: () => "support",
+      loginRoutes: { login: () => "login", logout: () => "logout" },
+      enrollmentRoutes: {
+        enroll: () => "enroll",
+        continue: () => "enrollContinue",
+      },
+    },
+  );
+  for (const [path, expected] of [
+    ["/login", "login"],
+    ["/logout", "logout"],
+    ["/enroll", "enroll"],
+    ["/enroll/continue", "enrollContinue"],
+    ["/account", "account"],
+    ["/account/email", "email"],
+    ["/account/password", "password"],
+    ["/account/email/resend", "resendEmail"],
+    ["/authorize", "authorize"],
+    ["/device", "device"],
+    ["/verify-email", "verifyEmail"],
+    ["/forgot-password", "forgotPassword"],
+    ["/reset-password", "resetPassword"],
+    ["/", "access"],
+    ["/apps/artbin", "access"],
+    ["/account/sessions", "access"],
+    ["/account/sessions/end", "access"],
+    ["/manage", "access"],
+    ["/manage/people/person", "access"],
+    ["/manage/people/person/support", "support"],
+    ["/support/handoff", "support"],
+    ["/support/callback", "support"],
+    ["/unknown", "fallback"],
+  ]) {
+    const response = await router.fetch(
+      new Request(`https://auth.test${path}`),
+    );
+    assert.equal(await response.text(), expected, path);
+  }
+});

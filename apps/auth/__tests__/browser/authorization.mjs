@@ -32,9 +32,9 @@ let completions = 0,
   resetCalls = 0,
   silentSuccesses = 0,
   loginRequired = 0;
-let holdGrantSearch = false,
-  grantSearchEntered,
-  releaseGrantSearch;
+let holdProfileLookup = false,
+  profileLookupEntered,
+  releaseProfileLookup;
 const provider = createServer(async (request, response) => {
   let body = "";
   for await (const chunk of request) body += chunk;
@@ -136,7 +136,14 @@ const provider = createServer(async (request, response) => {
         expirationDate: new Date(Date.now() + 600_000).toISOString(),
       },
     };
-  else if (request.url === "/management/v1/users/fixture-user")
+  else if (request.url === "/management/v1/users/fixture-user") {
+    if (holdProfileLookup) {
+      holdProfileLookup = false;
+      profileLookupEntered();
+      await new Promise((resolve) => {
+        releaseProfileLookup = resolve;
+      });
+    }
     result = {
       user: {
         id: "fixture-user",
@@ -146,14 +153,7 @@ const provider = createServer(async (request, response) => {
         details: { resourceOwner: "fixture" },
       },
     };
-  else if (request.url === "/management/v1/users/grants/_search") {
-    if (holdGrantSearch) {
-      holdGrantSearch = false;
-      grantSearchEntered();
-      await new Promise((resolve) => {
-        releaseGrantSearch = resolve;
-      });
-    }
+  } else if (request.url === "/management/v1/users/grants/_search") {
     const projectId = json.queries?.find((query) => query.projectIdQuery)
       ?.projectIdQuery.projectId;
     result = {
@@ -368,9 +368,18 @@ try {
     }
     const firstContext = await browser.newContext();
     const firstPage = await firstContext.newPage();
-    await firstPage.goto(
+    const loginResponse = await firstPage.goto(
       `${origin}/login?returnTo=${encodeURIComponent("/authorize?authRequest=first-valid")}`,
     );
+    if (app.id === "fourm") {
+      const styleNonce = await firstPage
+        .locator("style[nonce]")
+        .first()
+        .evaluate((style) => style.nonce);
+      assert(styleNonce);
+      const loginCsp = loginResponse.headers()["content-security-policy"];
+      assert(loginCsp.includes(`'nonce-${styleNonce}'`));
+    }
     await firstPage.locator("[name=username]").fill("fixture-user-" + app.id);
     await firstPage.locator("[name=password]").fill("fixture-password");
     await firstPage
@@ -446,7 +455,16 @@ try {
         );
         creationDateOverride = undefined;
       }
-      await page.goto(`${origin}/login?authRequest=consent`);
+      const consentResponse = await page.goto(
+        `${origin}/login?authRequest=consent`,
+      );
+      const consentNonce = await page
+        .locator("style[nonce]")
+        .first()
+        .evaluate((style) => style.nonce);
+      assert(consentNonce);
+      const consentCsp = consentResponse.headers()["content-security-policy"];
+      assert(consentCsp.includes(`'nonce-${consentNonce}'`));
       await page.getByRole("button", { name: "Allow", exact: true }).click();
       await page
         .waitForURL(`${callbackOrigin}/callback?**`, { timeout: 5000 })
@@ -618,6 +636,13 @@ try {
     timeout: 5000,
   });
   assert.equal(credentialAttempts, attemptsBeforeRestart + 1);
+  const deviceCodePage = await stalePage.goto(`${origin}/device`);
+  assert.equal(deviceCodePage.status(), 200);
+  assert.equal(
+    await stalePage.getByRole("heading", { name: "Device code" }).count(),
+    1,
+  );
+  assert.equal(await stalePage.locator('[name="user_code"]').count(), 1);
   await stalePage.goto(`${origin}/login?returnTo=/account`);
   const signedInCookie = (await staleContext.cookies(origin)).find(
     (cookie) => cookie.name === "__Host-jack_auth",
@@ -653,12 +678,12 @@ try {
     signedInCookie,
   );
   assert.equal(credentialAttempts, beforeSignedInReject);
-  const waitingForGrant = new Promise((resolve) => {
-    grantSearchEntered = resolve;
+  const waitingForProfile = new Promise((resolve) => {
+    profileLookupEntered = resolve;
   });
-  holdGrantSearch = true;
+  holdProfileLookup = true;
   const slowAccount = staleContext.request.get(`${origin}/account`);
-  await waitingForGrant;
+  await waitingForProfile;
   await stalePage.locator("[name=username]").fill("fixture-user-artbin");
   await stalePage.locator("[name=password]").fill("fixture-password");
   await stalePage.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -667,7 +692,7 @@ try {
     (cookie) => cookie.name === "__Host-jack_auth",
   )?.value;
   assert(rotatedCookie && rotatedCookie !== signedInCookie);
-  releaseGrantSearch();
+  releaseProfileLookup();
   const delayedResponse = await slowAccount;
   assert.equal(delayedResponse.status(), 200);
   assert.equal(delayedResponse.headers()["set-cookie"], undefined);
