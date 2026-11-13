@@ -18,8 +18,9 @@ available for work-in-progress human review; whole-migration acceptance is open.
 - Source admin forms, account controls, invite/trust completion, explicit identity
   links and durable post-profile companion-membership receipts.
 - Member/full-site ZIP exports, portable archive transfer and native backup
-  capture/restore, catalogue reconstruction and retention. Scheduling exists but
-  is disabled by default; remaining operational checks are listed below.
+  capture/restore, catalogue reconstruction and retention. Actual recurring
+  alarms captured the imported cohort, followed by cold restore of all 30 managed
+  tables and 146 assets. Scheduling remains disabled by default.
 - Released Go CLI: actual browser sign-in, signed callback, native profile/page/
   media operations, automatic refresh after a 401, refresh replay rejection and
   immediate revocation. This uses a caged disposable provider, not production SSO.
@@ -41,7 +42,7 @@ new review activity must not be overwritten by reseeding.
   remain unset; no successful native notification delivery is claimed.
 - Counter visitor identity still uses a browser token rather than source-IP
   cooldown semantics. Trusted peer attribution remains unresolved.
-- Remaining active-operation backup recovery, scheduler/dashboard scenarios,
+- Remaining active-operation backup recovery and dashboard scenarios,
   moderation/validation edges and Markdown table/list/fenced-code attribute lists.
   Common heading, paragraph and inline attribute lists are implemented and
   worktree-tested; they have not been rolled into the active human preview.
