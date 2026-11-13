@@ -19,8 +19,13 @@ const port = Number(process.env.FOURM_REVIEW_PORT ?? 18944);
 const issuerPort = Number(process.env.FOURM_REVIEW_ISSUER_PORT ?? 18945);
 const providerPort = Number(process.env.FOURM_REVIEW_PROVIDER_PORT ?? 18946);
 const origin = process.env.FOURM_REVIEW_ORIGIN ?? `http://127.0.0.1:${port}`;
-const issuer =
-  process.env.FOURM_REVIEW_ISSUER ?? `http://127.0.0.1:${issuerPort}`;
+const cliCage = process.env.FOURM_REVIEW_CLI_CAGE === "1";
+const privateReview = process.env.FOURM_REVIEW_PRIVATE === "1";
+if (cliCage && privateReview)
+  throw new Error("Choose one isolated review transport");
+const issuer = cliCage
+  ? "https://auth.jackharrhy.dev"
+  : (process.env.FOURM_REVIEW_ISSUER ?? `http://127.0.0.1:${issuerPort}`);
 const user = process.env.FOURM_REVIEW_USER ?? "jane";
 if (!/^[a-z]{3,20}$/.test(user))
   throw new Error("Fixture name must be 3–20 lowercase letters");
@@ -200,10 +205,21 @@ try {
       },
     ],
   };
+  if (cliCage)
+    config.applications.push({
+      ...config.applications[0],
+      native: true,
+      clientId: "fourm-local-cli",
+      callback: "http://localhost:4444/auth/cli/callback",
+    });
   await writeFile(join(state, "issuer.json"), JSON.stringify(config));
   await command([process.execPath, join(root, "scripts/build.mjs")]);
   const worker = parse(await readFile(join(root, "wrangler.jsonc"), "utf8"));
-  worker.main = "worker.ts";
+  worker.main = cliCage
+    ? "__tests__/cli-review-worker.ts"
+    : privateReview
+      ? "__tests__/private-review-worker.ts"
+      : "worker.ts";
   worker.vars = {
     REVIEW_SOURCE_FINGERPRINT: fingerprint,
     AUTH_ISSUER: issuer,
@@ -211,9 +227,15 @@ try {
     AUTH_PROJECT_ID: "fourm-local-project",
     AUTH_ORGANIZATION_ID: "fourm-local-org",
     AUTH_PUBLIC_ORIGIN: origin,
-    AUTH_CLI_CLIENT_ID: "fourm-local-browser",
+    AUTH_CLI_CLIENT_ID: cliCage ? "fourm-local-cli" : "fourm-local-browser",
+    ...(cliCage
+      ? { CLI_FIXTURE_ORIGIN: `http://127.0.0.1:${issuerPort}` }
+      : {}),
     AUTH_INTROSPECTION_CLIENT_ID: "fourm-local-resource",
     AUTH_INTROSPECTION_SECRET: "isolated-local-resource-secret",
+    ...(privateReview
+      ? { REVIEW_FIXTURE_ORIGIN: `http://127.0.0.1:${issuerPort}` }
+      : {}),
     AUTH_ENROLLMENT_KEY: enrollmentKey,
   };
   const workerConfig = join(
@@ -239,8 +261,14 @@ try {
     FOURM_FIXTURE_USERNAME: user,
   });
   service([binary, "--no-control-plane", "--trust-forwarded-headers"]);
-  await ready(`${issuer}/.well-known/openid-configuration`);
+  await ready(
+    `${cliCage || privateReview ? `http://127.0.0.1:${issuerPort}` : issuer}/.well-known/openid-configuration`,
+  );
   await ready(`http://127.0.0.1:${port}/ready`);
+  if ((cliCage || privateReview) && process.env.FOURM_REVIEW_BOOTSTRAP !== "0")
+    throw new Error(
+      "CLI cage requires explicit private archive import; bootstrap disabled",
+    );
   if (process.env.FOURM_REVIEW_BOOTSTRAP !== "0") {
     const tokenPath = join(
       state,
@@ -316,6 +344,8 @@ try {
     fixtureSubject: subject,
     pids: services.map((child) => child.pid),
     productionTouched: false,
+    cliTransportCaged: cliCage,
+    privateReviewTransport: privateReview,
   };
   await writeFile(join(state, "runtime.json"), JSON.stringify(report, null, 2));
   await writeFile(join(state, "runtime.log"), logs.join(""));
