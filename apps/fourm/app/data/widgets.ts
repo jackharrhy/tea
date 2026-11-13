@@ -224,7 +224,7 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     },
     lineage() {
       return db.all(
-        "SELECT id,username,display_name,invited_by_user_id FROM users WHERE is_disabled=0 ORDER BY id",
+        "SELECT id,username,display_name,invited_by_user_id FROM users ORDER BY created_at",
       );
     },
   };
