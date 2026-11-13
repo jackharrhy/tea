@@ -129,7 +129,7 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
         user.id,
       );
     },
-    addTrack(actorId: number, mediaId: number, title: string) {
+    addTrack(actorId: number, mediaId: number, title: string | null = null) {
       member(actorId);
       const media = db.all(
         "SELECT id FROM media WHERE id=? AND user_id=?",
@@ -145,7 +145,7 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
         "INSERT INTO playlist_items(user_id,media_id,title,position) VALUES(?,?,?,(SELECT coalesce(max(position),-1)+1 FROM playlist_items WHERE user_id=?))",
         actorId,
         mediaId,
-        title.slice(0, 200),
+        title === null ? null : title.slice(0, 200),
         actorId,
       );
     },
@@ -159,8 +159,7 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     },
     moveTrack(actorId: number, id: number, direction: string) {
       member(actorId);
-      if (!["up", "down"].includes(direction))
-        throw new CommunityError(422, "Choose up or down");
+      if (!["up", "down"].includes(direction)) return;
       db.transaction(() => {
         const items = db.all(
           "SELECT id,position FROM playlist_items WHERE user_id=? ORDER BY position,id",
