@@ -119,3 +119,22 @@ it("applies table-cell and tight-list attributes before shared-post sanitization
     content("| A |\n|---|\n| ![sample](/x){width=40} |", "markdown"),
   ).toContain('width="40"');
 });
+
+it("places fenced-code language on code and block attributes on pre", () => {
+  expect(
+    content("```{.python #sample .code}\nprint(1)\n```", "markdown"),
+  ).toContain(
+    '<pre id="sample" class="code"><code class="language-python">print(1)\n</code></pre>',
+  );
+  expect(
+    content('```{#plain .boxed title="example"}\n<x>\n```', "markdown"),
+  ).toContain(
+    '<pre id="plain"><code class="language-boxed" title="example">&lt;x&gt;\n</code></pre>',
+  );
+  expect(
+    postContent(
+      '```{.python #sample .code onmouseover="bad()"}\nprint(1)\n```',
+      "markdown",
+    ),
+  ).toBe("<pre><code>print(1)\n</code></pre>");
+});

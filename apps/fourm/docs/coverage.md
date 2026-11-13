@@ -43,8 +43,8 @@ new review activity must not be overwritten by reseeding.
 - Counter visitor identity still uses a browser token rather than source-IP
   cooldown semantics. Trusted peer attribution remains unresolved.
 - Remaining active-operation backup recovery and dashboard scenarios,
-  moderation/validation edges and Markdown fenced-code/complex-list attributes.
-  Common heading, paragraph, inline, table-cell and tight-list attributes are
+  moderation/validation edges and complex-list and malformed Markdown attributes.
+  Common heading, paragraph, inline, table-cell, tight-list and fenced-code attributes are
   implemented and
   worktree-tested; they have not been rolled into the active human preview.
 - Broader customization/layout review and the reported initial-paint/pop-in issue.
