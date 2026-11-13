@@ -2,7 +2,7 @@
 
 Jack Auth's browser sign-in, consent, app directory, access management, enrollment, and support-login UI. ZITADEL remains the separate issuer and owns identities, passwords, sessions, grants, and token exchange. This app calls supported native APIs and stores only its own access ledger, Radio enrollment history, appearance choices, and short-lived browser state. It does not import `@harrhy/identity` as a privileged provider client.
 
-`src/server.mjs` is the Node 26 entry point. Sign-in, delegated consent, account, email recovery, enrollment, and device approval use Remix components with one shared document shell in `src/document.tsx`. The remaining routes are still in `src/server.mjs`, `src/access-routes.mjs`, and `src/support-routes.mjs` while their controllers and views migrate. `config/applications.json` and `config/services.json` hold the app's reviewed client and directory policy. `integrations/` contains the native action source retained with its separate license. `__tests__/` holds the app's server and browser fixtures. The [architecture](docs/architecture.md), [support-login contract](docs/support-login.md), [product decisions](PRODUCT.md), and [design guide](DESIGN.md) provide details.
+`src/server.mjs` is the Node 26 entry point. Sign-in, delegated consent, account, email recovery, enrollment, device approval, and the app directory use Remix components with one shared document shell in `src/document.tsx`. The remaining routes are still in `src/server.mjs`, `src/access-routes.mjs`, and `src/support-routes.mjs` while their controllers and views migrate. `config/applications.json` and `config/services.json` hold the app's reviewed client and directory policy. `integrations/` contains the native action source retained with its separate license. `__tests__/` holds the app's server and browser fixtures. The [architecture](docs/architecture.md), [support-login contract](docs/support-login.md), [product decisions](PRODUCT.md), and [design guide](DESIGN.md) provide details.
 
 ## Run and check
 
@@ -26,7 +26,7 @@ The app is independently containerized by `Dockerfile`. Production settings, DNS
 
 ## Routing migration boundary
 
-Sign-in, delegated consent, account, email recovery, enrollment, and device approval now render through Remix 3 and use `@harrhy/ui` controls. Other pages still use the original Node route switch and HTML templates. This is an in-progress framework exception; the remaining controllers and views must move to Remix before the application replaces the standalone Auth deployment. The existing stylesheet is plain CSS until its remaining static UI rules move to Remix `css(...)` mixins. ZITADEL and its state remain separate. `@harrhy/identity` stays a consumer validation/client package.
+Sign-in, delegated consent, account, email recovery, enrollment, device approval, and the app directory now render through Remix 3 and use `@harrhy/ui` controls. Other pages still use the original Node route switch and HTML templates. This is an in-progress framework exception; the remaining controllers and views must move to Remix before the application replaces the standalone Auth deployment. The existing stylesheet is plain CSS until its remaining static UI rules move to Remix `css(...)` mixins. ZITADEL and its state remain separate. `@harrhy/identity` stays a consumer validation/client package.
 
 ## License
 

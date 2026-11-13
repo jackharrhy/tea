@@ -1,6 +1,5 @@
 import { escapeHtml as h } from "./security.mjs";
 import { page } from "./views.mjs";
-import { directorySections } from "./directory.mjs";
 
 const hidden = (name, value) =>
   `<input type="hidden" name="${h(name)}" value="${h(value)}">`;
@@ -36,39 +35,6 @@ export function sessions(items, current, context) {
       `<div class="people-list">${items.map((item) => `<div class="operation-row"><span><strong>${item.id === current ? "This browser" : "Central browser session"}</strong><span class="muted">Expires ${h(new Date(item.expirationDate).toLocaleString("en-GB", { timeZone: "UTC" }))} UTC</span></span>${form(context, hidden("session", item.id) + "<button>End session</button>", "/account/sessions/end")}</div>`).join("") || '<p class="empty">No active central sessions.</p>'}</div>` +
       linkBack("/account", "Account"),
     { ...context, active: "account" },
-  );
-}
-
-export function apps(items, context) {
-  const usable = items.filter((item) => item.status !== "Join"),
-    joinable = items.filter((item) => item.status === "Join");
-  const tile = (item) =>
-    `<article class="app-entry"><div class="app-monogram" aria-hidden="true">${h(item.name.slice(0, 1))}</div><div><h2>${item.url && !item.setupRequired && !context.preview ? `<a class="app-launch" href="${h(item.url)}">${h(item.name)}</a>` : h(item.name)}</h2>${item.status === "Open" ? "" : `<p class="app-status">${h(item.status)}</p>`}</div><a class="access-link" href="${h(context.preview ? context.preview.base : "")}/apps/${item.id}">Access details<span class="sr-only"> for ${h(item.name)}</span></a></article>`;
-  return page(
-    "Your apps",
-    intro("Your apps", "") +
-      (usable.length
-        ? directorySections(usable)
-            .map(
-              (section) =>
-                `<section class="app-section">${section.title ? `<h2 class="app-section-title">${h(section.title)}</h2>` : ""}<div class="app-grid">${section.items.map(tile).join("")}</div></section>`,
-            )
-            .join("")
-        : '<p class="empty">No apps are assigned yet.</p>') +
-      (joinable.length
-        ? `<section class="section"><h2>You can join</h2><div class="app-grid">${joinable.map(tile).join("")}</div></section>`
-        : ""),
-    { ...context, active: "apps" },
-  );
-}
-
-export function appDetail(item, context) {
-  return page(
-    item.name,
-    intro(item.name, item.description) +
-      `<section class="detail-section"><h2>Your access</h2><dl class="profile"><div><dt>Availability</dt><dd>${h(item.status)}</dd></div>${item.grant ? `<div><dt>Service roles</dt><dd>${h(item.grant.roleKeys.join(", "))}</dd></div>` : ""}<div><dt>Source</dt><dd>${item.sources.length ? item.sources.map((source) => `${h(source.source)} → ${h(source.role)}`).join("<br>") : h(item.status === "Public" ? "Public destination" : item.status === "Join" ? "Explicit enrollment required" : "Native project eligibility")}</dd></div></dl>${context.preview ? "" : item.setupRequired ? '<p class="notice">Ask your Auth administrator to review the native account link. Central eligibility alone does not complete setup.</p>' : item.url ? `<a class="button primary" href="${h(item.url)}">${item.status === "Join" ? "Join " + h(item.name) : "Open " + h(item.name)}</a>` : '<p class="muted">Open this service from its desktop client.</p>'}</section><section class="detail-section"><h2>Inside the app</h2><p>${h(item.description)}</p><p class="muted">${h(item.nativeCleanup || "App accounts, content ownership and sessions are managed by the destination.")}</p></section>` +
-      linkBack(context.preview?.base || "/", "Your apps"),
-    { ...context, active: "apps" },
   );
 }
 

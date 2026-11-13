@@ -1,6 +1,9 @@
 import { escapeHtml as h } from "./security.mjs";
 import { dailyArtwork } from "./appearance.mjs";
 
+const hidden = (name, value) =>
+  `<input type="hidden" name="${h(name)}" value="${h(value)}">`;
+
 export function page(
   title,
   content,

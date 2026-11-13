@@ -17,6 +17,8 @@ export function createAccessRoutes({
   endUserSessions,
   rateLimit,
   supportPreflight,
+  renderDirectory,
+  renderAppDetail,
 }) {
   const people = async () =>
     (await searchAll(api, "/management/v1/users/_search")).filter(
@@ -30,6 +32,7 @@ export function createAccessRoutes({
     profile: _profile,
     context,
     send,
+    sendRemix,
     redirect,
   }) {
     if (request.method === "GET" && url.pathname === "/account/sessions") {
@@ -64,14 +67,15 @@ export function createAccessRoutes({
         subject: session.userId,
         access,
       });
-      if (url.pathname === "/") send(views.apps(items, context));
+      if (url.pathname === "/")
+        await sendRemix((nonce) => renderDirectory(items, context, nonce));
       else {
         const item = items.find(
           (candidate) => url.pathname === `/apps/${candidate.id}`,
         );
         if (!item)
           throw fail(404, "This app is unavailable or not assigned to you.");
-        send(views.appDetail(item, context));
+        await sendRemix((nonce) => renderAppDetail(item, context, nonce));
       }
       return true;
     }
@@ -106,14 +110,15 @@ export function createAccessRoutes({
           subject: target.id,
           access,
         });
-        if (!preview[2]) send(views.apps(items, previewContext));
+        if (!preview[2])
+          await sendRemix((nonce) => renderDirectory(items, previewContext, nonce));
         else {
           const item = items.find(
             (candidate) => preview[2] === `apps/${candidate.id}`,
           );
           if (!item)
             throw fail(404, "This app is unavailable or not assigned.");
-          send(views.appDetail(item, previewContext));
+          await sendRemix((nonce) => renderAppDetail(item, previewContext, nonce));
         }
       }
       return true;
