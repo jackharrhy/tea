@@ -16,7 +16,13 @@ for (const [workspace, tool, typesFile] of workers) {
   const args =
     tool === "cf"
       ? ["workers", "types"]
-      : ["types", typesFile, "--env-file", ".dev.vars.example"];
+      : [
+          "types",
+          typesFile,
+          ...(existsSync(join(workspace, ".dev.vars.example"))
+            ? ["--env-file", ".dev.vars.example"]
+            : []),
+        ];
   const result = spawnSync(command, args, {
     cwd: workspace,
     stdio: "inherit",
