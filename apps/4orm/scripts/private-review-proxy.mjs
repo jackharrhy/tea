@@ -4,6 +4,11 @@ import { isIP } from "node:net";
 import { attestCounterPeer, counterPeerHeader } from "../app/counter-peer.ts";
 import { readFile } from "node:fs/promises";
 const config = JSON.parse(await readFile(process.argv[2], "utf8"));
+// Tailnet mode trusts network isolation supplied by the host, not HTTP identity.
+// The listener remains loopback-only in either mode. Default to the key gate.
+const accessMode = config.accessMode ?? "review-key";
+if (!["review-key", "tailnet"].includes(accessMode))
+  throw new Error("Unknown private review access mode");
 const key = (await readFile(config.keyFile, "utf8")).trim();
 if (!/^[a-f0-9]{64}$/.test(key))
   throw new Error("Private review requires its own random access key");
@@ -53,6 +58,10 @@ for (const route of config.routes) {
           return;
         }
       }
+      if (accessMode === "tailnet") {
+        res.writeHead(404, headers).end();
+        return;
+      }
       if (equal(new URLSearchParams(body).get("key") ?? "")) {
         res
           .writeHead(303, {
@@ -70,7 +79,7 @@ for (const route of config.routes) {
       config.ownerLoginSha256 &&
       createHash("sha256").update(identity).digest("hex") ===
         config.ownerLoginSha256;
-    if (!owner && !equal(cookie)) {
+    if (accessMode === "review-key" && !owner && !equal(cookie)) {
       res.writeHead(401, {
         ...headers,
         "Content-Type": "text/html; charset=utf-8",
