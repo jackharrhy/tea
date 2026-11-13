@@ -131,6 +131,15 @@ for (const route of config.routes) {
         const responseHeaders = {
           ...reply.headers,
           ...headers,
+          // Only bundled app assets may be retained privately for revalidation.
+          // Never cache HTML, uploads, issuer responses or review-only assets.
+          "Cache-Control":
+            accessMode === "tailnet" &&
+            route === config.routes[0] &&
+            url.pathname.startsWith("/static/") &&
+            [200, 304].includes(reply.statusCode)
+              ? "private, max-age=0, must-revalidate"
+              : "no-store",
           "Content-Security-Policy": csp,
         };
         if ((reply.headers["content-type"] ?? "").startsWith("text/html")) {

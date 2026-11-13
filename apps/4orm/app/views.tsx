@@ -1,10 +1,18 @@
-import { unsafeHTML } from "remix/component";
+import { css, unsafeHTML } from "remix/component";
 import type { Handle, RemixNode } from "remix/component";
 import type { Member, Row } from "./data/community.ts";
 import { postContent } from "./rendering.ts";
 import { chatMessageHTML } from "./chat-html.ts";
 import { MediaPicker } from "./settings-view.tsx";
 import { LocalTime } from "./time.tsx";
+
+// Paint the document canvas from SSR, before the external stylesheet arrives.
+// Ordinary links/history stay browser-owned (including form/scroll restoration).
+const shellCanvas = css({
+  backgroundColor: "#f0f0f0",
+  color: "#111",
+  colorScheme: "light",
+});
 
 // Keep the source banner element intact: saved banner CSS can target its children.
 const bannerAttributes: Record<string, string> = { role: "status" };
@@ -20,7 +28,7 @@ export function Document(
   }>,
 ) {
   return () => (
-    <html lang="en">
+    <html lang="en" mix={shellCanvas}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -34,7 +42,7 @@ export function Document(
         <link rel="stylesheet" href="/static/style.css" />
         <link rel="manifest" href="/static/manifest.json" />
         <meta name="theme-color" content="#00ccff" />
-        <script src="/static/htmx.min.js" />
+        <script defer src="/static/htmx.min.js" />
       </head>
       <body
         class="fourm-shell"
@@ -93,7 +101,7 @@ export function Document(
         >
           {handle.props.children}
         </main>
-        <script src="/static/app.js" />
+        <script defer src="/static/app.js" />
       </body>
     </html>
   );
@@ -544,7 +552,7 @@ export function Chat(
           </p>
         )}
       </div>
-      <script src="/static/htmx-sse.js" />
+      <script defer src="/static/htmx-sse.js" />
     </>
   );
 }
