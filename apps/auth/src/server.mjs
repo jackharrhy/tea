@@ -29,30 +29,36 @@ const organizationId = process.env.ORGANIZATION_ID;
 const projectId = process.env.LORE_PROJECT_ID;
 const clientId = process.env.LORE_CLIENT_ID;
 
-if (!organizationId || !projectId || !clientId) throw new Error("Missing identity configuration");
+if (!organizationId || !projectId || !clientId)
+  throw new Error("Missing identity configuration");
 const api = createZitadel({
   baseUrl: process.env.ZITADEL_API_URL || origin,
-  loginTokenFile: process.env.LOGIN_TOKEN_FILE || "/run/secrets/login-token.json",
-  managementTokenFile: process.env.MANAGEMENT_TOKEN_FILE || "/run/secrets/management-token.json",
+  loginTokenFile:
+    process.env.LOGIN_TOKEN_FILE || "/run/secrets/login-token.json",
+  managementTokenFile:
+    process.env.MANAGEMENT_TOKEN_FILE || "/run/secrets/management-token.json",
   organizationId,
 });
 const emailActions = createEmailActions(api, origin);
 const accountActions = createAccountActions(api, organizationId);
 const applications = JSON.parse(
   readFileSync(
-    process.env.AUTH_APPLICATIONS_FILE || new URL("../config/applications.json", import.meta.url),
+    process.env.AUTH_APPLICATIONS_FILE ||
+      new URL("../config/applications.json", import.meta.url),
     "utf8",
   ),
 );
 const services = JSON.parse(
   readFileSync(
-    process.env.AUTH_SERVICES_FILE || new URL("../config/services.json", import.meta.url),
+    process.env.AUTH_SERVICES_FILE ||
+      new URL("../config/services.json", import.meta.url),
     "utf8",
   ),
 );
 const integrations = JSON.parse(
   readFileSync(
-    process.env.AUTH_INTEGRATIONS_FILE || new URL("../config/integrations.json", import.meta.url),
+    process.env.AUTH_INTEGRATIONS_FILE ||
+      new URL("../config/integrations.json", import.meta.url),
     "utf8",
   ),
 );
@@ -95,7 +101,10 @@ radioEnrollment = process.env.RADIO_ENROLLMENT_DB_FILE
       api,
       organizationId,
       isBlocked: (subject) =>
-        accessStore.blocked(subject, applications.find((app) => app.id === "radio")?.projectId),
+        accessStore.blocked(
+          subject,
+          applications.find((app) => app.id === "radio")?.projectId,
+        ),
     })
   : null;
 const supportRoutes = createSupportRoutes({
@@ -115,7 +124,8 @@ const authorizationActions = createAuthorizationActions({
   isBlocked: (subject, project) => accessStore.blocked(subject, project),
 });
 const enrollmentKey = process.env.FOURM_ENROLLMENT_KEY_FILE
-  ? JSON.parse(readFileSync(process.env.FOURM_ENROLLMENT_KEY_FILE, "utf8")).token
+  ? JSON.parse(readFileSync(process.env.FOURM_ENROLLMENT_KEY_FILE, "utf8"))
+      .token
   : null;
 const enrollmentApplication = applications.find((app) => app.id === "fourm");
 const enrollment = enrollmentKey
@@ -147,17 +157,24 @@ const doodleAssets = new Map([
     "/assets/doodle-webgl.mjs",
     readFileSync(new URL("../public/doodle-webgl.mjs", import.meta.url)),
   ],
-  ["/assets/doodle-spec.mjs", readFileSync(new URL("./doodles.mjs", import.meta.url))],
+  [
+    "/assets/doodle-spec.mjs",
+    readFileSync(new URL("./doodles.mjs", import.meta.url)),
+  ],
 ]);
-const inter = readFileSync(new URL("../public/fonts/inter-variable.woff2", import.meta.url));
+const inter = readFileSync(
+  new URL("../public/fonts/inter-variable.woff2", import.meta.url),
+);
 const sessions = new Map(),
   attempts = new Map();
 const cookieName = "__Host-jack_auth";
 const sessionLifetime = 30 * 60_000;
 setInterval(() => {
   const now = Date.now();
-  for (const [key, value] of sessions) if (value.expires < now) sessions.delete(key);
-  for (const [key, value] of attempts) if (value.expires < now) attempts.delete(key);
+  for (const [key, value] of sessions)
+    if (value.expires < now) sessions.delete(key);
+  for (const [key, value] of attempts)
+    if (value.expires < now) attempts.delete(key);
 }, 60_000).unref();
 
 function httpError(status, message) {
@@ -190,13 +207,17 @@ function rateLimit(key, limit = 15) {
   record.count++;
   attempts.set(key, record);
   if (record.count > limit)
-    throw httpError(429, "Too many attempts. Please try again in five minutes.");
+    throw httpError(
+      429,
+      "Too many attempts. Please try again in five minutes.",
+    );
 }
 async function formData(request) {
   let body = "";
   for await (const chunk of request) {
     body += chunk.toString();
-    if (Buffer.byteLength(body) > 16_384) throw httpError(413, "Request is too large.");
+    if (Buffer.byteLength(body) > 16_384)
+      throw httpError(413, "Request is too large.");
   }
   return new URLSearchParams(body);
 }
@@ -204,7 +225,9 @@ async function grants(application) {
   return searchAll(
     api,
     "/management/v1/users/grants/_search",
-    application ? [{ projectIdQuery: { projectId: application.projectId } }] : [],
+    application
+      ? [{ projectIdQuery: { projectId: application.projectId } }]
+      : [],
   );
 }
 function assertApplication(request) {
@@ -219,7 +242,8 @@ async function endUserSessions(userId) {
       if (error.status !== 404) throw error;
     }
   }
-  for (const [id, value] of sessions) if (value.userId === userId) sessions.delete(id);
+  for (const [id, value] of sessions)
+    if (value.userId === userId) sessions.delete(id);
 }
 
 createServer(async (request, response) => {
@@ -243,9 +267,12 @@ createServer(async (request, response) => {
   const login = async (returnTo, csrf, error, status = error ? 401 : 200) => {
     returnTo = localReturnTo(returnTo);
     const destination = new URL(returnTo, origin);
-    const id = destination.pathname === "/authorize" && destination.searchParams.get("authRequest");
+    const id =
+      destination.pathname === "/authorize" &&
+      destination.searchParams.get("authRequest");
     if (id) {
-      const { request: authRequest, callback } = await authorizationActions.begin(id, session);
+      const { request: authRequest, callback } =
+        await authorizationActions.begin(id, session);
       if (callback) {
         redirect(callback);
         return;
@@ -259,19 +286,28 @@ createServer(async (request, response) => {
   };
   let session;
   try {
-    if (supportRoutes && (await supportRoutes.server(request, response, url))) return;
+    if (supportRoutes && (await supportRoutes.server(request, response, url)))
+      return;
     if (url.pathname === "/enroll/complete") {
       try {
-        if (request.method !== "POST") throw httpError(405, "POST is required.");
-        if (!enrollmentCompletion) throw httpError(503, "Enrollment completion is unavailable.");
-        if (!equalToken(request.headers.authorization, `Bearer ${enrollmentKey}`))
+        if (request.method !== "POST")
+          throw httpError(405, "POST is required.");
+        if (!enrollmentCompletion)
+          throw httpError(503, "Enrollment completion is unavailable.");
+        if (
+          !equalToken(request.headers.authorization, `Bearer ${enrollmentKey}`)
+        )
           throw httpError(401, "Enrollment service authentication required.");
-        if (request.headers["content-type"]?.split(";")[0].trim() !== "application/json")
+        if (
+          request.headers["content-type"]?.split(";")[0].trim() !==
+          "application/json"
+        )
           throw httpError(415, "JSON is required.");
         let body = "";
         for await (const chunk of request) {
           body += chunk.toString();
-          if (Buffer.byteLength(body) > 4096) throw httpError(413, "Request is too large.");
+          if (Buffer.byteLength(body) > 4096)
+            throw httpError(413, "Request is too large.");
         }
         let input;
         try {
@@ -284,7 +320,9 @@ createServer(async (request, response) => {
         response.end(JSON.stringify(result));
       } catch (error) {
         const status =
-          Number.isInteger(error.status) && error.status >= 400 && error.status < 600
+          Number.isInteger(error.status) &&
+          error.status >= 400 &&
+          error.status < 600
             ? error.status
             : 502;
         response.writeHead(status, {
@@ -313,14 +351,22 @@ createServer(async (request, response) => {
         throw httpError(400, "Invalid authorization request URI.");
       }
       if (authorizationPath && method === "POST") {
-        if (!request.headers["content-type"]?.startsWith("application/x-www-form-urlencoded"))
+        if (
+          !request.headers["content-type"]?.startsWith(
+            "application/x-www-form-urlencoded",
+          )
+        )
           throw httpError(415, "Unsupported authorization form.");
         body = await formData(request);
       }
       const policy = authorizationPolicy(uri, method, body, applications);
       if (typeof uri === "string") {
-        const client = new URL(uri, origin).searchParams.get("client_id") || body.get("client_id");
-        const minimum = applications.map((app) => app.authRequestNotBefore?.[client]).find(Boolean);
+        const client =
+          new URL(uri, origin).searchParams.get("client_id") ||
+          body.get("client_id");
+        const minimum = applications
+          .map((app) => app.authRequestNotBefore?.[client])
+          .find(Boolean);
         if (minimum) response.setHeader("X-Jack-Auth-Not-Before", minimum);
       }
       response.writeHead(policy.allowed ? 200 : 400, {
@@ -333,7 +379,10 @@ createServer(async (request, response) => {
       response.end("ok");
       return;
     }
-    if (request.method === "GET" && url.pathname === "/assets/fonts/inter-variable.woff2") {
+    if (
+      request.method === "GET" &&
+      url.pathname === "/assets/fonts/inter-variable.woff2"
+    ) {
       response.writeHead(200, {
         "Content-Type": "font/woff2",
         "Cache-Control": "public, max-age=86400",
@@ -365,17 +414,33 @@ createServer(async (request, response) => {
     }
     let form;
     if (request.method === "POST") {
-      if (!request.headers["content-type"]?.startsWith("application/x-www-form-urlencoded"))
+      if (
+        !request.headers["content-type"]?.startsWith(
+          "application/x-www-form-urlencoded",
+        )
+      )
         throw httpError(415, "Unsupported form type.");
       form = await formData(request);
-      if (!validPost(request.headers.origin, origin, form.get("csrf"), session.csrf)) {
+      if (
+        !validPost(
+          request.headers.origin,
+          origin,
+          form.get("csrf"),
+          session.csrf,
+        )
+      ) {
         console.warn(
           "form_rejected",
           JSON.stringify({
             originMatches: request.headers.origin === origin,
             hasCookie: Boolean(cookieValue),
             knownSession: Boolean(cookieValue && sessions.has(cookieValue)),
-            csrfMatches: validPost(origin, origin, form.get("csrf"), session.csrf),
+            csrfMatches: validPost(
+              origin,
+              origin,
+              form.get("csrf"),
+              session.csrf,
+            ),
           }),
         );
         if (request.headers.origin === origin && url.pathname === "/login") {
@@ -387,7 +452,10 @@ createServer(async (request, response) => {
           );
           return;
         }
-        throw httpError(403, "This form expired. Open Sign in above to load a fresh form.");
+        throw httpError(
+          403,
+          "This form expired. Open Sign in above to load a fresh form.",
+        );
       }
     }
     const context = {
@@ -397,8 +465,14 @@ createServer(async (request, response) => {
       supportEnabled: supportRoutes?.enabledFor(session.userId) === true,
       enrollment: Boolean(session.enrollmentTicket),
     };
-    if (request.method === "GET" && ["/verify-email", "/reset-password"].includes(url.pathname)) {
-      const key = url.pathname === "/verify-email" ? "emailVerification" : "passwordRecovery";
+    if (
+      request.method === "GET" &&
+      ["/verify-email", "/reset-password"].includes(url.pathname)
+    ) {
+      const key =
+        url.pathname === "/verify-email"
+          ? "emailVerification"
+          : "passwordRecovery";
       if (url.searchParams.has("code")) {
         const userId = url.searchParams.get("userID"),
           code = url.searchParams.get("code");
@@ -406,12 +480,16 @@ createServer(async (request, response) => {
           !/^[A-Za-z0-9-]{1,200}$/.test(userId || "") ||
           !/^[A-Za-z0-9_-]{1,20}$/.test(code || "")
         )
-          throw httpError(400, "This email link is invalid. Request a new one.");
+          throw httpError(
+            400,
+            "This email link is invalid. Request a new one.",
+          );
         session[key] = { userId, code };
         redirect(url.pathname);
         return;
       }
-      if (!session[key]) throw httpError(400, "Open the link in your email to continue.");
+      if (!session[key])
+        throw httpError(400, "Open the link in your email to continue.");
       send(
         views.emailForm(key === "emailVerification" ? "verify" : "reset", {
           ...context,
@@ -435,7 +513,13 @@ createServer(async (request, response) => {
         );
       }
       delete session.emailVerification;
-      send(views.emailResult("Email verified", "Your email address is verified.", context));
+      send(
+        views.emailResult(
+          "Email verified",
+          "Your email address is verified.",
+          context,
+        ),
+      );
       return;
     }
     if (request.method === "GET" && url.pathname === "/forgot-password") {
@@ -462,7 +546,11 @@ createServer(async (request, response) => {
       try {
         if (form.get("password") !== form.get("confirmation"))
           throw httpError(400, "The passwords do not match.");
-        await emailActions.resetPassword(pending.userId, pending.code, form.get("password"));
+        await emailActions.resetPassword(
+          pending.userId,
+          pending.code,
+          form.get("password"),
+        );
       } catch (error) {
         if (error.status !== 400) throw error;
         send(
@@ -481,21 +569,28 @@ createServer(async (request, response) => {
       delete session.passwordRecovery;
       await endUserSessions(pending.userId);
       send(
-        views.emailResult("Password updated", "Sign in with your new password.", {
-          csrf: session.csrf,
-        }),
+        views.emailResult(
+          "Password updated",
+          "Sign in with your new password.",
+          { csrf: session.csrf },
+        ),
       );
       return;
     }
     if (url.pathname === "/enroll") {
-      if (!enrollment) throw httpError(503, "Registration is unavailable. Please try again later.");
+      if (!enrollment)
+        throw httpError(
+          503,
+          "Registration is unavailable. Please try again later.",
+        );
       if (request.method === "GET" && url.searchParams.has("ticket")) {
         await enrollment.pending(url.searchParams.get("ticket"));
         session.enrollmentTicket = url.searchParams.get("ticket");
         redirect("/enroll");
         return;
       }
-      if (!session.enrollmentTicket) throw httpError(400, "Open your 4orm invite link again.");
+      if (!session.enrollmentTicket)
+        throw httpError(400, "Open your 4orm invite link again.");
       await enrollment.pending(session.enrollmentTicket);
       if (!session.userId && request.method === "GET") {
         send(views.enrollment(context));
@@ -524,9 +619,13 @@ createServer(async (request, response) => {
             lifetime: "1800s",
           },
         });
-        const verified = (await api(`/v2/sessions/${encodeURIComponent(result.sessionId)}`))
-          .session;
-        if (verified?.factors?.user?.id !== userId || !verified?.factors?.password?.verifiedAt)
+        const verified = (
+          await api(`/v2/sessions/${encodeURIComponent(result.sessionId)}`)
+        ).session;
+        if (
+          verified?.factors?.user?.id !== userId ||
+          !verified?.factors?.password?.verifiedAt
+        )
           throw httpError(401, "Sign in to your account to continue.");
         const enrollmentTicket = session.enrollmentTicket;
         sessions.delete(session.id);
@@ -547,7 +646,10 @@ createServer(async (request, response) => {
         ? `/authorize?authRequest=${encodeURIComponent(authRequest)}`
         : localReturnTo(url.searchParams.get("returnTo"));
       if (session.userId && authRequest) {
-        const { callback, requireLogin } = await authorizationActions.begin(authRequest, session);
+        const { callback, requireLogin } = await authorizationActions.begin(
+          authRequest,
+          session,
+        );
         if (callback) {
           redirect(callback);
           return;
@@ -584,7 +686,9 @@ createServer(async (request, response) => {
         );
         return;
       }
-      const verified = await api(`/v2/sessions/${encodeURIComponent(result.sessionId)}`);
+      const verified = await api(
+        `/v2/sessions/${encodeURIComponent(result.sessionId)}`,
+      );
       const userId = verified.session?.factors?.user?.id;
       if (!userId || !verified.session?.factors?.password?.verifiedAt)
         throw httpError(401, "Password verification was not completed.");
@@ -616,17 +720,22 @@ createServer(async (request, response) => {
       return;
     }
     if (!session.userId) {
-      redirect(`/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`);
+      redirect(
+        `/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`,
+      );
       return;
     }
     let providerSession;
     try {
-      providerSession = (await api(`/v2/sessions/${encodeURIComponent(session.sessionId)}`))
-        .session;
+      providerSession = (
+        await api(`/v2/sessions/${encodeURIComponent(session.sessionId)}`)
+      ).session;
     } catch (error) {
       if (![401, 403, 404].includes(error.status)) throw error;
       sessions.delete(session.id);
-      redirect(`/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`);
+      redirect(
+        `/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`,
+      );
       return;
     }
     if (
@@ -660,7 +769,8 @@ createServer(async (request, response) => {
         context,
         redirect,
         send,
-        setPolicy: (value) => response.setHeader("Content-Security-Policy", value),
+        setPolicy: (value) =>
+          response.setHeader("Content-Security-Policy", value),
       }))
     )
       return;
@@ -682,7 +792,10 @@ createServer(async (request, response) => {
         throw httpError(400, "Open your 4orm invite link again.");
       if (request.method === "POST" && url.pathname === "/enroll/continue") {
         rateLimit(`enrollment:${session.userId}`);
-        const destination = await enrollment.continue(session.enrollmentTicket, profile);
+        const destination = await enrollment.continue(
+          session.enrollmentTicket,
+          profile,
+        );
         delete session.enrollmentTicket;
         redirect(destination);
         return;
@@ -720,7 +833,13 @@ createServer(async (request, response) => {
         "Set-Cookie",
         `${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`,
       );
-      send(views.emailResult("Password updated", "Sign in with your new password.", {}));
+      send(
+        views.emailResult(
+          "Password updated",
+          "Sign in with your new password.",
+          {},
+        ),
+      );
       return;
     }
     if (request.method === "POST" && url.pathname === "/account/email/resend") {
@@ -729,26 +848,44 @@ createServer(async (request, response) => {
         profile.human.email.email.endsWith(".invalid") ||
         profile.human.email.isEmailVerified
       )
-        throw httpError(400, "Add an unverified email address to your account first.");
+        throw httpError(
+          400,
+          "Add an unverified email address to your account first.",
+        );
       rateLimit(`email:${session.userId}`);
       await emailActions.resend(session.userId);
-      send(views.emailResult("Check your email", "We sent a new verification link.", context));
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/account") {
-      const assigned = (await grants()).filter((grant) => grant.userId === session.userId);
       send(
-        views.account(
-          profile,
+        views.emailResult(
+          "Check your email",
+          "We sent a new verification link.",
           context,
-          applications.filter((app) => assigned.some((grant) => grant.projectId === app.projectId)),
         ),
       );
       return;
     }
-    if (url.pathname === "/authorize" && ["GET", "POST"].includes(request.method)) {
+    if (request.method === "GET" && url.pathname === "/account") {
+      const assigned = (await grants()).filter(
+        (grant) => grant.userId === session.userId,
+      );
+      send(
+        views.account(
+          profile,
+          context,
+          applications.filter((app) =>
+            assigned.some((grant) => grant.projectId === app.projectId),
+          ),
+        ),
+      );
+      return;
+    }
+    if (
+      url.pathname === "/authorize" &&
+      ["GET", "POST"].includes(request.method)
+    ) {
       const id =
-        request.method === "GET" ? url.searchParams.get("authRequest") : form.get("authRequest");
+        request.method === "GET"
+          ? url.searchParams.get("authRequest")
+          : form.get("authRequest");
       const { callback: silentCallback } = await authorizationActions.begin(id, session);
       if (silentCallback) {
         redirect(silentCallback);
@@ -780,9 +917,11 @@ createServer(async (request, response) => {
         send(views.deviceCode(session.csrf, context));
         return;
       }
-      if (!/^[A-Z0-9-]{4,30}$/.test(code)) throw httpError(400, "Invalid device code.");
-      const deviceRequest = (await api(`/v2/oidc/device_authorization/${encodeURIComponent(code)}`))
-        .deviceAuthorizationRequest;
+      if (!/^[A-Z0-9-]{4,30}$/.test(code))
+        throw httpError(400, "Invalid device code.");
+      const deviceRequest = (
+        await api(`/v2/oidc/device_authorization/${encodeURIComponent(code)}`)
+      ).deviceAuthorizationRequest;
       assertApplication(deviceRequest);
       send(views.device(deviceRequest, session.csrf, context, code));
       return;
@@ -803,7 +942,9 @@ createServer(async (request, response) => {
       if (!decision) {
         const pending = (async () => {
           const deviceRequest = (
-            await api(`/v2/oidc/device_authorization/${encodeURIComponent(code)}`)
+            await api(
+              `/v2/oidc/device_authorization/${encodeURIComponent(code)}`,
+            )
           ).deviceAuthorizationRequest;
           const application = assertApplication(deviceRequest);
           if (
@@ -811,25 +952,34 @@ createServer(async (request, response) => {
             (accessStore.blocked(session.userId, application.projectId) ||
               !(await grants(application)).some(
                 (grant) =>
-                  grant.userId === session.userId && grant.state === "USER_GRANT_STATE_ACTIVE",
+                  grant.userId === session.userId &&
+                  grant.state === "USER_GRANT_STATE_ACTIVE",
               ))
           )
-            throw httpError(403, `You do not have access to ${application.name}.`);
-          await api(`/v2/oidc/device_authorization/${encodeURIComponent(deviceRequest.id)}`, {
-            method: "POST",
-            body: approve
-              ? {
-                  session: {
-                    sessionId: session.sessionId,
-                    sessionToken: session.sessionToken,
-                  },
-                }
-              : { deny: {} },
-          });
+            throw httpError(
+              403,
+              `You do not have access to ${application.name}.`,
+            );
+          await api(
+            `/v2/oidc/device_authorization/${encodeURIComponent(deviceRequest.id)}`,
+            {
+              method: "POST",
+              body: approve
+                ? {
+                    session: {
+                      sessionId: session.sessionId,
+                      sessionToken: session.sessionToken,
+                    },
+                  }
+                : { deny: {} },
+            },
+          );
         })();
         decision = { approve, pending, expires: Date.now() + 300_000 };
         if (session.deviceDecisions.size >= 8)
-          session.deviceDecisions.delete(session.deviceDecisions.keys().next().value);
+          session.deviceDecisions.delete(
+            session.deviceDecisions.keys().next().value,
+          );
         session.deviceDecisions.set(code, decision);
       }
       try {
@@ -860,6 +1010,8 @@ createServer(async (request, response) => {
       expected ? error.status : 502,
     );
   }
-}).listen(Number(process.env.PORT || 3000), process.env.LISTEN_HOST || "0.0.0.0", () =>
-  console.info("auth listening"),
+}).listen(
+  Number(process.env.PORT || 3000),
+  process.env.LISTEN_HOST || "0.0.0.0",
+  () => console.info("auth listening"),
 );

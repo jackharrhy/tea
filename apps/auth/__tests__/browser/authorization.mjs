@@ -81,7 +81,9 @@ const provider = createServer(async (request, response) => {
         result = {
           callbackUrl: `${callbackOrigin}/callback?error=login_required&state=fixture-state`,
         };
-      } else if (json.error?.error === "ERROR_REASON_ACCOUNT_SELECTION_REQUIRED")
+      } else if (
+        json.error?.error === "ERROR_REASON_ACCOUNT_SELECTION_REQUIRED"
+      )
         result = {
           callbackUrl: `${callbackOrigin}/callback?error=account_selection_required&state=fixture-state`,
         };
@@ -99,7 +101,9 @@ const provider = createServer(async (request, response) => {
             `urn:zitadel:iam:org:project:id:${app.projectId}:aud`,
             "urn:zitadel:iam:org:projects:roles",
             "urn:zitadel:iam:org:project:role:admin",
-            ...(app.id === "ref" ? ["urn:zitadel:iam:org:project:role:archive-read"] : []),
+            ...(app.id === "ref"
+              ? ["urn:zitadel:iam:org:project:role:archive-read"]
+              : []),
           ]
         : ["openid"];
       result = {
@@ -150,7 +154,8 @@ const provider = createServer(async (request, response) => {
         releaseGrantSearch = resolve;
       });
     }
-    const projectId = json.queries?.find((query) => query.projectIdQuery)?.projectIdQuery.projectId;
+    const projectId = json.queries?.find((query) => query.projectIdQuery)
+      ?.projectIdQuery.projectId;
     result = {
       result: [
         {
@@ -164,7 +169,8 @@ const provider = createServer(async (request, response) => {
               : [
                   applications.some(
                     (app) =>
-                      ["marky", "radio"].includes(app.id) && app.clientIds.includes(currentClient),
+                      ["marky", "radio"].includes(app.id) &&
+                      app.clientIds.includes(currentClient),
                   )
                     ? "member"
                     : "admin",
@@ -238,66 +244,88 @@ try {
     requestId: "request_12345678901234567890",
     subject: "fixture-user",
   };
-  const unauthenticatedCompletion = await policyContext.request.post(`${origin}/enroll/complete`, {
-    data: event,
-  });
+  const unauthenticatedCompletion = await policyContext.request.post(
+    `${origin}/enroll/complete`,
+    { data: event },
+  );
   assert.equal(unauthenticatedCompletion.status(), 401);
   assert.equal(unauthenticatedCompletion.headers()["set-cookie"], undefined);
-  const nominatedProject = await policyContext.request.post(`${origin}/enroll/complete`, {
-    headers: { authorization: `Bearer ${enrollmentToken}` },
-    data: { ...event, projectId: "lore" },
-  });
+  const nominatedProject = await policyContext.request.post(
+    `${origin}/enroll/complete`,
+    {
+      headers: { authorization: `Bearer ${enrollmentToken}` },
+      data: { ...event, projectId: "lore" },
+    },
+  );
   assert.equal(nominatedProject.status(), 400);
   assert.equal(nominatedProject.headers()["set-cookie"], undefined);
-  const wrongMethod = await policyContext.request.get(`${origin}/enroll/complete`);
+  const wrongMethod = await policyContext.request.get(
+    `${origin}/enroll/complete`,
+  );
   assert.equal(wrongMethod.status(), 405);
   assert.equal(wrongMethod.headers()["set-cookie"], undefined);
-  const protectedClient = applications.find((app) => app.id === "fourm").pkceClientIds[0];
-  const denied = await policyContext.request.get(`${origin}/internal/oidc/authorize-policy`, {
-    headers: {
-      "x-forwarded-uri": `/oauth/v2/authorize?client_id=${protectedClient}&response_type=code`,
-      "x-forwarded-method": "GET",
+  const protectedClient = applications.find((app) => app.id === "fourm")
+    .pkceClientIds[0];
+  const denied = await policyContext.request.get(
+    `${origin}/internal/oidc/authorize-policy`,
+    {
+      headers: {
+        "x-forwarded-uri": `/oauth/v2/authorize?client_id=${protectedClient}&response_type=code`,
+        "x-forwarded-method": "GET",
+      },
     },
-  });
+  );
   assert.equal(denied.status(), 400);
   assert.equal(denied.headers()["set-cookie"], undefined);
-  const permitted = await policyContext.request.post(`${origin}/internal/oidc/authorize-policy`, {
-    headers: {
-      "x-forwarded-uri": "/oauth/v2/authorize",
-      "x-forwarded-method": "POST",
-      "content-type": "application/x-www-form-urlencoded",
+  const permitted = await policyContext.request.post(
+    `${origin}/internal/oidc/authorize-policy`,
+    {
+      headers: {
+        "x-forwarded-uri": "/oauth/v2/authorize",
+        "x-forwarded-method": "POST",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      data: new URLSearchParams({
+        client_id: protectedClient,
+        response_type: "code",
+        code_challenge: "a".repeat(43),
+        code_challenge_method: "S256",
+      }).toString(),
     },
-    data: new URLSearchParams({
-      client_id: protectedClient,
-      response_type: "code",
-      code_challenge: "a".repeat(43),
-      code_challenge_method: "S256",
-    }).toString(),
-  });
+  );
   assert.equal(permitted.status(), 200);
   assert.equal(permitted.headers()["set-cookie"], undefined);
   const [stagedClient, requestBoundary] = Object.entries(
     applications.find((app) => app.id === "fourm").authRequestNotBefore,
   )[0];
-  const stagedPolicy = await policyContext.request.get(`${origin}/internal/oidc/authorize-policy`, {
-    headers: {
-      "x-forwarded-uri": `/oauth/v2/authorize?client_id=${stagedClient}&response_type=code`,
-      "x-forwarded-method": "GET",
+  const stagedPolicy = await policyContext.request.get(
+    `${origin}/internal/oidc/authorize-policy`,
+    {
+      headers: {
+        "x-forwarded-uri": `/oauth/v2/authorize?client_id=${stagedClient}&response_type=code`,
+        "x-forwarded-method": "GET",
+      },
     },
-  });
+  );
   assert.equal(stagedPolicy.status(), 400);
-  assert.equal(stagedPolicy.headers()["x-jack-auth-not-before"], requestBoundary);
+  assert.equal(
+    stagedPolicy.headers()["x-jack-auth-not-before"],
+    requestBoundary,
+  );
   const lists = applications.find((app) => app.id === "lists");
   if (lists.authorizationHold) {
     currentClient = lists.clientIds[0];
-    const held = await policyContext.request.get(`${origin}/login?authRequest=held-lists`);
+    const held = await policyContext.request.get(
+      `${origin}/login?authRequest=held-lists`,
+    );
     assert.equal(held.status(), 403);
   }
   assert.equal(completions, 0);
   await policyContext.close();
   const silentContext = await browser.newContext();
   const silentPage = await silentContext.newPage();
-  currentClient = applications.find((app) => app.id === "rotund-portal").clientIds[0];
+  currentClient = applications.find((app) => app.id === "rotund-portal")
+    .clientIds[0];
   silent = true;
   const anonymousCredentials = credentialAttempts;
   const anonymousSilent = await silentPage.goto(`${origin}/login?authRequest=anonymous-probe`);
@@ -343,15 +371,21 @@ try {
     );
     await firstPage.locator("[name=username]").fill("fixture-user-" + app.id);
     await firstPage.locator("[name=password]").fill("fixture-password");
-    await firstPage.getByRole("button", { name: "Sign in", exact: true }).click();
+    await firstPage
+      .getByRole("button", { name: "Sign in", exact: true })
+      .click();
     await firstPage.waitForURL(`${callbackOrigin}/callback?**`, {
       timeout: 5000,
     });
-    assert.equal(await firstPage.locator("h1").innerText(), "Consumer session established");
+    assert.equal(
+      await firstPage.locator("h1").innerText(),
+      "Consumer session established",
+    );
     await firstContext.close();
     const violations = [];
     page.on("console", (message) => {
-      if (message.text().includes("Content Security Policy")) violations.push(message.text());
+      if (message.text().includes("Content Security Policy"))
+        violations.push(message.text());
     });
     await page.goto(
       app.id === "fourm"
@@ -361,7 +395,10 @@ try {
     await page.locator("[name=username]").fill("fixture-user-" + app.id);
     await page.locator("[name=password]").fill("wrong");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    assert.match(await page.locator("[role=alert]").innerText(), /Sign-in failed/);
+    assert.match(
+      await page.locator("[role=alert]").innerText(),
+      /Sign-in failed/,
+    );
     await page.locator("[name=username]").fill("fixture-user-" + app.id);
     await page.locator("[name=password]").fill("fixture-password");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -371,7 +408,10 @@ try {
         console.error(await page.locator("body").innerText(), violations);
         throw error;
       });
-    assert.equal(await page.locator("h1").innerText(), "Consumer session established");
+    assert.equal(
+      await page.locator("h1").innerText(),
+      "Consumer session established",
+    );
     // Existing central session must resume without another credential form.
     await page.goto(`${origin}/login?authRequest=second`);
     await page
@@ -385,7 +425,10 @@ try {
       silent = true;
       await page.goto(`${origin}/login?authRequest=existing-session-probe`);
       await page.waitForURL(`${callbackOrigin}/callback?**`, { timeout: 5000 });
-      assert.equal(await page.locator("h1").innerText(), "Consumer session established");
+      assert.equal(
+        await page.locator("h1").innerText(),
+        "Consumer session established",
+      );
       silentSuccesses++;
       silent = false;
     }
@@ -394,7 +437,9 @@ try {
       if (app.delegatedAuthRequestNotBefore) {
         creationDateOverride = "2000-01-01T00:00:00Z";
         assert.equal(
-          (await page.goto(`${origin}/login?authRequest=stale-delegated`)).status(),
+          (
+            await page.goto(`${origin}/login?authRequest=stale-delegated`)
+          ).status(),
           400,
         );
         creationDateOverride = undefined;
@@ -422,7 +467,9 @@ try {
   await freshnessPage.goto(`${origin}/login?authRequest=freshness-first`);
   await freshnessPage.locator("[name=username]").fill("fixture-user-artbin");
   await freshnessPage.locator("[name=password]").fill("fixture-password");
-  await freshnessPage.getByRole("button", { name: "Sign in", exact: true }).click();
+  await freshnessPage
+    .getByRole("button", { name: "Sign in", exact: true })
+    .click();
   await freshnessPage.waitForURL(`${callbackOrigin}/callback?**`, {
     timeout: 5000,
   });
@@ -432,7 +479,9 @@ try {
   assert.equal(await freshnessPage.locator("[name=password]").count(), 1);
   await freshnessPage.locator("[name=username]").fill("fixture-user-artbin");
   await freshnessPage.locator("[name=password]").fill("fixture-password");
-  await freshnessPage.getByRole("button", { name: "Sign in", exact: true }).click();
+  await freshnessPage
+    .getByRole("button", { name: "Sign in", exact: true })
+    .click();
   await freshnessPage.waitForURL(`${callbackOrigin}/callback?**`, {
     timeout: 5000,
   });
@@ -443,7 +492,9 @@ try {
   assert.equal(await freshnessPage.locator("[name=password]").count(), 1);
   await freshnessPage.locator("[name=username]").fill("fixture-user-artbin");
   await freshnessPage.locator("[name=password]").fill("fixture-password");
-  await freshnessPage.getByRole("button", { name: "Sign in", exact: true }).click();
+  await freshnessPage
+    .getByRole("button", { name: "Sign in", exact: true })
+    .click();
   await freshnessPage.waitForURL(`${callbackOrigin}/callback?**`, {
     timeout: 5000,
   });
@@ -458,11 +509,14 @@ try {
   promptOverride = ["PROMPT_SELECT_ACCOUNT"];
   maxAgeOverride = undefined;
   await freshnessPage.goto(`${origin}/login?authRequest=account-selection`);
-  await freshnessPage.waitForURL(`${callbackOrigin}/callback?error=account_selection_required&**`, {
-    timeout: 5000,
-  });
+  await freshnessPage.waitForURL(
+    `${callbackOrigin}/callback?error=account_selection_required&**`,
+    { timeout: 5000 },
+  );
   assert.equal(
-    await freshnessPage.getByRole("heading", { name: "Account selection required" }).count(),
+    await freshnessPage
+      .getByRole("heading", { name: "Account selection required" })
+      .count(),
     1,
   );
   assert.equal(completions, completionsBeforeSelection);
@@ -495,7 +549,9 @@ try {
   const staleContext = await browser.newContext();
   const stalePage = await staleContext.newPage();
   const staleReturn = "/authorize?authRequest=restart-form";
-  await stalePage.goto(`${origin}/login?returnTo=${encodeURIComponent(staleReturn)}`);
+  await stalePage.goto(
+    `${origin}/login?returnTo=${encodeURIComponent(staleReturn)}`,
+  );
   const cookieBeforeRestart = (await staleContext.cookies(origin)).find(
     (cookie) => cookie.name === "__Host-jack_auth",
   );
@@ -517,7 +573,8 @@ try {
   await stalePage.locator("[name=password]").fill("fixture-password");
   const rejectedResponse = stalePage.waitForResponse(
     (response) =>
-      response.request().method() === "POST" && new URL(response.url()).pathname === "/login",
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/login",
   );
   await stalePage.getByRole("button", { name: "Sign in", exact: true }).click();
   const rejected = await rejectedResponse;
@@ -526,13 +583,23 @@ try {
   assert.equal(credentialAttempts, attemptsBeforeRestart);
   assert.equal(await stalePage.locator("[name=password]").count(), 1);
   assert.equal(await stalePage.locator("[name=password]").inputValue(), "");
-  assert.notEqual(await stalePage.locator("[name=csrf]").inputValue(), csrfBeforeRestart);
+  assert.notEqual(
+    await stalePage.locator("[name=csrf]").inputValue(),
+    csrfBeforeRestart,
+  );
   const recoveredCookie = (await staleContext.cookies(origin)).find(
     (cookie) => cookie.name === "__Host-jack_auth",
   );
-  assert(recoveredCookie?.secure && recoveredCookie.httpOnly && recoveredCookie.sameSite === "Lax");
+  assert(
+    recoveredCookie?.secure &&
+      recoveredCookie.httpOnly &&
+      recoveredCookie.sameSite === "Lax",
+  );
   assert.notEqual(recoveredCookie.value, cookieBeforeRestart.value);
-  assert.equal(await stalePage.locator("[name=returnTo]").inputValue(), staleReturn);
+  assert.equal(
+    await stalePage.locator("[name=returnTo]").inputValue(),
+    staleReturn,
+  );
   await stalePage.locator("[name=username]").fill("fixture-user-artbin");
   await stalePage.locator("[name=password]").fill("fixture-password");
   await stalePage.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -559,12 +626,19 @@ try {
   await stalePage.setContent(recoveredSignedInForm);
   assert.equal(await stalePage.locator('form[action="/login"]').count(), 1);
   assert.equal(await stalePage.locator("[name=password]").inputValue(), "");
-  assert.equal(await stalePage.locator("[name=csrf]").inputValue(), signedInCsrf);
-  assert.equal(await stalePage.locator("[name=returnTo]").inputValue(), "/account");
+  assert.equal(
+    await stalePage.locator("[name=csrf]").inputValue(),
+    signedInCsrf,
+  );
+  assert.equal(
+    await stalePage.locator("[name=returnTo]").inputValue(),
+    "/account",
+  );
   assert.equal(signedInReject.headers()["set-cookie"], undefined);
   assert.equal(
-    (await staleContext.cookies(origin)).find((cookie) => cookie.name === "__Host-jack_auth")
-      ?.value,
+    (await staleContext.cookies(origin)).find(
+      (cookie) => cookie.name === "__Host-jack_auth",
+    )?.value,
     signedInCookie,
   );
   assert.equal(credentialAttempts, beforeSignedInReject);
@@ -587,8 +661,9 @@ try {
   assert.equal(delayedResponse.status(), 200);
   assert.equal(delayedResponse.headers()["set-cookie"], undefined);
   assert.equal(
-    (await staleContext.cookies(origin)).find((cookie) => cookie.name === "__Host-jack_auth")
-      ?.value,
+    (await staleContext.cookies(origin)).find(
+      (cookie) => cookie.name === "__Host-jack_auth",
+    )?.value,
     rotatedCookie,
   );
   await staleContext.close();
@@ -620,7 +695,9 @@ try {
   );
   const resetContext = await browser.newContext();
   const resetPage = await resetContext.newPage();
-  await resetPage.goto(`${origin}/reset-password?userID=reset-fixture&code=recovery-code`);
+  await resetPage.goto(
+    `${origin}/reset-password?userID=reset-fixture&code=recovery-code`,
+  );
   assert.equal(new URL(resetPage.url()).search, "");
   assert.match(
     await resetPage.locator("#password-requirements").innerText(),
@@ -628,24 +705,41 @@ try {
   );
   await resetPage.locator("[name=password]").fill("lowercasepassword123!");
   await resetPage.locator("[name=confirmation]").fill("lowercasepassword123!");
-  await resetPage.getByRole("button", { name: "Save password", exact: true }).click();
-  assert.match(await resetPage.locator("[role=alert]").innerText(), /Include an uppercase letter/);
+  await resetPage
+    .getByRole("button", { name: "Save password", exact: true })
+    .click();
+  assert.match(
+    await resetPage.locator("[role=alert]").innerText(),
+    /Include an uppercase letter/,
+  );
   assert.equal(await resetPage.locator("[name=password]").inputValue(), "");
   assert.equal(await resetPage.locator("[name=confirmation]").inputValue(), "");
   assert.equal(resetCalls, 1);
   await resetPage.locator("[name=password]").fill("ValidPassword123");
   await resetPage.locator("[name=confirmation]").fill("ValidPassword123");
-  await resetPage.getByRole("button", { name: "Save password", exact: true }).click();
-  assert.match(await resetPage.locator("[role=alert]").innerText(), /Include a symbol/);
+  await resetPage
+    .getByRole("button", { name: "Save password", exact: true })
+    .click();
+  assert.match(
+    await resetPage.locator("[role=alert]").innerText(),
+    /Include a symbol/,
+  );
   assert.equal(resetCalls, 2);
   await resetPage.locator("[name=password]").fill("ValidPassword123!");
   await resetPage.locator("[name=confirmation]").fill("DifferentPassword123!");
-  await resetPage.getByRole("button", { name: "Save password", exact: true }).click();
-  assert.match(await resetPage.locator("[role=alert]").innerText(), /passwords do not match/);
+  await resetPage
+    .getByRole("button", { name: "Save password", exact: true })
+    .click();
+  assert.match(
+    await resetPage.locator("[role=alert]").innerText(),
+    /passwords do not match/,
+  );
   assert.equal(resetCalls, 2);
   await resetPage.locator("[name=password]").fill("ValidPassword123!");
   await resetPage.locator("[name=confirmation]").fill("ValidPassword123!");
-  await resetPage.getByRole("button", { name: "Save password", exact: true }).click();
+  await resetPage
+    .getByRole("button", { name: "Save password", exact: true })
+    .click();
   assert.equal(await resetPage.locator("h1").innerText(), "Password updated");
   assert.equal(resetCalls, 3);
   await resetContext.close();
@@ -656,7 +750,10 @@ try {
   await browser?.close();
   server.kill();
   await once(server, "exit");
-  await Promise.all([new Promise((r) => provider.close(r)), new Promise((r) => consumer.close(r))]);
+  await Promise.all([
+    new Promise((r) => provider.close(r)),
+    new Promise((r) => consumer.close(r)),
+  ]);
   await rm(directory, { recursive: true, force: true });
   if (logs) process.stderr.write(logs);
 }
