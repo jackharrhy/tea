@@ -1,40 +1,26 @@
 import { expect, test } from "vitest";
-import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import {
   planBackupRetention,
   backupNameTime,
 } from "../app/backup-retention.ts";
+// Golden results generated from the original read-only Python oracle using only synthetic data.
+// CI must not require a developer's production/oracle checkout or interpreter.
+const goldens = JSON.parse(
+  readFileSync(
+    new URL("./fixtures/backup-retention-goldens.json", import.meta.url),
+    "utf8",
+  ),
+);
 function sourcePlan(now, names, maximum) {
-  const source = `import importlib.util,json,pathlib,tempfile,datetime,sys
-spec=importlib.util.spec_from_file_location('fourm_backup_oracle','/home/jack/repos/personal/4orm/app/backup.py')
-backup=importlib.util.module_from_spec(spec)
-spec.loader.exec_module(backup)
-value=json.load(sys.stdin)
-class Clock(datetime.datetime):
- @classmethod
- def now(cls,tz=None):
-  return datetime.datetime.fromisoformat(value['now']).astimezone(tz)
-backup.datetime=Clock
-with tempfile.TemporaryDirectory(prefix='fourm-retention-oracle-') as directory:
- root=pathlib.Path(directory)
- for name in value['names']:(root/name).mkdir()
- backup.prune_old_backups(root,value['maximum'])
- print(json.dumps(sorted(path.name for path in root.iterdir())))
-`;
-  const result = spawnSync(
-    "/home/jack/repos/personal/4orm/.venv/bin/python",
-    ["-B", "-c", source],
-    {
-      input: JSON.stringify({
-        now: new Date(now).toISOString(),
-        names,
-        maximum,
-      }),
-      encoding: "utf8",
-    },
+  const reference = goldens.cases.find(
+    (value) =>
+      Date.parse(value.now) === now &&
+      value.maximum === maximum &&
+      JSON.stringify(value.names) === JSON.stringify(names),
   );
-  expect(result.status, result.stderr).toBe(0);
-  return JSON.parse(result.stdout);
+  expect(reference, "Missing original-oracle golden case").toBeDefined();
+  return reference.keep;
 }
 function entry(time) {
   const date = new Date(time),
