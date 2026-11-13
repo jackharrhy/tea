@@ -287,6 +287,13 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
     replay: true,
     manifestVerified: true,
   });
+  for (const method of ["GET", "HEAD"]) {
+    const denied = await fetch(
+      origin + "/uploads/.backups/native/native-full-fixture.json",
+      { method },
+    );
+    assert.equal(denied.status, 404);
+  }
   const catalogue = await (await request("/catalogue-check", "POST")).json();
   assert.deepEqual(catalogue, {
     initial: 0,
@@ -311,6 +318,7 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
         backupRunStateRecovery: true,
         fullNativeBackup: fullBackup,
         catalogueRecovery: catalogue,
+        backupNamespacePublicGetHeadDenied: true,
         nativeOperationalRecovery: {
           ...recoverySummary,
           coldRestartAfterRestore: true,

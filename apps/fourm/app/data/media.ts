@@ -18,6 +18,8 @@ export function createMedia(db: Database, member: (id: number) => Member) {
     db.all("ALTER TABLE media_transfers ADD COLUMN upload_id TEXT");
   function reserve(actorId: number, path: string, mime: string, size: number) {
     member(actorId);
+    if (path === ".backups" || path.startsWith(".backups/"))
+      throw new CommunityError(422, "Backup storage is private");
     requireIdleMedia(db, actorId);
     if (
       db.all(

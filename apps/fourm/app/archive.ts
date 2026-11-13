@@ -22,6 +22,8 @@ export async function archiveObject(
 ) {
   await archiveRestoreAuthority(request, env);
   if (
+    path === ".backups" ||
+    path.startsWith(".backups/") ||
     path.length > 255 ||
     path.split(/[\\/]/).some((part) => !part || part === "." || part === "..")
   )

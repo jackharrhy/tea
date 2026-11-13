@@ -124,3 +124,33 @@ test("imported filesystem validators remain authoritative while bucket reads use
   expect(r.status).toBe(206);
   expect(await r.text()).toBe("012");
 });
+
+test("backup storage is never served through public media, even with a published row", async () => {
+  let touched = false;
+  const env = {
+    MEDIA: {
+      head() {
+        touched = true;
+      },
+    },
+  };
+  const store = {
+    call() {
+      touched = true;
+    },
+  };
+  for (const path of [
+    ".backups/native/snapshot.json",
+    ".backups/objects/digest",
+  ]) {
+    await expect(
+      readMedia(
+        new Request("https://review.invalid/uploads/" + path),
+        env,
+        store,
+        path,
+      ),
+    ).rejects.toMatchObject({ status: 404 });
+  }
+  expect(touched).toBe(false);
+});
