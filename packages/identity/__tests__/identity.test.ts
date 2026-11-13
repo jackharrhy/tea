@@ -4,6 +4,7 @@ import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import {
   createIdentityClient,
   createLoginTransaction,
+  loginTransactionCookieName,
   validLoginTransaction,
   projectAudienceScope,
   PROJECT_ROLES_SCOPE,
@@ -131,7 +132,9 @@ test("wrong nonce, issuer, audience, authorized party and signing key cannot cre
     const { client, calls } = fixture(token);
     await assert.rejects(
       client.exchange("code", transaction, "https://artbin.example/callback"),
-      { status: 401 },
+      {
+        status: 401,
+      },
     );
     assert.ok(!calls.some((call) => call.url.endsWith("/userinfo")));
   }
@@ -167,7 +170,9 @@ test("discovery cannot redirect credentials to an endpoint outside the configure
   });
   await assert.rejects(
     client.exchange("code", transaction, "https://artbin.example/callback"),
-    { status: 503 },
+    {
+      status: 503,
+    },
   );
   assert.equal(calls.length, 1);
 });
@@ -185,6 +190,20 @@ test("login transactions expire and must match browser state", () => {
     ),
     false,
   );
+});
+
+test("login transaction cookie names bind one browser flow", () => {
+  const other = createLoginTransaction();
+  assert.notEqual(
+    loginTransactionCookieName("ref_oauth", transaction.state),
+    loginTransactionCookieName("ref_oauth", other.state),
+  );
+  assert.equal(
+    loginTransactionCookieName("ref_oauth", other.state)?.length,
+    53,
+  );
+  assert.equal(loginTransactionCookieName("ref_oauth", "invalid"), null);
+  assert.equal(loginTransactionCookieName("ref_oauth;bad", other.state), null);
 });
 
 test("HTTP issuer is limited to local development hosts", () => {
