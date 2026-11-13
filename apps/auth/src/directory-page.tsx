@@ -23,6 +23,14 @@ const appGridStyles = css({
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: "16px",
+  "@media (min-width: 1440px)": { gap: "20px" },
+  "@media (max-width: 1000px)": {
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  },
+  "@media (max-width: 450px)": {
+    gridTemplateColumns: "1fr",
+    gap: "12px",
+  },
 });
 
 const appEntryStyles = css({
@@ -59,6 +67,17 @@ const appEntryStyles = css({
     textDecoration: "none",
   },
   "& .access-link:hover": { textDecoration: "underline" },
+  "@media (min-width: 1440px)": { padding: "26px" },
+  "@media (max-width: 450px)": {
+    padding: "20px",
+    "& .app-status": { minHeight: 0 },
+    "& .app-status:empty": { display: "none" },
+  },
+  "@media (prefers-color-scheme: dark)": {
+    background: "#1c1f21",
+    "& .app-monogram": { color: "#a8c1d2" },
+    "& .app-status": { color: "#9fbeda" },
+  },
 });
 
 function AppEntry(

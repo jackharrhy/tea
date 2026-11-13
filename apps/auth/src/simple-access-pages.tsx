@@ -6,6 +6,7 @@ import {
   listRowStyles,
   operationRowStyles,
   personInitialStyles,
+  personRowStyles,
 } from "./list-row-styles.ts";
 
 type AccessContext = Omit<DocumentProps, "title" | "children"> & {
@@ -153,7 +154,7 @@ function PeoplePage(
             shown.map((user) => (
               <a
                 class="person-row"
-                mix={listRowStyles}
+                mix={[listRowStyles, personRowStyles]}
                 href={`/manage/people/${encodeURIComponent(user.id)}`}
               >
                 <span

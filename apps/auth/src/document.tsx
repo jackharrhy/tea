@@ -2,6 +2,8 @@ import { css, unsafeHTML, type Handle, type RemixNode } from "remix/component";
 import { createUiTheme, uiControlStyles } from "@harrhy/ui";
 import { dailyArtwork } from "./appearance.mjs";
 import { sharedPageStyles } from "./shared-page-styles.ts";
+import { managementStyles } from "./management-styles.ts";
+import { responsiveStyles } from "./responsive-styles.ts";
 
 const theme = createUiTheme({
   ink: "#1b2025",
@@ -306,6 +308,8 @@ export function Document(handle: Handle<DocumentProps>) {
             uiControlStyles,
             layoutStyles,
             sharedPageStyles,
+            managementStyles,
+            responsiveStyles,
             login ? fullWidthAction : null,
           ]}
         >

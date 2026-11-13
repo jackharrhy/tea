@@ -60,7 +60,7 @@ jobs:
           fi
           convert -version
           identify -version
-      - if: steps.select.outputs.browser == 'true' && (env.RUN_INTEGRATION == 'true' || steps.select.outputs.radio == 'true')
+      - if: contains(fromJSON(steps.select.outputs.selected), '@harrhy/auth') || (steps.select.outputs.browser == 'true' && (env.RUN_INTEGRATION == 'true' || steps.select.outputs.radio == 'true'))
         run: npx playwright install --only-shell chromium
       - if: env.RUN_INTEGRATION == 'true' && steps.select.outputs.pool == 'true'
         run: npm exec --workspace @harrhy/pool-app -- playwright install --only-shell chromium
