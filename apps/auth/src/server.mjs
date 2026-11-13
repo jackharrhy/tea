@@ -10,6 +10,7 @@ import { createAccessRoutes } from "./access-routes.mjs";
 import { createAccountRoutes } from "./account-routes.mjs";
 import { createOAuthBrowserRoutes } from "./oauth-browser-routes.mjs";
 import { createEmailRoutes } from "./email-routes.mjs";
+import { createLoginRoutes } from "./login-routes.mjs";
 import { createZitadel } from "./zitadel.mjs";
 import {
   randomToken,
@@ -311,6 +312,17 @@ const accountRoutes = createAccountRoutes({
   cookieName,
 });
 
+const loginRoutes = createLoginRoutes({
+  api,
+  accountActions,
+  authorizationActions,
+  rateLimit,
+  localReturnTo,
+  newSession,
+  sessions,
+  cookie,
+  cookieName,
+});
 const emailRoutes = createEmailRoutes({
   emailActions,
   endUserSessions,
@@ -468,6 +480,10 @@ async function handleBrowser(request, routeAction, routePhase) {
           send,
           sendRemix,
           redirect,
+          login,
+          setSession: (value) => {
+            session = value;
+          },
         });
         return;
       }
@@ -535,87 +551,6 @@ async function handleBrowser(request, routeAction, routePhase) {
           redirect("/enroll");
           return;
         }
-      }
-      if (request.method === "GET" && url.pathname === "/login") {
-        const authRequest = url.searchParams.get("authRequest");
-        const returnTo = authRequest
-          ? `/authorize?authRequest=${encodeURIComponent(authRequest)}`
-          : localReturnTo(url.searchParams.get("returnTo"));
-        if (session.userId && authRequest) {
-          const { callback, requireLogin } = await authorizationActions.begin(
-            authRequest,
-            session,
-          );
-          if (callback) {
-            redirect(callback);
-            return;
-          }
-          if (!requireLogin) {
-            redirect(returnTo);
-            return;
-          }
-        }
-        await login(returnTo, session.csrf);
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/login") {
-        rateLimit(`user:${form.get("username")?.trim().toLowerCase()}`);
-        rateLimit("login-total", 300);
-        let result;
-        try {
-          const userCheck = await accountActions.loginUser(
-            form.get("username"),
-          );
-          result = await api("/v2/sessions", {
-            method: "POST",
-            body: {
-              checks: {
-                user: userCheck,
-                password: { password: form.get("password") },
-              },
-              lifetime: "1800s",
-            },
-          });
-        } catch {
-          await login(
-            localReturnTo(form.get("returnTo")),
-            session.csrf,
-            "Sign-in failed. Check your username and password.",
-          );
-          return;
-        }
-        const verified = await api(
-          `/v2/sessions/${encodeURIComponent(result.sessionId)}`,
-        );
-        const userId = verified.session?.factors?.user?.id;
-        if (!userId || !verified.session?.factors?.password?.verifiedAt)
-          throw httpError(401, "Password verification was not completed.");
-        const enrollmentTicket = session.enrollmentTicket;
-        sessions.delete(session.id);
-        session = Object.assign(newSession(), {
-          userId,
-          sessionId: result.sessionId,
-          sessionToken: result.sessionToken,
-          enrollmentTicket,
-          authenticatedAt: Date.now(),
-        });
-        headers.set("Set-Cookie", cookie(session));
-        redirect(localReturnTo(form.get("returnTo")));
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/logout") {
-        if (session.sessionId)
-          await api(`/v2/sessions/${encodeURIComponent(session.sessionId)}`, {
-            method: "DELETE",
-            body: { sessionToken: session.sessionToken },
-          });
-        sessions.delete(session.id);
-        headers.set(
-          "Set-Cookie",
-          `${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`,
-        );
-        redirect("/login");
-        return;
       }
       if (!session.userId) {
         redirect(
@@ -732,6 +667,7 @@ const browserRouter = createBrowserRouter(handleBrowser, {
   emailRoutes,
   accessRoutes,
   supportRoutes: supportBrowserRoute,
+  loginRoutes,
 });
 const fetchRequest = (request) => {
   const path = new URL(request.url).pathname;

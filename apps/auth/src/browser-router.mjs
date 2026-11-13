@@ -2,6 +2,8 @@ import { createRouter } from "remix/router";
 import { route } from "remix/routes";
 
 const routes = route({
+  login: "/login",
+  logout: "/logout",
   account: "/account",
   email: "/account/email",
   password: "/account/password",
@@ -25,11 +27,24 @@ const routes = route({
 
 export function createBrowserRouter(
   handle,
-  { accountRoutes, oauthRoutes, emailRoutes, accessRoutes, supportRoutes },
+  {
+    accountRoutes,
+    oauthRoutes,
+    emailRoutes,
+    accessRoutes,
+    supportRoutes,
+    loginRoutes,
+  },
 ) {
   const router = createRouter();
   router.map(routes, {
     actions: {
+      login({ request }) {
+        return handle(request, loginRoutes.login, "public");
+      },
+      logout({ request }) {
+        return handle(request, loginRoutes.logout, "public");
+      },
       account({ request }) {
         return handle(request, accountRoutes.account);
       },

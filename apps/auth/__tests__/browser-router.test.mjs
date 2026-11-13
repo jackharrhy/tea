@@ -21,9 +21,12 @@ test("account writes reach their route actions, while unrelated pages use the br
       },
       accessRoutes: () => "access",
       supportRoutes: () => "support",
+      loginRoutes: { login: () => "login", logout: () => "logout" },
     },
   );
   for (const [path, expected] of [
+    ["/login", "login"],
+    ["/logout", "logout"],
     ["/account", "account"],
     ["/account/email", "email"],
     ["/account/password", "password"],
