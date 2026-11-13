@@ -125,6 +125,20 @@ afterEach(async () => {
 });
 
 describe("native Remix router", () => {
+  it("serves a private document with one fresh CSP nonce across rendered assets", async () => {
+    const first = await router.fetch(request(routes.login.href()));
+    const second = await router.fetch(request(routes.login.href()));
+    assert.equal(first.status, 200);
+    assert.equal(first.headers.get("Cache-Control"), "private, no-store");
+    const policy = first.headers.get("Content-Security-Policy") ?? "";
+    const nonce = /script-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+    assert.ok(nonce);
+    assert.match(policy, /style-src-attr 'unsafe-inline'/);
+    assert.doesNotMatch(policy, /script-src[^;]*'unsafe-inline'/);
+    assert.ok((await first.text()).includes(`nonce="${nonce}"`));
+    assert.notEqual(second.headers.get("Content-Security-Policy"), policy);
+  });
+
   it("uses a document navigation to start cross-origin OAuth", async () => {
     const response = await router.fetch(request(routes.login.href()));
     assert.equal(response.status, 200);
