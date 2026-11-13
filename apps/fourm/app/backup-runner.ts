@@ -1,3 +1,4 @@
+import type { BackupActor } from "./data/backups.ts";
 import { captureNativeBackup, readNativeBackup } from "./native-backup.ts";
 import { CommunityError } from "./data/community.ts";
 import type { Community } from "./data/community.ts";
@@ -9,7 +10,7 @@ type BackupAuthority = Pick<
 export async function runNativeBackup(
   community: BackupAuthority,
   bucket: Pick<R2Bucket, "get" | "head" | "put" | "list">,
-  actorId: number | null,
+  actorId: BackupActor,
 ) {
   const job = community.beginBackup(actorId),
     name = String(job.name);

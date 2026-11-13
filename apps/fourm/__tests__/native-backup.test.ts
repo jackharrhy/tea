@@ -630,3 +630,32 @@ it("does not collect any blobs when backup roots or objects cannot be verified",
     source.db.close();
   }
 });
+
+it("derives hourly due times from durable receipts and backs up empty communities without inventing a member", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    expect(source.community.backupDueAt(3600000)).toBe(0);
+    expect(() => source.community.backupDueAt(0)).toThrow(
+      "Invalid backup interval",
+    );
+    const result = await runNativeBackup(
+      source.community,
+      r2.storage,
+      "scheduler",
+    );
+    expect(result.state).toBe("complete");
+    expect(source.community.backupDueAt(3600000)).toBe(
+      Number(result.finished_at) + 3600000,
+    );
+    expect(source.db.prepare("SELECT count(*) AS n FROM users").get()!.n).toBe(
+      0,
+    );
+    const pending = source.community.beginBackup("scheduler");
+    expect(source.community.backupDueAt(3600000)).toBe(
+      Number(pending.started_at) + 30000,
+    );
+  } finally {
+    source.db.close();
+  }
+});
