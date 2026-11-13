@@ -155,3 +155,27 @@ test("implicit root npm ci hooks publish images that install the root", () => {
     ["artbin"],
   );
 });
+
+test("Auth publisher selects its app and UI package without unrelated apps", () => {
+  const lock = structuredClone(base);
+  lock.packages["apps/auth"] = {
+    dependencies: { "@harrhy/ui": "*" },
+  };
+  lock.packages["packages/ui"] = {};
+  lock.packages["node_modules/@harrhy/ui"] = {
+    link: true,
+    resolved: "packages/ui",
+  };
+  const selectAuth = (paths) =>
+    selectPublishedApps({
+      apps: ["auth"],
+      paths,
+      beforeLock: lock,
+      afterLock: lock,
+      beforeRoot: root,
+      afterRoot: root,
+    });
+  assert.deepEqual(selectAuth(["apps/artbin/src/server.mjs"]), []);
+  assert.deepEqual(selectAuth(["apps/auth/src/server.mjs"]), ["auth"]);
+  assert.deepEqual(selectAuth(["packages/ui/styles.ts"]), ["auth"]);
+});
