@@ -1,6 +1,7 @@
 import {
   createIdentityClient,
   createLoginTransaction,
+  loginTransactionCookieName,
   validLoginTransaction,
   type LoginTransaction,
 } from "@harrhy/identity";
@@ -15,7 +16,7 @@ import { schema } from "../src/db/index.ts";
 import { routes } from "./routes.ts";
 import type { AppContext } from "./router.tsx";
 
-const cookieName = "lists_oauth";
+const cookiePrefix = "lists_oauth";
 
 function safeReturnTo(value: unknown) {
   return typeof value === "string" &&
@@ -26,19 +27,20 @@ function safeReturnTo(value: unknown) {
     : "/admin/";
 }
 
-function cookie(value: string, secure: boolean, maxAge: number) {
-  return `${cookieName}=${value}; Path=/auth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
+function cookie(name: string, value: string, secure: boolean, maxAge: number) {
+  return `${name}=${value}; Path=/auth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
 }
 
 function readCookie(
   request: Request,
+  name: string,
 ): (LoginTransaction & { returnTo?: string }) | null {
   const raw = request.headers
     .get("Cookie")
     ?.split(";")
     .map((item) => item.trim())
-    .find((item) => item.startsWith(`${cookieName}=`))
-    ?.slice(cookieName.length + 1);
+    .find((item) => item.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
   if (!raw || raw.length > 4096) return null;
   try {
     const value: unknown = JSON.parse(
@@ -87,12 +89,22 @@ export function createAuthRouter(
           const state = Buffer.from(
             JSON.stringify({ ...transaction, returnTo }),
           ).toString("base64url");
-          return redirect(authorization, cookie(state, secure, 600));
+          const name = loginTransactionCookieName(
+            cookiePrefix,
+            transaction.state,
+          )!;
+          return redirect(authorization, cookie(name, state, secure, 600));
         },
         async callback(context) {
-          const transaction = readCookie(context.request);
-          const cleared = cookie("", secure, 0);
           const state = context.url.searchParams.get("state");
+          const name = loginTransactionCookieName(cookiePrefix, state);
+          if (!name)
+            return new Response("Sign-in could not be completed", {
+              status: 400,
+              headers: { "Cache-Control": "no-store" },
+            });
+          const transaction = readCookie(context.request, name);
+          const cleared = cookie(name, "", secure, 0);
           const code = context.url.searchParams.get("code");
           if (
             !transaction ||

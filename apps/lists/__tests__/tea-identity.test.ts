@@ -164,6 +164,44 @@ test("central sign-in accepts only a reviewed subject with its Lists role", asyn
   expect((await signIn()).status).toBe(403);
   role = "member";
   expect((await signIn()).status).toBe(303);
+
+  const begin = async () => {
+    const response = await router.fetch(
+      new Request("https://lists.example.test/auth/login"),
+    );
+    const authorization = new URL(response.headers.get("location")!);
+    return {
+      state: authorization.searchParams.get("state")!,
+      nonce: authorization.searchParams.get("nonce")!,
+      cookie: response.headers.get("set-cookie")!.split(";")[0]!,
+    };
+  };
+  const first = await begin();
+  const second = await begin();
+  expect(first.state).not.toBe(second.state);
+  const combined = `${first.cookie}; ${second.cookie}`;
+  const callback = (state: string) =>
+    router.fetch(
+      new Request(
+        `https://lists.example.test/auth/callback?code=test-code&state=${state}`,
+        { headers: { Cookie: combined } },
+      ),
+    );
+  const invalid = await callback("invalid");
+  expect(invalid.status).toBe(400);
+  expect(invalid.headers.get("set-cookie")).toBeNull();
+  nonce = first.nonce;
+  const firstResult = await callback(first.state);
+  expect(firstResult.status).toBe(303);
+  expect(firstResult.headers.getSetCookie()[0]).toStartWith(
+    first.cookie.split("=")[0] + "=",
+  );
+  nonce = second.nonce;
+  const secondResult = await callback(second.state);
+  expect(secondResult.status).toBe(303);
+  expect(secondResult.headers.getSetCookie()[0]).toStartWith(
+    second.cookie.split("=")[0] + "=",
+  );
 });
 
 test("central bearer auth preserves local list access and rejects wrong audience or role", async () => {
