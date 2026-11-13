@@ -142,6 +142,16 @@ describe("editorial letter routes", () => {
       let writeResponse = await router.fetch(request(routes.write.href()));
       let writeHtml = await writeResponse.text();
       assert.equal(writeResponse.status, 200);
+      const policy = writeResponse.headers.get("Content-Security-Policy") ?? "";
+      const nonce = /script-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+      assert.ok(nonce);
+      assert.equal(
+        writeResponse.headers.get("Cache-Control"),
+        "private, no-store",
+      );
+      assert.match(policy, /font-src 'self'/);
+      assert.doesNotMatch(policy, /unsafe-inline/);
+      assert.ok(writeHtml.includes(`nonce="${nonce}"`));
       assert.match(writeHtml, /<h1[^>]*>dear steve,/);
       assert.match(writeHtml, /class="[^"]*letter-textarea/);
       assert.match(writeHtml, /placeholder="Write your letter here\.\.\."/);

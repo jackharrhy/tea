@@ -10,6 +10,8 @@ From the Tea root, run `npm ci`, copy `apps/letters-to-steve/.env.example` to `a
 
 Run `npm run letters-to-steve:check` for Tea formatting, lint, typecheck, and server tests. `npm run db:status --workspace @harrhy/letters-to-steve` reports migrations; `db:migrate` applies them. The server also applies committed migrations on startup. The editor enhances a working text-only form, so the public flow works without browser JavaScript.
 
+Remix 3.2 applies a fresh CSP nonce to each HTML response and the editor's authored import map and browser entry. HTML is private/no-store; the stylesheet, fonts, uploads, and editor requests stay same-origin. The text-only form remains usable when browser JavaScript is unavailable.
+
 ## Runtime and data
 
 `DATABASE_PATH` defaults to `./db/letters.sqlite`; `UPLOAD_DIRECTORY` defaults to `./tmp/uploads`. Keep both outside the public root and on persistent storage. The Docker image sets them to `/app/data/letters.sqlite` and `/app/data/uploads`, runs on pointer-compressed Node 26, and listens on port 44110. Harrhy publishes `ghcr.io/jackharrhy/letters-to-steve:latest` from `main`. Newport serves that image at <https://steve-letter-writ.ing> with Watchtower and a persistent store; routing, secrets, and rollback instructions live in the infrastructure repository's `hosts/newport/steve/README.md`.
