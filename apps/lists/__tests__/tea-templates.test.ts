@@ -46,4 +46,7 @@ test("native template gallery and preview retain the shared shell and restrictiv
   expect(preview.headers.get("content-security-policy")).toContain(
     "default-src 'none'",
   );
+  expect(preview.headers.get("content-security-policy")).not.toContain(
+    "nonce-",
+  );
 });

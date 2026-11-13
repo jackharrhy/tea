@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { render } from "remix/middleware/render";
+import { htmlCsp, htmlNoStore } from "./html-security.ts";
 import { createController, createRouter } from "remix/router";
 
 import type { Db } from "../src/db/index.ts";
@@ -124,7 +125,9 @@ function dashboardData(db: Db, user: User): DashboardData {
 
 export function createAdminRouter(db: Db, config: Config, user: User) {
   const renderer = render();
-  const router = createRouter<AppContext>({ middleware: [renderer] });
+  const router = createRouter<AppContext>({
+    middleware: [htmlNoStore, htmlCsp, renderer],
+  });
   router.map(
     routes.admin,
     createController(routes.admin, {

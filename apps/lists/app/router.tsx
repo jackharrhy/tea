@@ -1,5 +1,6 @@
 import { createRouter, type MiddlewareContext } from "remix/router";
 import { render } from "remix/middleware/render";
+import { htmlCsp, htmlNoStore } from "./html-security.ts";
 import { createController } from "remix/router";
 import { eq } from "drizzle-orm";
 
@@ -25,7 +26,9 @@ import {
 import { routes } from "./routes.ts";
 
 const renderMiddleware = render();
-export type AppContext = MiddlewareContext<[typeof renderMiddleware]>;
+export type AppContext = MiddlewareContext<
+  [typeof htmlCsp, typeof renderMiddleware]
+>;
 
 declare module "remix/router" {
   interface RouterTypes {
@@ -34,7 +37,9 @@ declare module "remix/router" {
 }
 
 export function createListsRouter(db: Db, config: Config) {
-  const router = createRouter<AppContext>({ middleware: [renderMiddleware] });
+  const router = createRouter<AppContext>({
+    middleware: [htmlNoStore, htmlCsp, renderMiddleware],
+  });
   const controller = createController(routes.subscribe, {
     actions: {
       show(context) {
