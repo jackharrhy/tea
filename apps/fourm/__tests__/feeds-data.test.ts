@@ -49,6 +49,8 @@ it("keeps the source public-page settling window, per-user filter and 100-entry 
       1,
       "2010-01-01 00:00:00",
     );
+    db.exec("UPDATE users SET created_at='2000-01-01 00:00:00' WHERE id=72");
+    expect(widgets.lineage().map((row) => row.id)).toEqual([72, 41]);
     const rows = widgets.feed(null);
     expect(rows).toHaveLength(100);
     expect(rows[0].username).toBe("other");

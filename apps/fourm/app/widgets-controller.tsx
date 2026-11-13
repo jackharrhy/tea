@@ -1,3 +1,5 @@
+import { inviteTree } from "./lineage.ts";
+import { LineageTree } from "./lineage-view.tsx";
 import { pagesFeed, forumFeed } from "./feeds.ts";
 import { guestbookJSON } from "./view-json.ts";
 import { counterJSON, counterDocument } from "./counter-widget.ts";
@@ -267,28 +269,14 @@ export function widgetController(
           },
         });
       },
-      async lineage() {
-        const members = await store.call("lineage");
+      async lineage({ request }) {
+        const tree = inviteTree(await store.call("lineage"));
+        if (wantsJSON(request)) return Response.json({ tree });
         return page(
-          "Invite tree",
+          "lineage",
           <>
-            <h1>Invite tree</h1>
-            <ul>
-              {members.map((member) => (
-                <li id={`user-${member.username}`}>
-                  <a href={`/u/${member.username}`}>{member.display_name}</a>
-                  {member.invited_by_user_id ? (
-                    <span>
-                      {" "}
-                      · invited by{" "}
-                      {members.find(
-                        (parent) => parent.id === member.invited_by_user_id,
-                      )?.display_name ?? "a former member"}
-                    </span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+            <h1>invite tree</h1>
+            <LineageTree nodes={tree} />
           </>,
         );
       },
