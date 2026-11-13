@@ -38,10 +38,13 @@ export function selectChecks(paths, workspaces) {
       path === "AGENTS.md" ||
       path === ".dockerignore" ||
       path === ".github/workflows/lint-actions.yml" ||
+      path.startsWith(".github/workflows/publish-") ||
       path === ".github/dependabot.yml" ||
       path === ".github/dependabot.yaml" ||
       path === "scripts/ci/affected.mjs" ||
       path === "scripts/ci/__tests__/affected.test.mjs" ||
+      path === "scripts/ci/publish-impact.mjs" ||
+      path === "scripts/ci/__tests__/publish-impact.test.mjs" ||
       path.endsWith("/Dockerfile") ||
       path.startsWith("docs/")
     )

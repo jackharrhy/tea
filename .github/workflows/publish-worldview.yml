@@ -5,15 +5,13 @@ on:
     paths:
       - .dockerignore
       - .nvmrc
+      - package.json
+      - package-lock.json
       - apps/worldview/**
       - apps/maps-service/**
       - apps/maps-collaboration/**
       - apps/maps-compiler/**
-      - packages/maps-editor/**
-      - packages/maps-protocol/**
-      - packages/maps-renderer/**
-      - packages/request-body/**
-      - packages/identity/**
+      - packages/**
   workflow_dispatch:
 concurrency:
   group: publish-worldview
@@ -32,41 +30,17 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
       - id: apps
         env:
           BEFORE: ${{ github.event.before }}
           EVENT: ${{ github.event_name }}
-        run: |
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          import os
-          import subprocess
-
-          apps = ["worldview", "maps-service", "maps-collaboration", "maps-compiler"]
-          before = os.environ.get("BEFORE", "")
-          if os.environ["EVENT"] == "workflow_dispatch" or not before or set(before) == {"0"}:
-              selected = apps
-          else:
-              paths = subprocess.check_output(
-                  ["git", "diff", "--name-only", before, os.environ["GITHUB_SHA"]],
-                  text=True,
-              ).splitlines()
-              shared = any(
-                  path in {".dockerignore", ".nvmrc", "package.json", "package-lock.json"}
-                  or path.startswith(("packages/maps-editor/", "packages/maps-protocol/", "packages/maps-renderer/", "packages/request-body/"))
-                  for path in paths
-              )
-              selected = apps if shared else [
-                  app for app in apps if any(path.startswith(f"apps/{app}/") for path in paths)
-              ]
-              if any(path.startswith("packages/identity/") for path in paths):
-                  selected = list(dict.fromkeys([*selected, "maps-service"]))
-              if not selected:
-                  selected = apps
-          print("apps=" + json.dumps(selected))
-          PY
+        run: node scripts/ci/publish-impact.mjs worldview maps-service maps-collaboration maps-compiler
   publish:
     needs: select
+    if: needs.select.outputs.apps != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

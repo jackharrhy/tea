@@ -5,21 +5,39 @@ on:
     paths:
       - .dockerignore
       - .nvmrc
+      - package.json
+      - package-lock.json
       - apps/cms/**
-      - packages/json-schema/**
-      - packages/logger/**
-      - packages/mcp/**
-      - packages/request-body/**
-      - packages/result/**
-      - packages/rich-text/**
-      - packages/identity/**
+      - packages/**
   workflow_dispatch:
 concurrency:
   group: publish-cms
   cancel-in-progress: false
 permissions: {}
 jobs:
+  select:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      apps: ${{ steps.apps.outputs.apps }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - id: apps
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+        run: node scripts/ci/publish-impact.mjs cms
   publish:
+    needs: select
+    if: needs.select.outputs.apps != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

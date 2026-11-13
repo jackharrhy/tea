@@ -5,15 +5,12 @@ on:
     paths:
       - .dockerignore
       - .nvmrc
+      - package.json
+      - package-lock.json
       - apps/pool/**
       - apps/burger/**
       - apps/gurgur/**
-      - packages/pool/**
-      - packages/pool-protocol/**
-      - packages/pool-simulation/**
-      - packages/burger-core/**
-      - packages/gurgur-engine/**
-      - packages/gurgur-game/**
+      - packages/**
   workflow_dispatch:
 concurrency:
   group: publish-world-games
@@ -32,39 +29,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
       - id: apps
         env:
           BEFORE: ${{ github.event.before }}
           EVENT: ${{ github.event_name }}
-        run: |
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          import os
-          import subprocess
-
-          app_paths = {
-              "pool": ("apps/pool/", "packages/pool/", "packages/pool-protocol/", "packages/pool-simulation/"),
-              "burger": ("apps/burger/", "packages/burger-core/"),
-              "gurgur": ("apps/gurgur/", "packages/gurgur-engine/", "packages/gurgur-game/"),
-          }
-          before = os.environ.get("BEFORE", "")
-          if os.environ["EVENT"] == "workflow_dispatch" or not before or set(before) == {"0"}:
-              selected = list(app_paths)
-          else:
-              paths = subprocess.check_output(
-                  ["git", "diff", "--name-only", before, os.environ["GITHUB_SHA"]],
-                  text=True,
-              ).splitlines()
-              shared = any(path in {
-                  ".github/workflows/publish-world-games.yml", ".dockerignore", ".nvmrc",
-                  "package.json", "package-lock.json",
-              } for path in paths)
-              selected = list(app_paths) if shared else [
-                  app for app, prefixes in app_paths.items()
-                  if any(path.startswith(prefixes) for path in paths)
-              ]
-          print("apps=" + json.dumps(selected))
-          PY
+        run: node scripts/ci/publish-impact.mjs pool burger gurgur
   publish:
     needs: select
     if: needs.select.outputs.apps != '[]'
