@@ -7,6 +7,7 @@ import {
 } from "@harrhy/identity";
 import { and, eq } from "drizzle-orm";
 import { render } from "remix/middleware/render";
+import { htmlCsp, htmlNoStore } from "./html-security.ts";
 import { createController, createRouter } from "remix/router";
 
 import { createSession } from "../src/auth.ts";
@@ -72,7 +73,9 @@ export function createAuthRouter(
   const identity = createIdentityClient(config.identity, fetcher);
   const secure = new URL(config.baseUrl).protocol === "https:";
   const callbackUri = `${config.baseUrl}/auth/callback`;
-  const router = createRouter<AppContext>({ middleware: [render()] });
+  const router = createRouter<AppContext>({
+    middleware: [htmlNoStore, htmlCsp, render()],
+  });
   router.map(
     routes.auth,
     createController(routes.auth, {

@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { css, type Handle } from "remix/component";
 import { render } from "remix/middleware/render";
+import { htmlCsp, htmlNoStore } from "./html-security.ts";
 import { createRouter } from "remix/router";
 
 import { createSession, destroySession } from "../src/auth.ts";
@@ -133,7 +134,9 @@ function sessionCookie(request: Request) {
 }
 
 export function createAdminAuthRouter(db: Db, config: Config) {
-  const router = createRouter<AppContext>({ middleware: [render()] });
+  const router = createRouter<AppContext>({
+    middleware: [htmlNoStore, htmlCsp, render()],
+  });
   router.get("/admin/login", (context) => {
     const returnTo = safeReturnTo(context.url.searchParams.get("returnTo"));
     if (config.identity)

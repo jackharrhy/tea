@@ -98,6 +98,12 @@ test("native inbound routes keep thread access scoped to assigned campaigns", as
   expect(html).not.toContain("Hidden");
   const thread = await app.request(`/admin/inbound/${message.id}`, { headers });
   expect(thread.status).toBe(200);
+  expect(thread.headers.get("Content-Security-Policy")).toContain(
+    "style-src-elem 'self' 'unsafe-inline'",
+  );
+  expect(thread.headers.get("Content-Security-Policy")).toContain(
+    "frame-src 'self' about:",
+  );
   expect(await thread.text()).toContain("A reply");
   expect(
     (await app.request(`/admin/inbound/${hidden.id}`, { headers })).status,

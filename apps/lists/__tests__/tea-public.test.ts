@@ -35,6 +35,12 @@ test("Remix confirmation, preferences, and unsubscribe keep existing public link
   const app = createApplication(db, config);
   const token = subscriber.unsubscribeToken;
 
+  const subscribe = await app.request("/subscribe");
+  expect(subscribe.headers.get("Cache-Control")).toBe("private, no-store");
+  const policy = subscribe.headers.get("Content-Security-Policy") ?? "";
+  expect(policy).toMatch(/style-src 'self' 'nonce-[^']+'/);
+  expect(policy).not.toContain("unsafe-eval");
+
   const confirm = await app.request(`/confirm/${token}/example.com`);
   expect(confirm.status).toBe(200);
   expect(await confirm.text()).toContain("Confirmed");
