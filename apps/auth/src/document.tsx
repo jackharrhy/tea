@@ -15,7 +15,7 @@ const theme = createUiTheme({
   controlRadius: "6px",
 });
 
-export const fullWidthAction = css({
+const fullWidthAction = css({
   "& .form-stack > button": {
     width: "100%",
     "min-height": "44px",
