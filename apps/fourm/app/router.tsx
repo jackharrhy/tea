@@ -1,3 +1,4 @@
+import { AdminBackups } from "./admin-backups.tsx";
 import { AdminStorage } from "./admin-storage.tsx";
 import { AdminForum } from "./admin-forum.tsx";
 import { AdminUsers } from "./admin-users.tsx";
@@ -260,6 +261,9 @@ export function createAppRouter(
                 pages={snapshot.pages}
               />
               <AdminForum threads={snapshot.threads} posts={snapshot.posts} />
+              <AdminBackups
+                {...await store.call("backupStatus", viewer.member?.id ?? null)}
+              />
               <AdminStorage />
               <form method="post" action="/admin/enrollment-completions/retry">
                 <button>Retry pending enrollment delivery</button>
