@@ -32,6 +32,8 @@ export function createOrphanCleanup(
   }
   return {
     reserveArchiveObject(path: string) {
+      if (path === ".backups" || path.startsWith(".backups/"))
+        throw new CommunityError(422, "Backup storage is private");
       if (
         db.all(
           "SELECT storage_path FROM orphan_cleanup_objects WHERE storage_path=?",

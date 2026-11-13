@@ -706,3 +706,30 @@ test("backup run identity survives authority reopen and terminal receipts are im
     f.close();
   }
 });
+
+test("archive staging and upload reservations cannot claim backup storage", () => {
+  const f = fixture();
+  try {
+    for (const path of [
+      ".backups/native/snapshot.json",
+      ".backups/objects/digest",
+    ]) {
+      expect(() => f.community.reserveArchiveObject(path)).toThrow(
+        "Backup storage is private",
+      );
+      expect(() =>
+        f.community.reserveUpload(41, path, "application/json", 3),
+      ).toThrow("Backup storage is private");
+    }
+    expect(
+      f.sqlite
+        .prepare("SELECT count(*) AS n FROM archive_staging_objects")
+        .get().n,
+    ).toBe(0);
+    expect(
+      f.sqlite.prepare("SELECT count(*) AS n FROM media_transfers").get().n,
+    ).toBe(0);
+  } finally {
+    f.close();
+  }
+});
