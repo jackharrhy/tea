@@ -105,3 +105,17 @@ it("renders heading and paragraph attributes without changing code or raw HTML",
     "</span>{.literal}",
   );
 });
+
+it("applies table-cell and tight-list attributes before shared-post sanitization", () => {
+  const table = "| A | B |\n|---|---|\n| one {.cell colspan=2} | two |";
+  expect(content(table, "markdown")).toContain(
+    '<td class="cell" colspan="2">one</td>',
+  );
+  expect(postContent(table, "markdown")).toContain('<td colspan="2">one</td>');
+  expect(content("- one *word*\n  {: .item #first}", "markdown")).toContain(
+    '<li class="item" id="first">one <em>word</em></li>',
+  );
+  expect(
+    content("| A |\n|---|\n| ![sample](/x){width=40} |", "markdown"),
+  ).toContain('width="40"');
+});
