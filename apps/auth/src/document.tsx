@@ -23,6 +23,30 @@ const fullWidthAction = css({
 });
 
 const layoutStyles = css({
+  "& label": { display: "grid", gap: "7px", fontWeight: 500 },
+  "& fieldset": { border: 0, padding: 0, margin: 0 },
+  "& legend": { fontWeight: 600, marginBottom: "12px" },
+  "& h1": {
+    fontSize: "28px",
+    lineHeight: 1.2,
+    letterSpacing: "-0.03em",
+    fontWeight: 600,
+    margin: "0 0 12px",
+  },
+  "& h2": {
+    fontSize: "17px",
+    lineHeight: 1.4,
+    fontWeight: 600,
+    margin: "0 0 13px",
+  },
+  "& h3": { fontSize: "15px", margin: "0 0 12px" },
+  "& p": { margin: "0 0 16px", maxWidth: "76ch" },
+  "& strong": { fontWeight: 600 },
+  "& code": {
+    fontFamily: "ui-monospace, monospace",
+    fontSize: "12px",
+    overflowWrap: "anywhere",
+  },
   "& a": { color: "var(--blue)", textUnderlineOffset: "4px" },
   "& button": { cursor: "pointer" },
   "& button:disabled": { cursor: "not-allowed", opacity: 0.5 },

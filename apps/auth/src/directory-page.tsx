@@ -40,10 +40,17 @@ const appEntryStyles = css({
     color: "#566b7b",
     lineHeight: 1.4,
   },
+  "& h2": { fontSize: "17px", margin: "0 0 5px" },
   "& .app-launch": { color: "var(--ink)", textDecoration: "none" },
   "& .app-launch:hover": {
     color: "var(--blue)",
     textDecoration: "underline",
+  },
+  "& p": { fontSize: "12px", color: "var(--muted)", margin: 0 },
+  "& .app-status": {
+    marginTop: "6px",
+    color: "#365f80",
+    minHeight: "18px",
   },
   "& .access-link": {
     gridColumn: "2",

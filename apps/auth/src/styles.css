@@ -78,49 +78,6 @@ input[type="checkbox"] {
   height: 18px;
   accent-color: #303c46;
 }
-label {
-  display: grid;
-  gap: 7px;
-  font-weight: 500;
-}
-fieldset {
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-legend {
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-h1 {
-  font-size: 28px;
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  font-weight: 600;
-  margin: 0 0 12px;
-}
-h2 {
-  font-size: 17px;
-  line-height: 1.4;
-  font-weight: 600;
-  margin: 0 0 13px;
-}
-h3 {
-  font-size: 15px;
-  margin: 0 0 12px;
-}
-p {
-  margin: 0 0 16px;
-  max-width: 76ch;
-}
-strong {
-  font-weight: 600;
-}
-code {
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
 .muted,
 .hint {
   color: var(--muted);
@@ -166,20 +123,6 @@ dd {
   color: #852e22;
   line-height: 1.6;
   margin-bottom: 25px;
-}
-.app-entry h2 {
-  font-size: 17px;
-  margin: 0 0 5px;
-}
-.app-entry p {
-  font-size: 12px;
-  color: var(--muted);
-  margin: 0;
-}
-.app-entry .app-status {
-  margin-top: 6px;
-  color: #365f80;
-  min-height: 18px;
 }
 .filters {
   display: flex;
