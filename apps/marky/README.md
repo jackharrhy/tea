@@ -10,6 +10,8 @@ From the repository root, run `npm ci`, then `npm run marky:dev`. The local serv
 
 Run `npm run check --workspace @harrhy/marky` for typecheck and server tests. `npm run marky:check` also runs shared formatting and linting. Run `npx remix doctor` from this workspace after framework structure changes.
 
+Remix 3.2 applies a fresh CSP nonce to each editor document and its import map, generated styles, and browser entry. HTML is private and no-store. The policy permits the same-origin collaboration WebSocket; `style-src-attr` allows the editor's per-user color and cursor-position attributes.
+
 ## Runtime and deployment
 
 The Docker image runs pointer-compressed Node 26 on Debian Trixie, with Git installed for optional commit and push. `MARKY_CONTENT_DIR=/app/data/content` and `MARKY_SESSION_DIR=/app/data/sessions` should use a persistent, writable volume. The image listens on port 44100. This repository publishes `ghcr.io/jackharrhy/marky` from `main`; production routing and secrets live in the infra repo.

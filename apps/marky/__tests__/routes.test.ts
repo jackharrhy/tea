@@ -24,6 +24,13 @@ describe("routes", () => {
     assert.match(contentType, /text\/html/);
     const body = await response.text();
     assert.match(body, /marky/);
+    const policy = response.headers.get("content-security-policy") ?? "";
+    const nonce = /style-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+    assert.ok(nonce);
+    assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+    assert.match(policy, /style-src-attr 'unsafe-inline'/);
+    assert.doesNotMatch(policy, /script-src[^;]*unsafe-inline/);
+    assert.ok(body.includes(`nonce="${nonce}"`));
   });
 
   it("home page mounts the editor client entry", async () => {

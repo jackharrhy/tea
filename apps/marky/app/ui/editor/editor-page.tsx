@@ -9,6 +9,7 @@ const FONT_STACK =
   "'Source Code Pro', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
 export interface EditorPageProps {
+  nonce?: string;
   authMode:
     | { mode: "anonymous" }
     | {
@@ -27,11 +28,15 @@ export function EditorPage(handle: Handle<EditorPageProps>) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
         <title>{TITLE}</title>
-        <ImportMap value={entryScript.importMap} />
+        <ImportMap value={entryScript.importMap} nonce={handle.props.nonce} />
         {entryScript.preloads.map((href) => (
           <link rel="modulepreload" href={href} />
         ))}
-        <script type="module" src={entryScript.href} />
+        <script
+          type="module"
+          src={entryScript.href}
+          nonce={handle.props.nonce}
+        />
       </head>
       <body
         mix={css({
