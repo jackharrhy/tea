@@ -20,6 +20,12 @@ const { renderLogin } = await import("./login-page.tsx");
 const { renderAuthorization } = await import("./authorization-page.tsx");
 const { renderEmailForm, renderEmailResult } = await import("./email-page.tsx");
 const { renderAccount } = await import("./account-page.tsx");
+const {
+  renderEnrollment,
+  renderDevice,
+  renderDeviceResult,
+  renderDeviceCode,
+} = await import("./flow-page.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
 import { createAccountActions } from "./accounts.mjs";
@@ -601,7 +607,7 @@ createServer(async (request, response) => {
         throw httpError(400, "Open your 4orm invite link again.");
       await enrollment.pending(session.enrollmentTicket);
       if (!session.userId && request.method === "GET") {
-        send(views.enrollment(context));
+        await sendRemix((nonce) => renderEnrollment(context, undefined, nonce));
         return;
       }
       if (!session.userId && request.method === "POST") {
@@ -810,7 +816,7 @@ createServer(async (request, response) => {
       }
       if (request.method === "GET" && url.pathname === "/enroll") {
         await enrollment.pending(session.enrollmentTicket);
-        send(views.enrollment(context, profile));
+        await sendRemix((nonce) => renderEnrollment(context, profile, nonce));
         return;
       }
     }
@@ -903,7 +909,7 @@ createServer(async (request, response) => {
     if (request.method === "GET" && url.pathname === "/device") {
       const code = url.searchParams.get("user_code");
       if (!code) {
-        send(views.deviceCode(session.csrf, context));
+        await sendRemix((nonce) => renderDeviceCode(context, nonce));
         return;
       }
       if (!/^[A-Z0-9-]{4,30}$/.test(code))
@@ -912,7 +918,7 @@ createServer(async (request, response) => {
         await api(`/v2/oidc/device_authorization/${encodeURIComponent(code)}`)
       ).deviceAuthorizationRequest;
       assertApplication(deviceRequest);
-      send(views.device(deviceRequest, session.csrf, context, code));
+      await sendRemix((nonce) => renderDevice(deviceRequest, code, context, nonce));
       return;
     }
     if (request.method === "POST" && url.pathname === "/device") {
@@ -977,7 +983,7 @@ createServer(async (request, response) => {
         session.deviceDecisions.delete(code);
         throw error;
       }
-      send(views.deviceResult(approve, context));
+      await sendRemix((nonce) => renderDeviceResult(approve, context, nonce));
       return;
     }
     throw httpError(404, "Page not found.");

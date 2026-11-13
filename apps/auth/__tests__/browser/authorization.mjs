@@ -631,6 +631,10 @@ try {
     timeout: 5000,
   });
   assert.equal(credentialAttempts, attemptsBeforeRestart + 1);
+  const deviceCodePage = await stalePage.goto(`${origin}/device`);
+  assert.equal(deviceCodePage.status(), 200);
+  assert.equal(await stalePage.getByRole("heading", { name: "Device code" }).count(), 1);
+  assert.equal(await stalePage.locator('[name="user_code"]').count(), 1);
   await stalePage.goto(`${origin}/login?returnTo=/account`);
   const signedInCookie = (await staleContext.cookies(origin)).find(
     (cookie) => cookie.name === "__Host-jack_auth",
