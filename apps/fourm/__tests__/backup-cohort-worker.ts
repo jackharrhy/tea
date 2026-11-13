@@ -1,3 +1,9 @@
+import {
+  captureNativeBackup,
+  readNativeBackup,
+  restoreNativeBackup,
+} from "../app/native-backup.ts";
+import type { NativeBackup } from "../app/native-backup.ts";
 import { CommunityCell } from "../app/data/community-cell.ts";
 import { runtime } from "../app/runtime.ts";
 import type { Bindings } from "../app/runtime.ts";
@@ -13,6 +19,37 @@ type FixtureBindings = Bindings & {
   FIXTURE_ACTOR_ID: string;
 };
 let cached: BackupSnapshot | null = null;
+let cachedNative: NativeBackup | null = null;
+async function nativeSnapshot(env: FixtureBindings) {
+  if (!cachedNative) {
+    const status = await runtime(env).call(
+      "backupStatus",
+      Number(env.FIXTURE_ACTOR_ID),
+    );
+    cachedNative = await readNativeBackup(
+      env.MEDIA,
+      String(status.backups[0].name),
+    );
+    if (!cachedNative) throw new Error("Native fixture snapshot missing");
+  }
+  return cachedNative;
+}
+async function files(env: FixtureBindings, native: boolean) {
+  if (!native) return (await snapshot(env)).objects;
+  return (await nativeSnapshot(env)).files.map((file) => ({
+    storage_path: file.key,
+    sha256: file.sha256,
+    size_bytes: file.size,
+    file: `objects/${file.sha256}`,
+    mime_type: file.httpMetadata.contentType ?? "application/octet-stream",
+    content_type: file.httpMetadata.contentType ?? "application/octet-stream",
+    etag: file.customMetadata.fourm_etag ?? file.httpEtag,
+    last_modified:
+      file.customMetadata.fourm_last_modified ??
+      new Date(file.uploaded).toUTCString(),
+    mtime_ns: file.customMetadata.fourm_mtime_ns,
+  }));
+}
 async function snapshot(env: FixtureBindings) {
   if (!cached) {
     const store = runtime(env),
@@ -66,6 +103,65 @@ export default {
           ),
         });
         return new Response(null, { status: 204 });
+      }
+      if (path === "/full/source-state")
+        return Response.json(await store.call("exportRecovery", actor));
+      if (path === "/full/capture") {
+        const job = await store.call("beginBackup", actor);
+        const captured = await captureNativeBackup(
+          env.MEDIA,
+          String(job.name),
+          () => store.call("exportRecovery", actor),
+        );
+        const receipt = await store.call(
+          "completeBackup",
+          String(job.name),
+          new TextEncoder().encode(JSON.stringify(captured.recovery))
+            .byteLength,
+          captured.files.length,
+        );
+        return Response.json({
+          name: job.name,
+          state: receipt.state,
+          files: captured.files.length,
+          tables: Object.keys(captured.recovery.tables).length,
+        });
+      }
+      if (path === "/full/manifest")
+        return Response.json(await nativeSnapshot(env));
+      if (path === "/full/drop-live") {
+        const data = await nativeSnapshot(env);
+        for (const file of data.files) await env.MEDIA.delete(file.key);
+        return Response.json({ removed: data.files.length });
+      }
+      if (path === "/full/live-status") {
+        const data = await nativeSnapshot(env);
+        let missing = 0;
+        for (const file of data.files)
+          if (!(await env.MEDIA.head(file.key))) missing++;
+        return Response.json({ missing });
+      }
+      if (path === "/full/restore") {
+        const data = await nativeSnapshot(env),
+          target = env.COMMUNITIES.get(
+            env.COMMUNITIES.idFromName("backup-restored-cohort"),
+          );
+        return Response.json(
+          await restoreNativeBackup(env.MEDIA, data.name, async (state) => {
+            const result = await target.call("restoreRecovery", [state]);
+            if (!result.ok)
+              throw new CommunityError(result.status, result.error);
+            return result.value;
+          }),
+        );
+      }
+      if (path === "/full/readback") {
+        const target = env.COMMUNITIES.get(
+          env.COMMUNITIES.idFromName("backup-restored-cohort"),
+        );
+        const result = await target.call("exportRecovery", [actor]);
+        if (!result.ok) throw new CommunityError(result.status, result.error);
+        return Response.json(result.value);
       }
       if (path === "/capture") {
         const job = await store.call("beginBackup", actor);
@@ -153,9 +249,12 @@ export default {
         return Response.json(result.value);
       }
       if (path.startsWith("/restored-object/")) {
-        const data = await snapshot(env),
+        const inventory = await files(
+            env,
+            url.searchParams.get("format") === "native",
+          ),
           index = Number(path.slice("/restored-object/".length)),
-          item = data.objects[index];
+          item = inventory[index];
         if (!item) throw new Error("Invalid fixture object index");
         const object = await env.MEDIA.get(item.storage_path);
         if (!object) throw new Error("Restored fixture object missing");

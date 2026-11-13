@@ -25,12 +25,19 @@ function canonicalTables(tables) {
 }
 process.umask(0o077);
 assert.equal(process.cwd(), "/home/jack/repos/personal/harrhy-fourm-celld");
+const format = process.env.FOURM_BACKUP_FORMAT ?? "portable";
+assert.ok(
+  ["portable", "native"].includes(format),
+  "Unknown backup fixture format",
+);
+const nativeMode = format === "native";
 const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
 const cohort = join(root, "parity-cohort-metadata-20261112");
 const state = await mkdtemp(join(tmpdir(), "fourm-backup-cohort-"));
 const output = join(
   root,
-  "backup-cohort-" + new Date().toISOString().replace(/[:.]/g, ""),
+  (nativeMode ? "native-backup-cohort-" : "backup-cohort-") +
+    new Date().toISOString().replace(/[:.]/g, ""),
 );
 await mkdir(output, { mode: 0o700 });
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -189,9 +196,14 @@ try {
   await request("/seed", JSON.stringify(source.tables), {
     "Content-Type": "application/json",
   });
+  const nativeBefore = nativeMode
+    ? await (await request("/full/source-state")).json()
+    : null;
   phase = "capture";
   await checkpoint();
-  const captured = await (await request("/capture", "{}")).json();
+  const captured = await (
+    await request(nativeMode ? "/full/capture" : "/capture", "{}")
+  ).json();
   assert.equal(captured.state, "complete");
   assert.equal(captured.files, 146);
   phase = "cold-recovery";
@@ -199,42 +211,95 @@ try {
   await stop();
   await rm(join(state, "replica"), { recursive: true, force: true });
   await start();
-  const snapshot = await (await request("/manifest")).json();
+  const snapshot = await (
+    await request(nativeMode ? "/full/manifest" : "/manifest")
+  ).json();
   assert.equal(
-    sha(canonicalTables(snapshot.tables)),
-    sha(canonicalTables(source.tables)),
+    sha(
+      canonicalTables(nativeMode ? snapshot.recovery.tables : snapshot.tables),
+    ),
+    sha(canonicalTables(nativeMode ? nativeBefore.tables : source.tables)),
     "Snapshot content-field checksum mismatch",
   );
   phase = "remove-owned-live-copies";
   await checkpoint();
-  assert.equal((await (await request("/drop-live", "{}")).json()).removed, 146);
-  assert.equal((await (await request("/live-status")).json()).missing, 146);
-  phase = "restore-objects";
-  await checkpoint();
-  for (let i = 0; i < snapshot.objects.length; i++) {
-    await request(`/restore-object/${i}`, "{}");
-    if (i % 10 === 0)
-      await checkpoint({ restored: i + 1, total: snapshot.objects.length });
-  }
-  phase = "restore-tables";
-  await checkpoint();
-  const first = await (await request("/restore-tables", "{}")).json();
-  const replay = await (await request("/restore-tables", "{}")).json();
-  assert.deepEqual(replay, first);
-  const restored = await (await request("/readback")).json();
   assert.equal(
-    sha(canonicalTables(restored)),
-    sha(canonicalTables(source.tables)),
-    "Restored content-field checksum mismatch",
+    (
+      await (
+        await request(nativeMode ? "/full/drop-live" : "/drop-live", "{}")
+      ).json()
+    ).removed,
+    146,
   );
+  assert.equal(
+    (
+      await (
+        await request(nativeMode ? "/full/live-status" : "/live-status")
+      ).json()
+    ).missing,
+    146,
+  );
+  let managedReadback = null;
+  const restoredObjects = nativeMode
+    ? snapshot.files.map((file) => ({ storage_path: file.key }))
+    : snapshot.objects;
+  if (nativeMode) {
+    phase = "restore-combined-native";
+    await checkpoint();
+    const first = await (await request("/full/restore", "{}")).json();
+    assert.equal(first.state.preserved, false);
+    assert.equal(first.files, 146);
+    const replay = await (await request("/full/restore", "{}")).json();
+    assert.equal(replay.state.preserved, true);
+    phase = "cold-after-restoration";
+    await checkpoint();
+    await stop();
+    await rm(join(state, "replica"), { recursive: true, force: true });
+    await start();
+    managedReadback = await (await request("/full/readback")).json();
+    assert.equal(
+      sha(canonicalTables(managedReadback.tables)),
+      sha(canonicalTables(nativeBefore.tables)),
+      "Managed native field checksum mismatch",
+    );
+    assert.deepEqual(managedReadback.columns, nativeBefore.columns);
+    assert.deepEqual(managedReadback.sequences, nativeBefore.sequences);
+    const logical = await (await request("/readback")).json();
+    assert.equal(
+      sha(canonicalTables(logical)),
+      sha(canonicalTables(source.tables)),
+      "Restored portable content-field checksum mismatch",
+    );
+  } else {
+    phase = "restore-objects";
+    await checkpoint();
+    for (let i = 0; i < snapshot.objects.length; i++) {
+      await request(`/restore-object/${i}`, "{}");
+      if (i % 10 === 0)
+        await checkpoint({ restored: i + 1, total: restoredObjects.length });
+    }
+    phase = "restore-tables";
+    await checkpoint();
+    const first = await (await request("/restore-tables", "{}")).json();
+    const replay = await (await request("/restore-tables", "{}")).json();
+    assert.deepEqual(replay, first);
+    const restored = await (await request("/readback")).json();
+    assert.equal(
+      sha(canonicalTables(restored)),
+      sha(canonicalTables(source.tables)),
+      "Restored content-field checksum mismatch",
+    );
+  }
   phase = "verify-restored-media";
   await checkpoint();
-  for (const [index, item] of snapshot.objects.entries()) {
+  for (const [index, item] of restoredObjects.entries()) {
     const expected = source.objects.find(
       (object) => object.storage_path === item.storage_path,
     );
     assert.ok(expected);
-    const response = await request(`/restored-object/${index}`),
+    const response = await request(
+        `/restored-object/${index}${nativeMode ? "?format=native" : ""}`,
+      ),
       bytes = Buffer.from(await response.arrayBuffer());
     assert.equal(bytes.length, expected.size_bytes);
     assert.equal(sha(bytes), expected.sha256);
@@ -243,7 +308,7 @@ try {
     assert.equal(response.headers.get("x-fixture-mtime-ns"), expected.mtime_ns);
     assert.equal(response.headers.get("content-type"), expected.content_type);
     if (index % 10 === 0)
-      await checkpoint({ verified: index + 1, total: snapshot.objects.length });
+      await checkpoint({ verified: index + 1, total: restoredObjects.length });
   }
   assert.equal(sha(await readFile(join(cohort, "cohort.sqlite3"))), sourceHash);
   await writeFile(
@@ -251,8 +316,14 @@ try {
     JSON.stringify(
       {
         status: "PASS",
-        scope:
-          "isolated native real-content cohort archive capture and restore; no browser/OAuth/full operational backup claim",
+        scope: nativeMode
+          ? "isolated real-cohort native30table/full-file artifact capture and cold restore; no production/browser/OAuth/scheduler claim"
+          : "isolated native real-content cohort archive capture and restore; no browser/OAuth/full operational backup claim",
+        combinedNativeFormat: nativeMode,
+        managedTablesExact: nativeMode
+          ? Object.keys(managedReadback.tables).length
+          : null,
+        coldAfterRestoration: nativeMode,
         cohort,
         sourceDatabaseUnchanged: true,
         counts: inventory,
