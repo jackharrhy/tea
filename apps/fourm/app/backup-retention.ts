@@ -56,3 +56,16 @@ export function planBackupRetention(
   }
   return { keep, remove };
 }
+
+export function backupNameTime(name: string): number | null {
+  const match =
+    /^(\d{4}-\d{2}-\d{2})T(\d{2})(\d{2})(\d{2})(\d{3})Z-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.exec(
+      name,
+    );
+  if (!match) return null;
+  const iso = `${match[1]}T${match[2]}:${match[3]}:${match[4]}.${match[5]}Z`,
+    time = Date.parse(iso);
+  return Number.isFinite(time) && new Date(time).toISOString() === iso
+    ? time
+    : null;
+}
