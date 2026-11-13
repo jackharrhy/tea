@@ -5,6 +5,7 @@ import {
   type Router,
 } from "remix/router";
 import { render as remixRender } from "remix/middleware/render";
+import { csp } from "remix/middleware/csp";
 import { readRequestBody } from "@harrhy/request-body";
 import {
   createIdentityClient,
@@ -47,7 +48,9 @@ export type { Bindings, Collection, EdgeConfig } from "./types.ts";
 export { routes } from "./routes.ts";
 
 const renderMiddleware = remixRender();
-export type EdgeContext = MiddlewareContext<[typeof renderMiddleware]>;
+export type EdgeContext = MiddlewareContext<
+  [ReturnType<typeof csp>, typeof renderMiddleware]
+>;
 
 function redirect(location: string, cookie?: string) {
   const headers = new Headers({
@@ -92,7 +95,30 @@ export function createEdgeRouter(
     !config.auth,
     !central || Boolean(config.previewUrl),
   );
-  const router = createRouter<EdgeContext>({ middleware: [renderMiddleware] });
+  const router = createRouter<EdgeContext>({
+    middleware: [
+      async (_context, next) => {
+        const response = await next();
+        if (response.headers.get("Content-Type")?.startsWith("text/html"))
+          response.headers.set("Cache-Control", "private, no-store");
+        return response;
+      },
+      csp({
+        policy: ({ nonce }) => ({
+          defaultSrc: ["'none'"],
+          scriptSrc: ["'self'", `'nonce-${nonce}'`],
+          styleSrc: ["'self'", `'nonce-${nonce}'`],
+          imgSrc: ["'self'", "data:", "blob:"],
+          fontSrc: ["'self'"],
+          connectSrc: ["'self'"],
+          formAction: ["'self'"],
+          baseUri: ["'none'"],
+          objectSrc: ["'none'"],
+        }),
+      }),
+      renderMiddleware,
+    ],
+  });
 
   router.map(
     routes,
