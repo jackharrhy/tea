@@ -1,4 +1,5 @@
-import { marked, Marked, Renderer } from "marked";
+import { Marked, Renderer } from "marked";
+import { markdownAttributes } from "./markdown-attributes.ts";
 import sanitize from "sanitize-html";
 import bbcode from "@bbob/html";
 import html5 from "@bbob/preset-html5";
@@ -80,6 +81,10 @@ const forumMarkdown = new Marked({
   },
 });
 
+const memberMarkdown = new Marked();
+markdownAttributes(memberMarkdown);
+markdownAttributes(forumMarkdown);
+
 function bbcodeText(text: string, tag: string) {
   let escaped = text.replaceAll("'", "&#39;").replaceAll('"', "&quot;");
   if (tag === "code") return escaped;
@@ -102,7 +107,7 @@ function bbcodeText(text: string, tag: string) {
 
 export function content(source: string, format: string) {
   return format === "markdown"
-    ? marked.parse(source, { async: false })
+    ? memberMarkdown.parse(source, { async: false })
     : source;
 }
 export function postContent(source: string, format: string) {
