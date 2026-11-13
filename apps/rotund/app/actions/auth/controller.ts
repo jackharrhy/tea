@@ -3,6 +3,10 @@ import { createController } from "remix/router";
 import { routes } from "../../routes.js";
 import type { Transaction } from "../../identity.js";
 import type { PortalConfig } from "../../router.js";
+import {
+  addPendingTransaction,
+  consumePendingTransaction,
+} from "../../pending-transactions.js";
 
 const random = () => randomBytes(32).toString("base64url");
 const redirect = (location: string) =>
@@ -65,7 +69,7 @@ export function createAuthController(config: PortalConfig) {
           createdAt: Date.now(),
           silent: false,
         };
-        context.session.set("transaction", tx);
+        addPendingTransaction(context.session, tx);
         context.session.set("probeDone", true);
         return redirect(await config.identity.begin(tx, false));
       },
@@ -73,19 +77,12 @@ export function createAuthController(config: PortalConfig) {
         const s = context.session;
         const url = new URL(routes.auth.callback.href(), config.origin);
         url.search = new URL(context.request.url).search;
-        const tx = s.get("transaction") as Transaction | undefined;
-        if (
-          !tx ||
-          typeof tx.state !== "string" ||
-          tx.createdAt > Date.now() ||
-          Date.now() - tx.createdAt > 600000 ||
-          url.searchParams.get("state") !== tx.state
-        )
+        const tx = consumePendingTransaction(s, url.searchParams.get("state"));
+        if (!tx)
           return new Response(
             "Invalid or expired sign-in. Return to rotund.org and try again.",
             { status: 400 },
           );
-        s.unset("transaction");
         s.set("probeDone", true);
         const error = url.searchParams.get("error");
         if (error) {
