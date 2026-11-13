@@ -11,8 +11,15 @@ test("account writes reach their route actions, while unrelated pages use the br
   );
   const router = createBrowserRouter(
     (_request, action) => new Response(action?.() ?? "fallback"),
-    accountRoutes,
-    { authorize: () => "authorize", device: () => "device" },
+    {
+      accountRoutes,
+      oauthRoutes: { authorize: () => "authorize", device: () => "device" },
+      emailRoutes: {
+        verifyEmail: () => "verifyEmail",
+        forgotPassword: () => "forgotPassword",
+        resetPassword: () => "resetPassword",
+      },
+    },
   );
   for (const [path, expected] of [
     ["/account", "account"],
@@ -21,6 +28,9 @@ test("account writes reach their route actions, while unrelated pages use the br
     ["/account/email/resend", "resendEmail"],
     ["/authorize", "authorize"],
     ["/device", "device"],
+    ["/verify-email", "verifyEmail"],
+    ["/forgot-password", "forgotPassword"],
+    ["/reset-password", "resetPassword"],
     ["/unknown", "fallback"],
   ]) {
     const response = await router.fetch(

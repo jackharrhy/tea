@@ -9,6 +9,7 @@ import { createAccessStore } from "./access-store.mjs";
 import { createAccessRoutes } from "./access-routes.mjs";
 import { createAccountRoutes } from "./account-routes.mjs";
 import { createOAuthBrowserRoutes } from "./oauth-browser-routes.mjs";
+import { createEmailRoutes } from "./email-routes.mjs";
 import { createZitadel } from "./zitadel.mjs";
 import {
   randomToken,
@@ -310,6 +311,13 @@ const accountRoutes = createAccountRoutes({
   cookieName,
 });
 
+const emailRoutes = createEmailRoutes({
+  emailActions,
+  endUserSessions,
+  rateLimit,
+  renderEmailForm,
+  renderEmailResult,
+});
 const oauthRoutes = createOAuthBrowserRoutes({
   api,
   authorizationActions,
@@ -324,7 +332,7 @@ const oauthRoutes = createOAuthBrowserRoutes({
   renderDeviceResult,
 });
 
-async function handleBrowser(request, routeAction) {
+async function handleBrowser(request, routeAction, routePhase) {
   const url = new URL(request.url);
   const headers = new Headers({
     "Cache-Control": "no-store",
@@ -448,125 +456,18 @@ async function handleBrowser(request, routeAction) {
         supportEnabled: supportRoutes?.enabledFor(session.userId) === true,
         enrollment: Boolean(session.enrollmentTicket),
       };
-      if (
-        request.method === "GET" &&
-        ["/verify-email", "/reset-password"].includes(url.pathname)
-      ) {
-        const key =
-          url.pathname === "/verify-email"
-            ? "emailVerification"
-            : "passwordRecovery";
-        if (url.searchParams.has("code")) {
-          const userId = url.searchParams.get("userID"),
-            code = url.searchParams.get("code");
-          if (
-            !/^[A-Za-z0-9-]{1,200}$/.test(userId || "") ||
-            !/^[A-Za-z0-9_-]{1,20}$/.test(code || "")
-          )
-            throw httpError(
-              400,
-              "This email link is invalid. Request a new one.",
-            );
-          session[key] = { userId, code };
-          redirect(url.pathname);
-          return;
-        }
-        if (!session[key])
-          throw httpError(400, "Open the link in your email to continue.");
-        const emailContext = {
-          ...context,
-          ...(key === "passwordRecovery"
-            ? { passwordPolicy: await emailActions.passwordPolicy() }
-            : {}),
-        };
-        await sendRemix((nonce) =>
-          renderEmailForm(
-            key === "emailVerification" ? "verify" : "reset",
-            emailContext,
-            nonce,
-          ),
-        );
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/verify-email") {
-        const pending = session.emailVerification;
-        if (!pending) throw httpError(400, "Open the verification link again.");
-        rateLimit(`verify:${pending.userId}`);
-        try {
-          await emailActions.verify(pending.userId, pending.code);
-        } catch {
-          throw httpError(
-            400,
-            "This verification link has expired or was already used. Request a new one from your account.",
-          );
-        }
-        delete session.emailVerification;
-        await sendRemix((nonce) =>
-          renderEmailResult(
-            "Email verified",
-            "Your email address is verified.",
-            context,
-            nonce,
-          ),
-        );
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/forgot-password") {
-        await sendRemix((nonce) => renderEmailForm("forgot", context, nonce));
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/forgot-password") {
-        rateLimit(`recovery:${form.get("username")?.trim().toLowerCase()}`);
-        rateLimit("recovery-total", 100);
-        await emailActions.requestReset(form.get("username"));
-        await sendRemix((nonce) =>
-          renderEmailResult(
-            "Check your email",
-            "If this account has a verified email address, we sent a recovery link.",
-            context,
-            nonce,
-          ),
-        );
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/reset-password") {
-        const pending = session.passwordRecovery;
-        if (!pending) throw httpError(400, "Open the recovery link again.");
-        rateLimit(`reset:${pending.userId}`);
-        try {
-          if (form.get("password") !== form.get("confirmation"))
-            throw httpError(400, "The passwords do not match.");
-          await emailActions.resetPassword(
-            pending.userId,
-            pending.code,
-            form.get("password"),
-          );
-        } catch (error) {
-          if (error.status !== 400) throw error;
-          const resetContext = {
-            ...context,
-            passwordPolicy: await emailActions.passwordPolicy(),
-            error:
-              error.message === "Identity service rejected the request"
-                ? "The password could not be saved. Check the requirements below, or request a new recovery link if this one has expired."
-                : error.message,
-          };
-          await sendRemix(
-            (nonce) => renderEmailForm("reset", resetContext, nonce),
-            400,
-          );
-          return;
-        }
-        delete session.passwordRecovery;
-        await endUserSessions(pending.userId);
-        await sendRemix((nonce) =>
-          renderEmailResult(
-            "Password updated",
-            "Sign in with your new password.",
-            { csrf: session.csrf },
-            nonce,
-          ),
-        );
+      if (routePhase === "public" && routeAction) {
+        await routeAction({
+          request,
+          url,
+          form,
+          session,
+          context,
+          headers,
+          send,
+          sendRemix,
+          redirect,
+        });
         return;
       }
       if (url.pathname === "/enroll") {
@@ -849,11 +750,11 @@ async function handleBrowser(request, routeAction) {
   return output ?? new Response("Request failed", { status: 500, headers });
 }
 
-const browserRouter = createBrowserRouter(
-  handleBrowser,
+const browserRouter = createBrowserRouter(handleBrowser, {
   accountRoutes,
   oauthRoutes,
-);
+  emailRoutes,
+});
 const fetchRequest = (request) => {
   const path = new URL(request.url).pathname;
   if (
