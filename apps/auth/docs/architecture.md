@@ -1,0 +1,13 @@
+# auth responsibilities
+
+ZITADEL v4 remains the identity/OAuth issuer. Reuse its user/session APIs and resource-based role-assignment API; do not write its database. A narrow adapter translates native objects to the application model.
+
+The preview 0.6.0 was started on an isolated synthetic runtime. Its standard OIDC discovery/authorize/token/introspection/DCR/UserInfo routes were absent in that runtime, and upstream ADR081/082 describe the provider as proposed. Its native teams currently concern platform/project administration, not proven consumer-specific role claims. Do not replace the production issuer or create a private issuer fork to obtain groups. Evidence is retained outside source under auth-redesign/compatibility. Preview remains eligible for future adoption once actual compatibility and immutable-user migration are proven.
+
+The auth SQLite database (private /data/access.sqlite) owns groups, membership, direct-assignment provenance, blocks, administrator membership and durable operations. ZITADEL remains authoritative for issued grants. Existing grants are imported as direct legacy assignments without modifying roles or inactive state. Outside changes are surfaced for review, never silently repaired. Group sources add together; blocking a service overrides them. Native accounts and data remain application-owned.
+
+The service catalogue separates service entry points from authorization projects and OAuth clients. Native media account linking is manual until an actual adapter is verified. Fixed-admin mappings can only be assigned to reviewed existing linked users; a new central grant must never create accidental native administration. Shared Media Admin policy is represented honestly, not as independent per-tool RBAC.
+
+Enrollment remains subject to its existing durable receipts and eligibility rules. Existing Radio ledger and 4orm commit evidence must survive. New group operations must not replay revoked enrollment. Account suspension, access removal and content deletion are separate actions. An operation retains external cleanup as manual/pending until observed; it cannot claim global logout from central session termination alone.
+
+Implementation is a single Node application with server-rendered forms, SQLite transactions and a serialized external effect path, not a second policy engine or generic provider proxy. Every mutation validates the active operator, CSRF/Origin, expected revision and reason. Native failures remain recorded, with readback before retrying ambiguous writes. Full project role keys are preserved, including keys unknown to the UI.

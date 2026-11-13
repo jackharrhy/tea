@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>auth · backgrounds</title>
+    <link rel="stylesheet" href="/gallery.css" />
+    <script type="module" src="/gallery.mjs"></script>
+  </head>
+  <body>
+    <header>
+      <a href="/">auth</a><span>Backgrounds</span
+      ><a href="https://auth.jackharrhy.dev" class="quiet">Open auth ↗</a>
+    </header>
+    <main>
+      <div class="toolbar">
+        <div class="day-controls">
+          <button id="previous" aria-label="Previous day">←</button
+          ><label class="sr-only" for="day">Preview date</label
+          ><input id="day" type="date" /><button
+            id="next"
+            aria-label="Next day"
+          >
+            →</button
+          ><button id="today">Today</button>
+        </div>
+        <div class="mode-controls">
+          <button id="rotation" aria-pressed="true">Daily pool</button
+          ><label><input id="motion" type="checkbox" checked /> Motion</label
+          ><label><input id="dark" type="checkbox" /> Dark</label>
+        </div>
+      </div>
+      <div class="workspace">
+        <section class="stage" aria-label="Sign-in preview">
+          <div id="art"></div>
+          <div class="mock-form" aria-label="Preview only">
+            <h1>auth</h1>
+            <span>Username or email</span>
+            <div class="mock-field"></div>
+            <span>Password</span>
+            <div class="mock-field"></div>
+            <div class="mock-button">Sign in</div>
+            <span class="mock-link">Forgot password?</span>
+          </div>
+          <div class="stage-label">
+            <span><span id="current"></span><span id="renderer"></span></span
+            ><span id="day-note">Daily · midnight UTC</span>
+          </div>
+        </section>
+        <section class="tuning" aria-label="Background controls">
+          <div class="tuning-heading">
+            <strong id="tuning-name">Settings</strong
+            ><button id="reset-settings">Reset style</button>
+          </div>
+          <div id="parameters" class="parameters"></div>
+        </section>
+      </div>
+      <div class="pool-heading">
+        <h2>Pool</h2>
+        <span id="count"></span><button id="save">Save changes</button
+        ><span id="status" role="status" aria-live="polite"></span>
+      </div>
+      <div id="pool" class="pool"></div>
+      <p class="footnote">
+        Click a background to inspect it. Check the ones you want in the daily
+        rotation.
+      </p>
+      <details class="references">
+        <summary>Inspiration</summary>
+        <a
+          href="https://www.shadertoy.com/view/XdtfRB"
+          target="_blank"
+          rel="noopener"
+          >Playstation Waves</a
+        >
+        ·
+        <a
+          href="https://www.shadertoy.com/view/MdXyzX"
+          target="_blank"
+          rel="noopener"
+          >Ocean</a
+        >
+        ·
+        <a
+          href="https://www.shadertoy.com/view/4tG3WR"
+          target="_blank"
+          rel="noopener"
+          >Caustics</a
+        >
+        <p>
+          Original shaders, inspired by wave fields and slow domain warping.
+          Colors from
+          <a href="https://stephango.com/flexoki" target="_blank" rel="noopener"
+            >Flexoki by Steph Ango</a
+          >.
+        </p>
+      </details>
+    </main>
+  </body>
+</html>

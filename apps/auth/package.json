@@ -1,0 +1,23 @@
+{
+  "name": "@harrhy/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=26.13.0 <27"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/server.mjs",
+    "start": "node src/server.mjs",
+    "test": "node --test __tests__/*.test.mjs",
+    "test:browser": "node __tests__/browser/authorization.mjs && node __tests__/browser/radio-enrollment.mjs && node __tests__/browser/access-management.mjs && node __tests__/browser/doodle-gallery.mjs",
+    "build": "tailwindcss -i ./src/styles.css -o ./public/style.css --minify",
+    "check": "npm test && npm run build && npm run test:browser"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "playwright": "^1.65.0",
+    "tailwindcss": "^4.3.3"
+  }
+}

@@ -2,6 +2,10 @@
 
 Harrhy contains the former standalone Ref, Radio, Worldview, Marky, Letters to Steve, Artbin, and Garden projects. Each deployable app owns its routes, UI, storage, and runtime settings. Packages contain only shared or embeddable code. The [root README](../README.md) lists the workspaces and the [Worldview app guide](../apps/worldview/README.md) documents its current viewer and editor.
 
+## Auth source workspace
+
+`apps/auth` imports the checked standalone Auth main at `0cdfc535` as an independent Node application. The browser login, consent, directory, access ledger, support flow, native action source, and synthetic HTTP/browser fixtures stay app-owned. Historical provider provisioning and acceptance scripts remain in the retained standalone repository; they are not startup migrations. The app's original MIT LICENSE remains with the source, and its two AGPL native action files keep their separate notices. This source integration does not switch the live Auth service, copy its databases or sealed keys, or change ZITADEL. A later scoped source slice will convert the Node HTTP routing to Remix 3 before a coordinated runtime cutover.
+
 ## Worldview
 
 Worldview serves `worldview.harrhy.xyz`. Its Remix app is in `apps/worldview/`; the hosted service, collaboration Worker, and local compiler are separate apps. The renderer, editor core, and protocol are packages. Worldview owns its public routes, file formats, OAuth scope, browser storage, and Celld Worker identity. The former standalone repository and npm renderer package have been retired.

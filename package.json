@@ -10,6 +10,8 @@
     "node": ">=26.13.0 <27"
   },
   "scripts": {
+    "auth:check": "npm run tooling:check && npm run check --workspace @harrhy/auth",
+    "auth:dev": "npm run dev --workspace @harrhy/auth",
     "garden:dev": "npm run dev --workspace @harrhy/garden",
     "8mb:check": "npm run tooling:check && npm run check --workspace @harrhy/8mb",
     "8mb:dev": "npm run dev --workspace @harrhy/8mb",
