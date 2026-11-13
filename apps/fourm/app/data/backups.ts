@@ -3,6 +3,8 @@ import { planBackupRetention, backupNameTime } from "../backup-retention.ts";
 import { CommunityError } from "./community.ts";
 import type { Database, Member } from "./community.ts";
 
+export type BackupActor = number | null | "scheduler";
+
 export function backupSchema(db: Database) {
   db.all(`CREATE TABLE IF NOT EXISTS backup_runs (
     name TEXT PRIMARY KEY,
@@ -19,7 +21,8 @@ export function backupSchema(db: Database) {
   CREATE UNIQUE INDEX IF NOT EXISTS one_pending_backup ON backup_runs(state) WHERE state='pending';`);
 }
 export function createBackups(db: Database, admin: (id: number) => Member) {
-  function authorize(actorId: number | null) {
+  function authorize(actorId: BackupActor) {
+    if (actorId === "scheduler") return;
     if (actorId === null)
       throw new CommunityError(403, "Admin access required");
     admin(actorId);
@@ -87,7 +90,7 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
     };
   }
   return {
-    beginBackup(actorId: number | null) {
+    beginBackup(actorId: BackupActor) {
       authorize(actorId);
       return db.transaction(() => {
         const pending = db.all(
@@ -123,7 +126,7 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
       return finish(name, "failed", null, null, error);
     },
     adoptVerifiedBackups(
-      actorId: number | null,
+      actorId: BackupActor,
       records: VerifiedBackupRecord[],
     ) {
       authorize(actorId);
@@ -200,11 +203,11 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
         };
       });
     },
-    backupRetentionPlan(actorId: number | null) {
+    backupRetentionPlan(actorId: BackupActor) {
       authorize(actorId);
       return retentionPlan();
     },
-    forgetPrunedBackup(actorId: number | null, name: string) {
+    forgetPrunedBackup(actorId: BackupActor, name: string) {
       authorize(actorId);
       return db.transaction(() => {
         const current = db.all(
@@ -224,7 +227,19 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
         return true;
       });
     },
-    backupStatus(actorId: number | null) {
+    backupDueAt(interval: number) {
+      if (!Number.isSafeInteger(interval) || interval < 1000)
+        throw new CommunityError(422, "Invalid backup interval");
+      const pending = db.all(
+        "SELECT started_at FROM backup_runs WHERE state='pending'",
+      )[0];
+      if (pending) return Number(pending.started_at) + 30000;
+      const last = db.all(
+        "SELECT max(finished_at) AS finished FROM backup_runs",
+      )[0];
+      return last.finished === null ? 0 : Number(last.finished) + interval;
+    },
+    backupStatus(actorId: BackupActor) {
       authorize(actorId);
       return db.transaction(() => ({
         backups: db.all(

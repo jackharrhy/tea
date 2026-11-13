@@ -1,3 +1,4 @@
+import type { BackupActor } from "./data/backups.ts";
 import { readNativeBackup } from "./native-backup.ts";
 import { CommunityError } from "./data/community.ts";
 import type { Community } from "./data/community.ts";
@@ -9,7 +10,7 @@ export async function pruneNativeBackups(
     "backupStatus" | "backupRetentionPlan" | "forgetPrunedBackup"
   >,
   bucket: Pick<R2Bucket, "get" | "head" | "delete">,
-  actorId: number | null,
+  actorId: BackupActor,
 ) {
   if (community.backupStatus(actorId).pending)
     throw new CommunityError(409, "Finish the pending backup before pruning");

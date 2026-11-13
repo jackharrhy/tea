@@ -1,3 +1,4 @@
+import type { BackupActor } from "./backups.ts";
 import { collectBackupObjects } from "../backup-gc.ts";
 import { pruneNativeBackups } from "../backup-pruning.ts";
 import { runNativeBackup } from "../backup-runner.ts";
@@ -11,7 +12,14 @@ import { DurableObject } from "cloudflare:workers";
 import { createCommunity, CommunityError } from "./community.ts";
 import type { Row } from "./community.ts";
 
-export class CommunityCell extends DurableObject<Env> {
+type CommunityBindings = Omit<
+  Env,
+  "BACKUP_SCHEDULER_ENABLED" | "BACKUP_INTERVAL_SECONDS"
+> & {
+  BACKUP_SCHEDULER_ENABLED?: string;
+  BACKUP_INTERVAL_SECONDS?: string;
+};
+export class CommunityCell extends DurableObject<CommunityBindings> {
   private community;
   private backup: Promise<Row> | undefined;
   private pruning:
@@ -19,13 +27,14 @@ export class CommunityCell extends DurableObject<Env> {
     | undefined;
   private moves = new Map<number, Promise<void>>();
   private orphanCleanup: Promise<number> | undefined;
-  constructor(ctx: DurableObjectState, env: Env) {
+  constructor(ctx: DurableObjectState, env: CommunityBindings) {
     super(ctx, env);
     this.community = createCommunity({
       all: (sql, ...values) =>
         ctx.storage.sql.exec(sql, ...values).toArray() as Row[],
       transaction: (operation) => ctx.storage.transactionSync(operation),
     });
+    ctx.blockConcurrencyWhile(() => this.scheduleMediaWork());
   }
   // The Worker is the only binding holder. HTTP callers cannot name RPC methods or SQL.
   async call<K extends keyof typeof this.community>(
@@ -50,7 +59,7 @@ export class CommunityCell extends DurableObject<Env> {
       throw error;
     }
   }
-  async runBackup(actorId: number | null) {
+  async runBackup(actorId: BackupActor) {
     try {
       this.community.backupStatus(actorId);
       if (this.pruning)
@@ -79,7 +88,7 @@ export class CommunityCell extends DurableObject<Env> {
       };
     }
   }
-  async pruneBackups(actorId: number | null) {
+  async pruneBackups(actorId: BackupActor) {
     try {
       this.community.backupStatus(actorId);
       if (this.backup)
@@ -111,16 +120,33 @@ export class CommunityCell extends DurableObject<Env> {
       };
     }
   }
+  private backupInterval() {
+    const seconds = Number(this.env.BACKUP_INTERVAL_SECONDS);
+    if (!Number.isSafeInteger(seconds) || seconds < 1 || seconds > 86400)
+      throw new CommunityError(503, "Invalid configured backup interval");
+    return seconds * 1000;
+  }
   private async scheduleMediaWork() {
+    const due: number[] = [];
     if (
       this.community.hasMediaTransfers() ||
       this.community.hasMediaMoves() ||
       this.community.hasAccountCleanup() ||
       this.community.hasOrphanCleanup()
-    ) {
-      const current = await this.ctx.storage.getAlarm();
-      if (current === null || current > Date.now() + 30000)
-        await this.ctx.storage.setAlarm(Date.now() + 30000);
+    )
+      due.push(Date.now() + 30000);
+    if (this.env.BACKUP_SCHEDULER_ENABLED === "1")
+      due.push(
+        Math.max(
+          Date.now() + 1000,
+          this.community.backupDueAt(this.backupInterval()),
+        ),
+      );
+    if (due.length) {
+      const next = Math.min(...due),
+        current = await this.ctx.storage.getAlarm();
+      if (current === null || current > next)
+        await this.ctx.storage.setAlarm(next);
     }
   }
   private async runMove(id: number) {
@@ -308,6 +334,19 @@ export class CommunityCell extends DurableObject<Env> {
           await cleanupMediaTransfer(this.community, this.env.MEDIA, item);
         } catch (error) {
           failure ??= error;
+        }
+      }
+      if (
+        this.env.BACKUP_SCHEDULER_ENABLED === "1" &&
+        this.community.backupDueAt(this.backupInterval()) <= Date.now()
+      ) {
+        const result = await this.runBackup("scheduler");
+        if (!result.ok)
+          failure ??= new CommunityError(result.status, result.error);
+        else {
+          const retention = await this.pruneBackups("scheduler");
+          if (!retention.ok)
+            failure ??= new CommunityError(retention.status, retention.error);
         }
       }
     } finally {
