@@ -273,11 +273,13 @@ it("does not publish changed state and rejects corrupt stored file bytes before 
       captureNativeBackup(r2.storage, "changed", async () => {
         if (reads++)
           source.db
-            .prepare("UPDATE users SET display_name='Changed' WHERE id=41")
+            .prepare(
+              "UPDATE media SET storage_path='fixture/changed.txt' WHERE id=1",
+            )
             .run();
         return source.community.exportRecovery(41);
       }),
-    ).rejects.toThrow("Application state changed");
+    ).rejects.toThrow("Storage authority changed");
     expect(r2.objects.has(".backups/native/changed.json")).toBe(false);
     const saved = await captureNativeBackup(r2.storage, "corrupt", async () =>
       source.community.exportRecovery(41),
@@ -655,6 +657,39 @@ it("derives hourly due times from durable receipts and backs up empty communitie
     expect(source.community.backupDueAt(3600000)).toBe(
       Number(pending.started_at) + 30000,
     );
+  } finally {
+    source.db.close();
+  }
+});
+
+it("captures one consistent SQL snapshot while unrelated member activity continues", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/kept.txt", "kept");
+    const initial = source.community.exportRecovery(41);
+    let reads = 0;
+    const saved = await captureNativeBackup(r2.storage, "busy", async () => {
+      if (reads++) {
+        source.db.exec(
+          "UPDATE users SET display_name='Updated during backup' WHERE id=41; INSERT INTO chat_messages(author_id,message) VALUES(41,'New chat during backup');",
+        );
+        source.community.createSession(
+          "new-session-during-backup",
+          41,
+          Date.now() + 60000,
+        );
+      }
+      return source.community.exportRecovery(41);
+    });
+    expect(canonicalTables(saved.recovery.tables)).toBe(
+      canonicalTables(initial.tables),
+    );
+    expect(
+      canonicalTables(source.community.exportRecovery(41).tables),
+    ).not.toBe(canonicalTables(initial.tables));
+    expect(await readNativeBackup(r2.storage, "busy")).not.toBeNull();
   } finally {
     source.db.close();
   }
