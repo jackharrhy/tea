@@ -27,6 +27,7 @@ const {
   renderDeviceCode,
 } = await import("./flow-page.tsx");
 const { renderDirectory, renderAppDetail } = await import("./directory-page.tsx");
+const { renderSessions, renderPeople, renderNewPerson } = await import("./simple-access-pages.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
 import { createAccountActions } from "./accounts.mjs";
@@ -108,6 +109,9 @@ const accessRoutes = createAccessRoutes({
   supportPreflight: (actor, target) => supportRoutes?.preflight(actor, target),
   renderDirectory,
   renderAppDetail,
+  renderSessions,
+  renderPeople,
+  renderNewPerson,
 });
 radioEnrollment = process.env.RADIO_ENROLLMENT_DB_FILE
   ? createRadioEnrollment({

@@ -19,6 +19,9 @@ export function createAccessRoutes({
   supportPreflight,
   renderDirectory,
   renderAppDetail,
+  renderSessions,
+  renderPeople,
+  renderNewPerson,
 }) {
   const people = async () =>
     (await searchAll(api, "/management/v1/users/_search")).filter(
@@ -36,13 +39,8 @@ export function createAccessRoutes({
     redirect,
   }) {
     if (request.method === "GET" && url.pathname === "/account/sessions") {
-      send(
-        views.sessions(
-          await native.sessions(session.userId),
-          session.sessionId,
-          context,
-        ),
-      );
+      const items = await native.sessions(session.userId);
+      await sendRemix((nonce) => renderSessions(items, session.sessionId, context, nonce));
       return true;
     }
     if (request.method === "POST" && url.pathname === "/account/sessions/end") {
@@ -131,16 +129,16 @@ export function createAccessRoutes({
       return true;
     }
     if (request.method === "GET" && url.pathname === "/manage/people") {
-      send(
-        views.people(await people(), model, context, {
-          q: (url.searchParams.get("q") || "").slice(0, 200),
-          state: url.searchParams.get("state") || "all",
-        }),
-      );
+      const users = await people();
+      const filter = {
+        q: (url.searchParams.get("q") || "").slice(0, 200),
+        state: url.searchParams.get("state") || "all",
+      };
+      await sendRemix((nonce) => renderPeople(users, model, context, filter, nonce));
       return true;
     }
     if (request.method === "GET" && url.pathname === "/manage/people/new") {
-      send(views.newPerson(context));
+      await sendRemix((nonce) => renderNewPerson(context, nonce));
       return true;
     }
     const person = url.pathname.match(

@@ -25,59 +25,6 @@ const changeFields = (type, revision) =>
 const linkBack = (url, text) =>
   `<a class="text-link" href="${url}">${text}</a>`;
 
-export function sessions(items, current, context) {
-  return page(
-    "Sessions",
-    intro(
-      "Sessions",
-      "Your central sign-ins. Ending one does not sign you out of every app.",
-    ) +
-      `<div class="people-list">${items.map((item) => `<div class="operation-row"><span><strong>${item.id === current ? "This browser" : "Central browser session"}</strong><span class="muted">Expires ${h(new Date(item.expirationDate).toLocaleString("en-GB", { timeZone: "UTC" }))} UTC</span></span>${form(context, hidden("session", item.id) + "<button>End session</button>", "/account/sessions/end")}</div>`).join("") || '<p class="empty">No active central sessions.</p>'}</div>` +
-      linkBack("/account", "Account"),
-    { ...context, active: "account" },
-  );
-}
-
-export function people(users, model, context, { q = "", state = "all" } = {}) {
-  const all = users.filter((user) => user.human);
-  const shown = all.filter(
-    (user) =>
-      (state === "all" ||
-        (state === "active"
-          ? user.state === "USER_STATE_ACTIVE"
-          : user.state !== "USER_STATE_ACTIVE")) &&
-      `${nameOf(user)} ${user.userName}`
-        .toLowerCase()
-        .includes(q.toLowerCase()),
-  );
-  return page(
-    "People",
-    intro(
-      "People",
-      "See who can use what, and why.",
-      `<a class="button" href="/manage/people/new">Add person</a>`,
-    ) +
-      `<form class="filters" method="get"><label>Find a person<input name="q" type="search" value="${h(q)}" placeholder="Name or username"></label><label>Account state<select name="state"><option value="all">All people</option><option value="active"${state === "active" ? " selected" : ""}>Active</option><option value="other"${state === "other" ? " selected" : ""}>Suspended or pending</option></select></label><button>Find</button></form><p class="result-count">${shown.length} of ${all.length} people</p><div class="people-list">${shown.map((user) => `<a class="person-row" href="${personPath(user)}"><span class="person-initial" aria-hidden="true">${h(nameOf(user).slice(0, 1))}</span><span><strong>${h(nameOf(user))}</strong><span class="muted">${h(user.userName)}</span></span><span>${pill(statusOf(user))}</span><span class="row-meta">${model.memberships.filter((item) => item.subject === user.id).length} groups</span><span class="row-action">View access</span></a>`).join("") || '<p class="empty">No people match these filters.</p>'}</div>`,
-    { ...context, active: "people" },
-  );
-}
-
-export function newPerson(context) {
-  return page(
-    "Add person",
-    intro(
-      "Add person",
-      "Create an identity. Service access is assigned separately.",
-    ) +
-      form(
-        context,
-        `<label>Username<input name="username" required pattern="[a-z0-9_-]{2,32}" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false"></label><label>Display name<input name="name" required maxlength="100"></label><label>Email (optional)<input name="email" type="email" maxlength="250"></label><label>Initial password<input name="password" type="password" autocomplete="new-password" minlength="12" required maxlength="200"></label><p class="muted">No invitation is sent. Share the initial password privately. Creating a person does not grant app access.</p><button class="primary">Create person</button>`,
-        "/manage/users",
-      ),
-    { ...context, active: "people" },
-  );
-}
-
 export function person(
   user,
   model,
