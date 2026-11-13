@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import "remix/node-tsx";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createSupportRoutes } from "./support-routes.mjs";
@@ -15,6 +16,7 @@ import {
   escapeHtml as h,
 } from "./security.mjs";
 import * as views from "./views.mjs";
+const { renderLogin } = await import("./login-page.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
 import { createAccountActions } from "./accounts.mjs";
@@ -147,7 +149,7 @@ const enrollmentCompletion =
         isBlocked: (subject, project) => accessStore.blocked(subject, project),
       })
     : null;
-const css = readFileSync(new URL("../public/style.css", import.meta.url));
+const css = readFileSync(new URL("./styles.css", import.meta.url));
 const doodleAssets = new Map([
   [
     "/assets/doodle-motion.mjs",
@@ -270,6 +272,7 @@ createServer(async (request, response) => {
     const id =
       destination.pathname === "/authorize" &&
       destination.searchParams.get("authRequest");
+    let callbackOrigin;
     if (id) {
       const { request: authRequest, callback } =
         await authorizationActions.begin(id, session);
@@ -277,12 +280,14 @@ createServer(async (request, response) => {
         redirect(callback);
         return;
       }
-      response.setHeader(
-        "Content-Security-Policy",
-        contentSecurityPolicy(authRequest.redirectUri, { scripts: true }),
-      );
+      callbackOrigin = authRequest.redirectUri;
     }
-    send(views.login({ csrf, returnTo, error }), status);
+    const nonce = randomToken();
+    response.setHeader(
+      "Content-Security-Policy",
+      contentSecurityPolicy(callbackOrigin, { scripts: true, styleNonce: nonce }),
+    );
+    send(await renderLogin({ csrf, returnTo, error }, nonce), status);
   };
   let session;
   try {

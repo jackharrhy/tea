@@ -228,7 +228,7 @@ async function capture(page, name) {
     await mkdir(`${snapshots}/assets/fonts`, { recursive: true });
     await writeFile(
       `${snapshots}/assets/style.css`,
-      readFileSync(new URL("../../public/style.css", import.meta.url)),
+      readFileSync(new URL("../../src/styles.css", import.meta.url)),
     );
     await writeFile(
       `${snapshots}/assets/fonts/inter-variable.woff2`,

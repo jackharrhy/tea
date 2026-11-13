@@ -368,9 +368,18 @@ try {
     }
     const firstContext = await browser.newContext();
     const firstPage = await firstContext.newPage();
-    await firstPage.goto(
+    const loginResponse = await firstPage.goto(
       `${origin}/login?returnTo=${encodeURIComponent("/authorize?authRequest=first-valid")}`,
     );
+    if (app.id === "fourm") {
+      const styleNonce = await firstPage.locator("style[nonce]").first().evaluate((style) => style.nonce);
+      assert(styleNonce);
+      assert(
+        loginResponse.headers()["content-security-policy"].includes(
+          `'nonce-${styleNonce}'`,
+        ),
+      );
+    }
     await firstPage.locator("[name=username]").fill("fixture-user-" + app.id);
     await firstPage.locator("[name=password]").fill("fixture-password");
     await firstPage

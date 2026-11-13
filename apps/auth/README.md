@@ -2,11 +2,11 @@
 
 Jack Auth's browser sign-in, consent, app directory, access management, enrollment, and support-login UI. ZITADEL remains the separate issuer and owns identities, passwords, sessions, grants, and token exchange. This app calls supported native APIs and stores only its own access ledger, Radio enrollment history, appearance choices, and short-lived browser state. It does not import `@harrhy/identity` as a privileged provider client.
 
-`src/server.mjs` is the Node 26 entry point. `src/authorization.mjs`, `src/access-routes.mjs`, and `src/support-routes.mjs` own the three sensitive HTTP flows. `config/applications.json` and `config/services.json` hold the app's reviewed client and directory policy. `integrations/` contains the native action source retained with its separate license. `__tests__/` holds the app's server and browser fixtures. The [architecture](docs/architecture.md), [support-login contract](docs/support-login.md), [product decisions](PRODUCT.md), and [design guide](DESIGN.md) provide details.
+`src/server.mjs` is the Node 26 entry point. The sign-in document is a Remix component in `src/login-page.tsx`; the remaining routes are still in `src/server.mjs`, `src/access-routes.mjs`, and `src/support-routes.mjs` while their controllers and views migrate. `config/applications.json` and `config/services.json` hold the app's reviewed client and directory policy. `integrations/` contains the native action source retained with its separate license. `__tests__/` holds the app's server and browser fixtures. The [architecture](docs/architecture.md), [support-login contract](docs/support-login.md), [product decisions](PRODUCT.md), and [design guide](DESIGN.md) provide details.
 
 ## Run and check
 
-From the Harrhy root, run `npm ci`, then `npm run check --workspace @harrhy/auth`. The check runs the Node contract tests, builds the stylesheet, and exercises the actual HTTP routes in Chromium against a synthetic issuer. Install Chromium once with `npx playwright install chromium` if needed. `npm run dev --workspace @harrhy/auth` starts the UI using an optional app-local `.env`; `docker compose --profile auth up --build auth` starts its opt-in local container at `auth.localhost`. A local UI can render without provider credentials, but real sign-in needs an approved local issuer/client and private mounted credentials.
+From the Harrhy root, run `npm ci`, then `npm run check --workspace @harrhy/auth`. The check typechecks the Remix component, runs the Node contract tests, and exercises the actual HTTP routes in Chromium against a synthetic issuer. The remaining plain stylesheet is served from `src/styles.css`; Tailwind is not used. Install Chromium once with `npx playwright install chromium` if needed. `npm run dev --workspace @harrhy/auth` starts the UI using an optional app-local `.env`; `docker compose --profile auth up --build auth` starts its opt-in local container at `auth.localhost`. A local UI can render without provider credentials, but real sign-in needs an approved local issuer/client and private mounted credentials.
 
 ### Real local sign-in
 
@@ -26,7 +26,7 @@ The app is independently containerized by `Dockerfile`. Production settings, DNS
 
 ## Routing migration boundary
 
-This first workspace keeps the current Node HTTP router and server-rendered forms so that the existing login, recovery, consent, enrollment, and support contracts can be checked before route conversion. It is a temporary framework exception. The next source slice will move app routing and presentation to Remix 3 conventions while preserving these contracts; ZITADEL and its state remain separate. `@harrhy/identity` stays a consumer validation/client package.
+Sign-in now renders through Remix 3 and uses `@harrhy/ui` controls. Other pages still use the original Node route switch and HTML templates. This is an in-progress framework exception; the remaining controllers and views must move to Remix before the application replaces the standalone Auth deployment. The existing stylesheet is plain CSS until its remaining static UI rules move to Remix `css(...)` mixins. ZITADEL and its state remain separate. `@harrhy/identity` stays a consumer validation/client package.
 
 ## License
 

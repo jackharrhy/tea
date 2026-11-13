@@ -28,22 +28,6 @@ ${title === "auth" && !user ? "" : `<header class="site-header"><a class="brand"
 </body></html>`;
 }
 
-export function login({ csrf, returnTo, error }) {
-  return page(
-    "auth",
-    `
-    <h1 class="login-title">auth</h1>
-    <form method="post" action="/login" class="form-stack">
-      ${hidden("csrf", csrf)}${hidden("returnTo", returnTo)}
-      <label>Username or email<input name="username" autocomplete="username" required autofocus maxlength="250" autocapitalize="none" spellcheck="false"></label>
-      <label>Password<input type="password" name="password" autocomplete="current-password" required maxlength="1000"></label>
-      <button class="primary">Sign in</button>
-    </form>
-    <a class="text-link" href="/forgot-password">Forgot password?</a>`,
-    { error, narrow: true },
-  );
-}
-
 export function enrollment(context, profile) {
   const verified =
     profile?.human?.email?.isEmailVerified &&
