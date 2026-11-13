@@ -167,19 +167,6 @@ code {
   font-size: 12px;
   margin-top: 8px;
 }
-.site-header {
-  position: relative;
-  z-index: 2;
-  margin: auto;
-  min-height: 78px;
-  max-width: 1240px;
-  padding: 0 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  border-bottom: 1px solid var(--line);
-}
 .brand {
   font-size: 29px;
   font-weight: 700;
@@ -219,51 +206,6 @@ code {
 }
 .mobile-nav {
   display: none;
-}
-.workspace {
-  max-width: 1184px;
-  padding: 0 28px;
-  margin: 44px auto 80px;
-}
-.page-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 22px;
-  margin-bottom: 30px;
-}
-.page-heading > div > p {
-  margin-bottom: 0;
-  max-width: 68ch;
-}
-.section {
-  margin-top: 48px;
-}
-.detail-section {
-  margin: 32px 0;
-  padding: 26px 0 0;
-  border-top: 1px solid var(--line);
-}
-.detail-section > p {
-  max-width: 75ch;
-}
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.form-stack {
-  display: grid;
-  gap: 18px;
-  max-width: 600px;
-}
-.form-stack > button {
-  justify-self: start;
-}
-.form-stack + .form-stack {
-  margin-top: 25px;
 }
 .profile {
   max-width: 740px;

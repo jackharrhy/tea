@@ -22,6 +22,52 @@ export const fullWidthAction = css({
   },
 });
 
+const layoutStyles = css({
+  "& .site-header": {
+    position: "relative",
+    zIndex: 2,
+    margin: "auto",
+    minHeight: "78px",
+    maxWidth: "1240px",
+    padding: "0 28px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "28px",
+    borderBottom: "1px solid var(--line)",
+  },
+  "& .workspace": {
+    maxWidth: "1184px",
+    padding: "0 28px",
+    margin: "44px auto 80px",
+  },
+  "& .page-heading": {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "22px",
+    marginBottom: "30px",
+  },
+  "& .page-heading > div > p": { marginBottom: 0, maxWidth: "68ch" },
+  "& .section": { marginTop: "48px" },
+  "& .detail-section": {
+    margin: "32px 0",
+    padding: "26px 0 0",
+    borderTop: "1px solid var(--line)",
+  },
+  "& .detail-section > p": { maxWidth: "75ch" },
+  "& .section-heading": {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "18px",
+    alignItems: "center",
+    marginBottom: "16px",
+  },
+  "& .form-stack": { display: "grid", gap: "18px", maxWidth: "600px" },
+  "& .form-stack > button": { justifySelf: "start" },
+  "& .form-stack + .form-stack": { marginTop: "25px" },
+});
+
 export type DocumentProps = {
   title: string;
   children: RemixNode;
@@ -102,7 +148,12 @@ export function Document(handle: Handle<DocumentProps>) {
         </head>
         <body
           class={narrow ? "authentication" : ""}
-          mix={[theme, uiControlStyles, login ? fullWidthAction : null]}
+          mix={[
+            theme,
+            uiControlStyles,
+            layoutStyles,
+            login ? fullWidthAction : null,
+          ]}
         >
           <a class="skip-link" href="#main">
             Skip to content
