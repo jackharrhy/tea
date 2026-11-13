@@ -544,9 +544,41 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
         fullPage: true,
       });
     }
+    const playlistHeaders = { Origin: origin, Accept: "application/json" };
+    const addedTrack = await context.request.post(
+      origin + "/settings/player/add",
+      {
+        headers: playlistHeaders,
+        form: { media_id: "1", title: "ignored by original form contract" },
+      },
+    );
+    assert.equal(addedTrack.status(), 200);
+    const playlistBefore = await (
+      await context.request.get(origin + "/u/fixture/player", {
+        headers: { Accept: "application/json" },
+      })
+    ).json();
+    assert.equal(playlistBefore.tracks.length, 1);
+    assert.equal(playlistBefore.tracks[0].title, null);
+    const movedTrack = await context.request.post(
+      origin + `/settings/player/${playlistBefore.tracks[0].id}/move`,
+      { headers: playlistHeaders, form: { direction: "sideways" } },
+    );
+    assert.equal(movedTrack.status(), 200);
+    await page.goto(origin + "/u/fixture/player");
+    assert.equal(
+      (await page.locator("#track-list li").innerText()).trim(),
+      "kept.txt",
+    );
     await stop();
     await rm(join(state, "replica"), { recursive: true, force: true });
     await start();
+    const playlistAfter = await (
+      await context.request.get(origin + "/u/fixture/player", {
+        headers: { Accept: "application/json" },
+      })
+    ).json();
+    assert.deepEqual(playlistAfter, playlistBefore);
     await page.goto(origin + "/u/fixture/counter");
     await page.locator("#counter-custom").waitFor();
     assert.equal(
@@ -574,6 +606,12 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
         pruning,
         busyCapture,
         automaticCatalogue,
+        playlistTransitions: {
+          untitledNull: true,
+          invalidDirectionNoOp: true,
+          browserFilenameFallback: true,
+          coldReplicaRecovery: true,
+        },
         counterCustomization: {
           saveReload: true,
           css: true,

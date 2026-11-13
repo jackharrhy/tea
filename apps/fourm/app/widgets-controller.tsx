@@ -135,12 +135,7 @@ export function widgetController(
       },
       async addTrack({ request }) {
         const body = await fields(request);
-        await store.call(
-          "addTrack",
-          actor().id,
-          Number(body.media_id),
-          body.title ?? "",
-        );
+        await store.call("addTrack", actor().id, Number(body.media_id), null);
         return playlistResponse(request);
       },
       async removeTrack({ request, params }) {
