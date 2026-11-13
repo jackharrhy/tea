@@ -72,7 +72,7 @@ async function stop() {
   runner = undefined;
 }
 async function start() {
-  runner = spawn(process.execPath, ["apps/fourm/scripts/review.mjs"], {
+  runner = spawn(process.execPath, ["apps/4orm/scripts/review.mjs"], {
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -265,7 +265,7 @@ try {
   );
   await writeFile(
     workflow,
-    `import {readFile,writeFile} from 'node:fs/promises';import {completeInvite} from ${JSON.stringify(resolve("apps/fourm/__tests__/enrollment-browser.mjs"))};const settings=JSON.parse(await readFile(process.argv[2],'utf8'));const result=await completeInvite(settings);await writeFile(${JSON.stringify(join(output, "acceptance.json"))},JSON.stringify({...result,realCohortMembers:${archive.tables.users.length},https:true,productionTouched:false},null,2));`,
+    `import {readFile,writeFile} from 'node:fs/promises';import {completeInvite} from ${JSON.stringify(resolve("apps/4orm/__tests__/enrollment-browser.mjs"))};const settings=JSON.parse(await readFile(process.argv[2],'utf8'));const result=await completeInvite(settings);await writeFile(${JSON.stringify(join(output, "acceptance.json"))},JSON.stringify({...result,realCohortMembers:${archive.tables.users.length},https:true,productionTouched:false},null,2));`,
   );
   await child(workflow, [config]);
   console.log(

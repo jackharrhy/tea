@@ -46,7 +46,7 @@ let configuration = {
 if (nativeState) {
   assert.ok(
     !relative(
-      resolvePath("apps/fourm/.review"),
+      resolvePath("apps/4orm/.review"),
       resolvePath(nativeState),
     ).startsWith(".."),
   );
@@ -57,7 +57,7 @@ if (nativeState) {
   assert.equal(nativeRuntime.productionTouched, false);
   assert.equal(
     nativeRuntime.sourceFingerprint,
-    await reviewSourceFingerprint(resolvePath("apps/fourm")),
+    await reviewSourceFingerprint(resolvePath("apps/4orm")),
   );
   assert.equal(new URL(nativeRuntime.origin).hostname, "127.0.0.1");
   const live = await fetch(nativeRuntime.origin + "/ready").then((r) =>

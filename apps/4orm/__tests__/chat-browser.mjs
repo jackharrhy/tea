@@ -9,11 +9,11 @@ const output =
   root + "/chat-browser-" + new Date().toISOString().replace(/[:.]/g, "");
 await mkdir(output, { mode: 0o700 });
 const runtime = JSON.parse(
-  await readFile("apps/fourm/.review/parity-local/runtime.json", "utf8"),
+  await readFile("apps/4orm/.review/parity-local/runtime.json", "utf8"),
 );
 assert.equal(
   runtime.sourceFingerprint,
-  await reviewSourceFingerprint(resolve("apps/fourm")),
+  await reviewSourceFingerprint(resolve("apps/4orm")),
 );
 const inventory = JSON.parse(
   await readFile(root + "/parity-cohort-20261112/inventory.json", "utf8"),

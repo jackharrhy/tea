@@ -12,7 +12,7 @@ const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
 const output =
   root + "/site-export-" + new Date().toISOString().replace(/[:.]/g, "");
 await mkdir(output, { mode: 0o700 });
-const expected = await reviewSourceFingerprint(resolve("apps/fourm"));
+const expected = await reviewSourceFingerprint(resolve("apps/4orm"));
 for (let i = 0; i < 100; i++) {
   try {
     const r = await fetch("http://127.0.0.1:18974/ready");

@@ -7,7 +7,7 @@ import { transferArchive } from "../scripts/archive.mjs";
 const root = "/home/jack/.local/state/form-harrhy-integration/candidate",
   repo = process.cwd(),
   origin = "http://127.0.0.1:18974";
-const original = resolve("apps/fourm/.review/parity-local"),
+const original = resolve("apps/4orm/.review/parity-local"),
   output = join(
     root,
     "metadata-roundtrip-" + new Date().toISOString().replace(/[:.]/g, ""),
@@ -49,7 +49,7 @@ async function start(state, persist = false) {
   const log = persist
     ? await open(join(output, "restored-source.log"), "a", 0o600)
     : null;
-  const child = spawn(process.execPath, ["apps/fourm/scripts/review.mjs"], {
+  const child = spawn(process.execPath, ["apps/4orm/scripts/review.mjs"], {
     cwd: repo,
     env: {
       ...process.env,

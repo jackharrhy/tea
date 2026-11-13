@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { createServer } from "node:net";
 import { spawn } from "node:child_process";
@@ -24,7 +25,10 @@ function canonicalTables(tables) {
   );
 }
 process.umask(0o077);
-assert.equal(process.cwd(), "/home/jack/repos/personal/harrhy-fourm-celld");
+assert.equal(
+  process.cwd(),
+  fileURLToPath(new URL("../../..", import.meta.url)).replace(/\/$/, ""),
+);
 const format = process.env.FOURM_BACKUP_FORMAT ?? "portable";
 assert.ok(
   ["portable", "native"].includes(format),
@@ -181,7 +185,7 @@ try {
   assert.equal(actor.length, 1);
   await writeFile(
     join(state, "worker.ts"),
-    `export {default,CommunityCell} from ${JSON.stringify(absolute("apps/fourm/__tests__/backup-cohort-worker.ts"))};`,
+    `export {default,CommunityCell} from ${JSON.stringify(absolute("apps/4orm/__tests__/backup-cohort-worker.ts"))};`,
   );
   await writeFile(
     join(state, "wrangler.jsonc"),

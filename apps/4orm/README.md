@@ -3,7 +3,7 @@
 Status: faithful-parity rework in progress. Earlier fixture preview and tests are
 POC evidence, not migration acceptance. See `docs/parity.md`.
 
-Development now lives at `apps/fourm` in the primary Harrhy checkout on
+Development now lives at `apps/4orm` in the primary Harrhy checkout on
 `work/fourm-parity`, derived from the native candidate rather than merged into
 `main`. The former standalone candidate worktree is retired; this is still the
 same Celld-native app, not a Python proxy or a production cutover.
@@ -25,7 +25,7 @@ From the monorepo root:
 
 ```sh
 npm ci
-npm run check --workspace @harrhy/fourm
+npm run check --workspace @harrhy/4orm
 ```
 
 `__tests__/` contains model, API-format, rendering and actual browser checks.
@@ -43,6 +43,16 @@ reseed them or start a second writer. The existing review supervisor and private
 access proxy own that instance; coordinate a stop/start before changing its
 runtime configuration. Generated configs retained in `.review/retired-worktree`
 are historical evidence, not launch inputs.
+
+The canonical private named preview is `https://4orm.pi.jackharrhy.dev`.
+Its canonical fixture issuer remains
+`https://newport.hedgehog-python.ts.net:8565`: changing it would break existing
+exact issuer/subject links. The separate review-key gate remains required.
+
+The product workspace is `@harrhy/4orm` at `apps/4orm`. Existing `fourm` Celld
+worker/bucket/DO names, cookies, metadata/protocol identifiers, fixture identities,
+`FOURM_*` environment keys and supervisor unit names are compatibility identities,
+not alternate product names. Preserve them; this rename is not a data migration.
 
 A preview hostname change must preserve its canonical fixture issuer unless an
 explicit identity-link migration is reviewed: member links use exact issuer and

@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import {
@@ -20,7 +21,10 @@ const publicJWK = (point) => ({
 });
 process.umask(0o077);
 const repo = process.cwd();
-assert.equal(repo, "/home/jack/repos/personal/harrhy-fourm-celld");
+assert.equal(
+  repo,
+  fileURLToPath(new URL("../../..", import.meta.url)).replace(/\/$/, ""),
+);
 const binary =
   "/home/jack/.local/state/form-harrhy-integration/candidate/tools/celld";
 const state = await mkdtemp(join(tmpdir(), "fourm-push-celld-"));
@@ -102,7 +106,7 @@ try {
       .digest("hex"),
   };
   const entry = `import {buildPushPayload,vapidHeaders} from ${JSON.stringify(absolute("node_modules/@block65/webcrypto-web-push/dist/lib/main.js"))};
-import {deliverPush} from ${JSON.stringify(absolute("apps/fourm/app/push-delivery.ts"))};
+import {deliverPush} from ${JSON.stringify(absolute("apps/4orm/app/push-delivery.ts"))};
  export default {async fetch(request,env){if(request.method==='GET')return Response.json({ready:true});const calls=[];const d=${JSON.stringify(delivery)};try{await buildPushPayload({data:{title:d.title,body:d.body,url:d.url}},{endpoint:d.subscription.endpoint,expirationTime:null,keys:{p256dh:d.subscription.p256dh_key,auth:d.subscription.auth_key}},{subject:env.VAPID_SUBJECT,publicKey:env.VAPID_PUBLIC_KEY,privateKey:env.VAPID_PRIVATE_KEY})}catch(error){const probe={};try{const pair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},false,['deriveBits']);probe.exportedRawPublicBytes=(await crypto.subtle.exportKey('raw',pair.publicKey)).byteLength;}catch(e){probe.generatedKeyError=e.name+': '+e.message;}try{const f=${JSON.stringify(standardFormats)};const peer=await crypto.subtle.importKey('spki',new Uint8Array(f.publicSPKI),{name:'ECDH',namedCurve:'P-256'},false,[]);const own=await crypto.subtle.importKey('pkcs8',new Uint8Array(f.privatePKCS8),{name:'ECDH',namedCurve:'P-256'},false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'ECDH',public:peer},own,256);const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bits))).map(b=>b.toString(16).padStart(2,'0')).join('');probe.standardECDHMatchesNode=digest===f.expectedSecretHash;const aes=await crypto.subtle.importKey('raw',crypto.getRandomValues(new Uint8Array(16)),{name:'AES-GCM'},false,['encrypt','decrypt']);const iv=crypto.getRandomValues(new Uint8Array(12));const encrypted=await crypto.subtle.encrypt({name:'AES-GCM',iv},aes,new Uint8Array([1,2,3]));const clear=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv},aes,encrypted));probe.aesGCMRoundtrip=clear.join(',')==='1,2,3';const signed=await vapidHeaders({endpoint:d.subscription.endpoint},{subject:env.VAPID_SUBJECT,publicKey:env.VAPID_PUBLIC_KEY,privateKey:env.VAPID_PRIVATE_KEY});probe.vapidSigned=String(signed.headers.authorization).startsWith('vapid t=');}catch(e){probe.standardFormatsError=e.name+': '+e.message;}return Response.json({phase:'crypto',name:error.name,message:error.message,probe})}await deliverPush(env,{call:async(...args)=>calls.push(args)},${JSON.stringify([delivery])},(endpoint,init)=>{if(endpoint!=='https://push.invalid/isolated')throw Error('Uncaged endpoint');return fetch('http://127.0.0.1:${server.address().port}/isolated',init)});return Response.json({expired:calls.length===1&&calls[0][0]==='expirePushSubscription'&&calls[0][1]===17});}};`;
   await writeFile(join(state, "worker.ts"), entry);
   await writeFile(
