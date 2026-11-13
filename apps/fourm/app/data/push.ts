@@ -30,7 +30,91 @@ export function createPushDevices(
   db: Database,
   member: (id: number) => Member,
 ) {
+  function deliveries(
+    userId: number,
+    title: string,
+    body: string,
+    url: string,
+  ) {
+    return db
+      .all(
+        "SELECT p.* FROM push_subscriptions p JOIN users u ON u.id=p.user_id WHERE p.user_id=? AND u.notifications_enabled=1",
+        userId,
+      )
+      .map((subscription) => ({ subscription, title, body, url }));
+  }
   return {
+    replyNotifications(actorId: number, postId: number) {
+      const actor = member(actorId);
+      const post = db.all(
+        "SELECT p.author_id,p.thread_id,p.quoted_post_id,t.title FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id WHERE p.id=?",
+        postId,
+      )[0];
+      if (!post || Number(post.author_id) !== actorId)
+        throw new CommunityError(403, "Post ownership required");
+      const watchers = db.all(
+        "SELECT user_id AS id FROM thread_watchers WHERE thread_id=? UNION SELECT id FROM users WHERE watch_all_threads=1",
+        post.thread_id,
+      );
+      const result = watchers
+        .filter((u) => Number(u.id) !== actorId)
+        .flatMap((u) =>
+          deliveries(
+            Number(u.id),
+            `New reply in ${post.title}`,
+            `${actor.display_name} replied`,
+            `/forum/${post.thread_id}#post-${postId}`,
+          ),
+        );
+      const quoted = post.quoted_post_id
+        ? db.all(
+            "SELECT author_id FROM forum_posts WHERE id=?",
+            post.quoted_post_id,
+          )[0]
+        : null;
+      if (
+        quoted &&
+        Number(quoted.author_id) !== actorId &&
+        !watchers.some((u) => Number(u.id) === Number(quoted.author_id))
+      )
+        result.push(
+          ...deliveries(
+            Number(quoted.author_id),
+            `You were quoted in ${post.title}`,
+            `${actor.display_name} quoted your post`,
+            `/forum/${post.thread_id}#post-${postId}`,
+          ),
+        );
+      return result;
+    },
+    guestbookNotifications(actorId: number, username: string) {
+      const actor = member(actorId);
+      const owner = db.all(
+        "SELECT id FROM users WHERE username=?",
+        username,
+      )[0];
+      if (!owner || Number(owner.id) === actorId) return [];
+      return deliveries(
+        Number(owner.id),
+        "New guestbook entry",
+        `${actor.display_name} signed your guestbook`,
+        `/u/${username}/guestbook`,
+      );
+    },
+    expirePushSubscription(
+      id: number,
+      endpoint: string,
+      p256dh: string,
+      auth: string,
+    ) {
+      db.all(
+        "DELETE FROM push_subscriptions WHERE id=? AND endpoint=? AND p256dh_key=? AND auth_key=?",
+        id,
+        endpoint,
+        p256dh,
+        auth,
+      );
+    },
     subscribePush(actorId: number, input: unknown) {
       member(actorId);
       const sub = parseSubscription(input);

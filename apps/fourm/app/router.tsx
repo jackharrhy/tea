@@ -6,6 +6,7 @@ import { AdminEditors } from "./admin-editors.tsx";
 import { adminRoutes, adminController } from "./admin-controller.tsx";
 import { AdminBanner } from "./admin-banner.tsx";
 import { exportUserSite, exportFullSite } from "./site-export.ts";
+import { deliverPush } from "./push-delivery.ts";
 import { pushRoutes, pushController } from "./push-controller.tsx";
 import { mediaRoutes, mediaController } from "./media-controller.tsx";
 import { wantsJSON } from "./http.ts";
@@ -158,6 +159,7 @@ export function createAppRouter(
         (await renderToString(
           <Document
             title={title}
+            vapidKey={env.VAPID_PUBLIC_KEY}
             member={viewer.member}
             banner={banner}
             html={html}
@@ -219,7 +221,10 @@ export function createAppRouter(
   router.map(pushRoutes, pushController(store, viewer));
   router.map(settingsRoutes, settingsController(store, viewer, page));
   router.map(mediaRoutes, mediaController(env, store, viewer, page));
-  router.map(widgetRoutes, widgetController(env, store, viewer, page));
+  router.map(
+    widgetRoutes,
+    widgetController(env, store, viewer, page, background),
+  );
   router.map(
     routes,
     createController(routes, {
@@ -573,6 +578,12 @@ export function createAppRouter(
             ),
           );
           if (id instanceof Response) return id;
+          if (env.VAPID_PRIVATE_KEY)
+            background(
+              store
+                .call("replyNotifications", member().id, id)
+                .then((items) => deliverPush(env, store, items)),
+            );
           const detail = await store.call("thread", Number(params.id));
           const target = `/forum/${params.id}?page=${detail.total_pages}`;
           if (wantsJSON(request))

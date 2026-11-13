@@ -1,6 +1,8 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it, vi } from "vitest";
 import { createCommunity } from "../app/data/community.ts";
+import { createAppRouter } from "../app/router.tsx";
+import type { Bindings, Runtime } from "../app/runtime.ts";
 import type { Row } from "../app/data/community.ts";
 
 function fixture(forumRateLimit = false, chatFloodLimit = false) {
@@ -757,6 +759,67 @@ it("keeps device upserts stable, hides credentials and scopes deletion to the me
   expect(community.pushDevices(41)).toEqual([]);
 });
 
+it("notifies watcher union once, excludes the replier and preserves quote and guestbook preferences", () => {
+  const { community, sqlite } = fixture();
+  sqlite
+    .prepare(
+      "INSERT INTO users(id,username,display_name,password_hash,notifications_enabled) VALUES(99,'third','Third','',1)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "UPDATE users SET notifications_enabled=1,watch_all_threads=1 WHERE id=41",
+    )
+    .run();
+  const subscription = {
+    endpoint: "https://push.invalid/one",
+    device_id: "device",
+    keys: { p256dh: "fixture-key", auth: "fixture-auth" },
+  };
+  for (const id of [41, 72, 99]) community.subscribePush(id, subscription);
+  const thread = community.createThread(99, "Topic", "Start", "markdown");
+  const quoted = Number(
+    sqlite.prepare("SELECT id FROM forum_posts WHERE thread_id=?").get(thread)
+      ?.id,
+  );
+  community.toggleThreadWatch(41, thread);
+  const reply = community.reply(72, thread, "Reply", "markdown", {
+    quoted_post_id: quoted,
+  });
+  const messages = community.replyNotifications(72, reply);
+  expect(
+    messages
+      .map((m) => Number(m.subscription.user_id))
+      .toSorted((a, b) => a - b),
+  ).toEqual([41, 99]);
+  expect(messages.every((m) => m.title === "New reply in Topic")).toBe(true);
+  community.toggleThreadWatch(99, thread);
+  const quoteMessages = community.replyNotifications(72, reply);
+  expect(
+    quoteMessages.find((m) => Number(m.subscription.user_id) === 99)?.title,
+  ).toBe("You were quoted in Topic");
+  expect(() => community.replyNotifications(41, reply)).toThrow(
+    "Post ownership required",
+  );
+  expect(community.guestbookNotifications(41, "jane")).toEqual([]);
+  expect(community.guestbookNotifications(72, "jane")).toHaveLength(1);
+  sqlite.prepare("UPDATE users SET notifications_enabled=0 WHERE id=41").run();
+  expect(community.guestbookNotifications(72, "jane")).toEqual([]);
+  expect(community.replyNotifications(72, reply)).toHaveLength(1);
+  const sub = community.pushDevices(99)[0];
+  community.subscribePush(99, {
+    ...subscription,
+    endpoint: "https://push.invalid/new",
+  });
+  community.expirePushSubscription(
+    Number(sub.id),
+    subscription.endpoint,
+    "fixture-key",
+    "fixture-auth",
+  );
+  expect(community.pushDevices(99)).toHaveLength(1);
+});
+
 it("exports only public pages for the owner or administrator", () => {
   const { community } = fixture();
   community.savePage(72, "public", {
@@ -1077,4 +1140,41 @@ it("restricts storage inventory to admins and includes paths reserved by recover
     paths: [],
     reserved: ["jane/upload", "retired/pending"],
   });
+});
+
+it("returns a committed guestbook entry while notification delivery is still pending", async () => {
+  const { community, sqlite } = fixture();
+  const pending = Promise.withResolvers<unknown[]>();
+  const jobs: Promise<unknown>[] = [];
+  const store = {
+    call: async (method: keyof typeof community, ...args: unknown[]) => {
+      if (method === "guestbookNotifications") return pending.promise;
+      return (community[method] as (...values: unknown[]) => unknown)(...args);
+    },
+  } as unknown as Runtime;
+  const router = createAppRouter(
+    { VAPID_PRIVATE_KEY: "isolated-test-only" } as Bindings,
+    store,
+    { member: community.member(72), sessionHash: null },
+    (operation) => jobs.push(operation),
+  );
+  try {
+    const response = await router.fetch(
+      new Request("http://127.0.0.1/u/jane/guestbook", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: new URLSearchParams({ message: "Saved before push finishes" }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, message: "entry added" });
+    expect(community.guestbook("jane").entries[0].message).toBe(
+      "Saved before push finishes",
+    );
+    expect(jobs).toHaveLength(1);
+  } finally {
+    pending.resolve([]);
+    await Promise.all(jobs);
+    sqlite.close();
+  }
 });
