@@ -74,6 +74,30 @@ test.skipIf(process.env.FOURM_HISTORY_BROWSER !== "1")(
           serviceWorkers: "block",
         });
         const page = await context.newPage();
+        await page.addInitScript(() => {
+          const paint = { frames: 0, wrong: 0 };
+          Object.assign(window, { historyPaint: paint });
+          const sample = () => {
+            if (document.body) {
+              paint.frames++;
+              if (
+                getComputedStyle(document.documentElement).backgroundColor !==
+                "rgb(240, 240, 240)"
+              )
+                paint.wrong++;
+            }
+            requestAnimationFrame(sample);
+          };
+          requestAnimationFrame(sample);
+        });
+        const assertPaint = async () => {
+          await page.waitForTimeout(50);
+          const paint = await page.evaluate(() =>
+            Reflect.get(window, "historyPaint"),
+          );
+          expect(paint.frames).toBeGreaterThan(0);
+          expect(paint.wrong).toBe(0);
+        };
         const canvas = () =>
           page.evaluate(
             () => getComputedStyle(document.documentElement).backgroundColor,
@@ -115,6 +139,7 @@ test.skipIf(process.env.FOURM_HISTORY_BROWSER !== "1")(
         await page.goBack();
         expect(new URL(page.url()).pathname).toBe("/forum");
         expect(await canvas()).toBe("rgb(240, 240, 240)");
+        await assertPaint();
         expect(
           await page.getByRole("textbox", { name: "Draft" }).inputValue(),
         ).toBe("unsent forum draft");
@@ -122,6 +147,7 @@ test.skipIf(process.env.FOURM_HISTORY_BROWSER !== "1")(
         await page.goForward();
         expect(new URL(page.url()).pathname).toBe("/chat");
         expect(await canvas()).toBe("rgb(240, 240, 240)");
+        await assertPaint();
         expect(
           await page.getByRole("textbox", { name: "Draft" }).inputValue(),
         ).toBe("unsent chat draft");
