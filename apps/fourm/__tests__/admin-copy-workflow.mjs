@@ -1,3 +1,4 @@
+import { exerciseWidgetCopies } from "./widget-copy-workflow.mjs";
 import { exerciseAdminForum } from "./admin-forum-workflow.mjs";
 import { exerciseAdminDeletion } from "./admin-deletion-workflow.mjs";
 import { exerciseAdminAccounts } from "./admin-accounts-workflow.mjs";
@@ -86,6 +87,23 @@ export async function exerciseAdminCopies({
           );
         }
 
+        if (workflow === "widgets") {
+          await exerciseWidgetCopies({
+            page,
+            context,
+            origin,
+            name,
+            output,
+            restart,
+          });
+          assert.equal(
+            errors.length,
+            0,
+            "Unexpected widget browser errors; private fixture logs only",
+          );
+          results.push({ name, widgetCustomization: true, browserErrors: 0 });
+          continue;
+        }
         if (workflow === "forum-admin") {
           await exerciseAdminForum({
             page,
