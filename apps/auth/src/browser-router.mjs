@@ -6,11 +6,13 @@ const routes = route({
   email: "/account/email",
   password: "/account/password",
   resendEmail: "/account/email/resend",
+  authorize: "/authorize",
+  device: "/device",
   root: "/",
   rest: "/*path",
 });
 
-export function createBrowserRouter(handle, accountRoutes) {
+export function createBrowserRouter(handle, accountRoutes, oauthRoutes) {
   const router = createRouter();
   router.map(routes, {
     actions: {
@@ -25,6 +27,12 @@ export function createBrowserRouter(handle, accountRoutes) {
       },
       resendEmail({ request }) {
         return handle(request, accountRoutes.resendEmail);
+      },
+      authorize({ request }) {
+        return handle(request, oauthRoutes.authorize);
+      },
+      device({ request }) {
+        return handle(request, oauthRoutes.device);
       },
       root({ request }) {
         return handle(request);

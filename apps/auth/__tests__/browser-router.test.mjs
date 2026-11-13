@@ -12,13 +12,16 @@ test("account writes reach their route actions, while unrelated pages use the br
   const router = createBrowserRouter(
     (_request, action) => new Response(action?.() ?? "fallback"),
     accountRoutes,
+    { authorize: () => "authorize", device: () => "device" },
   );
   for (const [path, expected] of [
     ["/account", "account"],
     ["/account/email", "email"],
     ["/account/password", "password"],
     ["/account/email/resend", "resendEmail"],
-    ["/authorize", "fallback"],
+    ["/authorize", "authorize"],
+    ["/device", "device"],
+    ["/unknown", "fallback"],
   ]) {
     const response = await router.fetch(
       new Request(`https://auth.test${path}`),

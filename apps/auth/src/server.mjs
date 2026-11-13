@@ -8,6 +8,7 @@ import { createNativeAccess } from "./native-access.mjs";
 import { createAccessStore } from "./access-store.mjs";
 import { createAccessRoutes } from "./access-routes.mjs";
 import { createAccountRoutes } from "./account-routes.mjs";
+import { createOAuthBrowserRoutes } from "./oauth-browser-routes.mjs";
 import { createZitadel } from "./zitadel.mjs";
 import {
   randomToken,
@@ -307,6 +308,20 @@ const accountRoutes = createAccountRoutes({
   renderAccount,
   renderEmailResult,
   cookieName,
+});
+
+const oauthRoutes = createOAuthBrowserRoutes({
+  api,
+  authorizationActions,
+  assertApplication,
+  grants,
+  accessStore,
+  contentSecurityPolicy,
+  randomToken,
+  renderAuthorization,
+  renderDevice,
+  renderDeviceCode,
+  renderDeviceResult,
 });
 
 async function handleBrowser(request, routeAction) {
@@ -774,12 +789,15 @@ async function handleBrowser(request, routeAction) {
       if (routeAction) {
         await routeAction({
           request,
+          url,
           form,
           session,
           profile,
           context,
           headers,
+          send,
           sendRemix,
+          redirect,
         });
         return;
       }
@@ -801,127 +819,6 @@ async function handleBrowser(request, routeAction) {
           await sendRemix((nonce) => renderEnrollment(context, profile, nonce));
           return;
         }
-      }
-      if (
-        url.pathname === "/authorize" &&
-        ["GET", "POST"].includes(request.method)
-      ) {
-        const id =
-          request.method === "GET"
-            ? url.searchParams.get("authRequest")
-            : form.get("authRequest");
-        const { callback: silentCallback } = await authorizationActions.begin(
-          id,
-          session,
-        );
-        if (silentCallback) {
-          redirect(silentCallback);
-          return;
-        }
-        if (request.method === "GET") {
-          const intent = await authorizationActions.view(id, session);
-          if (intent.consent) {
-            const nonce = randomToken();
-            headers.set(
-              "Content-Security-Policy",
-              contentSecurityPolicy(intent.request.redirectUri, {
-                styleNonce: nonce,
-              }),
-            );
-            send(await renderAuthorization(intent, id, context, nonce));
-            return;
-          }
-        }
-        const callback = await authorizationActions.complete(
-          id,
-          session,
-          request.method === "POST" ? form.get("decision") : "approve",
-          request.method === "GET",
-        );
-        redirect(callback);
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/device") {
-        const code = url.searchParams.get("user_code");
-        if (!code) {
-          await sendRemix((nonce) => renderDeviceCode(context, nonce));
-          return;
-        }
-        if (!/^[A-Z0-9-]{4,30}$/.test(code))
-          throw httpError(400, "Invalid device code.");
-        const deviceRequest = (
-          await api(`/v2/oidc/device_authorization/${encodeURIComponent(code)}`)
-        ).deviceAuthorizationRequest;
-        assertApplication(deviceRequest);
-        await sendRemix((nonce) =>
-          renderDevice(deviceRequest, code, context, nonce),
-        );
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/device") {
-        const code = form.get("userCode");
-        if (!/^[A-Z0-9-]{4,30}$/.test(code || ""))
-          throw httpError(400, "Load the device request again.");
-        const approve = form.get("decision") === "approve";
-        session.deviceDecisions ||= new Map();
-        let decision = session.deviceDecisions.get(code);
-        if (decision?.expires < Date.now()) {
-          session.deviceDecisions.delete(code);
-          decision = undefined;
-        }
-        if (decision && decision.approve !== approve)
-          throw httpError(409, "This request has already been handled.");
-        if (!decision) {
-          const pending = (async () => {
-            const deviceRequest = (
-              await api(
-                `/v2/oidc/device_authorization/${encodeURIComponent(code)}`,
-              )
-            ).deviceAuthorizationRequest;
-            const application = assertApplication(deviceRequest);
-            if (
-              approve &&
-              (accessStore.blocked(session.userId, application.projectId) ||
-                !(await grants(application)).some(
-                  (grant) =>
-                    grant.userId === session.userId &&
-                    grant.state === "USER_GRANT_STATE_ACTIVE",
-                ))
-            )
-              throw httpError(
-                403,
-                `You do not have access to ${application.name}.`,
-              );
-            await api(
-              `/v2/oidc/device_authorization/${encodeURIComponent(deviceRequest.id)}`,
-              {
-                method: "POST",
-                body: approve
-                  ? {
-                      session: {
-                        sessionId: session.sessionId,
-                        sessionToken: session.sessionToken,
-                      },
-                    }
-                  : { deny: {} },
-              },
-            );
-          })();
-          decision = { approve, pending, expires: Date.now() + 300_000 };
-          if (session.deviceDecisions.size >= 8)
-            session.deviceDecisions.delete(
-              session.deviceDecisions.keys().next().value,
-            );
-          session.deviceDecisions.set(code, decision);
-        }
-        try {
-          await decision.pending;
-        } catch (error) {
-          session.deviceDecisions.delete(code);
-          throw error;
-        }
-        await sendRemix((nonce) => renderDeviceResult(approve, context, nonce));
-        return;
       }
       throw httpError(404, "Page not found.");
     } catch (error) {
@@ -952,7 +849,11 @@ async function handleBrowser(request, routeAction) {
   return output ?? new Response("Request failed", { status: 500, headers });
 }
 
-const browserRouter = createBrowserRouter(handleBrowser, accountRoutes);
+const browserRouter = createBrowserRouter(
+  handleBrowser,
+  accountRoutes,
+  oauthRoutes,
+);
 const fetchRequest = (request) => {
   const path = new URL(request.url).pathname;
   if (
