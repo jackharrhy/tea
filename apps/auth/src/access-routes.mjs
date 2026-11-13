@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import * as views from "./access-views.mjs";
 import { directoryFor } from "./directory.mjs";
 import { searchAll } from "./applications.mjs";
 
@@ -33,6 +32,7 @@ export function createAccessRoutes({
   renderGroupForm,
   renderAccessForm,
   renderChangePreview,
+  renderPerson,
 }) {
   const people = async () =>
     (await searchAll(api, "/management/v1/users/_search")).filter(
@@ -160,22 +160,16 @@ export function createAccessRoutes({
       if (request.method === "GET") {
         if (person[2] === "access")
           await sendRemix((nonce) => renderAccessForm(user, model, domains, services, context, nonce));
-        else
-          send(
-            views.person(
-              user,
-              model,
-              domains,
-              services,
-              await native.list(user.id),
-              {
-                ...context,
-                supportTarget: context.supportEnabled
-                  ? await supportPreflight?.(context.user, user.id)
-                  : undefined,
-              },
-            ),
-          );
+        else {
+          const observed = await native.list(user.id);
+          const personContext = {
+            ...context,
+            supportTarget: context.supportEnabled
+              ? await supportPreflight?.(context.user, user.id)
+              : undefined,
+          };
+          await sendRemix((nonce) => renderPerson(user, model, domains, services, observed, personContext, undefined, nonce));
+        }
         return true;
       }
       if (request.method === "POST" && person[2] === "recovery") {
@@ -185,17 +179,8 @@ export function createAccessRoutes({
           new URL(url).origin,
         );
         access.recordAccount(session.userId, user.id, "recovery.created");
-        send(
-          views.person(
-            user,
-            model,
-            domains,
-            services,
-            await native.list(user.id),
-            context,
-            recoveryLink,
-          ),
-        );
+        const observed = await native.list(user.id);
+        await sendRemix((nonce) => renderPerson(user, model, domains, services, observed, context, recoveryLink, nonce));
         return true;
       }
       if (request.method === "POST" && person[2] === "status") {
