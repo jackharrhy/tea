@@ -10,6 +10,7 @@ import { getSessionCookie, getUserFromRequest } from "#lib/auth.server";
 import {
   identityClient,
   createLoginTransaction,
+  loginTransactionCookieName,
   validLoginTransaction,
   browserRedirectUri,
   getCliRedirectUri,
@@ -119,6 +120,10 @@ export default createController(routes.auth, {
 
     async login() {
       const transaction = createLoginTransaction();
+      const cookieName = loginTransactionCookieName(
+        "artbin_oauth",
+        transaction.state,
+      )!;
       return redirectWithHeaders(
         await identityClient().authorizationUrl(
           transaction,
@@ -126,7 +131,7 @@ export default createController(routes.auth, {
         ),
         {
           "Set-Cookie": oauthCookie(
-            "artbin_oauth",
+            cookieName,
             JSON.stringify(transaction),
             600,
           ),
@@ -139,18 +144,20 @@ export default createController(routes.auth, {
       const code = context.url.searchParams.get("code");
       const state = context.url.searchParams.get("state");
       const oauthError = context.url.searchParams.get("error");
+      const cookieName = loginTransactionCookieName("artbin_oauth", state);
+      if (!cookieName) return terminalLoginError("missing_oauth_state");
 
       const oauthData = readOauthCookie<LoginTransaction>(
         context.request,
-        "artbin_oauth",
+        cookieName,
       );
       if (!oauthData)
-        return terminalLoginError("missing_oauth_state", "artbin_oauth");
+        return terminalLoginError("missing_oauth_state", cookieName);
       if (!validLoginTransaction(oauthData, state)) {
-        return terminalLoginError("state_mismatch", "artbin_oauth");
+        return terminalLoginError("state_mismatch", cookieName);
       }
-      if (oauthError) return terminalLoginError(oauthError, "artbin_oauth");
-      if (!code) return terminalLoginError("missing_code", "artbin_oauth");
+      if (oauthError) return terminalLoginError(oauthError, cookieName);
+      if (!code) return terminalLoginError("missing_code", cookieName);
 
       try {
         const identity = await identityClient().exchange(
@@ -175,7 +182,7 @@ export default createController(routes.auth, {
         log.emit();
 
         const headers = new Headers();
-        headers.append("Set-Cookie", clearOauthCookie("artbin_oauth"));
+        headers.append("Set-Cookie", clearOauthCookie(cookieName));
         headers.append("Set-Cookie", getSessionCookie(sessionId));
         return redirectWithHeaders(routes.folders.href(), headers);
       } catch (error) {
@@ -183,7 +190,7 @@ export default createController(routes.auth, {
           step: "oauth-callback",
         });
         log.emit();
-        return terminalLoginError("oauth_failed", "artbin_oauth");
+        return terminalLoginError("oauth_failed", cookieName);
       }
     },
 
@@ -195,6 +202,10 @@ export default createController(routes.auth, {
         });
 
       const transaction = createLoginTransaction();
+      const cookieName = loginTransactionCookieName(
+        "artbin_cli_oauth",
+        transaction.state,
+      )!;
       return redirectWithHeaders(
         await identityClient().authorizationUrl(
           transaction,
@@ -202,7 +213,7 @@ export default createController(routes.auth, {
         ),
         {
           "Set-Cookie": oauthCookie(
-            "artbin_cli_oauth",
+            cookieName,
             JSON.stringify({ ...transaction, cliPort }),
             600,
           ),
@@ -215,17 +226,26 @@ export default createController(routes.auth, {
       const code = context.url.searchParams.get("code");
       const state = context.url.searchParams.get("state");
       const oauthError = context.url.searchParams.get("error");
+      const cookieName = loginTransactionCookieName("artbin_cli_oauth", state);
+      if (!cookieName)
+        return terminalCliError("Missing or invalid OAuth state");
       const oauthData = readOauthCookie<LoginTransaction & { cliPort: number }>(
         context.request,
-        "artbin_cli_oauth",
+        cookieName,
       );
       if (!oauthData || !parseCliPort(String(oauthData.cliPort))) {
-        return terminalCliError("Missing or invalid OAuth state");
+        return terminalCliError(
+          "Missing or invalid OAuth state",
+          400,
+          cookieName,
+        );
       }
       if (!validLoginTransaction(oauthData, state))
-        return terminalCliError("State mismatch");
-      if (oauthError) return terminalCliError(`OAuth error: ${oauthError}`);
-      if (!code) return terminalCliError("Missing code or state");
+        return terminalCliError("State mismatch", 400, cookieName);
+      if (oauthError)
+        return terminalCliError(`OAuth error: ${oauthError}`, 400, cookieName);
+      if (!code)
+        return terminalCliError("Missing code or state", 400, cookieName);
 
       try {
         const identity = await identityClient().exchange(
@@ -258,7 +278,7 @@ export default createController(routes.auth, {
 
         return redirectWithHeaders(
           `http://127.0.0.1:${oauthData.cliPort}/callback?code=${encodeURIComponent(handoffCode)}`,
-          { "Set-Cookie": clearOauthCookie("artbin_cli_oauth") },
+          { "Set-Cookie": clearOauthCookie(cookieName) },
         );
       } catch (error) {
         log.error(error instanceof Error ? error : new Error(String(error)), {
@@ -266,7 +286,7 @@ export default createController(routes.auth, {
           channel: "cli",
         });
         log.emit();
-        return terminalCliError("OAuth callback failed", 500);
+        return terminalCliError("OAuth callback failed", 500, cookieName);
       }
     },
 
@@ -409,19 +429,23 @@ function redirectWithHeaders(
   return new Response(null, { status, headers });
 }
 
-function terminalLoginError(code: string, cookieName: string): Response {
+function terminalLoginError(code: string, cookieName?: string): Response {
   return redirectWithHeaders(
     `${routes.login.href()}?error=${encodeURIComponent(code)}`,
-    {
-      "Set-Cookie": clearOauthCookie(cookieName),
-    },
+    cookieName ? { "Set-Cookie": clearOauthCookie(cookieName) } : undefined,
   );
 }
 
-function terminalCliError(message: string, status = 400): Response {
+function terminalCliError(
+  message: string,
+  status = 400,
+  cookieName?: string,
+): Response {
   return new Response(message, {
     status,
-    headers: { "Set-Cookie": clearOauthCookie("artbin_cli_oauth") },
+    headers: cookieName
+      ? { "Set-Cookie": clearOauthCookie(cookieName) }
+      : undefined,
   });
 }
 

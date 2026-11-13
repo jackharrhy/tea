@@ -127,7 +127,7 @@ describe("HTTP integration tests", () => {
       expect(location).toContain("response_type=code");
       expect(location).toContain("code_challenge_method=S256");
       const cookies = res.headers.get("set-cookie") ?? "";
-      expect(cookies).toContain("artbin_oauth=");
+      expect(cookies).toMatch(/artbin_oauth_[A-Za-z0-9_-]{43}=/);
     });
 
     test("/auth/callback without code redirects to /login with error", async () => {

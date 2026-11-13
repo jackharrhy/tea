@@ -160,7 +160,8 @@ describe("native Remix router", () => {
     assert.ok(authorizeUrl.searchParams.get("code_challenge"));
 
     const oauthCookie = start.headers.get("set-cookie")!;
-    assert.match(oauthCookie, /^artbin_oauth=/);
+    const transactionName = oauthCookie.split("=", 1)[0]!;
+    assert.match(transactionName, /^artbin_oauth_[A-Za-z0-9_-]{43}$/);
     assert.match(oauthCookie, /HttpOnly/);
     assert.match(oauthCookie, /SameSite=Lax/);
 
@@ -189,7 +190,8 @@ describe("native Remix router", () => {
     assert.ok(
       cookies.some(
         (cookie) =>
-          cookie.startsWith("artbin_oauth=") && cookie.includes("Max-Age=0"),
+          cookie.startsWith(`${transactionName}=`) &&
+          cookie.includes("Max-Age=0"),
       ),
     );
     assert.ok(
@@ -206,7 +208,7 @@ describe("native Remix router", () => {
     assert.equal((await database.db.select().from(sessions)).length, 3);
   });
 
-  it("validates state and clears the transaction cookie on OAuth errors", async () => {
+  it("leaves another transaction untouched on wrong state and clears only a matching error", async () => {
     const start = await router.fetch(request(routes.auth.login.href()));
     const authorizeUrl = new URL(start.headers.get("location")!);
     const oauthCookie = start.headers.get("set-cookie")!;
@@ -222,12 +224,9 @@ describe("native Remix router", () => {
     assert.equal(mismatched.status, 302);
     assert.equal(
       mismatched.headers.get("location"),
-      "/login?error=state_mismatch",
+      "/login?error=missing_oauth_state",
     );
-    assert.match(
-      mismatched.headers.get("set-cookie") ?? "",
-      /artbin_oauth=.*Max-Age=0/,
-    );
+    assert.equal(mismatched.headers.get("set-cookie"), null);
 
     const deniedUrl = new URL(routes.auth.callback.href(), origin);
     deniedUrl.searchParams.set("error", "access_denied");
@@ -242,10 +241,12 @@ describe("native Remix router", () => {
     );
     assert.equal(denied.status, 302);
     assert.equal(denied.headers.get("location"), "/login?error=access_denied");
-    assert.match(
-      denied.headers.get("set-cookie") ?? "",
-      /artbin_oauth=.*Max-Age=0/,
+    assert.ok(
+      denied.headers
+        .get("set-cookie")
+        ?.startsWith(oauthCookie.split("=", 1)[0]! + "="),
     );
+    assert.match(denied.headers.get("set-cookie")!, /Max-Age=0/);
   });
 
   it("exchanges a CLI OAuth callback for a single-use session handoff", async () => {
@@ -272,7 +273,7 @@ describe("native Remix router", () => {
     assert.equal(callback.status, 302);
     assert.match(
       callback.headers.get("set-cookie") ?? "",
-      /artbin_cli_oauth=.*Max-Age=0/,
+      /artbin_cli_oauth_[A-Za-z0-9_-]{43}=.*Max-Age=0/,
     );
 
     const loopbackUrl = new URL(callback.headers.get("location")!);
@@ -311,6 +312,62 @@ describe("native Remix router", () => {
       "invalid_grant",
     );
     assert.equal((await database.db.select().from(sessions)).length, 3);
+  });
+
+  it("keeps overlapping browser and CLI sign-ins independent by state", async () => {
+    for (const channel of [
+      {
+        start: routes.auth.login.href(),
+        callback: routes.auth.callback.href(),
+      },
+      {
+        start: `${routes.auth.cliAuthorize.href()}?port=43210`,
+        callback: routes.auth.cliCallback.href(),
+      },
+    ]) {
+      const start = async () => {
+        const response = await router.fetch(request(channel.start));
+        assert.equal(response.status, 302);
+        const authorization = new URL(response.headers.get("location")!);
+        return {
+          state: authorization.searchParams.get("state")!,
+          nonce: authorization.searchParams.get("nonce")!,
+          cookie: response.headers.get("set-cookie")!.split(";", 1)[0]!,
+        };
+      };
+      const first = await start();
+      const second = await start();
+      assert.notEqual(first.state, second.state);
+      const cookies = `${first.cookie}; ${second.cookie}`;
+      const callback = (state: string) =>
+        router.fetch(
+          new Request(
+            new URL(
+              `${channel.callback}?code=fixture-code&state=${state}`,
+              origin,
+            ),
+            { headers: { Cookie: cookies } },
+          ),
+        );
+      const invalid = await callback("invalid");
+      assert.equal(invalid.headers.get("set-cookie"), null);
+      globalThis.fetch = identityFetch(first.nonce);
+      const firstResult = await callback(first.state);
+      assert.equal(firstResult.status, 302);
+      assert.ok(
+        firstResult.headers
+          .getSetCookie()[0]
+          ?.startsWith(first.cookie.split("=", 1)[0]! + "="),
+      );
+      globalThis.fetch = identityFetch(second.nonce);
+      const secondResult = await callback(second.state);
+      assert.equal(secondResult.status, 302);
+      assert.ok(
+        secondResult.headers
+          .getSetCookie()[0]
+          ?.startsWith(second.cookie.split("=", 1)[0]! + "="),
+      );
+    }
   });
 
   it("never links an unmapped central identity by its matching username", async () => {

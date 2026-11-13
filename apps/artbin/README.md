@@ -33,6 +33,9 @@ Never match accounts by username. A fresh database needs no legacy mapping.
 The migration clears old browser sessions and CLI handoffs. Members sign in again
 through Jack Auth; sessions last at most an hour and never outlive the central
 identity proof. CLI handoffs remain single-use and cannot extend expired proof.
+Browser and CLI OAuth attempts each keep their state and PKCE verifier in a
+separate short-lived cookie, so opening another sign-in tab does not replace an
+earlier attempt.
 App access requires this project's `member` or `admin` role; administrator actions
 use its `admin` role. The former global 4orm admin flag is not an authority here.
 
