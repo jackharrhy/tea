@@ -42,12 +42,28 @@ function stable(value: Record<string, unknown>) {
     Object.entries(value).toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
   );
 }
-function recoveryFingerprint(state: RecoveryState) {
+function storageFingerprint(state: RecoveryState) {
+  const tables = Object.fromEntries([
+    ...[
+      "media",
+      "media_transfers",
+      "media_moves",
+      "media_move_files",
+      "account_cleanup_users",
+      "account_cleanup_objects",
+      "orphan_cleanup_objects",
+      "archive_staging_objects",
+    ].map((name) => [name, state.tables[name]]),
+    ["users", state.tables.users.map(({ id, username }) => ({ id, username }))],
+  ]);
+  // SQL already came from one transaction. Only storage coordination must stay
+  // unchanged while its corresponding files are copied.
   return (
-    canonicalTables(state.tables) +
+    canonicalTables(tables) +
     JSON.stringify([state.columns, state.sequences, state.exclusions])
   );
 }
+
 async function liveFiles(bucket: Bucket) {
   const files: R2Object[] = [];
   let cursor: string | undefined;
@@ -189,12 +205,10 @@ export async function captureNativeBackup(
       }),
     );
   }
-  if (
-    recoveryFingerprint(recovery) !== recoveryFingerprint(await readRecovery())
-  )
+  if (storageFingerprint(recovery) !== storageFingerprint(await readRecovery()))
     throw new CommunityError(
       409,
-      "Application state changed during native backup",
+      "Storage authority changed during native backup",
     );
   const after = await liveFiles(bucket);
   if (
