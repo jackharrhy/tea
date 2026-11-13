@@ -31,6 +31,8 @@ export function createAccessRoutes({
   renderOperation,
   renderGroups,
   renderGroupForm,
+  renderAccessForm,
+  renderChangePreview,
 }) {
   const people = async () =>
     (await searchAll(api, "/management/v1/users/_search")).filter(
@@ -157,7 +159,7 @@ export function createAccessRoutes({
       const user = await accountActions.managedUser(person[1]);
       if (request.method === "GET") {
         if (person[2] === "access")
-          send(views.accessForm(user, model, domains, services, context));
+          await sendRemix((nonce) => renderAccessForm(user, model, domains, services, context, nonce));
         else
           send(
             views.person(
@@ -295,7 +297,7 @@ export function createAccessRoutes({
         }
       }
       const changePreview = await access.preview(change, session.userId);
-      send(views.preview(changePreview, domains, current, context));
+      await sendRemix((nonce) => renderChangePreview(changePreview, domains, current, context, nonce));
       return true;
     }
     if (request.method === "POST" && url.pathname === "/manage/changes/apply") {
