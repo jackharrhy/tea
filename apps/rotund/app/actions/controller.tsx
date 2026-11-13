@@ -5,6 +5,7 @@ import { routes } from "../routes.js";
 import { visibleServices, type Service } from "../services.js";
 import type { Login, Transaction } from "../identity.js";
 import type { PortalConfig } from "../router.js";
+import { addPendingTransaction } from "../pending-transactions.js";
 
 const random = () => randomBytes(32).toString("base64url");
 const redirect = (location: string) =>
@@ -35,7 +36,7 @@ export function createHomeController(config: PortalConfig) {
             createdAt: Date.now(),
             silent: true,
           };
-          s.set("transaction", tx);
+          addPendingTransaction(s, tx);
           return redirect(await config.identity.begin(tx, true));
         }
         s.set("probeDone", true);

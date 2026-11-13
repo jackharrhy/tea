@@ -310,6 +310,58 @@ test("silent SSO checks once, login_required becomes a usable anonymous page wit
   );
 });
 
+test("an explicit sign-in does not replace a pending silent callback", async () => {
+  const { app } = fixture();
+  const silent = await app.fetch(request("/"));
+  const silentState = new URL(silent.headers.get("Location")!).searchParams.get(
+    "state",
+  )!;
+  const page = await app.fetch(request("/?signed_out=1", cookie(silent)));
+  const csrf = /name="csrf" value="([^"]+)"/.exec(await page.text())?.[1];
+  assert.ok(csrf);
+  const interactive = await app.fetch(
+    new Request("https://rotund.test/auth/login", {
+      method: "POST",
+      headers: {
+        Origin: "https://rotund.test",
+        Cookie: cookie(page) || cookie(silent),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ csrf }),
+    }),
+  );
+  assert.equal(interactive.status, 302);
+  const interactiveState = new URL(
+    interactive.headers.get("Location")!,
+  ).searchParams.get("state")!;
+  assert.notEqual(interactiveState, silentState);
+  const currentCookie = cookie(interactive);
+  assert.equal(
+    (
+      await app.fetch(
+        request("/auth/callback?code=ignored&state=wrong", currentCookie),
+      )
+    ).status,
+    400,
+  );
+  const silentResult = await app.fetch(
+    request(
+      `/auth/callback?error=login_required&state=${silentState}`,
+      currentCookie,
+    ),
+  );
+  assert.equal(silentResult.status, 302);
+  const interactiveResult = await app.fetch(
+    request(
+      `/auth/callback?code=fixture-code&state=${interactiveState}`,
+      cookie(silentResult),
+    ),
+  );
+  assert.equal(interactiveResult.status, 302);
+  const signedIn = await app.fetch(request("/", cookie(interactiveResult)));
+  assert.match(await signedIn.text(), /sonarr\.rotund\.org/);
+});
+
 test("live entitlements are refreshed; removed role and changed subject never retain privileged links", async () => {
   const f = fixture();
   const signed = await signIn(f.app);
