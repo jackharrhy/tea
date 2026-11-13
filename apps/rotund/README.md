@@ -14,6 +14,8 @@ Run from the repository root with Node 26 and `npm ci`. Set `APP_ORIGIN`, `AUTH_
 
 The app checks existing Jack Auth sign-in once with `prompt=none`; an anonymous visitor then sees the face and Sign in button without a redirect loop. Login uses code, PKCE, state, nonce, signed ID token validation and fresh UserInfo. Access tokens remain server-side. Every directory request checks the exact subject, project, organization and role; names, email and forwarded headers grant nothing. Signed Secure HttpOnly host-only cookies reference bounded one-hour in-memory sessions. Restart clears local sessions and ordinary Jack Auth SSO can restore them. Logout clears only the local portal session.
 
+The Remix CSP middleware gives each HTML response a fresh nonce for generated styles. Scripts stay disabled; forms may submit only to Rotund and the configured issuer. The app keeps its same-origin referrer policy because its sign-in form checks Origin and CSRF.
+
 Jellyfin retains its native login. Navidrome has its own existing Jack Auth entitlement. Seerr uses Jellyfin native login and its link remains restricted to the explicitly linked subject. Cleanuparr retains its native login behind the existing Jack Auth media-admin gate. Catalogue visibility is never a promise of destination access.
 
 ## Checks
