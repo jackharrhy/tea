@@ -72,10 +72,15 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
             user.id,
           );
         }
-        return db.all(
-          "SELECT total_views FROM visitor_counters WHERE user_id=?",
-          user.id,
-        )[0];
+        return {
+          owner: user,
+          total_views: Number(
+            db.all(
+              "SELECT total_views FROM visitor_counters WHERE user_id=?",
+              user.id,
+            )[0].total_views,
+          ),
+        };
       });
     },
     status: owner,
