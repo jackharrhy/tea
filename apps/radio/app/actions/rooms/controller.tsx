@@ -1,4 +1,5 @@
 import { createController } from "remix/router";
+import { getCspNonce } from "remix/middleware/csp";
 import { redirect } from "remix/response/redirect";
 import { Session } from "remix/session";
 
@@ -48,7 +49,11 @@ export default createController(routes.rooms, {
         );
         if (!snapshot) return new Response("Room unavailable", { status: 503 });
         return context.render(
-          <RadioPage snapshot={snapshot} roomName={room.name} />,
+          <RadioPage
+            snapshot={snapshot}
+            roomName={room.name}
+            nonce={getCspNonce(context)}
+          />,
         );
       },
     },

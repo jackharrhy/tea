@@ -127,6 +127,12 @@ try {
   await runtime.start(origin);
   const lobby = await request(routes.home.href());
   assert.equal(lobby.status, 200);
+  const policy = lobby.headers.get("Content-Security-Policy") ?? "";
+  const nonce = /script-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+  assert.ok(nonce, "lobby needs a fresh Remix CSP nonce");
+  assert.ok((await lobby.clone().text()).includes(`nonce="${nonce}"`));
+  assert.match(policy, new RegExp(`ws:\\/\\/127\\.0\\.0\\.1:${port}`));
+  assert.equal(lobby.headers.get("Cache-Control"), "private, no-store");
   assert.equal(
     (
       await request(routes.rooms.show.href({ roomSlug }), {
@@ -232,8 +238,24 @@ try {
     },
   ]);
   page = await context.newPage();
+  const cspViolations = [];
+  page.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      /Content Security Policy|Refused to|CSP/i.test(message.text())
+    )
+      cspViolations.push(message.text());
+  });
   await page.goto(origin, { waitUntil: "domcontentloaded" });
   await verifyPlayback(track.url);
+  assert.deepEqual(
+    cspViolations,
+    [],
+    "lobby and media playback must satisfy CSP",
+  );
+  result.checks.push(
+    "fresh CSP nonce and browser media without policy violations",
+  );
   result.checks.push("browser WAV metadata, decoding and playback progress");
   const snapshot = await connect();
   assert.ok(snapshot.tracks.some(({ id }) => id === track.id));

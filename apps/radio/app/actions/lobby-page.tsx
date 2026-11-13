@@ -13,12 +13,13 @@ export function LobbyPage(
     identity: RadioIdentity | null;
     selectedRoom: string;
     message?: string;
+    nonce: string | undefined;
   }>,
 ) {
   return () => {
-    let { rooms, identity, selectedRoom, message } = handle.props;
+    let { rooms, identity, selectedRoom, message, nonce } = handle.props;
     return (
-      <Document title="Rooms · radio">
+      <Document title="Rooms · radio" nonce={nonce}>
         <main mix={[desktopThemeStyle, lobbyStyle.page]}>
           <RoomLobby
             rooms={rooms}

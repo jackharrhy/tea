@@ -1,6 +1,7 @@
 import { createController } from "remix/router";
 import { redirect } from "remix/response/redirect";
 import { Session } from "remix/session";
+import { getCspNonce } from "remix/middleware/csp";
 
 import {
   DEFAULT_ROOM_SLUG,
@@ -24,6 +25,7 @@ export default createController(routes, {
         : (rooms[0]?.slug ?? DEFAULT_ROOM_SLUG);
       return context.render(
         <LobbyPage
+          nonce={getCspNonce(context)}
           rooms={rooms}
           identity={context.get(RadioAccess) ?? null}
           selectedRoom={selectedRoom}
