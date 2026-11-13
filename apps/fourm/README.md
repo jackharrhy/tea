@@ -44,6 +44,12 @@ access proxy own that instance; coordinate a stop/start before changing its
 runtime configuration. Generated configs retained in `.review/retired-worktree`
 are historical evidence, not launch inputs.
 
+A preview hostname change must preserve its canonical fixture issuer unless an
+explicit identity-link migration is reviewed: member links use exact issuer and
+subject. A named ingress without trusted Tailnet identity must require the
+separate review key, never fabricate an identity header or treat DNS as access
+control.
+
 Python production and its separate oracle interpreter/state remain independent
 and untouched. A long-term shared Celld host is a direction, not a reason to
 combine app stores or redesign authority during this consolidation.
