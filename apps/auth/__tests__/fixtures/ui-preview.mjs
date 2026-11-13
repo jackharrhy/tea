@@ -8,7 +8,6 @@ delete process.env.RADIO_ENROLLMENT_DB_FILE;
 const { renderLogin } = await import("../../src/login-page.tsx");
 const { renderInterior } = await import("./interior.tsx");
 const { optionsFrom, renderExplorer } = await import("./explorer.tsx");
-const { renderDoodle } = await import("../../src/doodles.mjs");
 const server = createServer(async (req, res) => {
   if (req.method !== "GET") {
     res.writeHead(405).end();
@@ -39,6 +38,7 @@ const server = createServer(async (req, res) => {
             ? "text/javascript"
             : "font/woff2",
       );
+      res.setHeader("Cache-Control", "no-store");
       res.end(await readFile(file));
     } catch {
       res.writeHead(404).end();
@@ -56,21 +56,11 @@ const server = createServer(async (req, res) => {
     return;
   }
   const options = optionsFrom(url.searchParams);
-  // Fixed dates select existing palette rotations and a deterministic seed, never host state.
-  const day = options.palette === "cyan" ? "2026-01-15" : "2026-01-16";
-  const artwork = renderDoodle(options.effect, day, {
-    color: options.palette === "neutral" ? 0 : 1,
-  }).replace(
-    "<svg ",
-    options.layer === "plain" || options.layer === "webgl"
-      ? "<svg hidden "
-      : "<svg ",
-  );
   let html = await renderLogin(
     { csrf: "fixture-only", returnTo: "/" },
     "fixture",
   );
-  html = html.replace(/<svg class="auth-art"[\s\S]*?<\/svg>/, artwork);
+  html = html.replace(/<svg class="auth-art"[\s\S]*?<\/svg>/, "");
   html = html.replace(
     "/assets/doodle-motion.mjs",
     "/assets/fixture-explorer.mjs",

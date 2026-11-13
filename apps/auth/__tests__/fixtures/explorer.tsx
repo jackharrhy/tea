@@ -29,9 +29,7 @@ const panel = css({
 export const choices = {
   layer: {
     plain: "Plain / no effect",
-    svg: "SVG only",
     webgl: "WebGL only",
-    both: "SVG + WebGL (simultaneous)",
   },
   effect: {
     waves: "Waves · line bands (existing default)",
@@ -68,7 +66,7 @@ export function optionsFrom(search: URLSearchParams) {
   ) as Record<keyof typeof choices, string>;
 }
 const labels: Record<string, string> = {
-  layer: "Layers",
+  layer: "Background",
   effect: "Existing effect",
   palette: "Color",
   surface: "Paper surface",
@@ -78,10 +76,11 @@ const labels: Record<string, string> = {
 export function renderExplorer(options: ReturnType<typeof optionsFrom>) {
   return renderToString(
     <details id="background-explorer" mix={panel}>
-      <summary>Background explorer · fixture only</summary>
+      <summary>Background options</summary>
       <p>
-        No sign-in submissions. Apply an option; its URL preserves the exact
-        selection. Defaults to plain and still. No SVG-to-WebGL replacement.
+        Safe preview: sign-in disabled. Changes appear immediately and stay in
+        the URL. Hold still for a repeatable view. WebGL unavailable? Plain
+        paper stays visible.
       </p>
       <form method="get" action="/login">
         {Object.entries(choices).map(([key, values]) => (
@@ -99,7 +98,6 @@ export function renderExplorer(options: ReturnType<typeof optionsFrom>) {
             </select>
           </label>
         ))}
-        <button type="submit">Apply & keep this URL</button>
       </form>
       <output id="explorer-status" aria-live="polite">
         Preparing selected background.

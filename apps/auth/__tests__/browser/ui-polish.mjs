@@ -22,6 +22,7 @@ try {
     { width: 390, height: 844 },
   ]) {
     const page = await browser.newPage({ viewport });
+    page.on("pageerror", (error) => console.log(error.message));
     await page.goto(`${origin}/login`);
     const box = await page.locator("main").boundingBox();
     assert.ok(
@@ -29,35 +30,55 @@ try {
       "login centered",
     );
     assert.equal(await page.locator("canvas").count(), 0);
-    assert.equal(await page.locator("svg.auth-art").isVisible(), false);
+    assert.equal(await page.locator("svg.auth-art").count(), 0);
     assert.equal(
       await page.locator('script[src="/assets/doodle-motion.mjs"]').count(),
       0,
     );
     await page.locator("#background-explorer summary").click();
-    await page.getByLabel("Layers", { exact: true }).selectOption("webgl");
+    await page.evaluate(() => {
+      window.fixtureMarker = "same-document";
+    });
+    await page.getByLabel("Background", { exact: true }).selectOption("webgl");
     await page.getByLabel("Existing effect").selectOption("caustic-glass");
     await page.getByLabel("Color", { exact: true }).selectOption("cyan");
-    await page.getByRole("button", { name: "Apply & keep this URL" }).click();
+    assert.equal(
+      await page.getByRole("button", { name: "Apply & keep this URL" }).count(),
+      0,
+    );
     await page.waitForFunction(() =>
       document
         .querySelector("#explorer-status")
         .textContent.includes("held at time zero"),
     );
+    await page.locator("#background-explorer summary").click();
     assert.ok(page.url().includes("effect=caustic-glass"));
-    assert.equal(await page.locator("svg.auth-art").isVisible(), false);
+    assert.equal(
+      await page.evaluate(() => window.fixtureMarker),
+      "same-document",
+    );
+    assert.equal(await page.locator("svg.auth-art").count(), 0);
     const canvas = page.locator("canvas.auth-art");
-    const first = await canvas.screenshot();
+    const first = await canvas.screenshot({
+      timeout: 5000,
+      style: "#main, #background-explorer { visibility: hidden !important; }",
+    });
     await page.waitForTimeout(150);
     assert.deepEqual(
-      await canvas.screenshot(),
+      await canvas.screenshot({
+        timeout: 5000,
+        style: "#main, #background-explorer { visibility: hidden !important; }",
+      }),
       first,
       "stable selected option",
     );
-    await page.reload();
-    await canvas.waitFor();
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 5000 });
+    await canvas.waitFor({ timeout: 5000 });
     assert.deepEqual(
-      await canvas.screenshot(),
+      await canvas.screenshot({
+        timeout: 5000,
+        style: "#main, #background-explorer { visibility: hidden !important; }",
+      }),
       first,
       "reload preserves fixed seed/time",
     );
@@ -68,24 +89,33 @@ try {
     await page.waitForFunction(() =>
       document
         .querySelector("#explorer-status")
-        .textContent.includes("fallback"),
+        .textContent.includes("WebGL unavailable"),
     );
-    assert.equal(await page.locator("svg.auth-art").isVisible(), true);
-    await page.goto(`${origin}/login?layer=both&effect=silk&motion=animate`);
-    await canvas.waitFor();
-    assert.equal(await page.locator("svg.auth-art").isVisible(), true);
+    assert.equal(await page.locator("svg.auth-art").count(), 0);
+    await page.goto(`${origin}/login?layer=webgl&effect=silk&motion=animate`);
+    await canvas.waitFor({ timeout: 5000 });
+    assert.equal(await page.locator("svg.auth-art").count(), 0);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.waitForFunction(() =>
       document
         .querySelector("#explorer-status")
         .textContent.includes("reduced motion"),
     );
-    const still = await canvas.screenshot();
+    const still = await canvas.screenshot({
+      timeout: 5000,
+      style: "#main, #background-explorer { visibility: hidden !important; }",
+    });
     await page.waitForTimeout(150);
-    assert.deepEqual(await canvas.screenshot(), still);
-    await page.goto(`${origin}/login?layer=svg&effect=waves`);
+    assert.deepEqual(
+      await canvas.screenshot({
+        timeout: 5000,
+        style: "#main, #background-explorer { visibility: hidden !important; }",
+      }),
+      still,
+    );
+    await page.goto(`${origin}/login?layer=plain`);
     assert.equal(await page.locator("canvas").count(), 0);
-    assert.equal(await page.locator("svg.auth-art").isVisible(), true);
+    assert.equal(await page.locator("svg.auth-art").count(), 0);
     await page.goto(origin);
     assert.equal(await page.locator("h1").textContent(), "Your apps");
     assert.ok(
@@ -109,14 +139,16 @@ try {
   });
   await page.goto(`${origin}/login?layer=webgl`);
   await page.waitForFunction(() =>
-    document.querySelector("#explorer-status").textContent.includes("fallback"),
+    document
+      .querySelector("#explorer-status")
+      .textContent.includes("WebGL unavailable"),
   );
   assert.equal(await page.locator("canvas").count(), 0);
-  assert.equal(await page.locator("svg.auth-art").isVisible(), true);
+  assert.equal(await page.locator("svg.auth-art").count(), 0);
   assert.equal((await page.request.post(`${origin}/login`)).status(), 405);
   assert.equal((await page.request.get(`${origin}/support`)).status(), 404);
   console.log(
-    "UI explorer: responsive centering/header, plain/SVG/WebGL/combined, deterministic hold/reload, reduced motion and WebGL fallback passed",
+    "UI explorer: responsive centering/header, immediate plain/WebGL controls, deterministic hold/reload, reduced motion and WebGL fallback passed",
   );
 } finally {
   await browser.close();
