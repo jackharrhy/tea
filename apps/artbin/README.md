@@ -16,6 +16,10 @@ Run `npm run artbin:check` from the root or `npm run check --workspace @harrhy/a
 
 Artbin keeps its own UI and storage behavior inside this app. Artbin consumes the Tea map renderer through its public package entry points. Keep its preview behavior, visual assets, and component styles intact when updating the renderer.
 
+Remix 3.2 assigns a fresh CSP nonce to each HTML document, including generated
+styles, import maps, and the browser entry. HTML is private and no-store. The
+policy permits same-origin media and the preview viewer's runtime style values.
+
 ## Central identity rollout
 
 Stop Artbin and back up its SQLite database before applying the reviewed mapping

@@ -1,5 +1,7 @@
 import type { Handle, RemixNode } from "remix/component";
 import { ImportMap } from "remix/component/server";
+import { getContext } from "remix/middleware/async-context";
+import { getCspNonce } from "remix/middleware/csp";
 
 import { documentImportMap, entryScript } from "../assets.ts";
 import { documentStyle } from "../ui/styles.ts";
@@ -12,6 +14,7 @@ export interface DocumentProps {
 
 export function Document(handle: Handle<DocumentProps>) {
   return () => {
+    const nonce = getCspNonce(getContext());
     const {
       children,
       head,
@@ -30,11 +33,11 @@ export function Document(handle: Handle<DocumentProps>) {
           />
           <title>{title}</title>
           {head}
-          <ImportMap value={documentImportMap} />
+          <ImportMap value={documentImportMap} nonce={nonce} />
           {entryScript.preloads.map((href) => (
             <link key={href} rel="modulepreload" href={href} />
           ))}
-          <script type="module" src={entryScript.href}></script>
+          <script type="module" src={entryScript.href} nonce={nonce}></script>
         </head>
         <body>{children}</body>
       </html>

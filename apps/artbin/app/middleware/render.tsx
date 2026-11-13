@@ -1,6 +1,7 @@
 import * as path from "node:path";
 
 import { renderWith } from "remix/middleware/render";
+import { getCspNonce, inheritCspNonce } from "remix/middleware/csp";
 import { createHtmlResponse } from "remix/response/html";
 import type { Router } from "remix/router";
 import type { RemixNode } from "remix/component";
@@ -10,12 +11,15 @@ import { assetServer } from "../assets.ts";
 
 export function render() {
   return renderWith(
-    ({ request, router }) =>
+    (context) =>
       function renderResponse(node: RemixNode, init?: ResponseInit) {
+        const { request, router } = context;
+        const nonce = getCspNonce(context);
         const stream = renderToStream(node, {
           frameSrc: request.url,
           signal: request.signal,
-          resolveFrame: (src) => resolveFrame(router, request, src),
+          nonce,
+          resolveFrame: (src) => resolveFrame(router, request, src, nonce),
           async resolveClientEntry(entryId, component) {
             if (!entryId.startsWith("file://")) {
               throw new Error(
@@ -43,19 +47,24 @@ export function render() {
   );
 }
 
-async function resolveFrame(router: Router, request: Request, src: string) {
+async function resolveFrame(
+  router: Router,
+  request: Request,
+  src: string,
+  nonce?: string,
+) {
   const url = new URL(src, request.url);
   const headers = new Headers({ Accept: "text/html" });
   const cookie = request.headers.get("Cookie");
   if (cookie) headers.set("Cookie", cookie);
 
-  const response = await router.fetch(
-    new Request(url, {
-      method: "GET",
-      headers,
-      signal: request.signal,
-    }),
-  );
+  const frameRequest = new Request(url, {
+    method: "GET",
+    headers,
+    signal: request.signal,
+  });
+  if (nonce) inheritCspNonce(frameRequest, nonce);
+  const response = await router.fetch(frameRequest);
 
   if (!response.ok) {
     return `<pre>Frame error: ${response.status} ${response.statusText}</pre>`;

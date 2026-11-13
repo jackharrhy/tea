@@ -1,4 +1,6 @@
 import { compression } from "remix/middleware/compression";
+import { asyncContext } from "remix/middleware/async-context";
+import { csp } from "remix/middleware/csp";
 import { staticFiles } from "remix/middleware/static";
 import { createRouter, type RouterContext } from "remix/router";
 
@@ -34,7 +36,31 @@ export const router = createRouter({
         );
       },
     }),
+    async (_context, next) => {
+      const response = await next();
+      if (response.headers.get("Content-Type")?.startsWith("text/html"))
+        response.headers.set("Cache-Control", "private, no-store");
+      return response;
+    },
+    asyncContext(),
     loadUser(),
+    csp({
+      policy: ({ nonce }) => ({
+        defaultSrc: ["'none'"],
+        scriptSrc: ["'self'", `'nonce-${nonce}'`],
+        styleSrc: ["'self'", `'nonce-${nonce}'`],
+        styleSrcAttr: ["'unsafe-inline'"],
+        fontSrc: ["'self'", "data:"],
+        imgSrc: ["'self'", "blob:", "data:"],
+        mediaSrc: ["'self'", "blob:"],
+        connectSrc: ["'self'", "blob:"],
+        workerSrc: ["'self'", "blob:"],
+        formAction: ["'self'"],
+        baseUri: ["'none'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      }),
+    }),
     render(),
   ],
 });
