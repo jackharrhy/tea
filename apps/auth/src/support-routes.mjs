@@ -1,6 +1,6 @@
 import { readFileSync, statSync } from "node:fs";
-import { page } from "./views.mjs";
-import { escapeHtml as h, contentSecurityPolicy } from "./security.mjs";
+import { contentSecurityPolicy } from "./security.mjs";
+const { renderSupportPage } = await import("./support-page.tsx");
 import { createSupportStore } from "./support-store.mjs";
 import { createSupportLogin } from "./support-login.mjs";
 import { createSupportProvider } from "./support-provider.mjs";
@@ -172,7 +172,7 @@ export function createSupportRoutes({
       }
       return true;
     },
-    async browser({ request, url, form, context, redirect, send, setPolicy }) {
+    async browser({ request, url, form, context, redirect, sendRemix, setPolicy }) {
       if (
         config.enabled !== true &&
         (url.pathname.startsWith("/support/") ||
@@ -195,23 +195,14 @@ export function createSupportRoutes({
               profile === "missing"
                 ? "Needs first Artbin sign-in."
                 : "Artbin availability could not be checked. Try again later.";
-            send(
-              page(
-                "Support login",
-                `<section class="narrow"><h1>Support login</h1><p>${message}</p><a href="/manage/people/${h(start[1])}">Back</a></section>`,
-                context,
-              ),
-            );
+            await sendRemix((nonce) => renderSupportPage(context, start[1], nonce, { message }), 200, [consumer.callback, config.issuer]);
             return true;
           }
           const actor = await accountActions.managedUser(context.user);
-          send(
-            page(
-              "Artbin",
-              `<section class="narrow"><h1>Artbin</h1><p>View as ${h(target.human?.profile?.displayName || target.userName)}.</p><p class="muted">You: ${h(actor.human?.profile?.displayName || actor.userName)} · Up to ten minutes. Your identity stays visible.</p><form method="post" class="form-stack"><input type="hidden" name="csrf" value="${h(context.csrf)}"><input type="hidden" name="consumer" value="artbin"><label>Reason<textarea name="reason" required minlength="3" maxlength="500"></textarea></label><button>Continue to Artbin</button></form><p><a href="/manage/people/${h(start[1])}">Back to person</a></p></section>`,
-              context,
-            ),
-          );
+          await sendRemix((nonce) => renderSupportPage(context, start[1], nonce, {
+            targetName: target.human?.profile?.displayName || target.userName,
+            actorName: actor.human?.profile?.displayName || actor.userName,
+          }), 200, [consumer.callback, config.issuer]);
           return true;
         }
         if (request.method !== "POST") throw fail(405);

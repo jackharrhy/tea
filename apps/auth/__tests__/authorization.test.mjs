@@ -1,4 +1,5 @@
 /* oxlint-disable eslint/no-shadow */
+import "remix/node-tsx";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -7,7 +8,7 @@ import {
   authorizationCallback,
 } from "../src/applications.mjs";
 import { createAuthorizationActions } from "../src/authorization.mjs";
-import { authorization as authorizationView } from "../src/views.mjs";
+const { renderAuthorization } = await import("../src/authorization-page.tsx");
 
 const application = {
   id: "artbin",
@@ -202,12 +203,12 @@ test("denial sends an OAuth error and callbacks stay on the registered target", 
   }
 });
 
-test("the consent view identifies the recipient, permission and optional data without active markup", () => {
+test("the consent view identifies the recipient, permission and optional data without active markup", async () => {
   const intent = authorizationForRequest(applications, {
     ...request,
     scope: [...scope, "email", "offline_access"],
   });
-  const html = authorizationView(
+  const html = await renderAuthorization(
     {
       ...intent,
       application: { ...application, name: "<script>bad</script>" },
@@ -215,6 +216,7 @@ test("the consent view identifies the recipient, permission and optional data wi
     },
     "request",
     { user: "jack", csrf: "proof" },
+    "test-nonce",
   );
   assert.match(html, /https:\/\/mcp-client\.example/);
   assert.match(html, /Administrator/);
@@ -266,7 +268,7 @@ test("Lists delegation requires explicit operation entitlements and never change
   const viewed = await actions.view("read", session);
   assert.deepEqual(viewed.roles, ["member", "lists-read"]);
   assert.match(
-    authorizationView(viewed, "read", { user: "member", csrf: "proof" }),
+    await renderAuthorization(viewed, "read", { user: "member", csrf: "proof" }, "test-nonce"),
     /lists-read/,
   );
   await actions.complete("read", session, "approve");

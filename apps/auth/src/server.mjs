@@ -13,9 +13,8 @@ import {
   validPost,
   contentSecurityPolicy,
   equalToken,
-  escapeHtml as h,
 } from "./security.mjs";
-import * as views from "./views.mjs";
+const { renderProblem } = await import("./problem-page.tsx");
 const { renderLogin } = await import("./login-page.tsx");
 const { renderAuthorization } = await import("./authorization-page.tsx");
 const { renderEmailForm, renderEmailResult } = await import("./email-page.tsx");
@@ -299,11 +298,11 @@ createServer(async (request, response) => {
     response.writeHead(303, { Location: path });
     response.end();
   };
-  const sendRemix = async (render, status = 200) => {
+  const sendRemix = async (render, status = 200, allowedOrigins) => {
     const nonce = randomToken();
     response.setHeader(
       "Content-Security-Policy",
-      contentSecurityPolicy(undefined, { styleNonce: nonce }),
+      contentSecurityPolicy(allowedOrigins, { styleNonce: nonce }),
     );
     send(await render(nonce), status);
   };
@@ -807,6 +806,7 @@ createServer(async (request, response) => {
         context,
         redirect,
         send,
+        sendRemix,
         setPolicy: (value) =>
           response.setHeader("Content-Security-Policy", value),
       }))
@@ -1022,10 +1022,12 @@ createServer(async (request, response) => {
         code: error.code,
       }),
     );
-    send(
-      views.page(
-        "Request failed",
-        `<section class="narrow"><h1>Request failed</h1><p>${h(expected ? error.message : "The identity service could not complete this request. Please try again.")}</p><a href="${session?.enrollmentTicket ? "/enroll" : "/account"}">${session?.enrollmentTicket ? "Back to signup" : "Back to account"}</a></section>`,
+    await sendRemix(
+      (nonce) => renderProblem(
+        expected ? error.message : "The identity service could not complete this request. Please try again.",
+        session?.enrollmentTicket ? "/enroll" : "/account",
+        !!session?.enrollmentTicket,
+        nonce,
       ),
       expected ? error.status : 502,
     );
