@@ -2,7 +2,7 @@ import { requireIdleMedia, availableMediaPath } from "./media-moves.ts";
 import { CommunityError } from "./community.ts";
 import type { Database, Member } from "./community.ts";
 
-export const storageLimit = 500 * 1024 * 1024;
+const storageLimit = 500 * 1024 * 1024;
 export const uploadLimit = 10 * 1024 * 1024;
 export function createMedia(db: Database, member: (id: number) => Member) {
   db.all(`CREATE TABLE IF NOT EXISTS media_transfers (

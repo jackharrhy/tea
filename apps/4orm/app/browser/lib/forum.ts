@@ -12,7 +12,7 @@ type PreviewState =
   | { status: "success" | "error" };
 const previews = new WeakMap<HTMLElement, PreviewState>();
 
-export function previewPost(textareaId: string): void {
+function previewPost(textareaId: string): void {
   const ta = document.getElementById(textareaId) as HTMLTextAreaElement | null;
   if (!ta || !ta.value.trim()) return;
   const form = ta.closest("form");
@@ -78,11 +78,7 @@ const setText = (id: string, text: string) => {
   if (el) el.textContent = text;
 };
 
-export function quotePost(
-  postId: string,
-  author: string,
-  content: string,
-): void {
+function quotePost(postId: string, author: string, content: string): void {
   setVal("quoted_post_id", postId);
   setVal("quoted_content", content);
   setVal("quoted_author", author);
@@ -100,7 +96,7 @@ export function quotePost(
   document.getElementById("reply-content")?.focus();
 }
 
-export function clearQuote(): void {
+function clearQuote(): void {
   setVal("quoted_post_id", "");
   setVal("quoted_content", "");
   setVal("quoted_author", "");

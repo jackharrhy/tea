@@ -6,7 +6,7 @@ function fileParts(name: string) {
     : { stem: base, suffix: "" };
 }
 
-export function cleanFilename(name: string) {
+function cleanFilename(name: string) {
   const { stem, suffix } = fileParts(name || "file");
   const safe =
     stem.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^[-._]+|[-._]+$/g, "") ||

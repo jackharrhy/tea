@@ -2,7 +2,7 @@ import type { Handle, RemixNode } from "remix/component";
 import type { Community } from "./data/community.ts";
 import type { Row } from "./data/community.ts";
 
-export function SettingsForm(
+function SettingsForm(
   handle: Handle<{
     action: string;
     status: string;

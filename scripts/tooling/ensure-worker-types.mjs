@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 const workers = [
+  ["apps/4orm", "wrangler", "worker-configuration.d.ts"],
   ["apps/ref", "wrangler", "worker-configuration.d.ts"],
   ["apps/radio", "wrangler", "worker-configuration.d.ts"],
   ["apps/maps-collaboration", "wrangler", "worker-configuration.d.ts"],

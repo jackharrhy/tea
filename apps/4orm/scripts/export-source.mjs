@@ -22,7 +22,7 @@ function sourceStats(paths) {
     throw new Error("Source file metadata inspection failed");
   return JSON.parse(metadata.stdout);
 }
-export const tableNames = coreTables;
+const tableNames = coreTables;
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 export async function exportSource({ database, uploads, output }) {
   process.umask(0o077);

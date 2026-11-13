@@ -3,7 +3,7 @@ import { coreTables } from "./schema.ts";
 import { CommunityError } from "./community.ts";
 import type { Database, Member, Row } from "./community.ts";
 import { canonicalTables } from "../canonical-tables.ts";
-export const recoveryTables = Object.freeze([
+const recoveryTables = Object.freeze([
   ...coreTables,
   "browser_sessions",
   "login_transactions",
@@ -18,7 +18,7 @@ export const recoveryTables = Object.freeze([
   "page_content_chunks",
   "counter_visits",
 ]);
-export const recoveryExclusions = Object.freeze([
+const recoveryExclusions = Object.freeze([
   "backup_runs",
   "_litestream_seq",
   "_litestream_lock",

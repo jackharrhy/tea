@@ -9,7 +9,7 @@ import { CommunityError } from "./data/community.ts";
 import { cookie, hash, readCookie, token } from "./runtime.ts";
 import type { Bindings, Runtime } from "./runtime.ts";
 
-export function identityConfig(env: Bindings): IdentityConfig {
+function identityConfig(env: Bindings): IdentityConfig {
   return {
     issuer: env.AUTH_ISSUER,
     clientId: env.AUTH_CLIENT_ID,

@@ -1,4 +1,4 @@
-export function convertTimes(): void {
+function convertTimes(): void {
   document.querySelectorAll<HTMLTimeElement>("time[datetime]").forEach((el) => {
     const d = new Date(el.getAttribute("datetime")!);
     if (isNaN(d.getTime())) return;

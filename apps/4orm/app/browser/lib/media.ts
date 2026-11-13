@@ -14,7 +14,7 @@ window["_cmEditors"] = window["_cmEditors"] || {};
 type UploadState = "idle" | "pending" | "success" | "error";
 const uploads = new WeakMap<HTMLElement, UploadState>();
 
-export function quickUploadMedia(textareaId: string, fmt: string): void {
+function quickUploadMedia(textareaId: string, fmt: string): void {
   const fileInput = document.getElementById(
     "media-upload-file-" + textareaId,
   ) as HTMLInputElement | null;
@@ -72,7 +72,7 @@ export function quickUploadMedia(textareaId: string, fmt: string): void {
     });
 }
 
-export function updateMediaButtons(textareaId: string): void {
+function updateMediaButtons(textareaId: string): void {
   const sel = document.querySelector<HTMLSelectElement>(
     "#media-select-" + CSS.escape(textareaId),
   );
@@ -94,7 +94,7 @@ export function updateMediaButtons(textareaId: string): void {
   show(".media-btn-audio", isAud);
 }
 
-export function insertMediaSnippet(textareaId: string, type: string): void {
+function insertMediaSnippet(textareaId: string, type: string): void {
   const sel = document.querySelector<HTMLSelectElement>(
     "#media-select-" + CSS.escape(textareaId),
   );
