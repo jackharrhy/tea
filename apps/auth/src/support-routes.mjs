@@ -1,4 +1,6 @@
 import { readFileSync, statSync } from "node:fs";
+import { createRouter } from "remix/router";
+import { route } from "remix/routes";
 import { contentSecurityPolicy } from "./security.mjs";
 const { renderSupportPage } = await import("./support-page.tsx");
 import { createSupportStore } from "./support-store.mjs";
@@ -122,56 +124,74 @@ export function createSupportRoutes({
   const timer = setInterval(sweep, 15000);
   timer.unref();
   void sweep();
+  const apiRoutes = route({
+    redeem: "/support/redeem",
+    session: "/support/session",
+    end: "/support/end",
+  });
+  const api = createRouter();
+  const handleApi = async ({ request, url }) => {
+    try {
+      if (
+        request.method !== "POST" ||
+        request.headers.get("content-type")?.split(";")[0] !==
+          "application/json"
+      )
+        throw fail(400);
+      let size = 0;
+      const chunks = [];
+      for await (const chunk of request.body || []) {
+        size += chunk.byteLength;
+        if (size > 16384) throw fail(413);
+        chunks.push(chunk);
+      }
+      let input;
+      try {
+        input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      } catch {
+        throw fail(400);
+      }
+      if (!input || typeof input !== "object" || Array.isArray(input))
+        throw fail(400);
+      if (config.enabled !== true && url.pathname === "/support/redeem")
+        throw fail(403);
+      return Response.json(
+        await login.server(
+          url.pathname,
+          input,
+          request.headers.get("authorization"),
+        ),
+        {
+          headers: {
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+          },
+        },
+      );
+    } catch (error) {
+      return Response.json(
+        { error: "support_request_failed" },
+        {
+          status: [400, 401, 403, 409, 410, 413].includes(error.status)
+            ? error.status
+            : 502,
+          headers: {
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+          },
+        },
+      );
+    }
+  };
+  api.map(apiRoutes, {
+    actions: { redeem: handleApi, session: handleApi, end: handleApi },
+  });
   return {
+    api,
     preflight,
     enabled: config.enabled === true,
     enabledFor: (subject) =>
       config.enabled === true && subject === config.actorSubject,
-    async server(request, response, url) {
-      if (
-        !["/support/redeem", "/support/session", "/support/end"].includes(
-          url.pathname,
-        )
-      )
-        return false;
-      response.setHeader("Cache-Control", "no-store");
-      try {
-        if (
-          request.method !== "POST" ||
-          request.headers["content-type"]?.split(";")[0] !== "application/json"
-        )
-          throw fail(400);
-        let body = "";
-        for await (const chunk of request) {
-          body += chunk;
-          if (Buffer.byteLength(body) > 16384) throw fail(413);
-        }
-        let input;
-        try {
-          input = JSON.parse(body);
-        } catch {
-          throw fail(400);
-        }
-        if (!input || typeof input !== "object" || Array.isArray(input))
-          throw fail(400);
-        if (config.enabled !== true && url.pathname === "/support/redeem")
-          throw fail(403);
-        const result = await login.server(
-          url.pathname,
-          input,
-          request.headers.authorization,
-        );
-        response.writeHead(200, { "content-type": "application/json" });
-        response.end(JSON.stringify(result));
-      } catch (error) {
-        const status = [400, 401, 403, 409, 410, 413].includes(error.status)
-          ? error.status
-          : 502;
-        response.writeHead(status, { "content-type": "application/json" });
-        response.end(JSON.stringify({ error: "support_request_failed" }));
-      }
-      return true;
-    },
     async browser({
       request,
       url,

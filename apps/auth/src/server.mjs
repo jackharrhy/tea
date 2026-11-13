@@ -299,18 +299,24 @@ async function endUserSessions(userId) {
 
 createServer(async (request, response) => {
   const routePath = new URL(request.url, origin).pathname;
+  const supportApi =
+    supportRoutes?.api &&
+    ["/support/redeem", "/support/session", "/support/end"].includes(routePath);
   if (
     (request.method === "GET" && isPublicRoute(routePath)) ||
-    isApiRoute(routePath)
+    isApiRoute(routePath) ||
+    supportApi
   ) {
     const incoming = createRequest(request, response, {
       host: new URL(origin).host,
       protocol: new URL(origin).protocol,
     });
-    await sendResponse(
-      response,
-      await (isApiRoute(routePath) ? apiRouter : publicRouter).fetch(incoming),
-    );
+    const router = supportApi
+      ? supportRoutes.api
+      : isApiRoute(routePath)
+        ? apiRouter
+        : publicRouter;
+    await sendResponse(response, await router.fetch(incoming));
     return;
   }
   response.setHeader("Cache-Control", "no-store");
@@ -366,8 +372,6 @@ createServer(async (request, response) => {
   };
   let session;
   try {
-    if (supportRoutes && (await supportRoutes.server(request, response, url)))
-      return;
     const cookieValue = request.headers.cookie
       ?.split(";")
       .map((item) => item.trim())

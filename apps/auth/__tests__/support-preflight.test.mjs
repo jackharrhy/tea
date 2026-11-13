@@ -72,6 +72,27 @@ test("missing or unavailable local profile blocks form and POST before native is
     },
   });
   const context = { user: "actor", admin: true, csrf: "csrf" };
+  const apiUrl = "https://auth.test/support/session";
+  const getResponse = await routes.api.fetch(new Request(apiUrl));
+  assert.equal(getResponse.status, 400);
+  assert.equal(getResponse.headers.get("set-cookie"), null);
+  const oversized = await routes.api.fetch(
+    new Request(apiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "x".repeat(16385),
+    }),
+  );
+  assert.equal(oversized.status, 413);
+  const unauthorized = await routes.api.fetch(
+    new Request(apiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    }),
+  );
+  assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.headers.get("cache-control"), "no-store");
   const browser = async (method) => {
     let html;
     await routes.browser({
