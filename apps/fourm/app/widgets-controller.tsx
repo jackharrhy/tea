@@ -1,3 +1,4 @@
+import { pagesFeed, forumFeed } from "./feeds.ts";
 import { guestbookJSON } from "./view-json.ts";
 import { counterJSON, counterDocument } from "./counter-widget.ts";
 import { playerJSON, playerDocument } from "./player-widget.ts";
@@ -40,12 +41,6 @@ export const widgetRoutes = route({
 });
 const redirect = (Location: string) =>
   new Response(null, { status: 303, headers: { Location } });
-const xml = (value: unknown) =>
-  String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 async function fields(request: Request) {
   return Object.fromEntries(
     Array.from((await request.formData()).entries()).filter(
@@ -83,21 +78,18 @@ export function widgetController(
     return redirect("/settings");
   }
   async function rss(username: string | null, forum = false) {
-    const rows = forum
-      ? await store.call("threads")
-      : await store.call("feed", username);
-    const items = rows
-      .map((row) => {
-        const url = forum
-          ? `/forum/${row.id}`
-          : `/u/${encodeURIComponent(String(row.username))}/page/${encodeURIComponent(String(row.slug))}`;
-        return `<item><title>${xml(row.title)}</title><link>${xml(env.AUTH_PUBLIC_ORIGIN + url)}</link><guid>${xml(env.AUTH_PUBLIC_ORIGIN + url)}</guid></item>`;
-      })
-      .join("");
-    return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>4orm</title><link>${xml(env.AUTH_PUBLIC_ORIGIN)}</link><description>Community updates</description>${items}</channel></rss>`,
-      { headers: { "Content-Type": "application/rss+xml; charset=utf-8" } },
-    );
+    const owner =
+      username === null ? undefined : await store.call("status", username);
+    const xml = forum
+      ? forumFeed(env.AUTH_PUBLIC_ORIGIN, await store.call("forumFeed"))
+      : pagesFeed(
+          env.AUTH_PUBLIC_ORIGIN,
+          await store.call("feed", username),
+          owner,
+        );
+    return new Response(xml, {
+      headers: { "Content-Type": "application/rss+xml; charset=utf-8" },
+    });
   }
   return createController(widgetRoutes, {
     actions: {
