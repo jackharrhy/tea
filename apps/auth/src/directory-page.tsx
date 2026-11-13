@@ -34,6 +34,24 @@ const appEntryStyles = css({
   border: "1px solid var(--line)",
   borderRadius: "8px",
   alignItems: "start",
+  "& .app-monogram": {
+    fontSize: "24px",
+    fontWeight: 450,
+    color: "#566b7b",
+    lineHeight: 1.4,
+  },
+  "& .app-launch": { color: "var(--ink)", textDecoration: "none" },
+  "& .app-launch:hover": {
+    color: "var(--blue)",
+    textDecoration: "underline",
+  },
+  "& .access-link": {
+    gridColumn: "2",
+    fontSize: "12px",
+    marginTop: "5px",
+    textDecoration: "none",
+  },
+  "& .access-link:hover": { textDecoration: "underline" },
 });
 
 function AppEntry(

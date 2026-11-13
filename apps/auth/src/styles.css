@@ -167,23 +167,9 @@ dd {
   line-height: 1.6;
   margin-bottom: 25px;
 }
-.app-monogram {
-  font-size: 24px;
-  font-weight: 450;
-  color: #566b7b;
-  line-height: 1.4;
-}
 .app-entry h2 {
   font-size: 17px;
   margin: 0 0 5px;
-}
-.app-launch {
-  color: var(--ink);
-  text-decoration: none;
-}
-.app-launch:hover {
-  color: var(--blue);
-  text-decoration: underline;
 }
 .app-entry p {
   font-size: 12px;
@@ -194,15 +180,6 @@ dd {
   margin-top: 6px;
   color: #365f80;
   min-height: 18px;
-}
-.access-link {
-  grid-column: 2;
-  font-size: 12px;
-  margin-top: 5px;
-  text-decoration: none;
-}
-.access-link:hover {
-  text-decoration: underline;
 }
 .filters {
   display: flex;
