@@ -23,6 +23,44 @@ const fullWidthAction = css({
 });
 
 const layoutStyles = css({
+  "&.authentication": { overflowX: "hidden" },
+  "&.authentication:has(.login-title)": {
+    display: "grid",
+    minHeight: "100svh",
+    placeItems: "center",
+  },
+  "& .auth-page": {
+    position: "relative",
+    zIndex: 1,
+    maxWidth: "420px",
+    margin: "clamp(24px, 8vh, 90px) auto 50px",
+    padding: "32px",
+    background: "rgba(255, 255, 255, 0.97)",
+    border: "1px solid #e3e8eb",
+    borderRadius: "12px",
+  },
+  "& .auth-page h1": { fontSize: "29px", marginBottom: "9px" },
+  "& .auth-page:has(.login-title)": {
+    width: "calc(100% - 40px)",
+    margin: "32px auto",
+  },
+  "& .auth-page .login-title": { marginBottom: "24px" },
+  "& .auth-page .form-stack > button": {
+    width: "100%",
+    marginTop: "4px",
+  },
+  "& .auth-page .text-link": { fontSize: "13px" },
+  "& .auth-art": {
+    position: "fixed",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    opacity: 0.55,
+    pointerEvents: "none",
+    "--doodle-ink": "#c7d5df",
+    "--doodle-fill": "#dce7ee",
+    "--doodle-wash": "#eef3f6",
+  },
   "& .site-header": {
     position: "relative",
     zIndex: 2,
