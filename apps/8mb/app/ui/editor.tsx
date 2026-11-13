@@ -19,7 +19,7 @@ const body = toJsxRuntime(fromHtml(bodySource, { fragment: true }), {
 
 const page = css({ colorScheme: "light dark" });
 
-export function editorDocument(script: string) {
+export function editorDocument(script: string, nonce?: string) {
   return (
     <html lang="en" mix={[...legacyStyles, page]}>
       <head>
@@ -58,7 +58,7 @@ export function editorDocument(script: string) {
       </head>
       <body>
         {body}
-        <script type="module" src={script} />
+        <script type="module" src={script} nonce={nonce} />
       </body>
     </html>
   );

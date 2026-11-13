@@ -113,7 +113,15 @@ test("unavailable diagnostics storage leaves the editor usable and recovers", as
       }),
     ]);
     const base = `http://127.0.0.1:${port}`;
-    assert.equal((await fetch(`${base}/8mb/`)).status, 200);
+    const page = await fetch(`${base}/8mb/`);
+    assert.equal(page.status, 200);
+    assert.equal(page.headers.get("Cache-Control"), "private, no-store");
+    const policy = page.headers.get("Content-Security-Policy") ?? "";
+    const nonce = /script-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+    assert.ok(nonce);
+    assert.match(policy, /worker-src 'self' blob:/);
+    assert.match(policy, /'wasm-unsafe-eval'/);
+    assert.match(await page.text(), new RegExp(`nonce="${nonce}"`));
     const send = () =>
       fetch(`${base}/8mb/api/diagnostics`, {
         method: "POST",
