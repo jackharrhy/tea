@@ -316,6 +316,82 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
     sameRun: true,
     files: 3,
   });
+  for (const [path, method] of [
+    ["/admin/backups", "GET"],
+    ["/admin/backups/run", "POST"],
+  ])
+    assert.equal((await request(path, method, false)).status, 403);
+  const beforeUI = await (await request("/backup-status")).json();
+  const backupBrowser = await chromium.launch();
+  try {
+    const context = await backupBrowser.newContext({
+      extraHTTPHeaders: { "X-Fixture-Actor": "admin" },
+      serviceWorkers: "block",
+    });
+    await context.route("**/*", (route) =>
+      new URL(route.request().url()).origin === origin
+        ? route.continue()
+        : route.abort(),
+    );
+    const page = await context.newPage(),
+      errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(origin + "/admin");
+    const panel = page
+      .locator("details.panel")
+      .filter({
+        has: page.locator("summary h2").filter({ hasText: /^backups$/ }),
+      });
+    await panel.locator("summary").click();
+    await panel
+      .getByRole("button", { name: "view full backup list", exact: true })
+      .click();
+    await panel
+      .getByRole("columnheader", { name: "snapshot", exact: true })
+      .waitFor();
+    const response = page.waitForResponse(
+      (r) =>
+        r.url() === origin + "/admin/backups/run" &&
+        r.request().method() === "POST",
+    );
+    await panel
+      .getByRole("button", { name: "run backup now", exact: true })
+      .click();
+    assert.equal((await response).status(), 200);
+    await panel.locator("#backup-status .ok").waitFor();
+    assert.match(
+      await panel.locator("#backup-status").innerText(),
+      /^backup complete:/,
+    );
+    await page.reload();
+    await panel.locator("summary").click();
+    await panel
+      .getByRole("button", { name: "view full backup list", exact: true })
+      .click();
+    await panel
+      .getByRole("columnheader", { name: "snapshot", exact: true })
+      .waitFor();
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.equal(
+        await panel.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+        true,
+      );
+      await panel.screenshot({
+        path: join(output, `native-backups-${width}.png`),
+      });
+    }
+    assert.deepEqual(errors, []);
+  } finally {
+    await backupBrowser.close();
+  }
+  const afterUI = await (await request("/backup-status")).json();
+  assert.equal(afterUI.backups.length, beforeUI.backups.length + 1);
+  assert.equal(afterUI.pending, null);
+  await stop();
+  await rm(join(state, "replica"), { recursive: true, force: true });
+  await start();
+  assert.deepEqual(await (await request("/backup-status")).json(), afterUI);
   await writeFile(
     join(output, "receipt.json"),
     JSON.stringify(
@@ -328,6 +404,14 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
         fullNativeBackup: fullBackup,
         catalogueRecovery: catalogue,
         manualBackup,
+        backupAdminBrowser: {
+          run: true,
+          list: true,
+          reload: true,
+          coldReplicaRecovery: true,
+          desktopMobile: true,
+          anonymousDenied: true,
+        },
         backupNamespacePublicGetHeadDenied: true,
         nativeOperationalRecovery: {
           ...recoverySummary,
