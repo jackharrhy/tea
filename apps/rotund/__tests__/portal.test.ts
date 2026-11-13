@@ -298,6 +298,11 @@ test("silent SSO checks once, login_required becomes a usable anonymous page wit
     /<style[^>]*data-rmx-style/,
     "native Remix styles render on the server",
   );
+  const policy = page.headers.get("Content-Security-Policy")!;
+  const nonce = policy.match(/style-src [^;]*'nonce-([^']+)'/)?.[1];
+  assert.ok(nonce);
+  assert.ok(html.includes(`nonce="${nonce}"`));
+  assert.doesNotMatch(policy, /unsafe-inline/);
   assert.doesNotMatch(
     html,
     /rel="stylesheet"|style\.css/,

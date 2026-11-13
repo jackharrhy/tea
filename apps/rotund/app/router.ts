@@ -1,6 +1,7 @@
 import { createCookie } from "remix/cookie";
 import { createRouter, type RouterContext } from "remix/router";
 import { render } from "remix/middleware/render";
+import { csp } from "remix/middleware/csp";
 import { session } from "remix/middleware/session";
 import { staticFiles } from "remix/middleware/static";
 import type { SessionStorage } from "remix/session";
@@ -36,6 +37,17 @@ function configuredRouter(config: PortalConfig) {
     middleware: [
       staticFiles(config.publicDir),
       session(cookie, config.storage ?? boundedSessions()),
+      csp({
+        policy: ({ nonce }) => ({
+          defaultSrc: ["'none'"],
+          scriptSrc: ["'none'"],
+          imgSrc: ["'self'"],
+          styleSrc: ["'self'", `'nonce-${nonce}'`],
+          formAction: ["'self'", config.issuerOrigin],
+          frameAncestors: ["'none'"],
+          baseUri: ["'none'"],
+        }),
+      }),
       render(),
     ],
   });
@@ -61,10 +73,6 @@ export function createPortal(config: PortalConfig) {
       const response = await router.fetch(request);
       response.headers.set("Cache-Control", "private, no-store");
       response.headers.set("Vary", "Cookie");
-      response.headers.set(
-        "Content-Security-Policy",
-        `default-src 'none'; script-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self' ${issuerOrigin.origin}; frame-ancestors 'none'; base-uri 'none'`,
-      );
       response.headers.set("Referrer-Policy", "same-origin");
       response.headers.set("X-Content-Type-Options", "nosniff");
       return response;
