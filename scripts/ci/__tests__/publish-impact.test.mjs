@@ -112,3 +112,46 @@ test("workspace source and root build inputs select only affected images", () =>
     apps,
   );
 });
+
+test("implicit root npm ci hooks publish images that install the root", () => {
+  const beforeRoot = {
+    ...root,
+    scripts: { ...root.scripts, postinstall: "node old.mjs" },
+  };
+  const afterRoot = {
+    ...beforeRoot,
+    scripts: { ...beforeRoot.scripts, postinstall: "node new.mjs" },
+  };
+  assert.deepEqual(
+    selectPublishedApps({
+      apps,
+      paths: ["package.json"],
+      beforeLock: base,
+      afterLock: base,
+      beforeRoot,
+      afterRoot,
+      dockerfiles: {
+        ref: "WORKDIR /app\nRUN npm ci\nRUN npm run build --workspace @harrhy/ref",
+        artbin:
+          "WORKDIR /app\nRUN npm ci --workspace @harrhy/artbin --include-workspace-root=false",
+      },
+    }),
+    ["ref"],
+  );
+  assert.deepEqual(
+    selectPublishedApps({
+      apps,
+      paths: ["package.json"],
+      beforeLock: base,
+      afterLock: base,
+      beforeRoot,
+      afterRoot,
+      dockerfiles: {
+        ref: "RUN npm ci --workspace @harrhy/ref --include-workspace-root=false",
+        artbin:
+          "RUN npm ci --workspace @harrhy/artbin --include-workspace-root=true",
+      },
+    }),
+    ["artbin"],
+  );
+});

@@ -11,6 +11,28 @@ const dependencyFields = [
   "peerDependencies",
 ];
 const globalInputs = new Set([".dockerignore", ".nvmrc"]);
+const npmInstallHooks = new Set([
+  "preinstall",
+  "install",
+  "postinstall",
+  "prepublish",
+  "preprepare",
+  "prepare",
+  "postprepare",
+]);
+
+function installsRoot(dockerfile = "") {
+  return dockerfile
+    .replace(/\\\r?\n/g, " ")
+    .split(/\bRUN\b|\n|&&|;/)
+    .some(
+      (command) =>
+        /\bnpm\s+(?:ci|install)\b/.test(command) &&
+        !/--include-workspace-root=false\b/.test(command) &&
+        (!/--workspace(?:\s|=)|\s-w(?:\s|=)/.test(command) ||
+          /--include-workspace-root=true\b/.test(command)),
+    );
+}
 
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
@@ -121,6 +143,11 @@ export function selectPublishedApps({
           `\\b(?:npm|bun) run ${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
         ).test(`${dockerfiles[app] ?? ""}\n${workspaceScripts[app] ?? ""}`),
       )
+    )
+      return true;
+    if (
+      scripts.some((name) => npmInstallHooks.has(name)) &&
+      installsRoot(dockerfiles[app])
     )
       return true;
     if (!lockChanged) return false;
