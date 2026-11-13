@@ -2,6 +2,7 @@ import { createIdentityClient, type IdentityConfig } from "@harrhy/identity";
 
 export {
   createLoginTransaction,
+  loginTransactionCookieName,
   validLoginTransaction,
 } from "@harrhy/identity";
 export type { LoginTransaction } from "@harrhy/identity";
