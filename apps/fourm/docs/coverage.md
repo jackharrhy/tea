@@ -69,7 +69,8 @@ gateway. These helpers are not migrated Harrhy applications. Only 4orm owns its
 DO/R2; the peer has a narrow directory capability and receives no user credentials.
 This proves capability separation, not hostile-tenant isolation.
 
-Authentication is isolated fixture authentication. Production Python/Auth,
-domains and the Harrhy owner's checkout remain untouched. No publication,
-integration merge or production cutover is claimed. The old POC listener was
+Authentication is isolated fixture authentication. The primary Harrhy checkout
+now owns the candidate working branch and preserved private review state; the
+former linked candidate worktree is retired. Production Python/Auth and domains
+remain untouched. No publication, integration merge or production cutover is claimed. The old POC listener was
 replaced after Jack explicitly waived preservation of its disposable review data.
