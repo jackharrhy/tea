@@ -2,14 +2,20 @@
 import "remix/node-tsx";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
+// Never inherit a host appearance-file path, even when launched from an operator shell.
+delete process.env.DOODLE_POOL_FILE;
+delete process.env.RADIO_ENROLLMENT_DB_FILE;
 const { renderLogin } = await import("../../src/login-page.tsx");
 const { renderInterior } = await import("./interior.tsx");
+const { optionsFrom, renderExplorer } = await import("./explorer.tsx");
+const { renderDoodle } = await import("../../src/doodles.mjs");
 const server = createServer(async (req, res) => {
   if (req.method !== "GET") {
     res.writeHead(405).end();
     return;
   }
-  const path = new URL(req.url, "http://fixture.invalid").pathname;
+  const url = new URL(req.url, "http://fixture.invalid");
+  const path = url.pathname;
   if (path.startsWith("/assets/")) {
     const asset = path.slice(8);
     if (!/^[a-z0-9/.-]+$/.test(asset) || asset.includes("..")) {
@@ -18,11 +24,13 @@ const server = createServer(async (req, res) => {
     }
     try {
       const file =
-        asset === "doodle-spec.mjs"
-          ? new URL("../../src/doodles.mjs", import.meta.url)
-          : asset === "style.css"
-            ? new URL("../../src/styles.css", import.meta.url)
-            : new URL(`../../public/${asset}`, import.meta.url);
+        asset === "fixture-explorer.mjs"
+          ? new URL("./explorer.mjs", import.meta.url)
+          : asset === "doodle-spec.mjs"
+            ? new URL("../../src/doodles.mjs", import.meta.url)
+            : asset === "style.css"
+              ? new URL("../../src/styles.css", import.meta.url)
+              : new URL(`../../public/${asset}`, import.meta.url);
       res.setHeader(
         "Content-Type",
         asset.endsWith(".css")
@@ -37,12 +45,42 @@ const server = createServer(async (req, res) => {
     }
     return;
   }
+  if (path !== "/" && path !== "/login") {
+    res.writeHead(404).end();
+    return;
+  }
   res.setHeader("Content-Type", "text/html");
-  res.end(
-    path === "/login"
-      ? await renderLogin({ csrf: "fixture-only", returnTo: "/" }, "fixture")
-      : await renderInterior(),
+  res.setHeader("Cache-Control", "no-store");
+  if (path === "/") {
+    res.end(await renderInterior());
+    return;
+  }
+  const options = optionsFrom(url.searchParams);
+  // Fixed dates select existing palette rotations and a deterministic seed, never host state.
+  const day = options.palette === "cyan" ? "2026-01-15" : "2026-01-16";
+  const artwork = renderDoodle(options.effect, day, {
+    color: options.palette === "neutral" ? 0 : 1,
+  }).replace(
+    "<svg ",
+    options.layer === "plain" || options.layer === "webgl"
+      ? "<svg hidden "
+      : "<svg ",
   );
+  let html = await renderLogin(
+    { csrf: "fixture-only", returnTo: "/" },
+    "fixture",
+  );
+  html = html.replace(/<svg class="auth-art"[\s\S]*?<\/svg>/, artwork);
+  html = html.replace(
+    "/assets/doodle-motion.mjs",
+    "/assets/fixture-explorer.mjs",
+  );
+  html = html.replace(
+    '<form method="post" action="/login"',
+    '<form method="get" action="/login" data-fixture-login="true"',
+  );
+  html = html.replace("</body>", `${await renderExplorer(options)}</body>`);
+  res.end(html);
 });
 server.listen(Number(process.env.PORT || 18809), "127.0.0.1", () =>
   console.log(

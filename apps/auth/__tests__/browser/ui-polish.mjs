@@ -3,7 +3,12 @@ import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { chromium } from "playwright";
 const server = spawn(process.execPath, ["__tests__/fixtures/ui-preview.mjs"], {
-  env: { ...process.env, PORT: "0" },
+  env: {
+    ...process.env,
+    PORT: "0",
+    DOODLE_POOL_FILE: "",
+    RADIO_ENROLLMENT_DB_FILE: "",
+  },
   stdio: ["ignore", "pipe", "inherit"],
 });
 const [output] = await once(server.stdout, "data");
@@ -23,47 +28,64 @@ try {
       Math.abs(box.y + box.height / 2 - viewport.height / 2) < 2,
       "login centered",
     );
-    await page.waitForTimeout(850);
-    const opacity = await page
-      .locator("canvas.auth-art")
-      .evaluate((el) => Number(getComputedStyle(el).opacity));
-    assert.ok(opacity > 0 && opacity < 0.55, "WebGL progressively fades in");
+    assert.equal(await page.locator("canvas").count(), 0);
+    assert.equal(await page.locator("svg.auth-art").isVisible(), false);
     assert.equal(
-      await page.locator("svg.auth-art").getAttribute("hidden"),
-      null,
+      await page.locator('script[src="/assets/doodle-motion.mjs"]').count(),
+      0,
     );
-    await page.waitForTimeout(1500);
-    await page.screenshot({ path: `/tmp/auth-login-${viewport.width}.png` });
-    await page
-      .locator("canvas.auth-art")
-      .evaluate((el) =>
-        el
-          .getContext("webgl2")
-          .getExtension("WEBGL_lose_context")
-          .loseContext(),
-      );
-    await page.waitForTimeout(100);
-    assert.equal(await page.locator("canvas.auth-art").count(), 0);
-    assert.ok(
-      Number(
-        await page
-          .locator("svg.auth-art")
-          .evaluate((el) => getComputedStyle(el).opacity),
-      ) > 0,
+    await page.locator("#background-explorer summary").click();
+    await page.getByLabel("Layers", { exact: true }).selectOption("webgl");
+    await page.getByLabel("Existing effect").selectOption("caustic-glass");
+    await page.getByLabel("Color", { exact: true }).selectOption("cyan");
+    await page.getByRole("button", { name: "Apply & keep this URL" }).click();
+    await page.waitForFunction(() =>
+      document
+        .querySelector("#explorer-status")
+        .textContent.includes("held at time zero"),
     );
-    await page.emulateMedia({ colorScheme: "dark" });
-    await page.waitForTimeout(2300);
-    assert.equal(await page.locator("canvas.auth-art").count(), 1);
+    assert.ok(page.url().includes("effect=caustic-glass"));
+    assert.equal(await page.locator("svg.auth-art").isVisible(), false);
+    const canvas = page.locator("canvas.auth-art");
+    const first = await canvas.screenshot();
+    await page.waitForTimeout(150);
+    assert.deepEqual(
+      await canvas.screenshot(),
+      first,
+      "stable selected option",
+    );
+    await page.reload();
+    await canvas.waitFor();
+    assert.deepEqual(
+      await canvas.screenshot(),
+      first,
+      "reload preserves fixed seed/time",
+    );
+    await page.screenshot({ path: `/tmp/auth-explorer-${viewport.width}.png` });
+    await canvas.evaluate((el) =>
+      el.getContext("webgl2").getExtension("WEBGL_lose_context").loseContext(),
+    );
+    await page.waitForFunction(() =>
+      document
+        .querySelector("#explorer-status")
+        .textContent.includes("fallback"),
+    );
+    assert.equal(await page.locator("svg.auth-art").isVisible(), true);
+    await page.goto(`${origin}/login?layer=both&effect=silk&motion=animate`);
+    await canvas.waitFor();
+    assert.equal(await page.locator("svg.auth-art").isVisible(), true);
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.waitForTimeout(50);
-    assert.equal(await page.locator("canvas.auth-art").count(), 0);
-    assert.ok(
-      Number(
-        await page
-          .locator("svg.auth-art")
-          .evaluate((el) => getComputedStyle(el).opacity),
-      ) > 0,
+    await page.waitForFunction(() =>
+      document
+        .querySelector("#explorer-status")
+        .textContent.includes("reduced motion"),
     );
+    const still = await canvas.screenshot();
+    await page.waitForTimeout(150);
+    assert.deepEqual(await canvas.screenshot(), still);
+    await page.goto(`${origin}/login?layer=svg&effect=waves`);
+    assert.equal(await page.locator("canvas").count(), 0);
+    assert.equal(await page.locator("svg.auth-art").isVisible(), true);
     await page.goto(origin);
     assert.equal(await page.locator("h1").textContent(), "Your apps");
     assert.ok(
@@ -85,19 +107,16 @@ try {
   await page.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = () => null;
   });
-  await page.goto(`${origin}/login`);
-  await page.waitForTimeout(1000);
-  assert.equal(await page.locator("canvas.auth-art").count(), 0);
-  assert.ok(
-    Number(
-      await page
-        .locator("svg.auth-art")
-        .evaluate((el) => getComputedStyle(el).opacity),
-    ) > 0,
+  await page.goto(`${origin}/login?layer=webgl`);
+  await page.waitForFunction(() =>
+    document.querySelector("#explorer-status").textContent.includes("fallback"),
   );
-  assert.equal((await page.request.post(origin)).status(), 405);
+  assert.equal(await page.locator("canvas").count(), 0);
+  assert.equal(await page.locator("svg.auth-art").isVisible(), true);
+  assert.equal((await page.request.post(`${origin}/login`)).status(), 405);
+  assert.equal((await page.request.get(`${origin}/support`)).status(), 404);
   console.log(
-    "UI polish: centered responsive login, gradual enhancement, reduced motion, no-WebGL fallback, header disclosure and read-only fixture passed",
+    "UI explorer: responsive centering/header, plain/SVG/WebGL/combined, deterministic hold/reload, reduced motion and WebGL fallback passed",
   );
 } finally {
   await browser.close();

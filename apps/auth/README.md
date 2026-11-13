@@ -26,9 +26,11 @@ The app is independently containerized by `Dockerfile`. The Auth publisher check
 
 ## Synthetic UI review
 
-`PORT=18809 node apps/auth/__tests__/fixtures/ui-preview.mjs` (from the repository root) serves a loopback-only, GET-only login (`/login`) and authenticated-header (`/`) fixture. It imports the current UI without starting Auth, loading credentials, or connecting to a provider/database; the interior identity is explicitly synthetic. Do not use it as an authenticated app or production runtime. `__tests__/browser/ui-polish.mjs` checks responsive centering, the staged SVG-to-WebGL fade, reduced motion, unavailable/context-lost WebGL fallback, and the mobile header. It runs in `test:browser`.
+`PORT=18809 node apps/auth/__tests__/fixtures/ui-preview.mjs` (from the repository root) serves a loopback-only, GET-only background explorer (`/login`) and authenticated-header (`/`) fixture. It imports the UI without starting Auth, loading credentials, or connecting to a provider/database; the interior identity is explicitly synthetic. Do not use it as an authenticated app or production runtime. Login submissions are disabled. `__tests__/browser/ui-polish.mjs` checks responsive centering/header, explorer controls, deterministic screenshots across reload, reduced motion, and unavailable/context-lost WebGL fallback. It runs in `test:browser`.
 
-The login keeps its SVG visible immediately, allows a short settling interval, and crossfades only after WebGL draws its first frame. Reduced motion keeps the static SVG; context loss restores it. Neither form nor interior content receives an entrance animation.
+The fixture defaults to plain/no effect. Open Background explorer to compare SVG-only, WebGL-only, or simultaneous layers using four existing effects, three palette choices and three paper surfaces. Apply stores all controls in the URL; fixed dates/seeds and time-zero rendering hold a stable choice for critique. Optional animation respects reduced motion. Optional entrance fades the selected background layer as a whole, never replaces SVG with WebGL. No-WebGL/context loss uses an explicitly labelled static SVG fallback. These controls and modules exist only under `__tests__/fixtures`; the product motion module is not loaded by the explorer. No production background has been selected or approved.
+
+The existing waves source draws a heavier SVG path every sixth line (`renderDoodle`, `src/doodles.mjs`, stroke width 8 rather than 1). Its WebGL counterpart also accents every sixth line (`line(f/6., .018)`, `public/doodle-webgl.mjs`). These are existing built-in line bands, not a new bars layer. SVG and WebGL use different geometry and framing, so swapping them visibly changes the pattern.
 
 ## Routing migration boundary
 
