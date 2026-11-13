@@ -71,6 +71,7 @@ export class CommunityCell extends DurableObject<CommunityBindings> {
         this.community,
         this.env.MEDIA,
         actorId,
+        actorId === "scheduler" ? this.backupInterval() : undefined,
       ).then(async (result): Promise<Row> => {
         const retention = await this.pruneBackupStorage(actorId);
         return {
