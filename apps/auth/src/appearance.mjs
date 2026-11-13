@@ -4,7 +4,7 @@ import {
   defaultPool,
   validPool,
   dailyDoodle,
-  renderDoodle,
+  doodleParameters,
 } from "./doodles.mjs";
 
 export function dailyArtwork(day = new Date().toISOString().slice(0, 10)) {
@@ -18,9 +18,15 @@ export function dailyArtwork(day = new Date().toISOString().slice(0, 10)) {
   if (filename)
     try {
       const saved = JSON.parse(readFileSync(filename, "utf8"));
-      if (validPool(saved.enabled)) pool = saved.enabled;
+      const enabled = Array.isArray(saved.enabled)
+        ? saved.enabled.filter((id) => id !== "waves")
+        : [];
+      if (validPool(enabled)) pool = enabled;
       settings = saved.settings || {};
     } catch {}
   const id = dailyDoodle(pool, day);
-  return renderDoodle(id, day, settings[id]);
+  const parameters = JSON.stringify(
+    doodleParameters(settings[id] || { color: 0 }),
+  ).replaceAll('"', "&quot;");
+  return `<canvas class="auth-art motion-canvas" aria-hidden="true" data-doodle="${id}" data-day="${day.replace(/[^0-9-]/g, "")}" data-settings="${parameters}"></canvas>`;
 }

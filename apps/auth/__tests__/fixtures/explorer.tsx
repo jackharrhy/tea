@@ -28,13 +28,12 @@ const panel = css({
 });
 export const choices = {
   layer: {
-    plain: "Plain / no effect",
     webgl: "WebGL only",
+    plain: "Plain / no effect",
   },
   effect: {
-    waves: "Waves · line bands (existing default)",
-    silk: "Silk · soft folds",
     "silk-braid": "Silk braid · three ribbons",
+    silk: "Silk · soft folds",
     "caustic-glass": "Caustic glass · light field",
   },
   palette: {
@@ -42,14 +41,13 @@ export const choices = {
     blue: "Blue / red / yellow",
     cyan: "Cyan / magenta / orange",
   },
-  surface: { cool: "Cool paper", white: "White", warm: "Warm paper" },
   motion: {
-    still: "Hold still (fixed seed + time)",
     animate: "Animate selected WebGL",
+    still: "Hold still (fixed seed + time)",
   },
   entrance: {
-    none: "No entrance",
     fade: "Fade whole background layer (same artwork)",
+    none: "No entrance",
   },
 };
 export function optionsFrom(search: URLSearchParams) {
@@ -69,7 +67,6 @@ const labels: Record<string, string> = {
   layer: "Background",
   effect: "Existing effect",
   palette: "Color",
-  surface: "Paper surface",
   motion: "Motion",
   entrance: "Layer entrance",
 };

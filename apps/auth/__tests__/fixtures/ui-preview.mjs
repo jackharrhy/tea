@@ -56,11 +56,23 @@ const server = createServer(async (req, res) => {
     return;
   }
   const options = optionsFrom(url.searchParams);
+  if (url.searchParams.get("view") === "product") {
+    let html = await renderLogin(
+      { csrf: "fixture-only", returnTo: "/" },
+      "fixture",
+    );
+    html = html.replace(
+      '<form method="post" action="/login"',
+      '<form method="get" action="/login"',
+    );
+    res.end(html);
+    return;
+  }
   let html = await renderLogin(
     { csrf: "fixture-only", returnTo: "/" },
     "fixture",
   );
-  html = html.replace(/<svg class="auth-art"[\s\S]*?<\/svg>/, "");
+  html = html.replace(/<canvas class="auth-art[^"]*"[^>]*><\/canvas>/, "");
   html = html.replace(
     "/assets/doodle-motion.mjs",
     "/assets/fixture-explorer.mjs",

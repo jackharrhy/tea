@@ -23,7 +23,7 @@ try {
   ]) {
     const page = await browser.newPage({ viewport });
     page.on("pageerror", (error) => console.log(error.message));
-    await page.goto(`${origin}/login`);
+    await page.goto(`${origin}/login?layer=plain&motion=still&entrance=none`);
     const box = await page.locator("main").boundingBox();
     assert.ok(
       Math.abs(box.y + box.height / 2 - viewport.height / 2) < 2,
@@ -92,7 +92,9 @@ try {
         .textContent.includes("WebGL unavailable"),
     );
     assert.equal(await page.locator("svg.auth-art").count(), 0);
-    await page.goto(`${origin}/login?layer=webgl&effect=silk&motion=animate`);
+    await page.goto(
+      `${origin}/login?layer=webgl&effect=silk&motion=animate&entrance=none`,
+    );
     await canvas.waitFor({ timeout: 5000 });
     assert.equal(await page.locator("svg.auth-art").count(), 0);
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -133,6 +135,43 @@ try {
     await page.screenshot({ path: `/tmp/auth-header-${viewport.width}.png` });
     await page.close();
   }
+  const product = await browser.newPage();
+  await product.goto(`${origin}/login?view=product`);
+  await product.locator("canvas.auth-art").waitFor();
+  assert.equal(
+    await product.locator("canvas").getAttribute("data-doodle"),
+    "silk-braid",
+  );
+  assert.equal(await product.locator("svg").count(), 0);
+  assert.ok(
+    await product
+      .locator("canvas")
+      .evaluate((el) =>
+        el
+          .getAnimations()
+          .some((animation) => animation.effect.getTiming().duration === 900),
+      ),
+  );
+  await product.waitForTimeout(1100);
+  const moving = await product.locator("canvas").screenshot();
+  await product.waitForTimeout(500);
+  assert.ok(
+    !(await product.locator("canvas").screenshot()).equals(moving),
+    "product animates by default",
+  );
+  await product.emulateMedia({ reducedMotion: "reduce" });
+  await product.waitForTimeout(100);
+  const frozen = await product.locator("canvas").screenshot();
+  await product.waitForTimeout(150);
+  assert.ok((await product.locator("canvas").screenshot()).equals(frozen));
+  await product
+    .locator("canvas")
+    .evaluate((el) =>
+      el.getContext("webgl2").getExtension("WEBGL_lose_context").loseContext(),
+    );
+  await product.waitForTimeout(100);
+  assert.equal(await product.locator("canvas, svg").count(), 0);
+  await product.close();
   const page = await browser.newPage();
   await page.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = () => null;
@@ -145,6 +184,9 @@ try {
   );
   assert.equal(await page.locator("canvas").count(), 0);
   assert.equal(await page.locator("svg.auth-art").count(), 0);
+  await page.goto(`${origin}/login?view=product`);
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator("canvas, svg").count(), 0);
   assert.equal((await page.request.post(`${origin}/login`)).status(), 405);
   assert.equal((await page.request.get(`${origin}/support`)).status(), 404);
   console.log(

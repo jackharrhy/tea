@@ -16,6 +16,7 @@ document
 function setup() {
   const options = Object.fromEntries(new FormData(form));
   const url = new URL(location.href);
+  url.searchParams.delete("surface");
   for (const [key, value] of Object.entries(options))
     url.searchParams.set(key, value);
   history.replaceState(null, "", url);
@@ -24,9 +25,7 @@ function setup() {
   canvas?.remove();
   renderer = undefined;
   canvas = undefined;
-  layer.style.background = scheme.matches
-    ? "#141617"
-    : { cool: "#f6f7f8", white: "#fff", warm: "#f7f4ee" }[options.surface];
+  layer.style.background = scheme.matches ? "#141617" : "#f6f7f8";
   let state = "Plain paper; no effect.";
   if (options.layer === "webgl") {
     const next = document.createElement("canvas");

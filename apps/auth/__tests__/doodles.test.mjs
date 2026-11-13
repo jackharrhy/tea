@@ -15,14 +15,14 @@ test("each doodle is deterministic for a UTC day and changes the next day withou
   }
 });
 test("daily selection stays within selected pool, advances daily, rejects empty or arbitrary targets", () => {
-  const pool = ["silk", "caustics", "waves"];
+  const pool = ["silk", "caustics", "silk-braid"];
   const days = ["2026-11-12", "2026-11-13", "2026-11-14"];
   assert.equal(new Set(days.map((day) => dailyDoodle(pool, day))).size, 3);
   assert.equal(validPool([]), false);
   assert.equal(validPool(["unknown"]), false);
   assert.equal(validPool(["silk", "silk"]), false);
   assert.equal(validPool(pool), true);
-  assert.equal(dailyDoodle([]), "waves");
+  assert.equal(dailyDoodle([]), "silk-braid");
 });
 
 test("the date selects a shared palette which is stable and changes the following day", async () => {
@@ -48,4 +48,14 @@ test("style settings reject unknown or unbounded input and render only normalize
       "&quot;color&quot;:1.4",
     ),
   );
+});
+
+test("Waves is not offered and login artwork is a WebGL canvas, never SVG", async () => {
+  const { dailyArtwork } = await import("../src/appearance.mjs");
+  assert(!doodles.some((item) => item.id === "waves"));
+  assert.equal(validPool(["waves"]), false);
+  const markup = dailyArtwork("2026-01-16");
+  assert(markup.startsWith("<canvas"));
+  assert(markup.includes('data-doodle="silk-braid"'));
+  assert(!markup.includes("<svg"));
 });

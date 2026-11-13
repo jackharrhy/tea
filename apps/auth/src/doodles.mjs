@@ -1,5 +1,4 @@
 export const doodles = [
-  { id: "waves", name: "Waves", mode: 0 },
   { id: "silk", name: "Silk", mode: 1 },
   { id: "silk-folds", name: "Silk folds", mode: 2 },
   { id: "silk-sheen", name: "Silk sheen", mode: 3 },
@@ -94,7 +93,7 @@ export function validSettings(value) {
     )
   );
 }
-export const defaultPool = ["waves"];
+export const defaultPool = ["silk-braid"];
 export function validPool(value) {
   return (
     Array.isArray(value) &&
@@ -130,7 +129,7 @@ export function renderDoodle(
   day = new Date().toISOString().slice(0, 10),
   settings = {},
 ) {
-  const theme = doodles.some((item) => item.id === id) ? id : "waves",
+  const theme = doodles.some((item) => item.id === id) ? id : "silk-braid",
     seed = doodleSeed(theme, day) * 6,
     paths = [];
   const palette = paletteForDay(day);
