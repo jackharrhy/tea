@@ -7,6 +7,9 @@ export interface Bindings {
   COMMUNITIES: DurableObjectNamespace<CommunityCell>;
   MEDIA: R2Bucket;
   AUTH_ISSUER: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
   REVIEW_SOURCE_FINGERPRINT?: string;
   AUTH_CLIENT_ID: string;
   AUTH_PROJECT_ID: string;

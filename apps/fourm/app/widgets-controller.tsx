@@ -3,6 +3,7 @@ import { LineageTree } from "./lineage-view.tsx";
 import { pagesFeed, forumFeed } from "./feeds.ts";
 import { guestbookJSON } from "./view-json.ts";
 import { counterJSON, counterDocument } from "./counter-widget.ts";
+import { deliverPush } from "./push-delivery.ts";
 import { playerJSON, playerDocument } from "./player-widget.ts";
 import { webringJSON, webringDocument } from "./webring-widget.ts";
 import { statusJSON, statusDocument } from "./status-widget.ts";
@@ -56,6 +57,7 @@ export function widgetController(
   store: Runtime,
   viewer: Viewer,
   page: (title: string, body: RemixNode) => Promise<Response>,
+  background: (operation: Promise<unknown>) => void,
 ) {
   function actor(status = 401) {
     if (!viewer.member) throw new CommunityError(status, "Sign in to continue");
@@ -162,6 +164,12 @@ export function widgetController(
           params.username,
           (await fields(request)).message ?? "",
         );
+        if (env.VAPID_PRIVATE_KEY)
+          background(
+            store
+              .call("guestbookNotifications", actor().id, params.username)
+              .then((items) => deliverPush(env, store, items)),
+          );
         if (wantsJSON(request))
           return Response.json({ ok: true, message: "entry added" });
         if (request.headers.get("HX-Request") === "true")
