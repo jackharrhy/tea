@@ -1,4 +1,5 @@
-import { planBackupRetention } from "../backup-retention.ts";
+import type { VerifiedBackupRecord } from "../backup-catalogue.ts";
+import { planBackupRetention, backupNameTime } from "../backup-retention.ts";
 import { CommunityError } from "./community.ts";
 import type { Database, Member } from "./community.ts";
 
@@ -98,16 +99,107 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
         throw new CommunityError(422, "Invalid backup failure");
       return finish(name, "failed", null, null, error);
     },
+    adoptVerifiedBackups(
+      actorId: number | null,
+      records: VerifiedBackupRecord[],
+    ) {
+      authorize(actorId);
+      if (
+        !Array.isArray(records) ||
+        records.some(
+          (record) =>
+            !record ||
+            typeof record.name !== "string" ||
+            !/^[A-Za-z0-9-]{1,128}$/.test(record.name) ||
+            [
+              record.started_at,
+              record.finished_at,
+              record.db_size,
+              record.file_count,
+            ].some((value) => !Number.isSafeInteger(value) || value < 0) ||
+            (backupNameTime(record.name) !== null &&
+              backupNameTime(record.name) !== record.started_at),
+        ) ||
+        new Set(records.map((record) => record.name)).size !== records.length
+      )
+        throw new CommunityError(422, "Invalid verified backup catalogue");
+      return db.transaction(() => {
+        let adopted = 0,
+          preserved = 0;
+        const conflicts: string[] = [];
+        for (const record of records.toSorted(
+          (a, b) => a.started_at - b.started_at,
+        )) {
+          const existing = db.all(
+            "SELECT * FROM backup_runs WHERE name=?",
+            record.name,
+          )[0];
+          if (existing) {
+            if (
+              existing.started_at !== record.started_at ||
+              existing.state === "failed" ||
+              (existing.state === "complete" &&
+                (existing.db_size !== record.db_size ||
+                  existing.file_count !== record.file_count))
+            ) {
+              conflicts.push(record.name);
+              continue;
+            }
+            if (existing.state === "complete") {
+              preserved++;
+              continue;
+            }
+            db.all(
+              "UPDATE backup_runs SET state='complete',finished_at=?,db_size=?,file_count=? WHERE name=?",
+              record.finished_at,
+              record.db_size,
+              record.file_count,
+              record.name,
+            );
+          } else
+            db.all(
+              "INSERT INTO backup_runs(name,started_at,finished_at,state,db_size,file_count) VALUES(?,?,?,'complete',?,?)",
+              record.name,
+              record.started_at,
+              record.finished_at,
+              record.db_size,
+              record.file_count,
+            );
+          adopted++;
+        }
+        return {
+          state: conflicts.length
+            ? ("conflicted" as const)
+            : ("complete" as const),
+          adopted,
+          preserved,
+          conflicts,
+        };
+      });
+    },
     backupRetentionPlan(actorId: number | null) {
       authorize(actorId);
-      return planBackupRetention(
-        db
-          .all("SELECT name,started_at FROM backup_runs WHERE state='complete'")
-          .map((row) => ({
-            name: String(row.name),
-            startedAt: Number(row.started_at),
-          })),
+      const rows = db.all(
+        "SELECT name,started_at FROM backup_runs WHERE state='complete'",
       );
+      const managed = rows.filter(
+        (row) => backupNameTime(String(row.name)) !== null,
+      );
+      const plan = planBackupRetention(
+        managed.map((row) => ({
+          name: String(row.name),
+          startedAt: Number(row.started_at),
+        })),
+      );
+      return {
+        ...plan,
+        keep: [
+          ...plan.keep,
+          ...rows
+            .filter((row) => backupNameTime(String(row.name)) === null)
+            .map((row) => String(row.name)),
+        ],
+      };
     },
     backupStatus(actorId: number | null) {
       authorize(actorId);
