@@ -21,6 +21,9 @@ Compose values only render the public lobby; their client ID is deliberately
 unregistered. `npm run test:celld --workspace @harrhy/radio` exercises rooms,
 WebSockets, media, and recovery with a signed disposable session. It does not claim a real Jack Auth callback; the production OAuth flow has separate acceptance.
 
+Each OAuth start keeps its state and PKCE verifier in a separate short-lived
+signed cookie. Another tab can start sign-in without invalidating the first.
+
 Use `npm run dev:celld` for a compatibility run on Celld, serving
 <http://127.0.0.1:9876> with disposable local state under `apps/radio/.celld/dev/`. Use the Celld fork
 selected in `Dockerfile` for this run and expose the five `CELLD_VAR_AUTH_*`
