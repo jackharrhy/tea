@@ -11,7 +11,9 @@ import {
   stat,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve as resolvePath, relative } from "node:path";
+import { reviewSourceFingerprint } from "../scripts/review-source.mjs";
+import { exerciseNativeCli } from "./cli-native-workflow.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import { chromium } from "@playwright/test";
 import { cliIssuerProxy } from "./cli-issuer-proxy.mjs";
@@ -26,7 +28,9 @@ const output =
 await mkdir(output, { mode: 0o700 });
 let provider, cli, proxy, browser;
 let phase = "setup";
-const configuration = {
+const nativeState = process.env.FOURM_CLI_NATIVE_STATE;
+let nativeRuntime;
+let configuration = {
   native: true,
   clientId: "fourm-isolated-cli",
   projectId: "fourm-isolated-project",
@@ -39,6 +43,32 @@ const configuration = {
   resourceClientId: "fourm-isolated-resource",
   resourceSecret: "isolated-not-production",
 };
+if (nativeState) {
+  assert.ok(
+    !relative(
+      resolvePath("apps/fourm/.review"),
+      resolvePath(nativeState),
+    ).startsWith(".."),
+  );
+  nativeRuntime = JSON.parse(
+    await readFile(join(nativeState, "runtime.json"), "utf8"),
+  );
+  assert.equal(nativeRuntime.cliTransportCaged, true);
+  assert.equal(nativeRuntime.productionTouched, false);
+  assert.equal(
+    nativeRuntime.sourceFingerprint,
+    await reviewSourceFingerprint(resolvePath("apps/fourm")),
+  );
+  assert.equal(new URL(nativeRuntime.origin).hostname, "127.0.0.1");
+  const live = await fetch(nativeRuntime.origin + "/ready").then((r) =>
+    r.json(),
+  );
+  assert.equal(live.sourceFingerprint, nativeRuntime.sourceFingerprint);
+  configuration = JSON.parse(
+    await readFile(join(nativeState, "issuer.json"), "utf8"),
+  ).applications.find((app) => app.native === true);
+  assert.ok(configuration);
+}
 const configServer = createServer((req, res) => {
   if (req.method !== "GET" || req.url !== "/api/v1/auth-config") {
     res.writeHead(404).end();
@@ -93,43 +123,51 @@ try {
     ).status,
     0,
   );
-  const probe = createServer();
-  await new Promise((resolve) => probe.listen(0, "127.0.0.1", resolve));
-  const port = probe.address().port;
-  await new Promise((resolve) => probe.close(resolve));
-  const upstream = `http://127.0.0.1:${port}`;
-  const providerConfig = join(directory, "provider.json");
-  await writeFile(
-    providerConfig,
-    JSON.stringify({ applications: [configuration] }),
-  );
-  provider = spawn(process.execPath, ["packages/dev-auth/server.mjs"], {
-    env: {
-      ...process.env,
-      HARRHY_DEV_AUTH_PORT: String(port),
-      HARRHY_DEV_AUTH_ORIGIN: issuer,
-      HARRHY_DEV_AUTH_CONFIG: providerConfig,
-    },
-    stdio: "ignore",
-  });
-  for (let i = 0; ; i++) {
-    try {
-      if ((await fetch(upstream + "/.well-known/openid-configuration")).ok)
-        break;
-    } catch {}
-    assert.ok(
-      i < 50 && provider.exitCode === null,
-      "Fixture provider did not become ready",
+  let upstream = process.env.FOURM_CLI_FIXTURE_ORIGIN;
+  if (!nativeState) {
+    const probe = createServer();
+    await new Promise((resolve) => probe.listen(0, "127.0.0.1", resolve));
+    const port = probe.address().port;
+    await new Promise((resolve) => probe.close(resolve));
+    upstream = `http://127.0.0.1:${port}`;
+    const providerConfig = join(directory, "provider.json");
+    await writeFile(
+      providerConfig,
+      JSON.stringify({ applications: [configuration] }),
     );
-    await delay(50);
+    provider = spawn(process.execPath, ["packages/dev-auth/server.mjs"], {
+      env: {
+        ...process.env,
+        HARRHY_DEV_AUTH_PORT: String(port),
+        HARRHY_DEV_AUTH_ORIGIN: issuer,
+        HARRHY_DEV_AUTH_CONFIG: providerConfig,
+      },
+      stdio: "ignore",
+    });
+    for (let i = 0; ; i++) {
+      try {
+        if ((await fetch(upstream + "/.well-known/openid-configuration")).ok)
+          break;
+      } catch {}
+      assert.ok(
+        i < 50 && provider.exitCode === null,
+        "Fixture provider did not become ready",
+      );
+      await delay(50);
+    }
   }
+  assert.ok(upstream, "Explicit native fixture origin required");
   proxy = await cliIssuerProxy({
     key: await readFile(key),
     cert: await readFile(cert),
     upstream,
   });
-  await new Promise((resolve) => configServer.listen(0, "127.0.0.1", resolve));
-  const origin = `http://127.0.0.1:${configServer.address().port}`;
+  if (!nativeState)
+    await new Promise((resolve) =>
+      configServer.listen(0, "127.0.0.1", resolve),
+    );
+  const origin =
+    nativeRuntime?.origin ?? `http://127.0.0.1:${configServer.address().port}`;
   const env = Object.fromEntries(
     Object.entries(process.env).filter(
       ([name]) =>
@@ -227,16 +265,32 @@ try {
   assert.equal(credentials.client_id, configuration.clientId);
   assert.ok(credentials.access_token && credentials.refresh_token);
   assert.equal((await stat(credentialPath)).mode & 0o777, 0o600);
+  let nativeAcceptance;
+  if (nativeState) {
+    phase = "native-cli-business-refresh-revocation";
+    nativeAcceptance = await exerciseNativeCli({
+      binary,
+      env,
+      origin,
+      upstream,
+      configuration,
+      credentialPath,
+      directory,
+    });
+  }
   await writeFile(
     join(output, "receipt.json"),
     JSON.stringify(
       {
-        status: "PASS_RELEASED_CLI_BROWSER_PROTOCOL_ONLY",
+        status: nativeState
+          ? "PASS_RELEASED_CLI_NATIVE_API"
+          : "PASS_RELEASED_CLI_BROWSER_PROTOCOL_ONLY",
         binary,
         binarySha256: createHash("sha256")
           .update(await readFile(binary))
           .digest("hex"),
         actualBrowserCallback: true,
+        nativeAcceptance,
         signedIdentityAcceptedByUnmodifiedCLI: true,
         credentialsMode: "0600",
         transport: {
@@ -246,11 +300,16 @@ try {
           browserPinnedFixtureSPKI: true,
           ...proxy.counts,
         },
-        limits: [
-          "Configuration endpoint is a disposable fixture, not the native 4orm API",
-          "No native CLI business/API or refresh acceptance claim",
-          "No production provider contact or production credentials",
-        ],
+        limits: nativeState
+          ? [
+              "Loopback native copy and synthetic provider, not production SSO",
+              "No full migration or Tailnet acceptance claim",
+            ]
+          : [
+              "Configuration endpoint is a disposable fixture, not the native 4orm API",
+              "No native CLI business/API or refresh acceptance claim",
+              "No production provider contact or production credentials",
+            ],
         productionTouched: false,
       },
       null,
@@ -259,7 +318,9 @@ try {
   );
   console.log(
     JSON.stringify({
-      status: "PASS_RELEASED_CLI_BROWSER_PROTOCOL_ONLY",
+      status: nativeState
+        ? "PASS_RELEASED_CLI_NATIVE_API"
+        : "PASS_RELEASED_CLI_BROWSER_PROTOCOL_ONLY",
       output,
     }),
   );

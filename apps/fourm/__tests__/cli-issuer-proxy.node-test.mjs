@@ -126,3 +126,30 @@ test("CLI issuer cage requires trusted TLS and refuses every other destination",
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("native issuer transport keeps even double-slash paths on loopback", async () => {
+  const { cliLoopbackTransport } = await import("./cli-loopback-transport.ts");
+  const calls = [];
+  const transport = cliLoopbackTransport(async (input, init) => {
+    calls.push({ input, init });
+    return new Response("fixture");
+  }, "http://127.0.0.1:18995");
+  await transport("https://auth.jackharrhy.dev//example.com/escape");
+  assert.equal(new URL(calls[0].input).origin, "http://127.0.0.1:18995");
+  assert.equal(new URL(calls[0].input).pathname, "//example.com/escape");
+  for (const url of [
+    "https://example.com/",
+    "https://auth.jackharrhy.dev.evil/",
+    "http://auth.jackharrhy.dev/",
+    "http://127.0.0.1:18995/",
+  ])
+    assert.throws(() => transport(url), /denied outbound/);
+  await transport(
+    new Request("https://auth.jackharrhy.dev/oauth/v2/token", {
+      method: "POST",
+      body: "fixture-body",
+    }),
+  );
+  assert.equal(calls[1].input.method, "POST");
+  assert.equal(await calls[1].input.text(), "fixture-body");
+});

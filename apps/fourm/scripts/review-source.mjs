@@ -21,6 +21,9 @@ export async function reviewSourceFingerprint(root) {
     join(root, "scripts/review.mjs"),
     join(root, "scripts/review-source.mjs"),
     join(root, "__tests__/issuer.mjs"),
+    join(root, "__tests__/cli-review-worker.ts"),
+    join(root, "__tests__/private-review-worker.ts"),
+    join(root, "__tests__/cli-loopback-transport.ts"),
     join(repo, "package-lock.json"),
     join(repo, "packages/dev-auth/server.mjs"),
   );
