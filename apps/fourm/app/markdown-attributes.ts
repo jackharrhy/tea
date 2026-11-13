@@ -64,47 +64,64 @@ function apply(html: string, attrs: Attributes) {
 }
 export function markdownAttributes(markdown: Marked) {
   const assigned = new WeakMap<object, Attributes>();
+  const trailing = / +\{:? *([^}\n ][^\n]*)\} *$/;
+  const separateLine = /\n *\{:? *([^}\n ][^\n]*)\} *$/;
+  function consume(target: object, children: Token[], pattern: RegExp) {
+    const last = children.at(-1);
+    if (last?.type !== "text") return;
+    const match = pattern.exec(last.text),
+      parsed = match && attributes(match[1]);
+    if (!parsed) return;
+    assigned.set(target, parsed);
+    last.text = last.text.slice(0, match.index);
+  }
   function visit(tokens: Token[]) {
     for (const token of tokens) {
       if (token.type === "list")
-        for (const item of token.items) visit(item.tokens);
+        for (const item of token.items) {
+          const tail = item.tokens.at(-1);
+          if (tail?.type === "text" && tail.tokens)
+            consume(item, tail.tokens, separateLine);
+          visit(item.tokens);
+        }
+      if (token.type === "table")
+        for (const cell of [...token.header, ...token.rows.flat()]) {
+          consume(cell, cell.tokens, trailing);
+          visit(cell.tokens);
+        }
       if (!("tokens" in token) || !Array.isArray(token.tokens)) continue;
       const children = token.tokens as Token[];
-      const last = children.at(-1);
-      if (
-        (token.type === "heading" || token.type === "paragraph") &&
-        last?.type === "text"
-      ) {
-        const pattern =
-          token.type === "heading"
-            ? / +\{:? *([^}\n ][^\n]*)\} *$/
-            : /\n *\{:? *([^}\n ][^\n]*)\} *$/;
-        const match = pattern.exec(last.text);
-        const parsed = match && attributes(match[1]);
-        if (parsed) {
-          assigned.set(token, parsed);
-          last.text = last.text.slice(0, match.index);
-          if (token.type === "heading")
-            last.text = last.text.replace(/#+$/, "").trimEnd();
-        }
+      if (token.type === "heading" || token.type === "paragraph") {
+        consume(
+          token,
+          children,
+          token.type === "heading" ? trailing : separateLine,
+        );
+        const last = children.at(-1);
+        if (
+          token.type === "heading" &&
+          assigned.has(token) &&
+          last?.type === "text"
+        )
+          last.text = last.text.replace(/#+$/, "").trimEnd();
       }
       visit(children);
-      for (let i = 1; i < children.length; i++) {
-        const previous = children[i - 1],
-          following = children[i];
-        if (
-          !["image", "link", "strong", "em", "codespan"].includes(
-            previous.type,
-          ) ||
-          following.type !== "text"
-        )
-          continue;
-        const match = /^\{:? *([^}\n ][^\n]*)\}/.exec(following.text);
-        const parsed = match && attributes(match[1]);
-        if (parsed) {
-          assigned.set(previous, parsed);
-          following.text = following.text.slice(match[0].length);
-        }
+    }
+    for (let i = 1; i < tokens.length; i++) {
+      const previous = tokens[i - 1],
+        following = tokens[i];
+      if (
+        !["image", "link", "strong", "em", "codespan"].includes(
+          previous.type,
+        ) ||
+        following.type !== "text"
+      )
+        continue;
+      const match = /^\{:? *([^}\n ][^\n]*)\}/.exec(following.text);
+      const parsed = match && attributes(match[1]);
+      if (parsed) {
+        assigned.set(previous, parsed);
+        following.text = following.text.slice(match[0].length);
       }
     }
   }
@@ -125,6 +142,8 @@ export function markdownAttributes(markdown: Marked) {
       },
     },
     renderer: {
+      tablecell: wrap(renderer.tablecell),
+      listitem: wrap(renderer.listitem),
       heading: wrap(renderer.heading),
       paragraph: wrap(renderer.paragraph),
       image: wrap(renderer.image),
