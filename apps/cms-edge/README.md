@@ -24,4 +24,6 @@ yet, so it is not part of a live cutover.
 
 The editor is under `/tea`; published JSON is at `/api/content/:collection` and `/api/content/:collection/:slug`. In password mode, `/api/preview/*` requires `Authorization: Bearer <TEA_PREVIEW_SECRET>`; Central mode uses a human admin resource token instead. `TEA_EDITOR_ORIGIN` sets the canonical editor origin. Editor input uses [`@harrhy/request-body`](../../packages/request-body/README.md) for a 16 KiB stream limit, and request records use [`@harrhy/logger`](../../packages/logger/README.md).
 
+Remix CSP middleware gives HTML responses per-request nonces for generated styles and keeps them private/no-store. JSON and media responses retain their own cache policy. Public site routes added through `extend` share the same HTML policy.
+
 From the repo root, run `npm ci`, then `npm run cms-edge:check`. Use `npm run cms-edge:dev` for local development. The Cloudflare `cf` CLI reads `cloudflare.config.ts` and uses the Vite plugin to build the Worker. The check generates Worker types, typechecks, runs tests in `app/__tests__/`, and builds the Worker. Deploy only after replacing the resource placeholder and setting secrets.

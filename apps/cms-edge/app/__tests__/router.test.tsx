@@ -111,6 +111,10 @@ it("serves a native Remix editor and public page from one router", async () => {
   );
   const html = await editor.text();
   assert.equal(editor.status, 200);
+  assert.equal(editor.headers.get("Cache-Control"), "private, no-store");
+  const policy = editor.headers.get("Content-Security-Policy") ?? "";
+  assert.match(policy, /style-src 'self' 'nonce-[^']+'/);
+  assert.doesNotMatch(policy, /script-src[^;]*unsafe-inline/);
   assert.equal(html.includes("Draft title"), true);
   assert.equal(html.includes("Save draft"), true);
   assert.equal(html.includes("Publish draft"), true);
@@ -118,6 +122,11 @@ it("serves a native Remix editor and public page from one router", async () => {
 
   const publicPage = await app.fetch(new Request(origin));
   assert.equal(publicPage.status, 200);
+  assert.equal(publicPage.headers.get("Cache-Control"), "private, no-store");
+  assert.match(
+    publicPage.headers.get("Content-Security-Policy") ?? "",
+    /nonce-/,
+  );
   assert.equal((await publicPage.text()).includes("Public page"), true);
 
   const published = await app.fetch(
