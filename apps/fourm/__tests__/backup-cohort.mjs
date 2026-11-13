@@ -206,6 +206,10 @@ try {
   ).json();
   assert.equal(captured.state, "complete");
   assert.equal(captured.files, 146);
+  if (nativeMode) {
+    assert.equal(captured.pruned, 0);
+    assert.equal(captured.objectsRemoved, 0);
+  }
   phase = "cold-recovery";
   await checkpoint();
   await stop();
@@ -320,6 +324,7 @@ try {
           ? "isolated real-cohort native30table/full-file artifact capture and cold restore; no production/browser/OAuth/scheduler claim"
           : "isolated native real-content cohort archive capture and restore; no browser/OAuth/full operational backup claim",
         combinedNativeFormat: nativeMode,
+        applicationManualRunAndRetention: nativeMode,
         managedTablesExact: nativeMode
           ? Object.keys(managedReadback.tables).length
           : null,
