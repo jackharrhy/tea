@@ -2,6 +2,10 @@ import { generateKeyPairSync, sign } from "node:crypto";
 
 import { afterEach, expect, test, vi } from "vitest";
 import { projectAudienceScope } from "@harrhy/identity";
+import { chromium } from "playwright";
+import { createServer } from "node:http";
+import { once } from "node:events";
+import { createRequestListener } from "remix/node-fetch-server";
 
 import { router } from "../app/router.ts";
 import { sessions, users } from "#db";
@@ -107,6 +111,7 @@ function mockProvider(input: {
   readonly introspectionClientId?: string;
   readonly introspectionScopes?: string;
   readonly statusActive?: () => boolean;
+  readonly statusExpiryOffsetMs?: number;
   readonly calls: string[];
 }) {
   const expiresAt = new Date(Date.now() + 240_000).toISOString();
@@ -164,7 +169,9 @@ function mockProvider(input: {
               supportId: "support-session",
               actorSubject: "actor",
               targetSubject: "target",
-              expiresAt,
+              expiresAt: new Date(
+                Date.parse(expiresAt) + (input.statusExpiryOffsetMs ?? 0),
+              ).toISOString(),
             },
       );
     if (url.endsWith("/support/end"))
@@ -262,6 +269,16 @@ test("support handoff uses an existing target and exit rejects in-flight verific
   expect(
     calls.filter((call) => call.endsWith("/support/session")),
   ).toHaveLength(1);
+  // New document requests must revalidate, without treating stable expiry as ended.
+  for (let navigation = 0; navigation < 3; navigation++) {
+    const page = await router.fetch(
+      new Request(`${artbin}/folders`, {
+        headers: { Cookie: sessionCookie, Accept: "text/html" },
+      }),
+    );
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain("target-user");
+  }
   await expect(
     getUserFromRequest(
       new Request(`${artbin}/api/cli/whoami`, {
@@ -314,6 +331,53 @@ test("support handoff uses an existing target and exit rejects in-flight verific
   ).rejects.toMatchObject({ status: 401 });
   expect(await db.query.users.findMany()).toMatchObject([
     { id: "local-target", authSubject: "target", isAdmin: false },
+  ]);
+});
+
+test("even a one-millisecond status expiry mismatch ends support with a secret-free diagnostic", async () => {
+  const db = setup();
+  await db.insert(users).values({
+    id: "expiry-target",
+    username: "target-user",
+    authSubject: "target",
+    isAdmin: false,
+  });
+  const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const start = await beginSupportLogin(
+    new Request(`${artbin}/auth/support/start?request=${"a".repeat(43)}`),
+  );
+  const handoff = new URL(start.headers.get("Location")!);
+  mockProvider({
+    targetToken: signedTargetToken(),
+    nonce: handoff.searchParams.get("nonce")!,
+    statusExpiryOffsetMs: 1,
+    calls: [],
+  });
+  const callback = await completeSupportLogin(
+    new Request(
+      `${artbin}/auth/support/callback?code=${"b".repeat(43)}&state=${handoff.searchParams.get("state")}`,
+      { headers: { Cookie: start.headers.get("Set-Cookie")!.split(";")[0] } },
+    ),
+  );
+  expect(callback.status).toBe(303);
+  const cookie = callback.headers
+    .getSetCookie()
+    .find((entry) => entry.startsWith("artbin_support="))!
+    .split(";")[0];
+  const response = await router
+    .fetch(
+      new Request(`${artbin}/folders`, {
+        headers: { Cookie: cookie, Accept: "text/html" },
+      }),
+    )
+    .catch((error: unknown) => {
+      if (error instanceof Response) return error;
+      throw error;
+    });
+  expect(response.status).toBe(303);
+  expect(response.headers.get("Location")).toBe("/auth/support/recover");
+  expect(warning.mock.calls).toEqual([
+    ["artbin_support_status_rejected", "expiry"],
   ]);
 });
 
@@ -479,7 +543,79 @@ test("unlinked support target ends the redeemed token and shows a clean actionab
   expect(page).toContain("Return to Jack Auth");
 });
 
+test.runIf(process.env.ARTBIN_SUPPORT_BROWSER_TEST === "1")(
+  "browser recovery form sends valid Origin and CSRF and clears a stale support cookie",
+  async () => {
+    setup();
+    let exitStatus: number | undefined;
+    let exitOrigin: string | null = null;
+    const server = createServer(
+      createRequestListener(async (request) => {
+        const pathname = new URL(request.url).pathname;
+        if (pathname === "/auth/login")
+          return new Response("<h1>Normal sign-in</h1>", {
+            headers: { "Content-Type": "text/html" },
+          });
+        const response = await router.fetch(request).catch((error: unknown) => {
+          if (error instanceof Response) return error;
+          throw error;
+        });
+        if (pathname === "/auth/support/exit") {
+          exitStatus = response.status;
+          exitOrigin = request.headers.get("Origin");
+        }
+        return response;
+      }),
+    );
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string")
+      throw new Error("Missing fixture address");
+    const browserOrigin = `http://127.0.0.1:${address.port}`;
+    process.env.ARTBIN_URL = browserOrigin;
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const context = await browser.newContext({ javaScriptEnabled: false });
+      await context.addCookies([
+        {
+          name: "artbin_support",
+          value: "synthetic-stale-session",
+          url: browserOrigin,
+          secure: true,
+          httpOnly: true,
+          sameSite: "Lax",
+        },
+      ]);
+      const page = await context.newPage();
+      await page.goto(`${browserOrigin}/auth/support/recover`, {
+        waitUntil: "domcontentloaded",
+        timeout: 5000,
+      });
+      await page
+        .getByRole("button", { name: "Clear support session" })
+        .click({ timeout: 5000 });
+      await page.waitForURL(`${browserOrigin}/auth/login`, { timeout: 5000 });
+      expect(exitStatus).toBe(303);
+      expect(exitOrigin).toBe(browserOrigin);
+      expect(
+        (await context.cookies()).some(
+          (cookie) => cookie.name === "artbin_support",
+        ),
+      ).toBe(false);
+    } finally {
+      await browser.close();
+      server.closeAllConnections();
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  },
+  30000,
+);
+
 test("stale support cookie blocks actor fallback until explicit CSRF-protected exit", async () => {
+  const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
   const db = setup();
   await db.insert(users).values({
     id: "local-actor",
@@ -552,6 +688,10 @@ test("stale support cookie blocks actor fallback until explicit CSRF-protected e
       )
     ).status,
   ).toBe(403);
+  expect(warning.mock.calls).toEqual([
+    ["artbin_support_exit_rejected", "csrf"],
+    ["artbin_support_exit_rejected", "origin"],
+  ]);
   const cleared = await exit(csrf!);
   expect(cleared.status).toBe(303);
   expect(cleared.headers.get("Location")).toBe("/");

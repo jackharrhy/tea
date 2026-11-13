@@ -93,7 +93,8 @@ export function createSupportStore({ filename, key, now = Date.now }) {
       );
       return { ref, row: get(id) };
     },
-    transfer(ref, kind, body, lifetime, state = "pending") {
+    // Sessions pass their absolute token-bounded expiry; never restart that deadline here.
+    transfer(ref, kind, body, lifetime, state = "pending", expiresAt) {
       return transaction(() => {
         const previous = get(supportHash(ref));
         if (
@@ -104,7 +105,7 @@ export function createSupportStore({ filename, key, now = Date.now }) {
           throw fail(409);
         const nextRef = supportRandom(),
           id = supportHash(nextRef),
-          expires = now() + lifetime;
+          expires = expiresAt ?? now() + lifetime;
         db.prepare("INSERT INTO support_lifecycle VALUES(?,?,?,?,?,?)").run(
           id,
           kind,

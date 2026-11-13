@@ -483,15 +483,23 @@ async function statusActive(settings: SupportConfig, session: SupportSession) {
     supportId: session.supportId,
     endSecret: session.endSecret,
   });
-  if (!response.ok) return false;
+  if (!response.ok) {
+    console.warn("artbin_support_status_rejected", "http");
+    return false;
+  }
   const status = await responseJson(response);
-  return (
-    status.active === true &&
-    status.supportId === session.supportId &&
-    status.actorSubject === session.actorSubject &&
-    status.targetSubject === session.targetSubject &&
-    Date.parse(String(status.expiresAt)) === session.expiresAt
-  );
+  const failure =
+    status.active !== true
+      ? "inactive"
+      : status.supportId !== session.supportId ||
+          status.actorSubject !== session.actorSubject ||
+          status.targetSubject !== session.targetSubject
+        ? "identity"
+        : Date.parse(String(status.expiresAt)) !== session.expiresAt
+          ? "expiry"
+          : null;
+  if (failure) console.warn("artbin_support_status_rejected", failure);
+  return failure === null;
 }
 
 async function resolveSupportUser(
@@ -671,8 +679,10 @@ export async function exitSupportLogin(request: Request): Promise<Response> {
   } catch {
     return new Response("Forbidden", { status: 403 });
   }
-  if (request.headers.get("Origin") !== expectedOrigin)
+  if (request.headers.get("Origin") !== expectedOrigin) {
+    console.warn("artbin_support_exit_rejected", "origin");
     return new Response("Forbidden", { status: 403 });
+  }
   const sessionId = cookie(request, SESSION_COOKIE);
   const session = sessionId ? sessions.get(digest(sessionId)) : undefined;
   const csrf = supportRecoveryToken(request);
@@ -687,8 +697,10 @@ export async function exitSupportLogin(request: Request): Promise<Response> {
   });
   if (!body.ok) return new Response("Invalid support exit", { status: 400 });
   const form = new URLSearchParams(Buffer.from(body.bytes).toString("utf8"));
-  if (!csrf || !sameSecret(form.get("csrf") ?? "", csrf))
+  if (!csrf || !sameSecret(form.get("csrf") ?? "", csrf)) {
+    console.warn("artbin_support_exit_rejected", "csrf");
     return new Response("Forbidden", { status: 403 });
+  }
   if (sessionId) sessions.delete(digest(sessionId));
   if (session) {
     let settings: SupportConfig | null;
