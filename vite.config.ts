@@ -7,6 +7,7 @@ export default defineConfig({
     ignorePatterns: [
       ".agents/**",
       "package-lock.json",
+      "apps/auth/public/style.css",
       "apps/garden/app/ui/public/mug/pico-cad-viewer.js",
       "apps/cms/sites/*/public/icons/**",
       "**/.cloudflare/**",

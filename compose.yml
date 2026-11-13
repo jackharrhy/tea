@@ -1,4 +1,24 @@
 services:
+  auth:
+    profiles: [auth]
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
+    environment:
+      NODE_ENV: development
+      PUBLIC_ORIGIN: http://auth.localhost
+      ZITADEL_API_URL: ${AUTH_DEV_ISSUER:-http://auth.localhost}
+      ORGANIZATION_ID: ${AUTH_DEV_ORGANIZATION_ID:-fixture-only}
+      LORE_PROJECT_ID: ${AUTH_DEV_LORE_PROJECT_ID:-fixture-only}
+      LORE_CLIENT_ID: ${AUTH_DEV_LORE_CLIENT_ID:-fixture-only}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.auth.rule: "Host(`auth.localhost`)"
+      traefik.http.routers.auth.entrypoints: web
+      traefik.http.services.auth.loadbalancer.server.port: "3000"
+    networks:
+      - web
+
   traefik:
     image: traefik:v3.7
     command:

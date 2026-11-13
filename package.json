@@ -1,15 +1,21 @@
 {
   "name": "harrhy",
   "private": true,
-  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
-  "engines": {
-    "node": ">=26.13.0 <27"
-  },
+  "type": "module",
   "scripts": {
+    "auth:real:init": "node apps/auth/local-real/init.mjs",
+    "auth:real:up": "docker compose --env-file apps/auth/.local-real/compose.env -f apps/auth/local-real/compose.yml up -d --wait",
+    "auth:real:seed": "node apps/auth/local-real/seed.mjs",
+    "auth:real:ui": "node apps/auth/local-real/run.mjs auth",
+    "auth:real:artbin": "node apps/auth/local-real/run.mjs artbin",
+    "auth:real:smoke": "node apps/auth/local-real/smoke.mjs",
+    "auth:real:down": "docker compose --env-file apps/auth/.local-real/compose.env -f apps/auth/local-real/compose.yml down",
+    "auth:check": "npm run tooling:check && npm run check --workspace @harrhy/auth",
+    "auth:dev": "npm run dev --workspace @harrhy/auth",
     "garden:dev": "npm run dev --workspace @harrhy/garden",
     "8mb:check": "npm run tooling:check && npm run check --workspace @harrhy/8mb",
     "8mb:dev": "npm run dev --workspace @harrhy/8mb",
@@ -67,6 +73,9 @@
         }
       }
     }
+  },
+  "engines": {
+    "node": ">=26.13.0 <27"
   },
   "allowScripts": {
     "better-sqlite3@13.1.1": true

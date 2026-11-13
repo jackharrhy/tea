@@ -21,6 +21,19 @@ const configs = {
       ["/tea/login", 200, { host: "andrew.jackharrhy.dev" }],
     ],
   },
+  auth: {
+    port: 3000,
+    env: [
+      "ORGANIZATION_ID=fixture-org",
+      "LORE_PROJECT_ID=fixture-project",
+      "LORE_CLIENT_ID=fixture-client",
+      "PUBLIC_ORIGIN=http://127.0.0.1:3000",
+    ],
+    paths: [
+      ["/healthz", 200],
+      ["/login", 200],
+    ],
+  },
   artbin: {
     port: 3000,
     env: [],

@@ -1,0 +1,243 @@
+[
+  {
+    "id": "lore",
+    "name": "Lore",
+    "projectId": "396722776053907459",
+    "clientIds": ["396722776490115075"],
+    "roles": ["owner", "editor"]
+  },
+  {
+    "id": "fourm",
+    "name": "4orm",
+    "projectId": "396747759928999939",
+    "clientIds": ["396747761673830403", "398729205979873283"],
+    "roles": ["member"],
+    "enrollment": {
+      "apiOrigin": "https://4orm.harrhy.xyz",
+      "returnUrl": "https://4orm.harrhy.xyz/auth/start?next=register",
+      "companionApplications": ["maps", "burger"]
+    },
+    "apiRoles": ["pages-read", "pages-write", "media-read", "media-write"],
+    "pkceClientIds": ["396747761673830403", "398729205979873283"],
+    "authRequestNotBefore": {
+      "398729205979873283": "2026-11-08T17:38:20.794260+00:00"
+    }
+  },
+  {
+    "id": "artbin",
+    "name": "Artbin",
+    "projectId": "396756729531990019",
+    "clientIds": ["396756732535177219", "399308762994704404"],
+    "pkceClientIds": ["396756732535177219", "399308762994704404"],
+    "roles": ["member", "admin"],
+    "delegatedRoles": ["admin"],
+    "authRequestNotBefore": {
+      "396756732535177219": "2026-11-08T18:37:43.416953+00:00",
+      "399308762994704404": "2026-11-12T16:59:13.004155+00:00"
+    },
+    "clientRoleRequirements": {
+      "399308762994704404": ["admin"]
+    }
+  },
+  {
+    "id": "maps",
+    "name": "Worldview",
+    "projectId": "396756760636948483",
+    "clientIds": ["396756762818052099"],
+    "pkceClientIds": ["396756762818052099"],
+    "roles": ["member", "admin"],
+    "delegatedRoles": ["admin"],
+    "authRequestNotBefore": {
+      "396756762818052099": "2026-11-08T18:37:43.416953+00:00"
+    }
+  },
+  {
+    "id": "executor",
+    "name": "Executor",
+    "projectId": "398453805496139778",
+    "clientIds": ["398453807794683906"],
+    "roles": ["member"]
+  },
+  {
+    "id": "burger",
+    "name": "Burger",
+    "projectId": "398737915301068803",
+    "clientIds": ["398737918404919299"],
+    "roles": ["member", "admin"],
+    "pkceClientIds": ["398737918404919299"],
+    "authRequestNotBefore": {
+      "398737918404919299": "2026-11-08T18:25:38.365775+00:00"
+    }
+  },
+  {
+    "id": "lists",
+    "name": "Tea Lists",
+    "projectId": "399027828395343875",
+    "clientIds": ["399027832069619715"],
+    "pkceClientIds": ["399027832069619715"],
+    "roles": ["admin", "member"],
+    "delegatedRoles": ["admin", "member"],
+    "delegatedPermissions": [
+      "lists-read",
+      "subscribers-read",
+      "subscribers-write",
+      "campaigns-read",
+      "campaigns-write",
+      "campaigns-send",
+      "templates-read",
+      "templates-write",
+      "deliverability-read",
+      "dmarc-read"
+    ],
+    "authorizationHold": false,
+    "authRequestNotBefore": {
+      "399027832069619715": "2026-11-10T19:16:13.507540+00:00"
+    },
+    "delegatedAuthRequestNotBefore": "2026-11-10T19:16:13.507540+00:00"
+  },
+  {
+    "id": "media-admin",
+    "name": "Media Admin",
+    "projectId": "399053688208883715",
+    "clientIds": [
+      "399053690960347139",
+      "399053734681837571",
+      "399053736963538947",
+      "399067672991498243",
+      "399208066580480020"
+    ],
+    "pkceClientIds": [
+      "399053690960347139",
+      "399053734681837571",
+      "399053736963538947",
+      "399067672991498243",
+      "399208066580480020"
+    ],
+    "roles": ["admin"],
+    "authorizationHold": false,
+    "authRequestNotBefore": {
+      "399053690960347139": "2026-11-10T22:45:40.931567+00:00",
+      "399053734681837571": "2026-11-10T22:45:40.931605+00:00",
+      "399053736963538947": "2026-11-10T22:45:40.931608+00:00",
+      "399067672991498243": "2026-11-11T01:02:15.507906+00:00",
+      "399208066580480020": "2026-11-12T00:17:05.386787+00:00"
+    },
+    "clientRoleRequirements": {
+      "399208066580480020": ["admin"]
+    }
+  },
+  {
+    "id": "rotund-portal",
+    "name": "Rotund portal",
+    "projectId": "399067665424973827",
+    "clientIds": ["399067669971599363"],
+    "pkceClientIds": ["399067669971599363"],
+    "roles": [],
+    "organizationHumansOnly": true,
+    "authRequestNotBefore": {
+      "399067669971599363": "2026-11-11T01:02:15.507945+00:00"
+    }
+  },
+  {
+    "id": "letters-to-steve",
+    "name": "Letters to Steve",
+    "projectId": "399094604768477204",
+    "clientIds": ["399094607637381140"],
+    "pkceClientIds": ["399094607637381140"],
+    "roles": ["admin", "member"],
+    "authorizationHold": false,
+    "clientRoleRequirements": {
+      "399094607637381140": ["admin", "member"]
+    },
+    "authRequestNotBefore": {
+      "399094607637381140": "2026-11-11T10:38:57.682Z"
+    }
+  },
+  {
+    "id": "ref",
+    "name": "Ref",
+    "projectId": "399095836685893652",
+    "clientIds": ["399095840712491028"],
+    "pkceClientIds": ["399095840712491028"],
+    "roles": ["admin", "member"],
+    "authorizationHold": false,
+    "delegatedRoles": ["admin"],
+    "delegatedPermissions": ["archive-read", "archive-restore"],
+    "clientRoleRequirements": {
+      "399095840712491028": ["member", "admin"]
+    },
+    "authRequestNotBefore": {
+      "399095840712491028": "2026-11-11T11:25:22.842Z"
+    },
+    "delegatedAuthRequestNotBefore": "2026-11-11T11:25:22.842Z"
+  },
+  {
+    "id": "radio",
+    "name": "Radio",
+    "projectId": "399095845577818132",
+    "clientIds": ["399095848731934740"],
+    "pkceClientIds": ["399095848731934740"],
+    "roles": ["admin", "member"],
+    "authorizationHold": false,
+    "selfEnrollment": "verified-organization-human",
+    "clientRoleRequirements": {
+      "399095848731934740": ["member", "admin"]
+    },
+    "authRequestNotBefore": {
+      "399095848731934740": "2026-11-11T09:47:45.056Z"
+    }
+  },
+  {
+    "id": "cms",
+    "name": "Tea CMS",
+    "projectId": "399097838123876372",
+    "clientIds": [
+      "399097841529651220",
+      "399097843761020948",
+      "399097845992456212"
+    ],
+    "pkceClientIds": [
+      "399097841529651220",
+      "399097843761020948",
+      "399097845992456212"
+    ],
+    "roles": ["admin", "member"],
+    "clientRoleRequirements": {
+      "399097841529651220": ["admin"],
+      "399097843761020948": ["member", "admin"],
+      "399097845992456212": ["member", "admin"]
+    },
+    "delegatedRoles": ["admin"],
+    "authorizationHold": true
+  },
+  {
+    "id": "marky",
+    "name": "Marky",
+    "projectId": "399099575991795732",
+    "clientIds": ["399099578994982932"],
+    "pkceClientIds": ["399099578994982932"],
+    "roles": ["admin", "member"],
+    "authorizationHold": false,
+    "clientRoleRequirements": {
+      "399099578994982932": ["member", "admin"]
+    },
+    "authRequestNotBefore": {
+      "399099578994982932": "2026-11-11T08:40:00.027Z"
+    }
+  },
+  {
+    "id": "navidrome",
+    "name": "Navidrome",
+    "projectId": "399152315824603156",
+    "clientIds": ["399152318240522260"],
+    "pkceClientIds": ["399152318240522260"],
+    "roles": ["admin"],
+    "authorizationHold": false,
+    "clientRoleRequirements": {
+      "399152318240522260": ["admin"]
+    },
+    "authRequestNotBefore": {
+      "399152318240522260": "2026-11-11T15:03:32.931Z"
+    }
+  }
+]

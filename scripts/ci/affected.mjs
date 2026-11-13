@@ -174,6 +174,6 @@ if (
   if (process.env.GITHUB_OUTPUT)
     appendFileSync(
       process.env.GITHUB_OUTPUT,
-      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@harrhy/cms", "@harrhy/ref", "@harrhy/radio", "@harrhy/burger"].some((name) => checks.includes(name))}\ncms=${checks.includes("@harrhy/cms")}\nref=${checks.includes("@harrhy/ref")}\nradio=${checks.includes("@harrhy/radio")}\npool=${checks.includes("@harrhy/pool-app")}\nburger=${checks.includes("@harrhy/burger")}\ngurgur=${checks.includes("@harrhy/gurgur")}\nmaps_hosted=${mapsHosted}\n`,
+      `selected=${JSON.stringify(checks)}\nany=${checks.length > 0}\nbrowser=${mapsHosted || ["@harrhy/auth", "@harrhy/cms", "@harrhy/ref", "@harrhy/radio", "@harrhy/burger"].some((name) => checks.includes(name))}\ncms=${checks.includes("@harrhy/cms")}\nref=${checks.includes("@harrhy/ref")}\nradio=${checks.includes("@harrhy/radio")}\npool=${checks.includes("@harrhy/pool-app")}\nburger=${checks.includes("@harrhy/burger")}\ngurgur=${checks.includes("@harrhy/gurgur")}\nmaps_hosted=${mapsHosted}\n`,
     );
 }

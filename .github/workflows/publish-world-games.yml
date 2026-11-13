@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-world-games.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/pool/**
       - apps/burger/**
       - apps/gurgur/**

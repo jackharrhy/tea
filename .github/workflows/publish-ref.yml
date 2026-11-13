@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-ref.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/ref/**
       - packages/identity/**
       - packages/ui/**

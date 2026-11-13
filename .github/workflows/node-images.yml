@@ -8,6 +8,7 @@ on:
       - package.json
       - package-lock.json
       - apps/cms/Dockerfile
+      - apps/auth/**
       - apps/artbin/Dockerfile
       - apps/letters-to-steve/Dockerfile
       - apps/marky/Dockerfile
@@ -32,6 +33,7 @@ jobs:
         app:
           [
             cms,
+            auth,
             artbin,
             letters-to-steve,
             marky,

@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-artbin.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/artbin/**
       - packages/artbin-core/**
       - packages/identity/**

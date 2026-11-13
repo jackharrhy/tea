@@ -1,0 +1,453 @@
+{
+  "checkedAt": "2026-11-12T03:25:42.963006+00:00",
+  "evidence": "Read-only native inventory; configuration snapshot, not human consumer acceptance",
+  "projects": [
+    {
+      "id": "396722364274049027",
+      "name": "ZITADEL",
+      "applicationId": null,
+      "infrastructure": true
+    },
+    {
+      "id": "396722776053907459",
+      "name": "Lore",
+      "applicationId": "lore",
+      "infrastructure": false
+    },
+    {
+      "id": "396747759928999939",
+      "name": "4orm",
+      "applicationId": "fourm",
+      "infrastructure": false
+    },
+    {
+      "id": "396756729531990019",
+      "name": "Artbin",
+      "applicationId": "artbin",
+      "infrastructure": false
+    },
+    {
+      "id": "396756760636948483",
+      "name": "Tea Maps",
+      "applicationId": "maps",
+      "infrastructure": false
+    },
+    {
+      "id": "397199310409760770",
+      "name": "ZITADEL DCR",
+      "applicationId": null,
+      "infrastructure": true
+    },
+    {
+      "id": "398453805496139778",
+      "name": "Executor",
+      "applicationId": "executor",
+      "infrastructure": false
+    },
+    {
+      "id": "398737915301068803",
+      "name": "Burger",
+      "applicationId": "burger",
+      "infrastructure": false
+    },
+    {
+      "id": "399027828395343875",
+      "name": "Tea Lists",
+      "applicationId": "lists",
+      "infrastructure": false
+    },
+    {
+      "id": "399053688208883715",
+      "name": "Media Admin",
+      "applicationId": "media-admin",
+      "infrastructure": false
+    },
+    {
+      "id": "399067665424973827",
+      "name": "Rotund Portal",
+      "applicationId": "rotund-portal",
+      "infrastructure": false
+    },
+    {
+      "id": "399067666012176387",
+      "name": "Jellyfin directory eligibility",
+      "applicationId": null,
+      "infrastructure": false
+    },
+    {
+      "id": "399094604768477204",
+      "name": "Letters to Steve",
+      "applicationId": "letters-to-steve",
+      "infrastructure": false
+    },
+    {
+      "id": "399095836685893652",
+      "name": "Ref",
+      "applicationId": "ref",
+      "infrastructure": false
+    },
+    {
+      "id": "399095845577818132",
+      "name": "Radio",
+      "applicationId": "radio",
+      "infrastructure": false
+    },
+    {
+      "id": "399097838123876372",
+      "name": "Tea CMS",
+      "applicationId": "cms",
+      "infrastructure": false
+    },
+    {
+      "id": "399099575991795732",
+      "name": "Marky",
+      "applicationId": "marky",
+      "infrastructure": false
+    },
+    {
+      "id": "399152315824603156",
+      "name": "Navidrome",
+      "applicationId": "navidrome",
+      "infrastructure": false
+    },
+    {
+      "id": "399176503268474900",
+      "name": "Seerr directory",
+      "applicationId": null,
+      "infrastructure": false
+    }
+  ],
+  "applications": [
+    {
+      "id": "396722364274114563",
+      "name": "Management-API",
+      "projectId": "396722364274049027",
+      "applicationId": null,
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "396722365985193987",
+      "callbacks": []
+    },
+    {
+      "id": "396722364274180099",
+      "name": "Admin-API",
+      "projectId": "396722364274049027",
+      "applicationId": null,
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "396722365985259523",
+      "callbacks": []
+    },
+    {
+      "id": "396722364274245635",
+      "name": "Auth-API",
+      "projectId": "396722364274049027",
+      "applicationId": null,
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "396722365985325059",
+      "callbacks": []
+    },
+    {
+      "id": "396722364274311171",
+      "name": "Management Console",
+      "projectId": "396722364274049027",
+      "applicationId": null,
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "396722365985390595",
+      "callbacks": [
+        "https://jack-auth-spike-rlohk4.auth.jackharrhy.dev/ui/console/auth/callback",
+        "https://auth.jackharrhy.dev/ui/console/auth/callback"
+      ]
+    },
+    {
+      "id": "396722776456560643",
+      "name": "Lore Desktop and CLI",
+      "projectId": "396722776053907459",
+      "applicationId": "lore",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "396722776490115075",
+      "callbacks": ["http://localhost:4444/callback"]
+    },
+    {
+      "id": "396747761657053187",
+      "name": "4orm",
+      "projectId": "396747759928999939",
+      "applicationId": "fourm",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "396747761673830403",
+      "callbacks": [
+        "https://4orm.harrhy.xyz/auth/callback",
+        "http://127.0.0.1:8000/auth/callback"
+      ]
+    },
+    {
+      "id": "398729207070326787",
+      "name": "4orm resource server",
+      "projectId": "396747759928999939",
+      "applicationId": "fourm",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "398729207087104003",
+      "callbacks": []
+    },
+    {
+      "id": "398729205979807747",
+      "name": "4orm native CLI",
+      "projectId": "396747759928999939",
+      "applicationId": "fourm",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "398729205979873283",
+      "callbacks": ["http://localhost:4444/auth/cli/callback"]
+    },
+    {
+      "id": "396756732535111683",
+      "name": "Artbin browser and CLI",
+      "projectId": "396756729531990019",
+      "applicationId": "artbin",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "396756732535177219",
+      "callbacks": [
+        "https://artbin.jackharrhy.dev/auth/callback",
+        "http://127.0.0.1:49175/auth/callback",
+        "https://artbin.jackharrhy.dev/auth/cli/callback",
+        "http://127.0.0.1:49175/auth/cli/callback"
+      ]
+    },
+    {
+      "id": "396756733457858563",
+      "name": "Artbin resource server",
+      "projectId": "396756729531990019",
+      "applicationId": "artbin",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "396756733457924099",
+      "callbacks": []
+    },
+    {
+      "id": "396756763690401795",
+      "name": "Tea Maps resource server",
+      "projectId": "396756760636948483",
+      "applicationId": "maps",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "396756763707179011",
+      "callbacks": []
+    },
+    {
+      "id": "396756762817986563",
+      "name": "Tea Maps browser and CLI",
+      "projectId": "396756760636948483",
+      "applicationId": "maps",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "396756762818052099",
+      "callbacks": ["https://worldview.harrhy.xyz/auth/callback"]
+    },
+    {
+      "id": "398453807794618370",
+      "name": "Executor dashboard SSO",
+      "projectId": "398453805496139778",
+      "applicationId": "executor",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "398453807794683906",
+      "callbacks": ["https://executor.jackharrhy.dev/api/auth/callback/sso"]
+    },
+    {
+      "id": "398737918404853763",
+      "name": "Burger production browser",
+      "projectId": "398737915301068803",
+      "applicationId": "burger",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "398737918404919299",
+      "callbacks": ["https://big.burger.beauty/auth/4orm/callback"]
+    },
+    {
+      "id": "399027899530739715",
+      "name": "Tea Lists resource server",
+      "projectId": "399027828395343875",
+      "applicationId": "lists",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "399027899530805251",
+      "callbacks": []
+    },
+    {
+      "id": "399027832069554179",
+      "name": "Tea Lists production browser",
+      "projectId": "399027828395343875",
+      "applicationId": "lists",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399027832069619715",
+      "callbacks": ["https://lists.jackharrhy.dev/auth/callback"]
+    },
+    {
+      "id": "399053690943569923",
+      "name": "sonarr media admin",
+      "projectId": "399053688208883715",
+      "applicationId": "media-admin",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399053690960347139",
+      "callbacks": ["https://sonarr.rotund.org/oauth2/callback"]
+    },
+    {
+      "id": "399053734681772035",
+      "name": "prowlarr media admin",
+      "projectId": "399053688208883715",
+      "applicationId": "media-admin",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399053734681837571",
+      "callbacks": ["https://prowlarr.rotund.org/oauth2/callback"]
+    },
+    {
+      "id": "399053736963473411",
+      "name": "qbittorrent media admin",
+      "projectId": "399053688208883715",
+      "applicationId": "media-admin",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399053736963538947",
+      "callbacks": ["https://qbittorrent.rotund.org/oauth2/callback"]
+    },
+    {
+      "id": "399067672974721027",
+      "name": "radarr media admin",
+      "projectId": "399053688208883715",
+      "applicationId": "media-admin",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399067672991498243",
+      "callbacks": ["https://radarr.rotund.org/oauth2/callback"]
+    },
+    {
+      "id": "399208066563702804",
+      "name": "Cleanuparr browser",
+      "projectId": "399053688208883715",
+      "applicationId": "media-admin",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399208066580480020",
+      "callbacks": ["https://cleanuparr.rotund.org/oauth2/callback"]
+    },
+    {
+      "id": "399067669954822147",
+      "name": "Rotund portal browser",
+      "projectId": "399067665424973827",
+      "applicationId": "rotund-portal",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399067669971599363",
+      "callbacks": ["https://rotund.org/auth/callback"]
+    },
+    {
+      "id": "399094607620603924",
+      "name": "Letters to Steve browser",
+      "projectId": "399094604768477204",
+      "applicationId": "letters-to-steve",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399094607637381140",
+      "callbacks": ["https://steve-letter-writ.ing/auth/callback"]
+    },
+    {
+      "id": "399095843380002836",
+      "name": "Ref archive resource server",
+      "projectId": "399095836685893652",
+      "applicationId": "ref",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "Resource API",
+      "clientId": "399095843380068372",
+      "callbacks": []
+    },
+    {
+      "id": "399095840712425492",
+      "name": "Ref browser",
+      "projectId": "399095836685893652",
+      "applicationId": "ref",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399095840712491028",
+      "callbacks": ["https://ref.jackharrhy.dev/auth/callback"]
+    },
+    {
+      "id": "399095848715157524",
+      "name": "Radio browser",
+      "projectId": "399095845577818132",
+      "applicationId": "radio",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399095848731934740",
+      "callbacks": ["https://radio.jackharrhy.dev/auth/callback"]
+    },
+    {
+      "id": "399097841512874004",
+      "name": "CMS operator browser",
+      "projectId": "399097838123876372",
+      "applicationId": "cms",
+      "state": "APP_STATE_INACTIVE",
+      "kind": "OIDC",
+      "clientId": "399097841529651220",
+      "callbacks": ["https://teacms.jackharrhy.dev/auth/callback"]
+    },
+    {
+      "id": "399097843744243732",
+      "name": "CMS andrew browser",
+      "projectId": "399097838123876372",
+      "applicationId": "cms",
+      "state": "APP_STATE_INACTIVE",
+      "kind": "OIDC",
+      "clientId": "399097843761020948",
+      "callbacks": ["https://andrew.jackharrhy.dev/tea/auth/callback"]
+    },
+    {
+      "id": "399097845992390676",
+      "name": "CMS luke browser",
+      "projectId": "399097838123876372",
+      "applicationId": "cms",
+      "state": "APP_STATE_INACTIVE",
+      "kind": "OIDC",
+      "clientId": "399097845992456212",
+      "callbacks": ["https://luke.jackharrhy.dev/tea/auth/callback"]
+    },
+    {
+      "id": "399097848341200916",
+      "name": "CMS published MCP resource",
+      "projectId": "399097838123876372",
+      "applicationId": "cms",
+      "state": "APP_STATE_INACTIVE",
+      "kind": "Resource API",
+      "clientId": "399097848341266452",
+      "callbacks": []
+    },
+    {
+      "id": "399099578994917396",
+      "name": "Marky browser",
+      "projectId": "399099575991795732",
+      "applicationId": "marky",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399099578994982932",
+      "callbacks": ["https://md.jackharrhy.dev/auth/callback"]
+    },
+    {
+      "id": "399152318223745044",
+      "name": "Navidrome browser",
+      "projectId": "399152315824603156",
+      "applicationId": "navidrome",
+      "state": "APP_STATE_ACTIVE",
+      "kind": "OIDC",
+      "clientId": "399152318240522260",
+      "callbacks": ["https://music.rotund.org/oauth2/callback"]
+    }
+  ]
+}

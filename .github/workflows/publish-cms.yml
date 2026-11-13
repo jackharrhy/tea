@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-cms.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/cms/**
       - packages/json-schema/**
       - packages/logger/**

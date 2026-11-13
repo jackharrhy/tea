@@ -3,6 +3,18 @@
   // Celld is a host/container tool; Wrangler is provided by app workspaces in CI.
   "ignoreBinaries": ["celld", "wrangler"],
   "workspaces": {
+    "apps/auth": {
+      "entry": [
+        "integrations/*.js",
+        "tools/doodle-gallery/server.mjs",
+        "tools/doodle-gallery/public/*.mjs",
+        "tools/doodle-gallery/public/*.css",
+      ],
+      "ignoreUnresolved": [
+        "^\\./doodle-spec\\.mjs$",
+        "^/doodle-(webgl|spec)\\.mjs$",
+      ],
+    },
     "apps/8mb": {
       "entry": ["public/sw.js", "scripts/import-styles.mjs"],
       // The build copies these FFmpeg cores as browser-loadable JavaScript and WASM.
