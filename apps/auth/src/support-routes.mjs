@@ -172,7 +172,15 @@ export function createSupportRoutes({
       }
       return true;
     },
-    async browser({ request, url, form, context, redirect, sendRemix, setPolicy }) {
+    async browser({
+      request,
+      url,
+      form,
+      context,
+      redirect,
+      sendRemix,
+      setPolicy,
+    }) {
       if (
         config.enabled !== true &&
         (url.pathname.startsWith("/support/") ||
@@ -195,14 +203,25 @@ export function createSupportRoutes({
               profile === "missing"
                 ? "Needs first Artbin sign-in."
                 : "Artbin availability could not be checked. Try again later.";
-            await sendRemix((nonce) => renderSupportPage(context, start[1], nonce, { message }), 200, [consumer.callback, config.issuer]);
+            await sendRemix(
+              (nonce) =>
+                renderSupportPage(context, start[1], nonce, { message }),
+              200,
+              [consumer.callback, config.issuer],
+            );
             return true;
           }
           const actor = await accountActions.managedUser(context.user);
-          await sendRemix((nonce) => renderSupportPage(context, start[1], nonce, {
-            targetName: target.human?.profile?.displayName || target.userName,
-            actorName: actor.human?.profile?.displayName || actor.userName,
-          }), 200, [consumer.callback, config.issuer]);
+          await sendRemix(
+            (nonce) =>
+              renderSupportPage(context, start[1], nonce, {
+                targetName:
+                  target.human?.profile?.displayName || target.userName,
+                actorName: actor.human?.profile?.displayName || actor.userName,
+              }),
+            200,
+            [consumer.callback, config.issuer],
+          );
           return true;
         }
         if (request.method !== "POST") throw fail(405);

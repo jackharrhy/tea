@@ -19,9 +19,21 @@ type FormProps = { mode: "verify" | "forgot" | "reset"; context: EmailContext };
 function EmailFormPage(handle: Handle<FormProps>) {
   return () => {
     const { mode, context } = handle.props;
-    const title = { verify: "Verify email", forgot: "Reset password", reset: "New password" }[mode];
-    const action = { verify: "/verify-email", forgot: "/forgot-password", reset: "/reset-password" }[mode];
-    const button = { verify: "Verify email", forgot: "Send recovery link", reset: "Save password" }[mode];
+    const title = {
+      verify: "Verify email",
+      forgot: "Reset password",
+      reset: "New password",
+    }[mode];
+    const action = {
+      verify: "/verify-email",
+      forgot: "/forgot-password",
+      reset: "/reset-password",
+    }[mode];
+    const button = {
+      verify: "Verify email",
+      forgot: "Send recovery link",
+      reset: "Save password",
+    }[mode];
     const policy = context.passwordPolicy;
     const composition = policy
       ? [
@@ -42,22 +54,48 @@ function EmailFormPage(handle: Handle<FormProps>) {
           {mode === "forgot" ? (
             <label>
               Username or email
-              <input name="username" autoComplete="username" required maxLength={250} autoCapitalize="none" spellCheck={false} />
+              <input
+                name="username"
+                autoComplete="username"
+                required
+                maxLength={250}
+                autoCapitalize="none"
+                spellCheck={false}
+              />
             </label>
           ) : mode === "reset" ? (
             <>
               <p id="password-requirements">{requirements}</p>
               <label>
                 New password
-                <input name="password" type="password" autoComplete="new-password" aria-describedby="password-requirements" required minLength={policy?.minLength || 12} maxLength={200} />
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  aria-describedby="password-requirements"
+                  required
+                  minLength={policy?.minLength || 12}
+                  maxLength={200}
+                />
               </label>
               <label>
                 Confirm password
-                <input name="confirmation" type="password" autoComplete="new-password" required minLength={policy?.minLength || 12} maxLength={200} />
+                <input
+                  name="confirmation"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={policy?.minLength || 12}
+                  maxLength={200}
+                />
               </label>
             </>
-          ) : <p>Confirm this email address for your account.</p>}
-          <button class="primary" mix={uiPrimaryActionStyles}>{button}</button>
+          ) : (
+            <p>Confirm this email address for your account.</p>
+          )}
+          <button class="primary" mix={uiPrimaryActionStyles}>
+            {button}
+          </button>
         </form>
       </Document>
     );
@@ -81,10 +119,24 @@ function EmailResultPage(handle: Handle<ResultProps>) {
   };
 }
 
-export function renderEmailForm(mode: FormProps["mode"], context: EmailContext, nonce: string) {
-  return renderToString(<EmailFormPage mode={mode} context={context} />, { nonce });
+export function renderEmailForm(
+  mode: FormProps["mode"],
+  context: EmailContext,
+  nonce: string,
+) {
+  return renderToString(<EmailFormPage mode={mode} context={context} />, {
+    nonce,
+  });
 }
 
-export function renderEmailResult(title: string, message: string, context: EmailContext, nonce: string) {
-  return renderToString(<EmailResultPage title={title} message={message} context={context} />, { nonce });
+export function renderEmailResult(
+  title: string,
+  message: string,
+  context: EmailContext,
+  nonce: string,
+) {
+  return renderToString(
+    <EmailResultPage title={title} message={message} context={context} />,
+    { nonce },
+  );
 }

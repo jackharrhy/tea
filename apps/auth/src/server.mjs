@@ -19,18 +19,23 @@ const { renderLogin } = await import("./login-page.tsx");
 const { renderAuthorization } = await import("./authorization-page.tsx");
 const { renderEmailForm, renderEmailResult } = await import("./email-page.tsx");
 const { renderAccount } = await import("./account-page.tsx");
+const { renderEnrollment, renderDevice, renderDeviceResult, renderDeviceCode } =
+  await import("./flow-page.tsx");
+const { renderDirectory, renderAppDetail } =
+  await import("./directory-page.tsx");
+const { renderSessions, renderPeople, renderNewPerson } =
+  await import("./simple-access-pages.tsx");
+const { renderServiceList, renderServiceDetail, renderIntegrations } =
+  await import("./service-pages.tsx");
 const {
-  renderEnrollment,
-  renderDevice,
-  renderDeviceResult,
-  renderDeviceCode,
-} = await import("./flow-page.tsx");
-const { renderDirectory, renderAppDetail } = await import("./directory-page.tsx");
-const { renderSessions, renderPeople, renderNewPerson } = await import("./simple-access-pages.tsx");
-const { renderServiceList, renderServiceDetail, renderIntegrations } = await import("./service-pages.tsx");
-const { renderPreviewAccount, renderInactivePreview, renderActivity, renderOperation } = await import("./activity-pages.tsx");
+  renderPreviewAccount,
+  renderInactivePreview,
+  renderActivity,
+  renderOperation,
+} = await import("./activity-pages.tsx");
 const { renderGroups, renderGroupForm } = await import("./group-pages.tsx");
-const { renderAccessForm, renderChangePreview } = await import("./access-pages.tsx");
+const { renderAccessForm, renderChangePreview } =
+  await import("./access-pages.tsx");
 const { renderPerson } = await import("./person-page.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
@@ -325,7 +330,10 @@ createServer(async (request, response) => {
     const nonce = randomToken();
     response.setHeader(
       "Content-Security-Policy",
-      contentSecurityPolicy(callbackOrigin, { scripts: true, styleNonce: nonce }),
+      contentSecurityPolicy(callbackOrigin, {
+        scripts: true,
+        styleNonce: nonce,
+      }),
     );
     send(await renderLogin({ csrf, returnTo, error }, nonce), status);
   };
@@ -542,7 +550,11 @@ createServer(async (request, response) => {
           : {}),
       };
       await sendRemix((nonce) =>
-        renderEmailForm(key === "emailVerification" ? "verify" : "reset", emailContext, nonce),
+        renderEmailForm(
+          key === "emailVerification" ? "verify" : "reset",
+          emailContext,
+          nonce,
+        ),
       );
       return;
     }
@@ -560,7 +572,12 @@ createServer(async (request, response) => {
       }
       delete session.emailVerification;
       await sendRemix((nonce) =>
-        renderEmailResult("Email verified", "Your email address is verified.", context, nonce),
+        renderEmailResult(
+          "Email verified",
+          "Your email address is verified.",
+          context,
+          nonce,
+        ),
       );
       return;
     }
@@ -604,13 +621,21 @@ createServer(async (request, response) => {
               ? "The password could not be saved. Check the requirements below, or request a new recovery link if this one has expired."
               : error.message,
         };
-        await sendRemix((nonce) => renderEmailForm("reset", resetContext, nonce), 400);
+        await sendRemix(
+          (nonce) => renderEmailForm("reset", resetContext, nonce),
+          400,
+        );
         return;
       }
       delete session.passwordRecovery;
       await endUserSessions(pending.userId);
       await sendRemix((nonce) =>
-        renderEmailResult("Password updated", "Sign in with your new password.", { csrf: session.csrf }, nonce),
+        renderEmailResult(
+          "Password updated",
+          "Sign in with your new password.",
+          { csrf: session.csrf },
+          nonce,
+        ),
       );
       return;
     }
@@ -820,7 +845,6 @@ createServer(async (request, response) => {
         session,
         profile,
         context,
-        send,
         sendRemix,
         redirect,
       })
@@ -850,7 +874,12 @@ createServer(async (request, response) => {
       await accountActions.provePassword(session, form.get("currentPassword"));
       await emailActions.setEmail(session.userId, form.get("email")?.trim());
       await sendRemix((nonce) =>
-        renderEmailResult("Check your email", "Open the verification link to confirm your address.", context, nonce),
+        renderEmailResult(
+          "Check your email",
+          "Open the verification link to confirm your address.",
+          context,
+          nonce,
+        ),
       );
       return;
     }
@@ -869,7 +898,12 @@ createServer(async (request, response) => {
         `${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`,
       );
       await sendRemix((nonce) =>
-        renderEmailResult("Password updated", "Sign in with your new password.", {}, nonce),
+        renderEmailResult(
+          "Password updated",
+          "Sign in with your new password.",
+          {},
+          nonce,
+        ),
       );
       return;
     }
@@ -886,7 +920,12 @@ createServer(async (request, response) => {
       rateLimit(`email:${session.userId}`);
       await emailActions.resend(session.userId);
       await sendRemix((nonce) =>
-        renderEmailResult("Check your email", "We sent a new verification link.", context, nonce),
+        renderEmailResult(
+          "Check your email",
+          "We sent a new verification link.",
+          context,
+          nonce,
+        ),
       );
       return;
     }
@@ -916,7 +955,9 @@ createServer(async (request, response) => {
           const nonce = randomToken();
           response.setHeader(
             "Content-Security-Policy",
-            contentSecurityPolicy(intent.request.redirectUri, { styleNonce: nonce }),
+            contentSecurityPolicy(intent.request.redirectUri, {
+              styleNonce: nonce,
+            }),
           );
           send(await renderAuthorization(intent, id, context, nonce));
           return;
@@ -943,7 +984,9 @@ createServer(async (request, response) => {
         await api(`/v2/oidc/device_authorization/${encodeURIComponent(code)}`)
       ).deviceAuthorizationRequest;
       assertApplication(deviceRequest);
-      await sendRemix((nonce) => renderDevice(deviceRequest, code, context, nonce));
+      await sendRemix((nonce) =>
+        renderDevice(deviceRequest, code, context, nonce),
+      );
       return;
     }
     if (request.method === "POST" && url.pathname === "/device") {
@@ -1023,12 +1066,15 @@ createServer(async (request, response) => {
       }),
     );
     await sendRemix(
-      (nonce) => renderProblem(
-        expected ? error.message : "The identity service could not complete this request. Please try again.",
-        session?.enrollmentTicket ? "/enroll" : "/account",
-        !!session?.enrollmentTicket,
-        nonce,
-      ),
+      (nonce) =>
+        renderProblem(
+          expected
+            ? error.message
+            : "The identity service could not complete this request. Please try again.",
+          session?.enrollmentTicket ? "/enroll" : "/account",
+          !!session?.enrollmentTicket,
+          nonce,
+        ),
       expected ? error.status : 502,
     );
   }

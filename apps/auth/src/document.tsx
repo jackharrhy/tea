@@ -39,7 +39,9 @@ function Navigation(handle: Handle<DocumentProps>) {
     const { user, admin, csrf, active, preview } = handle.props;
     const base = preview?.base || "";
     const link = (path: string, label: string, key?: string) => (
-      <a href={path} aria-current={active === key ? "page" : undefined}>{label}</a>
+      <a href={path} aria-current={active === key ? "page" : undefined}>
+        {label}
+      </a>
     );
     if (preview)
       return (
@@ -82,7 +84,10 @@ export function Document(handle: Handle<DocumentProps>) {
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width,initial-scale=1" />
           <meta name="theme-color" content="#f6f7f8" />
-          <title>{title}{title === "auth" ? "" : " · auth"}</title>
+          <title>
+            {title}
+            {title === "auth" ? "" : " · auth"}
+          </title>
           <link
             rel="preload"
             href="/assets/fonts/inter-variable.woff2"
@@ -91,13 +96,17 @@ export function Document(handle: Handle<DocumentProps>) {
             crossOrigin="anonymous"
           />
           <link rel="stylesheet" href="/assets/style.css" />
-          {login ? <script type="module" src="/assets/doodle-motion.mjs" /> : null}
+          {login ? (
+            <script type="module" src="/assets/doodle-motion.mjs" />
+          ) : null}
         </head>
         <body
           class={narrow ? "authentication" : ""}
           mix={[theme, uiControlStyles, login ? fullWidthAction : null]}
         >
-          <a class="skip-link" href="#main">Skip to content</a>
+          <a class="skip-link" href="#main">
+            Skip to content
+          </a>
           {narrow ? <div innerHTML={unsafeHTML(dailyArtwork())} /> : null}
           {preview ? (
             <aside class="preview-banner">
@@ -109,17 +118,28 @@ export function Document(handle: Handle<DocumentProps>) {
           {showNavigation ? (
             <header class="site-header">
               <a class="brand" href={preview?.base || "/"} aria-label="auth">
-                auth<span class="brand-dot" aria-hidden="true">.</span>
+                auth
+                <span class="brand-dot" aria-hidden="true">
+                  .
+                </span>
               </a>
-              <nav class="desktop-nav" aria-label="Main"><Navigation {...handle.props} /></nav>
+              <nav class="desktop-nav" aria-label="Main">
+                <Navigation {...handle.props} />
+              </nav>
               <details class="mobile-nav">
                 <summary>Menu</summary>
-                <nav aria-label="Mobile"><Navigation {...handle.props} /></nav>
+                <nav aria-label="Mobile">
+                  <Navigation {...handle.props} />
+                </nav>
               </details>
             </header>
           ) : null}
           <main id="main" class={narrow ? "auth-page" : "workspace"}>
-            {error ? <p role="alert" class="error">{error}</p> : null}
+            {error ? (
+              <p role="alert" class="error">
+                {error}
+              </p>
+            ) : null}
             {children}
           </main>
         </body>

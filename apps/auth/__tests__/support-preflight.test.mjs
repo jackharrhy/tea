@@ -137,13 +137,22 @@ test("View as appears only in eligible Artbin service context, never as a standa
     },
   ];
   const render = (state) =>
-    renderPerson(user, model, apps, services, grants, {
-      user: "actor",
-      admin: true,
-      csrf: "csrf",
-      supportEnabled: true,
-      supportTarget: state,
-    }, undefined, "test-nonce");
+    renderPerson(
+      user,
+      model,
+      apps,
+      services,
+      grants,
+      {
+        user: "actor",
+        admin: true,
+        csrf: "csrf",
+        supportEnabled: true,
+        supportTarget: state,
+      },
+      undefined,
+      "test-nonce",
+    );
   assert.match(
     await render("ready"),
     /<strong>Artbin<\/strong><span class="table-subline"><a[^>]+>View as this person/,

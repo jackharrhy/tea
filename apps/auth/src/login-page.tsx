@@ -34,9 +34,13 @@ function LoginPage(handle: Handle<LoginProps>) {
             maxLength={1000}
           />
         </label>
-        <button class="primary" mix={uiPrimaryActionStyles}>Sign in</button>
+        <button class="primary" mix={uiPrimaryActionStyles}>
+          Sign in
+        </button>
       </form>
-      <a class="text-link" href="/forgot-password">Forgot password?</a>
+      <a class="text-link" href="/forgot-password">
+        Forgot password?
+      </a>
     </Document>
   );
 }

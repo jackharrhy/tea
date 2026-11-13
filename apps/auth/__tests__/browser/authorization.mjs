@@ -153,8 +153,7 @@ const provider = createServer(async (request, response) => {
         details: { resourceOwner: "fixture" },
       },
     };
-  }
-  else if (request.url === "/management/v1/users/grants/_search") {
+  } else if (request.url === "/management/v1/users/grants/_search") {
     const projectId = json.queries?.find((query) => query.projectIdQuery)
       ?.projectIdQuery.projectId;
     result = {
@@ -373,13 +372,13 @@ try {
       `${origin}/login?returnTo=${encodeURIComponent("/authorize?authRequest=first-valid")}`,
     );
     if (app.id === "fourm") {
-      const styleNonce = await firstPage.locator("style[nonce]").first().evaluate((style) => style.nonce);
+      const styleNonce = await firstPage
+        .locator("style[nonce]")
+        .first()
+        .evaluate((style) => style.nonce);
       assert(styleNonce);
-      assert(
-        loginResponse.headers()["content-security-policy"].includes(
-          `'nonce-${styleNonce}'`,
-        ),
-      );
+      const loginCsp = loginResponse.headers()["content-security-policy"];
+      assert(loginCsp.includes(`'nonce-${styleNonce}'`));
     }
     await firstPage.locator("[name=username]").fill("fixture-user-" + app.id);
     await firstPage.locator("[name=password]").fill("fixture-password");
@@ -456,10 +455,16 @@ try {
         );
         creationDateOverride = undefined;
       }
-      const consentResponse = await page.goto(`${origin}/login?authRequest=consent`);
-      const consentNonce = await page.locator("style[nonce]").first().evaluate((style) => style.nonce);
+      const consentResponse = await page.goto(
+        `${origin}/login?authRequest=consent`,
+      );
+      const consentNonce = await page
+        .locator("style[nonce]")
+        .first()
+        .evaluate((style) => style.nonce);
       assert(consentNonce);
-      assert(consentResponse.headers()["content-security-policy"].includes(`'nonce-${consentNonce}'`));
+      const consentCsp = consentResponse.headers()["content-security-policy"];
+      assert(consentCsp.includes(`'nonce-${consentNonce}'`));
       await page.getByRole("button", { name: "Allow", exact: true }).click();
       await page
         .waitForURL(`${callbackOrigin}/callback?**`, { timeout: 5000 })
@@ -633,7 +638,10 @@ try {
   assert.equal(credentialAttempts, attemptsBeforeRestart + 1);
   const deviceCodePage = await stalePage.goto(`${origin}/device`);
   assert.equal(deviceCodePage.status(), 200);
-  assert.equal(await stalePage.getByRole("heading", { name: "Device code" }).count(), 1);
+  assert.equal(
+    await stalePage.getByRole("heading", { name: "Device code" }).count(),
+    1,
+  );
   assert.equal(await stalePage.locator('[name="user_code"]').count(), 1);
   await stalePage.goto(`${origin}/login?returnTo=/account`);
   const signedInCookie = (await staleContext.cookies(origin)).find(

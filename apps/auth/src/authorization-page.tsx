@@ -26,7 +26,9 @@ function AuthorizationPage(handle: Handle<AuthorizationProps>) {
       ...(intent.request.scope.includes("profile") ? ["Name and profile"] : []),
       ...(intent.request.scope.includes("email") ? ["Email address"] : []),
       ...(intent.selfEnrollment
-        ? ["Join Radio: list, join and create rooms, upload tracks, and use room controls."]
+        ? [
+            "Join Radio: list, join and create rooms, upload tracks, and use room controls.",
+          ]
         : []),
       ...(intent.offline ? ["Stay connected until access is revoked"] : []),
     ];
@@ -34,22 +36,47 @@ function AuthorizationPage(handle: Handle<AuthorizationProps>) {
       <Document {...context} title={title} narrow>
         <h1>{title}</h1>
         <dl class="profile">
-          <div><dt>Application</dt><dd>{intent.application.name}</dd></div>
-          <div><dt>Client</dt><dd>{intent.clientOrigin}</dd></div>
+          <div>
+            <dt>Application</dt>
+            <dd>{intent.application.name}</dd>
+          </div>
+          <div>
+            <dt>Client</dt>
+            <dd>{intent.clientOrigin}</dd>
+          </div>
           <div>
             <dt>Permission</dt>
-            <dd>{intent.roles.map((role) => role === "admin" ? "Administrator" : role).join(", ")}</dd>
+            <dd>
+              {intent.roles
+                .map((role) => (role === "admin" ? "Administrator" : role))
+                .join(", ")}
+            </dd>
           </div>
         </dl>
         {details.length ? (
-          <div class="permissions"><ul>{details.map((detail) => <li>{detail}</li>)}</ul></div>
+          <div class="permissions">
+            <ul>
+              {details.map((detail) => (
+                <li>{detail}</li>
+              ))}
+            </ul>
+          </div>
         ) : null}
         <form method="post" action="/authorize">
           <input type="hidden" name="csrf" value={context.csrf} />
           <input type="hidden" name="authRequest" value={id} />
           <div class="actions">
-            <button name="decision" value="deny">Deny</button>
-            <button class="primary" mix={uiPrimaryActionStyles} name="decision" value="approve">Allow</button>
+            <button name="decision" value="deny">
+              Deny
+            </button>
+            <button
+              class="primary"
+              mix={uiPrimaryActionStyles}
+              name="decision"
+              value="approve"
+            >
+              Allow
+            </button>
           </div>
         </form>
       </Document>
@@ -63,5 +90,8 @@ export function renderAuthorization(
   context: AuthorizationProps["context"],
   nonce: string,
 ) {
-  return renderToString(<AuthorizationPage intent={intent} id={id} context={context} />, { nonce });
+  return renderToString(
+    <AuthorizationPage intent={intent} id={id} context={context} />,
+    { nonce },
+  );
 }

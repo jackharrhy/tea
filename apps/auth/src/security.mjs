@@ -30,7 +30,10 @@ export function validPost(origin, expectedOrigin, suppliedToken, sessionToken) {
   return origin === expectedOrigin && equalToken(suppliedToken, sessionToken);
 }
 
-export function contentSecurityPolicy(callback, { scripts = false, styleNonce } = {}) {
+export function contentSecurityPolicy(
+  callback,
+  { scripts = false, styleNonce } = {},
+) {
   const origins = new Set();
   for (const value of Array.isArray(callback)
     ? callback

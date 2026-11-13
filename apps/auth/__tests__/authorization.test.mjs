@@ -268,7 +268,12 @@ test("Lists delegation requires explicit operation entitlements and never change
   const viewed = await actions.view("read", session);
   assert.deepEqual(viewed.roles, ["member", "lists-read"]);
   assert.match(
-    await renderAuthorization(viewed, "read", { user: "member", csrf: "proof" }, "test-nonce"),
+    await renderAuthorization(
+      viewed,
+      "read",
+      { user: "member", csrf: "proof" },
+      "test-nonce",
+    ),
     /lists-read/,
   );
   await actions.complete("read", session, "approve");

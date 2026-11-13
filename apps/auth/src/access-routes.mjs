@@ -45,13 +45,14 @@ export function createAccessRoutes({
     session,
     profile: _profile,
     context,
-    send,
     sendRemix,
     redirect,
   }) {
     if (request.method === "GET" && url.pathname === "/account/sessions") {
       const items = await native.sessions(session.userId);
-      await sendRemix((nonce) => renderSessions(items, session.sessionId, context, nonce));
+      await sendRemix((nonce) =>
+        renderSessions(items, session.sessionId, context, nonce),
+      );
       return true;
     }
     if (request.method === "POST" && url.pathname === "/account/sessions/end") {
@@ -108,9 +109,13 @@ export function createAccessRoutes({
         },
       };
       if (target.state !== "USER_STATE_ACTIVE")
-        await sendRemix((nonce) => renderInactivePreview(target, previewContext, nonce));
+        await sendRemix((nonce) =>
+          renderInactivePreview(target, previewContext, nonce),
+        );
       else if (preview[2] === "account")
-        await sendRemix((nonce) => renderPreviewAccount(target, previewContext, nonce));
+        await sendRemix((nonce) =>
+          renderPreviewAccount(target, previewContext, nonce),
+        );
       else {
         const items = directoryFor({
           services,
@@ -120,14 +125,18 @@ export function createAccessRoutes({
           access,
         });
         if (!preview[2])
-          await sendRemix((nonce) => renderDirectory(items, previewContext, nonce));
+          await sendRemix((nonce) =>
+            renderDirectory(items, previewContext, nonce),
+          );
         else {
           const item = items.find(
             (candidate) => preview[2] === `apps/${candidate.id}`,
           );
           if (!item)
             throw fail(404, "This app is unavailable or not assigned.");
-          await sendRemix((nonce) => renderAppDetail(item, previewContext, nonce));
+          await sendRemix((nonce) =>
+            renderAppDetail(item, previewContext, nonce),
+          );
         }
       }
       return true;
@@ -145,7 +154,9 @@ export function createAccessRoutes({
         q: (url.searchParams.get("q") || "").slice(0, 200),
         state: url.searchParams.get("state") || "all",
       };
-      await sendRemix((nonce) => renderPeople(users, model, context, filter, nonce));
+      await sendRemix((nonce) =>
+        renderPeople(users, model, context, filter, nonce),
+      );
       return true;
     }
     if (request.method === "GET" && url.pathname === "/manage/people/new") {
@@ -159,7 +170,9 @@ export function createAccessRoutes({
       const user = await accountActions.managedUser(person[1]);
       if (request.method === "GET") {
         if (person[2] === "access")
-          await sendRemix((nonce) => renderAccessForm(user, model, domains, services, context, nonce));
+          await sendRemix((nonce) =>
+            renderAccessForm(user, model, domains, services, context, nonce),
+          );
         else {
           const observed = await native.list(user.id);
           const personContext = {
@@ -168,7 +181,18 @@ export function createAccessRoutes({
               ? await supportPreflight?.(context.user, user.id)
               : undefined,
           };
-          await sendRemix((nonce) => renderPerson(user, model, domains, services, observed, personContext, undefined, nonce));
+          await sendRemix((nonce) =>
+            renderPerson(
+              user,
+              model,
+              domains,
+              services,
+              observed,
+              personContext,
+              undefined,
+              nonce,
+            ),
+          );
         }
         return true;
       }
@@ -180,7 +204,18 @@ export function createAccessRoutes({
         );
         access.recordAccount(session.userId, user.id, "recovery.created");
         const observed = await native.list(user.id);
-        await sendRemix((nonce) => renderPerson(user, model, domains, services, observed, context, recoveryLink, nonce));
+        await sendRemix((nonce) =>
+          renderPerson(
+            user,
+            model,
+            domains,
+            services,
+            observed,
+            context,
+            recoveryLink,
+            nonce,
+          ),
+        );
         return true;
       }
       if (request.method === "POST" && person[2] === "status") {
@@ -227,7 +262,9 @@ export function createAccessRoutes({
           : model.groups.find((item) => item.id === group[1]);
       if (group[1] !== "new" && !value) throw fail(404, "Group not found.");
       const users = await people();
-      await sendRemix((nonce) => renderGroupForm(value, model, domains, users, context, nonce));
+      await sendRemix((nonce) =>
+        renderGroupForm(value, model, domains, users, context, nonce),
+      );
       return true;
     }
     if (
@@ -282,7 +319,9 @@ export function createAccessRoutes({
         }
       }
       const changePreview = await access.preview(change, session.userId);
-      await sendRemix((nonce) => renderChangePreview(changePreview, domains, current, context, nonce));
+      await sendRemix((nonce) =>
+        renderChangePreview(changePreview, domains, current, context, nonce),
+      );
       return true;
     }
     if (request.method === "POST" && url.pathname === "/manage/changes/apply") {
@@ -326,7 +365,9 @@ export function createAccessRoutes({
       return true;
     }
     if (request.method === "GET" && url.pathname === "/manage/activity") {
-      await sendRemix((nonce) => renderActivity(access.operations(), context, nonce));
+      await sendRemix((nonce) =>
+        renderActivity(access.operations(), context, nonce),
+      );
       return true;
     }
     const operation = url.pathname.match(
@@ -359,11 +400,15 @@ export function createAccessRoutes({
       }
     }
     if (request.method === "GET" && url.pathname === "/manage/services") {
-      await sendRemix((nonce) => renderServiceList(services, domains, context, nonce));
+      await sendRemix((nonce) =>
+        renderServiceList(services, domains, context, nonce),
+      );
       return true;
     }
     if (request.method === "GET" && url.pathname === "/manage/integrations") {
-      await sendRemix((nonce) => renderIntegrations(integrations, context, nonce));
+      await sendRemix((nonce) =>
+        renderIntegrations(integrations, context, nonce),
+      );
       return true;
     }
     const service = url.pathname.match(
@@ -372,12 +417,14 @@ export function createAccessRoutes({
     if (request.method === "GET" && service) {
       const value = services.find((item) => item.id === service[1]);
       if (!value) throw fail(404, "Service not found.");
-      await sendRemix((nonce) => renderServiceDetail(
-        value,
-        domains.find((app) => app.id === (value.applicationId || value.id)),
-        context,
-        nonce,
-      ));
+      await sendRemix((nonce) =>
+        renderServiceDetail(
+          value,
+          domains.find((app) => app.id === (value.applicationId || value.id)),
+          context,
+          nonce,
+        ),
+      );
       return true;
     }
     if (request.method === "POST" && url.pathname === "/manage/users") {
