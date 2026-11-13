@@ -69,3 +69,39 @@ it("matches source automatic links, punctuation, and Markdown media boundaries",
     postContent("[url=javascript:alert(1)]bad[/url]", "bbcode"),
   ).not.toContain("href=");
 });
+
+it("renders Python-style Markdown image sizing and keeps shared-post sanitization", () => {
+  expect(
+    content('![sample](/image.png){width="120" height=80 .photo}', "markdown"),
+  ).toContain('width="120"');
+  expect(
+    content('![sample](/image.png){width="120" height=80 .photo}', "markdown"),
+  ).toContain('class="photo"');
+  const shared = postContent(
+    '![sample](/image.png){width=120 height=80 onerror="bad()" .photo}',
+    "markdown",
+  );
+  expect(shared).toContain('width="120"');
+  expect(shared).toContain('height="80"');
+  expect(shared).not.toMatch(/onerror|class=|\{width/);
+});
+it("renders heading and paragraph attributes without changing code or raw HTML", () => {
+  expect(content("# Heading ## {.title}", "markdown")).toContain(
+    '<h1 class="title">Heading</h1>',
+  );
+  expect(content("# Heading {.one .two #anchor}", "markdown")).toContain(
+    '<h1 class="one two" id="anchor">Heading</h1>',
+  );
+  expect(content("Paragraph\n{: .note}", "markdown")).toContain(
+    '<p class="note">Paragraph</p>',
+  );
+  expect(content("`code`{.inline}", "markdown")).toContain(
+    '<code class="inline">code</code>',
+  );
+  expect(
+    content("```text\n![sample](/x){width=120}\n```", "markdown"),
+  ).toContain("{width=120}");
+  expect(content("<span>Raw</span>{.literal}", "markdown")).toContain(
+    "</span>{.literal}",
+  );
+});
