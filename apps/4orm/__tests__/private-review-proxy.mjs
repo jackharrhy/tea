@@ -9,7 +9,10 @@ import { setTimeout as delay } from "node:timers/promises";
 
 const directory = await mkdtemp(join(tmpdir(), "4orm-proxy-test-"));
 const upstream = createServer((req, res) => {
-  res.writeHead(401, { "Content-Type": "text/plain" });
+  res.writeHead(req.url.startsWith("/static/") ? 200 : 401, {
+    "Content-Type": "text/plain",
+    ETag: '"bundled-asset"',
+  });
   res.end("App authorization still required");
 });
 upstream.listen(0, "127.0.0.1");
@@ -77,6 +80,16 @@ try {
       });
       assert.equal(sameOrigin.status, accessMode === "tailnet" ? 404 : 401);
       assert.equal(sameOrigin.headers.get("set-cookie"), null);
+      const asset = await fetch(origin + "/static/style.css");
+      assert.equal(
+        asset.headers.get("cache-control"),
+        accessMode === "tailnet"
+          ? "private, max-age=0, must-revalidate"
+          : "no-store",
+      );
+      if (accessMode === "tailnet")
+        assert.equal(asset.headers.get("etag"), '"bundled-asset"');
+      assert.equal(response.headers.get("cache-control"), "no-store");
     } finally {
       child.kill("SIGTERM");
       await once(child, "exit");

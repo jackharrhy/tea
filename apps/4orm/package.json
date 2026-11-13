@@ -11,7 +11,8 @@
     "dev:celld": "node scripts/review.mjs",
     "test:celld": "node __tests__/celld-smoke.mjs",
     "build": "node scripts/build.mjs",
-    "test:parity": "node __tests__/parity-browser.mjs"
+    "test:parity": "node __tests__/parity-browser.mjs",
+    "test:history": "FOURM_HISTORY_BROWSER=1 vitest run __tests__/history-browser.test.tsx"
   },
   "dependencies": {
     "@bbob/html": "^4.4.1",
