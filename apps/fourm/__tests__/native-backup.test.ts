@@ -1,3 +1,4 @@
+import { runNativeBackup } from "../app/backup-runner.ts";
 import { inspectBackupCatalogue } from "../app/backup-catalogue.ts";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
@@ -363,6 +364,65 @@ it("preserves terminal conflicts and protects manually named recovered snapshots
       keep: ["manual-preserve"],
       remove: [],
     });
+  } finally {
+    source.db.close();
+  }
+});
+
+it("manual backup reports a verified snapshot even when its publication acknowledgment is lost", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/file.txt", "kept");
+    r2.loseAck();
+    const result = await runNativeBackup(source.community, r2.storage, 41);
+    expect(result.state).toBe("complete");
+    expect(result.file_count).toBe(1);
+    expect(source.community.backupStatus(41).pending).toBeNull();
+    expect(
+      await readNativeBackup(r2.storage, String(result.name)),
+    ).not.toBeNull();
+  } finally {
+    source.db.close();
+  }
+});
+
+it("manual backup preserves an uncertain outcome for retry and records a confirmed pre-publication failure", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    let unavailable = true;
+    const flaky = {
+      ...r2.storage,
+      async get(key: string) {
+        if (unavailable) throw Error("storage unavailable");
+        return r2.storage.get(key);
+      },
+    };
+    await expect(
+      runNativeBackup(source.community, flaky, 41),
+    ).rejects.toMatchObject({ status: 503 });
+    const pending = source.community.backupStatus(41).pending;
+    expect(pending).not.toBeNull();
+    unavailable = false;
+    const retry = await runNativeBackup(source.community, flaky, 41);
+    expect(retry.name).toBe(pending!.name);
+    expect(retry.state).toBe("complete");
+    const broken = {
+      ...r2.storage,
+      async list() {
+        throw Error("listing unavailable");
+      },
+    };
+    const failed = await runNativeBackup(source.community, broken, 41);
+    expect(failed.state).toBe("failed");
+    expect(failed.error).toBe("Backup could not finish. Try again.");
+    expect(source.community.backupStatus(41).pending).toBeNull();
+    await expect(
+      runNativeBackup(source.community, r2.storage, null),
+    ).rejects.toMatchObject({ status: 403 });
   } finally {
     source.db.close();
   }
