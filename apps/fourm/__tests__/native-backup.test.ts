@@ -1,3 +1,4 @@
+import { processMediaMove } from "../app/media-move.ts";
 import { collectBackupObjects } from "../app/backup-gc.ts";
 import {
   captureBackupSnapshot,
@@ -763,5 +764,102 @@ it("retains unrecognized catalogue evidence without starting a replacement run",
     expect(r2.objects.has(".backups/native/unknown.txt")).toBe(true);
   } finally {
     source.db.close();
+  }
+});
+
+it("restores a rename after a lost destination-write acknowledgment and resumes without recopying", async () => {
+  const source = authority(),
+    target = authority(),
+    r2 = bucket();
+  try {
+    source.community.restore({
+      users: [
+        {
+          id: 41,
+          username: "fixture",
+          display_name: "Fixture",
+          password_hash: "",
+          is_admin: 1,
+        },
+      ],
+      media: [
+        {
+          id: 1,
+          user_id: 41,
+          storage_path: "fixture/kept.txt",
+          size_bytes: 4,
+          mime_type: "text/plain",
+        },
+      ],
+    });
+    r2.add("fixture/kept.txt", "kept", {
+      fourm_mtime_ns: "1794445200000000123",
+    });
+    const move = source.community.beginUsernameRename(41, "restored-fixture");
+    const moveId = Number(move!.id);
+    let loseAcknowledgment = true;
+    let destinationWrites = 0;
+    const movingStorage = {
+      ...r2.storage,
+      async put(key: string, bytes: ArrayBuffer, options: R2PutOptions) {
+        const result = await r2.storage.put(key, bytes, options);
+        if (key === "restored-fixture/kept.txt") {
+          destinationWrites++;
+          if (loseAcknowledgment) {
+            loseAcknowledgment = false;
+            throw Error("Injected lost write acknowledgment");
+          }
+        }
+        return result;
+      },
+      async delete(key: string) {
+        r2.objects.delete(key);
+      },
+    } as unknown as R2Bucket;
+    await expect(
+      processMediaMove(source.community, movingStorage, moveId),
+    ).rejects.toThrow("Injected lost write acknowledgment");
+    expect(source.community.member(41).username).toBe("fixture");
+    expect(source.community.pendingMediaMoves()[0].state).toBe("copying");
+    const snapshot = await captureNativeBackup(
+      r2.storage,
+      "pending-rename",
+      async () => source.community.exportRecovery(41),
+    );
+    expect(snapshot.files).toHaveLength(2);
+    for (const key of r2.objects.keys())
+      if (!key.startsWith(".backups/")) r2.objects.delete(key);
+    await restoreNativeBackup(r2.storage, "pending-rename", async (state) =>
+      target.community.restoreRecovery(state),
+    );
+    expect(target.community.pendingMediaMoves()[0].id).toBe(moveId);
+    expect(
+      r2.objects.get("restored-fixture/kept.txt")?.customMetadata.fourm_move,
+    ).toBe(`${moveId}:1`);
+    await processMediaMove(target.community, movingStorage, moveId);
+    expect(destinationWrites).toBe(1);
+    expect(target.community.member(41).username).toBe("restored-fixture");
+    expect(target.community.mediaItem(41, 1)).toMatchObject({
+      id: 1,
+      storage_path: "restored-fixture/kept.txt",
+    });
+    expect(
+      target.db.prepare("SELECT user_id FROM media WHERE id=1").get()?.user_id,
+    ).toBe(41);
+    expect(target.community.pendingMediaMoves()).toEqual([]);
+    expect(r2.objects.has("fixture/kept.txt")).toBe(false);
+    expect(
+      new TextDecoder().decode(
+        r2.objects.get("restored-fixture/kept.txt")!.bytes,
+      ),
+    ).toBe("kept");
+    expect(
+      r2.objects.get("restored-fixture/kept.txt")?.customMetadata
+        .fourm_mtime_ns,
+    ).toBe("1794445200000000123");
+    expect(target.db.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  } finally {
+    source.db.close();
+    target.db.close();
   }
 });
