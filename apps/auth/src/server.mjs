@@ -42,13 +42,25 @@ const api = createZitadel({
 const emailActions = createEmailActions(api, origin);
 const accountActions = createAccountActions(api, organizationId);
 const applications = JSON.parse(
-  readFileSync(new URL("../config/applications.json", import.meta.url), "utf8"),
+  readFileSync(
+    process.env.AUTH_APPLICATIONS_FILE ||
+      new URL("../config/applications.json", import.meta.url),
+    "utf8",
+  ),
 );
 const services = JSON.parse(
-  readFileSync(new URL("../config/services.json", import.meta.url), "utf8"),
+  readFileSync(
+    process.env.AUTH_SERVICES_FILE ||
+      new URL("../config/services.json", import.meta.url),
+    "utf8",
+  ),
 );
 const integrations = JSON.parse(
-  readFileSync(new URL("../config/integrations.json", import.meta.url), "utf8"),
+  readFileSync(
+    process.env.AUTH_INTEGRATIONS_FILE ||
+      new URL("../config/integrations.json", import.meta.url),
+    "utf8",
+  ),
 );
 const nativeAccess = createNativeAccess(api, organizationId);
 const accessFilename =

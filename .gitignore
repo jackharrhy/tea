@@ -33,6 +33,7 @@ apps/worldview/local/*
 apps/cms/sites/*/site.local.json
 
 apps/artbin/data/
+apps/auth/.local-real/
 apps/artbin/public/uploads/
 apps/artbin/tmp/
 apps/artbin/.coverage/

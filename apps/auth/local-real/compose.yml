@@ -1,0 +1,64 @@
+name: harrhy-auth-real
+
+services:
+  postgres:
+    image: postgres:17-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: zitadel
+      POSTGRES_PASSWORD: ${AUTH_REAL_POSTGRES_PASSWORD:?Run npm run auth:real:init}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d zitadel"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    ports:
+      - 127.0.0.1:18887:8080
+    networks: [identity]
+
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:v4.20.0@sha256:9ea0e9ecfdc43115da871242e40a0320f2ece864c7cd8b5d41a863a7f4902499
+    user: "1000:1000"
+    command:
+      [
+        start-from-init,
+        --masterkey,
+        "${AUTH_REAL_MASTERKEY:?}",
+        --tlsMode,
+        disabled,
+      ]
+    environment:
+      ZITADEL_DATABASE_POSTGRES_DSN: postgresql://postgres:${AUTH_REAL_POSTGRES_PASSWORD:?}@127.0.0.1:5432/zitadel?sslmode=disable
+      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: "18887"
+      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_TLS_ENABLED: "false"
+      ZITADEL_TELEMETRY_ENABLED: "false"
+      ZITADEL_FIRSTINSTANCE_INSTANCENAME: Harrhy local identity
+      ZITADEL_FIRSTINSTANCE_ORG_NAME: Harrhy local
+      ZITADEL_FIRSTINSTANCE_PATPATH: /bootstrap/operator.pat
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: local-bootstrap
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: Local bootstrap
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE: ${AUTH_REAL_PAT_EXPIRY:?}
+      ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH: /bootstrap/login.pat
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: local-login
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME: Local login client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: ${AUTH_REAL_PAT_EXPIRY:?}
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: http://localhost:18888/
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: http://localhost:18888/login?authRequest=
+    volumes:
+      - ${AUTH_REAL_STATE:?}/bootstrap:/bootstrap
+    depends_on:
+      postgres:
+        condition: service_healthy
+    network_mode: service:postgres
+
+networks:
+  identity:
+    driver: bridge
+
+volumes:
+  postgres:
