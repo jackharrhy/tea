@@ -1,3 +1,4 @@
+import { collectBackupObjects } from "../backup-gc.ts";
 import { pruneNativeBackups } from "../backup-pruning.ts";
 import { runNativeBackup } from "../backup-runner.ts";
 import { scanStorage, cleanupOrphanMedia } from "../storage-health.ts";
@@ -13,7 +14,9 @@ import type { Row } from "./community.ts";
 export class CommunityCell extends DurableObject<Env> {
   private community;
   private backup: Promise<Row> | undefined;
-  private pruning: Promise<{ removed: number }> | undefined;
+  private pruning:
+    | Promise<{ removed: number; objectsRemoved: number }>
+    | undefined;
   private moves = new Map<number, Promise<void>>();
   private orphanCleanup: Promise<number> | undefined;
   constructor(ctx: DurableObjectState, env: Env) {
@@ -88,7 +91,10 @@ export class CommunityCell extends DurableObject<Env> {
         this.community,
         this.env.MEDIA,
         actorId,
-      ));
+      ).then(async (result) => ({
+        ...result,
+        ...(await collectBackupObjects(this.env.MEDIA)),
+      })));
       try {
         return { ok: true as const, result: await running };
       } finally {
