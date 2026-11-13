@@ -19,7 +19,7 @@ A Remix 3 monorepo for personal apps and packages.
 | [`@harrhy/burger`](apps/burger/) | Remix game UI and authoritative Bun world server | [README](apps/burger/README.md) |
 | [`@harrhy/cms`](apps/cms/) | Multi-site CMS, operator dashboard, and Node host | [README](apps/cms/README.md) |
 | [`@harrhy/cms-edge`](apps/cms-edge/) | Cloudflare Worker CMS backed by D1 and R2 | [README](apps/cms-edge/README.md) |
-| [`@harrhy/fourm`](apps/fourm/) | Isolated native 4orm community candidate on Celld | [README](apps/fourm/README.md) |
+| [`@harrhy/4orm`](apps/4orm/) | Isolated native 4orm community candidate on Celld | [README](apps/4orm/README.md) |
 | [`@harrhy/garden`](apps/garden/) | Obsidian-backed personal website and publishing tools | [README](apps/garden/README.md) |
 | [`@harrhy/gurgur`](apps/gurgur/) | WebGPU world and Bun authoritative game server | [README](apps/gurgur/README.md) |
 | [`@harrhy/letters-to-steve`](apps/letters-to-steve/) | Private correspondence and editorial publishing for Steve | [README](apps/letters-to-steve/README.md) |

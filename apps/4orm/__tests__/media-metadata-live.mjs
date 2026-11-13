@@ -24,7 +24,7 @@ let phase = "readiness";
 try {
   assert.equal(
     (await (await fetch(origin + "/ready")).json()).sourceFingerprint,
-    await reviewSourceFingerprint(resolve("apps/fourm")),
+    await reviewSourceFingerprint(resolve("apps/4orm")),
   );
   const headers = { Authorization: "Bearer " + token };
   async function stage(item, overrides = {}) {
