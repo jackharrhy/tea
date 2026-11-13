@@ -20,7 +20,9 @@ available for work-in-progress human review; whole-migration acceptance is open.
 - Member/full-site ZIP exports, portable archive transfer and native backup
   capture/restore, catalogue reconstruction and retention. Actual recurring
   alarms captured the imported cohort, followed by cold restore of all 30 managed
-  tables and 146 assets. Scheduling remains disabled by default.
+  tables and 146 assets. A SQLite/R2-adapter integration test also covers a
+  rename captured after a lost write acknowledgment, restored and resumed without
+  recopying the destination. Scheduling remains disabled by default.
 - Released Go CLI: actual browser sign-in, signed callback, native profile/page/
   media operations, automatic refresh after a 401, refresh replay rejection and
   immediate revocation. This uses a caged disposable provider, not production SSO.
@@ -43,7 +45,7 @@ new review activity must not be overwritten by reseeding.
   remain unset; no successful native notification delivery is claimed.
 - Counter visitor identity still uses a browser token rather than source-IP
   cooldown semantics. Trusted peer attribution remains unresolved.
-- Remaining active-operation backup recovery and dashboard scenarios,
+- Remaining dashboard scenarios,
   moderation/validation edges and complex-list and malformed Markdown attributes.
   Common heading, paragraph, inline, table-cell, tight-list and fenced-code attributes are
   implemented and
