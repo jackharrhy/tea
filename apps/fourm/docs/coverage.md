@@ -45,13 +45,14 @@ new review activity must not be overwritten by reseeding.
   has incompatible raw P-256 key import/export. ECDH with SPKI/PKCS#8, AES-GCM
   and VAPID signing pass isolated probes; end-to-end native push does not. VAPID keys
   remain unset; no successful native notification delivery is claimed.
-- Counter visitor identity still uses a browser token rather than source-IP
-  cooldown semantics. Trusted peer attribution remains unresolved.
+- Production ingress wiring for counter identity: the private preview now uses
+  authenticated source-IP context and preserves the original cooldown. A future
+  deployment must configure the same trusted boundary; unconfigured local fixtures
+  retain the browser-token fallback.
 - Remaining dashboard scenarios,
   moderation/validation edges and complex-list and malformed Markdown attributes.
   Common heading, paragraph, inline, table-cell, tight-list and fenced-code attributes are
-  implemented and
-  worktree-tested; they have not been rolled into the active human preview.
+  implemented, tested and running in the active human preview.
 - Broader customization/layout review and the reported initial-paint/pop-in issue.
   Core SSR is verified; separately painted iframes and client enhancements remain.
 
