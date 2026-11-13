@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsrs --noEmit && tsrs --noEmit -p tsconfig.browser.json",
-    "test": "vitest run",
+    "test": "vitest run && node __tests__/private-review-proxy.mjs",
     "check": "npm run build && npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run",
     "types:worker": "wrangler types worker-configuration.d.ts",
     "dev:celld": "node scripts/review.mjs",

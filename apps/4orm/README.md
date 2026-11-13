@@ -47,7 +47,9 @@ are historical evidence, not launch inputs.
 The canonical private named preview is `https://4orm.pi.jackharrhy.dev`.
 Its canonical fixture issuer remains
 `https://newport.hedgehog-python.ts.net:8565`: changing it would break existing
-exact issuer/subject links. The separate review-key gate remains required.
+exact issuer/subject links. The owner-approved access boundary for this preview
+is Tailnet peers, without a separate review-key prompt. App-level login and
+authorization remain unchanged.
 
 The product workspace is `@harrhy/4orm` at `apps/4orm`. Existing `fourm` Celld
 worker/bucket/DO names, cookies, metadata/protocol identifiers, fixture identities,
@@ -56,9 +58,12 @@ not alternate product names. Preserve them; this rename is not a data migration.
 
 A preview hostname change must preserve its canonical fixture issuer unless an
 explicit identity-link migration is reviewed: member links use exact issuer and
-subject. A named ingress without trusted Tailnet identity must require the
-separate review key, never fabricate an identity header or treat DNS as access
-control.
+subject. The loopback-only private proxy defaults to `accessMode: "review-key"`.
+Its explicit `accessMode: "tailnet"` disables only that outer prompt; enable it
+only with verified Tailnet-only host routing and no public alternate ingress.
+It trusts network isolation, not forwarded identity headers or DNS. Keep the
+existing key file for rollback; Tailnet mode issues no review-access cookie.
+Never fabricate identity headers or bypass app-level authorization.
 
 Python production and its separate oracle interpreter/state remain independent
 and untouched. A long-term shared Celld host is a direction, not a reason to
