@@ -23,6 +23,63 @@ const fullWidthAction = css({
 });
 
 const layoutStyles = css({
+  "& a": { color: "var(--blue)", textUnderlineOffset: "4px" },
+  "& button": { cursor: "pointer" },
+  "& button:disabled": { cursor: "not-allowed", opacity: 0.5 },
+  "& button, & .button": {
+    display: "inline-flex",
+    minHeight: "42px",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    padding: "8px 15px",
+    border: "1px solid #b9c1c6",
+    borderRadius: "6px",
+    background: "var(--surface)",
+    color: "var(--ink)",
+    font: "inherit",
+    fontWeight: 500,
+    textDecoration: "none",
+    whiteSpace: "nowrap",
+    lineHeight: 1.4,
+  },
+  "& button:hover, & .button:hover": {
+    background: "#edf0f2",
+    borderColor: "#919da6",
+  },
+  "& button:active, & .button:active": { background: "#e2e7eb" },
+  "& .brand": {
+    fontSize: "29px",
+    fontWeight: 700,
+    letterSpacing: "-0.065em",
+    color: "#202a32",
+    textDecoration: "none",
+    lineHeight: 1,
+  },
+  "& .brand-dot": { color: "#547b9a" },
+  "& .desktop-nav": {
+    display: "flex",
+    alignItems: "center",
+    gap: "3px",
+  },
+  "& .desktop-nav > a, & .nav-button": {
+    border: 0,
+    background: "transparent",
+    color: "#4a555f",
+    padding: "9px 12px",
+    textDecoration: "none",
+    borderRadius: "5px",
+    minHeight: "40px",
+    display: "flex",
+    alignItems: "center",
+  },
+  "& .desktop-nav > a:hover, & .nav-button:hover, & .desktop-nav > a[aria-current='page']":
+    {
+      background: "#e7eaed",
+      color: "#1d2932",
+    },
+  "& .desktop-nav > a[aria-current='page']": { fontWeight: 600 },
+  "& .mobile-nav": { display: "none" },
   "&.authentication": { overflowX: "hidden" },
   "&.authentication:has(.login-title)": {
     display: "grid",
