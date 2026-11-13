@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-radio.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/radio/**
       - packages/identity/**
   workflow_dispatch:

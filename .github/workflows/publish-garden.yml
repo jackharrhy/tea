@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-garden.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/garden/**
   workflow_dispatch:
 concurrency:

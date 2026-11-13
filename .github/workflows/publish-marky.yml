@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-marky.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/marky/**
       - packages/identity/**
   workflow_dispatch:

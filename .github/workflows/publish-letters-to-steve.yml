@@ -3,11 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/workflows/publish-letters-to-steve.yml
       - .dockerignore
       - .nvmrc
-      - package.json
-      - package-lock.json
       - apps/letters-to-steve/**
       - packages/identity/**
   workflow_dispatch:
