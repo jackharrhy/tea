@@ -29,6 +29,8 @@ export function createAccessRoutes({
   renderInactivePreview,
   renderActivity,
   renderOperation,
+  renderGroups,
+  renderGroupForm,
 }) {
   const people = async () =>
     (await searchAll(api, "/management/v1/users/_search")).filter(
@@ -225,7 +227,7 @@ export function createAccessRoutes({
       }
     }
     if (request.method === "GET" && url.pathname === "/manage/groups") {
-      send(views.groups(model, context));
+      await sendRemix((nonce) => renderGroups(model, context, nonce));
       return true;
     }
     const group = url.pathname.match(
@@ -237,7 +239,8 @@ export function createAccessRoutes({
           ? null
           : model.groups.find((item) => item.id === group[1]);
       if (group[1] !== "new" && !value) throw fail(404, "Group not found.");
-      send(views.groupForm(value, model, domains, await people(), context));
+      const users = await people();
+      await sendRemix((nonce) => renderGroupForm(value, model, domains, users, context, nonce));
       return true;
     }
     if (

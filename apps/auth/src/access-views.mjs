@@ -181,67 +181,6 @@ export function accessForm(user, model, applications, services, context) {
   );
 }
 
-export function groups(model, context) {
-  return page(
-    "Groups",
-    intro(
-      "Groups",
-      "Reusable sets of service roles. Groups add together.",
-      `<a class="button" href="/manage/groups/new">Create group</a>`,
-    ) +
-      `<div class="people-list">${model.groups.map((group) => `<a class="group-row" href="/manage/groups/${group.id}"><span><strong>${h(group.name)}</strong><span class="muted">${h(group.description)}</span></span><span>${model.memberships.filter((item) => item.group === group.id).length} people</span><span>${group.id === "auth-administrators" ? "Protected administration" : group.bindings.length + " service roles"}</span></a>`).join("")}</div>`,
-    { ...context, active: "groups" },
-  );
-}
-
-export function groupForm(group, model, applications, users, context) {
-  const members = model.memberships.filter((item) => item.group === group?.id);
-  const membership = group
-    ? `<section class="detail-section"><h2>People</h2>${
-        members
-          .map((item) => {
-            const user = users.find(
-              (candidate) => candidate.id === item.subject,
-            );
-            return `<div class="compact-row"><a href="/manage/people/${encodeURIComponent(item.subject)}">${h(user ? nameOf(user) : "Unavailable identity")}</a></div>`;
-          })
-          .join("") ||
-        '<p class="muted">No members. Creating a group does not add anyone.</p>'
-      }</section>`
-    : "";
-  if (group?.id === "auth-administrators")
-    return page(
-      group.name,
-      intro(group.name, group.description) +
-        '<p class="notice">Protected group. Manage membership from each person’s page. Keep at least one active administrator. Membership grants no downstream project roles.</p>' +
-        membership,
-      { ...context, active: "groups" },
-    );
-  const bindings = group?.bindings || [];
-  const fields = `${changeFields("group.save", model.revision)}${group ? hidden("group", group.id) : ""}<label>Group name<input name="name" required minlength="2" maxlength="80" value="${h(group?.name || "")}"></label><label>Description<textarea name="description" maxlength="500" rows="2">${h(group?.description || "")}</textarea></label><fieldset><legend>Service roles</legend><p class="muted">These are exact service permissions, not a universal role hierarchy.</p><div class="role-options">${applications
-    .filter((app) => app.roles.length && !app.authorizationHold)
-    .map(
-      (app) =>
-        `<div><strong>${h(app.name)}</strong>${[...new Set([...app.roles, ...(app.apiRoles || []), ...(app.delegatedPermissions || [])])].map((role) => `<label class="check"><input name="bindings" type="checkbox" value="${h(app.id + "|" + role)}"${bindings.some((item) => item.application === app.id && item.role === role) ? " checked" : ""}>${h(role)}</label>`).join("")}</div>`,
-    )
-    .join(
-      "",
-    )}</div></fieldset>${reason}<button class="primary">Review group</button>`;
-  return page(
-    group?.name || "Create group",
-    intro(
-      group?.name || "Create group",
-      "Preview the affected service roles before applying.",
-    ) +
-      form(context, fields) +
-      membership +
-      (group
-        ? `<section class="detail-section"><h2>Delete group</h2><p class="muted">Removes this source of access. Independent assignments remain.</p>${form(context, changeFields("group.delete", model.revision) + hidden("group", group.id) + reason + "<button>Review deletion</button>")}</section>`
-        : ""),
-    { ...context, active: "groups" },
-  );
-}
-
 export function preview(change, applications, users, context) {
   const personName = (id) => {
     const user = users.find((item) => item.id === id);
