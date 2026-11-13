@@ -100,6 +100,8 @@ export default {
         });
         return new Response(null, { status: 204 });
       }
+      if (path === "/full/scheduled-status")
+        return Response.json(await store.call("backupStatus", actor));
       if (path === "/full/source-state")
         return Response.json(await store.call("exportRecovery", actor));
       if (path === "/full/capture") {

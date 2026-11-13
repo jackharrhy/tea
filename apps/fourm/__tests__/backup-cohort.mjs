@@ -31,13 +31,22 @@ assert.ok(
   "Unknown backup fixture format",
 );
 const nativeMode = format === "native";
+const scheduledMode = process.env.FOURM_BACKUP_SCHEDULED === "1";
+assert.ok(
+  !scheduledMode || nativeMode,
+  "Scheduled capture uses native backups",
+);
+const scheduledRuns = [];
 const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
 const cohort = join(root, "parity-cohort-metadata-20261112");
 const state = await mkdtemp(join(tmpdir(), "fourm-backup-cohort-"));
 const output = join(
   root,
-  (nativeMode ? "native-backup-cohort-" : "backup-cohort-") +
-    new Date().toISOString().replace(/[:.]/g, ""),
+  (scheduledMode
+    ? "scheduled-native-backup-cohort-"
+    : nativeMode
+      ? "native-backup-cohort-"
+      : "backup-cohort-") + new Date().toISOString().replace(/[:.]/g, ""),
 );
 await mkdir(output, { mode: 0o700 });
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -53,7 +62,8 @@ const origin = `http://127.0.0.1:${port}`;
 let child,
   logs = "",
   phase = "export",
-  failed = false;
+  failed = false,
+  seeded = false;
 const environment = {
   ...Object.fromEntries(
     Object.entries(process.env).filter(([k]) => !k.startsWith("CELLD_")),
@@ -89,7 +99,7 @@ async function stop() {
   const timer = setTimeout(() => {
     if (owned.exitCode === null && owned.signalCode === null)
       owned.kill("SIGKILL");
-  }, 30000);
+  }, 60000);
   await exit;
   clearTimeout(timer);
   child = undefined;
@@ -99,11 +109,35 @@ async function start() {
   for (let i = 0; i < 300; i++) {
     assert.equal(child.exitCode, null);
     try {
-      if ((await fetch(origin + "/health")).ok) return;
+      if ((await fetch(origin + "/health")).ok) {
+        if (!seeded) return;
+        const authority = await fetch(origin + "/full/scheduled-status", {
+          headers: { Authorization: `Bearer ${key}` },
+          signal: AbortSignal.timeout(2000),
+        });
+        if (authority.ok) return;
+      }
     } catch {}
     await delay(100);
   }
   throw Error("Isolated cohort runtime did not become ready");
+}
+async function configureScheduler(enabled) {
+  await stop();
+  const path = join(state, "wrangler.jsonc");
+  const config = JSON.parse(await readFile(path, "utf8"));
+  config.vars.BACKUP_SCHEDULER_ENABLED = enabled ? "1" : "0";
+  config.vars.BACKUP_INTERVAL_SECONDS = "10";
+  await writeFile(path, JSON.stringify(config));
+  const deployment = run(["deploy", path]);
+  assert.equal(
+    await new Promise((resolve, reject) => {
+      deployment.once("error", reject);
+      deployment.once("exit", resolve);
+    }),
+    0,
+  );
+  await start();
 }
 async function request(path, body, headers = {}) {
   const response = await fetch(origin + path, {
@@ -196,17 +230,56 @@ try {
   await request("/seed", JSON.stringify(source.tables), {
     "Content-Type": "application/json",
   });
+  seeded = true;
   const nativeBefore = nativeMode
     ? await (await request("/full/source-state")).json()
     : null;
   phase = "capture";
   await checkpoint();
-  const captured = await (
-    await request(nativeMode ? "/full/capture" : "/capture", "{}")
-  ).json();
+  let captured;
+  if (scheduledMode) {
+    phase = "scheduled-capture";
+    await configureScheduler(true);
+    const seen = new Set();
+    const deadline = Date.now() + 120000;
+    while (scheduledRuns.length < 2) {
+      assert.equal(child.exitCode, null);
+      const status = await (await request("/full/scheduled-status")).json();
+      assert.notEqual(
+        status.last?.state,
+        "failed",
+        "Actual alarm backup failed",
+      );
+      for (const record of status.backups)
+        if (!seen.has(record.name)) {
+          seen.add(record.name);
+          assert.equal(record.file_count, 146);
+          scheduledRuns.push({
+            name: record.name,
+            state: "complete",
+            files: record.file_count,
+            startedAt: record.started_at,
+            finishedAt: record.finished_at,
+          });
+          await checkpoint({ scheduledRuns: scheduledRuns.length });
+        }
+      assert.ok(
+        Date.now() < deadline,
+        "Scheduled backup recurrence deadline exceeded",
+      );
+      if (scheduledRuns.length < 2) await delay(300);
+    }
+    assert.ok(scheduledRuns[1].startedAt > scheduledRuns[0].startedAt);
+    captured = { state: "complete", files: 146 };
+    await configureScheduler(false);
+  } else {
+    captured = await (
+      await request(nativeMode ? "/full/capture" : "/capture", "{}")
+    ).json();
+  }
   assert.equal(captured.state, "complete");
   assert.equal(captured.files, 146);
-  if (nativeMode) {
+  if (nativeMode && !scheduledMode) {
     assert.equal(captured.pruned, 0);
     assert.equal(captured.objectsRemoved, 0);
   }
@@ -320,11 +393,15 @@ try {
     JSON.stringify(
       {
         status: "PASS",
-        scope: nativeMode
-          ? "isolated real-cohort native30table/full-file artifact capture and cold restore; no production/browser/OAuth/scheduler claim"
-          : "isolated native real-content cohort archive capture and restore; no browser/OAuth/full operational backup claim",
+        scope: scheduledMode
+          ? "actual Celld alarms capture and recur on imported real cohort; scheduled artifact cold restore; no production/browser/OAuth claim"
+          : nativeMode
+            ? "isolated real-cohort native30table/full-file artifact capture and cold restore; no production/browser/OAuth/scheduler claim"
+            : "isolated native real-content cohort archive capture and restore; no browser/OAuth/full operational backup claim",
         combinedNativeFormat: nativeMode,
-        applicationManualRunAndRetention: nativeMode,
+        applicationManualRunAndRetention: nativeMode && !scheduledMode,
+        actualAlarmScheduling: scheduledMode,
+        scheduledRuns,
         managedTablesExact: nativeMode
           ? Object.keys(managedReadback.tables).length
           : null,
