@@ -236,6 +236,16 @@ try {
     ...(privateReview
       ? { REVIEW_FIXTURE_ORIGIN: `http://127.0.0.1:${issuerPort}` }
       : {}),
+    ...(process.env.FOURM_REVIEW_COUNTER_PEER_KEY_FILE
+      ? {
+          COUNTER_PEER_KEY: (
+            await readFile(
+              process.env.FOURM_REVIEW_COUNTER_PEER_KEY_FILE,
+              "utf8",
+            )
+          ).trim(),
+        }
+      : {}),
     AUTH_ENROLLMENT_KEY: enrollmentKey,
   };
   const workerConfig = join(
