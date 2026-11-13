@@ -7,6 +7,7 @@ import {
   type MiddlewareContext,
 } from "remix/router";
 import { render } from "remix/middleware/render";
+import { asyncContext } from "remix/middleware/async-context";
 import { staticFiles } from "remix/middleware/static";
 import { cop } from "remix/middleware/cop";
 import { assets } from "./assets.ts";
@@ -31,6 +32,7 @@ import { createPublicController } from "./actions/controller.tsx";
 import { createAuthController } from "./actions/auth/controller.tsx";
 import { createAdminController } from "./actions/admin/controller.tsx";
 import { createMcpHandler } from "./mcp/handler.ts";
+import { htmlCsp, htmlNoStore } from "./ui/csp.ts";
 
 const renderMiddleware = render({ assets });
 function validMcpToken(
@@ -71,6 +73,7 @@ export function createTeaRouter(
   );
   const router = createRouter<AppContext>({
     middleware: [
+      asyncContext(),
       headRequests,
       protectWrites(site),
       staticFiles(join(site.dataDir, "public"), { index: false }),
@@ -88,6 +91,8 @@ export function createTeaRouter(
       }),
       cop({ trustedOrigins: [site.origin] }),
       services(content, auth, site, operator),
+      htmlNoStore,
+      htmlCsp(),
       renderMiddleware,
     ],
   });

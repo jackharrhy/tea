@@ -2,12 +2,14 @@ import { fileURLToPath } from "node:url";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { createController, createRouter } from "remix/router";
 import { render } from "remix/middleware/render";
+import { asyncContext } from "remix/middleware/async-context";
 import { staticFiles } from "remix/middleware/static";
 import { cop } from "remix/middleware/cop";
 import { cookieValue, sessionCookie } from "../app/data/auth.ts";
 import type { SiteRuntime } from "../app/site.ts";
 import type { TeaDatabase } from "../app/data/database.ts";
 import { assets } from "../app/assets.ts";
+import { htmlCsp, htmlNoStore } from "../app/ui/csp.ts";
 import { operatorRoutes } from "./routes.ts";
 import { Dashboard, Login, type Summary } from "./ui.tsx";
 import { Design } from "./design.tsx";
@@ -85,6 +87,7 @@ export function createOperatorRouter(
   const byId = new Map(sites.map(({ site }) => [site.id, site]));
   const router = createRouter({
     middleware: [
+      asyncContext(),
       staticFiles(fileURLToPath(new URL("./public", import.meta.url)), {
         index: false,
       }),
@@ -105,6 +108,8 @@ export function createOperatorRouter(
         response?.headers.set("Referrer-Policy", "no-referrer");
         return response;
       },
+      htmlNoStore,
+      htmlCsp(sites.map(({ site }) => site.origin)),
       render({ assets }),
     ],
   });

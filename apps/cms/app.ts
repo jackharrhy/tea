@@ -99,10 +99,7 @@ export async function createApp(sites: SiteRuntime[], operator?: Operator) {
           !request.headers.has("cookie") &&
           !request.headers.has("authorization") &&
           !response.headers.has("set-cookie") &&
-          response.headers.get("content-type")?.startsWith("text/html") &&
-          !/\b(?:private|no-store)\b/i.test(
-            response.headers.get("cache-control") ?? "",
-          )
+          response.headers.get("content-type")?.startsWith("text/html")
         )
           return compressResponse(response, request, {
             encodings: ["br", "gzip"],

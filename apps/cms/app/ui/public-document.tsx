@@ -2,6 +2,8 @@ import { css, unsafeHTML, type Handle, type RemixNode } from "remix/component";
 import type { PublicPageProps } from "../site.ts";
 import { pageMetadata, structuredData } from "../actions/public-seo.ts";
 import { Document } from "./document.tsx";
+import { getContext } from "remix/middleware/async-context";
+import { getCspNonce } from "remix/middleware/csp";
 import { FeatureAssets } from "./feature-assets.tsx";
 import { adornmentStyles } from "./adornment-styles.ts";
 import { risoStyles } from "./riso-styles.ts";
@@ -15,6 +17,7 @@ export function PublicDocument(
   >,
 ) {
   return () => {
+    const nonce = getCspNonce(getContext());
     const {
       page,
       store,
@@ -53,6 +56,7 @@ export function PublicDocument(
             {page && !preview && !page.seo.no_index && (
               <script
                 type="application/ld+json"
+                nonce={nonce}
                 innerHTML={unsafeHTML(structuredData(metadata, site))}
               ></script>
             )}
@@ -60,9 +64,11 @@ export function PublicDocument(
               <>
                 <script
                   async
+                  nonce={nonce}
                   src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}
                 ></script>
                 <script
+                  nonce={nonce}
                   innerHTML={unsafeHTML(`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
