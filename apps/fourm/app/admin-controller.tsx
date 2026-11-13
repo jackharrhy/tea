@@ -1,3 +1,4 @@
+import { BackupList } from "./admin-backups.tsx";
 import { scanStorage } from "./storage-health.ts";
 import { StorageHealthView } from "./admin-storage.tsx";
 import type { Row } from "./data/community.ts";
@@ -9,6 +10,8 @@ import { route, post, get } from "remix/routes";
 import type { Runtime, Viewer, Bindings } from "./runtime.ts";
 import { formFields, saved } from "./settings-controller.tsx";
 export const adminRoutes = route({
+  backups: get("/admin/backups"),
+  runBackup: post("/admin/backups/run"),
   cleanupFiles: post("/admin/cleanup/files"),
   cleanupRecords: post("/admin/cleanup/records"),
   orphans: get("/admin/orphans"),
@@ -57,6 +60,31 @@ export function adminController(store: Runtime, viewer: Viewer, env: Bindings) {
   const id = viewer.member?.id ?? null;
   return createController(adminRoutes, {
     actions: {
+      async backups() {
+        const status = await store.call("backupStatus", id);
+        return new Response(await renderToString(<BackupList {...status} />), {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      },
+      async runBackup({ request }) {
+        const cell = env.COMMUNITIES.get(
+          env.COMMUNITIES.idFromName("fourm-community-v1"),
+        );
+        const result = await cell.runBackup(id);
+        if (!result.ok) throw new CommunityError(result.status, result.error);
+        if (request.headers.get("HX-Request") !== "true") return redirect();
+        const run = result.result;
+        return new Response(
+          await renderToString(
+            <p class={run.error ? "error" : "ok"}>
+              {run.error
+                ? `error: ${run.error}`
+                : `backup complete: ${run.name}`}
+            </p>,
+          ),
+          { headers: { "Content-Type": "text/html; charset=utf-8" } },
+        );
+      },
       async cleanupFiles({ request }) {
         const count = await store.cleanupOrphanFiles(id);
         return cleanupResponse(request, count, "files");
