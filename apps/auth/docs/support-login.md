@@ -10,7 +10,10 @@ Artbin receives no ordinary target Auth session. Its separate memory-only suppor
 
 ## Persistence and cleanup
 
-`support_lifecycle` shares the existing `access.sqlite` recovery boundary. AES-256-GCM with record-bound associated data encrypts bearer material, actor proof, capability hashes and reason. Opaque request/code/session references are hashed at rest. Token ownership transfers atomically between lifecycle records.
+`support_lifecycle` shares the existing `access.sqlite` recovery boundary. AES-256-GCM with record-bound associated data encrypts bearer material, actor proof, capability hashes and reason. Opaque request/code/session references are hashed at rest. Token ownership transfers atomically between lifecycle records. Session transfer
+preserves the absolute expiry bounded by the native token; redemption and status
+return that same persisted expiry. Consumers compare it exactly, not with clock
+or timestamp tolerance.
 
 Exit marks the lifecycle inactive before native revocation. Revocation is only confirmed after same-token native introspection is inactive and UserInfo returns 401. Failure retains encrypted material for the periodic, restart-safe cleanup sweep. Expiry, disabling new support login, or loss of Auth-admin/target eligibility also ends support. Keep the private configuration and encryption key available while disabling: the cleanup worker and authenticated end/status remain available even when new handoffs are disabled. Unknown interrupted exchange outcomes are never replayed and block new starts for operator audit. No credentials, accounts or grants are reset to resolve an unknown outcome.
 

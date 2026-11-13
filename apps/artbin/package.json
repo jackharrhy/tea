@@ -14,6 +14,7 @@
     "start": "NODE_ENV=production node --import remix/node-tsx server.ts",
     "test": "npm run test:unit && npm run test:remix",
     "test:unit": "vitest run",
+    "test:support:browser": "ARTBIN_SUPPORT_BROWSER_TEST=1 vitest run __tests__/support-login.test.ts",
     "test:remix": "remix test --type server --concurrency 1",
     "typecheck": "tsrs --noEmit",
     "check": "npm run typecheck && npm test",

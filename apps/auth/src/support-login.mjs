@@ -262,6 +262,7 @@ export function createSupportLogin({
           },
           expires - now(),
           "active",
+          expires,
         );
         return {
           access_token: token.targetToken,
@@ -270,7 +271,7 @@ export function createSupportLogin({
             id: result.ref,
             actorSubject: row.body.actor,
             targetSubject: row.body.target,
-            expiresAt: new Date(expires).toISOString(),
+            expiresAt: new Date(result.row.expires).toISOString(),
             nonce: row.body.appNonce,
             endSecret,
           },

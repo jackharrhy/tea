@@ -79,6 +79,14 @@ service owns durable expiry and native token revocation if Artbin restarts or an
 exit request cannot reach it. Mutation logs include actor and target references.
 Initial acceptance must make no content changes.
 
+`npm run test:support:browser --workspace @harrhy/artbin-app` additionally runs
+Chromium through the recovery form and normal router middleware with synthetic
+cookies and an ephemeral loopback HTTP server (no provider or production requests).
+Install Playwright Chromium first. Ordinary checks keep this browser probe opt-in.
+Support status rejection logs contain only `http`, `inactive`, `identity`, or
+`expiry` branch codes; exit rejection logs distinguish `origin` from `csrf`.
+They never contain header values, cookies, tokens, subjects, or support references.
+
 Keep `ARTBIN_SUPPORT_LOGIN_ENABLED=0` until the matching Jack Auth support
 endpoints, dedicated confidential client, transport credential, native policy
 and isolated consumer acceptance are ready. The private production configuration
