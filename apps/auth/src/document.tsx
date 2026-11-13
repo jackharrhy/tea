@@ -23,6 +23,39 @@ const fullWidthAction = css({
 });
 
 const layoutStyles = css({
+  "& .primary": {
+    background: "#20282f",
+    color: "#fff",
+    borderColor: "#20282f",
+  },
+  "& .primary:hover": {
+    background: "#36424b",
+    color: "#fff",
+    borderColor: "#36424b",
+  },
+  "& input, & textarea, & select": {
+    font: "inherit",
+    width: "100%",
+    border: "1px solid var(--control)",
+    borderRadius: "6px",
+    background: "var(--surface)",
+    color: "var(--ink)",
+    padding: "10px 12px",
+    minHeight: "44px",
+    caretColor: "var(--blue)",
+    lineHeight: 1.5,
+  },
+  "& textarea": { resize: "vertical", minHeight: "80px" },
+  "& input::placeholder, & textarea::placeholder": {
+    color: "#66727c",
+    opacity: 1,
+  },
+  "& input[type='checkbox']": {
+    width: "18px",
+    minHeight: "18px",
+    height: "18px",
+    accentColor: "#303c46",
+  },
   "& label": { display: "grid", gap: "7px", fontWeight: 500 },
   "& fieldset": { border: 0, padding: 0, margin: 0 },
   "& legend": { fontWeight: 600, marginBottom: "12px" },

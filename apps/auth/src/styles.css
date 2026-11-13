@@ -27,21 +27,6 @@ body {
   font-size: 14px;
   line-height: 1.65;
 }
-input,
-select,
-textarea {
-  font: inherit;
-}
-.primary {
-  background: #20282f;
-  color: #fff;
-  border-color: #20282f;
-}
-.primary:hover {
-  background: #36424b;
-  color: #fff;
-  border-color: #36424b;
-}
 :where(a, button, input, select, textarea, summary):focus-visible {
   outline: 3px solid #3675be;
   outline-offset: 4px;
@@ -49,34 +34,6 @@ textarea {
 ::selection {
   background: #cbdcf0;
   color: #15273a;
-}
-input,
-textarea,
-select {
-  width: 100%;
-  border: 1px solid var(--control);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--ink);
-  padding: 10px 12px;
-  min-height: 44px;
-  caret-color: var(--blue);
-  line-height: 1.5;
-}
-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-input::placeholder,
-textarea::placeholder {
-  color: #66727c;
-  opacity: 1;
-}
-input[type="checkbox"] {
-  width: 18px;
-  min-height: 18px;
-  height: 18px;
-  accent-color: #303c46;
 }
 .muted,
 .hint {
