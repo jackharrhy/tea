@@ -455,7 +455,10 @@ try {
         );
         creationDateOverride = undefined;
       }
-      await page.goto(`${origin}/login?authRequest=consent`);
+      const consentResponse = await page.goto(`${origin}/login?authRequest=consent`);
+      const consentNonce = await page.locator("style[nonce]").first().evaluate((style) => style.nonce);
+      assert(consentNonce);
+      assert(consentResponse.headers()["content-security-policy"].includes(`'nonce-${consentNonce}'`));
       await page.getByRole("button", { name: "Allow", exact: true }).click();
       await page
         .waitForURL(`${callbackOrigin}/callback?**`, { timeout: 5000 })

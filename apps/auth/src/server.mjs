@@ -17,6 +17,7 @@ import {
 } from "./security.mjs";
 import * as views from "./views.mjs";
 const { renderLogin } = await import("./login-page.tsx");
+const { renderAuthorization } = await import("./authorization-page.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
 import { createAccountActions } from "./accounts.mjs";
@@ -902,11 +903,12 @@ createServer(async (request, response) => {
       if (request.method === "GET") {
         const intent = await authorizationActions.view(id, session);
         if (intent.consent) {
+          const nonce = randomToken();
           response.setHeader(
             "Content-Security-Policy",
-            contentSecurityPolicy(intent.request.redirectUri),
+            contentSecurityPolicy(intent.request.redirectUri, { styleNonce: nonce }),
           );
-          send(views.authorization(intent, id, context));
+          send(await renderAuthorization(intent, id, context, nonce));
           return;
         }
       }

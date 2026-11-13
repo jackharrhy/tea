@@ -148,29 +148,6 @@ export function account(profile, context, _applications = []) {
   );
 }
 
-export function authorization(intent, id, context) {
-  const details = [
-    ...(intent.request.scope.includes("profile") ? ["Name and profile"] : []),
-    ...(intent.request.scope.includes("email") ? ["Email address"] : []),
-    ...(intent.selfEnrollment
-      ? [
-          "Join Radio: list, join and create rooms, upload tracks, and use room controls.",
-        ]
-      : []),
-    ...(intent.offline ? ["Stay connected until access is revoked"] : []),
-  ];
-  return page(
-    intent.selfEnrollment ? "Join Radio?" : "Allow access?",
-    `<h1>${intent.selfEnrollment ? "Join Radio?" : "Allow access?"}</h1>
-    <dl class="profile"><div><dt>Application</dt><dd>${h(intent.application.name)}</dd></div><div><dt>Client</dt><dd>${h(intent.clientOrigin)}</dd></div><div><dt>Permission</dt><dd>${h(intent.roles.map((role) => (role === "admin" ? "Administrator" : role)).join(", "))}</dd></div></dl>
-    ${details.length ? `<div class="permissions"><ul>${details.map((detail) => `<li>${h(detail)}</li>`).join("")}</ul></div>` : ""}
-    <form method="post" action="/authorize">${hidden("csrf", context.csrf)}${hidden("authRequest", id)}
-      <div class="actions"><button name="decision" value="deny">Deny</button><button class="primary" name="decision" value="approve">Allow</button></div>
-    </form>`,
-    { ...context, narrow: true },
-  );
-}
-
 export function device(request, csrf, context, userCode) {
   return page(
     "Approve sign-in",
