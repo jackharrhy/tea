@@ -1,6 +1,7 @@
 import { type Handle } from "remix/component";
 import { renderToString } from "remix/component/server";
 import { Document, type DocumentProps } from "./document.tsx";
+import { listRowStyles, operationRowStyles } from "./list-row-styles.ts";
 
 type Context = Omit<DocumentProps, "title" | "children"> & { csrf: string };
 type Person = {
@@ -105,7 +106,11 @@ function ActivityPage(
         <div class="people-list">
           {applied.length ? (
             applied.map((entry) => (
-              <a class="operation-row" href={`/manage/operations/${entry.id}`}>
+              <a
+                class="operation-row"
+                mix={[listRowStyles, operationRowStyles]}
+                href={`/manage/operations/${entry.id}`}
+              >
                 <span>
                   <strong>{entry.reason}</strong>
                   <span class="muted">

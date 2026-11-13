@@ -2,6 +2,11 @@ import { type Handle } from "remix/component";
 import { renderToString } from "remix/component/server";
 import { uiPrimaryActionStyles } from "@harrhy/ui";
 import { Document, type DocumentProps } from "./document.tsx";
+import {
+  listRowStyles,
+  operationRowStyles,
+  personInitialStyles,
+} from "./list-row-styles.ts";
 
 type AccessContext = Omit<DocumentProps, "title" | "children"> & {
   csrf: string;
@@ -28,7 +33,10 @@ function SessionsPage(
         <div class="people-list">
           {items.length ? (
             items.map((item) => (
-              <div class="operation-row">
+              <div
+                class="operation-row"
+                mix={[listRowStyles, operationRowStyles]}
+              >
                 <span>
                   <strong>
                     {item.id === current
@@ -145,9 +153,14 @@ function PeoplePage(
             shown.map((user) => (
               <a
                 class="person-row"
+                mix={listRowStyles}
                 href={`/manage/people/${encodeURIComponent(user.id)}`}
               >
-                <span class="person-initial" aria-hidden="true">
+                <span
+                  class="person-initial"
+                  mix={personInitialStyles}
+                  aria-hidden="true"
+                >
                   {nameOf(user).slice(0, 1)}
                 </span>
                 <span>

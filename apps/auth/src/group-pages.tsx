@@ -1,6 +1,7 @@
 import { type Handle } from "remix/component";
 import { renderToString } from "remix/component/server";
 import { Document, type DocumentProps } from "./document.tsx";
+import { groupRowStyles, listRowStyles } from "./list-row-styles.ts";
 
 type Context = Omit<DocumentProps, "title" | "children"> & { csrf: string };
 type Group = {
@@ -49,7 +50,11 @@ function GroupsPage(handle: Handle<{ model: Model; context: Context }>) {
         </div>
         <div class="people-list">
           {model.groups.map((group) => (
-            <a class="group-row" href={`/manage/groups/${group.id}`}>
+            <a
+              class="group-row"
+              mix={[listRowStyles, groupRowStyles]}
+              href={`/manage/groups/${group.id}`}
+            >
               <span>
                 <strong>{group.name}</strong>
                 <span class="muted">{group.description}</span>

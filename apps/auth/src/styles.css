@@ -306,46 +306,6 @@ dd {
 .people-list {
   border-top: 1px solid var(--line);
 }
-.person-row,
-.group-row,
-.operation-row {
-  display: grid;
-  grid-template-columns: 38px minmax(180px, 1fr) 110px 90px 92px;
-  gap: 16px;
-  align-items: center;
-  min-height: 85px;
-  padding: 18px 12px;
-  border-bottom: 1px solid var(--line);
-  color: var(--ink);
-  text-decoration: none;
-}
-.person-row:hover,
-.group-row:hover,
-.operation-row:hover {
-  background: #eef1f3;
-}
-.person-initial {
-  font-size: 18px;
-  color: #586d7b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 36px;
-}
-.person-row strong,
-.group-row strong,
-.operation-row strong {
-  display: block;
-  font-size: 14px;
-}
-.person-row .muted,
-.group-row .muted,
-.operation-row .muted {
-  display: block;
-  font-size: 12px;
-  margin-top: 4px;
-}
 .row-action {
   font-size: 12px;
   color: var(--blue);
@@ -364,16 +324,6 @@ dd {
   color: #3c4d5b;
   border-radius: 4px;
   font-weight: 450;
-}
-.group-row {
-  grid-template-columns: minmax(200px, 1fr) 100px 180px;
-}
-.group-row > span:not(:first-child) {
-  font-size: 12px;
-  color: var(--muted);
-}
-.operation-row {
-  grid-template-columns: minmax(200px, 1fr) auto;
 }
 .table-frame {
   width: 100%;
