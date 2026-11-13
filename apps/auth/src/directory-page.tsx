@@ -1,4 +1,4 @@
-import { type Handle } from "remix/component";
+import { css, type Handle } from "remix/component";
 import { renderToString } from "remix/component/server";
 import { uiPrimaryActionStyles } from "@harrhy/ui";
 import { directorySections } from "./directory.mjs";
@@ -19,13 +19,30 @@ type DirectoryItem = {
 
 type DirectoryContext = Omit<DocumentProps, "title" | "children">;
 
+const appGridStyles = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: "16px",
+});
+
+const appEntryStyles = css({
+  display: "grid",
+  gridTemplateColumns: "36px minmax(0, 1fr)",
+  gap: "17px",
+  padding: "24px",
+  background: "#fff",
+  border: "1px solid var(--line)",
+  borderRadius: "8px",
+  alignItems: "start",
+});
+
 function AppEntry(
   handle: Handle<{ item: DirectoryItem; context: DirectoryContext }>,
 ) {
   return () => {
     const { item, context } = handle.props;
     return (
-      <article class="app-entry">
+      <article class="app-entry" mix={appEntryStyles}>
         <div class="app-monogram" aria-hidden="true">
           {item.name.slice(0, 1)}
         </div>
@@ -74,7 +91,7 @@ function DirectoryPage(
               {section.title ? (
                 <h2 class="app-section-title">{section.title}</h2>
               ) : null}
-              <div class="app-grid">
+              <div class="app-grid" mix={appGridStyles}>
                 {section.items.map((item: DirectoryItem) => (
                   <AppEntry item={item} context={context} />
                 ))}
@@ -87,7 +104,7 @@ function DirectoryPage(
         {joinable.length ? (
           <section class="section">
             <h2>You can join</h2>
-            <div class="app-grid">
+            <div class="app-grid" mix={appGridStyles}>
               {joinable.map((item) => (
                 <AppEntry item={item} context={context} />
               ))}

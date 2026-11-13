@@ -245,21 +245,6 @@ dd {
   line-height: 1.6;
   margin-bottom: 25px;
 }
-.app-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-.app-entry {
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  gap: 17px;
-  padding: 24px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  align-items: start;
-}
 .app-monogram {
   font-size: 24px;
   font-weight: 450;
