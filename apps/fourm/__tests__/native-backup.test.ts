@@ -1,3 +1,4 @@
+import { pruneNativeBackups } from "../app/backup-pruning.ts";
 import { runNativeBackup } from "../app/backup-runner.ts";
 import { inspectBackupCatalogue } from "../app/backup-catalogue.ts";
 import { DatabaseSync } from "node:sqlite";
@@ -423,6 +424,117 @@ it("manual backup preserves an uncertain outcome for retry and records a confirm
     await expect(
       runNativeBackup(source.community, r2.storage, null),
     ).rejects.toMatchObject({ status: 403 });
+  } finally {
+    source.db.close();
+  }
+});
+
+it("prunes expired native roots with replay after lost deletion acknowledgment, retaining shared files and manual snapshots", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/file.txt", "retained bytes");
+    const day = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+    const names = ["01", "02", "03"].map(
+      (hour) => `${day}T${hour}0000000Z-11111111-1111-4111-8111-111111111111`,
+    );
+    for (const name of [...names, "manual-preserve"])
+      await captureNativeBackup(r2.storage, name, async () =>
+        source.community.exportRecovery(41),
+      );
+    const verified = await inspectBackupCatalogue(r2.storage);
+    expect(verified.rejected).toEqual([]);
+    source.community.adoptVerifiedBackups(41, verified.records);
+    let lost = true;
+    const deleted: string[] = [];
+    const storage = {
+      ...r2.storage,
+      async delete(key: string) {
+        deleted.push(key);
+        r2.objects.delete(key);
+        if (lost) {
+          lost = false;
+          throw Error("delete acknowledgment lost");
+        }
+      },
+    };
+    await expect(
+      pruneNativeBackups(source.community, storage, 41),
+    ).rejects.toThrow("acknowledgment lost");
+    expect(source.community.backupStatus(41).backups).toHaveLength(4);
+    expect(await pruneNativeBackups(source.community, storage, 41)).toEqual({
+      removed: 2,
+    });
+    expect(await pruneNativeBackups(source.community, storage, 41)).toEqual({
+      removed: 0,
+    });
+    expect(
+      source.community
+        .backupStatus(41)
+        .backups.map((row) => row.name)
+        .toSorted((a, b) => String(a).localeCompare(String(b))),
+    ).toEqual(
+      [names[2], "manual-preserve"].toSorted((a, b) => a.localeCompare(b)),
+    );
+    expect(deleted.every((key) => key.startsWith(".backups/native/"))).toBe(
+      true,
+    );
+    expect(await readNativeBackup(r2.storage, names[2])).not.toBeNull();
+    expect(
+      await readNativeBackup(r2.storage, "manual-preserve"),
+    ).not.toBeNull();
+    expect(r2.objects.get("fixture/file.txt")!.bytes).toEqual(
+      new TextEncoder().encode("retained bytes"),
+    );
+    expect(() => source.community.forgetPrunedBackup(41, names[2])).toThrow(
+      "protected",
+    );
+    await expect(
+      pruneNativeBackups(source.community, storage, null),
+    ).rejects.toMatchObject({ status: 403 });
+    source.community.beginBackup(41);
+    await expect(
+      pruneNativeBackups(source.community, storage, 41),
+    ).rejects.toMatchObject({ status: 409 });
+  } finally {
+    source.db.close();
+  }
+});
+
+it("retains expired snapshot evidence when verification fails", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/file.txt", "retained bytes");
+    const day = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+    const names = ["01", "02"].map(
+      (hour) => `${day}T${hour}0000000Z-11111111-1111-4111-8111-111111111111`,
+    );
+    for (const name of names)
+      await captureNativeBackup(r2.storage, name, async () =>
+        source.community.exportRecovery(41),
+      );
+    source.community.adoptVerifiedBackups(
+      41,
+      (await inspectBackupCatalogue(r2.storage)).records,
+    );
+    const key = `.backups/native/${names[0]}.json`;
+    r2.objects.get(key)!.bytes = new TextEncoder().encode("damaged manifest");
+    let deletes = 0;
+    const storage = {
+      ...r2.storage,
+      async delete() {
+        deletes++;
+      },
+    };
+    await expect(
+      pruneNativeBackups(source.community, storage, 41),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(deletes).toBe(0);
+    expect(r2.objects.has(key)).toBe(true);
+    expect(source.community.backupStatus(41).backups).toHaveLength(2);
   } finally {
     source.db.close();
   }

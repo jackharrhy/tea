@@ -63,6 +63,29 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
       return run(name);
     });
   }
+  function retentionPlan() {
+    const rows = db.all(
+      "SELECT name,started_at FROM backup_runs WHERE state='complete'",
+    );
+    const managed = rows.filter(
+      (row) => backupNameTime(String(row.name)) !== null,
+    );
+    const plan = planBackupRetention(
+      managed.map((row) => ({
+        name: String(row.name),
+        startedAt: Number(row.started_at),
+      })),
+    );
+    return {
+      ...plan,
+      keep: [
+        ...plan.keep,
+        ...rows
+          .filter((row) => backupNameTime(String(row.name)) === null)
+          .map((row) => String(row.name)),
+      ],
+    };
+  }
   return {
     beginBackup(actorId: number | null) {
       authorize(actorId);
@@ -179,27 +202,27 @@ export function createBackups(db: Database, admin: (id: number) => Member) {
     },
     backupRetentionPlan(actorId: number | null) {
       authorize(actorId);
-      const rows = db.all(
-        "SELECT name,started_at FROM backup_runs WHERE state='complete'",
-      );
-      const managed = rows.filter(
-        (row) => backupNameTime(String(row.name)) !== null,
-      );
-      const plan = planBackupRetention(
-        managed.map((row) => ({
-          name: String(row.name),
-          startedAt: Number(row.started_at),
-        })),
-      );
-      return {
-        ...plan,
-        keep: [
-          ...plan.keep,
-          ...rows
-            .filter((row) => backupNameTime(String(row.name)) === null)
-            .map((row) => String(row.name)),
-        ],
-      };
+      return retentionPlan();
+    },
+    forgetPrunedBackup(actorId: number | null, name: string) {
+      authorize(actorId);
+      return db.transaction(() => {
+        const current = db.all(
+          "SELECT state FROM backup_runs WHERE name=?",
+          name,
+        )[0];
+        if (!current) return false;
+        if (!retentionPlan().remove.includes(name))
+          throw new CommunityError(
+            409,
+            "Snapshot is protected by backup retention",
+          );
+        db.all(
+          "DELETE FROM backup_runs WHERE name=? AND state='complete'",
+          name,
+        );
+        return true;
+      });
     },
     backupStatus(actorId: number | null) {
       authorize(actorId);
