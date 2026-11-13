@@ -18,7 +18,27 @@ parser.add_argument("root", type=Path)
 parser.add_argument("native", type=Path)
 parser.add_argument("output", type=Path)
 parser.add_argument("--http", action="store_true")
+parser.add_argument("--oracle", type=Path)
+parser.add_argument("--fixture-auth", type=Path)
+parser.add_argument("--oracle-origin", default="http://127.0.0.1:18964")
+parser.add_argument("--native-origin", default="http://127.0.0.1:18974")
 args = parser.parse_args()
+oracle = args.oracle or args.root / "python-oracle"
+assert oracle.resolve().is_relative_to(args.root.resolve()), (
+    "Oracle must be private review state"
+)
+for origin in [args.oracle_origin, args.native_origin]:
+    parsed = urllib.parse.urlsplit(origin)
+    assert (
+        parsed.scheme == "http"
+        and parsed.hostname in {"localhost", "127.0.0.1", "::1"}
+        and not parsed.username
+        and not parsed.password
+        and not parsed.query
+        and not parsed.fragment
+        and parsed.path in {"", "/"}
+    ), "HTTP audit is restricted to exact loopback origins"
+
 args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
 
 
@@ -60,14 +80,18 @@ for pid in runtime["pids"]:
             continue
 assert len(paths) == 1, "Ambiguous native community database"
 cohort = args.root / "parity-cohort-metadata-20261112"
-auth = json.loads((args.root / "parity-cohort-20261112/review-auth.json").read_text())
+auth = json.loads(
+    (
+        args.fixture_auth or args.root / "parity-cohort-20261112/review-auth.json"
+    ).read_text()
+)
 assert auth["reviewOnly"] and not auth["genuineProductionSso"]
 assert urllib.parse.urlsplit(auth["issuer"]).hostname in {"127.0.0.1", "localhost"}, (
     "Fixture identity must belong to the private loopback issuer"
 )
 databases = {
     "correctedCohort": readonly(cohort / "cohort.sqlite3"),
-    "oracle": readonly(args.root / "python-oracle/oracle.sqlite3"),
+    "oracle": readonly(oracle / "oracle.sqlite3"),
     "native": readonly(paths.pop()),
 }
 report = {
@@ -232,11 +256,9 @@ try:
     if args.http:
         inventory = json.loads((cohort / "inventory.json").read_text())
         report["mediaHTTP"] = {}
-        source_runtime = json.loads(
-            (args.root / "python-oracle/runtime.json").read_text()
-        )
+        source_runtime = json.loads((oracle / "runtime.json").read_text())
         uploads = Path(source_runtime["uploads"]).resolve()
-        assert uploads.is_relative_to((args.root / "python-oracle").resolve())
+        assert uploads.is_relative_to(oracle.resolve())
         mtime_exact = 0
         for asset in inventory["assets"]:
             path = (uploads / asset["path"]).resolve()
@@ -247,8 +269,8 @@ try:
             "mtimeNanosecondsExact": mtime_exact,
         }
         for name, origin in [
-            ("oracle", "http://127.0.0.1:18964"),
-            ("native", "http://127.0.0.1:18974"),
+            ("oracle", args.oracle_origin.rstrip("/")),
+            ("native", args.native_origin.rstrip("/")),
         ]:
             checks = collections.Counter()
             for asset in inventory["assets"]:
