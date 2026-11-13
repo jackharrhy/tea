@@ -1,4 +1,4 @@
-import { css } from "remix/component";
+import { css, type Handle } from "remix/component";
 import { BurgerGame } from "./game/burger-game";
 import { BurgerTools } from "./game/burger-tools";
 
@@ -24,7 +24,7 @@ const entry = css({
   },
 });
 
-export function BurgerPage() {
+export function BurgerPage(handle: Handle<{ nonce?: string }>) {
   return () => (
     <html lang="en">
       <head>
@@ -47,7 +47,11 @@ export function BurgerPage() {
           <BurgerGame />
           <BurgerTools />
         </main>
-        <script type="module" src="/assets/game.js" />
+        <script
+          type="module"
+          src="/assets/game.js"
+          nonce={handle.props.nonce}
+        />
       </body>
     </html>
   );

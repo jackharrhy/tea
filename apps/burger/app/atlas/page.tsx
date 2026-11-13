@@ -1,4 +1,4 @@
-import { css } from "remix/component";
+import { css, type Handle } from "remix/component";
 import { AtlasEditor } from "./editor";
 
 const pageStyle = css({
@@ -11,7 +11,7 @@ const pageStyle = css({
   "& a": { color: "#e5c47e" },
 });
 
-export function AtlasPage() {
+export function AtlasPage(handle: Handle<{ nonce?: string }>) {
   return () => (
     <html lang="en" mix={pageStyle}>
       <head>
@@ -21,7 +21,11 @@ export function AtlasPage() {
       </head>
       <body>
         <AtlasEditor />
-        <script type="module" src="/assets/game.js" />
+        <script
+          type="module"
+          src="/assets/game.js"
+          nonce={handle.props.nonce}
+        />
       </body>
     </html>
   );

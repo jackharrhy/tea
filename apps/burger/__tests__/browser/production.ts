@@ -90,7 +90,14 @@ try {
   }, "Burger Remix server");
   const document = await fetch(origin);
   assert.equal(document.status, 200);
-  assert.match(await document.text(), /Burger · Tea/);
+  assert.equal(document.headers.get("Cache-Control"), "private, no-store");
+  const policy = document.headers.get("Content-Security-Policy") ?? "";
+  const nonce = /script-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+  assert.ok(nonce);
+  assert.match(policy, /connect-src 'self' ws:\/\//);
+  const html = await document.text();
+  assert.match(html, /Burger · Tea/);
+  assert(html.includes(`nonce="${nonce}"`));
   await waitFor(
     async () => (await fetch(`${origin}/assets/game.js`)).ok,
     "Burger static assets",
@@ -148,7 +155,15 @@ try {
     await page.goto(origin);
     await page
       .locator("canvas")
-      .waitFor({ state: "attached", timeout: 20_000 });
+      .waitFor({ state: "attached", timeout: 20_000 })
+      .catch((error: unknown) => {
+        throw new Error(
+          `Burger canvas did not mount: ${browserErrors.join(" | ")}`,
+          {
+            cause: error,
+          },
+        );
+      });
     await page.waitForFunction(
       () =>
         window.context?.me.serverEid != null &&
