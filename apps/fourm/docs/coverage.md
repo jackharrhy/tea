@@ -38,7 +38,8 @@ new review activity must not be overwritten by reseeding.
 ## Open work
 
 - Actual native Web Push delivery: device/preference flows work, but Celld 0.6.2
-  lacks the P-256 operations required by the delivery implementation. VAPID keys
+  has incompatible raw P-256 key import/export. ECDH with SPKI/PKCS#8, AES-GCM
+  and VAPID signing pass isolated probes; end-to-end native push does not. VAPID keys
   remain unset; no successful native notification delivery is claimed.
 - Counter visitor identity still uses a browser token rather than source-IP
   cooldown semantics. Trusted peer attribution remains unresolved.
