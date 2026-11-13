@@ -1,3 +1,4 @@
+import { inspectBackupCatalogue } from "../app/backup-catalogue.ts";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
 import { expect, it } from "vitest";
@@ -85,7 +86,9 @@ function bucket() {
       return info(key);
     },
     async list(options?: R2ListOptions) {
-      const keys = [...objects.keys()].toSorted(),
+      const keys = [...objects.keys()]
+          .filter((key) => !options?.prefix || key.startsWith(options.prefix))
+          .toSorted(),
         start = Number(options?.cursor ?? 0),
         next = start + 2;
       return {
@@ -284,6 +287,82 @@ it("does not publish changed state and rejects corrupt stored file bytes before 
       }),
     ).rejects.toThrow("file verification failed");
     expect(called).toBe(false);
+  } finally {
+    source.db.close();
+  }
+});
+
+it("reconstructs only verified catalog entries, resolves pending acknowledgments and leaves corrupt objects untouched", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    r2.add("fixture/kept.txt", "kept");
+    const job = source.community.beginBackup(41);
+    const saved = await captureNativeBackup(
+      r2.storage,
+      String(job.name),
+      async () => source.community.exportRecovery(41),
+    );
+    const catalogue = await inspectBackupCatalogue(r2.storage);
+    expect(catalogue.rejected).toEqual([]);
+    expect(catalogue.records).toHaveLength(1);
+    expect(catalogue.records[0].started_at).toBe(job.started_at);
+    expect(
+      source.community.adoptVerifiedBackups(41, catalogue.records),
+    ).toEqual({ state: "complete", adopted: 1, preserved: 0, conflicts: [] });
+    const first = source.community.backupStatus(41).last;
+    expect(
+      source.community.adoptVerifiedBackups(41, catalogue.records),
+    ).toEqual({ state: "complete", adopted: 0, preserved: 1, conflicts: [] });
+    expect(source.community.backupStatus(41).last).toEqual(first);
+    r2.objects.get(".backups/objects/" + saved.files[0].sha256)!.bytes =
+      new Uint8Array([9]);
+    r2.add(".backups/native/unrecognized.txt", "keep this evidence");
+    const before = [...r2.objects.keys()].toSorted();
+    const rejected = await inspectBackupCatalogue(r2.storage);
+    expect(rejected.records).toEqual([]);
+    expect(rejected.rejected).toHaveLength(2);
+    expect([...r2.objects.keys()].toSorted()).toEqual(before);
+    expect(source.community.backupStatus(41).last).toEqual(first);
+  } finally {
+    source.db.close();
+  }
+});
+it("preserves terminal conflicts and protects manually named recovered snapshots from automatic retention", () => {
+  const source = authority();
+  try {
+    seed(source);
+    const job = source.community.beginBackup(41);
+    source.community.failBackup(String(job.name), "Known failed attempt");
+    const facts = {
+      name: String(job.name),
+      started_at: Number(job.started_at),
+      finished_at: Date.now(),
+      db_size: 100,
+      file_count: 1,
+    };
+    expect(source.community.adoptVerifiedBackups(41, [facts])).toEqual({
+      state: "conflicted",
+      adopted: 0,
+      preserved: 0,
+      conflicts: [job.name],
+    });
+    expect(source.community.backupStatus(41).last?.state).toBe("failed");
+    expect(() => source.community.adoptVerifiedBackups(null, [facts])).toThrow(
+      "Admin access required",
+    );
+    expect(() =>
+      source.community.adoptVerifiedBackups(41, [
+        null as unknown as typeof facts,
+      ]),
+    ).toThrow("Invalid verified backup catalogue");
+    const manual = { ...facts, name: "manual-preserve", started_at: 0 };
+    expect(source.community.adoptVerifiedBackups(41, [manual]).adopted).toBe(1);
+    expect(source.community.backupRetentionPlan(41)).toEqual({
+      keep: ["manual-preserve"],
+      remove: [],
+    });
   } finally {
     source.db.close();
   }

@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
 import { spawnSync } from "node:child_process";
-import { planBackupRetention } from "../app/backup-retention.ts";
+import {
+  planBackupRetention,
+  backupNameTime,
+} from "../app/backup-retention.ts";
 function sourcePlan(now, names, maximum) {
   const source = `import importlib.util,json,pathlib,tempfile,datetime,sys
 spec=importlib.util.spec_from_file_location('fourm_backup_oracle','/home/jack/repos/personal/4orm/app/backup.py')
@@ -90,4 +93,14 @@ test("rejects ambiguous inventory and a policy that would delete every snapshot"
   expect(() => planBackupRetention([item], Date.now(), 0)).toThrow(
     "Invalid backup retention policy",
   );
+});
+
+test("reads canonical native job timestamps without guessing manually named snapshots", () => {
+  const suffix = "-12345678-1234-4123-8123-123456789abc";
+  expect(backupNameTime("2026-11-13T001234567Z" + suffix)).toBe(
+    Date.parse("2026-11-13T00:12:34.567Z"),
+  );
+  expect(backupNameTime("2026-02-29T001234567Z" + suffix)).toBeNull();
+  expect(backupNameTime("manual-preserve")).toBeNull();
+  expect(backupNameTime("2026-11-13T001234567Z-not-a-uuid")).toBeNull();
 });

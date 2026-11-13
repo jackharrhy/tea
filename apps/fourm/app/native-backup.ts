@@ -61,7 +61,7 @@ async function liveFiles(bucket: Bucket) {
   return files.toSorted((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }
 export async function readNativeBackup(
-  bucket: Bucket,
+  bucket: Pick<Bucket, "get">,
   name: string,
 ): Promise<NativeBackup | null> {
   const object = await bucket.get(keyFor(name));
