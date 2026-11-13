@@ -1,3 +1,4 @@
+import { runNativeBackup } from "../backup-runner.ts";
 import { scanStorage, cleanupOrphanMedia } from "../storage-health.ts";
 import {
   processMediaMove,
@@ -10,6 +11,7 @@ import type { Row } from "./community.ts";
 
 export class CommunityCell extends DurableObject<Env> {
   private community;
+  private backup: Promise<Row> | undefined;
   private moves = new Map<number, Promise<void>>();
   private orphanCleanup: Promise<number> | undefined;
   constructor(ctx: DurableObjectState, env: Env) {
@@ -41,6 +43,30 @@ export class CommunityCell extends DurableObject<Env> {
           retryAfter: error.retryAfter,
         };
       throw error;
+    }
+  }
+  async runBackup(actorId: number | null) {
+    try {
+      this.community.backupStatus(actorId);
+      const running = (this.backup ??= runNativeBackup(
+        this.community,
+        this.env.MEDIA,
+        actorId,
+      ));
+      try {
+        return { ok: true as const, result: await running };
+      } finally {
+        if (this.backup === running) this.backup = undefined;
+      }
+    } catch (error) {
+      return {
+        ok: false as const,
+        status: error instanceof CommunityError ? error.status : 503,
+        error:
+          error instanceof CommunityError
+            ? error.message
+            : "Backup response interrupted. Check the backup list before retrying.",
+      };
     }
   }
   private async scheduleMediaWork() {
