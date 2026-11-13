@@ -44,7 +44,7 @@ function metadata(object: R2Object, path: string) {
   };
 }
 export async function readBackupSnapshot(
-  bucket: Bucket,
+  bucket: Pick<Bucket, "get">,
   name: string,
 ): Promise<BackupSnapshot | null> {
   const stored = await bucket.get(manifestKey(name));

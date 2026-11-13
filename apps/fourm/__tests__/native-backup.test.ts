@@ -1,3 +1,8 @@
+import { collectBackupObjects } from "../app/backup-gc.ts";
+import {
+  captureBackupSnapshot,
+  readBackupSnapshot,
+} from "../app/backup-snapshot.ts";
 import { pruneNativeBackups } from "../app/backup-pruning.ts";
 import { runNativeBackup } from "../app/backup-runner.ts";
 import { inspectBackupCatalogue } from "../app/backup-catalogue.ts";
@@ -535,6 +540,92 @@ it("retains expired snapshot evidence when verification fails", async () => {
     expect(deletes).toBe(0);
     expect(r2.objects.has(key)).toBe(true);
     expect(source.community.backupStatus(41).backups).toHaveLength(2);
+  } finally {
+    source.db.close();
+  }
+});
+
+it("collects only unreferenced verified blobs while preserving native and portable snapshot references", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    source.db.exec("DELETE FROM media WHERE id=2");
+    r2.add("fixture/kept.txt", "kept");
+    await captureBackupSnapshot(r2.storage, "portable-only", async () =>
+      source.community.exportArchive(41),
+    );
+    r2.add("fixture/kept.txt", "next");
+    await captureNativeBackup(r2.storage, "native-only", async () =>
+      source.community.exportRecovery(41),
+    );
+    const unused = "abandoned capture",
+      digest = createHash("sha256").update(unused).digest("hex");
+    r2.add(".backups/objects/" + digest, unused, { backup_sha256: digest });
+    let lost = true;
+    const storage = {
+      ...r2.storage,
+      async delete(key: string) {
+        r2.objects.delete(key);
+        if (lost) {
+          lost = false;
+          throw Error("delete acknowledgment lost");
+        }
+      },
+    };
+    await expect(collectBackupObjects(storage)).rejects.toThrow(
+      "acknowledgment lost",
+    );
+    expect(await collectBackupObjects(storage)).toEqual({ objectsRemoved: 0 });
+    expect(
+      await readBackupSnapshot(r2.storage, "portable-only"),
+    ).not.toBeNull();
+    expect(await readNativeBackup(r2.storage, "native-only")).not.toBeNull();
+    expect(r2.objects.get("fixture/kept.txt")!.bytes).toEqual(
+      new TextEncoder().encode("next"),
+    );
+  } finally {
+    source.db.close();
+  }
+});
+
+it("does not collect any blobs when backup roots or objects cannot be verified", async () => {
+  const source = authority(),
+    r2 = bucket();
+  try {
+    seed(source);
+    const saved = await captureNativeBackup(r2.storage, "retained", async () =>
+      source.community.exportRecovery(41),
+    );
+    expect(saved.files).toHaveLength(0);
+    const content = "unused",
+      digest = createHash("sha256").update(content).digest("hex"),
+      key = ".backups/objects/" + digest;
+    r2.add(key, content, { backup_sha256: digest });
+    r2.add(".backups/unknown-format", "retain");
+    let deletes = 0;
+    const storage = {
+      ...r2.storage,
+      async delete() {
+        deletes++;
+      },
+    };
+    await expect(collectBackupObjects(storage)).rejects.toMatchObject({
+      status: 409,
+    });
+    r2.objects.delete(".backups/unknown-format");
+    r2.objects.get(".backups/native/retained.json")!.bytes =
+      new TextEncoder().encode("corrupt");
+    await expect(collectBackupObjects(storage)).rejects.toMatchObject({
+      status: 409,
+    });
+    r2.objects.delete(".backups/native/retained.json");
+    r2.objects.get(key)!.customMetadata = {};
+    await expect(collectBackupObjects(storage)).rejects.toMatchObject({
+      status: 409,
+    });
+    expect(deletes).toBe(0);
+    expect(r2.objects.has(key)).toBe(true);
   } finally {
     source.db.close();
   }
