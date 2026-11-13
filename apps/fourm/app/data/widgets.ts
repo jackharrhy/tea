@@ -212,9 +212,14 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     },
     feed(username: string | null) {
       return db.all(
-        "SELECT p.slug,p.title,p.updated_at,u.username FROM pages p JOIN users u ON u.id=p.user_id WHERE p.is_public=1 AND u.is_disabled=0 AND (? IS NULL OR u.username=?) ORDER BY p.updated_at DESC,p.id DESC LIMIT 50",
+        "SELECT p.slug,p.title,p.updated_at,u.username,u.display_name FROM pages p JOIN users u ON u.id=p.user_id WHERE p.is_public=1 AND p.updated_at<=datetime('now','-20 minutes') AND (? IS NULL OR u.username=?) ORDER BY p.updated_at DESC LIMIT 100",
         username,
         username,
+      );
+    },
+    forumFeed() {
+      return db.all(
+        "SELECT p.id,p.thread_id,p.created_at,t.title AS thread_title,u.username AS author_username,u.display_name AS author_display_name FROM forum_posts p JOIN users u ON u.id=p.author_id JOIN forum_threads t ON t.id=p.thread_id ORDER BY p.created_at DESC LIMIT 100",
       );
     },
     lineage() {
