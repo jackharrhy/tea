@@ -7,6 +7,7 @@ export interface Bindings {
   COMMUNITIES: DurableObjectNamespace<CommunityCell>;
   MEDIA: R2Bucket;
   AUTH_ISSUER: string;
+  COUNTER_PEER_KEY?: string;
   VAPID_PUBLIC_KEY?: string;
   VAPID_PRIVATE_KEY?: string;
   VAPID_SUBJECT?: string;
