@@ -556,18 +556,3 @@ export function Chat(
     </>
   );
 }
-export function BareDocument(
-  handle: Handle<{ title: string; children?: RemixNode }>,
-) {
-  return () => (
-    <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>{handle.props.title} · 4orm</title>
-        <link rel="stylesheet" href="/static/style.css" />
-      </head>
-      <body>{handle.props.children}</body>
-    </html>
-  );
-}

@@ -46,7 +46,7 @@ export function GuestbookEntries(
     </>
   );
 }
-export function Guestbook(
+function Guestbook(
   handle: Handle<{ owner: Row; entries: Row[]; member: Member | null }>,
 ) {
   return () => (

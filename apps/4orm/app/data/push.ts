@@ -6,7 +6,7 @@ export interface SubscriptionInput {
   device_id: string;
   device_name: string;
 }
-export function parseSubscription(value: unknown): SubscriptionInput {
+function parseSubscription(value: unknown): SubscriptionInput {
   if (!value || typeof value !== "object")
     throw new CommunityError(400, "invalid subscription");
   const body = value as Record<string, unknown>;

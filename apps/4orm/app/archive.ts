@@ -5,7 +5,7 @@ import type { Row } from "./data/community.ts";
 import type { Bindings, Runtime } from "./runtime.ts";
 import { hash, runtime } from "./runtime.ts";
 
-export async function archiveRestoreAuthority(request: Request, env: Bindings) {
+async function archiveRestoreAuthority(request: Request, env: Bindings) {
   const principal = await bearer(request, env, "archive-restore");
   if (!principal.roles.has("admin"))
     throw new CommunityError(403, "Explicit archive admin grant required");

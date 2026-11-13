@@ -21,7 +21,7 @@ function deviceTime(value: unknown) {
     </time>
   );
 }
-export async function pushDevicesHTML(devices: Row[]) {
+async function pushDevicesHTML(devices: Row[]) {
   return renderToString(
     devices.length ? (
       <div class="stack">
