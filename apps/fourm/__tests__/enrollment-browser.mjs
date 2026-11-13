@@ -2,35 +2,65 @@ import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 import { setTimeout as delay } from "node:timers/promises";
 
-export async function createInvite(origin) {
-  const browser = await chromium.launch();
+export async function createInvite(
+  origin,
+  { adminUsername = "jane", issuer, browserOptions = {} } = {},
+) {
+  const browser = await chromium.launch(browserOptions);
   try {
     const context = await browser.newContext();
+    if (issuer)
+      await context.route("**/*", (route) =>
+        [origin, issuer].includes(new URL(route.request().url()).origin)
+          ? route.continue()
+          : route.abort(),
+      );
     const page = await context.newPage();
     await page.goto(origin + "/auth/start");
     await page
       .getByRole("button", { name: "Continue as local user", exact: true })
       .click();
-    await page.waitForURL(origin + "/u/jane");
-    await page.goto(origin + "/settings/invites");
+    await page.waitForURL(origin + "/u/" + adminUsername, {
+      waitUntil: "domcontentloaded",
+    });
+    await page.goto(origin + "/settings");
     await page
-      .getByRole("button", { name: "Create invite", exact: true })
+      .locator("summary")
+      .filter({ hasText: /^invites$/ })
       .click();
-    const link = page
-      .getByRole("link", { name: /\/register\?invite=/ })
-      .first();
-    await link.waitFor();
-    const code = new URL(
-      await link.getAttribute("href"),
-      origin,
-    ).searchParams.get("invite");
+    const before = await page
+      .locator("#invites-section code")
+      .allTextContents();
+    await page
+      .getByRole("button", { name: "create invite", exact: true })
+      .click();
+    await page.waitForFunction(
+      (previous) =>
+        [...document.querySelectorAll("#invites-section code")].some(
+          (node) => !previous.includes(node.textContent),
+        ),
+      before,
+    );
+    const code = (
+      await page.locator("#invites-section code").allTextContents()
+    ).find((value) => !before.includes(value));
+    assert.ok(code);
     return { code, adminState: await context.storageState() };
   } finally {
     await browser.close();
   }
 }
-export async function completeInvite({ origin, issuer, key, invite, output }) {
-  const browser = await chromium.launch();
+export async function completeInvite({
+  origin,
+  issuer,
+  key,
+  invite,
+  output,
+  memberUsername = "alex",
+  baselineMembers = 2,
+  browserOptions = {},
+}) {
+  const browser = await chromium.launch(browserOptions);
   const headers = { Authorization: "Bearer " + key };
   const endpoint = (path, body) =>
     fetch(origin + path, {
@@ -41,6 +71,11 @@ export async function completeInvite({ origin, issuer, key, invite, output }) {
   let requestId;
   try {
     const context = await browser.newContext();
+    await context.route("**/*", (route) =>
+      [origin, issuer].includes(new URL(route.request().url()).origin)
+        ? route.continue()
+        : route.abort(),
+    );
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", () => errors.push("browser error"));
@@ -58,7 +93,7 @@ export async function completeInvite({ origin, issuer, key, invite, output }) {
     assert.equal(
       (await fetch(origin + "/world/community").then((r) => r.json())).members
         .length,
-      2,
+      baselineMembers,
     );
     await page
       .getByRole("button", {
@@ -82,7 +117,7 @@ export async function completeInvite({ origin, issuer, key, invite, output }) {
     await page
       .getByRole("button", { name: "Continue to 4orm", exact: true })
       .click();
-    await page.waitForURL(origin + "/u/alex");
+    await page.waitForURL(origin + "/u/" + memberUsername);
     assert.equal(
       await page.getByRole("link", { name: "admin", exact: true }).count(),
       0,
@@ -93,7 +128,7 @@ export async function completeInvite({ origin, issuer, key, invite, output }) {
     assert.equal(proof.completed, true);
     assert.equal(proof.createdProfile, true);
     assert.equal(proof.enabled, true);
-    assert.equal(proof.subject, "fourm-fixture-alex");
+    assert.equal(proof.subject, "fourm-fixture-" + memberUsername);
     let grantState;
     for (let i = 0; i < 50; i++) {
       grantState = await fetch(issuer + "/fixture/grants", { headers }).then(

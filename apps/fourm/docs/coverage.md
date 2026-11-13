@@ -16,7 +16,9 @@ available for work-in-progress human review; whole-migration acceptance is open.
 - Forum threads, posting, quotes, pagination, editing, watch preferences and
   moderation controls; public chat history, SSE, presence and reconnect behavior.
 - Source admin forms, account controls, invite/trust completion, explicit identity
-  links and durable post-profile companion-membership receipts.
+  links and durable post-profile companion-membership receipts. A real-cohort
+  loopback HTTPS fixture verifies signup, trust acceptance, member-only completion
+  and retries that do not recreate deleted grants.
 - Member/full-site ZIP exports, portable archive transfer and native backup
   capture/restore, catalogue reconstruction and retention. Actual recurring
   alarms captured the imported cohort, followed by cold restore of all 30 managed
@@ -52,7 +54,6 @@ new review activity must not be overwritten by reseeding.
   worktree-tested; they have not been rolled into the active human preview.
 - Broader customization/layout review and the reported initial-paint/pop-in issue.
   Core SSR is verified; separately painted iframes and client enhancements remain.
-- Final enrollment/recovery checks on the refreshed HTTPS review configuration.
 
 The private preview gates both the app and fixture issuer, restricts outbound
 browser resources, and remaps hardcoded production asset URLs to its own copied
