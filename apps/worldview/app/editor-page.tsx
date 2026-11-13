@@ -1,4 +1,5 @@
 import { browserAssets } from "./assets/build-manifest.ts";
+import type { Handle } from "remix/component";
 import { EditorRecentProjects } from "./assets/editor-recent-projects-panel.tsx";
 import {
   EditorHostedPresence,
@@ -52,7 +53,7 @@ import {
 import { editorStyles } from "./editor-styles.ts";
 import { mapsEditorStyles } from "./editor-maps-styles.ts";
 
-export function EditorPage() {
+export function EditorPage(handle: Handle<{ nonce?: string }>) {
   return () => (
     <html lang="en" mix={[editorStyles, mapsEditorStyles]}>
       <head>
@@ -263,8 +264,16 @@ export function EditorPage() {
         <EditorSourceComparison />
         <EditorHostedSource />
         <EditorContextMenu />
-        <script type="module" src={browserAssets.editor}></script>
-        <script type="module" src={browserAssets.entry}></script>
+        <script
+          type="module"
+          src={browserAssets.editor}
+          nonce={handle.props.nonce}
+        ></script>
+        <script
+          type="module"
+          src={browserAssets.entry}
+          nonce={handle.props.nonce}
+        ></script>
       </body>
     </html>
   );

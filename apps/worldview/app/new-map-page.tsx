@@ -1,8 +1,9 @@
 import { browserAssets } from "./assets/build-manifest.ts";
+import type { Handle } from "remix/component";
 import { projectsStyles } from "./projects-styles.ts";
 import { NewMapSetup } from "./assets/new-map-setup.tsx";
 
-export function NewMapPage() {
+export function NewMapPage(handle: Handle<{ nonce?: string }>) {
   return () => (
     <html lang="en" mix={projectsStyles}>
       <head>
@@ -34,7 +35,11 @@ export function NewMapPage() {
             <NewMapSetup />
           </section>
         </main>
-        <script type="module" src={browserAssets.entry}></script>
+        <script
+          type="module"
+          src={browserAssets.entry}
+          nonce={handle.props.nonce}
+        ></script>
       </body>
     </html>
   );

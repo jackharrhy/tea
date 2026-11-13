@@ -14,6 +14,7 @@ import { ProjectResources } from "./assets/project-resources-page.tsx";
 
 export function ProjectsPage(
   handle: Handle<{
+    nonce?: string;
     projectId?: string;
     section?: "maps" | "new-map" | "resources" | "access";
     createRequested?: boolean;
@@ -92,7 +93,11 @@ export function ProjectsPage(
             )}
           </div>
         </main>
-        <script type="module" src={browserAssets.entry}></script>
+        <script
+          type="module"
+          src={browserAssets.entry}
+          nonce={handle.props.nonce}
+        ></script>
       </body>
     </html>
   );

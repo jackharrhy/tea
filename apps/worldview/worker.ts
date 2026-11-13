@@ -1,5 +1,6 @@
 import { createRouter, type MiddlewareContext } from "remix/router";
 import { render } from "remix/middleware/render";
+import { csp } from "remix/middleware/csp";
 import { browserAssets } from "./app/assets/build-manifest.ts";
 import controller from "./app/controller.tsx";
 import { routes } from "./app/routes.ts";
@@ -10,7 +11,9 @@ import {
   proxyServiceRequest,
 } from "./app/service-proxy.ts";
 
-type AppContext = MiddlewareContext<[ReturnType<typeof render>]>;
+type AppContext = MiddlewareContext<
+  [ReturnType<typeof csp>, ReturnType<typeof render>]
+>;
 
 declare module "remix/router" {
   interface RouterTypes {
@@ -89,6 +92,43 @@ const clientEntryFiles = {
 
 const router = createRouter<AppContext>({
   middleware: [
+    async (_context, next) => {
+      const response = await next();
+      if (response.headers.get("Content-Type")?.startsWith("text/html"))
+        response.headers.set("Cache-Control", "private, no-store");
+      return response;
+    },
+    csp({
+      policy: ({ nonce, context }) => {
+        const url = new URL(context.request.url);
+        const socketOrigin = `${url.protocol === "https:" ? "wss:" : "ws:"}//${url.host}`;
+        return {
+          defaultSrc: ["'none'"],
+          scriptSrc: ["'self'", `'nonce-${nonce}'`],
+          styleSrc: [
+            "'self'",
+            `'nonce-${nonce}'`,
+            // Static shadow-root stylesheet in maps-renderer/src/element/index.ts.
+            "'sha256-HD0vecafCm/lfeVmae0pT6AJYp4J+T/05thskD0CXew='",
+          ],
+          styleSrcAttr: ["'unsafe-inline'"],
+          fontSrc: ["'self'", "data:"],
+          imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+          connectSrc: [
+            "'self'",
+            socketOrigin,
+            "blob:",
+            "data:",
+            "https:",
+            "http:",
+          ],
+          workerSrc: ["'self'", "blob:"],
+          formAction: ["'self'"],
+          baseUri: ["'none'"],
+          objectSrc: ["'none'"],
+        };
+      },
+    }),
     render({
       assets: {
         async getScriptEntry(sourceId) {

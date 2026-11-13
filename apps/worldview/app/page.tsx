@@ -1,4 +1,5 @@
 import { browserAssets } from "./assets/build-manifest.ts";
+import type { Handle } from "remix/component";
 import { mapsStyles } from "./styles.ts";
 import { HostedViewerPanel } from "./assets/hosted-viewer-panel.tsx";
 import { ViewerSourcePanel } from "./assets/viewer-source-panel.tsx";
@@ -10,7 +11,7 @@ import { ViewerAudioPanel } from "./assets/viewer-audio-panel.tsx";
 import { ViewerDiagnosticsPanel } from "./assets/viewer-diagnostics-panel.tsx";
 import { ViewerDropTarget, ViewerToolbar } from "./assets/viewer-chrome.tsx";
 
-export function MapsPage() {
+export function MapsPage(handle: Handle<{ nonce?: string }>) {
   return () => (
     <html lang="en" mix={mapsStyles}>
       <head>
@@ -100,8 +101,16 @@ export function MapsPage() {
             <footer class="dock-footer">WASD / MOUSE TO EXPLORE</footer>
           </aside>
         </main>
-        <script type="module" src={browserAssets.viewer}></script>
-        <script type="module" src={browserAssets.entry}></script>
+        <script
+          type="module"
+          src={browserAssets.viewer}
+          nonce={handle.props.nonce}
+        ></script>
+        <script
+          type="module"
+          src={browserAssets.entry}
+          nonce={handle.props.nonce}
+        ></script>
       </body>
     </html>
   );

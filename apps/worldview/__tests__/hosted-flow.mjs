@@ -296,7 +296,18 @@ try {
   browser = await chromium.launch({ headless: true });
   const owner = await browser.newPage({ ignoreHTTPSErrors: true });
   const ownerErrors = [];
+  const policyErrors = [];
   owner.on("pageerror", (error) => ownerErrors.push(error.message));
+  const recordPolicyError = (message) => {
+    if (
+      message.type() === "error" &&
+      /Content Security Policy|Refused to/.test(message.text())
+    )
+      policyErrors.push(message.text());
+  };
+  owner.on("console", recordPolicyError);
+  await owner.goto(`${mapsOrigin}/viewer`);
+  await owner.locator("tea-map-view").waitFor();
   await owner.goto(`${mapsOrigin}/projects`);
   await owner.getByText("Sign in to browse hosted projects").waitFor();
   assert.equal(
@@ -316,6 +327,7 @@ try {
   result.checks.push("OAuth login creates a hosted project");
 
   const observer = await browser.newPage({ ignoreHTTPSErrors: true });
+  observer.on("console", recordPolicyError);
   await observer.goto(`${mapsOrigin}/projects`);
   await observer.locator("#projects-login").click();
   await observer.getByText("Signed in as Test Observer").waitFor();
@@ -407,6 +419,7 @@ try {
     "hosted build reaches compiler and serves its BSP artifact",
   );
   assert.deepEqual(ownerErrors, []);
+  assert.deepEqual(policyErrors, []);
   result.status = "passed";
 } catch (error) {
   result.status = "failed";
