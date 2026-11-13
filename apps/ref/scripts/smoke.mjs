@@ -14,7 +14,18 @@ try {
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(base);
+  await page.addInitScript(() => {
+    document.addEventListener("securitypolicyviolation", (event) => {
+      window.refCspViolations ??= [];
+      window.refCspViolations.push(
+        `${event.effectiveDirective}: ${event.blockedURI}`,
+      );
+    });
+  });
+  const landing = await page.goto(base);
+  const landingCsp = landing?.headers()["content-security-policy"] ?? "";
+  assert.match(landingCsp, /style-src[^;]*'nonce-[^']+'/);
+  assert.doesNotMatch(landingCsp, /unsafe-inline/);
   assert.equal(await page.locator('input[type="password"]').count(), 0);
   assert.equal((await context.request.post(`${base}/login`)).status(), 404);
   await page.getByRole("link", { name: "Sign in with Jack Auth" }).click();
@@ -25,6 +36,11 @@ try {
   await page.waitForURL(/\/boards\/[0-9a-f-]+/);
   const boardId = page.url().split("/").at(-1);
   await page.locator("#connection.online").waitFor();
+  const boardCsp = (await context.request.get(page.url())).headers()[
+    "content-security-policy"
+  ];
+  assert.match(boardCsp, /worker-src 'self'/);
+  assert.match(boardCsp, /media-src 'self' https:\/\/video\.twimg\.com/);
 
   const second = await context.newPage();
   second.on("pageerror", (error) => errors.push(error.message));
@@ -207,6 +223,10 @@ try {
     404,
   );
   assert.deepEqual(errors, []);
+  assert.deepEqual(
+    await page.evaluate(() => window.refCspViolations ?? []),
+    [],
+  );
   console.log(
     JSON.stringify({
       ok: true,
