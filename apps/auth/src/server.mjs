@@ -7,6 +7,7 @@ import { createSupportRoutes } from "./support-routes.mjs";
 import { createNativeAccess } from "./native-access.mjs";
 import { createAccessStore } from "./access-store.mjs";
 import { createAccessRoutes } from "./access-routes.mjs";
+import { createAccountRoutes } from "./account-routes.mjs";
 import { createZitadel } from "./zitadel.mjs";
 import {
   randomToken,
@@ -298,7 +299,17 @@ async function endUserSessions(userId) {
     if (value.userId === userId) sessions.delete(id);
 }
 
-async function handleBrowser(request) {
+const accountRoutes = createAccountRoutes({
+  accountActions,
+  emailActions,
+  endUserSessions,
+  rateLimit,
+  renderAccount,
+  renderEmailResult,
+  cookieName,
+});
+
+async function handleBrowser(request, routeAction) {
   const url = new URL(request.url);
   const headers = new Headers({
     "Cache-Control": "no-store",
@@ -760,6 +771,18 @@ async function handleBrowser(request) {
         })
       )
         return;
+      if (routeAction) {
+        await routeAction({
+          request,
+          form,
+          session,
+          profile,
+          context,
+          headers,
+          sendRemix,
+        });
+        return;
+      }
       if (url.pathname === "/enroll" || url.pathname === "/enroll/continue") {
         if (!enrollment || !session.enrollmentTicket)
           throw httpError(400, "Open your 4orm invite link again.");
@@ -778,76 +801,6 @@ async function handleBrowser(request) {
           await sendRemix((nonce) => renderEnrollment(context, profile, nonce));
           return;
         }
-      }
-      if (request.method === "POST" && url.pathname === "/account/email") {
-        rateLimit(`email:${session.userId}`);
-        await accountActions.provePassword(
-          session,
-          form.get("currentPassword"),
-        );
-        await emailActions.setEmail(session.userId, form.get("email")?.trim());
-        await sendRemix((nonce) =>
-          renderEmailResult(
-            "Check your email",
-            "Open the verification link to confirm your address.",
-            context,
-            nonce,
-          ),
-        );
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/account/password") {
-        rateLimit(`password-change:${session.userId}`);
-        if (form.get("password") !== form.get("confirmation"))
-          throw httpError(400, "The passwords do not match.");
-        await accountActions.changePassword(
-          session.userId,
-          form.get("currentPassword"),
-          form.get("password"),
-        );
-        await endUserSessions(session.userId);
-        headers.set(
-          "Set-Cookie",
-          `${cookieName}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`,
-        );
-        await sendRemix((nonce) =>
-          renderEmailResult(
-            "Password updated",
-            "Sign in with your new password.",
-            {},
-            nonce,
-          ),
-        );
-        return;
-      }
-      if (
-        request.method === "POST" &&
-        url.pathname === "/account/email/resend"
-      ) {
-        if (
-          !profile.human?.email?.email ||
-          profile.human.email.email.endsWith(".invalid") ||
-          profile.human.email.isEmailVerified
-        )
-          throw httpError(
-            400,
-            "Add an unverified email address to your account first.",
-          );
-        rateLimit(`email:${session.userId}`);
-        await emailActions.resend(session.userId);
-        await sendRemix((nonce) =>
-          renderEmailResult(
-            "Check your email",
-            "We sent a new verification link.",
-            context,
-            nonce,
-          ),
-        );
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/account") {
-        await sendRemix((nonce) => renderAccount(profile, context, nonce));
-        return;
       }
       if (
         url.pathname === "/authorize" &&
@@ -999,7 +952,7 @@ async function handleBrowser(request) {
   return output ?? new Response("Request failed", { status: 500, headers });
 }
 
-const browserRouter = createBrowserRouter(handleBrowser);
+const browserRouter = createBrowserRouter(handleBrowser, accountRoutes);
 const fetchRequest = (request) => {
   const path = new URL(request.url).pathname;
   if (
