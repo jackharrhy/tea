@@ -87,6 +87,19 @@ test("workspace source and root build inputs select only affected images", () =>
     ["ref"],
   );
   assert.deepEqual(
+    selectPublishedApps({
+      apps,
+      paths: ["package.json"],
+      beforeLock: base,
+      afterLock: base,
+      beforeRoot: root,
+      afterRoot: { ...root, scripts: { "ref:build": "npm run build:new" } },
+      dockerfiles: { ref: "RUN npm run build --workspace @harrhy/ref" },
+      workspaceScripts: { ref: '{"build":"npm run ref:build"}' },
+    }),
+    ["ref"],
+  );
+  assert.deepEqual(
     select(["package-lock.json"], { ...base, lockfileVersion: 4 }),
     apps,
   );

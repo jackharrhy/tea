@@ -87,6 +87,7 @@ export function selectPublishedApps({
   beforeRoot,
   afterRoot,
   dockerfiles = {},
+  workspaceScripts = {},
 }) {
   if (paths.some((path) => globalInputs.has(path))) return apps;
   const rootManifestChanged = paths.includes("package.json");
@@ -118,7 +119,7 @@ export function selectPublishedApps({
       scripts.some((name) =>
         new RegExp(
           `\\b(?:npm|bun) run ${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-        ).test(dockerfiles[app] ?? ""),
+        ).test(`${dockerfiles[app] ?? ""}\n${workspaceScripts[app] ?? ""}`),
       )
     )
       return true;
@@ -156,6 +157,24 @@ export function selectFromCommits(apps, before, head, event) {
       readFileSync(join(root, "apps", app, "Dockerfile"), "utf8"),
     ]),
   );
+  const workspaceScripts = Object.fromEntries(
+    apps.map((app) => {
+      const workspaces = [...dependencyClosure(afterLock, app).keys()].filter(
+        (path) => path.startsWith("apps/") || path.startsWith("packages/"),
+      );
+      const scripts = workspaces.map((path) => {
+        try {
+          return JSON.parse(
+            readFileSync(join(root, path, "package.json"), "utf8"),
+          ).scripts;
+        } catch (error) {
+          if (error.code === "ENOENT") return undefined;
+          throw error;
+        }
+      });
+      return [app, JSON.stringify(scripts)];
+    }),
+  );
   return selectPublishedApps({
     apps,
     paths,
@@ -164,6 +183,7 @@ export function selectFromCommits(apps, before, head, event) {
     beforeRoot,
     afterRoot,
     dockerfiles,
+    workspaceScripts,
   });
 }
 
