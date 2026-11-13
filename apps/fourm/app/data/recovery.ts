@@ -1,3 +1,4 @@
+import type { BackupActor } from "./backups.ts";
 import { coreTables } from "./schema.ts";
 import { CommunityError } from "./community.ts";
 import type { Database, Member, Row } from "./community.ts";
@@ -140,10 +141,10 @@ export function createRecovery(db: Database, admin: (id: number) => Member) {
   }
 
   return {
-    exportRecovery(actorId: number | null) {
+    exportRecovery(actorId: BackupActor) {
       if (actorId === null)
         throw new CommunityError(403, "Admin access required");
-      admin(actorId);
+      if (actorId !== "scheduler") admin(actorId);
       return db.transaction(() => {
         const snapshot = capture();
         validateRecoveryState(snapshot, snapshot.columns);
