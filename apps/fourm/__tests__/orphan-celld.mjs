@@ -570,9 +570,102 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
       (await page.locator("#track-list li").innerText()).trim(),
       "kept.txt",
     );
+    await page.goto(origin + "/u/fixture/guestbook");
+    await page
+      .locator('textarea[name="message"]')
+      .fill("Fixture guestbook message");
+    await page.getByRole("button", { name: "sign", exact: true }).click();
+    await page
+      .locator(".gb-entry")
+      .getByText("Fixture guestbook message", { exact: true })
+      .waitFor();
+    const guestbookBefore = await (
+      await context.request.get(origin + "/u/fixture/guestbook", {
+        headers: { Accept: "application/json" },
+      })
+    ).json();
+    assert.equal(guestbookBefore.owner_username, "fixture");
+    assert.equal(guestbookBefore.can_post, true);
+    assert.equal(guestbookBefore.entries.length, 1);
+    assert.equal(guestbookBefore.entries[0].author_username, "fixture");
+    const guestbookAnonymous = await (
+      await fetch(origin + "/u/fixture/guestbook", {
+        headers: { Accept: "application/json" },
+      })
+    ).json();
+    assert.equal(guestbookAnonymous.can_post, false);
+    for (const path of [
+      "/u/fixture/guestbook",
+      `/u/fixture/guestbook/${guestbookBefore.entries[0].id}/delete`,
+    ]) {
+      const denied = await fetch(origin + path, {
+        method: "POST",
+        headers: {
+          Origin: origin,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ message: "anonymous" }),
+      });
+      assert.equal(denied.status, 403);
+    }
+    assert.equal(
+      (
+        await context.request.post(origin + "/u/member/guestbook", {
+          headers: playlistHeaders,
+          form: { message: "Authored by admin, owned by member" },
+        })
+      ).status(),
+      200,
+    );
+    const memberGuestbook = await (
+      await context.request.get(origin + "/u/member/guestbook", {
+        headers: { Accept: "application/json" },
+      })
+    ).json();
+    assert.equal(
+      (
+        await context.request.post(
+          origin +
+            `/u/member/guestbook/${memberGuestbook.entries[0].id}/delete`,
+          { headers: playlistHeaders },
+        )
+      ).status(),
+      403,
+    );
+    assert.equal(
+      (
+        await context.request.post(origin + "/u/absent/guestbook/1/delete", {
+          headers: playlistHeaders,
+        })
+      ).status(),
+      403,
+    );
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 400 });
+      await page.screenshot({
+        path: join(output, `native-guestbook-contract-${width}.png`),
+        fullPage: true,
+      });
+    }
     await stop();
     await rm(join(state, "replica"), { recursive: true, force: true });
     await start();
+    const guestbookAfter = await (
+      await context.request.get(origin + "/u/fixture/guestbook", {
+        headers: { Accept: "application/json" },
+      })
+    ).json();
+    assert.deepEqual(guestbookAfter, guestbookBefore);
+    await page.goto(origin + "/u/fixture/guestbook");
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "x", exact: true }).click();
+    await page.locator(".gb-empty").waitFor();
+    const guestbookDeleted = await (
+      await context.request.get(origin + "/u/fixture/guestbook", {
+        headers: { Accept: "application/json" },
+      })
+    ).json();
+    assert.deepEqual(guestbookDeleted.entries, []);
     const playlistAfter = await (
       await context.request.get(origin + "/u/fixture/player", {
         headers: { Accept: "application/json" },
@@ -606,6 +699,13 @@ export default {async fetch(request,env,context){const path=new URL(request.url)
         pruning,
         busyCapture,
         automaticCatalogue,
+        guestbookContract: {
+          json: true,
+          anonymous403: true,
+          adminAuthorCannotDeleteOtherOwnersEntry: true,
+          visibleSignDelete: true,
+          coldReplicaRecovery: true,
+        },
         playlistTransitions: {
           untitledNull: true,
           invalidDirectionNoOp: true,

@@ -1,3 +1,4 @@
+import { guestbookJSON } from "./view-json.ts";
 import { counterJSON, counterDocument } from "./counter-widget.ts";
 import { playerJSON, playerDocument } from "./player-widget.ts";
 import { webringJSON, webringDocument } from "./webring-widget.ts";
@@ -59,8 +60,8 @@ export function widgetController(
   viewer: Viewer,
   page: (title: string, body: RemixNode) => Promise<Response>,
 ) {
-  function actor() {
-    if (!viewer.member) throw new CommunityError(401, "Sign in to continue");
+  function actor(status = 401) {
+    if (!viewer.member) throw new CommunityError(status, "Sign in to continue");
     return viewer.member;
   }
 
@@ -151,19 +152,19 @@ export function widgetController(
         );
         return playlistResponse(request);
       },
-      async guestbook({ params }) {
+      async guestbook({ request, params }) {
+        const snapshot = await store.call("guestbook", params.username);
+        if (wantsJSON(request))
+          return Response.json(guestbookJSON(snapshot, viewer.member !== null));
         return new Response(
-          await guestbookDocument({
-            ...(await store.call("guestbook", params.username)),
-            member: viewer.member,
-          }),
+          await guestbookDocument({ ...snapshot, member: viewer.member }),
           { headers: { "Content-Type": "text/html; charset=utf-8" } },
         );
       },
       async signGuestbook({ request, params }) {
         await store.call(
           "signGuestbook",
-          actor().id,
+          actor(403).id,
           params.username,
           (await fields(request)).message ?? "",
         );
@@ -184,7 +185,7 @@ export function widgetController(
       async deleteGuestbook({ request, params }) {
         await store.call(
           "deleteGuestbook",
-          actor().id,
+          actor(403).id,
           params.username,
           Number(params.id),
         );

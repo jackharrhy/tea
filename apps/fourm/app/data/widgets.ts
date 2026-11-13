@@ -38,8 +38,8 @@ export function createWidgets(db: Database, member: (id: number) => Member) {
     },
     deleteGuestbook(actorId: number, username: string, id: number) {
       member(actorId);
-      const user = owner(username);
-      if (user.id !== actorId)
+      const user = db.all("SELECT id FROM users WHERE username=?", username)[0];
+      if (!user || user.id !== actorId)
         throw new CommunityError(
           403,
           "Only the guestbook owner can remove entries",
