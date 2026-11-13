@@ -13,7 +13,6 @@ import {
   localReturnTo,
   validPost,
   contentSecurityPolicy,
-  equalToken,
 } from "./security.mjs";
 const { renderProblem } = await import("./problem-page.tsx");
 const { renderLogin } = await import("./login-page.tsx");
@@ -45,8 +44,8 @@ import { createEnrollmentActions } from "./enrollment.mjs";
 import { createEnrollmentCompletion } from "./enrollment-completion.mjs";
 import { createRadioEnrollment } from "./radio-enrollment.mjs";
 import { createAuthorizationActions } from "./authorization.mjs";
-import { authorizationPolicy, isAuthorizationPath } from "./oidc-policy.mjs";
 import { createPublicRouter, isPublicRoute } from "./public-router.mjs";
+import { createApiRouter, isApiRoute } from "./api-router.mjs";
 
 const origin = process.env.PUBLIC_ORIGIN || "https://auth.jackharrhy.dev";
 const organizationId = process.env.ORGANIZATION_ID;
@@ -188,6 +187,12 @@ const enrollmentCompletion =
         isBlocked: (subject, project) => accessStore.blocked(subject, project),
       })
     : null;
+const apiRouter = createApiRouter({
+  enrollmentCompletion,
+  enrollmentKey,
+  applications,
+  origin,
+});
 const css = readFileSync(new URL("./styles.css", import.meta.url));
 const doodleAssets = new Map([
   [
@@ -293,15 +298,19 @@ async function endUserSessions(userId) {
 }
 
 createServer(async (request, response) => {
+  const routePath = new URL(request.url, origin).pathname;
   if (
-    request.method === "GET" &&
-    isPublicRoute(new URL(request.url, origin).pathname)
+    (request.method === "GET" && isPublicRoute(routePath)) ||
+    isApiRoute(routePath)
   ) {
     const incoming = createRequest(request, response, {
       host: new URL(origin).host,
       protocol: new URL(origin).protocol,
     });
-    await sendResponse(response, await publicRouter.fetch(incoming));
+    await sendResponse(
+      response,
+      await (isApiRoute(routePath) ? apiRouter : publicRouter).fetch(incoming),
+    );
     return;
   }
   response.setHeader("Cache-Control", "no-store");
@@ -359,93 +368,6 @@ createServer(async (request, response) => {
   try {
     if (supportRoutes && (await supportRoutes.server(request, response, url)))
       return;
-    if (url.pathname === "/enroll/complete") {
-      try {
-        if (request.method !== "POST")
-          throw httpError(405, "POST is required.");
-        if (!enrollmentCompletion)
-          throw httpError(503, "Enrollment completion is unavailable.");
-        if (
-          !equalToken(request.headers.authorization, `Bearer ${enrollmentKey}`)
-        )
-          throw httpError(401, "Enrollment service authentication required.");
-        if (
-          request.headers["content-type"]?.split(";")[0].trim() !==
-          "application/json"
-        )
-          throw httpError(415, "JSON is required.");
-        let body = "";
-        for await (const chunk of request) {
-          body += chunk.toString();
-          if (Buffer.byteLength(body) > 4096)
-            throw httpError(413, "Request is too large.");
-        }
-        let input;
-        try {
-          input = JSON.parse(body);
-        } catch {
-          throw httpError(400, "Invalid JSON.");
-        }
-        const result = await enrollmentCompletion.complete(input);
-        response.writeHead(200, { "Content-Type": "application/json" });
-        response.end(JSON.stringify(result));
-      } catch (error) {
-        const status =
-          Number.isInteger(error.status) &&
-          error.status >= 400 &&
-          error.status < 600
-            ? error.status
-            : 502;
-        response.writeHead(status, {
-          "Content-Type": "application/json",
-          ...(status === 405 ? { Allow: "POST" } : {}),
-        });
-        response.end(
-          JSON.stringify({
-            error:
-              error.code === "enrollment_grant_ambiguous"
-                ? error.code
-                : "enrollment_completion_failed",
-          }),
-        );
-      }
-      return;
-    }
-    if (url.pathname === "/internal/oidc/authorize-policy") {
-      const uri = request.headers["x-forwarded-uri"];
-      const method = request.headers["x-forwarded-method"];
-      let body = new URLSearchParams();
-      let authorizationPath;
-      try {
-        authorizationPath = typeof uri === "string" && isAuthorizationPath(uri);
-      } catch {
-        throw httpError(400, "Invalid authorization request URI.");
-      }
-      if (authorizationPath && method === "POST") {
-        if (
-          !request.headers["content-type"]?.startsWith(
-            "application/x-www-form-urlencoded",
-          )
-        )
-          throw httpError(415, "Unsupported authorization form.");
-        body = await formData(request);
-      }
-      const policy = authorizationPolicy(uri, method, body, applications);
-      if (typeof uri === "string") {
-        const client =
-          new URL(uri, origin).searchParams.get("client_id") ||
-          body.get("client_id");
-        const minimum = applications
-          .map((app) => app.authRequestNotBefore?.[client])
-          .find(Boolean);
-        if (minimum) response.setHeader("X-Jack-Auth-Not-Before", minimum);
-      }
-      response.writeHead(policy.allowed ? 200 : 400, {
-        "Content-Type": "application/json",
-      });
-      response.end(JSON.stringify(policy));
-      return;
-    }
     const cookieValue = request.headers.cookie
       ?.split(";")
       .map((item) => item.trim())
