@@ -11,13 +11,18 @@ const routes = route({
   verifyEmail: "/verify-email",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
+  apps: "/apps/:id",
+  sessions: "/account/sessions",
+  endSession: "/account/sessions/end",
+  manage: "/manage",
+  manageRest: "/manage/*path",
   root: "/",
   rest: "/*path",
 });
 
 export function createBrowserRouter(
   handle,
-  { accountRoutes, oauthRoutes, emailRoutes },
+  { accountRoutes, oauthRoutes, emailRoutes, accessRoutes },
 ) {
   const router = createRouter();
   router.map(routes, {
@@ -49,8 +54,23 @@ export function createBrowserRouter(
       resetPassword({ request }) {
         return handle(request, emailRoutes.resetPassword, "public");
       },
+      apps({ request }) {
+        return handle(request, accessRoutes);
+      },
+      sessions({ request }) {
+        return handle(request, accessRoutes);
+      },
+      endSession({ request }) {
+        return handle(request, accessRoutes);
+      },
+      manage({ request }) {
+        return handle(request, accessRoutes);
+      },
+      manageRest({ request }) {
+        return handle(request, accessRoutes);
+      },
       root({ request }) {
-        return handle(request);
+        return handle(request, accessRoutes);
       },
       rest({ request }) {
         return handle(request);

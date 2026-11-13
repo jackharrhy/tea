@@ -674,21 +674,8 @@ async function handleBrowser(request, routeAction, routePhase) {
         }))
       )
         return;
-      if (
-        await accessRoutes({
-          request,
-          url,
-          form,
-          session,
-          profile,
-          context,
-          sendRemix,
-          redirect,
-        })
-      )
-        return;
       if (routeAction) {
-        await routeAction({
+        const handled = await routeAction({
           request,
           url,
           form,
@@ -700,6 +687,7 @@ async function handleBrowser(request, routeAction, routePhase) {
           sendRemix,
           redirect,
         });
+        if (handled === false) throw httpError(404, "Page not found.");
         return;
       }
       if (url.pathname === "/enroll" || url.pathname === "/enroll/continue") {
@@ -754,6 +742,7 @@ const browserRouter = createBrowserRouter(handleBrowser, {
   accountRoutes,
   oauthRoutes,
   emailRoutes,
+  accessRoutes,
 });
 const fetchRequest = (request) => {
   const path = new URL(request.url).pathname;

@@ -19,6 +19,7 @@ test("account writes reach their route actions, while unrelated pages use the br
         forgotPassword: () => "forgotPassword",
         resetPassword: () => "resetPassword",
       },
+      accessRoutes: () => "access",
     },
   );
   for (const [path, expected] of [
@@ -31,6 +32,12 @@ test("account writes reach their route actions, while unrelated pages use the br
     ["/verify-email", "verifyEmail"],
     ["/forgot-password", "forgotPassword"],
     ["/reset-password", "resetPassword"],
+    ["/", "access"],
+    ["/apps/artbin", "access"],
+    ["/account/sessions", "access"],
+    ["/account/sessions/end", "access"],
+    ["/manage", "access"],
+    ["/manage/people/person", "access"],
     ["/unknown", "fallback"],
   ]) {
     const response = await router.fetch(
