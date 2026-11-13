@@ -134,6 +134,7 @@ export function markdownAttributes(markdown: Marked) {
         attrs = assigned.get(token);
       return attrs ? apply(html, attrs) : html;
     };
+  const renderCode = renderer.code;
   markdown.use({
     hooks: {
       processAllTokens(tokens) {
@@ -142,6 +143,26 @@ export function markdownAttributes(markdown: Marked) {
       },
     },
     renderer: {
+      code(token) {
+        const match = /^\{([^\n]*)\}$/.exec(token.lang ?? "");
+        const parsed = match && attributes(match[1]);
+        if (!parsed) return renderCode.call(this, token);
+        const classes = (parsed.get("class") ?? "")
+          .split(/\s+/)
+          .filter(Boolean);
+        const outer: Attributes = new Map();
+        if (parsed.has("id")) outer.set("id", parsed.get("id")!);
+        if (classes.length > 1) outer.set("class", classes.slice(1).join(" "));
+        parsed.delete("id");
+        parsed.delete("class");
+        const html = renderCode.call(this, {
+          ...token,
+          lang: classes[0] ?? "",
+        });
+        return apply(html, outer).replace(/<code\b[^>]*>/, (opening) =>
+          apply(opening, parsed),
+        );
+      },
       tablecell: wrap(renderer.tablecell),
       listitem: wrap(renderer.listitem),
       heading: wrap(renderer.heading),
