@@ -1,5 +1,6 @@
 import type { Cookie } from "remix/cookie";
 import { render } from "remix/middleware/render";
+import { csp, getCspNonce } from "remix/middleware/csp";
 import { session } from "remix/middleware/session";
 import {
   createController,
@@ -34,7 +35,34 @@ export interface RouterDeps {
 
 export function createRouter(deps: RouterDeps) {
   const router = createFetchRouter<AppContext>({
-    middleware: [session(deps.sessionCookie, deps.sessionStorage), rendering],
+    middleware: [
+      async (_context, next) => {
+        const response = await next();
+        if (response.headers.get("Content-Type")?.startsWith("text/html"))
+          response.headers.set("Cache-Control", "private, no-store");
+        return response;
+      },
+      session(deps.sessionCookie, deps.sessionStorage),
+      csp({
+        policy: ({ nonce, context }) => {
+          const url = new URL(context.request.url);
+          const socketOrigin = `${url.protocol === "https:" ? "wss:" : "ws:"}//${url.host}`;
+          return {
+            defaultSrc: ["'none'"],
+            scriptSrc: ["'self'", `'nonce-${nonce}'`],
+            styleSrc: ["'self'", `'nonce-${nonce}'`],
+            styleSrcAttr: ["'unsafe-inline'"],
+            connectSrc: ["'self'", socketOrigin],
+            imgSrc: ["'self'", "data:", "blob:"],
+            formAction: ["'self'"],
+            baseUri: ["'none'"],
+            objectSrc: ["'none'"],
+            frameAncestors: ["'none'"],
+          };
+        },
+      }),
+      rendering,
+    ],
   });
 
   router.map(
@@ -50,7 +78,10 @@ export function createRouter(deps: RouterDeps) {
         home(context) {
           if (deps.config.auth.mode === "anonymous") {
             return context.render(
-              <EditorPage authMode={{ mode: "anonymous" }} />,
+              <EditorPage
+                authMode={{ mode: "anonymous" }}
+                nonce={getCspNonce(context)}
+              />,
             );
           }
           const identity = context.session.get("identity") as
@@ -60,6 +91,7 @@ export function createRouter(deps: RouterDeps) {
             return redirect(routes.auth.signIn.href());
           return context.render(
             <EditorPage
+              nonce={getCspNonce(context)}
               authMode={{
                 mode: "central",
                 identity: { name: identity.name, color: identity.color },
