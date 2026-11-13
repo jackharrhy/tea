@@ -328,7 +328,9 @@ try {
     .clientIds[0];
   silent = true;
   const anonymousCredentials = credentialAttempts;
-  const anonymousSilent = await silentPage.goto(`${origin}/login?authRequest=anonymous-probe`);
+  const anonymousSilent = await silentPage.goto(
+    `${origin}/login?authRequest=anonymous-probe`,
+  );
   assert.equal(anonymousSilent.status(), 200);
   assert.equal(await silentPage.locator("h1").innerText(), "Signed out portal");
   assert.equal(await silentPage.locator("[name=password]").count(), 0);
@@ -526,15 +528,24 @@ try {
   maxAgeOverride = undefined;
   const beforeSilentDirect = { completions, loginRequired };
   await freshnessPage.goto(`${origin}/authorize?authRequest=direct-silent-get`);
-  assert.equal(await freshnessPage.locator("h1").innerText(), "Signed out portal");
-  assert.equal(await freshnessPage.getByRole("button", { name: "Allow" }).count(), 0);
+  assert.equal(
+    await freshnessPage.locator("h1").innerText(),
+    "Signed out portal",
+  );
+  assert.equal(
+    await freshnessPage.getByRole("button", { name: "Allow" }).count(),
+    0,
+  );
   await freshnessPage.goto(`${origin}/login?returnTo=/account`);
   const csrf = await freshnessPage.locator("[name=csrf]").inputValue();
-  const directPost = await freshnessContext.request.post(`${origin}/authorize`, {
-    headers: { Origin: origin },
-    form: { authRequest: "direct-silent-post", decision: "approve", csrf },
-    maxRedirects: 0,
-  });
+  const directPost = await freshnessContext.request.post(
+    `${origin}/authorize`,
+    {
+      headers: { Origin: origin },
+      form: { authRequest: "direct-silent-post", decision: "approve", csrf },
+      maxRedirects: 0,
+    },
+  );
   assert.equal(directPost.status(), 303);
   const silentDestination = new URL(directPost.headers().location);
   assert.equal(silentDestination.origin, callbackOrigin);

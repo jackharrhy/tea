@@ -886,7 +886,10 @@ createServer(async (request, response) => {
         request.method === "GET"
           ? url.searchParams.get("authRequest")
           : form.get("authRequest");
-      const { callback: silentCallback } = await authorizationActions.begin(id, session);
+      const { callback: silentCallback } = await authorizationActions.begin(
+        id,
+        session,
+      );
       if (silentCallback) {
         redirect(silentCallback);
         return;
