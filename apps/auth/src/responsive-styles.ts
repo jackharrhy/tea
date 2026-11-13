@@ -127,6 +127,7 @@ export const responsiveStyles = css({
       maxWidth: "390px",
       padding: "26px",
     },
+    "& .auth-page:has(.login-title)": { margin: "0 auto" },
     "&.authentication .site-header": {
       padding: "0 23px",
       minHeight: "74px",
