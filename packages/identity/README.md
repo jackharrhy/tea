@@ -22,7 +22,9 @@ Provide issuer, client ID, project ID and organization ID in `IdentityConfig`.
 Create and store a `LoginTransaction`, redirect with `authorizationUrl`, validate
 browser state with `validLoginTransaction`, and consume the transaction once
 before calling `exchange`. Keep transaction storage and local sessions in the
-app. Keep resource-server credentials in its server-only configuration.
+app. For browser cookie storage, `loginTransactionCookieName` gives each state
+its own cookie name so another sign-in cannot replace or clear a pending flow.
+Keep resource-server credentials in its server-only configuration.
 
 Jack Auth's `jackIdentity` action supplies `jack_auth_username` and
 `jack_auth_principal_type`. Roles come from the project-specific reserved ZITADEL

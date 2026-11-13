@@ -28,7 +28,26 @@ try {
   assert.doesNotMatch(landingCsp, /unsafe-inline/);
   assert.equal(await page.locator('input[type="password"]').count(), 0);
   assert.equal((await context.request.post(`${base}/login`)).status(), 404);
-  await page.getByRole("link", { name: "Sign in with Jack Auth" }).click();
+  const firstStart = await context.request.get(`${base}/auth/login`, {
+    maxRedirects: 0,
+  });
+  const secondStart = await context.request.get(`${base}/auth/login`, {
+    maxRedirects: 0,
+  });
+  assert.equal(firstStart.status(), 303);
+  assert.equal(secondStart.status(), 303);
+  const firstCookie = firstStart.headers()["set-cookie"].split("=", 1)[0];
+  const secondCookie = secondStart.headers()["set-cookie"].split("=", 1)[0];
+  assert.notEqual(firstCookie, secondCookie);
+  await page.goto(firstStart.headers().location);
+  await page.getByRole("button", { name: "Continue as local user" }).click();
+  await page.getByRole("heading", { name: "Boards" }).waitFor();
+  assert(
+    (await context.cookies(`${base}/auth/login`)).some(
+      (entry) => entry.name === secondCookie,
+    ),
+  );
+  await page.goto(secondStart.headers().location);
   await page.getByRole("button", { name: "Continue as local user" }).click();
   await page.getByRole("heading", { name: "Boards" }).waitFor();
   await page.locator("input[name=title]").fill("Smoke board");

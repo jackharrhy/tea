@@ -109,6 +109,17 @@ export function validLoginTransaction(
     data.createdAt > now - 600
   );
 }
+export function loginTransactionCookieName(
+  prefix: string,
+  state: string | null,
+): string | null {
+  if (
+    !/^[a-z][a-z0-9_]{0,31}$/.test(prefix) ||
+    !/^[A-Za-z0-9_-]{43}$/.test(state ?? "")
+  )
+    return null;
+  return `${prefix}_${state}`;
+}
 async function json(response: Response): Promise<Record<string, unknown>> {
   const body = await response.text();
   if (body.length > 262144) throw unavailable();

@@ -1,6 +1,7 @@
 import {
   createIdentityClient,
   createLoginTransaction,
+  loginTransactionCookieName,
   validLoginTransaction,
   type LoginTransaction,
 } from "@harrhy/identity";
@@ -15,19 +16,23 @@ import {
   sessionCookie,
 } from "./auth.ts";
 
-const transactionCookie = "steve_oauth";
+const transactionPrefix = "steve_oauth";
 
-function cookie(value: string, maxAge: number): string {
-  return `${transactionCookie}=${value}; Path=/auth; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+function cookie(name: string, value: string, maxAge: number): string {
+  return `${name}=${value}; Path=/auth; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
 
-function readTransaction(request: Request): LoginTransaction | null {
+function readTransaction(
+  request: Request,
+  name: string | null,
+): LoginTransaction | null {
+  if (!name) return null;
   const value = request.headers
     .get("cookie")
     ?.split(";")
     .map((part) => part.trim())
-    .find((part) => part.startsWith(`${transactionCookie}=`))
-    ?.slice(transactionCookie.length + 1);
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
   if (!value || value.length > 4096) return null;
   try {
     return JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
@@ -42,6 +47,10 @@ export default createController(routes.auth, {
       const config = centralAuthConfig();
       if (!config) return new Response("Not found", { status: 404 });
       const transaction = createLoginTransaction();
+      const name = loginTransactionCookieName(
+        transactionPrefix,
+        transaction.state,
+      )!;
       const location = await createIdentityClient(
         config.identity,
       ).authorizationUrl(
@@ -53,6 +62,7 @@ export default createController(routes.auth, {
         headers: {
           Location: location,
           "Set-Cookie": cookie(
+            name,
             Buffer.from(JSON.stringify(transaction)).toString("base64url"),
             600,
           ),
@@ -63,8 +73,9 @@ export default createController(routes.auth, {
     async callback(context) {
       const config = centralAuthConfig();
       if (!config) return new Response("Not found", { status: 404 });
-      const transaction = readTransaction(context.request);
       const state = context.url.searchParams.get("state");
+      const name = loginTransactionCookieName(transactionPrefix, state);
+      const transaction = readTransaction(context.request, name);
       const code = context.url.searchParams.get("code");
       const response = new Response(null, {
         status: 303,
@@ -73,7 +84,7 @@ export default createController(routes.auth, {
           "Cache-Control": "no-store",
         },
       });
-      response.headers.append("Set-Cookie", cookie("", 0));
+      if (name) response.headers.append("Set-Cookie", cookie(name, "", 0));
       if (!transaction || !validLoginTransaction(transaction, state) || !code)
         return new Response("Sign-in could not be completed", {
           status: 400,

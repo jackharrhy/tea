@@ -1,6 +1,7 @@
 import {
   createIdentityClient,
   createLoginTransaction,
+  loginTransactionCookieName,
   validLoginTransaction,
   type LoginTransaction,
 } from "@harrhy/identity";
@@ -11,19 +12,23 @@ import { AppIdentity, AppRuntime } from "../data/runtime.ts";
 import { sessionCookie } from "../middleware/session.ts";
 import { routes } from "../routes.ts";
 
-const transactionCookie = "ref_oauth";
+const transactionPrefix = "ref_oauth";
 
-function cookie(value: string, maxAge: number): string {
-  return `${transactionCookie}=${value}; Path=/auth; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+function cookie(name: string, value: string, maxAge: number): string {
+  return `${name}=${value}; Path=/auth; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
 
-function readTransaction(request: Request): LoginTransaction | null {
+function readTransaction(
+  request: Request,
+  name: string | null,
+): LoginTransaction | null {
+  if (!name) return null;
   const value = request.headers
     .get("cookie")
     ?.split(";")
     .map((part) => part.trim())
-    .find((part) => part.startsWith(`${transactionCookie}=`))
-    ?.slice(transactionCookie.length + 1);
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
   if (!value || value.length > 4096) return null;
   try {
     return JSON.parse(atob(value.replace(/-/g, "+").replace(/_/g, "/")));
@@ -38,6 +43,10 @@ export default createController(routes.auth, {
       const central = context.get(AppIdentity);
       if (!central) return new Response("Not found", { status: 404 });
       const transaction = createLoginTransaction();
+      const name = loginTransactionCookieName(
+        transactionPrefix,
+        transaction.state,
+      )!;
       const url = await createIdentityClient(central.config).authorizationUrl(
         transaction,
         `${central.origin}${routes.auth.callback.href()}`,
@@ -48,24 +57,22 @@ export default createController(routes.auth, {
         .replace(/=+$/, "");
       return redirect(url, {
         status: 303,
-        headers: { "Set-Cookie": cookie(encoded, 600) },
+        headers: { "Set-Cookie": cookie(name, encoded, 600) },
       });
     },
     async callback(context) {
       const central = context.get(AppIdentity);
       if (!central) return new Response("Not found", { status: 404 });
-      const transaction = readTransaction(context.request);
       const url = new URL(context.request.url);
+      const state = url.searchParams.get("state");
+      const name = loginTransactionCookieName(transactionPrefix, state);
+      const transaction = readTransaction(context.request, name);
       const code = url.searchParams.get("code");
-      const cleared = cookie("", 0);
-      if (
-        !transaction ||
-        !validLoginTransaction(transaction, url.searchParams.get("state")) ||
-        !code
-      )
+      const cleared = name ? cookie(name, "", 0) : null;
+      if (!transaction || !validLoginTransaction(transaction, state) || !code)
         return new Response("Sign-in could not be completed", {
           status: 400,
-          headers: { "Set-Cookie": cleared },
+          headers: cleared ? { "Set-Cookie": cleared } : undefined,
         });
       let stage = "exchange";
       try {
@@ -80,7 +87,7 @@ export default createController(routes.auth, {
           .directory.createCentralSession(profile.subject, profile.expiresAt);
         const response = redirect(routes.home.href(), {
           status: 303,
-          headers: { "Set-Cookie": cleared },
+          headers: { "Set-Cookie": cleared! },
         });
         response.headers.append(
           "Set-Cookie",
@@ -105,7 +112,7 @@ export default createController(routes.auth, {
         );
         return new Response("Sign-in could not be completed", {
           status,
-          headers: { "Set-Cookie": cleared },
+          headers: { "Set-Cookie": cleared! },
         });
       }
     },
