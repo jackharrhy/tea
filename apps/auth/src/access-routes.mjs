@@ -22,6 +22,9 @@ export function createAccessRoutes({
   renderSessions,
   renderPeople,
   renderNewPerson,
+  renderServiceList,
+  renderServiceDetail,
+  renderIntegrations,
 }) {
   const people = async () =>
     (await searchAll(api, "/management/v1/users/_search")).filter(
@@ -362,11 +365,11 @@ export function createAccessRoutes({
       }
     }
     if (request.method === "GET" && url.pathname === "/manage/services") {
-      send(views.serviceList(services, domains, context));
+      await sendRemix((nonce) => renderServiceList(services, domains, context, nonce));
       return true;
     }
     if (request.method === "GET" && url.pathname === "/manage/integrations") {
-      send(views.integrations(integrations, context));
+      await sendRemix((nonce) => renderIntegrations(integrations, context, nonce));
       return true;
     }
     const service = url.pathname.match(
@@ -375,13 +378,12 @@ export function createAccessRoutes({
     if (request.method === "GET" && service) {
       const value = services.find((item) => item.id === service[1]);
       if (!value) throw fail(404, "Service not found.");
-      send(
-        views.serviceDetail(
-          value,
-          domains.find((app) => app.id === (value.applicationId || value.id)),
-          context,
-        ),
-      );
+      await sendRemix((nonce) => renderServiceDetail(
+        value,
+        domains.find((app) => app.id === (value.applicationId || value.id)),
+        context,
+        nonce,
+      ));
       return true;
     }
     if (request.method === "POST" && url.pathname === "/manage/users") {

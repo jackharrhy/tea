@@ -292,56 +292,6 @@ export function operation(value, context) {
   );
 }
 
-export function serviceList(services, applications, context) {
-  return page(
-    "Services",
-    intro(
-      "Services",
-      "A catalogue of products, not a list of OAuth client IDs.",
-      `<a class="button" href="/manage/integrations">Technical integrations</a>`,
-    ) +
-      `<div class="table-frame"><table><thead><tr><th>Service</th><th>Category</th><th>Integration</th></tr></thead><tbody>${services.map((service) => `<tr><td><a href="/manage/services/${service.id}">${h(service.name)}</a></td><td>${h(service.category)}</td><td>${pill(applications.find((app) => app.id === service.applicationId)?.authorizationHold ? "held" : service.kind)}</td></tr>`).join("")}</tbody></table></div>`,
-    { ...context, active: "services" },
-  );
-}
-
-export function serviceDetail(service, application, context) {
-  return page(
-    service.name,
-    intro(service.name, service.description) +
-      `<dl class="profile"><div><dt>Integration</dt><dd>${h(service.kind)}</dd></div><div><dt>Category</dt><dd>${h(service.category)}</dd></div><div><dt>Service roles</dt><dd>${h(service.roles.join(", ") || "Separate native permissions")}</dd></div><div><dt>Central boundary</dt><dd>${h(application?.name || "No registered browser application in this catalogue")}</dd></div><div><dt>Cleanup</dt><dd>${h(service.nativeCleanup || "Service-specific; must be verified")}</dd></div></dl>${service.url ? `<p><a href="${h(service.url)}">Open service</a></p>` : ""}${application ? `<details class="technical"><summary>Technical identifiers</summary><p>Project: <code>${h(application.projectId)}</code></p><p>Clients: ${application.clientIds.map((id) => `<code>${h(id)}</code>`).join(", ")}</p></details>` : ""}` +
-      linkBack("/manage/services", "Services"),
-    { ...context, active: "services" },
-  );
-}
-
-export function integrations(snapshot, context) {
-  return page(
-    "Technical integrations",
-    intro(
-      "Technical integrations",
-      `${snapshot.projects.length} native projects and ${snapshot.applications.length} application registrations. This is an operator inventory snapshot, not proof of consumer login.`,
-    ) +
-      `<p class="muted">Inventory checked ${h(snapshot.checkedAt)}. Infrastructure clients and resource credentials are distinct from user-facing apps.</p><div class="table-frame"><table><thead><tr><th>Project</th><th>Registration</th><th>Type / state</th></tr></thead><tbody>${snapshot.projects
-        .map((project) => {
-          const projectApps = snapshot.applications.filter(
-            (app) => app.projectId === project.id,
-          );
-          return projectApps.length
-            ? projectApps
-                .map(
-                  (app) =>
-                    `<tr><td>${h(project.name)}${project.infrastructure ? '<span class="table-subline">Issuer infrastructure</span>' : ""}</td><td>${h(app.name)}<details><summary>Identifiers and callbacks</summary><p><code>${h(app.clientId || app.id)}</code></p>${app.callbacks.map((callback) => `<p><code>${h(callback)}</code></p>`).join("")}</details></td><td>${h(app.kind)}<span class="table-subline">${h(app.state.replace("APP_STATE_", "").toLowerCase())}</span></td></tr>`,
-                )
-                .join("")
-            : `<tr><td>${h(project.name)}</td><td>No browser/resource registrations</td><td>${project.infrastructure ? "Infrastructure" : "Directory eligibility"}</td></tr>`;
-        })
-        .join("")}</tbody></table></div>` +
-      linkBack("/manage/services", "Services"),
-    { ...context, active: "services" },
-  );
-}
-
 export function previewAccount(user, context) {
   return page(
     "Account",

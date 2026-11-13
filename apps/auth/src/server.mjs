@@ -28,6 +28,7 @@ const {
 } = await import("./flow-page.tsx");
 const { renderDirectory, renderAppDetail } = await import("./directory-page.tsx");
 const { renderSessions, renderPeople, renderNewPerson } = await import("./simple-access-pages.tsx");
+const { renderServiceList, renderServiceDetail, renderIntegrations } = await import("./service-pages.tsx");
 import { createEmailActions } from "./email.mjs";
 import { applicationForClient, searchAll } from "./applications.mjs";
 import { createAccountActions } from "./accounts.mjs";
@@ -112,6 +113,9 @@ const accessRoutes = createAccessRoutes({
   renderSessions,
   renderPeople,
   renderNewPerson,
+  renderServiceList,
+  renderServiceDetail,
+  renderIntegrations,
 });
 radioEnrollment = process.env.RADIO_ENROLLMENT_DB_FILE
   ? createRadioEnrollment({

@@ -288,6 +288,13 @@ try {
     .getByRole("heading", { name: "Your tools", exact: true })
     .waitFor();
   await capture(page, "apps-desktop");
+  await page.getByRole("link", { name: "Services", exact: true }).first().click();
+  await page.getByRole("heading", { name: "Services", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Worldview", exact: true }).click();
+  await page.getByRole("heading", { name: "Worldview", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Services", exact: true }).last().click();
+  await page.getByRole("link", { name: "Technical integrations" }).click();
+  await page.getByRole("heading", { name: "Technical integrations" }).waitFor();
   await page.getByRole("link", { name: "People", exact: true }).first().click();
   await page.getByRole("link", { name: /Sam Member/ }).click();
   await capture(page, "person-desktop");
