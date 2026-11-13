@@ -34,8 +34,14 @@ assert((await fetch(new URL("/api/health", baseURL))).ok, "production health");
 const response = await fetch(baseURL);
 assert.equal(response.status, 200);
 assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+assert.equal(response.headers.get("cache-control"), "private, no-store");
+const policy = response.headers.get("content-security-policy") ?? "";
+const nonce = /script-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+assert.ok(nonce);
+assert.match(policy, /connect-src 'self' ws:\/\//);
 const html = await response.text();
 assert.match(html, /Pool · Tea/);
+assert(html.includes(`nonce="${nonce}"`));
 assert.doesNotMatch(html, /@vite\/client|\/src\/.*\.ts|react-refresh/);
 for (const [path, mime] of [
   ["/assets/game.js", /javascript/],
@@ -78,9 +84,17 @@ try {
     deviceScaleFactor: 0.5,
   });
   const errors: string[] = [];
+  const policyErrors: string[] = [];
   const messages: ServerMessage[] = [];
   const browserSockets: { isClosed(): boolean }[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      /Content Security Policy|Refused to/.test(message.text())
+    )
+      policyErrors.push(message.text());
+  });
   page.on("websocket", (socket) => {
     if (new URL(socket.url()).pathname !== "/ws") return;
     browserSockets.push(socket);
@@ -129,6 +143,7 @@ try {
     "chat round trip over WebSocket",
   );
   assert.deepEqual(errors, [], "browser runtime errors");
+  assert.deepEqual(policyErrors, [], "browser CSP violations");
   assert.equal(
     browserSockets.length,
     2,

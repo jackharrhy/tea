@@ -1,6 +1,7 @@
 import { PoolGame } from "./game/pool-game";
+import type { Handle } from "remix/component";
 
-export function PoolPage() {
+export function PoolPage(handle: Handle<{ nonce?: string }>) {
   return () => (
     <html lang="en">
       <head>
@@ -126,7 +127,11 @@ export function PoolPage() {
             </div>
           </div>
         </main>
-        <script type="module" src="/assets/game.js" />
+        <script
+          type="module"
+          src="/assets/game.js"
+          nonce={handle.props.nonce}
+        />
       </body>
     </html>
   );
