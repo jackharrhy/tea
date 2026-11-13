@@ -1,28 +1,20 @@
+import { parityTarget, privateEqual } from "./parity-target.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { chromium } from "@playwright/test";
 import { spawnSync } from "node:child_process";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import { reviewSourceFingerprint } from "../scripts/review-source.mjs";
 process.umask(0o077);
-const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
+const { root, database, oracle, native } = await parityTarget();
 const output =
   root + "/player-browser-" + new Date().toISOString().replace(/[:.]/g, "");
 await mkdir(output, { mode: 0o700 });
-const runtime = JSON.parse(
-  await readFile("apps/fourm/.review/parity-local/runtime.json", "utf8"),
-);
-assert.equal(
-  runtime.sourceFingerprint,
-  await reviewSourceFingerprint(resolve("apps/fourm")),
-);
 const rows = spawnSync(
   "python3",
   [
     "-c",
     "import sqlite3,json,sys,pathlib; p=pathlib.Path(sys.argv[1]); d=sqlite3.connect(p.as_uri()+'?mode=ro',uri=True); d.row_factory=sqlite3.Row; print(json.dumps([dict(r) for r in d.execute(\"SELECT username,(SELECT count(*) FROM playlist_items p WHERE p.user_id=users.id)>0 AS present FROM users ORDER BY id\")]))",
-    root + "/parity-cohort-20261112/review.sqlite3",
+    database,
   ],
   { encoding: "utf8" },
 );
@@ -31,8 +23,6 @@ const owners = JSON.parse(rows.stdout);
 const browser = await chromium.launch();
 let phase = "start";
 try {
-  const oracle = "http://127.0.0.1:18964",
-    native = "http://127.0.0.1:18974";
   for (const owner of owners) {
     phase = "json";
     const path = "/u/" + encodeURIComponent(owner.username) + "/player";
@@ -44,7 +34,7 @@ try {
       assert.equal(response.status, 200);
       values.push(await response.json());
     }
-    assert.deepEqual(
+    privateEqual(
       values[1],
       values[0],
       "Player JSON differs; private cohort only",
@@ -172,7 +162,7 @@ try {
         output + `/comparison-${index}-${width}.json`,
         JSON.stringify(capture, null, 2),
       );
-      assert.deepEqual(
+      privateEqual(
         capture.native,
         capture.oracle,
         "Player widget differs; inspect protected comparison",
@@ -199,6 +189,7 @@ try {
         controlsTestedWithMediaPlayStub: true,
         actualAudioDecodingVerified: true,
         screenshotEquality,
+        targets: { oracle, native },
         productionTouched: false,
       },
       null,
