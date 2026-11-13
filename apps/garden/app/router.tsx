@@ -5,6 +5,7 @@ import { brotliCompressSync, constants, gzipSync } from "node:zlib";
 import { AcceptEncoding } from "remix/headers/accept-encoding";
 import { createRouter } from "remix/router";
 import { render } from "remix/middleware/render";
+import { gardenCsp } from "./ui/csp.ts";
 import { staticFiles } from "remix/middleware/static";
 import { createFileResponse } from "remix/response/file";
 import { openLazyFile } from "remix/fs";
@@ -42,6 +43,7 @@ export function createGarden(config: GardenConfig) {
         index: false,
         cacheControl: config.development ? "no-cache" : "public, max-age=3600",
       }),
+      gardenCsp(config.development, config.assetOrigin),
       render({ assets }),
     ],
   });

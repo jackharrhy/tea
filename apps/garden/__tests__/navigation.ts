@@ -35,7 +35,7 @@ await once(server, "listening");
 const address = server.address();
 assert.ok(address && typeof address === "object");
 const base = `http://127.0.0.1:${address.port}`;
-const browser = await chromium.launch({ channel: "chrome" });
+const browser = await chromium.launch();
 try {
   for (const reducedMotion of ["no-preference", "reduce"] as const) {
     const context = await browser.newContext({ reducedMotion });
@@ -54,6 +54,13 @@ try {
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        message.text().includes("Content Security Policy")
+      )
+        errors.push(message.text());
+    });
     const modelRequests: string[] = [];
     page.on("request", (request) => {
       if (request.url().includes("cuppa.txt"))
