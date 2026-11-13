@@ -26,7 +26,7 @@ The app is independently containerized by `Dockerfile`. Production settings, DNS
 
 ## Routing migration boundary
 
-Sign-in, delegated consent, account, email recovery, enrollment, device approval, the app directory, sessions, access management, People, groups, and service inventory now render through Remix 3 and use `@harrhy/ui` controls. All browser pages now render with Remix 3 components, including support and failure states. The original Node request switch remains an in-progress framework exception; it must move to Remix routes and middleware before this application replaces the standalone Auth deployment. The existing stylesheet is plain CSS until its remaining static UI rules move to Remix `css(...)` mixins. ZITADEL and its state remain separate. `@harrhy/identity` stays a consumer validation/client package.
+Sign-in, delegated consent, account, email recovery, enrollment, device approval, the app directory, sessions, access management, People, groups, and service inventory now render through Remix 3 and use `@harrhy/ui` controls. All browser pages now render with Remix 3 components, including support and failure states. Public asset and health routes now use a Remix Web Request/Response router. The remaining Node request switch is an in-progress framework exception; authentication, administration, and support handlers must move to Remix routes and middleware before this application replaces the standalone Auth deployment. The existing stylesheet is plain CSS until its remaining static UI rules move to Remix `css(...)` mixins. ZITADEL and its state remain separate. `@harrhy/identity` stays a consumer validation/client package.
 
 ## License
 

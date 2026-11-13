@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import "remix/node-tsx";
+import { createRequest, sendResponse } from "remix/node-fetch-server";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createSupportRoutes } from "./support-routes.mjs";
@@ -45,6 +46,7 @@ import { createEnrollmentCompletion } from "./enrollment-completion.mjs";
 import { createRadioEnrollment } from "./radio-enrollment.mjs";
 import { createAuthorizationActions } from "./authorization.mjs";
 import { authorizationPolicy, isAuthorizationPath } from "./oidc-policy.mjs";
+import { createPublicRouter, isPublicRoute } from "./public-router.mjs";
 
 const origin = process.env.PUBLIC_ORIGIN || "https://auth.jackharrhy.dev";
 const organizationId = process.env.ORGANIZATION_ID;
@@ -204,6 +206,11 @@ const doodleAssets = new Map([
 const inter = readFileSync(
   new URL("../public/fonts/inter-variable.woff2", import.meta.url),
 );
+const publicRouter = createPublicRouter({
+  styles: css,
+  font: inter,
+  doodles: doodleAssets,
+});
 const sessions = new Map(),
   attempts = new Map();
 const cookieName = "__Host-jack_auth";
@@ -286,6 +293,17 @@ async function endUserSessions(userId) {
 }
 
 createServer(async (request, response) => {
+  if (
+    request.method === "GET" &&
+    isPublicRoute(new URL(request.url, origin).pathname)
+  ) {
+    const incoming = createRequest(request, response, {
+      host: new URL(origin).host,
+      protocol: new URL(origin).protocol,
+    });
+    await sendResponse(response, await publicRouter.fetch(incoming));
+    return;
+  }
   response.setHeader("Cache-Control", "no-store");
   response.setHeader("X-Content-Type-Options", "nosniff");
   // no-referrer would make browsers send Origin: null on HTML form POSTs.
@@ -426,33 +444,6 @@ createServer(async (request, response) => {
         "Content-Type": "application/json",
       });
       response.end(JSON.stringify(policy));
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/healthz") {
-      response.end("ok");
-      return;
-    }
-    if (
-      request.method === "GET" &&
-      url.pathname === "/assets/fonts/inter-variable.woff2"
-    ) {
-      response.writeHead(200, {
-        "Content-Type": "font/woff2",
-        "Cache-Control": "public, max-age=86400",
-      });
-      response.end(inter);
-      return;
-    }
-    if (request.method === "GET" && doodleAssets.has(url.pathname)) {
-      response.writeHead(200, {
-        "Content-Type": "text/javascript; charset=utf-8",
-      });
-      response.end(doodleAssets.get(url.pathname));
-      return;
-    }
-    if (request.method === "GET" && url.pathname === "/assets/style.css") {
-      response.writeHead(200, { "Content-Type": "text/css" });
-      response.end(css);
       return;
     }
     const cookieValue = request.headers.cookie
