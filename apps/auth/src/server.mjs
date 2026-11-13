@@ -1013,13 +1013,33 @@ const fetchRequest = (request) => {
   return browserRouter.fetch(request);
 };
 
-createServer(
+const server = createServer(
   createRequestListener(fetchRequest, {
     host: new URL(origin).host,
     protocol: new URL(origin).protocol,
   }),
-).listen(
+);
+server.listen(
   Number(process.env.PORT || 3000),
   process.env.LISTEN_HOST || "0.0.0.0",
   () => console.info("auth listening"),
 );
+
+let stopping = false;
+async function stop() {
+  if (stopping) return;
+  stopping = true;
+  await new Promise((resolve, reject) =>
+    server.close((error) => (error ? reject(error) : resolve())),
+  );
+  await supportRoutes?.close();
+  radioEnrollment?.close();
+  accessStore.close();
+}
+for (const signal of ["SIGTERM", "SIGINT"])
+  process.once(signal, () => {
+    void stop().catch((error) => {
+      console.error("auth_shutdown_failed", error);
+      process.exitCode = 1;
+    });
+  });

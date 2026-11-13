@@ -109,17 +109,17 @@ export function createSupportRoutes({
     eligible,
     actorSubject: config.actorSubject,
   });
-  let sweeping = false;
-  const sweep = async () => {
-    if (sweeping) return;
-    sweeping = true;
-    try {
-      await login.sweep();
-    } catch {
-      console.error("support_cleanup_pending");
-    } finally {
-      sweeping = false;
-    }
+  let sweeping;
+  let closed = false;
+  const sweep = () => {
+    if (closed || sweeping) return sweeping;
+    sweeping = login
+      .sweep()
+      .catch(() => console.error("support_cleanup_pending"))
+      .finally(() => {
+        sweeping = undefined;
+      });
+    return sweeping;
   };
   const timer = setInterval(sweep, 15000);
   timer.unref();
@@ -272,8 +272,10 @@ export function createSupportRoutes({
       );
       return true;
     },
-    close() {
+    async close() {
+      closed = true;
       clearInterval(timer);
+      await sweeping;
       store.close();
     },
   };

@@ -127,7 +127,7 @@ test("missing or unavailable local profile blocks form and POST before native is
     assert.equal(await routes.preflight("other-admin", "target"), "ineligible");
     assert.equal(lookups, count);
   } finally {
-    routes.close();
+    await routes.close();
     globalThis.fetch = original;
     rmSync(dir, { recursive: true, force: true });
   }
