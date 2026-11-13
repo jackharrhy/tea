@@ -24,7 +24,7 @@ export function privateEqual(actual, expected, message) {
 export async function parityTarget() {
   const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
   const state = resolve(
-    process.env.FOURM_PARITY_NATIVE_STATE ?? "apps/fourm/.review/parity-local",
+    process.env.FOURM_PARITY_NATIVE_STATE ?? "apps/4orm/.review/parity-local",
   );
   const database = resolve(
     process.env.FOURM_PARITY_COHORT_DATABASE ??
@@ -48,7 +48,7 @@ export async function parityTarget() {
     "Cohort database must be private review input",
   );
   assert.ok(
-    !relative(resolve("apps/fourm/.review"), state).startsWith(".."),
+    !relative(resolve("apps/4orm/.review"), state).startsWith(".."),
     "Native runtime must be owned review state",
   );
   const runtime = JSON.parse(
@@ -62,7 +62,7 @@ export async function parityTarget() {
   assert.equal(runtime.productionTouched, false);
   assert.equal(
     runtime.sourceFingerprint,
-    await reviewSourceFingerprint(resolve("apps/fourm")),
+    await reviewSourceFingerprint(resolve("apps/4orm")),
   );
   const response = await fetch(native + "/ready", {
     redirect: "error",

@@ -60,7 +60,7 @@ SPKI/PKCS#8 ECDH, AES-GCM and VAPID primitives work, but native delivery does no
 VAPID keys remain unset. No notification success is claimed. Broader layout and
 moderation/validation review remains bounded by actual gaps or user reports.
 
-`npm run test:parity --workspace @harrhy/fourm` requires its configured owned
+`npm run test:parity --workspace @harrhy/4orm` requires its configured owned
 oracle/native listeners. `FOURM_PARITY_WRITES=1` edits only those disposable test
 copies and restores existing values. Match the running source fingerprint before
 using results. Do not treat an old runner or synthetic POC receipt as current

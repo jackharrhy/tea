@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import {
@@ -39,9 +40,12 @@ const exerciseCopies = [
     ? exercisePushCopies
     : exerciseChatCopies;
 const repo = process.cwd();
-assert.equal(repo, "/home/jack/repos/personal/harrhy-fourm-celld");
+assert.equal(
+  repo,
+  fileURLToPath(new URL("../../..", import.meta.url)).replace(/\/$/, ""),
+);
 const root = "/home/jack/.local/state/form-harrhy-integration/candidate";
-const canonical = resolve("apps/fourm/.review/parity-local");
+const canonical = resolve("apps/4orm/.review/parity-local");
 const oracle = join(root, "python-oracle");
 const output = join(
   root,
@@ -108,7 +112,7 @@ async function startNative(state, persist = false) {
     "a",
     0o600,
   );
-  const child = spawn(process.execPath, ["apps/fourm/scripts/review.mjs"], {
+  const child = spawn(process.execPath, ["apps/4orm/scripts/review.mjs"], {
     cwd: repo,
     env: {
       ...process.env,

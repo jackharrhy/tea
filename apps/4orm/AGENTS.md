@@ -19,5 +19,5 @@ review uses a single supervisor and preserved `.review/` state; do not seed or
 start a second writer against it. Python source and its `.venv` remain independent
 production/oracle dependencies, not cleanup targets.
 
-Run `npm run check --workspace @harrhy/fourm` and the relevant Celld/browser
+Run `npm run check --workspace @harrhy/4orm` and the relevant Celld/browser
 smokes. Disclose unported behavior and validation limits in the review handoff.

@@ -48,7 +48,7 @@ try {
       "-c",
       `from pathlib import Path
 import sqlite3,json
-p=max(Path('apps/fourm/.review/parity-local/replica').rglob('db.sqlite'),key=lambda p:int(p.parent.name[1:]))
+p=max(Path('apps/4orm/.review/parity-local/replica').rglob('db.sqlite'),key=lambda p:int(p.parent.name[1:]))
 c=sqlite3.connect(p.resolve().as_uri()+'?mode=ro',uri=True)
 print(json.dumps([dict(zip(['id','user_id','kind','target','state'],r)) for r in c.execute('select id,user_id,kind,target,state from media_moves')]))`,
     ],
