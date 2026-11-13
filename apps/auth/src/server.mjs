@@ -11,6 +11,7 @@ import { createAccountRoutes } from "./account-routes.mjs";
 import { createOAuthBrowserRoutes } from "./oauth-browser-routes.mjs";
 import { createEmailRoutes } from "./email-routes.mjs";
 import { createLoginRoutes } from "./login-routes.mjs";
+import { createEnrollmentRoutes } from "./enrollment-routes.mjs";
 import { createZitadel } from "./zitadel.mjs";
 import {
   randomToken,
@@ -302,6 +303,16 @@ async function endUserSessions(userId) {
     if (value.userId === userId) sessions.delete(id);
 }
 
+const enrollmentRoutes = createEnrollmentRoutes({
+  enrollment,
+  organizationId,
+  api,
+  rateLimit,
+  sessions,
+  newSession,
+  cookie,
+  renderEnrollment,
+});
 const accountRoutes = createAccountRoutes({
   accountActions,
   emailActions,
@@ -487,71 +498,23 @@ async function handleBrowser(request, routeAction, routePhase) {
         });
         return;
       }
-      if (url.pathname === "/enroll") {
-        if (!enrollment)
-          throw httpError(
-            503,
-            "Registration is unavailable. Please try again later.",
-          );
-        if (request.method === "GET" && url.searchParams.has("ticket")) {
-          await enrollment.pending(url.searchParams.get("ticket"));
-          session.enrollmentTicket = url.searchParams.get("ticket");
-          redirect("/enroll");
-          return;
-        }
-        if (!session.enrollmentTicket)
-          throw httpError(400, "Open your 4orm invite link again.");
-        await enrollment.pending(session.enrollmentTicket);
-        if (!session.userId && request.method === "GET") {
-          await sendRemix((nonce) =>
-            renderEnrollment(context, undefined, nonce),
-          );
-          return;
-        }
-        if (!session.userId && request.method === "POST") {
-          rateLimit("enrollment-total", 30);
-          if (form.get("password") !== form.get("confirmation"))
-            throw httpError(400, "The passwords do not match.");
-          const userId = await enrollment.createUser(
-            session.enrollmentTicket,
-            {
-              username: form.get("username")?.trim(),
-              email: form.get("email")?.trim(),
-              password: form.get("password"),
-            },
-            organizationId,
-          );
-          const result = await api("/v2/sessions", {
-            method: "POST",
-            body: {
-              checks: {
-                user: { userId },
-                password: { password: form.get("password") },
-              },
-              lifetime: "1800s",
-            },
-          });
-          const verified = (
-            await api(`/v2/sessions/${encodeURIComponent(result.sessionId)}`)
-          ).session;
-          if (
-            verified?.factors?.user?.id !== userId ||
-            !verified?.factors?.password?.verifiedAt
-          )
-            throw httpError(401, "Sign in to your account to continue.");
-          const enrollmentTicket = session.enrollmentTicket;
-          sessions.delete(session.id);
-          session = Object.assign(newSession(), {
-            userId,
-            sessionId: result.sessionId,
-            sessionToken: result.sessionToken,
-            enrollmentTicket,
-          });
-          headers.set("Set-Cookie", cookie(session));
-          redirect("/enroll");
-          return;
-        }
-      }
+      if (
+        routePhase === "enrollment" &&
+        (await enrollmentRoutes.beforeAuth({
+          request,
+          url,
+          form,
+          session,
+          context,
+          headers,
+          sendRemix,
+          redirect,
+          setSession: (value) => {
+            session = value;
+          },
+        }))
+      )
+        return;
       if (!session.userId) {
         redirect(
           `/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`,
@@ -613,25 +576,6 @@ async function handleBrowser(request, routeAction, routePhase) {
         if (handled === false) throw httpError(404, "Page not found.");
         return;
       }
-      if (url.pathname === "/enroll" || url.pathname === "/enroll/continue") {
-        if (!enrollment || !session.enrollmentTicket)
-          throw httpError(400, "Open your 4orm invite link again.");
-        if (request.method === "POST" && url.pathname === "/enroll/continue") {
-          rateLimit(`enrollment:${session.userId}`);
-          const destination = await enrollment.continue(
-            session.enrollmentTicket,
-            profile,
-          );
-          delete session.enrollmentTicket;
-          redirect(destination);
-          return;
-        }
-        if (request.method === "GET" && url.pathname === "/enroll") {
-          await enrollment.pending(session.enrollmentTicket);
-          await sendRemix((nonce) => renderEnrollment(context, profile, nonce));
-          return;
-        }
-      }
       throw httpError(404, "Page not found.");
     } catch (error) {
       const expected = error.status && error.status < 500;
@@ -668,6 +612,7 @@ const browserRouter = createBrowserRouter(handleBrowser, {
   accessRoutes,
   supportRoutes: supportBrowserRoute,
   loginRoutes,
+  enrollmentRoutes,
 });
 const fetchRequest = (request) => {
   const path = new URL(request.url).pathname;

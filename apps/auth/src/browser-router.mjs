@@ -4,6 +4,8 @@ import { route } from "remix/routes";
 const routes = route({
   login: "/login",
   logout: "/logout",
+  enroll: "/enroll",
+  enrollContinue: "/enroll/continue",
   account: "/account",
   email: "/account/email",
   password: "/account/password",
@@ -34,6 +36,7 @@ export function createBrowserRouter(
     accessRoutes,
     supportRoutes,
     loginRoutes,
+    enrollmentRoutes,
   },
 ) {
   const router = createRouter();
@@ -44,6 +47,12 @@ export function createBrowserRouter(
       },
       logout({ request }) {
         return handle(request, loginRoutes.logout, "public");
+      },
+      enroll({ request }) {
+        return handle(request, enrollmentRoutes.enroll, "enrollment");
+      },
+      enrollContinue({ request }) {
+        return handle(request, enrollmentRoutes.continue);
       },
       account({ request }) {
         return handle(request, accountRoutes.account);
