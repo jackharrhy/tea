@@ -1,7 +1,8 @@
 import { GurgurWorld } from "./world";
+import type { Handle } from "remix/component";
 import { documentStyles } from "./styles";
 
-export function GurgurPage() {
+export function GurgurPage(handle: Handle<{ nonce?: string }>) {
   return () => (
     <html lang="en" mix={documentStyles}>
       <head>
@@ -12,7 +13,11 @@ export function GurgurPage() {
       </head>
       <body>
         <GurgurWorld />
-        <script type="module" src="/assets/game.js" />
+        <script
+          type="module"
+          src="/assets/game.js"
+          nonce={handle.props.nonce}
+        />
       </body>
     </html>
   );
