@@ -9,6 +9,8 @@ import { createMarkdownRenderer } from "../app/content/markdown.ts";
 import { resolveWikiLink } from "../app/content/garden-routing.mjs";
 import { createGarden } from "../app/router.tsx";
 import { exportSnapshot } from "../app/content/publish.ts";
+import { createHash } from "node:crypto";
+import { importMapHash } from "../app/ui/csp.ts";
 import type { GardenConfig } from "../app/config.ts";
 
 async function fixture(t: { after: (callback: () => Promise<void>) => void }) {
@@ -170,6 +172,19 @@ test("HTTP pages, feeds, tools, assets and production boundaries", async (t) => 
     production.router.fetch(`https://example.test${pathname}`);
   const plain = await request("/");
   const html = await plain.text();
+  const importMap = html.match(
+    /<script[^>]*type="importmap"[^>]*>([^<]+)<\/script>/,
+  )?.[1];
+  assert.ok(importMap);
+  assert.equal(
+    createHash("sha256").update(importMap).digest("base64"),
+    importMapHash,
+  );
+  assert.ok(
+    plain.headers
+      .get("Content-Security-Policy")
+      ?.includes(`'sha256-${importMapHash}'`),
+  );
   const compressed = await production.router.fetch(
     new Request("https://example.test/?ignored=cache-key", {
       headers: { "Accept-Encoding": "gzip;q=0.5" },
@@ -177,6 +192,10 @@ test("HTTP pages, feeds, tools, assets and production boundaries", async (t) => 
   );
   assert.equal(compressed.headers.get("Content-Encoding"), "gzip");
   assert.equal(compressed.headers.get("Vary"), "Accept-Encoding");
+  assert.equal(
+    compressed.headers.get("Content-Security-Policy"),
+    plain.headers.get("Content-Security-Policy"),
+  );
   assert.equal(
     gunzipSync(Buffer.from(await compressed.arrayBuffer())).toString(),
     html,
