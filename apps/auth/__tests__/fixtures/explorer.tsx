@@ -26,7 +26,7 @@ const panel = css({
   "& select, & button": { minHeight: "44px" },
   "& output": { display: "block", fontSize: "12px", marginTop: "12px" },
 });
-export const choices = {
+const choices = {
   layer: {
     webgl: "WebGL only",
     plain: "Plain / no effect",
