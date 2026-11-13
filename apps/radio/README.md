@@ -34,6 +34,10 @@ authenticated listeners can create additional persistent rooms.
 Client assets are prebuilt into ignored `dist/client/` files because a Worker has no source
 filesystem from which `remix/assets` can compile modules on demand.
 
+Remix 3.2 gives each HTML document a fresh CSP nonce for generated styles and
+the browser entry. HTML is private and no-store; the policy permits the
+same-origin room WebSocket, media playback, and computed player style values.
+
 Useful commands:
 
 ```sh

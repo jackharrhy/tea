@@ -156,9 +156,13 @@ const glyphCandidates = [
   ["remove", "close"],
 ] as const;
 
-export function KitchenSinkPage() {
+export function KitchenSinkPage(handle: Handle<{ nonce: string | undefined }>) {
   return () => (
-    <Document title="UI · radio" head={<KitchenSinkHead />}>
+    <Document
+      title="UI · radio"
+      head={<KitchenSinkHead />}
+      nonce={handle.props.nonce}
+    >
       <main mix={[desktopThemeStyle, sinkStyle.page]}>
         <header mix={sinkStyle.toolbar}>
           <strong>radio/ui</strong>

@@ -6,13 +6,14 @@ export interface DocumentProps {
   children?: RemixNode;
   head?: RemixNode;
   title?: string;
+  nonce: string | undefined;
 }
 
 const DEFAULT_TITLE = "radio";
 
 export function Document(handle: Handle<DocumentProps>) {
   return () => {
-    let { children, head, title = DEFAULT_TITLE } = handle.props;
+    let { children, head, title = DEFAULT_TITLE, nonce } = handle.props;
 
     return (
       <html lang="en">
@@ -32,7 +33,11 @@ export function Document(handle: Handle<DocumentProps>) {
           })}
         >
           {children}
-          <script type="module" src={browserAssets.entry}></script>
+          <script
+            type="module"
+            src={browserAssets.entry}
+            nonce={nonce}
+          ></script>
         </body>
       </html>
     );

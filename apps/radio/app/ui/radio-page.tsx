@@ -7,10 +7,18 @@ import { desktopColor, desktopThemeStyle } from "./desktop/theme.ts";
 import { Document } from "./document.tsx";
 
 export function RadioPage(
-  handle: Handle<{ snapshot: RoomSnapshot; roomName: string }>,
+  handle: Handle<{
+    snapshot: RoomSnapshot;
+    roomName: string;
+    nonce: string | undefined;
+  }>,
 ) {
   return () => (
-    <Document title={`${handle.props.roomName} · radio`} head={<RadioHead />}>
+    <Document
+      title={`${handle.props.roomName} · radio`}
+      head={<RadioHead />}
+      nonce={handle.props.nonce}
+    >
       <main mix={[desktopThemeStyle, pageStyle]}>
         <RadioRoom
           initialSnapshot={handle.props.snapshot}

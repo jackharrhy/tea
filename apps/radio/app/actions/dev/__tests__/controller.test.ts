@@ -59,4 +59,12 @@ it("renders the development kitchen sink with representative radio states", asyn
   assert.match(html, /Naked Flames - Undisputed Altitude/);
   assert.match(html, />Yves</);
   assert.match(html, /name="robots" content="noindex, nofollow"/);
+  const policy = response.headers.get("Content-Security-Policy") ?? "";
+  const nonce = /script-src[^;]*'nonce-([^']+)'/.exec(policy)?.[1];
+  assert.ok(nonce);
+  assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+  assert.match(policy, /ws:\/\/localhost/);
+  assert.match(policy, /style-src-attr 'unsafe-inline'/);
+  assert.doesNotMatch(policy, /script-src[^;]*unsafe-inline/);
+  assert.ok(html.includes(`nonce="${nonce}"`));
 });

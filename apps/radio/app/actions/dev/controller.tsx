@@ -1,4 +1,5 @@
 import { createController } from "remix/router";
+import { getCspNonce } from "remix/middleware/csp";
 
 import { routes } from "../../routes.ts";
 import { KitchenSinkPage } from "./kitchen-sink-page.tsx";
@@ -10,7 +11,7 @@ export default createController(routes.dev, {
         return new Response("Not Found", { status: 404 });
       }
 
-      return context.render(<KitchenSinkPage />);
+      return context.render(<KitchenSinkPage nonce={getCspNonce(context)} />);
     },
   },
 });
