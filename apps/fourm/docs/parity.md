@@ -1,107 +1,67 @@
-# Faithful migration rework
+# Faithful migration review
 
-The Python product is the implementation oracle. The original fixture candidate
-was not accepted as faithful parity. `coverage.md` lists unfinished implementation
-work, not accepted exclusions. No production migration is authorized.
+The existing Python product is the implementation oracle. The native candidate
+uses the same private production-content cohort: 62 members, 22 pages and 146
+media assets. It preserves original IDs, ownership, customization and explicit
+identity links. The Tailnet preview now serves that real-content copy behind
+private access; it no longer serves the original synthetic POC.
 
-The first corrected pass restores the original shell stylesheet, original profile
-panels/custom-content placement, and guestbook's bare iframe document with saved
-owner CSS/HTML. It does not add guestbook/navigation widgets to members' pages.
-The large-page storage adaptation preserves an existing 2.75 MB page without
-increasing Celld's SQLite limits: bounded Unicode-safe chunks reassemble into the
-original content field on read, edit and archive export.
+Production is untouched. Authentication uses a declared isolated fixture alias,
+not production SSO. Passwords, tokens, browser sessions, push endpoints, mail
+credentials and unconsumed enrollment jobs are excluded. Completed enrollment
+history is retained. No publication, integration merge or cutover is authorized.
 
-Private state and evidence belong outside Git. The source-owned hourly backup
-provides the cohort. `scripts/parity/snapshot.py BACKUP_DIRECTORY NEW_PRIVATE_DIR`
-opens its SQLite read-only, builds a separate credential-free database, copies
-indexed media bytes rather than shared hardlinks, and records counts/checksums.
-It blanks passwords, replaces invite codes, and excludes retired credentials,
-push endpoints and live enrollment jobs. Do not use the original raw database as
-a writable app mount. Keep the original links and content untouched in that copy.
+## Verified scope
 
-A separately declared review-only identity alias may be added to a second private
-copy for signed local-provider testing. It is not production SSO or a production
-identity change. Preserve original issuer/subject rows and account for the alias
-separately. The Python oracle uses its own private code/database copy, no real
-credentials, disabled backup scheduler and loopback-only server egress.
+Paired desktop/mobile browser workflows cover original home cards, profiles,
+embedded guestbook, settings save/reopen, widgets/playlists, pages, media,
+forum/chat and selected admin workflows. The guestbook remains in the original
+profile/widget context. Source CSS, browser helpers, HTMX and CodeMirror are
+served locally. These are bounded workflow checks, not every customization or
+error path. `coverage.md` records current limitations.
 
-The current real-content native store is loopback-only. Existing Tailnet preview
-still contains the older fixture cohort; it must not be called corrected review
-readiness. Before replacing it, preserve user-added review data, finish parity,
-and protect all real-content preview requests (including media) behind explicit
-private review access. Do not expose imported member content anonymously.
+The corrected pair passed field-for-field accounting of all 18 transfer tables
+and all 146 media assets, including MIME, validators and modification times.
+Native scheduled capture and cold restore preserved 30 managed tables and those
+assets. Interrupted username relocation resumes after authority restore, retaining
+IDs and bytes. The released Go CLI passed actual browser login and native API,
+refresh and revocation flows with a caged fixture issuer.
 
-## Verified so far
+The private preview remaps hardcoded production asset origins and serves the
+lettering page's fixed gifenc dependency locally. Saved member content remains
+unchanged. Those transport accommodations do not establish support for every
+external dependency in a future deployment.
 
-Paired desktop/mobile runs use the same imported member/content cohort. The home
-card order and content, profile guestbook placement, guestbook entries, settings
-sections, controls and saved values match the oracle. Actual browser workflows
-cover CSS and guestbook styling save/reopen, notification preferences, playlist
-add/move/remove, page create/edit/reopen/delete, and signing/deleting an entry
-inside the profile's guestbook iframe without navigating the parent. These are
-local review identities acting on copies, not production SSO.
+## Counter ingress
 
-The source's browser helpers and CodeMirror editor are built in this workspace.
-HTMX is the same pinned version, served locally for the isolated comparison.
-Only the private oracle's base and bare-guestbook template copies replace the CDN
-URL with that byte-identical local file. The embedded workflow asserts no iframe
-reload, so fallback form navigation cannot masquerade as the enhanced behavior.
-Browser logs retain blocked remote requests and normal media cancellations;
-script exceptions and unexpected local transport failures fail the comparison.
-The five-minute chat badge uses the source's seeded choices. Raw profile metadata
-is inserted before member scripts; simple/css-only layouts retain their original
-composition. More real-content layout coverage is still required.
+The preview proxy signs source-IP counter context using a dedicated private key.
+The Worker verifies its signature, request method/path and freshness before
+hashing the IP for the original per-member cooldown. Raw forwarding headers and
+browser cookies cannot substitute for that proof. The proxy strips any supplied
+proof header and takes the IP only from the trusted Tailnet Serve boundary.
 
-Run `npm run test:parity --workspace @harrhy/fourm` with the owned oracle and native
-listeners running. `FOURM_PARITY_WRITES=1` includes the controlled local-copy edits
-and restores existing values. Evidence stays outside Git in the private parity
-root. The native readiness fingerprint must match both its supervisor receipt and
-the current app sources; a stale worker cannot satisfy the comparison.
+`COUNTER_PEER_KEY` configures verification in the Worker. The private runner reads
+it from `FOURM_REVIEW_COUNTER_PEER_KEY_FILE`; the proxy reads the same dedicated
+file through `counterPeerKeyFile`. Do not reuse enrollment, identity or review
+access keys. Configured Workers fail closed on missing/invalid proof. Unconfigured
+local fixtures retain cookie attribution, which is not source-IP parity. A future
+Harrhy ingress must wire a trusted signer before claiming that parity. Never
+expose an unsigned backend as the public counter ingress.
 
-Media delivery now supports bounded/suffix/open-ended ranges, merged and multipart
-ranges, HEAD, conditional requests and If-Range. A running-app comparison checks
-actual imported audio/video/image bytes against Python. Celld deliberately frames
-GET streams as chunked and drops their Content-Length; HEAD retains representation
-length. The filename-based MIME registry is captured from the production Python
-runtime, rather than the oracle host's larger OS registry. All 146 assets match
-production's MIME, size, Last-Modified and ETag through read-only HEAD checks.
-Archives preserve original modification times, opaque validators and nanosecond
-precision. Real-content backup, fresh restore, replay and cache-free authority
-reopen verify those fields. Public media retains the source cache policy.
+## Review and remaining work
 
-The source media-library composition and upload/rename/alt/delete forms are ported,
-including quick upload and original filename/extension rules. Username moves keep
-member, media and identity-link IDs, move only the source username's owned prefix,
-and leave saved content URLs untouched, as Python does. Durable media moves have
-two phases: copy destinations while retaining original metadata, then atomically
-commit paths/username and clean up old keys. SQLite reserves source/destination
-paths and the new username until cleanup completes. Conflicting uploads, deletes
-and enrollment claims cannot race the move. Alarms resume persisted work after a
-restart; bounded per-file reads precede writes on the same local R2 authority.
+The current Tailnet copy retains Jack's review activity. Do not reseed it or copy
+large cohorts for routine checks. Private source snapshots, runtime state and
+browser evidence stay outside Git. Existing paired runners operate on their
+owned test copies, not the human-review store.
 
-Paired desktop/mobile browser workflows exercise upload, alt text, file rename,
-delete and username save/reopen, then restore original paths/settings. An actual
-interrupted 33-file move recovered through the durable alarm after cold start;
-all 146 original asset hashes were checked after restoring the original username.
-Persistence tests also cover an uncertain object write, cleanup interruption,
-foreign destination protection, and late upload completion after cleanup claims it.
+Native Web Push remains blocked by Celld 0.6.2 raw P-256 import/export behavior;
+SPKI/PKCS#8 ECDH, AES-GCM and VAPID primitives work, but native delivery does not.
+VAPID keys remain unset. No notification success is claimed. Broader layout and
+moderation/validation review remains bounded by actual gaps or user reports.
 
-## Still required
-
-Final corrected snapshot adoption, notifications and
-watch behavior, source admin/export workflows, forum quotes/pagination, chat,
-and every original widget rendering/configuration path remain implementation and
-verification work. Source validation/error paths and JSON contracts need the same
-care as positive browser flows. Recheck all real layouts and perform full
-real-content authority reopen, import/replay and recovery before review readiness.
-The earlier POC browser runner is not proof of the corrected workflow threshold.
-
-The snapshot builder now retains completed enrollment/profile history and records
-excluded row counts. Unconsumed enrollment state, production push endpoints and
-credentials remain excluded. The corrected cohort retains one completed enrollment
-and excludes two unconsumed continuations; adopting it in both final review stores
-is still required. Files are independent copies with preserved stat metadata.
-
-Offline source export uses installed Python's standard library for source-compatible
-filesystem metadata; the native Worker has no Python or network dependency at startup.
-`FOURM_MIGRATION_PYTHON` selects that offline tool when needed.
+`npm run test:parity --workspace @harrhy/fourm` requires its configured owned
+oracle/native listeners. `FOURM_PARITY_WRITES=1` edits only those disposable test
+copies and restores existing values. Match the running source fingerprint before
+using results. Do not treat an old runner or synthetic POC receipt as current
+whole-migration acceptance.
