@@ -16,13 +16,16 @@ const routes = route({
   endSession: "/account/sessions/end",
   manage: "/manage",
   manageRest: "/manage/*path",
+  supportStart: "/manage/people/:id/support",
+  supportHandoff: "/support/handoff",
+  supportCallback: "/support/callback",
   root: "/",
   rest: "/*path",
 });
 
 export function createBrowserRouter(
   handle,
-  { accountRoutes, oauthRoutes, emailRoutes, accessRoutes },
+  { accountRoutes, oauthRoutes, emailRoutes, accessRoutes, supportRoutes },
 ) {
   const router = createRouter();
   router.map(routes, {
@@ -68,6 +71,15 @@ export function createBrowserRouter(
       },
       manageRest({ request }) {
         return handle(request, accessRoutes);
+      },
+      supportStart({ request }) {
+        return handle(request, supportRoutes);
+      },
+      supportHandoff({ request }) {
+        return handle(request, supportRoutes);
+      },
+      supportCallback({ request }) {
+        return handle(request, supportRoutes);
       },
       root({ request }) {
         return handle(request, accessRoutes);

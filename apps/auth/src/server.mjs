@@ -331,6 +331,7 @@ const oauthRoutes = createOAuthBrowserRoutes({
   renderDeviceCode,
   renderDeviceResult,
 });
+const supportBrowserRoute = (input) => supportRoutes?.browser(input) ?? false;
 
 async function handleBrowser(request, routeAction, routePhase) {
   const url = new URL(request.url);
@@ -660,20 +661,6 @@ async function handleBrowser(request, routeAction, routePhase) {
         sessions.delete(session.id);
         throw httpError(403, "This account is not active.");
       }
-      if (
-        supportRoutes &&
-        (await supportRoutes.browser({
-          request,
-          url,
-          form,
-          context,
-          redirect,
-          send,
-          sendRemix,
-          setPolicy: (value) => headers.set("Content-Security-Policy", value),
-        }))
-      )
-        return;
       if (routeAction) {
         const handled = await routeAction({
           request,
@@ -686,6 +673,7 @@ async function handleBrowser(request, routeAction, routePhase) {
           send,
           sendRemix,
           redirect,
+          setPolicy: (value) => headers.set("Content-Security-Policy", value),
         });
         if (handled === false) throw httpError(404, "Page not found.");
         return;
@@ -743,6 +731,7 @@ const browserRouter = createBrowserRouter(handleBrowser, {
   oauthRoutes,
   emailRoutes,
   accessRoutes,
+  supportRoutes: supportBrowserRoute,
 });
 const fetchRequest = (request) => {
   const path = new URL(request.url).pathname;
