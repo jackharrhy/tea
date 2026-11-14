@@ -19,10 +19,9 @@ git fetch origin main
 mkdir -p .worktrees
 git worktree add -b <task> .worktrees/<task> origin/main
 cd .worktrees/<task>
-npm ci
 ```
 
-Use the repository's Node version. Read the affected workspace's README and `AGENTS.md`. Keep dependencies, build output, and runtime state inside this worktree; choose separate server ports and Compose project names.
+Read the affected workspace's README and `AGENTS.md`. Use the existing toolchain and cheapest appropriate checks. Install dependencies with `npm ci` only when needed, using the repository's Node version. Docs and static edits do not need a full Compose stack, remote preview, or toolchain installation. Start only needed services; keep dependencies, build output, and runtime state isolated, with distinct ports and Compose project names.
 
 ## Merge
 
@@ -39,7 +38,7 @@ Verify all expected checks passed on that head and review the diff. Within owner
 gh pr merge <pr> --squash --match-head-commit <verified-head-sha>
 ```
 
-Notify Harrhy with the PR, merge commit, checks, and runtime follow-up.
+If a requesting or coordinating agent exists, send it the PR, result, and any runtime follow-up.
 
 ## Remove
 
