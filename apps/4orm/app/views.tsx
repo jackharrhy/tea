@@ -69,7 +69,7 @@ export function Document(
               </>
             ) : (
               <>
-                <a href="/login">login</a>
+                <a href="/login">Sign in</a>
                 <a href="/register">register</a>
               </>
             )}
@@ -548,7 +548,7 @@ export function Chat(
           </form>
         ) : (
           <p class="muted fourm-chat-empty">
-            <a href="/login">sign in</a> to chat
+            <a href="/login">Sign in</a> to chat
           </p>
         )}
       </div>

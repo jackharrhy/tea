@@ -17,7 +17,7 @@ try {
     page.on("pageerror", () => errors.push("browser error"));
     try {
       await page.goto(origin);
-      await page.getByRole("link", { name: "sign in", exact: true }).click();
+      await page.getByRole("link", { name: "Sign in", exact: true }).click();
       await page
         .getByRole("button", { name: "Continue as local user", exact: true })
         .click();

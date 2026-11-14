@@ -53,7 +53,7 @@ try {
       assert.equal(await page.locator(".chat-input").count(), 0);
       assert.equal(
         await page.locator('.fourm-chat-empty a[href="/login"]').textContent(),
-        "sign in",
+        "Sign in",
       );
       capture[name] = await page.evaluate(() => ({
         messages: [...document.querySelectorAll(".chat-msg")].map((m) => ({
