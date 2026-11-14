@@ -185,7 +185,7 @@ try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   await page.goto(origin);
-  await page.getByRole("link", { name: "Sign in with Jack Auth" }).click();
+  await page.getByRole("link", { name: "Sign in" }).click();
   await page.getByRole("button", { name: "Continue as local user" }).click();
   await page.getByText("Renamed board").waitFor();
   await page.goto(`${origin}/boards/${first.boardId}`);

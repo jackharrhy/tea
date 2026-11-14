@@ -51,22 +51,9 @@ export const refStyles = css({
     "text-align": "center",
   },
   "& .auth-form .wordmark": {
-    display: "inline-block",
+    display: "block",
     "font-size": "clamp(52px, 12vw, 72px)",
-    "margin-bottom": "52px",
-  },
-  "& .auth-intro h1": {
-    margin: "0 0 14px",
-    "font-size": "clamp(27px, 5vw, 34px)",
-    "font-weight": "650",
-    "letter-spacing": "-0.035em",
-    "line-height": "1.15",
-  },
-  "& .auth-intro p": {
-    margin: "0 0 28px",
-    color: "#565b55",
-    "font-size": "15px",
-    "line-height": "1.55",
+    margin: "0 0 32px",
   },
   "& .auth-link": {
     "--ui-action-min-height": "46px",

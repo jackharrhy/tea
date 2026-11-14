@@ -45,7 +45,8 @@ it("renders the development kitchen sink with representative radio states", asyn
   assert.match(html, /signed out/);
   assert.match(html, /aria-label="Rooms"/);
   assert.match(html, /name="room" value="cozy"[^>]*data-selected="true"/);
-  assert.match(html, /Sign in with Jack Auth/);
+  assert.match(html, />Sign in<\/a>/);
+  assert.doesNotMatch(html, /Jack\s*Auth/i);
   assert.doesNotMatch(html, /placeholder="password"/);
   assert.doesNotMatch(html, /Choose a room and enter a name/);
   assert.doesNotMatch(html, /type="radio"/);

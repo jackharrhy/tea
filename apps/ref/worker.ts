@@ -37,7 +37,7 @@ export default {
       try {
         publicOrigin = new URL(env.AUTH_PUBLIC_ORIGIN);
       } catch {
-        return new Response("Jack Auth is not configured", { status: 503 });
+        return new Response("Sign-in is not configured", { status: 503 });
       }
     }
     if (
@@ -56,7 +56,7 @@ export default {
         )) ||
       publicOrigin.origin !== env.AUTH_PUBLIC_ORIGIN
     )
-      return new Response("Jack Auth is not configured", { status: 503 });
+      return new Response("Sign-in is not configured", { status: 503 });
     if (url.pathname === "/.well-known/oauth-protected-resource/api/archive") {
       return Response.json(
         {

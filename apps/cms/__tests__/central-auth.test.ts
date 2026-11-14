@@ -83,14 +83,14 @@ it("requires reviewed local links and rejects old CMS password sessions in Centr
       ).status,
       303,
     );
-    assert.match(
-      await (await get("https://operator.example.test/login")).text(),
-      /Sign in with Jack Auth/,
-    );
-    assert.match(
-      await (await get("https://andrew.example.test/tea/login")).text(),
-      /Sign in with Jack Auth/,
-    );
+    for (const login of [
+      "https://operator.example.test/login",
+      "https://andrew.example.test/tea/login",
+    ]) {
+      const html = await (await get(login)).text();
+      assert.match(html, /href="[^"]*\/auth\/login"[^>]*>Sign in<\/a>/);
+      assert.doesNotMatch(html, /Jack\s*Auth/i);
+    }
     const metadata = await get(
       "https://andrew.example.test/.well-known/oauth-protected-resource/tea/mcp",
     );

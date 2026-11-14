@@ -32,7 +32,7 @@ export function Login(
           )}
           {handle.props.central ? (
             <a href="/auth/login" className="button primary" data-rmx-document>
-              Sign in with Jack Auth
+              Sign in
             </a>
           ) : (
             <form method="post" action="/login" data-rmx-document>

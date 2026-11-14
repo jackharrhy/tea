@@ -540,7 +540,8 @@ test("unlinked support target ends the redeemed token and shows a clean actionab
   expect(problem.headers.get("Referrer-Policy")).toBe("no-referrer");
   const page = await problem.text();
   expect(page).toContain("does not have an Artbin account");
-  expect(page).toContain("Return to Jack Auth");
+  expect(page).toContain("Return to people");
+  expect(page).not.toMatch(/Jack\s*Auth/i);
 });
 
 test.runIf(process.env.ARTBIN_SUPPORT_BROWSER_TEST === "1")(

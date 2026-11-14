@@ -46,7 +46,7 @@ export function PoolPage(handle: Handle<{ nonce?: string }>) {
               </button>
             </div>
             <a id="sign-in" href="/auth/login" hidden>
-              Sign in with Jack Auth
+              Sign in
             </a>
           </form>
           <section id="table-ui" hidden aria-label="Pool table">

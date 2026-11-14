@@ -89,6 +89,8 @@ test("local issuer isolates browser and native grants, rotating refresh and revo
     const page = await fetch(authorize(first.callback)).then((response) =>
       response.text(),
     );
+    assert.match(page, /<h1>Local sign-in<\/h1>/);
+    assert.doesNotMatch(page, /Jack\s*Auth/i);
     const ticket = /name="ticket" value="([A-Za-z0-9_-]+)"/.exec(page)?.[1];
     assert.ok(ticket);
     const confirmed = await fetch(`${issuer}/dev/continue`, {

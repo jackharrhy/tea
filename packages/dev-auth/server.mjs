@@ -165,7 +165,7 @@ const server = createServer(async (request, response) => {
           "X-Content-Type-Options": "nosniff",
         })
         .end(
-          `<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local Jack Auth</title><style>body{font:16px system-ui;background:#f6f6f4;color:#222321;min-height:100dvh;display:grid;place-items:center;margin:0}main{max-width:24rem;padding:2rem}h1{font-size:2rem;letter-spacing:-.04em}p{line-height:1.5}button{background:#292d29;color:white;border:0;border-radius:5px;padding:.8rem 1.2rem;font:inherit;cursor:pointer}</style><main><h1>Local Jack Auth</h1><p>Use a disposable identity in this isolated development store.</p><form method="post" action="/dev/continue"><input type="hidden" name="ticket" value="${ticket}"><button type="submit">Continue as local user</button></form></main></html>`,
+          `<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local sign-in</title><style>body{font:16px system-ui;background:#f6f6f4;color:#222321;min-height:100dvh;display:grid;place-items:center;margin:0}main{max-width:24rem;padding:2rem}h1{font-size:2rem;letter-spacing:-.04em}p{line-height:1.5}button{background:#292d29;color:white;border:0;border-radius:5px;padding:.8rem 1.2rem;font:inherit;cursor:pointer}</style><main><h1>Local sign-in</h1><p>Use a disposable identity in this isolated development store.</p><form method="post" action="/dev/continue"><input type="hidden" name="ticket" value="${ticket}"><button type="submit">Continue as local user</button></form></main></html>`,
         );
       return;
     }
