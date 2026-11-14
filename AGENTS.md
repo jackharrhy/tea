@@ -11,7 +11,7 @@ Harrhy is a Remix 3 monorepo of independently deployable apps and importable pac
 
 ## Parallel task workflow
 
-Read the [worktrees skill](.agents/skills/worktrees/SKILL.md) before creating, operating, or removing task worktrees. This explicit pointer applies even when your tool does not automatically discover repository skills.
+Read the [worktrees skill](.agents/skills/worktrees/SKILL.md) before creating or removing task worktrees.
 
 Use a separate branch and worktree for each bounded task, starting from freshly fetched `origin/main`. The shared main checkout is not an editing hub. Agents may create their own worktrees, push PRs, and review and merge their own owner-authorized work; no coordinator permission, locks, holds, or central ownership registry is required.
 
