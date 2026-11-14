@@ -4,8 +4,10 @@ Read the root AGENTS.md and this app's README. Keep 4orm behavior, routes,
 storage and tests in this app. Use Remix 3 and explicit Celld bindings. Never
 proxy back to Python to conceal missing ported behavior.
 
-This is a review candidate maintained in the primary Harrhy checkout on a
-candidate-derived working branch, not an accepted production replacement.
+This is a review candidate whose source is merged into Harrhy main, not an
+accepted production replacement. The preserved private runtime remains on a
+pushed candidate checkpoint in the primary checkout; do not reset that checkout
+to synchronize source or disturb its ignored state.
 Do not change live Python 4orm, production Auth, or another app's storage. The explicitly
 authorized parity review uses sanitized private content copies; keep them ignored
 and out of public artifacts. Never import production credentials, sessions or live
