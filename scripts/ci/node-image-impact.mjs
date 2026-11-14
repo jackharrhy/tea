@@ -79,7 +79,7 @@ export function selectNodeImages({
         return true;
       if (
         !sources.length ||
-        sources.some((source) => /[\[\]"'$*?\\]/.test(source))
+        sources.some((source) => /[[\]"'$*?\\]/.test(source))
       )
         return true;
       if (

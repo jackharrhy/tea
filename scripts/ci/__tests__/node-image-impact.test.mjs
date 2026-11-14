@@ -130,7 +130,7 @@ test("comparison reads both Dockerfile revisions and falls back on errors", () =
   assert.ok(
     reads.some((args) => args.includes("--no-renames") && args.includes("-z")),
   );
-  for (const read of [
+  for (const failingRead of [
     () => {
       throw new Error("missing base");
     },
@@ -140,7 +140,7 @@ test("comparison reads both Dockerfile revisions and falls back on errors", () =
     assert.deepEqual(
       selectNodeImagesFromCommits({
         before: "base",
-        read,
+        read: failingRead,
         warn: (text) => warnings.push(text),
       }),
       nodeImageApps,
@@ -149,17 +149,26 @@ test("comparison reads both Dockerfile revisions and falls back on errors", () =
   }
 });
 
+function unexpectedRead() {
+  throw new Error("must not read");
+}
+
+function malformedLockRead(args) {
+  return args[0] === "diff"
+    ? "apps/auth/src/server.mjs\0"
+    : args[1].endsWith("package-lock.json")
+      ? "{}"
+      : "COPY apps/auth ./app";
+}
+
 test("manual, missing and zero bases check all without comparing; no diff is a noop", () => {
-  const read = () => {
-    throw new Error("must not read");
-  };
   for (const args of [
     { event: "workflow_dispatch", before: "base" },
     {},
     { before: "0000" },
   ])
     assert.deepEqual(
-      selectNodeImagesFromCommits({ ...args, read }),
+      selectNodeImagesFromCommits({ ...args, read: unexpectedRead }),
       nodeImageApps,
     );
   assert.deepEqual(
@@ -169,14 +178,12 @@ test("manual, missing and zero bases check all without comparing; no diff is a n
 });
 
 test("malformed lock data conservatively checks every image through the entry point", () => {
-  const read = (args) =>
-    args[0] === "diff"
-      ? "apps/auth/src/server.mjs\0"
-      : args[1].endsWith("package-lock.json")
-        ? "{}"
-        : "COPY apps/auth ./app";
   assert.deepEqual(
-    selectNodeImagesFromCommits({ before: "base", read, warn: () => {} }),
+    selectNodeImagesFromCommits({
+      before: "base",
+      read: malformedLockRead,
+      warn: () => {},
+    }),
     nodeImageApps,
   );
 });
