@@ -1,6 +1,69 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { directoryFor } from "../src/directory.mjs";
+import { readFileSync } from "node:fs";
+import { createAccessStore } from "../src/access-store.mjs";
+
+test("configured Seerr directory uses existing media membership without claiming native setup", (t) => {
+  const services = JSON.parse(
+    readFileSync(new URL("../config/services.json", import.meta.url)),
+  );
+  const applications = JSON.parse(
+    readFileSync(new URL("../config/applications.json", import.meta.url)),
+  );
+  const media = services.find(
+    (service) => service.id === "jellyfin",
+  ).eligibility;
+  const access = createAccessStore({
+    filename: ":memory:",
+    applications,
+    services,
+  });
+  t.after(() => access.close());
+  access.bootstrap({ administrator: "fixture-owner", grants: [] });
+  const input = {
+    services,
+    applications,
+    access,
+    subject: "fixture-member",
+    grants: [
+      {
+        userId: "fixture-member",
+        projectId: media.projectId,
+        state: "USER_GRANT_STATE_ACTIVE",
+        roleKeys: ["member"],
+      },
+    ],
+  };
+  const result = directoryFor(input);
+  const seerr = result.find((service) => service.id === "seerr");
+  assert(seerr);
+  assert.equal(seerr.setupRequired, true);
+  assert.equal(seerr.status, "Setup required");
+  assert(
+    !result.some((service) =>
+      [
+        "sonarr",
+        "radarr",
+        "prowlarr",
+        "cleanuparr",
+        "qbittorrent",
+        "slskd",
+      ].includes(service.id),
+    ),
+  );
+  for (const grant of [
+    { ...input.grants[0], roleKeys: ["admin"] },
+    { ...input.grants[0], userId: "other-subject" },
+    { ...input.grants[0], projectId: "other-project" },
+    { ...input.grants[0], state: "USER_GRANT_STATE_INACTIVE" },
+  ])
+    assert(
+      !directoryFor({ ...input, grants: [grant] }).some(
+        (service) => service.id === "seerr",
+      ),
+    );
+});
 
 test("directory distinguishes entitlement, setup, opt-in and public from hidden integrations", () => {
   const services = [

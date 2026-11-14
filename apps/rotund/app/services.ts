@@ -58,6 +58,8 @@ export function parseBindings(value: string): Binding[] {
   const bindings = parsed as Binding[];
   const ids = new Set(bindings.map((binding) => binding?.id));
   const mediaAdmin = bindings.find((binding) => binding?.id === "sonarr");
+  const seerr = bindings.find((binding) => binding?.id === "seerr");
+  const jellyfin = bindings.find((binding) => binding?.id === "jellyfin");
   if (
     ids.size !== bindings.length ||
     !existingIds.every((id) => ids.has(id)) ||
@@ -75,8 +77,11 @@ export function parseBindings(value: string): Binding[] {
         (binding.allowedSubject !== undefined &&
           (typeof binding.allowedSubject !== "string" ||
             !binding.allowedSubject)) ||
-        (["seerr", "slskd"].includes(binding.id) && !binding.allowedSubject),
+        (binding.id === "slskd" && !binding.allowedSubject),
     ) ||
+    (seerr &&
+      !seerr.allowedSubject &&
+      (!jellyfin || !sameAccess(seerr, jellyfin))) ||
     bindings.some(
       (binding) =>
         ["cleanuparr", "slskd"].includes(binding.id) &&
