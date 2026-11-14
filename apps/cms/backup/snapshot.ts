@@ -33,8 +33,7 @@ function safeRelative(path: string) {
   if (
     !path ||
     path.includes(String.fromCharCode(92)) ||
-    path.split("/").some((p) => !p || p === "." || p === "..") ||
-    path.startsWith("/")
+    path.split("/").some((p) => !p || p === "." || p === "..")
   )
     throw new Error("Invalid backup relative path");
   return path;
@@ -111,7 +110,6 @@ export async function validateSnapshot(root: string): Promise<Manifest> {
     )
       throw new Error("Invalid file manifest");
     names.add(file.path);
-    // inventory rejects symlinks, including a replaced parent directory.
   }
   const actual = await inventory(root);
   if (
@@ -219,7 +217,6 @@ export async function captureSnapshot(
     const info = await lstat(databasePath);
     if (
       !info.isFile() ||
-      info.isSymbolicLink() ||
       !(await realpath(databasePath)).startsWith((await realpath(data)) + "/")
     )
       throw new Error("Invalid source database path");

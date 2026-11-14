@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { dependencyClosure, selectPublishedApps } from "./publish-impact.mjs";
+import { dependencyClosure } from "./publish-impact.mjs";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 export const nodeImageApps = [
@@ -34,36 +34,21 @@ export function selectNodeImages({
       if (!lock.packages[`apps/${app}`])
         throw new Error(`Missing lock entry for ${app}`);
   }
+  const workspaces = paths.map((path) => path.split("/").slice(0, 2).join("/"));
   if (
-    paths.some((path) => {
-      const workspace = path.split("/").slice(0, 2).join("/");
-      return !beforeLock.packages[workspace] && !afterLock.packages[workspace];
-    })
+    workspaces.some(
+      (workspace) =>
+        !beforeLock.packages[workspace] && !afterLock.packages[workspace],
+    )
   )
     return [...nodeImageApps];
-  const published = new Set(
-    selectPublishedApps({
-      apps: nodeImageApps,
-      paths,
-      beforeLock,
-      afterLock,
-      beforeRoot: {},
-      afterRoot: {},
-    }),
-  );
   return nodeImageApps.filter((app) => {
     const dockerfile = dockerfiles[app];
     if (typeof dockerfile !== "string")
       throw new Error(`Missing Dockerfile for ${app}`);
-    // CMS, maps-service and maps-compiler currently COPY . . and retain /app
-    // in the final image. Even unrelated workspace files are real image inputs;
-    // root npm ci also installs every workspace. Do not reduce this to a lock
-    // closure. Inspect both revisions when Dockerfiles change (see caller).
-    if (/^\s*(?:COPY|ADD)\s+(?:--\S+\s+)*\.\s+\.\s*$/im.test(dockerfile))
-      return true;
-    // Explicit context COPY inputs can also sit outside manifest dependencies
-    // (for example a separately built renderer). Stage-to-stage copies are not
-    // host inputs. Unknown/JSON/variable forms conservatively select this image.
+    // COPY inputs need not be dependencies. In particular COPY . . in CMS
+    // and both maps images makes every workspace file an image input.
+    // Unsupported COPY syntax conservatively selects the image.
     for (const line of dockerfile.split("\n")) {
       if (!/^\s*(?:COPY|ADD)\s/i.test(line) || /--from[=\s]/i.test(line))
         continue;
@@ -93,14 +78,11 @@ export function selectNodeImages({
       )
         return true;
     }
-    if (published.has(app)) return true;
-    // Include app-to-app workspace links as well as package consumers, in both
-    // revisions; removed dependencies must not disappear from the impact set.
+    // The closure includes the app itself and app/package consumers. Both
+    // revisions matter when a dependency is removed.
     return [beforeLock, afterLock].some((lock) => {
       const closure = dependencyClosure(lock, app);
-      return paths.some((path) =>
-        closure.has(path.split("/").slice(0, 2).join("/")),
-      );
+      return workspaces.some((workspace) => closure.has(workspace));
     });
   });
 }
@@ -113,8 +95,7 @@ function git(args) {
   return result.stdout;
 }
 
-// All comparison/parse failures are fail-open to checks, never to omission.
-// The injected reader also lets tests cover error fallback without a Git fixture.
+// Comparison and parse failures must run checks, never omit them.
 export function selectNodeImagesFromCommits({
   before,
   head = "HEAD",

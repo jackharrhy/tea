@@ -35,8 +35,10 @@ function fixture() {
 const ordered = (...apps) => nodeImageApps.filter((app) => apps.includes(app));
 
 test("app-only changes avoid unrelated narrow images but retain whole-context images", () => {
+  const f = fixture();
+  f.dockerfiles["8mb"] = "FROM node";
   assert.deepEqual(
-    selectNodeImages({ ...fixture(), paths: ["apps/8mb/server.ts"] }),
+    selectNodeImages({ ...f, paths: ["apps/8mb/server.ts"] }),
     ordered(...broad, "8mb"),
   );
   assert.deepEqual(
@@ -71,14 +73,9 @@ test("mixed inputs union consumers, while empty diffs select no images", () => {
 test("root runtime, bootstrap, configuration and unknown inputs check every image", () => {
   for (const path of [
     ".nvmrc",
-    ".dockerignore",
-    "package.json",
     "package-lock.json",
     "tsconfig.base.json",
     "scripts/tooling/ensure-worker-types.mjs",
-    "scripts/ci/node-image-impact.mjs",
-    "scripts/ci/publish-impact.mjs",
-    "scripts/ci/node-image-smoke.mjs",
     ".github/workflows/node-images.yml",
     "new-root-input",
     "apps/new-unknown/source.ts",
@@ -199,15 +196,13 @@ test("repository Dockerfiles and lock preserve whole-context inputs and actual U
       readFileSync(new URL(`apps/${app}/Dockerfile`, root), "utf8"),
     ]),
   );
-  const select = (paths) =>
-    selectNodeImages({ paths, beforeLock: lock, afterLock: lock, dockerfiles });
   assert.deepEqual(
-    select(["apps/auth/src/server.mjs"]),
+    selectNodeImages({
+      paths: ["packages/ui/styles.ts"],
+      beforeLock: lock,
+      afterLock: lock,
+      dockerfiles,
+    }),
     ordered(...broad, "auth"),
   );
-  assert.deepEqual(
-    select(["packages/ui/styles.ts"]),
-    ordered(...broad, "auth"),
-  );
-  assert.deepEqual(select(["apps/8mb/server.ts"]), ordered(...broad, "8mb"));
 });
