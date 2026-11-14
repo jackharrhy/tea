@@ -20,6 +20,7 @@ const services: Service[] = [
     name: "qBittorrent",
     url: "https://qbittorrent.rotund.org/",
   },
+  { id: "slskd", name: "slskd (Soulseek)", url: "https://slskd.rotund.org/" },
   { id: "navidrome", name: "Navidrome", url: "https://music.rotund.org/" },
   { id: "seerr", name: "Seerr", url: "https://seerr.rotund.org/" },
 ];
@@ -51,7 +52,6 @@ export function parseBindings(value: string): Binding[] {
     throw new Error("Invalid service entitlement bindings");
   const bindings = parsed as Binding[];
   const ids = new Set(bindings.map((binding) => binding?.id));
-  const cleanuparr = bindings.find((binding) => binding?.id === "cleanuparr");
   const mediaAdmin = bindings.find((binding) => binding?.id === "sonarr");
   if (
     ids.size !== bindings.length ||
@@ -70,15 +70,18 @@ export function parseBindings(value: string): Binding[] {
         (binding.allowedSubject !== undefined &&
           (typeof binding.allowedSubject !== "string" ||
             !binding.allowedSubject)) ||
-        (binding.id === "seerr" && !binding.allowedSubject),
+        (["seerr", "slskd"].includes(binding.id) && !binding.allowedSubject),
     ) ||
-    (cleanuparr &&
-      (!mediaAdmin ||
-        !mediaAdminIds.every((id) => {
-          const binding = bindings.find((candidate) => candidate?.id === id);
-          return binding && sameAccess(binding, mediaAdmin);
-        }) ||
-        !sameAccess(cleanuparr, mediaAdmin)))
+    bindings.some(
+      (binding) =>
+        ["cleanuparr", "slskd"].includes(binding.id) &&
+        (!mediaAdmin ||
+          !mediaAdminIds.every((id) => {
+            const member = bindings.find((candidate) => candidate?.id === id);
+            return member && sameAccess(member, mediaAdmin);
+          }) ||
+          !sameAccess(binding, mediaAdmin)),
+    )
   )
     throw new Error("Invalid service entitlement bindings");
   return bindings;
