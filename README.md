@@ -64,6 +64,8 @@ A monorepo for personal apps and packages: Remix 3 web apps and native tools.
 
 ## Working in the repo
 
+Follow the [parallel task workflow](AGENTS.md#parallel-task-workflow): independent worktrees and PRs, agent-owned check review and authorized self-merges, with no coordinator approval gate. Shared-runtime deployment coordination is separate from source work.
+
 Use Node.js 26 LTS (`.nvmrc` and `mise.toml`; minimum 26.13.0) for monorepo development and CI. The published Artbin CLI retains its separate Node 20+ consumer support. Install from the root:
 
 ```sh
