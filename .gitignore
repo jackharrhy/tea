@@ -38,3 +38,7 @@ apps/artbin/public/uploads/
 apps/artbin/tmp/
 apps/artbin/.coverage/
 apps/artbin-cli/dist-ui/
+
+apps/4orm/worker-configuration.d.ts
+apps/4orm/.review/
+apps/4orm/.review-*.jsonc

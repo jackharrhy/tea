@@ -1,0 +1,49 @@
+{
+  "name": "@harrhy/4orm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsrs --noEmit && tsrs --noEmit -p tsconfig.browser.json",
+    "test": "vitest run && node __tests__/private-review-proxy.mjs",
+    "check": "npm run build && npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run",
+    "types:worker": "wrangler types worker-configuration.d.ts",
+    "dev:celld": "node scripts/review.mjs",
+    "test:celld": "node __tests__/celld-smoke.mjs",
+    "build": "node scripts/build.mjs",
+    "test:parity": "node __tests__/parity-browser.mjs",
+    "test:history": "FOURM_HISTORY_BROWSER=1 vitest run __tests__/history-browser.test.tsx"
+  },
+  "dependencies": {
+    "@bbob/html": "^4.4.1",
+    "@bbob/plugin-helper": "^4.4.1",
+    "@bbob/preset-html5": "^4.4.1",
+    "@block65/webcrypto-web-push": "2.0.0",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.12",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@harrhy/identity": "0.1.0",
+    "codemirror": "^6.0.2",
+    "fflate": "0.8.3",
+    "htmx-ext-sse": "2.2.4",
+    "htmx.org": "^2.0.11",
+    "marked": "^18.2.0",
+    "remix": "3.2.0",
+    "sanitize-html": "^2.18.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^26.6.6",
+    "@types/sanitize-html": "^2.16.2",
+    "esbuild": "^0.28.2",
+    "jsonc-parser": "^3.3.1",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.159.0"
+  },
+  "engines": {
+    "node": ">=26.13.0 <27"
+  }
+}

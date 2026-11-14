@@ -1,0 +1,35 @@
+{
+  "name": "harrhy-fourm-candidate",
+  "main": "worker.ts",
+  "compatibility_date": "2026-11-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BACKUP_SCHEDULER_ENABLED": "0",
+    "BACKUP_INTERVAL_SECONDS": "3600",
+  },
+  "assets": {
+    "directory": "dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "COMMUNITIES",
+        "class_name": "CommunityCell",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["CommunityCell"],
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "harrhy-fourm-candidate-media",
+    },
+  ],
+}

@@ -1,0 +1,1245 @@
+import { DatabaseSync } from "node:sqlite";
+import { describe, expect, it, vi } from "vitest";
+import { createCommunity } from "../app/data/community.ts";
+import { attestCounterPeer, counterPeerHeader } from "../app/counter-peer.ts";
+import { createAppRouter } from "../app/router.tsx";
+import type { Bindings, Runtime } from "../app/runtime.ts";
+import type { Row } from "../app/data/community.ts";
+
+function fixture(forumRateLimit = false, chatFloodLimit = false) {
+  const sqlite = new DatabaseSync(":memory:");
+  sqlite.exec("PRAGMA foreign_keys=ON");
+  const community = createCommunity(
+    {
+      all(sql, ...values) {
+        if (!values.length && sql.includes(";")) {
+          sqlite.exec(sql);
+          return [];
+        }
+        const statement = sqlite.prepare(sql);
+        return statement.columns().length
+          ? (statement.all(...values) as Row[])
+          : (statement.run(...values), []);
+      },
+      transaction(operation) {
+        sqlite.exec("BEGIN");
+        try {
+          const result = operation();
+          sqlite.exec("COMMIT");
+          return result;
+        } catch (error) {
+          sqlite.exec("ROLLBACK");
+          throw error;
+        }
+      },
+    },
+    { forumRateLimit, chatFloodLimit },
+  );
+  community.restore({
+    users: [
+      {
+        id: 41,
+        username: "jane",
+        display_name: "Jane",
+        password_hash: "",
+        is_admin: 1,
+      },
+      {
+        id: 72,
+        username: "sam",
+        display_name: "Sam",
+        password_hash: "",
+        is_admin: 0,
+      },
+    ],
+    external_identities: [
+      {
+        issuer: "https://fixture.example",
+        subject: "subject-jane",
+        user_id: 41,
+      },
+      {
+        issuer: "https://fixture.example",
+        subject: "subject-sam",
+        user_id: 72,
+      },
+    ],
+  });
+  return { community, sqlite };
+}
+
+describe("community persistence and authority", () => {
+  it("uses exact issuer and subject links, never a matching name", () => {
+    const { community } = fixture();
+    expect(
+      community.resolveIdentity("https://fixture.example", "subject-jane").id,
+    ).toBe(41);
+    expect(() =>
+      community.resolveIdentity("https://other.example", "subject-jane"),
+    ).toThrow();
+    expect(() =>
+      community.resolveIdentity("https://fixture.example", "jane"),
+    ).toThrow();
+  });
+  it("keeps private pages private and scopes writes to their owner", () => {
+    const { community } = fixture();
+    community.savePage(41, "draft", {
+      title: "Draft",
+      content: "Only Jane",
+      is_public: 0,
+    });
+    expect(community.pages(41, null)).toEqual([]);
+    expect(() => community.page(41, "draft", 72)).toThrow();
+    expect(() => community.deletePage(72, "draft")).toThrow();
+    expect(community.page(41, "draft", 41).content).toBe("Only Jane");
+  });
+  it("locks replies for members, permits admin moderation, and keeps post ownership", () => {
+    const { community } = fixture();
+    const thread = community.createThread(41, "Hello", "First post", "bbcode");
+    const reply = community.reply(72, thread, "Hi Jane", "markdown");
+    expect(() => community.editPost(72, 1, "Taken over", "html")).toThrow();
+    community.moderate(41, thread, "lock");
+    expect(() => community.reply(72, thread, "Another", "html")).toThrow();
+    expect(() => community.moderate(72, thread, "delete")).toThrow();
+    community.editPost(72, reply, "Edited reply", "markdown");
+    expect(community.thread(thread).posts[1].is_edited).toBe(1);
+  });
+  it("revokes local sessions immediately when an admin disables a member", () => {
+    const { community } = fixture();
+    community.createSession("a".repeat(64), 72, Date.now() + 10000);
+    expect(community.session("a".repeat(64))?.id).toBe(72);
+    community.setDisabled(41, 72, true);
+    expect(community.session("a".repeat(64))).toBeNull();
+    expect(() => community.sendChat(72, "Should be denied")).toThrow();
+  });
+  it("consumes an OAuth transaction only once", () => {
+    const { community } = fixture();
+    community.saveLogin("state-hash", "transaction");
+    expect(community.consumeLogin("state-hash")).toBe("transaction");
+    expect(community.consumeLogin("state-hash")).toBeNull();
+  });
+  it("advances chat through a full 200-message page without skipping the next batch", () => {
+    const { community } = fixture();
+    for (let i = 0; i < 203; i++) community.sendChat(41, `Message ${i}`);
+    const first = community.chat(72, 0);
+    expect(first).toHaveLength(200);
+    expect(community.chat(72, Number(first.at(-1)!.id))).toHaveLength(3);
+  });
+  it("reserves scarce invites and creates a member only after the exact claimed callback", () => {
+    const { community, sqlite } = fixture();
+    community.createInvite(41, "one-place", 1);
+    community.reserveEnrollment("one-place", "registration-1", null);
+    expect(() =>
+      community.reserveEnrollment("one-place", "registration-2", null),
+    ).toThrow();
+    expect(
+      sqlite
+        .prepare("SELECT uses_count FROM invites WHERE code='one-place'")
+        .get()?.uses_count,
+    ).toBe(0);
+    community.claimEnrollment(
+      "registration-1",
+      "https://fixture.example",
+      "new-subject",
+      "alex",
+      "Alex",
+    );
+    expect(() =>
+      community.finishEnrollment(
+        "registration-1",
+        "https://fixture.example",
+        "another-subject",
+      ),
+    ).toThrow();
+    const actor = community.finishEnrollment(
+      "registration-1",
+      "https://fixture.example",
+      "new-subject",
+    );
+    expect(actor.is_admin).toBe(0);
+    expect(
+      sqlite.prepare("SELECT password_hash FROM users WHERE id=?").get(actor.id)
+        ?.password_hash,
+    ).toBe("");
+    expect(
+      community.completionProof("registration-1", "https://fixture.example"),
+    ).toMatchObject({ userId: actor.id, createdProfile: true, enabled: true });
+    expect(
+      community.finishEnrollment(
+        "registration-1",
+        "https://fixture.example",
+        "new-subject",
+      ).id,
+    ).toBe(actor.id);
+  });
+  it("keeps original grant reservations and terminal receipts durable past invite expiry", () => {
+    const { community, sqlite } = fixture();
+    community.createInvite(41, "completion", 1);
+    community.reserveEnrollment("completion", "registration", null);
+    community.claimEnrollment(
+      "registration",
+      "https://fixture.example",
+      "new-subject",
+      "alex",
+      "Alex",
+    );
+    community.finishEnrollment(
+      "registration",
+      "https://fixture.example",
+      "new-subject",
+    );
+    sqlite
+      .prepare(
+        "UPDATE auth_enrollments SET expires_at=1 WHERE id='registration'",
+      )
+      .run();
+    expect(
+      community.reserveGrant(
+        "registration",
+        "https://fixture.example",
+        "maps",
+        "new-subject",
+        "original",
+      ).attemptId,
+    ).toBe("original");
+    expect(
+      community.reserveGrant(
+        "registration",
+        "https://fixture.example",
+        "maps",
+        "new-subject",
+        "retry",
+      ).attemptId,
+    ).toBe("original");
+    expect(() =>
+      community.finishGrant(
+        "registration",
+        "https://fixture.example",
+        "maps",
+        "new-subject",
+        "retry",
+        "grant-1",
+        "created",
+      ),
+    ).toThrow();
+    expect(
+      community.finishGrant(
+        "registration",
+        "https://fixture.example",
+        "maps",
+        "new-subject",
+        "original",
+        "grant-1",
+        "created",
+      ).state,
+    ).toBe("done");
+    expect(() =>
+      community.finishGrant(
+        "registration",
+        "https://fixture.example",
+        "maps",
+        "new-subject",
+        "original",
+        "replacement",
+        "created",
+      ),
+    ).toThrow();
+    expect(community.recordDelivery("registration", 200)).toBe(502);
+    community.reserveGrant(
+      "registration",
+      "https://fixture.example",
+      "burger",
+      "new-subject",
+      "burger-attempt",
+    );
+    community.finishGrant(
+      "registration",
+      "https://fixture.example",
+      "burger",
+      "new-subject",
+      "burger-attempt",
+      "grant-2",
+      "preserved",
+    );
+    expect(community.recordDelivery("registration", 200)).toBe(200);
+    expect(community.pendingCompletions()).toEqual([]);
+  });
+  it("does not consume an invite or fan out when an existing linked member re-enrolls", () => {
+    const { community, sqlite } = fixture();
+    community.createInvite(41, "existing-member", 1);
+    community.reserveEnrollment("existing-member", "existing-request", null);
+    community.claimEnrollment(
+      "existing-request",
+      "https://fixture.example",
+      "subject-sam",
+      "invented-name",
+      "Invented name",
+    );
+    expect(
+      community.finishEnrollment(
+        "existing-request",
+        "https://fixture.example",
+        "subject-sam",
+      ).id,
+    ).toBe(72);
+    expect(
+      sqlite
+        .prepare("SELECT uses_count FROM invites WHERE code='existing-member'")
+        .get()?.uses_count,
+    ).toBe(0);
+    expect(
+      community.completionProof("existing-request", "https://fixture.example")
+        .createdProfile,
+    ).toBe(false);
+    expect(() =>
+      community.reserveGrant(
+        "existing-request",
+        "https://fixture.example",
+        "maps",
+        "subject-sam",
+        "no-new-grant",
+      ),
+    ).toThrow();
+  });
+  it("charges in-flight uploads against quota and denies another owner's deletion", () => {
+    const { community, sqlite } = fixture();
+    sqlite
+      .prepare(
+        "INSERT INTO media(user_id,storage_path,mime_type,size_bytes) VALUES(41,'jane/existing','application/octet-stream',?)",
+      )
+      .run(495 * 1024 * 1024);
+    community.reserveUpload(41, "jane/reserved", "image/png", 4 * 1024 * 1024);
+    expect(() =>
+      community.reserveUpload(
+        41,
+        "jane/over-quota",
+        "image/png",
+        2 * 1024 * 1024,
+      ),
+    ).toThrow();
+    const uploaded = community.finishUpload(41, "jane/reserved");
+    expect(() => community.deleteMedia(72, Number(uploaded.id))).toThrow();
+    expect(community.publishedMedia("jane/reserved").user_id).toBe(41);
+    community.deleteMedia(41, Number(uploaded.id));
+    expect(() => community.publishedMedia("jane/reserved")).toThrow();
+    expect(community.pendingMediaDeletes()[0].storage_path).toBe(
+      "jane/reserved",
+    );
+  });
+  it("preserves guestbook ownership, including when the author is an admin", () => {
+    const { community } = fixture();
+    community.signGuestbook(41, "sam", "A signed message");
+    const entry = community.guestbook("sam").entries[0];
+    expect(() =>
+      community.deleteGuestbook(41, "sam", Number(entry.id)),
+    ).toThrow();
+    community.deleteGuestbook(72, "sam", Number(entry.id));
+    expect(community.guestbook("sam").entries).toEqual([]);
+  });
+  it("keeps playlists and avatars scoped to owned media and preserves reorder IDs", () => {
+    const { community, sqlite } = fixture();
+    sqlite.exec(
+      "INSERT INTO media(id,user_id,storage_path,mime_type,size_bytes) VALUES(5,41,'jane/image.png','image/png',1),(6,41,'jane/song.mp3','audio/mpeg',1),(7,72,'sam/song.mp3','audio/mpeg',1)",
+    );
+    expect(() => community.addTrack(72, 6, "Not my file")).toThrow();
+    expect(() => community.setAvatar(72, 5)).toThrow();
+    community.setAvatar(41, 5);
+    expect(community.profile("jane").avatar_path).toBe("jane/image.png");
+    community.addTrack(41, 6, "First");
+    community.addTrack(41, 5, "Second");
+    const before = community.playlist("jane");
+    community.moveTrack(41, Number(before[1].id), "up");
+    expect(community.playlist("jane").map((row) => row.id)).toEqual([
+      before[1].id,
+      before[0].id,
+    ]);
+    community.removeTrack(72, Number(before[0].id));
+    expect(community.playlist("jane")).toHaveLength(2);
+  });
+  it("deduplicates counter visits and keeps disabled members out of public and presence views", () => {
+    const { community } = fixture();
+    expect(community.counter("jane", "opaque-visitor").total_views).toBe(1);
+    expect(community.counter("jane", "opaque-visitor").total_views).toBe(1);
+    expect(community.counter("jane", "another-visitor").total_views).toBe(2);
+    community.setWebring(41, true);
+    community.setWebring(72, true);
+    expect(community.webring("jane").next?.username).toBe("sam");
+    community.openChat(41, "jane-browser");
+    expect(community.openChat(72, "sam-browser").presence).toHaveLength(2);
+    expect(community.openChat(72, "sam-browser").presence).toHaveLength(2);
+    community.setDisabled(41, 72, true);
+    expect(community.pollChat(41, "jane-browser", 0).presence).toHaveLength(1);
+    expect(community.webring("jane").members).toHaveLength(1);
+    expect(community.members()).toHaveLength(1);
+  });
+});
+
+it("preserves existing multi-megabyte Unicode pages within native SQL value limits", () => {
+  const { community, sqlite } = fixture();
+  const content = "🌍漢字".repeat(300_000);
+  const page = community.savePage(41, "large.html", {
+    title: "Large existing page",
+    content,
+    content_format: "html",
+    is_public: 1,
+  });
+  expect(page.content).toBe(content);
+  const largest = sqlite
+    .prepare(
+      "SELECT MAX(length(cast(content AS BLOB))) AS bytes FROM page_content_chunks",
+    )
+    .get();
+  expect(Number(largest?.bytes)).toBeLessThan(1_000_000);
+  expect(
+    community.exportArchive(41).pages.find((row) => row.id === page.id)
+      ?.content,
+  ).toBe(content);
+  community.savePage(41, "large.html", {
+    title: "Edited",
+    content: "small",
+    content_format: "html",
+    is_public: 1,
+  });
+  expect(community.page(41, "large.html", 41).content).toBe("small");
+  expect(
+    sqlite.prepare("SELECT count(*) AS n FROM page_content_chunks").get()?.n,
+  ).toBe(0);
+});
+
+it("saves the source settings sections without crossing account or role boundaries", () => {
+  const { community, sqlite } = fixture();
+  community.saveSettingsSection(72, "guestbook", {
+    guestbook_css: ".gb-entry{color:blue}",
+    guestbook_html: "<footer>saved</footer>",
+    is_admin: 1,
+  });
+  const owner = community.guestbook("sam").owner;
+  expect(owner.guestbook_css).toBe(".gb-entry{color:blue}");
+  expect(owner.guestbook_html).toBe("<footer>saved</footer>");
+  expect(community.member(72).is_admin).toBe(0);
+  sqlite
+    .prepare("UPDATE users SET updated_at='2000-01-01 00:00:00' WHERE id=72")
+    .run();
+  community.saveSettingsSection(72, "notifications", {
+    notifications_enabled: "on",
+  });
+  const preferences = community.profile("sam");
+  expect(preferences.notifications_enabled).toBe(1);
+  expect(preferences.watch_all_threads).toBe(0);
+  expect(preferences.updated_at).toBe("2000-01-01 00:00:00");
+  community.saveSettingsSection(72, "status", {
+    status_emoji: "🌍".repeat(11),
+    status_text: "x".repeat(141),
+  });
+  expect(community.profile("sam").status_emoji).toBe("🌍".repeat(10));
+  community.setDisabled(41, 72, true);
+  expect(() =>
+    community.saveSettingsSection(72, "css", { custom_css: "body{}" }),
+  ).toThrow("Membership is unavailable");
+});
+it("canonical page editing preserves IDs through slug changes and rejects duplicate creation", () => {
+  const { community } = fixture();
+  const original = community.createSettingsPage(41, "before.html", {
+    title: "Before",
+    content: "Original",
+    content_format: "html",
+  });
+  expect(() =>
+    community.createSettingsPage(41, "before.html", {
+      title: "Overwrite",
+      content: "wrong",
+    }),
+  ).toThrow("already exists");
+  const edited = community.editSettingsPage(41, "before.html", {
+    new_slug: "after.html",
+    title: "After",
+    content: "Updated",
+    content_format: "markdown",
+    is_public: 0,
+  });
+  expect(edited.id).toBe(original.id);
+  expect(edited.content).toBe("Updated");
+  expect(edited.is_public).toBe(0);
+  expect(() => community.page(41, "before.html", 41)).toThrow("Not found");
+  expect(() =>
+    community.editSettingsPage(72, "after.html", {
+      new_slug: "stolen",
+      title: "No",
+    }),
+  ).toThrow("Not found");
+});
+
+it("archive replay and metadata updates retain local administrator and disabled-member authority", () => {
+  const { community, sqlite } = fixture();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-jane",
+    ),
+  ).not.toThrow();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-sam",
+    ),
+  ).toThrow("Admin access");
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://other.example",
+      "subject-jane",
+    ),
+  ).toThrow("not linked");
+  sqlite.prepare("UPDATE users SET is_admin=0 WHERE id=41").run();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-jane",
+    ),
+  ).toThrow("Admin access");
+  sqlite.prepare("UPDATE users SET is_admin=1,is_disabled=1 WHERE id=41").run();
+  expect(() =>
+    community.assertArchiveRestoreAuthority(
+      "https://fixture.example",
+      "subject-jane",
+    ),
+  ).toThrow("unavailable");
+  sqlite.close();
+});
+
+it("keeps source browser page fields independent of API limits", () => {
+  const { community } = fixture();
+  const longSlug = "page-" + "x".repeat(90);
+  const longTitle = "A title " + "x".repeat(150);
+  const created = community.createSettingsPage(41, longSlug, {
+    title: longTitle,
+    content: "Original",
+    content_format: "markdown",
+  });
+  expect(created.title).toBe(longTitle);
+  expect(community.page(41, longSlug, 41).content).toBe("Original");
+  expect(() => community.savePage(41, longSlug, { title: "API" })).toThrow();
+  expect(() => community.savePage(41, "api", { title: longTitle })).toThrow();
+  const edited = community.editSettingsPage(41, longSlug, {
+    new_slug: "  renamed.html  ",
+    title: "   ",
+    content: "Saved",
+    content_format: "html",
+    is_public: 0,
+  });
+  expect(edited.id).toBe(created.id);
+  expect(edited.title).toBe("");
+  expect(edited.slug).toBe("renamed.html");
+  expect(community.pages(41, null)).toEqual([]);
+  expect(community.page(41, "renamed.html", 41).content).toBe("Saved");
+  expect(() =>
+    community.editSettingsPage(72, "renamed.html", { title: "Taken" }),
+  ).toThrow();
+});
+
+it("pages forum threads with source pin and last-reply ordering", () => {
+  const { community, sqlite } = fixture();
+  for (let i = 1; i <= 27; i++) {
+    sqlite
+      .prepare(
+        "INSERT INTO forum_threads(id,author_id,title,last_reply_at) VALUES(?,41,?,?)",
+      )
+      .run(i, `Thread ${i}`, `2026-01-${String(i).padStart(2, "0")} 00:00:00`);
+  }
+  sqlite.prepare("UPDATE forum_threads SET is_pinned=1 WHERE id=1").run();
+  const first = community.forumIndex();
+  expect(first.total).toBe(27);
+  expect(first.total_pages).toBe(2);
+  expect(first.threads).toHaveLength(25);
+  expect(first.threads.slice(0, 2).map((t) => t.id)).toEqual([1, 27]);
+  expect(first.threads[0].author_username).toBe("jane");
+  expect(community.forumIndex(2).threads.map((t) => t.id)).toEqual([3, 2]);
+  expect(community.forumIndex(0)).toEqual(first);
+  expect(community.forumIndex(3).threads).toEqual([]);
+});
+
+it("paginates thread posts by source date and preserves quote snapshots and watching", () => {
+  const { community, sqlite } = fixture();
+  const thread = community.createThread(41, "Discussion", "First", "bbcode");
+  const first = community.thread(thread).posts[0];
+  expect(community.thread(thread, 1, 41).watching).toBe(true);
+  for (let i = 0; i < 51; i++)
+    community.reply(72, thread, `Reply ${i}`, "markdown");
+  const quoted = community.reply(72, thread, "Quoted reply", "markdown", {
+    quoted_post_id: first.id,
+    quoted_content: "Original snapshot",
+    quoted_author: "jane",
+  });
+  community.editPost(41, Number(first.id), "Changed after quote", "markdown");
+  const last = community.thread(thread, 2, 72);
+  expect(last.total_posts).toBe(53);
+  expect(last.total_pages).toBe(2);
+  expect(last.posts).toHaveLength(3);
+  const snapshot = sqlite
+    .prepare("SELECT * FROM forum_posts WHERE id=?")
+    .get(quoted);
+  expect(snapshot?.quoted_content).toBe("Original snapshot");
+  expect(snapshot?.quoted_content_format).toBe("bbcode");
+  expect(community.toggleThreadWatch(72, thread)).toBe(true);
+  expect(community.thread(thread, 1, 72).watching).toBe(true);
+  expect(community.toggleThreadWatch(72, thread)).toBe(false);
+  community.setDisabled(41, 72, true);
+  expect(() => community.toggleThreadWatch(72, thread)).toThrow();
+  community.moderate(41, thread, "lock");
+  expect(() =>
+    community.reply(41, thread, "Admin also blocked", "bbcode"),
+  ).toThrow();
+});
+
+it("allows only the thread author or local admin to edit and delete threads", () => {
+  const { community } = fixture();
+  const thread = community.createThread(72, "Member thread", "First", "bbcode");
+  community.editThread(72, thread, {
+    title: " Edited ",
+    custom_css: "p{color:red}",
+    custom_html: "<p>Header</p>",
+  });
+  expect(community.thread(thread).thread.title).toBe("Edited");
+  expect(() => community.moderate(72, thread, "pin")).toThrow();
+  const adminThread = community.createThread(
+    41,
+    "Admin thread",
+    "First",
+    "bbcode",
+  );
+  expect(() =>
+    community.editThread(72, adminThread, { title: "Taken" }),
+  ).toThrow();
+  expect(() => community.deleteThread(72, adminThread)).toThrow();
+  community.deleteThread(72, thread);
+  expect(() => community.thread(thread)).toThrow();
+});
+
+it("persists thread creation styling without changing post ownership", () => {
+  const { community } = fixture();
+  const id = community.createThread(72, " Styled ", "First post", "markdown", {
+    custom_css: ".forum-post {color:purple}",
+    custom_html: "<aside>Thread intro</aside>",
+  });
+  const detail = community.thread(id, 1, 72);
+  expect(detail.thread.title).toBe("Styled");
+  expect(detail.thread.custom_css).toBe(".forum-post {color:purple}");
+  expect(detail.thread.custom_html).toBe("<aside>Thread intro</aside>");
+  expect(detail.posts[0].author_id).toBe(72);
+  expect(detail.watching).toBe(true);
+});
+
+it("deletes an owned post without inventing thread deletion or last-reply rewrites", () => {
+  const { community } = fixture();
+  const thread = community.createThread(41, "Discussion", "First", "bbcode");
+  const first = community.thread(thread).posts[0];
+  community.deletePost(41, Number(first.id));
+  expect(community.thread(thread).posts).toEqual([]);
+  expect(community.thread(thread).thread.title).toBe("Discussion");
+});
+
+it("enforces forum posting pace atomically across threads with source rounding", () => {
+  const { community, sqlite } = fixture(true);
+  const id = community.createThread(41, "First", "Body", "bbcode");
+  expect(() =>
+    community.createThread(41, "Too soon", "Body", "bbcode"),
+  ).toThrow("please wait before posting again");
+  expect(() => community.reply(41, id, "Too soon", "bbcode")).toThrow();
+  expect(community.thread(id).total_posts).toBe(1);
+  expect(community.forumIndex().total).toBe(1);
+  sqlite
+    .prepare(
+      "UPDATE forum_posts SET created_at=strftime('%Y-%m-%d %H:%M:%f','now','-9.5 seconds') WHERE author_id=41",
+    )
+    .run();
+  community.reply(41, id, "Allowed by source truncation", "bbcode");
+  expect(community.thread(id).total_posts).toBe(2);
+  community.reply(72, id, "Different member", "bbcode");
+  expect(community.thread(id).total_posts).toBe(3);
+});
+
+it("keeps chat history public, live delivery bounded and connection presence explicit", async () => {
+  const { community } = fixture();
+  community.sendChat(41, "Stored before opening");
+  const opened = community.openChat(null, "anonymous");
+  expect(opened.presence).toEqual([]);
+  community.openChat(41, "tab-a");
+  community.openChat(41, "tab-b");
+  community.updateChatPresence(41, false);
+  expect(community.pollChat(null, "anonymous", opened.cursor).presence).toEqual(
+    [{ username: "jane", state: "idle" }],
+  );
+  const notification = community.waitChat(opened.cursor);
+  community.sendChat(41, "  New live message  ");
+  await notification;
+  const live = community.pollChat(null, "anonymous", opened.cursor);
+  expect(live.events.map((e) => e.message)).toEqual(["New live message"]);
+  expect(live.presence[0].state).toBe("active");
+  community.closeChat(41, "tab-a");
+  expect(
+    community.pollChat(null, "anonymous", live.cursor).presence,
+  ).toHaveLength(1);
+  community.closeChat(41, "tab-b");
+  expect(community.pollChat(null, "anonymous", live.cursor).presence).toEqual(
+    [],
+  );
+  expect(community.chatHistory()).toHaveLength(2);
+  for (let i = 0; i < 205; i++) community.sendChat(41, `Buffered ${i}`);
+  const evicted = community.pollChat(null, "anonymous", 0);
+  expect(evicted.events).toHaveLength(200);
+  expect(evicted.cursor).toBeGreaterThan(200);
+  expect(community.chatHistory()).toHaveLength(100);
+});
+
+it("times out chat flooding, expires presence leases and never persists system notices", () => {
+  const clock = vi.spyOn(Date, "now").mockReturnValue(100000);
+  try {
+    const { community, sqlite } = fixture(false, true);
+    community.openChat(41, "tab");
+    community.sendChat(41, "😀".repeat(501));
+    expect(Array.from(String(community.chatHistory()[0].message))).toHaveLength(
+      500,
+    );
+    for (let i = 1; i < 20; i++)
+      expect(community.sendChat(41, `Message ${i}`).status).toBe("sent");
+    expect(community.sendChat(41, "Flooded").status).toBe("timed_out");
+    expect(community.sendChat(41, "Still timed out").status).toBe("timed_out");
+    expect(
+      sqlite.prepare("SELECT count(*) AS count FROM chat_messages").get()
+        ?.count,
+    ).toBe(20);
+    expect(
+      community.pollChat(null, "anonymous", 0).events.at(-1)?.username,
+    ).toBe("system");
+    clock.mockReturnValue(131000);
+    expect(community.sendChat(41, "Timeout outlasts flood window").status).toBe(
+      "timed_out",
+    );
+    clock.mockReturnValue(160001);
+    expect(community.pollChat(null, "anonymous", 0).presence).toEqual([]);
+    expect(community.sendChat(41, "Recovered").status).toBe("sent");
+    expect(community.chatHistory()).toHaveLength(21);
+    expect(() => community.sendChat(41, "  ")).toThrow("empty message");
+  } finally {
+    clock.mockRestore();
+  }
+});
+
+it("keeps device upserts stable, hides credentials and scopes deletion to the member", () => {
+  const { community, sqlite } = fixture();
+  const sub = {
+    endpoint: "https://push.invalid/one",
+    device_id: "same-device",
+    device_name: "laptop",
+    keys: { p256dh: "private-fixture-key", auth: "private-fixture-auth" },
+  };
+  community.subscribePush(41, sub);
+  community.subscribePush(72, sub);
+  const original = community.pushDevices(41)[0];
+  community.subscribePush(41, {
+    ...sub,
+    endpoint: "https://push.invalid/two",
+    device_name: "renamed",
+  });
+  expect(community.pushDevices(41)).toEqual([
+    { ...original, device_name: "renamed" },
+  ]);
+  expect(community.pushDevices(41)[0]).not.toHaveProperty("auth_key");
+  community.deletePushDevice(72, Number(original.id));
+  expect(community.pushDevices(41)).toHaveLength(1);
+  community.unsubscribePush(72, "same-device");
+  expect(community.pushDevices(72)).toHaveLength(0);
+  expect(community.pushDevices(41)).toHaveLength(1);
+  expect(() => community.subscribePush(41, { ...sub, keys: {} })).toThrow(
+    "invalid subscription",
+  );
+  sqlite.prepare("UPDATE users SET is_disabled=1 WHERE id=72").run();
+  expect(() => community.subscribePush(72, sub)).toThrow(
+    "Membership is unavailable",
+  );
+  community.deletePushDevice(41, Number(original.id));
+  expect(community.pushDevices(41)).toEqual([]);
+});
+
+it("notifies watcher union once, excludes the replier and preserves quote and guestbook preferences", () => {
+  const { community, sqlite } = fixture();
+  sqlite
+    .prepare(
+      "INSERT INTO users(id,username,display_name,password_hash,notifications_enabled) VALUES(99,'third','Third','',1)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "UPDATE users SET notifications_enabled=1,watch_all_threads=1 WHERE id=41",
+    )
+    .run();
+  const subscription = {
+    endpoint: "https://push.invalid/one",
+    device_id: "device",
+    keys: { p256dh: "fixture-key", auth: "fixture-auth" },
+  };
+  for (const id of [41, 72, 99]) community.subscribePush(id, subscription);
+  const thread = community.createThread(99, "Topic", "Start", "markdown");
+  const quoted = Number(
+    sqlite.prepare("SELECT id FROM forum_posts WHERE thread_id=?").get(thread)
+      ?.id,
+  );
+  community.toggleThreadWatch(41, thread);
+  const reply = community.reply(72, thread, "Reply", "markdown", {
+    quoted_post_id: quoted,
+  });
+  const messages = community.replyNotifications(72, reply);
+  expect(
+    messages
+      .map((m) => Number(m.subscription.user_id))
+      .toSorted((a, b) => a - b),
+  ).toEqual([41, 99]);
+  expect(messages.every((m) => m.title === "New reply in Topic")).toBe(true);
+  community.toggleThreadWatch(99, thread);
+  const quoteMessages = community.replyNotifications(72, reply);
+  expect(
+    quoteMessages.find((m) => Number(m.subscription.user_id) === 99)?.title,
+  ).toBe("You were quoted in Topic");
+  expect(() => community.replyNotifications(41, reply)).toThrow(
+    "Post ownership required",
+  );
+  expect(community.guestbookNotifications(41, "jane")).toEqual([]);
+  expect(community.guestbookNotifications(72, "jane")).toHaveLength(1);
+  sqlite.prepare("UPDATE users SET notifications_enabled=0 WHERE id=41").run();
+  expect(community.guestbookNotifications(72, "jane")).toEqual([]);
+  expect(community.replyNotifications(72, reply)).toHaveLength(1);
+  const sub = community.pushDevices(99)[0];
+  community.subscribePush(99, {
+    ...subscription,
+    endpoint: "https://push.invalid/new",
+  });
+  community.expirePushSubscription(
+    Number(sub.id),
+    subscription.endpoint,
+    "fixture-key",
+    "fixture-auth",
+  );
+  expect(community.pushDevices(99)).toHaveLength(1);
+});
+
+it("exports only public pages for the owner or administrator", () => {
+  const { community } = fixture();
+  community.savePage(72, "public", {
+    title: "Visible",
+    content: "hello",
+    content_format: "html",
+    is_public: 1,
+  });
+  community.savePage(72, "private", {
+    title: "Hidden",
+    content: "secret",
+    content_format: "html",
+    is_public: 0,
+  });
+  expect(community.userSiteExport(72, "sam").pages.map((p) => p.slug)).toEqual([
+    "public",
+  ]);
+  expect(community.userSiteExport(41, "sam").profile.id).toBe(72);
+  expect(() => community.userSiteExport(null, "sam")).toThrow(
+    "Export permission required",
+  );
+  expect(() => community.userSiteExport(72, "jane")).toThrow(
+    "Export permission required",
+  );
+  expect(() => community.userSiteExport(41, "absent")).toThrow("Not found");
+});
+
+it("restricts the full static export to enabled administrators and excludes identity secrets", () => {
+  const { community, sqlite } = fixture();
+  expect(() => community.fullSiteExport(null)).toThrow("Admin access required");
+  expect(() => community.fullSiteExport(72)).toThrow("Admin access required");
+  const result = community.fullSiteExport(41);
+  expect(result.users).toHaveLength(2);
+  expect(result.users[0].profile).not.toHaveProperty("password_hash");
+  expect(result).not.toHaveProperty("external_identities");
+  sqlite.prepare("UPDATE users SET is_disabled=1 WHERE id=41").run();
+  expect(() => community.fullSiteExport(41)).toThrow(
+    "Membership is unavailable",
+  );
+});
+
+it("preserves admin banner/profile/card/page write contracts and rejects non-admin writes", () => {
+  const { community, sqlite } = fixture();
+  expect(() =>
+    community.adminSaveBanner(null, { banner_enabled: "on" }),
+  ).toThrow("Admin access required");
+  expect(() =>
+    community.adminSaveProfile(72, 41, { display_name: "changed" }),
+  ).toThrow("Admin access required");
+  community.adminSaveBanner(41, {
+    banner_enabled: "on",
+    banner_html: "<b>Notice</b>",
+    banner_css: "b{color:purple}",
+  });
+  expect(community.siteBanner()).toMatchObject({
+    id: 1,
+    banner_enabled: 1,
+    banner_html: "<b>Notice</b>",
+  });
+  community.adminSaveBanner(41, {});
+  expect(community.siteBanner()).toMatchObject({
+    id: 1,
+    banner_enabled: 0,
+    banner_html: "",
+    banner_css: "",
+  });
+  community.adminSaveProfile(41, 72, {
+    display_name: "Updated",
+    content: "<p>profile</p>",
+    content_format: "html",
+    layout: "raw",
+    is_admin: 1,
+  });
+  expect(community.profile("sam")).toMatchObject({
+    display_name: "Updated",
+    content: "<p>profile</p>",
+    layout: "raw",
+    custom_css: "",
+  });
+  expect(
+    community.adminSnapshot(41).users.find((u) => u.id === 72)?.is_admin,
+  ).toBe(0);
+  expect(() => community.adminSaveProfile(41, 9999, {})).toThrow("Not found");
+  expect(() => community.adminSaveCard(41, 9999, {})).toThrow("Not found");
+  community.saveCard(72, { headline: "old", content: "old" });
+  community.adminSaveCard(41, 72, { headline: "new" });
+  expect(
+    sqlite
+      .prepare(
+        "SELECT headline,content,content_format,accent_color FROM profile_cards WHERE user_id=72",
+      )
+      .get(),
+  ).toMatchObject({
+    headline: "new",
+    content: "",
+    content_format: "markdown",
+    accent_color: "#00ffff",
+  });
+  community.savePage(72, "initial", {
+    title: "Old",
+    content: "old",
+    content_format: "html",
+    is_public: 1,
+  });
+  const page = sqlite.prepare("SELECT id FROM pages WHERE user_id=72").get();
+  const content = "🧭".repeat(270000);
+  community.adminSavePage(41, Number(page?.id), {
+    slug: " renamed ",
+    title: " New ",
+    content,
+    content_format: "html",
+  });
+  expect(community.page(72, "renamed", 72)).toMatchObject({
+    title: "New",
+    content,
+    is_public: 0,
+  });
+  expect(
+    sqlite.prepare("SELECT content FROM pages WHERE user_id=72").get()?.content,
+  ).toBe("");
+  expect(() =>
+    community.adminSavePage(72, Number(page?.id), {
+      slug: "wrong",
+      title: "wrong",
+    }),
+  ).toThrow("Admin access required");
+});
+
+it("keeps admin account toggles local, reports storage, and resolves only exact identity links", () => {
+  const { community, sqlite } = fixture();
+  expect(() => community.adminToggleAccount(72, 41, "is_admin")).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.adminSetWebring(null, 72, true)).toThrow(
+    "Admin access required",
+  );
+  const row = community.adminToggleAccount(41, 72, "is_admin");
+  expect(row.user.is_admin).toBe(1);
+  expect(row.stats.file_count).toBe(0);
+  expect(community.adminToggleAccount(41, 72, "is_admin").user.is_admin).toBe(
+    0,
+  );
+  expect(
+    community.adminToggleAccount(41, 72, "is_disabled").user.is_disabled,
+  ).toBe(1);
+  expect(
+    community.adminToggleAccount(41, 72, "is_disabled").user.is_disabled,
+  ).toBe(0);
+  expect(community.adminSetWebring(41, 72, true).user.in_webring).toBe(1);
+  expect(community.adminSetWebring(41, 72, false).user.in_webring).toBe(0);
+  expect(() => community.adminUserRow(41, 9999)).toThrow("Not found");
+  expect(
+    community.adminIdentitySubject(41, 41, "https://fixture.example"),
+  ).toBe("subject-jane");
+  expect(() =>
+    community.adminIdentitySubject(41, 41, "https://other.example"),
+  ).toThrow("no central identity link");
+  sqlite
+    .prepare(
+      "INSERT INTO external_identities(user_id,issuer,subject) VALUES(41,'https://fixture.example','second-subject')",
+    )
+    .run();
+  expect(() =>
+    community.adminIdentitySubject(41, 41, "https://fixture.example"),
+  ).toThrow("ambiguous central identity links");
+  expect(community.adminSnapshot(41).storage).toHaveLength(2);
+});
+
+it("reparents survivors and cascades account content without orphaning completed enrollment proofs", () => {
+  const { community, sqlite } = fixture();
+  sqlite.prepare("UPDATE users SET invited_by_user_id=41 WHERE id=72").run();
+  sqlite
+    .prepare(
+      "INSERT INTO invites(id,code,created_by_user_id,max_uses) VALUES(70,'local-delete-invite',72,2)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO users(id,username,display_name,password_hash,invited_by_user_id,invite_id) VALUES(99,'child','Child','',72,70)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO auth_enrollments(id,invite_id,expires_at,user_id,consumed_at,subject) VALUES('completed-child',70,1,99,1,'child-sub')",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO enrollment_completions(request_id,issuer,delivered_at) VALUES('completed-child','https://fixture.example',1)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO enrollment_grants(request_id,application_id,attempt_id,outcome) VALUES('completed-child','maps','local-attempt','preserved')",
+    )
+    .run();
+  community.createSession("local-session", 72, Date.now() + 60000);
+  community.signGuestbook(72, "jane", "Local entry");
+  community.savePage(72, "owned", {
+    title: "Owned",
+    content: "text",
+    content_format: "html",
+    is_public: 1,
+  });
+  expect(() => community.beginAccountDelete(null, 72, "reparent")).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.beginAccountDelete(72, 99, "prune")).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.beginAccountDelete(41, 41, "reparent")).toThrow(
+    "Cannot delete your own account",
+  );
+  expect(community.beginAccountDelete(41, 72, "reparent")).toBe(1);
+  expect(community.profile("child").id).toBe(99);
+  expect(
+    sqlite
+      .prepare("SELECT invited_by_user_id,invite_id FROM users WHERE id=99")
+      .get(),
+  ).toMatchObject({ invited_by_user_id: 41, invite_id: null });
+  expect(community.session("local-session")).toBe(null);
+  expect(community.guestbook("jane").entries).toEqual([]);
+  expect(
+    sqlite.prepare("SELECT count(*) AS n FROM pages WHERE user_id=72").get()?.n,
+  ).toBe(0);
+  expect(
+    sqlite.prepare("SELECT count(*) AS n FROM enrollment_grants").get()?.n,
+  ).toBe(0);
+  expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+});
+it("prunes descendant accounts atomically and blocks active media work", () => {
+  const { community, sqlite } = fixture();
+  sqlite
+    .prepare(
+      "INSERT INTO users(id,username,display_name,password_hash,invited_by_user_id) VALUES(99,'child','Child','',72),(100,'grandchild','Grandchild','',99)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO media_transfers(storage_path,user_id,mime_type,size_bytes,state,expires_at) VALUES('child/pending.png',99,'image/png',1,'uploading',9999999999999)",
+    )
+    .run();
+  expect(() => community.beginAccountDelete(41, 72, "prune")).toThrow(
+    "Wait for media transfers",
+  );
+  expect(community.profile("sam").id).toBe(72);
+  expect(community.hasAccountCleanup()).toBe(false);
+  sqlite.prepare("DELETE FROM media_transfers WHERE user_id=99").run();
+  expect(community.beginAccountDelete(41, 72, "prune")).toBe(3);
+  expect(community.members().map((u) => u.id)).toEqual([41]);
+  expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+});
+
+it("randomizes only default cyan cards with distinct palette choices before cycling", () => {
+  const { community, sqlite } = fixture();
+  for (let id = 101; id <= 113; id++) {
+    sqlite
+      .prepare(
+        "INSERT INTO users(id,username,display_name,password_hash) VALUES(?,?,?,'')",
+      )
+      .run(id, "member-" + id, "Member");
+    community.saveCard(id, { accent_color: "#00ffff", headline: "retained" });
+  }
+  community.saveCard(41, { accent_color: "#123456", headline: "custom" });
+  community.saveCard(72, {
+    accent_color: "#00FFFF",
+    headline: "uppercase custom",
+  });
+  expect(() => community.adminRandomizeCards(72)).toThrow(
+    "Admin access required",
+  );
+  expect(community.adminRandomizeCards(41)).toBe(13);
+  const cards = sqlite
+    .prepare(
+      "SELECT accent_color,headline FROM profile_cards WHERE user_id>=101 ORDER BY user_id",
+    )
+    .all();
+  expect(new Set(cards.slice(0, 12).map((c) => c.accent_color)).size).toBe(12);
+  expect(cards[12].accent_color).toBe(cards[0].accent_color);
+  expect(
+    cards.every(
+      (c) => c.accent_color !== "#00ffff" && c.headline === "retained",
+    ),
+  ).toBe(true);
+  expect(
+    sqlite
+      .prepare("SELECT accent_color FROM profile_cards WHERE user_id=41")
+      .get()?.accent_color,
+  ).toBe("#123456");
+  expect(
+    sqlite
+      .prepare("SELECT accent_color FROM profile_cards WHERE user_id=72")
+      .get()?.accent_color,
+  ).toBe("#00FFFF");
+  expect(community.adminRandomizeCards(41)).toBe(0);
+});
+
+it("restricts storage inventory to admins and includes paths reserved by recovery", () => {
+  const { community, sqlite } = fixture();
+  community.reserveUpload(41, "jane/upload", "image/png", 10);
+  sqlite
+    .prepare(
+      "INSERT INTO account_cleanup_users(username,user_id) VALUES('retired',99)",
+    )
+    .run();
+  sqlite
+    .prepare(
+      "INSERT INTO account_cleanup_objects(storage_path,username) VALUES('retired/pending','retired')",
+    )
+    .run();
+  expect(() => community.adminMediaInventory(null)).toThrow(
+    "Admin access required",
+  );
+  expect(() => community.adminMediaInventory(72)).toThrow(
+    "Admin access required",
+  );
+  expect(community.adminMediaInventory(41)).toEqual({
+    paths: [],
+    reserved: ["jane/upload", "retired/pending"],
+  });
+});
+
+it("returns a committed guestbook entry while notification delivery is still pending", async () => {
+  const { community, sqlite } = fixture();
+  const pending = Promise.withResolvers<unknown[]>();
+  const jobs: Promise<unknown>[] = [];
+  const store = {
+    call: async (method: keyof typeof community, ...args: unknown[]) => {
+      if (method === "guestbookNotifications") return pending.promise;
+      return (community[method] as (...values: unknown[]) => unknown)(...args);
+    },
+  } as unknown as Runtime;
+  const router = createAppRouter(
+    { VAPID_PRIVATE_KEY: "isolated-test-only" } as Bindings,
+    store,
+    { member: community.member(72), sessionHash: null },
+    (operation) => jobs.push(operation),
+  );
+  try {
+    const response = await router.fetch(
+      new Request("http://127.0.0.1/u/jane/guestbook", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: new URLSearchParams({ message: "Saved before push finishes" }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, message: "entry added" });
+    expect(community.guestbook("jane").entries[0].message).toBe(
+      "Saved before push finishes",
+    );
+    expect(jobs).toHaveLength(1);
+  } finally {
+    pending.resolve([]);
+    await Promise.all(jobs);
+    sqlite.close();
+  }
+});
+
+it("uses an authenticated ingress IP for counter cooldown and ignores changed browser cookies", async () => {
+  const { community, sqlite } = fixture();
+  const secret = "ab".repeat(32);
+  const store = {
+    call: async (method: keyof typeof community, ...args: unknown[]) =>
+      (community[method] as (...values: unknown[]) => unknown)(...args),
+  } as unknown as Runtime;
+  const router = createAppRouter(
+    { COUNTER_PEER_KEY: secret } as Bindings,
+    store,
+    { member: null, sessionHash: null },
+    () => {},
+  );
+  const path = "/u/jane/counter";
+  const visit = async (ip: string, cookie: string) => {
+    const proof = await attestCounterPeer(
+      { ip, method: "GET", path, at: Date.now() },
+      secret,
+    );
+    const response = await router.fetch(
+      new Request("https://review.invalid" + path, {
+        headers: {
+          Accept: "application/json",
+          Cookie: "fourm_visitor=" + cookie,
+          [counterPeerHeader]: proof,
+          "X-Forwarded-For": "192.0.2.200",
+        },
+      }),
+    );
+    expect(response.headers.get("Set-Cookie")).toBeNull();
+    return response.json() as Promise<{ total_views: number }>;
+  };
+  try {
+    const first = await visit("192.0.2.1", "first");
+    expect((await visit("192.0.2.1", "changed")).total_views).toBe(
+      first.total_views,
+    );
+    expect((await visit("192.0.2.2", "changed")).total_views).toBe(
+      first.total_views + 1,
+    );
+    await expect(
+      router.fetch(
+        new Request("https://review.invalid" + path, {
+          headers: {
+            "CF-Connecting-IP": "192.0.2.3",
+            "X-Forwarded-For": "192.0.2.3",
+          },
+        }),
+      ),
+    ).rejects.toMatchObject({ status: 503 });
+    expect(
+      sqlite.prepare("SELECT count(*) AS n FROM counter_visits").get()?.n,
+    ).toBe(2);
+    expect(
+      sqlite
+        .prepare("SELECT visitor_hash FROM counter_visits")
+        .all()
+        .every((row) => /^[a-f0-9]{64}$/.test(String(row.visitor_hash))),
+    ).toBe(true);
+  } finally {
+    sqlite.close();
+  }
+});

@@ -37,7 +37,9 @@ for (const app of applications.values()) {
     !app.resourceClientId ||
     !app.resourceSecret ||
     !Array.isArray(app.roles) ||
-    new URL(app.callback).pathname !== "/auth/callback"
+    (app.native === true
+      ? app.callback !== "http://localhost:4444/auth/cli/callback"
+      : new URL(app.callback).pathname !== "/auth/callback")
   )
     throw new Error("Invalid local auth application registration");
 }
@@ -50,6 +52,7 @@ const key = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const pending = new Map();
 const codes = new Map();
 const tokens = new Map();
+const refreshTokens = new Map();
 const encode = (value) =>
   Buffer.from(JSON.stringify(value)).toString("base64url");
 const random = () => randomBytes(32).toString("base64url");
@@ -106,6 +109,7 @@ const server = createServer(async (request, response) => {
         userinfo_endpoint: `${issuer}/oidc/v1/userinfo`,
         jwks_uri: `${issuer}/oauth/v2/keys`,
         introspection_endpoint: `${issuer}/oauth/v2/introspect`,
+        revocation_endpoint: `${issuer}/oauth/v2/revoke`,
       });
     }
     if (request.method === "GET" && url.pathname === "/oauth/v2/keys")
@@ -128,6 +132,7 @@ const server = createServer(async (request, response) => {
         new Set([
           ...expectedScopes(app),
           "profile",
+          ...(app.native === true ? ["offline_access"] : []),
           ...app.roles.map(
             (role) => `urn:zitadel:iam:org:project:role:${role}`,
           ),
@@ -187,6 +192,30 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "POST" && url.pathname === "/oauth/v2/token") {
       const params = await form(request);
+      if (params.get("grant_type") === "refresh_token") {
+        const old = params.get("refresh_token");
+        const record = refreshTokens.get(old);
+        if (
+          !record ||
+          record.app.clientId !== params.get("client_id") ||
+          record.expires <= Date.now() / 1000
+        )
+          return json(response, { error: "invalid_grant" }, 400);
+        refreshTokens.delete(old);
+        const access = random();
+        const refresh = random();
+        tokens.set(access, {
+          ...record,
+          expires: Math.floor(Date.now() / 1000) + 3600,
+        });
+        refreshTokens.set(refresh, record);
+        return json(response, {
+          access_token: access,
+          refresh_token: refresh,
+          token_type: "Bearer",
+          expires_in: 3600,
+        });
+      }
       const code = params.get("code");
       const transaction = codes.get(code);
       if (
@@ -220,12 +249,37 @@ const server = createServer(async (request, response) => {
         expires: now + 3600,
         scopes: transaction.scopes,
       });
+      let refreshToken;
+      if (
+        app.native === true &&
+        transaction.scopes.includes("offline_access")
+      ) {
+        refreshToken = random();
+        refreshTokens.set(refreshToken, {
+          app,
+          scopes: transaction.scopes,
+          expires: now + 86400,
+        });
+      }
       return json(response, {
+        ...(refreshToken ? { refresh_token: refreshToken } : {}),
         access_token: accessToken,
         id_token: `${unsigned}.${sign("RSA-SHA256", Buffer.from(unsigned), key.privateKey).toString("base64url")}`,
         token_type: "Bearer",
         expires_in: 3600,
       });
+    }
+    if (request.method === "POST" && url.pathname === "/oauth/v2/revoke") {
+      const params = await form(request);
+      const client = applications.get(params.get("client_id"));
+      if (!client) return json(response, { error: "invalid_client" }, 400);
+      const token = params.get("token");
+      const record = tokens.get(token) ?? refreshTokens.get(token);
+      if (record && record.app !== client)
+        return json(response, { error: "invalid_client" }, 400);
+      tokens.delete(token);
+      refreshTokens.delete(token);
+      return json(response, {});
     }
     if (request.method === "GET" && url.pathname === "/oidc/v1/userinfo") {
       const token = request.headers.authorization?.replace(/^Bearer /, "");
@@ -258,7 +312,9 @@ const server = createServer(async (request, response) => {
       const record = tokens.get(token);
       if (
         !record ||
-        record.app !== resourceApp ||
+        record.app.resourceClientId !== resourceApp.resourceClientId ||
+        record.app.projectId !== resourceApp.projectId ||
+        record.app.organizationId !== resourceApp.organizationId ||
         record.expires <= Date.now() / 1000
       )
         return json(response, { active: false });

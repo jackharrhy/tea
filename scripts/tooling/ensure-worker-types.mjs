@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 const workers = [
+  ["apps/4orm", "wrangler", "worker-configuration.d.ts"],
   ["apps/ref", "wrangler", "worker-configuration.d.ts"],
   ["apps/radio", "wrangler", "worker-configuration.d.ts"],
   ["apps/maps-collaboration", "wrangler", "worker-configuration.d.ts"],
@@ -15,7 +16,13 @@ for (const [workspace, tool, typesFile] of workers) {
   const args =
     tool === "cf"
       ? ["workers", "types"]
-      : ["types", typesFile, "--env-file", ".dev.vars.example"];
+      : [
+          "types",
+          typesFile,
+          ...(existsSync(join(workspace, ".dev.vars.example"))
+            ? ["--env-file", ".dev.vars.example"]
+            : []),
+        ];
   const result = spawnSync(command, args, {
     cwd: workspace,
     stdio: "inherit",

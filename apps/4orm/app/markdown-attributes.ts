@@ -1,0 +1,177 @@
+import { Renderer } from "marked";
+import type { Marked, Token } from "marked";
+
+type Attributes = Map<string, string | null>;
+function attributes(source: string): Attributes | null {
+  const result: Attributes = new Map();
+  const scanner =
+    /([^ =}]+)="([^"]*)"|([^ =}]+)='([^']*)'|([^ =}]+)=([^ =}]+)|([^ =}]+)/y;
+  let position = 0;
+  while (position < source.length) {
+    if (source[position] === " ") {
+      position++;
+      continue;
+    }
+    scanner.lastIndex = position;
+    const match = scanner.exec(source);
+    if (!match) return null;
+    let name = match[1] ?? match[3] ?? match[5] ?? match[7];
+    let value = match[2] ?? match[4] ?? match[6] ?? null;
+    if (match[7]?.startsWith(".")) {
+      name = "class";
+      value = [result.get("class"), match[7].slice(1)]
+        .filter(Boolean)
+        .join(" ");
+    } else if (match[7]?.startsWith("#")) {
+      name = "id";
+      value = match[7].slice(1);
+    }
+    name = name.replace(
+      // oxlint-disable-next-line no-misleading-character-class -- Python attr_list permits combining marks in XML names.
+      /[^A-Z_a-z\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u02ff\u0370-\u037d\u037f-\u1fff\u200c-\u200d\u2070-\u218f\u2c00-\u2fef\u3001-\ud7ff\uf900-\ufdcf\ufdf0-\ufffd:\-.0-9\u00b7\u0300-\u036f\u203f-\u2040]+/g,
+      "_",
+    );
+    result.set(name, value);
+    position = scanner.lastIndex;
+  }
+  return result.size ? result : null;
+}
+function escape(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+function apply(html: string, attrs: Attributes) {
+  return html.replace(
+    /^<([a-z][a-z0-9]*)([^>]*?)(\/?)>/i,
+    (_, tag: string, existing: string, closing: string) => {
+      for (const [name, value] of attrs) {
+        const literal = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        existing = existing.replace(
+          new RegExp(
+            `\\s+${literal}(?:\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+))?(?=\\s|$)`,
+            "gi",
+          ),
+          "",
+        );
+        existing += value === null ? ` ${name}` : ` ${name}="${escape(value)}"`;
+      }
+      return `<${tag}${existing}${closing}>`;
+    },
+  );
+}
+export function markdownAttributes(markdown: Marked) {
+  const assigned = new WeakMap<object, Attributes>();
+  const trailing = / +\{:? *([^}\n ][^\n]*)\} *$/;
+  const separateLine = /\n *\{:? *([^}\n ][^\n]*)\} *$/;
+  function consume(target: object, children: Token[], pattern: RegExp) {
+    const last = children.at(-1);
+    if (last?.type !== "text") return;
+    const match = pattern.exec(last.text),
+      parsed = match && attributes(match[1]);
+    if (!parsed) return;
+    assigned.set(target, parsed);
+    last.text = last.text.slice(0, match.index);
+  }
+  function visit(tokens: Token[]) {
+    for (const token of tokens) {
+      if (token.type === "list")
+        for (const item of token.items) {
+          const tail = item.tokens.at(-1);
+          if (tail?.type === "text" && tail.tokens)
+            consume(item, tail.tokens, separateLine);
+          visit(item.tokens);
+        }
+      if (token.type === "table")
+        for (const cell of [...token.header, ...token.rows.flat()]) {
+          consume(cell, cell.tokens, trailing);
+          visit(cell.tokens);
+        }
+      if (!("tokens" in token) || !Array.isArray(token.tokens)) continue;
+      const children = token.tokens as Token[];
+      if (token.type === "heading" || token.type === "paragraph") {
+        consume(
+          token,
+          children,
+          token.type === "heading" ? trailing : separateLine,
+        );
+        const last = children.at(-1);
+        if (
+          token.type === "heading" &&
+          assigned.has(token) &&
+          last?.type === "text"
+        )
+          last.text = last.text.replace(/#+$/, "").trimEnd();
+      }
+      visit(children);
+    }
+    for (let i = 1; i < tokens.length; i++) {
+      const previous = tokens[i - 1],
+        following = tokens[i];
+      if (
+        !["image", "link", "strong", "em", "codespan"].includes(
+          previous.type,
+        ) ||
+        following.type !== "text"
+      )
+        continue;
+      const match = /^\{:? *([^}\n ][^\n]*)\}/.exec(following.text);
+      const parsed = match && attributes(match[1]);
+      if (parsed) {
+        assigned.set(previous, parsed);
+        following.text = following.text.slice(match[0].length);
+      }
+    }
+  }
+  const renderer = markdown.defaults.renderer ?? new Renderer();
+  const wrap = <T extends object>(
+    render: (this: Renderer, token: T) => string,
+  ) =>
+    function (this: Renderer, token: T) {
+      const html = render.call(this, token),
+        attrs = assigned.get(token);
+      return attrs ? apply(html, attrs) : html;
+    };
+  const renderCode = renderer.code;
+  markdown.use({
+    hooks: {
+      processAllTokens(tokens) {
+        visit(tokens);
+        return tokens;
+      },
+    },
+    renderer: {
+      code(token) {
+        const match = /^\{([^\n]*)\}$/.exec(token.lang ?? "");
+        const parsed = match && attributes(match[1]);
+        if (!parsed) return renderCode.call(this, token);
+        const classes = (parsed.get("class") ?? "")
+          .split(/\s+/)
+          .filter(Boolean);
+        const outer: Attributes = new Map();
+        if (parsed.has("id")) outer.set("id", parsed.get("id")!);
+        if (classes.length > 1) outer.set("class", classes.slice(1).join(" "));
+        parsed.delete("id");
+        parsed.delete("class");
+        const html = renderCode.call(this, {
+          ...token,
+          lang: classes[0] ?? "",
+        });
+        return apply(html, outer).replace(/<code\b[^>]*>/, (opening) =>
+          apply(opening, parsed),
+        );
+      },
+      tablecell: wrap(renderer.tablecell),
+      listitem: wrap(renderer.listitem),
+      heading: wrap(renderer.heading),
+      paragraph: wrap(renderer.paragraph),
+      image: wrap(renderer.image),
+      link: wrap(renderer.link),
+      strong: wrap(renderer.strong),
+      em: wrap(renderer.em),
+      codespan: wrap(renderer.codespan),
+    },
+  });
+}
