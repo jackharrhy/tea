@@ -70,7 +70,10 @@ A private `.partial-*` directory is never a completed backup. Files/SQLite are
 synced and reread/verified before atomic directory publication as `snapshot-*`.
 After a valid new success, every owned generation is verified before pruning to
 seven. Corruption blocks pruning. Unknown/manual/old `.tar.gz` archives and partial
-directories are never automatically deleted. Report errors and investigate partial
+directories are never automatically deleted. Retention first atomically renames a
+verified removal candidate to `.retired-*`, so a crash mid-delete cannot poison the
+completed catalogue; leftover retired directories also need manual inspection.
+Report errors and investigate partial
 storage manually; disk reserve checks fail closed rather than erasing the last good
 backup. The floor is a guard, not a filesystem quota against concurrent host users.
 

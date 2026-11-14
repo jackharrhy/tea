@@ -157,8 +157,12 @@ export function createBackupService(
       }
       // Re-verify every owned generation before pruning any; unknown/partial entries untouched.
       const completed = await catalogue();
-      for (const record of completed.slice(config.retention))
-        await rm(join(config.directory, record.name), { recursive: true });
+      for (const record of completed.slice(config.retention)) {
+        // A crash during recursive removal must not leave a corrupt completed generation.
+        const retired = join(config.directory, `.retired-${record.name}`);
+        await rename(join(config.directory, record.name), retired);
+        await rm(retired, { recursive: true });
+      }
       const kept = completed.slice(0, config.retention);
       status = {
         ...status,
