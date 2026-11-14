@@ -86,7 +86,7 @@ function Guestbook(
         ) : (
           <p class="gb-signin">
             <a href="/login" target="_parent">
-              Sign in
+              sign in
             </a>{" "}
             to leave a message
           </p>

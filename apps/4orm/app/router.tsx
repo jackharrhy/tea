@@ -145,7 +145,7 @@ export function createAppRouter(
   background: (operation: Promise<unknown>) => void,
 ) {
   function member() {
-    if (!viewer.member) throw new CommunityError(401, "Sign in to continue");
+    if (!viewer.member) throw new CommunityError(401, "sign in to continue");
     return viewer.member;
   }
   async function page(
@@ -955,7 +955,7 @@ export function createAppRouter(
                     }
                   />
                 </label>
-                <button>Sign in</button>
+                <button>sign in</button>
               </form>
             </>,
           );

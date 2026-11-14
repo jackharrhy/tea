@@ -80,7 +80,7 @@ export async function completeInvite({
     const errors = [];
     page.on("pageerror", () => errors.push("browser error"));
     await page.goto(origin + "/register?invite=" + invite.code);
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.getByRole("button", { name: "sign in", exact: true }).click();
     const ticket = new URL(page.url()).searchParams.get("ticket");
     assert.ok(ticket);
     requestId = JSON.parse(
