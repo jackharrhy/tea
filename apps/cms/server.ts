@@ -20,7 +20,31 @@ const operator = operatorOrigin
       ),
     }
   : undefined;
-const app = await createApp(sites, operator);
+const { createBackupService, backupConfig } =
+  await import("./backup/service.ts");
+const backups = createBackupService(
+  resolve(process.env.TEA_DATA_DIR ?? "data"),
+  [
+    ...sites.map((site) => ({
+      id: site.id,
+      origin: site.origin,
+      database: `${site.id}/tea.db`,
+      trees: [`${site.id}/uploads`, `${site.id}/public`],
+    })),
+    ...(operator
+      ? [
+          {
+            id: "operator",
+            origin: operator.origin,
+            database: "operator/operator.db",
+            trees: [],
+          },
+        ]
+      : []),
+  ],
+  backupConfig(),
+);
+const app = await createApp(sites, operator, backups.status);
 const logger = createLogger({
   service: "cms",
   environment: process.env.NODE_ENV,
@@ -46,6 +70,7 @@ server.listen(
         `${site.id}: ${site.origin}${site.preview ? " (preview)" : ""}`,
       );
     if (operator) console.log(`operator: ${operator.origin}`);
+    void backups.start();
   },
 );
 let closing = false;
@@ -53,6 +78,7 @@ function shutdown() {
   if (closing) return;
   closing = true;
   server.close(async () => {
+    await backups.close();
     app.close();
     await assets.close();
     process.exit(0);

@@ -10,6 +10,7 @@ import type { OperatorStore } from "./operator/store.ts";
 import { currentLog } from "@harrhy/logger";
 import { parseOperatorOrigin } from "./config.ts";
 import { compressResponse } from "remix/response/compress";
+import type { BackupStatus } from "./backup/service.ts";
 
 type Operator = { origin: string; store: OperatorStore };
 type Tenant = {
@@ -53,7 +54,11 @@ async function openTenant(
   }
 }
 
-export async function createApp(sites: SiteRuntime[], operator?: Operator) {
+export async function createApp(
+  sites: SiteRuntime[],
+  operator?: Operator,
+  backupStatus?: () => BackupStatus,
+) {
   const tenants: Tenant[] = [];
   try {
     if (operator) parseOperatorOrigin(operator.origin, sites);
@@ -67,7 +72,12 @@ export async function createApp(sites: SiteRuntime[], operator?: Operator) {
     );
     const operatorRoute = operator && {
       origin: new URL(operator.origin),
-      router: createOperatorRouter(operator.store, operator.origin, tenants),
+      router: createOperatorRouter(
+        operator.store,
+        operator.origin,
+        tenants,
+        backupStatus,
+      ),
     };
     return {
       async fetch(request: Request) {

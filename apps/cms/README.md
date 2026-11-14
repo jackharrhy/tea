@@ -31,6 +31,18 @@ npm run test:browser --workspace @harrhy/cms
 
 Host tests and fixtures live in `__tests__/`; feature tests live in `__tests__/` beside their code. Operational scripts live in `scripts/`. See [Compose](../../compose.yml) and [operations](../../docs/cms/operations.md) for deployment and data, [MCP](../../docs/cms/mcp.md) for the optional read-only endpoint, and [AGENTS.md](AGENTS.md) for CMS editing rules.
 
+## App-owned backups
+
+`backup/` owns the optional daily scheduler, SQLite/media snapshots, seven-generation
+retention and private status receipts. Set `TEA_BACKUP_DIR` to a distinct persistent
+mount (local Compose uses `cms-backups:/app/backups`). The authenticated operator
+dashboard shows status; public health does not expose it. All configured site
+DB/uploads/public trees and the optional operator DB are included. See
+[backup configuration, consistency and offline restore](../../docs/cms/backups.md).
+Database snapshots are individually consistent, not a cross-database instant.
+Local snapshots are not off-host disaster recovery. The separate production Andrew
+site and its legacy media are outside this app's backup scope.
+
 ## Central Auth transition
 
 The existing operator and site password logins stay active until the operator

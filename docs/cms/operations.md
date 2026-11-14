@@ -12,11 +12,14 @@ From the repo root:
 docker compose up --build -d
 ```
 
-Root [`compose.yml`](../../compose.yml) runs Traefik and CMS. Open `http://andrew.localhost` or `http://luke.localhost`. Traefik binds port 80 on loopback and forwards to CMS port 4351 over the Compose network. CMS publishes no host port. The `cms-data` volume persists data between runs.
+Root [`compose.yml`](../../compose.yml) runs Traefik and CMS. Open `http://andrew.localhost` or `http://luke.localhost`. Traefik binds port 80 on loopback and forwards to CMS port 4351 over the Compose network. CMS publishes no host port. The `cms-data` volume persists data between runs; the separate `cms-backups` volume
+holds optional app-owned recovery snapshots at `/app/backups`.
 
 `docker compose down` stops the stack and keeps the volume.
 
-Compose mounts inline `site.local.json` overrides for the `.localhost` hosts; tracked manifests stay as they are. The image runs as Node user UID 1000, so bind-mounted data must be writable by that user. Production routing, TLS, DNS, secrets, and volume backups belong in the infrastructure repo.
+Compose mounts inline `site.local.json` overrides for the `.localhost` hosts; tracked manifests stay as they are. The image runs as Node user UID 1000, so bind-mounted data must be writable by that user. Production routing, TLS, DNS, secrets and persistent mount selection belong in the
+infrastructure repo. TeaCMS owns its optional snapshot schedule, retention and status;
+Infra owns off-host replication and the tested transition from its old cron.
 
 ## Traefik
 
@@ -44,7 +47,11 @@ Mug's `teacms` Compose service uses `:latest`, and Watchtower pulls new images f
 curl http://andrew.localhost/healthz
 ```
 
-Do not copy a live WAL-mode `tea.db` alone. Use SQLite backup, or stop writes and back up the database and uploads together. Keep off-host copies and test restores.
+Do not copy a live WAL-mode `tea.db` alone. The optional app-owned scheduler uses
+SQLite backup plus every site's uploads/public and the operator DB, verifies completion,
+and retains seven daily generations. See [backups](backups.md) for explicit mount/config,
+actual per-database consistency, status, offline restore and cron retirement gates.
+Keep off-host copies and test restores. Standalone Andrew remains outside this app.
 
 `data/operator/operator.db` holds operator password hashes, sessions, and site-entry tickets. Back it up securely or reseed an operator after restoring.
 

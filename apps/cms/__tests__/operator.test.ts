@@ -37,7 +37,18 @@ it("keeps operator access separate, hands off once, and revokes site access on s
   store.sqlite
     .prepare("INSERT INTO users(email,password_hash) VALUES (?,?)")
     .run("operator@test.local", await bcrypt.hash("operator-test-password", 4));
-  const app = await createApp(sites, { origin: operatorOrigin, store });
+  const app = await createApp(sites, { origin: operatorOrigin, store }, () => ({
+    enabled: true,
+    running: false,
+    lastSuccess: "2026-11-14T04:27:00.000Z",
+    nextDue: "2026-11-15T04:27:00.000Z",
+    completed: 7,
+    bytes: 1234,
+    retention: 7,
+    intervalSeconds: 86400,
+    localOnly: true,
+    lastError: "Storage unavailable",
+  }));
   try {
     const request = (url: string, init?: RequestInit) =>
       app.fetch(new Request(url, init));
@@ -85,6 +96,14 @@ it("keeps operator access separate, hands off once, and revokes site access on s
     assert.match(html, /Luke/);
     assert.match(html, /Healthy/);
     assert.ok(!html.includes("operator-test-password"));
+    assert.match(html, /Last verified snapshot/);
+    assert.match(html, /2026-11-14T04:27:00.000Z/);
+    assert.match(html, /Storage unavailable/);
+    assert.match(html, /Local recovery only/);
+    assert.doesNotMatch(
+      await (await request(operatorOrigin + "/login")).text(),
+      /Last verified snapshot/,
+    );
 
     async function enter(site: "andrew" | "luke") {
       const siteConfig = sites.find((item) => item.id === site)!;

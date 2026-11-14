@@ -20,6 +20,8 @@ import {
   finishCentralLogin,
 } from "../app/data/central-auth.ts";
 
+import type { BackupStatus } from "../backup/service.ts";
+
 const cookieName = "tea-operator-session";
 const csrfCookieName = "tea-operator-csrf";
 function csrfToken(request: Request) {
@@ -81,6 +83,7 @@ export function createOperatorRouter(
   store: OperatorStore,
   origin: string,
   sites: SiteRow[],
+  backupStatus?: () => BackupStatus,
 ) {
   const central = centralAuth(origin, process.env.TEA_AUTH_OPERATOR_CLIENT_ID);
   const transactionCookie = "tea-operator-oauth";
@@ -132,6 +135,7 @@ export function createOperatorRouter(
               email={user.email}
               sites={sites.map(summarize)}
               csrf={csrf}
+              backup={backupStatus?.()}
             />,
           );
           response.headers.append(

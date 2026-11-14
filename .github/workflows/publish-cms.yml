@@ -67,6 +67,8 @@ jobs:
         with:
           context: .
           file: apps/cms/Dockerfile
+          build-args: |
+            APP_REVISION=${{ github.sha }}
           push: true
           tags: |
             ghcr.io/jackharrhy/teacms:latest
