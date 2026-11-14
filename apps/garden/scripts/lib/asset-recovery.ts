@@ -82,7 +82,7 @@ export async function recoverMissingAssets(
     }
   }
   if (!options.copy || !missing.length)
-    return { selected: paths.length, missing };
+    return { remoteFiles: paths.length, missing };
   const scratch = await fs.mkdtemp(
     path.join(os.tmpdir(), "garden-asset-recovery-"),
   );
@@ -123,7 +123,7 @@ export async function recoverMissingAssets(
         }
       }
     }
-    return { selected: paths.length, missing };
+    return { remoteFiles: paths.length, missing };
   } finally {
     await fs.rm(scratch, { recursive: true, force: true });
   }

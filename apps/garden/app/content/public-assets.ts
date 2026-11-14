@@ -10,11 +10,10 @@ import { createContentStore } from "./store.ts";
 import { createMarkdownRenderer } from "./markdown.ts";
 import { resolveOgImage } from "./utils.ts";
 
-export interface PublicAsset {
+interface PublicAsset {
   sourcePath: string;
   hash: string;
   bytes: number;
-  contents: Buffer;
 }
 export interface PublicAssetOptions {
   vaultPath: string;
@@ -51,8 +50,7 @@ function assetPath(value: string) {
   return normalized;
 }
 
-// This is the selection owner for export and upload. References are extracted
-// from the same rendered Markdown used by pages, never from a second Markdown parser.
+// Reuse page rendering so export selection follows the actual Markdown transforms.
 export async function selectPublicAssets(options: PublicAssetOptions) {
   const snapshot = createContentStore(options.vaultPath).read();
   if (!snapshot.byId.has("home"))
@@ -288,7 +286,6 @@ export async function selectPublicAssets(options: PublicAssetOptions) {
       sourcePath: reference,
       hash: createHash("sha256").update(contents).digest("hex"),
       bytes: contents.length,
-      contents,
     });
     const extension = path.extname(reference).toLowerCase();
     if (extension === ".css") css(contents.toString("utf8"), reference);

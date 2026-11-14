@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { assetsCommand } from "../scripts/assets.ts";
+import { recoverAssetsCommand } from "../scripts/assets.ts";
 import { selectPublicAssets } from "../app/content/public-assets.ts";
 
 async function fixture(t: { after(callback: () => Promise<void>): void }) {
@@ -27,19 +27,26 @@ async function fixture(t: { after(callback: () => Promise<void>): void }) {
 test("missing-local remains a maintenance inventory, independent of publication selection", async (t) => {
   const f = await fixture(t);
   await fs.writeFile(path.join(f.assetsPath, "existing.txt"), "keep");
-  const result = await assetsCommand(["missing-local"], f.env, (args) => {
-    assert.deepEqual(args, [
-      "lsjson",
-      "fixture:bucket",
-      "--files-only",
-      "--recursive",
-    ]);
-    return JSON.stringify([
-      { Path: "existing.txt" },
-      { Path: "nested/recovered.txt" },
-    ]);
+  const result = await recoverAssetsCommand(
+    ["missing-local"],
+    f.env,
+    (args) => {
+      assert.deepEqual(args, [
+        "lsjson",
+        "fixture:bucket",
+        "--files-only",
+        "--recursive",
+      ]);
+      return JSON.stringify([
+        { Path: "existing.txt" },
+        { Path: "nested/recovered.txt" },
+      ]);
+    },
+  );
+  assert.deepEqual(result, {
+    remoteFiles: 2,
+    missing: ["nested/recovered.txt"],
   });
-  assert.deepEqual(result, { selected: 2, missing: ["nested/recovered.txt"] });
   assert.deepEqual(await fs.readdir(f.assetsPath), ["existing.txt"]);
 });
 
@@ -48,7 +55,7 @@ test("pull-missing is remote-to-scratch-to-local only; dry-run and exclusive wri
   await fs.writeFile(path.join(f.assetsPath, "existing.txt"), "keep");
   for (const dryRun of [true, false]) {
     let received = "";
-    await assetsCommand(
+    await recoverAssetsCommand(
       ["pull-missing", ...(dryRun ? ["--dry-run"] : [])],
       f.env,
       (args) => {
@@ -110,7 +117,7 @@ test("pull-missing is remote-to-scratch-to-local only; dry-run and exclusive wri
 test("a local file created during download is not overwritten, and failed transfers remove scratch", async (t) => {
   const f = await fixture(t);
   let received = "";
-  await assetsCommand(["pull-missing"], f.env, (args) => {
+  await recoverAssetsCommand(["pull-missing"], f.env, (args) => {
     if (args[0] === "lsjson") return JSON.stringify([{ Path: "new.txt" }]);
     received = args[2];
     writeFileSync(path.join(received, "new.txt"), "download");
@@ -122,7 +129,7 @@ test("a local file created during download is not overwritten, and failed transf
     "concurrent local",
   );
   await assert.rejects(
-    assetsCommand(["pull-missing"], f.env, (args) => {
+    recoverAssetsCommand(["pull-missing"], f.env, (args) => {
       if (args[0] === "lsjson")
         return JSON.stringify([{ Path: "another.txt" }]);
       received = args[2];
@@ -153,7 +160,7 @@ test("recovery rejects traversal and preexisting symlink escapes before transfer
   ]) {
     for (const command of ["missing-local", "pull-missing"]) {
       await assert.rejects(
-        assetsCommand([command], f.env, (args) => {
+        recoverAssetsCommand([command], f.env, (args) => {
           assert.equal(args[0], "lsjson", "must reject before copy");
           return JSON.stringify([{ Path: remotePath }]);
         }),

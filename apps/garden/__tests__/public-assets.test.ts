@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs/promises";
-import { readFileSync, readdirSync, statSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -9,8 +8,6 @@ import {
   readApprovedPublic,
 } from "../app/content/public-assets.ts";
 import { exportSnapshot } from "../app/content/publish.ts";
-import { withPublicAssetStage } from "../scripts/lib/public-asset-stage.ts";
-import { assetsCommand } from "../scripts/assets.ts";
 
 async function fixture(
   t: { after(callback: () => Promise<void>): void },
@@ -72,7 +69,6 @@ test("one public selection covers rendered wiki, Markdown, HTML, OG image and ac
   assert.deepEqual(names(manifest.assets), expected);
   assert.equal(manifest.pages.length, 2);
   assert.equal(JSON.stringify(manifest).includes("not-selected"), false);
-  assert.equal(JSON.stringify(manifest).includes("contents"), false);
 });
 
 test("CSS imports, escaped URLs, HTML srcset/SVG/style dependencies close transitively with cycles", async (t) => {
@@ -153,118 +149,23 @@ test("encoded directory names are decoded once and only real HTML attributes aut
   ]);
 });
 
-test("explicit approval files validate before execution and remote comparison ignores older objects", async (t) => {
+test("explicit approval files select export assets and reject invalid selections", async (t) => {
   const f = await fixture(t);
   await f.asset("approved.png");
   const selection = path.join(f.directory, "approved.json");
   await fs.writeFile(selection, JSON.stringify(["approved.png"]));
-  const env = {
-    GARDEN_VAULT_PATH: f.vaultPath,
-    GARDEN_VAULT_ASSETS_PATH: f.assetsPath,
-  };
-  const result = await assetsCommand(
-    ["diff", "--public-selection", selection],
-    env,
-    () => "older-remote-object.png\n",
-  );
-  assert.deepEqual(result, { selected: 1, missing: ["approved.png"] });
+  const manifest = await exportSnapshot({
+    ...f,
+    outputPath: path.join(f.directory, "snapshot"),
+    approvedPublic: await readApprovedPublic(selection),
+  });
+  assert.deepEqual(names(manifest.assets), ["approved.png"]);
   await fs.writeFile(selection, JSON.stringify({ all: true }));
   await assert.rejects(readApprovedPublic(selection), /JSON array/);
   for (const approvedPublic of [["../escape"], ["folder"], ["bad\nname"]]) {
     await fs.mkdir(path.join(f.assetsPath, "folder"), { recursive: true });
     await assert.rejects(selectPublicAssets({ ...f, approvedPublic }));
   }
-});
-
-test("unselected files never enter the stage; selected bytes cannot be swapped after selection", async (t) => {
-  const f = await fixture(t, "![[public.png]]");
-  await f.asset("public.png", "selected bytes");
-  const { assets } = await selectPublicAssets(f);
-  await f.asset("public.png", "changed after selection");
-  let staged = "";
-  await withPublicAssetStage(assets, async (directory) => {
-    staged = directory;
-    assert.deepEqual(await fs.readdir(directory), ["public.png"]);
-    assert.equal(
-      await fs.readFile(path.join(directory, "public.png"), "utf8"),
-      "selected bytes",
-    );
-    assert.equal((await fs.stat(directory)).mode & 0o777, 0o700);
-    assert.equal(
-      (await fs.stat(path.join(directory, "public.png"))).mode & 0o777,
-      0o400,
-    );
-  });
-  await assert.rejects(fs.stat(staged), { code: "ENOENT" });
-  assets[0].contents.fill(0);
-  await assert.rejects(
-    withPublicAssetStage(assets, async () =>
-      assert.fail("must not transfer changed bytes"),
-    ),
-    /bytes changed/,
-  );
-});
-
-test("upload reads only the secure selection stage, uses copy not sync, and cleans up after failure", async (t) => {
-  const f = await fixture(t, "![[public.png]]");
-  await f.asset("public.png", "selected");
-  const env = {
-    GARDEN_VAULT_PATH: f.vaultPath,
-    GARDEN_VAULT_ASSETS_PATH: f.assetsPath,
-    GARDEN_RCLONE_REMOTE: "fixture:public",
-  };
-  let staged = "";
-  const result = await assetsCommand(
-    ["copy-to-r2", "--dry-run"],
-    env,
-    (args) => {
-      assert.equal(args[0], "copy");
-      staged = args[1];
-      assert.notEqual(staged, f.assetsPath);
-      assert.deepEqual(readdirSync(staged), ["public.png"]);
-      assert.equal(
-        readFileSync(path.join(staged, "public.png"), "utf8"),
-        "selected",
-      );
-      assert.equal(statSync(staged).mode & 0o777, 0o700);
-      assert.ok(args.includes("--dry-run"));
-      return "";
-    },
-  );
-  assert.equal(result.selected, 1);
-  await assert.rejects(fs.stat(staged), { code: "ENOENT" });
-  await assert.rejects(
-    assetsCommand(["copy-to-r2"], env, (args) => {
-      staged = args[1];
-      throw new Error("fixture transfer failure");
-    }),
-    /fixture transfer failure/,
-  );
-  await assert.rejects(fs.stat(staged), { code: "ENOENT" });
-});
-
-function unexpectedTransfer() {
-  return assert.fail("must not run rclone");
-}
-
-test("empty publication selection and refused sync never invoke a transfer", async (t) => {
-  const f = await fixture(t);
-  const env = {
-    GARDEN_VAULT_PATH: f.vaultPath,
-    GARDEN_VAULT_ASSETS_PATH: f.assetsPath,
-  };
-  assert.equal(
-    (await assetsCommand(["copy-to-r2"], env, unexpectedTransfer)).selected,
-    0,
-  );
-  for (const command of [
-    ["sync-to-r2", "--yes"],
-    ["sync-to-r2", "--dry-run"],
-  ])
-    await assert.rejects(
-      assetsCommand(command, env, unexpectedTransfer),
-      /disabled/,
-    );
 });
 
 test("containment, hidden paths, malformed URLs, missing files and unsupported dependency syntax fail closed", async (t) => {

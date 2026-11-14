@@ -24,12 +24,7 @@ function pageHash(value: string | Buffer) {
 export async function exportSnapshot(
   options: PublicAssetOptions & { outputPath: string },
 ) {
-  const { snapshot, assets: selected } = await selectPublicAssets(options);
-  const assets = selected.map(({ sourcePath, hash, bytes }) => ({
-    sourcePath,
-    hash,
-    bytes,
-  }));
+  const { snapshot, assets } = await selectPublicAssets(options);
   const manifest: PublishManifest = {
     generatedAt: new Date().toISOString(),
     pages: snapshot.entries
