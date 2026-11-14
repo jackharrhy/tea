@@ -7,13 +7,18 @@ description: Set up a task worktree, merge its PR, and remove it when finished.
 
 ## Create
 
-Choose an unused sibling path and task branch. Substitute the placeholders:
+Run in Bash from any checkout. Replace `<task>` with a unique task name; worktrees go in the main checkout's `.worktrees/`:
 
-```sh
+```bash
+main=$(git rev-parse --path-format=absolute --git-common-dir)
+main=${main%/.git}
+test -d "$main/.git" || { echo "Requires a non-bare main checkout with a .git directory"; exit 1; }
+cd "$main"
 git worktree list
 git fetch origin main
-git worktree add -b <task-branch> <worktree-path> origin/main
-cd <worktree-path>
+mkdir -p .worktrees
+git worktree add -b <task> .worktrees/<task> origin/main
+cd .worktrees/<task>
 npm ci
 ```
 
@@ -46,10 +51,10 @@ git ls-files --others --exclude-standard
 git ls-files --others --ignored --exclude-standard
 ```
 
-Check for active sessions and processes using the tree. Preserve unique ignored configuration, databases, keys, or documents; remove only confirmed rebuildable output. From another checkout:
+Check for active sessions and processes using the tree. Preserve unique ignored configuration, databases, keys, or documents; remove only confirmed rebuildable output. From the main checkout:
 
 ```sh
-git worktree remove <worktree-path>
+git worktree remove .worktrees/<task>
 ```
 
 If removal refuses, inspect the remaining files instead of forcing it.
