@@ -72,6 +72,8 @@
       ],
     },
     "apps/garden": {
+      // Local R2 recovery invokes the operator-installed rclone executable.
+      "ignoreBinaries": ["rclone"],
       "entry": [
         "app/ui/public/entry.js",
         "app/ui/public/debug.js",
