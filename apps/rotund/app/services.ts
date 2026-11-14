@@ -30,12 +30,17 @@ function record(value: unknown): value is Record<string, unknown> {
 const existingIds = ["jellyfin", "sonarr", "radarr", "prowlarr", "qbittorrent"];
 const mediaAdminIds = ["sonarr", "radarr", "prowlarr", "qbittorrent"];
 
-function sameAccess(a: Binding, b: Binding): boolean {
+function sameAccess(
+  a: Binding,
+  b: Binding,
+  allowOwnerRestriction = false,
+): boolean {
   const rolesA = a.requiredAnyRole.toSorted();
   const rolesB = b.requiredAnyRole.toSorted();
   return (
     a.projectId === b.projectId &&
-    a.allowedSubject === b.allowedSubject &&
+    (a.allowedSubject === b.allowedSubject ||
+      (allowOwnerRestriction && !b.allowedSubject)) &&
     rolesA.length === rolesB.length &&
     rolesA.every((role, index) => role === rolesB[index])
   );
@@ -80,7 +85,7 @@ export function parseBindings(value: string): Binding[] {
             const member = bindings.find((candidate) => candidate?.id === id);
             return member && sameAccess(member, mediaAdmin);
           }) ||
-          !sameAccess(binding, mediaAdmin)),
+          !sameAccess(binding, mediaAdmin, binding.id === "slskd")),
     )
   )
     throw new Error("Invalid service entitlement bindings");

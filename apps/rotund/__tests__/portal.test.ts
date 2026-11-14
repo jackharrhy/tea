@@ -149,17 +149,34 @@ for (const service of [
       ),
       false,
     );
-    const ownerBindings = bindings.map((binding) =>
-      binding.projectId === "fixture-admin"
-        ? { ...binding, allowedSubject: "fixture-owner" }
-        : binding,
-    );
+    const ownerBindings =
+      service.id === "slskd"
+        ? bindings
+        : bindings.map((binding) =>
+            binding.projectId === "fixture-admin"
+              ? { ...binding, allowedSubject: "fixture-owner" }
+              : binding,
+          );
     const binding = {
       id: service.id,
       projectId: "fixture-admin",
       requiredAnyRole: ["admin"],
       allowedSubject: "fixture-owner",
     };
+    if (service.id === "slskd") {
+      assert.throws(() =>
+        parseBindings(
+          JSON.stringify([
+            ...bindings.map((member) =>
+              member.projectId === "fixture-admin"
+                ? { ...member, allowedSubject: "different-owner" }
+                : member,
+            ),
+            binding,
+          ]),
+        ),
+      );
+    }
     const configured = parseBindings(
       JSON.stringify([...ownerBindings, binding]),
     );
@@ -187,7 +204,9 @@ for (const service of [
     for (const replacement of [
       { ...binding, projectId: "fixture-jellyfin" },
       { ...binding, requiredAnyRole: ["member"] },
-      { ...binding, allowedSubject: "unreviewed-subject" },
+      ...(service.id === "cleanuparr"
+        ? [{ ...binding, allowedSubject: "unreviewed-subject" }]
+        : []),
     ]) {
       assert.throws(() =>
         parseBindings(JSON.stringify([...ownerBindings, replacement])),
