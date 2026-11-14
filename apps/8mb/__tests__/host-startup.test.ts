@@ -121,7 +121,7 @@ test("unavailable diagnostics storage leaves the editor usable and recovers", as
     assert.ok(nonce);
     assert.match(policy, /worker-src 'self' blob:/);
     assert.match(policy, /'wasm-unsafe-eval'/);
-    assert.match(await page.text(), new RegExp(`nonce="${nonce}"`));
+    assert.ok((await page.text()).includes(`nonce="${nonce}"`));
     const send = () =>
       fetch(`${base}/8mb/api/diagnostics`, {
         method: "POST",
