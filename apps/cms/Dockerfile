@@ -12,10 +12,11 @@ RUN npm ci && rm -rf node_modules/better-sqlite3/prebuilds \
 FROM platformatic/node-caged:26-slim
 RUN groupadd --gid 1000 node && useradd --uid 1000 --gid node --create-home node
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=4351 TEA_DATA_DIR=/app/data
+ARG APP_REVISION=unknown
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=4351 TEA_DATA_DIR=/app/data APP_REVISION=$APP_REVISION
 WORKDIR /app/apps/cms
 COPY --from=build --chown=node:node /app /app
-RUN mkdir -p /app/data && chown node:node /app/data
+RUN mkdir -p /app/data /app/backups && chown node:node /app/data /app/backups
 USER node
 EXPOSE 4351
 CMD ["node", "--import", "remix/node-tsx", "server.ts"]

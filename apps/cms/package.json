@@ -14,6 +14,7 @@
     "test:browser": "playwright test",
     "cms:seed-users": "node --env-file-if-exists=.env --import remix/node-tsx scripts/seed-users.ts",
     "cms:seed-operator": "node --env-file-if-exists=.env --import remix/node-tsx scripts/seed-operator.ts",
+    "restore:backup": "node scripts/restore-backup.ts",
     "link:central-auth": "node --env-file-if-exists=.env --import remix/node-tsx scripts/link-central-auth.ts",
     "lint": "vp lint .",
     "lint:fix": "vp lint --fix .",

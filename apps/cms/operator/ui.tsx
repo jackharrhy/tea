@@ -2,6 +2,7 @@ import type { Handle } from "remix/component";
 import { Document } from "../app/ui/document.tsx";
 import { AdminBrand } from "../app/ui/admin-brand.tsx";
 import { operatorStyles } from "./operator-styles.ts";
+import type { BackupStatus } from "../backup/service.ts";
 
 export type Summary = {
   id: string;
@@ -71,7 +72,12 @@ export function Login(
 }
 
 export function Dashboard(
-  handle: Handle<{ email: string; sites: Summary[]; csrf: string }>,
+  handle: Handle<{
+    email: string;
+    sites: Summary[];
+    csrf: string;
+    backup?: BackupStatus;
+  }>,
 ) {
   return () => (
     <Document title="Sites · teacms" admin static styles={[operatorStyles]}>
@@ -92,6 +98,41 @@ export function Dashboard(
         <div className="operator-heading">
           <h1>Sites</h1>
         </div>
+        {handle.props.backup && (
+          <section aria-label="Backups" className="operator-site">
+            <div className="operator-site-info">
+              <h2>Backups</h2>
+              <p>
+                {!handle.props.backup.enabled
+                  ? "Not configured"
+                  : handle.props.backup.lastError
+                    ? "Needs attention"
+                    : handle.props.backup.running
+                      ? "Backup in progress"
+                      : "Scheduled"}
+              </p>
+              <p>
+                Last verified snapshot:{" "}
+                {handle.props.backup.lastSuccess ?? "None"}
+              </p>
+              <p>Next due: {handle.props.backup.nextDue ?? "On startup"}</p>
+              <p>
+                {handle.props.backup.completed} snapshot
+                {handle.props.backup.completed === 1 ? "" : "s"} ·{" "}
+                {handle.props.backup.bytes} bytes · keep{" "}
+                {handle.props.backup.retention} · every{" "}
+                {handle.props.backup.intervalSeconds} seconds
+              </p>
+              {handle.props.backup.lastError && (
+                <p role="alert">{handle.props.backup.lastError}</p>
+              )}
+              <p>
+                Local recovery only. Off-host replication and restore drills are
+                separate protections.
+              </p>
+            </div>
+          </section>
+        )}
         <div className="operator-sites">
           {handle.props.sites.map((site) => (
             <article className="operator-site">

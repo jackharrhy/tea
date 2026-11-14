@@ -58,8 +58,10 @@ services:
       dockerfile: apps/cms/Dockerfile
     environment:
       TEA_DATA_DIR: /app/data
+      TEA_BACKUP_DIR: /app/backups
     volumes:
       - cms-data:/app/data
+      - cms-backups:/app/backups
     configs:
       - source: andrew-local-site
         target: /app/apps/cms/sites/andrew/site.local.json
@@ -491,6 +493,7 @@ volumes:
   artbin-tmp:
   burger-data:
   cms-data:
+  cms-backups:
   letters-to-steve-data:
   lists-data:
   lists-mailpit-data:

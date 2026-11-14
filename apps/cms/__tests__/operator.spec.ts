@@ -70,6 +70,11 @@ test("operator dashboard opens both isolated site editors", async ({
   await expect(page).toHaveURL(origin + "/");
   await expect(page.getByRole("heading", { name: "Sites" })).toBeVisible();
   await expect(page.getByText("Healthy")).toHaveCount(2);
+  const backups = page.getByRole("region", { name: "Backups" });
+  await expect(backups).toContainText("Last verified snapshot:");
+  await expect(backups).not.toContainText("Last verified snapshot: None");
+  await expect(backups).toContainText("1 snapshot");
+  await expect(backups).toContainText("Local recovery only");
   await page.screenshot({ path: "tmp/operator-dashboard.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
