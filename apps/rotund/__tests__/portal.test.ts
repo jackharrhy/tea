@@ -134,6 +134,38 @@ test("optional catalogue bindings preserve existing config and require exact sub
   );
 });
 
+test("Seerr admits existing media members without exposing management links", () => {
+  const seerr = { ...bindings[0], id: "seerr" };
+  const configured = parseBindings(JSON.stringify([...bindings, seerr]));
+  assert.deepEqual(
+    visibleServices(
+      { sub: "fixture-member", ...roles("fixture-jellyfin", "member") },
+      configured,
+      org,
+    ).map((service) => service.id),
+    ["jellyfin", "seerr"],
+  );
+  for (const claims of [
+    {},
+    roles("fixture-jellyfin", "member", "wrong-org"),
+    roles("wrong-project", "member"),
+    roles("fixture-jellyfin", "admin"),
+  ])
+    assert.equal(
+      visibleServices(claims, configured, org).some(
+        (service) => service.id === "seerr",
+      ),
+      false,
+    );
+  for (const replacement of [
+    { ...seerr, projectId: "different-project" },
+    { ...seerr, requiredAnyRole: ["admin"] },
+  ])
+    assert.throws(() =>
+      parseBindings(JSON.stringify([...bindings, replacement])),
+    );
+});
+
 for (const service of [
   {
     id: "cleanuparr",

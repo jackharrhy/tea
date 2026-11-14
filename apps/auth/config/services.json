@@ -290,12 +290,12 @@
     "applicationId": null,
     "kind": "native",
     "roles": [],
-    "description": "Stable Seerr is live with the native owner. Directory eligibility is not Jack Auth SSO, requester provisioning or automatic approval.",
+    "description": "Media members can request content through reviewed native Jellyfin accounts with automatic approval. Directory eligibility does not provision or link accounts, and grants no administrative access.",
     "assignmentGuard": "reviewed-link",
     "nativeCleanup": "Native account, sessions and private credentials require manual review.",
     "eligibility": {
-      "projectId": "399176503268474900",
-      "roles": ["directory-owner"]
+      "projectId": "399067666012176387",
+      "roles": ["member"]
     },
     "directorySection": "media"
   },
