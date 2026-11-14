@@ -69,7 +69,7 @@ export function Document(
               </>
             ) : (
               <>
-                <a href="/login">login</a>
+                <a href="/login">sign in</a>
                 <a href="/register">register</a>
               </>
             )}

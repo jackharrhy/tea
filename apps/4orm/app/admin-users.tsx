@@ -90,7 +90,7 @@ export function AdminUserRow(
                 hx-swap="outerHTML"
               >
                 <button type="submit" class="btn-sm">
-                  manage Jack Auth
+                  manage access
                 </button>
               </form>
               <form

@@ -273,7 +273,8 @@ describe("Worker HTTP boundary", () => {
     let rootHtml = await root.text();
     expect(rootHtml).toContain('aria-label="Rooms"');
     expect(rootHtml).toContain('name="room" value="cozy"');
-    expect(rootHtml).toContain("Sign in with Jack Auth");
+    expect(rootHtml).toMatch(/>Sign in<\/a>/);
+    expect(rootHtml).not.toMatch(/Jack\s*Auth/i);
     expect(rootHtml).not.toContain('placeholder="password"');
     expect(rootHtml).not.toContain('type="radio"');
     expect(rootHtml).toContain('aria-label="Breadcrumb"');

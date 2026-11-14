@@ -60,10 +60,10 @@ export default createController(routes.auth, {
             <p>
               {missingAccount
                 ? "This person does not have an Artbin account. Choose someone who has already signed in to Artbin."
-                : "The support sign-in could not be verified. Start again from Jack Auth."}
+                : "The support sign-in could not be verified. Start again from the people page."}
             </p>
             <ButtonLink href={directory} document variant="primary">
-              Return to Jack Auth
+              Return to people
             </ButtonLink>
           </main>
         </Document>,

@@ -89,7 +89,7 @@ export function RoomLobby(
                 href={routes.auth.login.href()}
                 mix={desktopStyle.primaryButton}
               >
-                Sign in with Jack Auth
+                Sign in
               </a>
             ) : null}
           </div>

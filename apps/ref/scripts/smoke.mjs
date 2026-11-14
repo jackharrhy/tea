@@ -26,7 +26,16 @@ try {
   const landingCsp = landing?.headers()["content-security-policy"] ?? "";
   assert.match(landingCsp, /style-src[^;]*'nonce-[^']+'/);
   assert.doesNotMatch(landingCsp, /unsafe-inline/);
-  const signIn = page.getByRole("link", { name: "Sign in with Jack Auth" });
+  const signIn = page.getByRole("link", { name: "Sign in", exact: true });
+  assert.equal(
+    await page.getByRole("heading", { level: 1 }).textContent(),
+    "ref",
+  );
+  assert.equal(await page.locator(".auth-intro").count(), 0);
+  assert.equal(
+    await page.getByText("A shared board for images and links.").count(),
+    0,
+  );
   assert.ok((await signIn.boundingBox()).height >= 46);
   assert.equal(
     await signIn.evaluate((el) => getComputedStyle(el).borderRadius),

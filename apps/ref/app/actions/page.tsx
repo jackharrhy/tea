@@ -26,23 +26,17 @@ function Document(handle: Handle<{ title: string; children?: RemixNode }>) {
 
 export function AuthPage(handle: Handle<{ error?: string }>) {
   return () => (
-    <Document title="Unlock">
+    <Document title="Sign in">
       <main class="auth-page">
         <div class="auth-form">
-          <a class="wordmark" href="/">
-            ref
+          <h1 class="wordmark">ref</h1>
+          <a
+            class="auth-link"
+            href="/auth/login"
+            mix={[uiActionStyles, uiPrimaryActionStyles]}
+          >
+            Sign in
           </a>
-          <div class="auth-intro">
-            <h1>A shared board for images and links.</h1>
-            <p>Collect visual references and arrange them together.</p>
-            <a
-              class="auth-link"
-              href="/auth/login"
-              mix={[uiActionStyles, uiPrimaryActionStyles]}
-            >
-              Sign in with Jack Auth
-            </a>
-          </div>
           {handle.props.error && (
             <p class="error" role="alert">
               {handle.props.error}

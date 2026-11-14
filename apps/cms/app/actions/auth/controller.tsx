@@ -41,7 +41,7 @@ function Login(
               href={routes.auth.centralLogin.href()}
               data-rmx-document
             >
-              Sign in with Jack Auth
+              Sign in
             </a>
           ) : (
             <form

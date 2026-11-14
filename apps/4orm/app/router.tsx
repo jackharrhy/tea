@@ -145,7 +145,7 @@ export function createAppRouter(
   background: (operation: Promise<unknown>) => void,
 ) {
   function member() {
-    if (!viewer.member) throw new CommunityError(401, "Sign in to continue");
+    if (!viewer.member) throw new CommunityError(401, "sign in to continue");
     return viewer.member;
   }
   async function page(
@@ -942,7 +942,7 @@ export function createAppRouter(
               <h1>Join 4orm</h1>
               <p>
                 Use a member's invite. Account creation and verification
-                continue at Jack Auth.
+                continue on the sign-in service.
               </p>
               <form method="post" action="/auth/register">
                 <label>
@@ -955,7 +955,7 @@ export function createAppRouter(
                     }
                   />
                 </label>
-                <button>Continue to Jack Auth</button>
+                <button>sign in</button>
               </form>
             </>,
           );
