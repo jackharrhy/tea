@@ -79,8 +79,7 @@ export function createBackupService(
       withFileTypes: true,
     })) {
       if (!generationPattern.test(entry.name)) continue; // Never adopt/prune legacy/manual archives.
-      if (!entry.isDirectory() || entry.isSymbolicLink())
-        throw new Error("Invalid snapshot generation");
+      if (!entry.isDirectory()) throw new Error("Invalid snapshot generation");
       const manifest = await validateSnapshot(
         join(config!.directory, entry.name),
       );
@@ -111,11 +110,10 @@ export function createBackupService(
           throw e;
         },
       );
-      if (existing && (!existing.isFile() || existing.isSymbolicLink()))
+      if (existing && !existing.isFile())
         throw new Error("Invalid backup lease file");
       lock = new DatabaseSync(lockPath);
-      // Hold a real SQLite write lock across all async capture/retention operations.
-      // Crash releases the lock; no TTL/stale-file stealing or overlapping expired owner.
+      // SQLite holds the lease across awaits and releases it on process exit.
       lock.exec("PRAGMA busy_timeout=0; BEGIN IMMEDIATE");
       const records = await catalogue();
       const latest = records[0];
@@ -155,7 +153,6 @@ export function createBackupService(
       } finally {
         await directory.close();
       }
-      // Re-verify every owned generation before pruning any; unknown/partial entries untouched.
       const completed = await catalogue();
       for (const record of completed.slice(config.retention)) {
         // A crash during recursive removal must not leave a corrupt completed generation.
@@ -190,7 +187,7 @@ export function createBackupService(
           ? "Another backup process holds the lease; retry scheduled."
           : "Backup failed verification, configuration, or available-space checks. Previous snapshots retained; inspect storage and configuration.",
       };
-      // Do not overwrite the active owner\u0027s persisted receipt when acquisition failed.
+      // A failed lease acquisition must not overwrite the active owner's receipt.
       if (lock?.isTransaction) await persist().catch(() => {});
       console.error("TeaCMS backup:", status.lastError);
     } finally {
@@ -225,8 +222,6 @@ export function createBackupService(
     run,
     async start() {
       if (!config) return;
-      // Durable manifest catalogue, not a timer/mtime, decides if downtime left work due.
-      // A single capture coalesces all missed intervals; no synthetic historical snapshots.
       try {
         const previous = JSON.parse(
           await readFile(join(config.directory, "status.json"), "utf8"),
