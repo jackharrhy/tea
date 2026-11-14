@@ -10,7 +10,9 @@ for (const [name, client] of [
   ["slskd", "399584591968469012"],
 ]) {
   test(`${name} uses the existing Media Admin project, explicit admin and scope-independent S256 gate`, async () => {
-    const apps = JSON.parse(readFileSync(new URL("../config/applications.json", import.meta.url)));
+    const apps = JSON.parse(
+      readFileSync(new URL("../config/applications.json", import.meta.url)),
+    );
     const app = apps.find((a) => a.id === "media-admin");
     assert(app.clientIds.includes(client));
     const creationDate = new Date(
@@ -22,7 +24,9 @@ for (const [name, client] of [
       scope: ["openid"],
       redirectUri: `https://${name.toLowerCase()}.rotund.org/oauth2/callback`,
     };
-    assert.deepEqual(authorizationForRequest(apps, request).anyRoles, ["admin"]);
+    assert.deepEqual(authorizationForRequest(apps, request).anyRoles, [
+      "admin",
+    ]);
     assert.throws(
       () =>
         authorizationForRequest(apps, {
@@ -37,7 +41,12 @@ for (const [name, client] of [
       scope: "openid",
     });
     const policy = () =>
-      authorizationPolicy("/oauth/v2/authorize?" + params, "GET", new URLSearchParams(), apps);
+      authorizationPolicy(
+        "/oauth/v2/authorize?" + params,
+        "GET",
+        new URLSearchParams(),
+        apps,
+      );
     assert.equal(policy().allowed, false);
     params.set("code_challenge", "a".repeat(43));
     params.set("code_challenge_method", "plain");
@@ -58,7 +67,11 @@ for (const [name, client] of [
         roleKeys: ["admin"],
       },
       { userId: "owner", state: "USER_GRANT_STATE_ACTIVE", roleKeys: [] },
-      { userId: "owner", state: "USER_GRANT_STATE_ACTIVE", roleKeys: ["member"] },
+      {
+        userId: "owner",
+        state: "USER_GRANT_STATE_ACTIVE",
+        roleKeys: ["member"],
+      },
       {
         userId: "owner",
         state: "USER_GRANT_STATE_INACTIVE",
@@ -76,7 +89,8 @@ for (const [name, client] of [
       roleKeys: ["admin"],
     };
     assert.equal(
-      (await actions.view("request", { userId: "owner" })).application.projectId,
+      (await actions.view("request", { userId: "owner" })).application
+        .projectId,
       app.projectId,
     );
   });

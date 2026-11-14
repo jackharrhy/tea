@@ -4,9 +4,15 @@ import { readFileSync } from "node:fs";
 import { authorizationForRequest } from "../src/applications.mjs";
 
 test("retired Halcyon client is absent and cannot authorize through the shared Jellyfin member project", () => {
-  const apps = JSON.parse(readFileSync(new URL("../config/applications.json", import.meta.url)));
+  const apps = JSON.parse(
+    readFileSync(new URL("../config/applications.json", import.meta.url)),
+  );
   const clientId = "399207418342408212";
-  assert(!apps.some((app) => app.id === "halcyon" || app.clientIds.includes(clientId)));
+  assert(
+    !apps.some(
+      (app) => app.id === "halcyon" || app.clientIds.includes(clientId),
+    ),
+  );
   for (const scope of [
     ["openid", "profile"],
     [
