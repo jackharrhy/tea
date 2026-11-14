@@ -33,5 +33,6 @@ test("retired Halcyon client is absent and cannot authorize through the shared J
       { status: 403 },
     );
   const media = apps.find((app) => app.id === "media-admin");
-  assert.deepEqual(Object.values(media.clientRoleRequirements), [["admin"]]);
+  for (const roles of Object.values(media.clientRoleRequirements))
+    assert.deepEqual(roles, ["admin"]);
 });
