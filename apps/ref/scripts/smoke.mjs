@@ -26,6 +26,21 @@ try {
   const landingCsp = landing?.headers()["content-security-policy"] ?? "";
   assert.match(landingCsp, /style-src[^;]*'nonce-[^']+'/);
   assert.doesNotMatch(landingCsp, /unsafe-inline/);
+  const signIn = page.getByRole("link", { name: "Sign in with Jack Auth" });
+  assert.ok((await signIn.boundingBox()).height >= 46);
+  assert.equal(
+    await signIn.evaluate((el) => getComputedStyle(el).borderRadius),
+    "5px",
+  );
+  await page.screenshot({ path: "/tmp/ref-ui-signin-desktop.png" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  );
+  await page.screenshot({ path: "/tmp/ref-ui-signin-mobile.png" });
+  await page.setViewportSize({ width: 1440, height: 900 });
   assert.equal(await page.locator('input[type="password"]').count(), 0);
   assert.equal((await context.request.post(`${base}/login`)).status(), 404);
   const firstStart = await context.request.get(`${base}/auth/login`, {
@@ -55,6 +70,24 @@ try {
   await page.waitForURL(/\/boards\/[0-9a-f-]+/);
   const boardId = page.url().split("/").at(-1);
   await page.locator("#connection.online").waitFor();
+  const addImages = page.getByRole("button", { name: "Add images" });
+  const addLink = page.locator("#link-menu summary");
+  assert.ok((await addImages.boundingBox()).height >= 40);
+  assert.ok((await addLink.boundingBox()).height >= 40);
+  await addLink.focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.locator("#link-menu").getAttribute("open"), "");
+  await page.keyboard.press("Enter");
+  assert.equal(await page.locator("#link-menu").getAttribute("open"), null);
+  await page.screenshot({ path: "/tmp/ref-ui-board-desktop.png" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  );
+  await page.screenshot({ path: "/tmp/ref-ui-board-mobile.png" });
+  await page.setViewportSize({ width: 1440, height: 900 });
   const boardCsp = (await context.request.get(page.url())).headers()[
     "content-security-policy"
   ];

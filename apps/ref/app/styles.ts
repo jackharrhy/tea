@@ -69,9 +69,11 @@ export const refStyles = css({
     "line-height": "1.55",
   },
   "& .auth-link": {
+    "--ui-action-min-height": "46px",
+    "--ui-action-padding": "10px 18px",
+    "--ui-action-font-size": "14px",
     "min-height": "46px",
     padding: "10px 18px",
-    "border-radius": "5px",
     "font-size": "14px",
   },
   "& .home-page": {
@@ -222,6 +224,7 @@ export const refStyles = css({
     background: "#ad6662",
   },
   "& .header-add": {
+    "--ui-action-font-size": "12px",
     padding: "8px 12px",
     "font-size": "12px",
     "white-space": "nowrap",
@@ -443,14 +446,9 @@ export const refStyles = css({
     position: "relative",
   },
   "& .add-link-menu summary": {
+    "--ui-action-font-size": "12px",
     "list-style": "none",
-    cursor: "pointer",
-    border: "1px solid #c9cbc5",
-    "border-radius": "5px",
-    background: "#fff",
-    padding: "8px 12px",
     "font-size": "12px",
-    "white-space": "nowrap",
   },
   "& .add-link-menu summary::-webkit-details-marker": {
     display: "none",
@@ -621,6 +619,7 @@ export const refStyles = css({
       display: "none",
     },
     "& .header-add, & .add-link-menu summary": {
+      "--ui-action-padding": "8px",
       padding: "8px",
     },
   },
