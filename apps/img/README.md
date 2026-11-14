@@ -41,6 +41,9 @@ From the Harrhy root, `npm run img:dev -- samples/hummingbird.gif` opens the sam
 require Cargo on PATH and do not require installing the JavaScript dependencies.
 Paths passed to the app are relative to `apps/img`. Rust dependencies and the
 toolchain remain pinned in this app; integration tests live in `__tests__/`.
+GitHub checks cache Cargo downloads and compilation outputs by runner, pinned
+manifest/lock/toolchain, and source inputs. Cargo still executes the complete
+release test and Clippy commands on cache hits; no check is skipped.
 
 The native Rune UI stays in this app. A shared image-processing or WASM package
 can be extracted when Ref consumes it; no browser editing or WAD export is
