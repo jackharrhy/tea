@@ -111,7 +111,7 @@ const layoutStyles = css({
   "& .brand": {
     fontSize: "29px",
     fontWeight: 700,
-    letterSpacing: "-0.065em",
+    letterSpacing: "-0.035em",
     color: "#202a32",
     textDecoration: "none",
     lineHeight: 1,
@@ -129,7 +129,7 @@ const layoutStyles = css({
     padding: "9px 12px",
     textDecoration: "none",
     borderRadius: "5px",
-    minHeight: "40px",
+    minHeight: "44px",
     display: "flex",
     alignItems: "center",
   },
@@ -145,6 +145,7 @@ const layoutStyles = css({
     display: "grid",
     minHeight: "100svh",
     placeItems: "center",
+    padding: "32px 0",
   },
   "& .auth-page": {
     position: "relative",
@@ -159,7 +160,7 @@ const layoutStyles = css({
   "& .auth-page h1": { fontSize: "29px", marginBottom: "9px" },
   "& .auth-page:has(.login-title)": {
     width: "calc(100% - 40px)",
-    margin: "32px auto",
+    margin: "0 auto",
   },
   "& .auth-page .login-title": { marginBottom: "24px" },
   "& .auth-page .form-stack > button": {
@@ -178,12 +179,19 @@ const layoutStyles = css({
     "--doodle-fill": "#dce7ee",
     "--doodle-wash": "#eef3f6",
   },
+  "& .artwork-layer": { position: "fixed", inset: 0, pointerEvents: "none" },
+  "& .desktop-nav > form": {
+    margin: "0 0 0 12px",
+    paddingLeft: "12px",
+    borderLeft: "1px solid var(--line)",
+  },
   "& .site-header": {
     position: "relative",
     zIndex: 2,
     margin: "auto",
     minHeight: "78px",
-    maxWidth: "1240px",
+    maxWidth: "1184px",
+    width: "100%",
     padding: "0 28px",
     display: "flex",
     alignItems: "center",
@@ -316,7 +324,9 @@ export function Document(handle: Handle<DocumentProps>) {
           <a class="skip-link" href="#main">
             Skip to content
           </a>
-          {narrow ? <div innerHTML={unsafeHTML(dailyArtwork())} /> : null}
+          {narrow ? (
+            <div class="artwork-layer" innerHTML={unsafeHTML(dailyArtwork())} />
+          ) : null}
           {preview ? (
             <aside class="preview-banner">
               <strong>Viewing {preview.name}</strong>

@@ -11,7 +11,7 @@
     "dev": "node --env-file-if-exists=.env --watch src/server.mjs",
     "start": "node src/server.mjs",
     "test": "node --test __tests__/*.test.mjs",
-    "test:browser": "node __tests__/browser/authorization.mjs && node __tests__/browser/radio-enrollment.mjs && node __tests__/browser/access-management.mjs && node __tests__/browser/doodle-gallery.mjs",
+    "test:browser": "node __tests__/browser/authorization.mjs && node __tests__/browser/radio-enrollment.mjs && node __tests__/browser/access-management.mjs && node __tests__/browser/doodle-gallery.mjs && node __tests__/browser/ui-polish.mjs",
     "typecheck": "tsrs --noEmit",
     "check": "npm run typecheck && npm test && npm run test:browser"
   },

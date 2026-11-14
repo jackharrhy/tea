@@ -33,12 +33,11 @@ try {
   page.on("pageerror", (error) => errors.push(error.name));
   await page.goto(origin);
   await page
-    .getByRole("button", { name: "Preview Waves", exact: true })
+    .getByRole("button", { name: "Preview Silk braid", exact: true })
     .waitFor();
-  assert.equal(await page.locator(".concept").count(), 11);
+  assert.equal(await page.locator(".concept").count(), 10);
   assert.equal(await page.locator(".mock-form input").count(), 0);
   for (const name of [
-    "Waves",
     "Silk folds",
     "Silk",
     "Silk sheen",
@@ -65,7 +64,7 @@ try {
   );
   await page.getByLabel("Saturation", { exact: true }).fill("1.8");
   await page
-    .getByRole("button", { name: "Preview Waves", exact: true })
+    .getByRole("button", { name: "Preview Silk braid", exact: true })
     .click();
   assert.equal(
     await page.getByLabel("Color strength", { exact: true }).inputValue(),
@@ -81,7 +80,7 @@ try {
   await page.getByText("Saved", { exact: true }).waitFor();
   assert.deepEqual(
     JSON.parse(await readFile(directory + "/pool.json", "utf8")).enabled,
-    ["waves", "silk"],
+    ["silk", "silk-braid"],
   );
   assert.equal(
     JSON.parse(await readFile(directory + "/pool.json", "utf8")).settings.silk
@@ -96,13 +95,13 @@ try {
   );
   const forged = await context.request.patch(origin + "/api/pool", {
     headers: { origin: "http://wrong.invalid" },
-    data: { enabled: ["waves"], expectedRevision: 1 },
+    data: { enabled: ["silk-braid"], expectedRevision: 1 },
   });
   assert.equal(forged.status(), 403);
   const invalidSettings = await context.request.patch(origin + "/api/pool", {
     headers: { origin },
     data: {
-      enabled: ["waves"],
+      enabled: ["silk-braid"],
       expectedRevision: 1,
       settings: { silk: { color: 99 } },
     },
@@ -136,7 +135,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS real WebGL gallery: eleven shaders, private pool persistence/Origin, paused frame, context-loss fallback and mobile.",
+    "PASS real WebGL gallery: ten shaders, private pool persistence/Origin, paused frame, context-loss fallback and mobile.",
   );
 } finally {
   await browser?.close();

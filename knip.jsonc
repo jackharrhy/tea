@@ -6,6 +6,8 @@
     "apps/auth": {
       "entry": [
         "integrations/*.js",
+        "__tests__/fixtures/ui-preview.mjs",
+        "__tests__/fixtures/explorer.mjs",
         "tools/doodle-gallery/server.mjs",
         "tools/doodle-gallery/public/*.mjs",
         "tools/doodle-gallery/public/*.css",
@@ -13,6 +15,7 @@
       "ignoreUnresolved": [
         "^\\./doodle-spec\\.mjs$",
         "^/doodle-(webgl|spec)\\.mjs$",
+        "^/assets/doodle-webgl\\.mjs$",
       ],
     },
     "apps/8mb": {
