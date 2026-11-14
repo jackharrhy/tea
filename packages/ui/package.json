@@ -7,7 +7,7 @@
     ".": "./styles.ts"
   },
   "scripts": {
-    "check": "tsrs --noEmit"
+    "check": "tsrs --noEmit && node --test __tests__/*.test.mjs"
   },
   "dependencies": {
     "remix": "3.2.0"

@@ -67,11 +67,12 @@ export const uiActionStyles = css({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  minHeight: "40px",
-  padding: "9px 14px",
+  minHeight: "var(--ui-action-min-height, 40px)",
+  padding: "var(--ui-action-padding, 9px 14px)",
   border: "1px solid var(--ui-line)",
   borderRadius: "var(--ui-control-radius, 5px)",
   font: "inherit",
+  fontSize: "var(--ui-action-font-size, inherit)",
   fontWeight: "600",
   lineHeight: "1.2",
   whiteSpace: "nowrap",
@@ -79,7 +80,14 @@ export const uiActionStyles = css({
   cursor: "pointer",
 });
 
+// Preserve standalone primary-action behavior for existing consumers such as Auth.
+// New consumers opt into uiActionStyles for shared target geometry.
 export const uiPrimaryActionStyles = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: "600",
+  textDecoration: "none",
   background: "var(--ui-action-surface)",
   borderColor: "var(--ui-action-surface)",
   color: "var(--ui-action-ink)",
