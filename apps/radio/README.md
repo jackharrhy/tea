@@ -48,6 +48,11 @@ npm run types:worker --workspace @harrhy/radio
 npm run radio:check
 ```
 
+`check` builds browser assets once before typechecking, both Remix and Worker
+test suites, and the deployment dry-run. Standalone `npm test` still builds its
+own assets; the production Celld smoke deliberately makes a separate minified
+build.
+
 ## Deployment model
 
 The default Tea configuration uses Worker name `tea-radio` and bucket name `tea-radio-tracks` for new isolated stores. The repository's root `compose.yml` serves it at `radio.localhost` with an independent `radio-data` volume. Mug's production service uses the cutover configuration with the original `radio` Worker and `radio-tracks` bucket, and a separate copied Celld volume.
