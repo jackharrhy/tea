@@ -20,7 +20,7 @@ order without consuming one another.
 
 The Remix CSP middleware gives each HTML response a fresh nonce for generated styles. Scripts stay disabled; forms may submit only to Rotund and the configured issuer. The app keeps its same-origin referrer policy because its sign-in form checks Origin and CSRF.
 
-Jellyfin retains its native login. Navidrome has its own existing Jack Auth entitlement. Seerr uses Jellyfin native login and its link remains restricted to the explicitly linked subject. Cleanuparr retains its native login behind the existing Jack Auth media-admin gate. The slskd (Soulseek) link points to `https://slskd.rotund.org/`, which remains Tailnet-only with native owner login. Adding its catalogue binding does not activate Soulseek or provision an account. Catalogue visibility is never a promise of destination access.
+Jellyfin retains its native login. Navidrome has its own existing Jack Auth entitlement. Seerr uses Jellyfin native login and its link remains restricted to the explicitly linked subject. Cleanuparr retains its native login behind the existing Jack Auth media-admin gate. The slskd (Soulseek) link points to `https://slskd.rotund.org/`, behind the existing Jack Auth owner/media-admin gate with native owner login. Adding its catalogue binding does not activate Soulseek or provision an account. Catalogue visibility is never a promise of destination access.
 
 ## Checks
 
