@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "npm run build && npm run types:worker && npm run typecheck && npm test && wrangler deploy --dry-run",
+    "check": "npm run build && npm run types:worker && npm run typecheck && npm run test:remix && npm run test:worker && wrangler deploy --dry-run",
     "dev": "npm run build && wrangler dev",
     "dev:celld": "npm run build && celld dev",
     "postinstall": "node scripts/sync-icon-font.mjs",

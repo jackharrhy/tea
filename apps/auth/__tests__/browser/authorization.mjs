@@ -338,23 +338,14 @@ try {
   assert.equal(credentialAttempts, anonymousCredentials);
   await silentContext.close();
   silent = false;
+  // Representative browser boundaries: direct authRequest + login CSP,
+  // returnTo + delegated consent, archive scopes, and silent portal sessions.
+  // Per-client admission/freshness policy remains covered by the Node tests;
+  // this is intentionally not an end-to-end login matrix for every application.
   const enabled = applications.filter(
     (a) =>
-      [
-        "fourm",
-        "artbin",
-        "maps",
-        "executor",
-        "burger",
-        "lists",
-        "media-admin",
-        "rotund-portal",
-        "marky",
-        "radio",
-        "letters-to-steve",
-        "ref",
-        "navidrome",
-      ].includes(a.id) && !a.authorizationHold,
+      ["fourm", "artbin", "ref", "rotund-portal"].includes(a.id) &&
+      !a.authorizationHold,
   );
   for (const app of enabled) {
     currentClient = app.clientIds[0];
