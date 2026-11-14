@@ -1,12 +1,15 @@
 import path from "node:path";
+import { parse } from "@bomb.sh/args";
+import { readApprovedPublic } from "../app/content/public-assets.ts";
 import {
   exportSnapshot,
   diffManifest,
   type PublishManifest,
 } from "../app/content/publish.ts";
 
+const args = parse(process.argv.slice(2), { string: ["public-selection"] });
 const outputPath = path.resolve(
-  process.argv[2] ||
+  args._[0]?.toString() ||
     `tmp/published/${new Date().toISOString().replaceAll(":", "-")}`,
 );
 const manifest = await exportSnapshot({
@@ -15,6 +18,9 @@ const manifest = await exportSnapshot({
     process.env.GARDEN_VAULT_ASSETS_PATH || "./vault/Assets",
   ),
   outputPath,
+  assetOrigin: process.env.GARDEN_ASSET_ORIGIN,
+  origin: process.env.GARDEN_ORIGIN,
+  approvedPublic: await readApprovedPublic(args["public-selection"]),
 });
 console.log(
   `Snapshot: ${outputPath}\nPublic pages: ${manifest.pages.length}\nReferenced assets: ${manifest.assets.length}`,
